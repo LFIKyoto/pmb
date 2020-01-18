@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr_caddie_procs.class.php,v 1.2 2016-11-18 13:16:05 dgoron Exp $
+// $Id: empr_caddie_procs.class.php,v 1.3 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,8 +12,8 @@ require_once ($class_path."/caddie_procs.class.php");
 
 class empr_caddie_procs extends caddie_procs {
 	
-	static $module = 'circ';
-	static $table = 'empr_caddie_procs';
+	public static $module = 'circ';
+	public static $table = 'empr_caddie_procs';
 	
 	public static function get_parameters_remote() {
 		$allowed_proc_types = array("PEMPS", "PEMPA");

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: visu_ex.inc.php,v 1.35 2017-11-21 12:01:00 dgoron Exp $
+// $Id: visu_ex.inc.php,v 1.36 2019-04-09 09:56:15 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -62,6 +62,7 @@ if (!isset($back_to_visu)){
 	$isbn = '';
 	$code = '';
 	
+	$where_typedoc = "";
 	if(isEAN($ex_query)) {
 		// la saisie est un EAN -> on tente de le formater en ISBN
 		$EAN=$ex_query;
@@ -88,17 +89,18 @@ if (!isset($back_to_visu)){
 			// ce n'est rien de tout ça, on prend la saisie telle quelle
 			$code = str_replace("*","%",$ex_query);
 			// filtrer par typdoc_query si selectionné
-			if($typdoc_query) $where_typedoc=" and typdoc='$typdoc_query' ";
+			if(!empty($typdoc_query) && !empty($typdoc_query[0])) $where_typedoc=" and typdoc in ('".implode("','", $typdoc_query)."') ";
 		}
 	}
 	
-	if($nb_results){
+	if(!empty($nb_results)){
 		$limit_page= " limit ".$page*$nb_per_page_search.", $nb_per_page_search "; 
 	}else{
 		$limit_page= " "; 
 		$page=0;
 	}	
 
+	$rqt_bulletin = 0;
 	// on compte
 	if ($EAN && $isbn) {
 		
@@ -150,7 +152,7 @@ if (!isset($back_to_visu)){
 		die();
 	}
 	
-	if(!$nb_results){
+	if(empty($nb_results)){
 		$nb_results= pmb_mysql_num_rows($myQuery);
 	}
 					
@@ -173,12 +175,15 @@ if (!isset($back_to_visu)){
 					print_r($notice);
 					echo "</pre>";*/
 					//Les liens sont défini dans le fichier visu_rech.inc.php
+					if (!isset($link_explnum)) $link_explnum = "";
+					if (!isset($print_mode)) $print_mode = 0;
 					$display = new mono_display($notice, 6, $link, 1, $link_expl, '', $link_explnum,1, $print_mode,1,1,'',0,false,true,$recherche_ajax_mode);
 					//mono_display($id, $level=1, $action='', $expl=1, $expl_link='', $lien_suppr_cart="", $explnum_link='', $show_resa=0, $print=0, $show_explnum=1, $show_statut=0, $anti_loop='', $draggable=0, $no_link=false, $show_opac_hidden_fields=true,$ajax_mode=0)
 					print pmb_bidi($display->result);
 				}
 				if (++$nb >= $nb_per_page_search) break;
 			}
+			if (!isset($end_result_liste)) $end_result_liste = "";
 			print $end_result_liste;
 		} else {
 			// exemplaire inconnu
@@ -211,7 +216,7 @@ if (!isset($back_to_visu)){
 	
 	//Gestion de la pagination
 	if ($nb_results) {
-		$nav_bar.="
+		$nav_bar = "
 		<form name='search_form' action='./circ.php?categ=visu_rech' method='post' style='display:none'>
 			<input type='hidden' name='page' value='$page'/>
 			<input type='hidden' name='nb_results' value='$nb_results'/>

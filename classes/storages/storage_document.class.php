@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: storage_document.class.php,v 1.4 2018-02-26 17:01:59 apetithomme Exp $
+// $Id: storage_document.class.php,v 1.5 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
     die("no access");
@@ -138,7 +138,7 @@ class storage_document {
         return round($this->human_size, 1) . " " . $units[$i];
     }
 
-    function delete() {
+    public function delete() {
         global $msg;
         //suppression physique
         if ($this->storage->delete($this->path . $this->filename)) {
@@ -152,7 +152,7 @@ class storage_document {
         return false;
     }
 
-    function calculate_vignette() {
+    public function calculate_vignette() {
         error_reporting(null);
         global $base_path, $include_path, $class_path;
         $path = $this->get_document_in_tmp();
@@ -177,12 +177,12 @@ class storage_document {
         }
     }
 
-    function regen_vign() {
+    public function regen_vign() {
         $this->calculate_vignette();
         pmb_mysql_query("update " . static::$table . " set " . static::$prefix . "_vignette = '" . addslashes($this->vignette) . "' where id_" . static::$prefix . " = " . $this->id);
     }
 
-    function get_document_in_tmp() {
+    public function get_document_in_tmp() {
         $this->clean_tmp();
         global $base_path;
         $path = tempnam($base_path . "/temp/", static::$table . '_');
@@ -218,7 +218,7 @@ class storage_document {
         }
     }
 
-    function rrmdir($dir) {
+    public function rrmdir($dir) {
         if (is_dir($dir)) {
             $objects = scandir($dir);
             foreach ($objects as $object) {

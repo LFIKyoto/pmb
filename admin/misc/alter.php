@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: alter.php,v 1.20 2017-01-25 16:43:49 dgoron Exp $
+// $Id: alter.php,v 1.21 2019-06-05 13:13:19 btafforeau Exp $
 
 // définition du minimum nécéssaire 
 $base_path="../..";                            
@@ -21,7 +21,7 @@ function form_relance_auto ($maj_suivante="lancement", $etape="0", $nb_etapes) {
 	$dummy.="<INPUT NAME=\"action\" TYPE=\"hidden\" value=\"".$maj_suivante."\">";
 	$dummy.="<INPUT NAME=\"etape\" TYPE=\"hidden\" value=\"".$etape."\">";
 	$dummy.="<div class='erreur'>Patientez...</div>";
-	$dummy.="<br />".$msg[alter_etape].$etape." / ".$nb_etapes."<br />";
+	$dummy.="<br />".$msg['alter_etape'].$etape." / ".$nb_etapes."<br />";
 	$dummy.="</FORM>";
 	$dummy.="<SCRIPT>setTimeout(\"document.majbase.submit()\",10);</SCRIPT>";
 	return $dummy;

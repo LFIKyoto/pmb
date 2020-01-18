@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_module.class.php,v 1.82 2018-09-14 09:56:54 dgoron Exp $
+// $Id: cms_module_common_module.class.php,v 1.86.2.2 2019-11-25 11:43:12 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -28,7 +28,7 @@ class cms_module_common_module extends cms_module_root{
 	public $classement = "";
 	
 	public function __construct($id=0){
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 		$infos = self::read_manifest();
 		$this->informations = $infos['informations'];
 		$this->elements_used = $infos['elements_used'];
@@ -47,7 +47,7 @@ class cms_module_common_module extends cms_module_root{
 		$informations = array();
 		@ini_set("zend.ze1_compatibility_mode", "0");
 		$manifest = new domDocument();
-		$module_path = realpath(dirname($base_path."/cms/modules/".str_replace("cms_module_","",get_called_class())."/".get_called_class().".class.php"));
+		$module_path = realpath(dirname($base_path."/cms/modules/".str_replace("cms_module_","",static::class)."/".static::class.".class.php"));
 		
 		$manifest->load($module_path."/manifest.xml");
 		
@@ -122,7 +122,7 @@ class cms_module_common_module extends cms_module_root{
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				$row = pmb_mysql_fetch_object($result);
-				$this->id = $row->id_cadre+0;
+				$this->id = (int) $row->id_cadre;
 				$this->hash = $row->cadre_hash;
 				$this->name = $row->cadre_name;
 				$this->fixed = $row->cadre_fixed;
@@ -140,28 +140,28 @@ class cms_module_common_module extends cms_module_root{
 					while ($ligne=pmb_mysql_fetch_object($result)) {
 						switch ($ligne->cadre_content_type) {
 							case "datasource":
-					$this->datasource = array(
-									'id' => $ligne->id_cadre_content+0,
-									'name' => $ligne->cadre_content_object
-					);
+            					$this->datasource = array(
+            					    'id' => (int) $ligne->id_cadre_content,
+            						'name' => $ligne->cadre_content_object
+            					);
 								break;
 							case "filter":
-					$this->filter = array(
-									'id' => $ligne->id_cadre_content+0,
-									'name' => $ligne->cadre_content_object
-					);
+            					$this->filter = array(
+            					    'id' => (int) $ligne->id_cadre_content,
+            						'name' => $ligne->cadre_content_object
+            					);
 								break;
 							case "view":
-					$this->view = array(
-									'id' => $ligne->id_cadre_content+0,
-									'name' => $ligne->cadre_content_object
-					);
+            					$this->view = array(
+            					    'id' => (int) $ligne->id_cadre_content,
+            						'name' => $ligne->cadre_content_object
+            					);
 								break;
 							case "condition":
-						$this->conditions[] = array(
-									'id' => $ligne->id_cadre_content+0,
+        						$this->conditions[] = array(
+        						    'id' => (int) $ligne->id_cadre_content,
 									'name' => $ligne->cadre_content_object
-						);
+        						);
 								break;
 							default:
 								break;
@@ -172,7 +172,7 @@ class cms_module_common_module extends cms_module_root{
 		}
 	}
 	
-	static function read_elements_used($use_node){
+	public static function read_elements_used($use_node){
 		@ini_set("zend.ze1_compatibility_mode", "0");
 		$elements_used = array();
 		$types = array(
@@ -208,12 +208,14 @@ class cms_module_common_module extends cms_module_root{
 		if(!in_array("cms_module_common_condition_global_var_value",$elements_used['condition'])) $elements_used['condition'][] = "cms_module_common_condition_global_var_value";
 		if(!in_array("cms_module_common_condition_view",$elements_used['condition'])) $elements_used['condition'][] = "cms_module_common_condition_view";
 		if(!in_array("cms_module_common_condition_lang",$elements_used['condition'])) $elements_used['condition'][] = "cms_module_common_condition_lang";
+		if(!in_array("cms_module_common_condition_readers_categories",$elements_used['condition'])) $elements_used['condition'][] = "cms_module_common_condition_readers_categories";
+		if(!in_array("cms_module_common_condition_readers_statuses",$elements_used['condition'])) $elements_used['condition'][] = "cms_module_common_condition_readers_statuses";
 		
 		@ini_set("zend.ze1_compatibility_mode", "1");
 		return $elements_used;
 	}
 	
-	static function get_elements_used($file=""){
+	public static function get_elements_used($file=""){
 		@ini_set("zend.ze1_compatibility_mode", "0");
 		//on récupère la partie intéressante du manifest...
 		$dom = new domDocument();
@@ -421,7 +423,7 @@ class cms_module_common_module extends cms_module_root{
 					<input type='button' class='bouton' value='".$this->msg['cms_module_common_module_cancel']."' ".($cancel_callback != '' ? "onclick='".$cancel_callback."();'" : "")."/>
 				</div>
 				<div class='right'>".
-					(($this->id && $ajax) ? "<input type='submit' id='cms_module_common_module_submit' class='bouton' value='".$this->msg['cms_module_common_module_duplicate']."' ".( $ajax ? "onclick=\"if(test_form_".$this->class_name."()){document.getElementById('cms_module_common_module_id').value='';cms_module_save();}return false;\"" : "")."/>&nbsp;" : "")."
+		(($this->id && $ajax) ? "<input type='submit' id='cms_module_common_module_submit' class='bouton' value='".$this->msg['cms_module_common_module_duplicate']."' ".( $ajax ? "onclick=\"if(test_form_".$this->class_name."())cms_module_duplicate();return false;\"" : "")."/>&nbsp;" : "")."
 					<input type='button' class='bouton' value='".$this->msg['cms_module_common_module_delete']."' onclick=\"if(confirm('".addslashes($this->msg['cms_module_common_module_confirm_delete'])."')) {cms_module_delete()}\"/>
 				</div>
 			</div>
@@ -469,6 +471,13 @@ class cms_module_common_module extends cms_module_root{
 					}
 				});
 			}
+            function cms_module_duplicate(){
+                //On veut sauvegarder notre formulaire comme si c'était un nouveau
+                document.forms['".$this->class_name."_form'].action = document.forms['".$this->class_name."_form'].action.replace('action=save_form','action=duplicate_form');  
+                //C'est une copie, donc on le dit
+				document.forms['".$this->class_name."_form'].cms_module_common_module_name.value = 'Copie de '+document.forms['".$this->class_name."_form'].cms_module_common_module_name.value
+				cms_module_save(); 
+            }
 			
 			function cms_module_delete(){
 				dojo.xhrGet({
@@ -1121,4 +1130,13 @@ class cms_module_common_module extends cms_module_root{
 		}
 		return true;		
 	}
+	public function clean_duplication(){
+	    $this->id=0;
+	    $this->hash = '';
+	    $this->get_hash();
+        $this->conditions = [];
+        $this->filter = [];
+        $this->datasource= [];
+        $this->view = [];
+	} 
 }

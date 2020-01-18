@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cart.php,v 1.32 2017-07-13 14:06:21 tsamson Exp $
+// $Id: cart.php,v 1.34.6.1 2019-10-30 08:15:48 dgoron Exp $
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
@@ -82,8 +82,9 @@ if (($pos=strpos($item, "_p"))) {
 // constante pour afficher le lien de suppr du panier
 switch ($action) {
 	case 'new_cart':
-		$myCart = caddie_root::get_instance_from_object_type($object_type);
-		$form_action = "./cart.php?action=valid_new_cart&object_type=".$object_type."&item=".$item.(isset($current_print) ? "&current_print=".$current_print : "");
+		$myCart = caddie_root::get_instance_from_object_type($object_type);	
+		$form_action = "./cart.php?action=valid_new_cart&object_type=".$object_type."&item=".$item.(isset($current_print) ? "&current_print=".$current_print : "") . 
+		(isset($pager) ? "&pager=".$pager : "") . (isset($include_child) ? "&include_child=".$include_child : "") . (isset($include_bulletin_notice) ? "&include_bulletin_notice=".$include_bulletin_notice : "") . (isset($include_analysis) ? "&include_analysis=".$include_analysis : "") . (isset($selected_objects) ? "&selected_objects=".$selected_objects : "");
 		$form_cancel = "history.go(-1);";
 		$myCart->type = $object_type;
 		print $myCart->get_form($form_action, $form_cancel);
@@ -95,7 +96,7 @@ switch ($action) {
 	case 'valid_new_cart':
 		$myCart = caddie_root::get_instance_from_object_type($object_type);
 		$myCart->set_properties_from_form();
-		$myCart->create_cart();
+		$idcaddie_new = $myCart->create_cart();	
 	break;
 }
 

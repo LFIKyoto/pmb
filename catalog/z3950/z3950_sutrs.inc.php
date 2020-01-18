@@ -5,7 +5,7 @@
 // authors: Marco Vaninetti, Massimo Mancini
 // state: experimental ;-)
 // +-------------------------------------------------+
-// $Id: z3950_sutrs.inc.php,v 1.10 2017-03-21 11:32:17 dgoron Exp $
+// $Id: z3950_sutrs.inc.php,v 1.11 2019-06-10 08:57:12 btafforeau Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
@@ -17,7 +17,7 @@ require_once("$class_path/XMLlist.class.php");
 $clang = new XMLlist("$include_path/marc_tables/$lang/lang.xml", 0);
 $clang->analyser();
 $codelang = $clang->table;
-while (list($l,$d)=each($codelang)) $codelang[$l]=strtolower($d);
+foreach ($codelang as $l => $d) $codelang[$l]=strtolower($d);
 
 function _item_($param) {
 	global $import_type;

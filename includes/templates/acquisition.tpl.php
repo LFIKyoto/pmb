@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: acquisition.tpl.php,v 1.31 2017-09-29 09:53:23 dgoron Exp $
+// $Id: acquisition.tpl.php,v 1.34 2019-06-18 07:44:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $msg, $charset, $acquisition_layout, $current_module, $acquisition_layout_end, $user_query, $acquisition_menu, $plugins;
+global $acquisition_rent_requests_activate;
 
 // $acquisition_menu : menu page acquisition
 $acquisition_menu = "
@@ -25,21 +28,24 @@ $acquisition_menu = "
 		<li><a href='./acquisition.php?categ=sug&sub=import'>".htmlentities($msg['acquisition_menu_sug_import'],ENT_QUOTES,$charset)."</a></li>	
 		<li><a href='./acquisition.php?categ=sug&sub=empr_sug'>".htmlentities($msg['acquisition_menu_sug_empr'],ENT_QUOTES,$charset)."</a></li>	
 		<li><a href='./acquisition.php?categ=sug'>".htmlentities($msg['acquisition_menu_sug_todo'],ENT_QUOTES,$charset)."</a></li>
-	</ul>
-	<h3 onclick='menuHide(this,event)'>".htmlentities($msg['acquisition_menu_rent'],ENT_QUOTES,$charset)."</h3>
-	<ul>
-		<li><a href='./acquisition.php?categ=rent&sub=requests'>".htmlentities($msg['acquisition_menu_rent_requests'],ENT_QUOTES,$charset)."</a></li>
-";		
-if (SESSrights & ACQUISITION_ACCOUNT_INVOICE_AUTH) {
-	$acquisition_menu.= "
-		<li><a href='./acquisition.php?categ=rent&sub=accounts'>".htmlentities($msg['acquisition_menu_rent_accounts'],ENT_QUOTES,$charset)."</a></li>
-		<li><a href='./acquisition.php?categ=rent&sub=accounts&accounts_search_form_invoiced_filter=1&accounts_search_form_request_status=3'>".htmlentities($msg['acquisition_menu_rent_accounts_to_invoice'],ENT_QUOTES,$charset)."</a></li>
-		<li><a href='./acquisition.php?categ=rent&sub=invoices'>".htmlentities($msg['acquisition_menu_rent_invoices'],ENT_QUOTES,$charset)."</a></li>
-		<li><a href='./acquisition.php?categ=rent&sub=invoices&invoices_search_form_status=1'>".htmlentities($msg['acquisition_menu_rent_invoices_to_validate'],ENT_QUOTES,$charset)."</a></li>
-	";
-}		
-$acquisition_menu.= "			
 	</ul>";
+if ($acquisition_rent_requests_activate) {
+    $acquisition_menu .= "
+    	<h3 onclick='menuHide(this,event)'>".htmlentities($msg['acquisition_menu_rent'],ENT_QUOTES,$charset)."</h3>
+    	<ul>
+    		<li><a href='./acquisition.php?categ=rent&sub=requests'>".htmlentities($msg['acquisition_menu_rent_requests'],ENT_QUOTES,$charset)."</a></li>
+    ";		
+    if (SESSrights & ACQUISITION_ACCOUNT_INVOICE_AUTH) {
+    	$acquisition_menu.= "
+    		<li><a href='./acquisition.php?categ=rent&sub=accounts'>".htmlentities($msg['acquisition_menu_rent_accounts'],ENT_QUOTES,$charset)."</a></li>
+    		<li><a href='./acquisition.php?categ=rent&sub=accounts&accounts_search_form_invoiced_filter=1&accounts_search_form_request_status=3'>".htmlentities($msg['acquisition_menu_rent_accounts_to_invoice'],ENT_QUOTES,$charset)."</a></li>
+    		<li><a href='./acquisition.php?categ=rent&sub=invoices'>".htmlentities($msg['acquisition_menu_rent_invoices'],ENT_QUOTES,$charset)."</a></li>
+    		<li><a href='./acquisition.php?categ=rent&sub=invoices&invoices_search_form_status=1'>".htmlentities($msg['acquisition_menu_rent_invoices_to_validate'],ENT_QUOTES,$charset)."</a></li>
+    	";
+    }		
+    $acquisition_menu.= "			
+    	</ul>";
+}
 $plugins = plugins::get_instance();	
 $acquisition_menu.= $plugins->get_menu('acquisition')."
 	<div id='div_alert' class='erreur'></div>

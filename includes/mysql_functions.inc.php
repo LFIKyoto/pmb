@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mysql_functions.inc.php,v 1.9 2018-06-04 11:14:07 dgoron Exp $
+// $Id: mysql_functions.inc.php,v 1.11 2019-05-29 08:14:14 tsamson Exp $
 
 require_once($class_path.'/pmb_mysqli.class.php');
 
@@ -438,4 +438,21 @@ function pmb_mysql_debug($backtrace) {
 		</div>";
 	}
 	return $res;
+}
+
+/**
+ * 
+ * @param resource $link_identifier
+ * @return boolean
+ */
+function pmb_mysql_ping($link_identifier = null){
+    global $dbh;
+    
+    if($link_identifier == null){
+        $link_identifier = $dbh;
+    }
+    if (pmb_mysql_insert_id($link_identifier)) {
+        return true;
+    }
+    return pmb_mysqli::get_connection($link_identifier)->ping();
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_common_datasource_used_in_custom_fields.class.php,v 1.1 2018-06-29 13:02:47 tsamson Exp $
+// $Id: frbr_entity_common_datasource_used_in_custom_fields.class.php,v 1.3.2.1 2019-09-26 13:47:22 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -20,53 +20,23 @@ class frbr_entity_common_datasource_used_in_custom_fields extends frbr_entity_co
 	}
 	
 	public function get_sub_datasources(){
-		if(get_called_class() != 'frbr_entity_common_datasource_used_in_custom_fields') {
+	    if(static::class != 'frbr_entity_common_datasource_used_in_custom_fields') {
 			return array();
-		}
-	}
-	
-	protected function get_entity_type_from_data_type($data_type) {
-		switch ($data_type) {
-			case 1:
-				return 'authors';
-				break;
-			case 2:
-				return 'categories';
-				break;
-			case 3:
-				return 'publishers';
-				break;
-			case 4:
-				return 'collections';
-				break;
-			case 5:
-				return 'subcollections';
-				break;
-			case 6:
-				return 'series';
-				break;
-			case 7:
-				return 'indexint';
-				break;
-			case 8:
-				return 'works';
-				break;
-			case 9:
-				return 'concepts';
-				break;
-			default:
-				return 'authperso';
 		}
 	}
 	
 	protected function get_custom_list() {
 		if(!isset($this->custom_list)) {
 			$this->custom_list = array();
-			$query = "select idchamp, titre, options, datatype from ".$this->prefix."_custom where type='query_auth' order by name";
+			$query = "SELECT idchamp, titre, options, datatype FROM ".$this->prefix."_custom WHERE type='query_auth'";
+			if (!empty($this->parameters->authperso_id) && $this->prefix == "authperso") {
+			    $query .= " AND num_type = ".$this->parameters->authperso_id; 
+			}
+			$query .= " ORDER BY name";
 			$result = pmb_mysql_query($query);
 			while($row = pmb_mysql_fetch_assoc($result)) {
 			    $options = _parser_text_no_function_($row['options']);
-				if($this->get_entity_type_from_data_type($options['OPTIONS'][0]['DATA_TYPE'][0]['value']) == $this->origin_entity) {
+			    if($this->get_aut_type_from_entity_type($this->origin_entity) == $options['OPTIONS'][0]['DATA_TYPE'][0]['value']) {
 					$this->custom_list[] = $row;
 				}
 			}
@@ -92,7 +62,7 @@ class frbr_entity_common_datasource_used_in_custom_fields extends frbr_entity_co
 	
 	public function get_form(){
 		$form = parent::get_form();
-		if(get_called_class() != 'frbr_entity_common_datasource_used_in_custom_fields' && !empty($this->prefix)) {
+		if(static::class != 'frbr_entity_common_datasource_used_in_custom_fields' && !empty($this->prefix)) {
 			$form .= "
 			<div class='row'>
 				<div class='colonne3'>
@@ -107,11 +77,6 @@ class frbr_entity_common_datasource_used_in_custom_fields extends frbr_entity_co
 	}
 	
 	public function save_form(){
-		global $datanode_datasource_used_in_custom_field;
-		$custom_field = explode('|||', $datanode_datasource_used_in_custom_field);
-		$this->parameters->prefix = $custom_field[0];
-		$this->parameters->id = $custom_field[1];
-		$this->parameters->datatype = $custom_field[2];
 		return parent::save_form();
 	}
 	

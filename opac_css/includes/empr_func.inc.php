@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr_func.inc.php,v 1.52 2018-10-24 12:34:04 ngantier Exp $
+// $Id: empr_func.inc.php,v 1.59 2019-06-11 13:54:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($class_path."/password.class.php");
+require_once($class_path."/emprunteur.class.php");
 
 function connexion_empr() {
 	global $dbh, $msg, $opac_duration_session_auth;
@@ -24,6 +25,7 @@ function connexion_empr() {
 	//a positionner si les vues OPAC sont activées
 	global $include_path;
 	global $opac_integrate_anonymous_cart;
+	global $allow_opac;	
 	
 	$erreur_connexion=0;
 	
@@ -36,7 +38,7 @@ function connexion_empr() {
 		}
 		if ($time_expired==0) { // début if ($time_expired==0) 1
 			//Si pas de session en cours, vérification du login
-			$verif_query = "SELECT id_empr, empr_cb, empr_nom, empr_prenom, empr_password, empr_lang, empr_date_expiration<sysdate() as isexp, empr_login, empr_ldap,empr_location, allow_opac 
+			$verif_query = "SELECT id_empr, empr_cb, empr_nom, empr_prenom, empr_password, empr_lang, empr_date_expiration<sysdate() as isexp, empr_login, empr_ldap,empr_location, cle_validation, allow_opac 
 					FROM empr
 					JOIN empr_statut ON empr_statut=idstatut
 					WHERE empr_login='".($emprlogin ? $emprlogin :$p_login)."'";
@@ -53,6 +55,7 @@ function connexion_empr() {
 					$verif_isexp = $verif_line['isexp'];
 					$verif_opac = $verif_line['allow_opac'];
 					$empr_location = $verif_line['empr_location'];
+					$empr_activated = ($verif_line['cle_validation'] != '' ? 0 : 1);
 				}
 			} else {
 				$verif_empr_cb = '';
@@ -64,6 +67,7 @@ function connexion_empr() {
 				$verif_isexp = '';
 				$verif_opac = 0;
 				$empr_location = 0;
+				$empr_activated = 0;
 			}
 
 			$auth_ok=0;
@@ -124,6 +128,14 @@ function connexion_empr() {
 					echo "<script>alert(\"".$msg["empr_expire"]."\");</script>";
 					$erreur_connexion=1;
 				}
+				if(!$empr_activated) {
+					/*echo "<script>
+						if(confirm(\"".$msg["empr_account_recall_activation"]."\")) {
+							".connexion_registration_confirmation($verif_id_empr)." 	
+						}
+						</script>";
+					*/
+				}
 				if($opac_opac_view_activate){
 					$_SESSION["opac_view"]=0;
 					$_SESSION['opac_view_query']=0;
@@ -172,6 +184,14 @@ function connexion_empr() {
 					echo "<script>alert(\"".$msg["empr_expire"]."\");</script>";
 					$erreur_connexion=1;
 				}elseif(!$verif_opac){
+					if(!$empr_activated) {
+						/*echo "<script>
+						if(confirm(\"".$msg["empr_account_recall_activation"]."\")) {
+							".connexion_registration_confirmation($verif_id_empr)."
+						}
+						</script>";
+						*/
+					}
 					//Si la connexion à l'opac est interdite
 					echo "<script>alert(\"".$msg["empr_connexion_interdite"]."\");</script>";
 					$erreur_connexion=2;
@@ -208,6 +228,12 @@ function connexion_empr() {
 			if (!$lvl) $lvl="bannette";			
 		}
 	}	
+	if ($auth_ok && !$allow_opac) {
+	    // cas de l'adhésion dépassée dont le statut associé (opac_adhesion_expired_status) interdit de se connecter
+	    @session_destroy();
+	    $erreur_connexion = 2;
+	    $log_ok = 0;
+	}
 	return $log_ok;
 
 }
@@ -389,4 +415,9 @@ function connexion_unique(){
 		}
 	}
 	return $log_ok;
+}
+
+function connexion_registration_confirmation($id) {
+	$emprunteur = new emprunteur($id);
+	$emprunteur->registration_confirmation_email();
 }

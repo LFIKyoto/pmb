@@ -2,14 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scheduler_dashboard.class.php,v 1.10 2018-11-13 09:49:47 dgoron Exp $
+// $Id: scheduler_dashboard.class.php,v 1.11 2019-06-12 12:48:06 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
-	
+
+use Spipu\Html2Pdf\Html2Pdf;
+
 require_once($class_path."/scheduler/scheduler_tasks.class.php");
 require_once($class_path."/scheduler/scheduler_task_docnum.class.php");
 require_once($class_path."/scheduler/scheduler_progress_bar.class.php");
-require_once($class_path.'/html2pdf/html2pdf.class.php');
 require_once($base_path."/admin/planificateur/templates/tache_rapport.tpl.php");
 require_once($class_path.'/list/list_scheduler_dashboard_ui.class.php');
 
@@ -228,12 +229,12 @@ class scheduler_dashboard {
 		$query = "select id_tache from taches where id_tache=".$task_id;
 		$result = pmb_mysql_query($query);
 		if (pmb_mysql_num_rows($result)) {
-			$html2pdf = new HTML2PDF('P','A4','fr');
+			$html2pdf = new Html2Pdf('P','A4','fr');
 			$template = static::get_css_for_pdf_report();
 			$template .= '<div class="report_title">'.scheduler_tasks::get_catalog_element($type_task_id, 'COMMENT').'</div>';
 			$template .= static::get_report_details(0);
-			$html2pdf->WriteHTML($template);
-			$html2pdf->Output('scheduler_'.$task_id.'.pdf');
+			$html2pdf->writeHTML($template);
+			$html2pdf->output('scheduler_'.$task_id.'.pdf');
 		}
 	}
 	

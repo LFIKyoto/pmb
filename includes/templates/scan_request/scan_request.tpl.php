@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_request.tpl.php,v 1.26 2017-11-21 13:38:21 dgoron Exp $
+// $Id: scan_request.tpl.php,v 1.27 2019-05-27 10:29:14 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $scan_request_location_form, $pmb_scan_request_location_activate, $current_module, $msg, $scan_request_form, $scan_request_ajax_form;
+global $scan_request_associated_bulls_sub_template, $scan_request_concept_part;
 
 $scan_request_location_form='';
 if(isset($pmb_scan_request_location_activate) && $pmb_scan_request_location_activate){	

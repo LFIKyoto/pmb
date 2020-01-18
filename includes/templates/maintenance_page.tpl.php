@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: maintenance_page.tpl.php,v 1.4 2017-11-21 12:00:59 dgoron Exp $
+// $Id: maintenance_page.tpl.php,v 1.6 2019-05-27 11:55:20 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $maintenance_page_form, $maintenance_page_default_content, $msg;
 
 $maintenance_page_form = '<form class="form-admin" id="admin_opac_maintenance_form" name="admin_opac_maintenance_form" method="post" action="admin.php?categ=opac&sub=maintenance&action=save">
 	<div class="form-contenu">

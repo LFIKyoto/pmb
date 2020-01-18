@@ -2,7 +2,7 @@
 <!DOCTYPE XMLlist SYSTEM "../XMLlist.dtd" [<!ENTITY nbsp "&amp;nbsp;">]>
 
 <!-- messages localises en anglais pour l'OPAC de PMB
-$Id: de_DE.xml,v 1.281 2018-12-28 16:28:41 dgoron Exp $ -->
+$Id: de_DE.xml,v 1.309.2.13 2019-12-04 10:27:01 dgoron Exp $ -->
 
 <XMLlist>
 <entry code="not_allowed">Operation nicht erlaubt</entry>
@@ -854,12 +854,12 @@ $Id: de_DE.xml,v 1.281 2018-12-28 16:28:41 dgoron Exp $ -->
 <entry code="list_lecture_list_out">Move records from list to basket</entry>
 <entry code="list_lecture_mail">Output</entry>
 <entry code="list_lecture_share_with_users">Share with others</entry>
-<entry code="list_lecture_name_dont_filled">Enter a list name. \n This is mandatory!</entry>
+<entry js="opac" code="list_lecture_name_dont_filled">Enter a list name. This is mandatory!</entry>
 <entry code="list_lecture_partagee">Shared</entry>
 <entry code="list_lecture_no_mylist">No reading list has been added</entry>
 <entry code="list_lecture_no_myshared">You don't have any shared list</entry>
 <entry code="list_lecture_view">View %s</entry>
-<entry code="list_lecture_confirm_suppr">Are you sure you want to delete the reading list(s)?</entry>
+<entry js="opac" code="list_lecture_confirm_suppr">Are you sure you want to delete the reading list(s)?</entry>
 <entry code="list_lecture_no_publiclist">No reading list is currently available</entry>
 <entry code="list_lecture_owner">List of %s</entry>
 <entry code="list_lecture_desabo">Unsubscribe from the list </entry>
@@ -885,7 +885,7 @@ $Id: de_DE.xml,v 1.281 2018-12-28 16:28:41 dgoron Exp $ -->
 <entry code="list_lecture_refus_corps_mail">%s denied your subscription request to the "%s" reading list.</entry>
 <entry code="list_lecture_activation_mail">Please click here to grant or decline her/his request</entry>
 <entry code="list_lecture_no_ck">Select at least a record !</entry>
-<entry code="list_lecture_confirm_delete">Do you really want to delete this records from the reading list ?</entry>
+<entry js="opac" code="list_lecture_confirm_delete">Do you really want to delete this records from the reading list ?</entry>
 <entry code="docnum">elektronische Dokumente</entry>
 <entry code="docnum_search_with">Electronic Documents : yes</entry>
 <entry code="docnum_indexation_contenu">Electronic Documents contents</entry>
@@ -962,7 +962,7 @@ $Id: de_DE.xml,v 1.281 2018-12-28 16:28:41 dgoron Exp $ -->
 <entry code="list_lecture_objet_confirm_mail">Subscription to the "%s" reading list has been granted</entry>
 <entry code="list_lecture_confirm_mail">%s has now granted you access to the "%s" reading list.</entry>
 <entry code="list_lecture_confirm_redir_mail">Please click here to access the "%s" reading list.</entry>
-<entry code="list_lecture_already_requested">You have already requested access to this reading list.The request is in process.</entry>
+<entry js="opac" code="list_lecture_already_requested">You have already requested access to this reading list.The request is in process.</entry>
 <entry code="list_lecture_delete_subscriber">Do you really want to remove the access to the reading list for this user ?</entry>
 <entry code="accueil_bannette">My alerts</entry>
 <entry code="empr_no_alerts">Aucune nouveauté pour cette alerte.</entry>
@@ -1878,7 +1878,7 @@ $Id: de_DE.xml,v 1.281 2018-12-28 16:28:41 dgoron Exp $ -->
 <entry code="mail_obj_resa_planning_canceled">Réservation planifiée supprimée dans l'OPAC</entry>
 <entry code="mail_obj_resa_planning_reaffected">Réservation planifiée supprimée et réaffectée au rang suivant dans l'OPAC</entry>
 
-<entry code="dsi_bannette_gerer_pub">Gérer vos alertes</entry>
+<entry code="dsi_bannette_gerer_pub">Gérer mes alertes</entry>
 <entry code="search_in_oeuvre_title">Titre d'oeuvres</entry>
 
 <entry code="show_tris_selector_no_sort">Aucun tri</entry>
@@ -1966,7 +1966,7 @@ $Id: de_DE.xml,v 1.281 2018-12-28 16:28:41 dgoron Exp $ -->
 <entry code="collstate_linked_bulletins_list_page_title">Liste des bulletins de la reliure</entry>
 <entry code="bul_collstate">Reliure</entry>
 
-<entry code="list_lecture_name_exists">Vous avez déjà créé une liste de lecture avec ce nom.</entry>
+<entry js="opac" code="list_lecture_name_exists">Vous avez déjà créé une liste de lecture avec ce nom.</entry>
 <entry code="parperso_date_inter">Intervalle de dates</entry>
 <entry code="extexplnum_lender_num_lender">Propriétaire</entry>
 <entry code="extexpl_location">Localisation</entry>
@@ -2495,4 +2495,103 @@ $Id: de_DE.xml,v 1.281 2018-12-28 16:28:41 dgoron Exp $ -->
 <entry code="173">Collections trouvées sous la clé</entry>
 <entry code="empr_sugg_verifcode">Code de vérification :</entry>
 <entry code="empr_sugg_wrongcode">Le code de vérification saisi n'est pas valide !</entry>
+<entry code="entrepot_notice_docnum">Documents numériques</entry>
+<entry code="dsi_bannette_priv">Mes alertes personnalisées</entry>
+<entry code="dsi_bannette_pub">Mes alertes</entry>
+<entry code="dsi_bannette_priv_no_alerts">Vous n'avez pas créé d'alerte personnalisée.</entry>
+<entry code="dsi_bannette_pub_no_alerts">Aucune alerte disponible.</entry>
+<entry code="dsi_bannette_no_newrecord">Aucune nouveauté à afficher.</entry>
+<entry code="subs_pb_tags"><![CDATA[<h3>Validation de votre inscription impossible !</h3><br /><span class='erreur'>Les champs de saisie ne doivent pas contenir de tags HTML</span>]]></entry>
+<entry code="selector_keyword">Sélection d'un tag</entry>
+<entry code="less_than_days_query">Il y a moins de</entry>
+<entry code="more_than_days_query">Il y a plus de</entry>
+<entry code="days">jour(s)</entry>
+<entry code="this_week_query">Cette semaine</entry>
+<entry code="last_week_query">La semaine dernière</entry>
+<entry code="this_month_query">Ce mois-ci</entry>
+<entry code="last_month_query">Le mois dernier</entry>
+<entry code="this_year_query">Cette année</entry>
+<entry code="empr_change_profil">Modifier le profil</entry>
+<entry code="profil_id_empr">Identifiant</entry>
+<entry code="profil_empr_nom">Nom</entry>
+<entry code="profil_empr_prenom">Prénom</entry>
+<entry code="profil_empr_login">Login</entry>
+<entry code="profil_empr_prenom">Prénom</entry>
+<entry code="profil_empr_adr1">Adresse (ligne 1)</entry>
+<entry code="profil_empr_adr2">Adresse (ligne 2)</entry>
+<entry code="profil_empr_cp">C.P.</entry>
+<entry code="profil_empr_ville">Ville</entry>
+<entry code="profil_empr_pays">Pays</entry>
+<entry code="profil_empr_mail">E-mail</entry>
+<entry code="profil_empr_tel1">Téléphone</entry>
+<entry code="profil_empr_tel2">Autre téléphone</entry>
+<entry code="profil_empr_prof">Profession</entry>
+<entry code="profil_empr_year">Année de naissance</entry>
+<entry code="profil_empr_categ">Catégorie</entry>
+<entry code="profil_empr_codestat">Code statistique</entry>
+<entry code="profil_empr_sexe">Sexe</entry>
+<entry code="profil_empr_login">Identifiant OPAC</entry>
+<entry code="profil_empr_lang">Langue OPAC</entry>
+<entry code="profil_empr_location">Localisation</entry>
+<entry code="profil_empr_sexe_m">Masculin</entry>
+<entry code="profil_empr_sexe_f">Féminin</entry>
+<entry code="profil_empr_sexe_o">Non précisé</entry>
+<entry code="sauv_misc_running">Sauvegarde en cours...</entry>
+<entry code="onto_error_too_long_value_small_text">%s : Ce champ ne doit pas dépasser 512 caractères.</entry>
+<entry code="empr_renewal">Se réabonner</entry>
+<entry code="empr_renewal_success">La prolongation de votre abonnement a bien été effectuée jusqu'au %s</entry>
+<entry code="subs_pb_invalid_login"><![CDATA[<h3>Inscription impossible avec cet identifiant !</h3><br /><span class='erreur'>L'identifiant est invalide, un autre vous est proposé, saisissez de nouveau votre mot de passe ainsi que le code et validez</span><br />]]></entry>
+<entry code="empr_delete_account">Suppression du compte</entry>
+<entry code="delete_account_running">Suppression du compte en cours...</entry>
+<entry code="empr_confirm_deleting_account">Êtes-vous sûr(e) de vouloir supprimer votre compte ?</entry>
+<entry code="autorite_suppr_categ_forcage_button">Forcer la suppression</entry>
+<entry js="opac" code="list_lecture_no_ck">Select at least a record !</entry>
+<entry code="liste_lecture_create_date">Date d'ajout</entry>
+<entry code="subs_f_consent_message">J'accepte la conservation et l'utilisation à but non commercial de mes données personnelles</entry>
+<entry code="subs_form_consent_message_mandatory">Vous devez accepter la conservation de vos données !</entry>
+<entry code="empr_account_recall_activation">Vous n'avez pas encore confirmé votre inscription. Veuillez valider votre compte à l'aide de l'e-mail de confirmation. Renvoyer l'e-mail ?</entry>
+<entry code="cms_module_charte_accept_button">J'ai lu et j'accepte les conditions</entry>
+<entry code="dsi_bannette_no_equation">Aucune équation de recherche associée</entry>
+<entry code="nomenclature_search_nomenclature_abbreviation">Tutti des instruments</entry>
+<entry code="nomenclature_search_nomenclature_abbreviation_bois">Tutti des bois</entry>
+<entry code="nomenclature_search_nomenclature_abbreviation_cuivres">Tutti des cuivres</entry>
+<entry code="nomenclature_search_nomenclature_abbreviation_percussions">Tutti des percussions</entry>
+<entry code="nomenclature_search_nomenclature_abbreviation_cordes">Tutti des cordes</entry>
+<entry code="nomenclature_search_instruments_no_standard">Instruments non standards</entry>
+<entry code="nomenclature_search_instruments_workshop">Instruments d'un atelier</entry>
+<entry code="noteq_query"><![CDATA[!=]]></entry>
+<entry code="nomenclature_search">Nomenclatures</entry>
+<entry code="nomenclature_search_formations">Formation</entry>
+<entry code="nomenclature_search_types">Type de formation</entry>
+<entry code="nomenclature_search_formation_label">Nom de formation</entry>
+<entry code="nomenclature_search_workshop_label">Nom d'un atelier</entry>
+<entry code="nomenclature_search_nomenclature_notes">Notes</entry>
+<entry code="cms_module_common_datasource_desc_last_update_sql_date">Date de dernière mise à jour (Format SQL)</entry>
+<entry code="empr_msg">Message</entry>
+<entry code="error_template">Erreur sur le template</entry>
+<entry code="facette_delete_one">Supprimer</entry>
+<entry code="authperso_sel_title">Sélection de l'autorité</entry>
+<entry code="parperso_option_duration_begin">Entre</entry>
+<entry code="parperso_option_duration_end">et</entry>
+<entry code="script_analytics_button_dnt_confirm">OK</entry>
+<entry code="search_extended_record_qualified_author">Auteur qualifié de la notice</entry>
+<entry code="notice_vedette_composee_author">Qualification</entry>
+<entry code="tu_authors_list">Auteurs</entry>
+<entry code="empr_no_loan_old">Aucun prêt précédent</entry>
+<entry code="cms_module_common_datasource_desc_last_update_sql_date">Date de dernière mise à jour (Format SQL)</entry>
+<entry code="cms_module_charte_accept_button">J'ai compris</entry>
+<entry code="contact_form_object_other">Saisie libre de l'objet</entry>
+<entry code="contact_form_object_free_entry">Saisissez l'objet de votre message :</entry>
+<entry code="contact_form_parameter_attachments">Joindre :</entry>
+<entry code="empr_groups_comments">Message de groupe</entry>
+<entry code="search_universe_id">Identifiant</entry>
+<entry code="search_universe_url">Permalien</entry>
+<entry code="search_segment_id">Identifiant</entry>
+<entry code="search_segment_url">Permalien</entry>
+<entry code="empr_view_sugg_detail">Détail d'une suggestion</entry>
+<entry code="empr_change_password_form_empty">Le mot de passe ne peut pas être vide.</entry>
+<entry code="empr_password_bad_security">Le mot de passe n'est pas assez sécurisé.</entry>
+<entry code="scan_request_nb_scanned_pages">Nombre de pages numérisées</entry>
+<entry code="empr_old_password">Veuillez saisir votre mot de passe actuel :</entry>
+<entry code="empr_old_password_wrong">Le mot de passe actuel saisi est incorrect.</entry>
 </XMLlist>

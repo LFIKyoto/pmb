@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: askmdp.php,v 1.60 2018-04-25 10:36:19 dgoron Exp $
+// $Id: askmdp.php,v 1.64 2019-06-04 08:58:11 ngantier Exp $
 
 $base_path=".";
 $is_opac_included = false;
@@ -222,98 +222,9 @@ if($pmb_logs_activate){
 	$log->save();
 }
 
-$cms_build_info="";
-if($cms_build_activate == -1){
-	unset($_SESSION["cms_build_activate"]);
-}else if($cms_build_activate || $_SESSION["cms_build_activate"]){ // issu de la gestion
-	if(isset($pageid) && $pageid) {
-		require_once($base_path."/classes/cms/cms_pages.class.php");
-		$cms_page= new cms_page($pageid);
-		$cms_build_info['page']=$cms_page->get_env();
-	}
-	global $log, $infos_notice, $infos_expl, $nb_results_tab;
-	$cms_build_info['input']="askmdp.php";
-	$cms_build_info['session']=$_SESSION;
-	$cms_build_info['post']=$_POST;
-	$cms_build_info['get']=$_GET;
-	$cms_build_info['lvl']=$lvl;
-	$cms_build_info['tab']=$tab;	
-	$cms_build_info['log']=$log;
-	$cms_build_info['infos_notice']=$infos_notice;
-	$cms_build_info['infos_expl']=$infos_expl;
-	$cms_build_info['nb_results_tab']=$nb_results_tab;
-	$cms_build_info['search_type_asked']=$search_type_asked;
-	$cms_build_info=rawurlencode(serialize(pmb_base64_encode($cms_build_info)));
-	$cms_build_info= "<input type='hidden' id='cms_build_info' name='cms_build_info' value='".$cms_build_info."' />";
-	$cms_build_info.="	
-	<script type='text/javascript'>
-		if(window.top.window.cms_opac_loaded){
-			window.onload = function() {
-				window.top.window.cms_opac_loaded('".$_SERVER['REQUEST_URI']."');
-			}
-		}
-	</script>
-	";
-	$_SESSION["cms_build_activate"]="1";
-}
-$footer=str_replace("!!cms_build_info!!",$cms_build_info,$footer);	
+cms_build_info(array(
+    'input' => 'askmdp.php',
+));
 
-print $footer;
-
-if($opac_parse_html || $cms_active){	
-	if($opac_parse_html){
-		$htmltoparse= parseHTML(ob_get_contents());
-	}else{
-		$htmltoparse= ob_get_contents();
-	}
-			
-	ob_end_clean();
-	if ($cms_active) {
-		require_once($base_path."/classes/cms/cms_build.class.php");
-		$cms=new cms_build();
-		$htmltoparse = $cms->transform_html($htmltoparse);
-	}
-	
-	//Compression CSS
-	
-	if($opac_compress_css == 1 && !$cms_active){
-		$compressed_file_exist = file_exists("./temp/full.css");
-		require_once($class_path."/curl.class.php");
-		$dom = new DOMDocument();
-		$dom->encoding = $charset;
-		$dom->loadHTML($htmltoparse);
-		$css_buffer = "";
-		$links = $dom->getElementsByTagName("link");
-		$dom_css = array();
-		for($i=0 ; $i<$links->length ; $i++){
-			$dom_css[] = $links->item($i);
-			if(!$compressed_file_exist && $links->item($i)->hasAttribute("type") && $links->item($i)->getAttribute("type") == "text/css"){
-				$css_buffer.= loadandcompresscss(html_entity_decode($links->item($i)->getAttribute("href")));
-			}
-		}
-		$styles = $dom->getElementsByTagName("style");
-		for($i=0 ; $i<$styles->length ; $i++){
-			$dom_css[] = $styles->item($i);
-			if(!$compressed_file_exist){
-				$css_buffer.= compresscss($styles->item($i)->nodeValue,"");
-			}
-		}
-		foreach($dom_css as $link){
-			$link->parentNode->removeChild($link);
-		}
-		if(!$compressed_file_exist){
-			file_put_contents("./temp/full.css",$css_buffer);
-		}
-		$link = $dom->createElement("link");
-		$link->setAttribute("href", "./temp/full.css");
-		$link->setAttribute("rel", "stylesheet");
-		$link->setAttribute("type", "text/css");
-		$dom->getElementsByTagName("head")->item(0)->appendChild($link);
-		$htmltoparse = $dom->saveHTML();
-	}else if (file_exists("./temp/full.css") && !$cms_active){
-		unlink("./temp/full.css");
-	}
-	print $htmltoparse;
-}
 /* Fermeture de la connexion */
 pmb_mysql_close($dbh);

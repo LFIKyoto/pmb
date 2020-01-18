@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa.tpl.php,v 1.16 2017-01-26 16:07:10 dgoron Exp $
+// $Id: resa.tpl.php,v 1.17 2019-05-27 12:11:00 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $id_empr, $groupID, $layout_begin, $msg, $groupID, $menu_search_commun, $id_empr, $menu_search_visu_rech, $menu_search, $unq, $RESA_other_search, $current_module;
+global $nb_per_page_a_search, $resa_liste_jscript_GESTION_INFO_GESTION, $ajout_resa_jscript_choix_loc_retrait;
 
 if(!isset($id_empr)) $id_empr = 0;
 if(!isset($groupID)) $groupID = 0;

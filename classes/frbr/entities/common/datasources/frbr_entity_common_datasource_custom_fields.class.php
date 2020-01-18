@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_common_datasource_custom_fields.class.php,v 1.2 2018-06-29 13:02:47 tsamson Exp $
+// $Id: frbr_entity_common_datasource_custom_fields.class.php,v 1.5 2019-09-04 13:20:56 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,7 +16,7 @@ class frbr_entity_common_datasource_custom_fields extends frbr_entity_common_dat
 	}
 	
 	public function get_sub_datasources(){
-		if(get_called_class() != 'frbr_entity_common_datasource_custom_fields') {
+	    if(static::class != 'frbr_entity_common_datasource_custom_fields') {
 			return array();
 		} else {
 			return array(
@@ -35,41 +35,12 @@ class frbr_entity_common_datasource_custom_fields extends frbr_entity_common_dat
 		}
 	}
 	
-	protected function get_entity_type_from_data_type($data_type) {
-		switch ($data_type) {
-			case 1:
-				return 'authors';
-				break;
-			case 2:
-				return 'categories';
-				break;
-			case 3:
-				return 'publishers';
-				break;
-			case 4:
-				return 'collections';
-				break;
-			case 5:
-				return 'subcollections';
-				break;
-			case 6:
-				return 'series';
-				break;
-			case 7:
-				return 'indexint';
-				break;
-			case 8:
-				return 'works';
-				break;
-			case 9:
-				return 'concepts';
-				break;
-			default:
-				return 'authperso';
-		}
-	}
+	
 	
 	protected function get_prefixes() {
+	    if (!empty($this->parameters->prefix)) {
+	        return [$this->parameters->prefix];
+	    }
 		return array(
 				'author',
 				'categ',
@@ -80,7 +51,8 @@ class frbr_entity_common_datasource_custom_fields extends frbr_entity_common_dat
 				'indexint',
 				'skos',
 				'tu',
-				'authperso'
+				'authperso',
+	            'expl'
 		);
 	}
 	
@@ -92,7 +64,7 @@ class frbr_entity_common_datasource_custom_fields extends frbr_entity_common_dat
 				$result = pmb_mysql_query($query);
 				while($row = pmb_mysql_fetch_assoc($result)) {
 					$options = _parser_text_no_function_($row['options']);
-					if($this->get_entity_type_from_data_type($options['OPTIONS'][0]['DATA_TYPE'][0]['value']) == $this->entity_type) {
+					if($this->get_aut_type_from_entity_type($this->entity_type) == $options['OPTIONS'][0]['DATA_TYPE'][0]['value']) {
 						$this->custom_list[$prefix][] = $row;
 					}
 				}
@@ -121,7 +93,7 @@ class frbr_entity_common_datasource_custom_fields extends frbr_entity_common_dat
 	
 	public function get_form(){
 		$form = parent::get_form();
-		if(get_called_class() != 'frbr_entity_common_datasource_custom_fields') {
+		if(static::class != 'frbr_entity_common_datasource_custom_fields') {
 			$form .= "
 			<div class='row'>
 				<div class='colonne3'>
@@ -148,7 +120,13 @@ class frbr_entity_common_datasource_custom_fields extends frbr_entity_common_dat
 	 * Récupération des données de la source...
 	 */
 	public function get_datas($datas=array()){
-	    $query = "select ".$this->parameters->prefix."_custom_".$this->parameters->datatype." as id, ".$this->parameters->prefix."_custom_origine as parent from ".$this->parameters->prefix."_custom_values where ".$this->parameters->prefix."_custom_champ = ".$this->parameters->id." and ".$this->parameters->prefix."_custom_origine in (".implode(',', $datas).")";
+	    $datatype = 'integer';
+	    $qid = "select datatype from ".$this->parameters->prefix."_custom where idchamp=".$this->parameters->id;
+	    $rid = pmb_mysql_query($qid);
+	    if($rid) {
+	       $datatype = pmb_mysql_result($rid,0,0);
+	    }
+		$query = "select ".$this->parameters->prefix."_custom_".$datatype." as id, ".$this->parameters->prefix."_custom_origine as parent from ".$this->parameters->prefix."_custom_values where ".$this->parameters->prefix."_custom_champ = ".$this->parameters->id." and ".$this->parameters->prefix."_custom_origine in (".implode(',', $datas).")";
 		$datas = $this->get_datas_from_query($query);
 		$datas = parent::get_datas($datas);
 		return $datas;

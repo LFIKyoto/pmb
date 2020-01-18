@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannette_see.inc.php,v 1.4 2017-11-14 13:50:24 dgoron Exp $
+// $Id: bannette_see.inc.php,v 1.5 2019-06-18 12:33:56 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,7 +17,7 @@ print "<div id='aut_details' class='aut_details_bannette'>\n";
 if ($id_bannette){
 	$bans=explode(",",$id_bannette);
 	for($i=0 ; $i<count($bans) ; $i++){
-		$bans[$i]+=0;
+	    $bans[$i] = intval($bans[$i]);
 	}
 	$aff = pmb_bidi(affiche_public_bannette(implode(",",$bans), 0, "./index.php?lvl=bannette_see&id_bannette=!!id_bannette!!"));
 	if ($opac_bannette_notices_depliables) print $begin_result_liste ;

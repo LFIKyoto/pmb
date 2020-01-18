@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_universe.tpl.php,v 1.8 2018-04-20 15:26:05 dgoron Exp $
+// $Id: search_universe.tpl.php,v 1.9.6.3 2019-11-08 15:18:08 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -11,9 +11,10 @@ global $search_universe_form_definition;
 global $search_universe_opac_views;
 global $search_universe_segment;
 global $search_universe_segments_form;
-global $search_universe_tree_interface;
+global $search_universe_tree_interface, $msg;
 
 $search_universe_content_form ="
+!!universe_id_field!!
 <div class='row'>
 	<label class='etiquette' for='universe_label'>".$msg['search_universe_label']."</label>
 </div>
@@ -26,6 +27,7 @@ $search_universe_content_form ="
 <div class='row'>
 	<textarea name='universe_description' id='universe_description' rows='5' data-translation-fieldname='universe_description'>!!universe_description!!</textarea>
 </div>
+!!universe_permalink_field!!
 !!universe_opac_views!!
 !!universe_segments_form!!
 

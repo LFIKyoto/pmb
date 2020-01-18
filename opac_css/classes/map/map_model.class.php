@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_model.class.php,v 1.8 2017-09-08 14:23:16 dgoron Exp $
+// $Id: map_model.class.php,v 1.11 2019-05-29 08:25:56 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/map/map_hold.class.php");
@@ -88,8 +88,7 @@ class map_model {
   		$this->cluster = $cluster;
   		for($i=0 ; $i<count($this->ids) ; $i++){
    			$layer_model_class_name = $this->get_layer_model_class_name($this->ids[$i]['layer']);
-   			if($this->ids[$i]['layer']=='authority') {
-   				
+            if ($this->ids[$i]['layer'] == 'authority' || $this->ids[$i]['layer'] == 'authority_concept') {
    				$this->models[$this->ids[$i]['layer']] = new $layer_model_class_name($this->ids[$i]['type'],$this->ids[$i]['ids']);
    			} elseif ($this->ids[$i]['layer'] == 'location' || $this->ids[$i]['layer']=='sur_location' ) {
    				$this->models[$this->ids[$i]['layer']] = new $layer_model_class_name($this->ids[$i]['ids']);   				
@@ -214,6 +213,7 @@ class map_model {
 	
 	protected function get_layer_model_class_name($layer=""){
 		if($layer){
+            if($layer == "authority_concept") $layer = "authority";
 			if(class_exists("map_layer_model_".$layer)){
 				return "map_layer_model_".$layer;
 			}else{
@@ -223,6 +223,7 @@ class map_model {
 			return false;
 		}
 	}
+	
 	public function get_holds_informations($id_layer){
 		global $dbh;
 		$informations = array();
@@ -236,19 +237,37 @@ class map_model {
 					 $id_layer => (is_array($hold->get_num_object()) ? $hold->get_num_object() : array($hold->get_num_object()))
 				)
 			);
-			if($id_layer == "authority"){
-				$requete = "select notcateg_notice from notices_categories where num_noeud in (".implode(",",$infos['objects']['authority']).")";
-				$result = pmb_mysql_query($requete,$dbh);
-				$notice_from_categ = array();
-				while ($row = pmb_mysql_fetch_object($result)) {
-					$notice_from_categ[] = $row->notcateg_notice;
-				}
-			
-				$infos['objects']['record'] = $notice_from_categ;
-			}
+            if ($id_layer == "authority" || $id_layer == "authority_concept") {
+                $type_authority = $this->models[$id_layer]->get_type();                
+                $notices_ids = $this->get_restrict_ids();               
+                if ($type_authority == 2) {
+                    $requete = "select notcateg_notice as notice_id from notices_categories where num_noeud in (" . implode(",", $infos['objects']['authority']) . ")";
+                    if (count($notices_ids)) {
+                        $requete.= " and notcateg_notice in (" . implode(",", $notices_ids) . ")";
+                    }
+                } else {
+                    $requete = "select num_object as notice_id from index_concept where type_object=1 and num_concept in (" . implode(",", $infos['objects']['authority_concept']) . ")";
+                    if (count($notices_ids)) {
+                        $requete.= " and num_object in (" . implode(",", $notices_ids) . ")";
+                    }
+                }
+                $result = pmb_mysql_query($requete, $dbh);
+                $notice_ids = array();
+                while ($row = pmb_mysql_fetch_object($result)) {
+                    $notice_ids[] = $row->notice_id;
+                }
+                $infos['objects']['record'] = $notice_ids;
+            }
 			$informations[] = $infos;
 		}
 		return $informations;
+	}
+	
+	public function get_restrict_ids() {
+	    
+	    if(isset($_SESSION['tab_result'])) {
+	        return explode(',', $_SESSION['tab_result']);
+	    }
 	}
 	
 	public function have_results(){

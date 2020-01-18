@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_family_admin.tpl.php,v 1.10 2017-11-07 15:34:41 ngantier Exp $
+// $Id: nomenclature_family_admin.tpl.php,v 1.11 2019-05-27 13:34:31 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $nomenclature_family_list_tpl, $msg, $charset, $nomenclature_family_list_line_tpl, $nomenclature_family_form_tpl, $current_module, $nomenclature_family_musicstand_list_tpl;
+global $nomenclature_family_musicstand_list_line_tpl, $nomenclature_family_musicstand_form_tpl;
 
 $nomenclature_family_list_tpl="	
 <script type='text/javascript' src='./javascript/sorttable.js'></script>			

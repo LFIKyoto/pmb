@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scheduler_task_calendar.class.php,v 1.2 2018-03-07 15:01:04 dgoron Exp $
+// $Id: scheduler_task_calendar.class.php,v 1.3 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -103,7 +103,8 @@ class scheduler_task_calendar {
 		/* Calcul du mois */
 		if ($month_of_year[0] != '*') {
 			$annee_courante = false;
-			for ($i=0; $i<sizeof($month_of_year); $i++) {
+			$nb_months_of_year = count($month_of_year);
+			for ($i = 0; $i < $nb_months_of_year; $i++) {
 				if (($month_of_year[$i] >= $this->new_date["MOIS"]) && (!$annee_courante)) {
 					$annee_courante = true;
 					$this->new_date["MOIS"] = $month_of_year[$i];

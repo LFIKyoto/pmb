@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_sections_by_section_categories.class.php,v 1.2 2018-12-06 09:34:14 dgoron Exp $
+// $Id: cms_module_common_datasource_sections_by_section_categories.class.php,v 1.3 2019-03-20 10:51:51 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -39,10 +39,35 @@ class cms_module_common_datasource_sections_by_section_categories extends cms_mo
 	protected function get_query_base() {
 		$selector = $this->get_selected_selector();
 		if ($selector) {
-			$query = "select distinct id_section,if(section_start_date != '0000-00-00 00:00:00',section_start_date,section_creation_date) as publication_date, num_noeud
-					from cms_sections join cms_sections_descriptors on id_section=num_section
-					where num_section != '".($selector->get_value()*1)."' and num_noeud in (select num_noeud from cms_sections_descriptors where num_section = '".($selector->get_value()*1)."')";
-			return $query;
+			if(!isset($this->parameters['operator_between_authorities'])) $this->parameters['operator_between_authorities'] = 'or';
+			switch ($this->parameters["operator_between_authorities"]) {
+				case 'and':
+					$query = "select distinct cms_sections_descriptors.num_noeud
+						from cms_sections_descriptors
+					    where cms_sections_descriptors.num_section = '".($selector->get_value()*1)."'";
+					$result = pmb_mysql_query($query);
+					$descriptors = array();
+					if($result && (pmb_mysql_num_rows($result) > 0)){
+						while($row = pmb_mysql_fetch_object($result)){
+							$descriptors[] = $row->num_noeud;
+						}
+					}
+					if(count($descriptors)) {
+						$query = "select distinct id_section,if(section_start_date != '0000-00-00 00:00:00',section_start_date,section_creation_date) as publication_date, num_noeud
+							from cms_sections join cms_sections_descriptors on id_section=num_section
+							where cms_sections_descriptors.num_section != '".($selector->get_value()*1)."' and cms_sections_descriptors.num_noeud IN (".implode(',', $descriptors).")
+							group by id_section
+							having count(id_section) = ".count($descriptors);
+						return $query;
+					}
+					break;
+				case 'or':
+				default:
+					$query = "select distinct id_section,if(section_start_date != '0000-00-00 00:00:00',section_start_date,section_creation_date) as publication_date, num_noeud
+							from cms_sections join cms_sections_descriptors on id_section=num_section
+							where num_section != '".($selector->get_value()*1)."' and num_noeud in (select num_noeud from cms_sections_descriptors where num_section = '".($selector->get_value()*1)."')";
+					return $query;
+			}
 		}
 		return false;
 	}

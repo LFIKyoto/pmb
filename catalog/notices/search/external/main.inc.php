@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.10 2017-02-08 09:57:47 dgoron Exp $
+// $Id: main.inc.php,v 1.11 2019-06-07 08:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $notice_id, $source, $acces_m, $gestion_acces_active, $gestion_acces_user_notice, $class_path, $PMBuserid, $id, $charset;
+global $external_type, $include_path, $base_path, $sub, $item;
 
 if(!isset($notice_id)) $notice_id = 0;
 if(!isset($source)) $source = '';

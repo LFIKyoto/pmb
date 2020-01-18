@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facette_search_opac.class.php,v 1.35 2018-11-26 14:32:02 dgoron Exp $
+// $Id: facette_search_opac.class.php,v 1.39.2.2 2019-11-05 14:05:45 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -24,14 +24,14 @@ class facette_search_opac {
 	 * Nom de la table
 	 * @var string
 	 */
-	static $table_name = 'facettes';
+	public static $table_name = 'facettes';
 	
 	public function __construct($type='notices', $is_external=false){
 		$this->type = $type;
 		if($is_external) {
 			static::$table_name = 'facettes_external';
 		}
-		self::parse_xml_file($this->type);
+		static::parse_xml_file($this->type);
 	}
 	
 	protected static function get_xml_file($type='notices') {
@@ -149,7 +149,7 @@ class facette_search_opac {
 		
 		$lst="";
 		$fields = $this->fields_sort();
-		$query = "SELECT * FROM ".static::$table_name." where facette_type = '".$this->type."' order by facette_order, facette_name";
+		$query = "SELECT * FROM ".static::$table_name." where facette_type LIKE '".$this->type."%' order by facette_order, facette_name";
 		$result = pmb_mysql_query($query);
 		$i = 0;
 		while($row = pmb_mysql_fetch_object($result)){
@@ -157,29 +157,43 @@ class facette_search_opac {
 			
 			if ($i % 2) $pair_impair = "even"; else $pair_impair = "odd";
 			$td_javascript="
-				onMouseDown=\"document.location='".static::format_url("&action=edit&id=".$row->id_facette)."'\"
+				onMouseDown=\"document.location='".static::format_url("&type=".$row->facette_type."&action=edit&id=".$row->id_facette)."'\"
         		onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='".$pair_impair."'\" 
         		style=\"cursor : pointer\" ";			
 			$lst .= "
 				<tr class='".$pair_impair."'>
 					<td>
-						<input type='button' class='bouton_small' value='-' onClick=\"document.location='".static::format_url("&action=up&id=".$row->id_facette)."'\"/></a>
-						<input type='button' class='bouton_small' value='+' onClick=\"document.location='".static::format_url("&action=down&id=".$row->id_facette)."'\"/>
+						<img src='".get_url_icon('bottom-arrow.png')."' title='".htmlentities($msg['move_bottom_arrow'], ENT_QUOTES, $charset)."' alt='".htmlentities($msg['move_bottom_arrow'], ENT_QUOTES, $charset)."' onClick=\"document.location='".static::format_url("&type=".$this->type."&action=down&id=".$row->id_facette)."'\" style='cursor:pointer;'/></a>
+						<img src='".get_url_icon('top-arrow.png')."' title='".htmlentities($msg['move_top_arrow'], ENT_QUOTES, $charset)."' alt='".htmlentities($msg['move_top_arrow'], ENT_QUOTES, $charset)."' onClick=\"document.location='".static::format_url("&type=".$this->type."&action=up&id=".$row->id_facette)."'\" style='cursor:pointer;'/>
 					</td>
-					<td ".$td_javascript.">".htmlentities($row->facette_name,ENT_QUOTES,$charset)."</td>";
-					if($row->facette_critere > $this->get_authperso_start()) {
-						$authperso_query = "select authperso_name from authperso where id_authperso =".($row->facette_critere - $this->get_authperso_start());
-						$authperso_result = pmb_mysql_query($authperso_query);
-						$lst .= "<td>";
-						if (pmb_mysql_num_rows($authperso_result)) {
-							$authperso_row = pmb_mysql_fetch_object($authperso_result);
-							$lst .= $authperso_row->authperso_name;
-						}
-						$lst .= "</td>";
+					<td ".$td_javascript.">".htmlentities($row->facette_name,ENT_QUOTES,$charset)."</td>
+                    <td ".$td_javascript.">";
+			         if($row->facette_critere > $this->get_authperso_start() && $this->type != "authperso") {					    
+					    $authperso_query = "select authperso_name from authperso where id_authperso =".($row->facette_critere - $this->get_authperso_start());
+					    $authperso_result = pmb_mysql_query($authperso_query);
+					    if (pmb_mysql_num_rows($authperso_result)) {
+					        $authperso_row = pmb_mysql_fetch_object($authperso_result);
+					        $lst .= $authperso_row->authperso_name;
+					    }
+					} elseif ($this->type == "authperso")  {
+					    $authperso =  explode("_",$row->facette_type);
+					    $authperso_id = 0;
+					    if (!empty($authperso[1]) && intval($authperso[1])) {
+					        $authperso_id = $authperso[1];
+					    }
+					    $authperso_query = "select authperso_name from authperso where id_authperso =".$authperso_id;
+					    $authperso_result = pmb_mysql_query($authperso_query);
+					    if (pmb_mysql_num_rows($authperso_result)) {
+					        $authperso_row = pmb_mysql_fetch_object($authperso_result);
+					        $lst .= $authperso_row->authperso_name;
+					    }
+					    
 					} else {
-						$lst .= "<td ".$td_javascript.">".htmlentities($fields[$row->facette_critere],ENT_QUOTES,$charset)."</td>";
-					}
-					$lst .= "<td ".$td_javascript.">".(sizeof($array_subfields)>1 ? htmlentities($array_subfields[$row->facette_ss_critere],ENT_QUOTES,$charset) : $msg["admin_opac_facette_ss_critere"])."</td>
+					    $lst .= htmlentities($fields[$row->facette_critere],ENT_QUOTES,$charset);
+					}					
+					$lst .= "
+                    </td>
+                    <td ".$td_javascript.">".(count($array_subfields)>1 ? htmlentities($array_subfields[$row->facette_ss_critere],ENT_QUOTES,$charset) : $msg["admin_opac_facette_ss_critere"])."</td>
 					<td ".$td_javascript.">".($row->facette_nb_result ? $row->facette_nb_result : htmlentities($msg["admin_opac_facette_illimite"],ENT_QUOTES,$charset))."</td>
 					<td ".$td_javascript.">".($row->facette_type_sort ? $msg['intit_gest_tri2'] : $msg['intit_gest_tri1'])." ".($row->facette_order_sort ? $msg['intit_gest_tri4'] : $msg['intit_gest_tri3'])."</td>
 					<td ".$td_javascript." class='center'>".($row->facette_visible_gestion ? 'X' : '')."</td>
@@ -200,11 +214,11 @@ class facette_search_opac {
 		$requete="select facette_order from ".static::$table_name." where id_facette=$id";
 		$resultat=pmb_mysql_query($requete);
 		$ordre=pmb_mysql_result($resultat,0,0);
-		$requete="select max(facette_order) as ordre from ".static::$table_name." where facette_type = '".$type."' and facette_order<$ordre";
+		$requete="select max(facette_order) as ordre from ".static::$table_name." where facette_type LIKE '".$type."%' and facette_order<$ordre";
 		$resultat=pmb_mysql_query($requete);
 		$ordre_max=@pmb_mysql_result($resultat,0,0);
 		if ($ordre_max) {
-			$requete="select id_facette from ".static::$table_name." where facette_type = '".$type."' and facette_order=$ordre_max limit 1";
+			$requete="select id_facette from ".static::$table_name." where facette_type LIKE '".$type."%' and facette_order=$ordre_max limit 1";
 			$resultat=pmb_mysql_query($requete);
 			$id_facette_max=pmb_mysql_result($resultat,0,0);
 			$requete="update ".static::$table_name." set facette_order='".$ordre_max."' where id_facette=$id";
@@ -218,11 +232,11 @@ class facette_search_opac {
 		$requete="select facette_order from ".static::$table_name." where id_facette=$id";
 		$resultat=pmb_mysql_query($requete);
 		$ordre=pmb_mysql_result($resultat,0,0);
-		$requete="select min(facette_order) as ordre from ".static::$table_name." where facette_type = '".$type."' and facette_order>$ordre";
+		$requete="select min(facette_order) as ordre from ".static::$table_name." where facette_type LIKE '".$type."%' and facette_order>$ordre";
 		$resultat=pmb_mysql_query($requete);
 		$ordre_min=@pmb_mysql_result($resultat,0,0);
 		if ($ordre_min) {
-			$requete="select id_facette from ".static::$table_name." where facette_type = '".$type."' and facette_order=$ordre_min limit 1";
+			$requete="select id_facette from ".static::$table_name." where facette_type LIKE '".$type."%' and facette_order=$ordre_min limit 1";
 			$resultat=pmb_mysql_query($requete);
 			$id_facette_min=pmb_mysql_result($resultat,0,0);
 			$requete="update ".static::$table_name." set facette_order='".$ordre_min."' where id_facette=$id";
@@ -233,7 +247,7 @@ class facette_search_opac {
 	}
 	
 	public static function facette_order_by_name($type='notices'){
-		$query = "SELECT id_facette  FROM ".static::$table_name." WHERE facette_type = '".$type."' order by facette_name";
+		$query = "SELECT id_facette  FROM ".static::$table_name." WHERE facette_type LIKE '".$type."%' order by facette_name";
 		$result = pmb_mysql_query($query);	
 		$i=1;
 		while($row = pmb_mysql_fetch_object($result)){
@@ -251,7 +265,7 @@ class facette_search_opac {
 		    if(isset(self::$fields[$this->type]['FIELD'][$i]['TABLE'][0]['NAME'])){
 		        $prev_tmp = (isset($msg[self::$fields[$this->type]['FIELD'][$i]['TABLE'][0]['NAME']]) ? $msg[self::$fields[$this->type]['FIELD'][$i]['TABLE'][0]['NAME']] : self::$fields[$this->type]['FIELD'][$i]['TABLE'][0]['NAME']);
 		    }
-			if($tmp= $msg[self::$fields[$this->type]['FIELD'][$i]['NAME']]){
+		    if(isset($msg[self::$fields[$this->type]['FIELD'][$i]['NAME']]) && $tmp = $msg[self::$fields[$this->type]['FIELD'][$i]['NAME']]){
 				$lib = $tmp;
 			}else{
 				$lib = self::$fields[$this->type]['FIELD'][$i]['NAME'];
@@ -264,15 +278,25 @@ class facette_search_opac {
 	}
 	
 	public function array_subfields($id){
-		global $msg,$charset;
+		global $msg;
 		
 		$array_subfields = array();
-		$isbd = '';
+		
 		if($id == $this->get_custom_fields_id()) {
 			$result = pmb_mysql_query("select idchamp, titre from ".$this->get_custom_fields_table()."_custom order by titre asc");
 			while($row=pmb_mysql_fetch_object($result)){
 				$array_subfields[$row->idchamp] = $row->titre;
 			}
+		} elseif($id == $this->get_custom_expl_fields_id()) {
+		    $result = pmb_mysql_query("select idchamp, titre from expl_custom order by titre asc");
+		    while($row=pmb_mysql_fetch_object($result)){
+		        $array_subfields[$row->idchamp] = $row->titre;
+		    }
+		} elseif($id == $this->get_custom_explnum_fields_id()) {
+		    $result = pmb_mysql_query("select idchamp, titre from explnum_custom order by titre asc");
+		    while($row=pmb_mysql_fetch_object($result)){
+		        $array_subfields[$row->idchamp] = $row->titre;
+		    }
 		} elseif($id > $this->get_authperso_start()) {
 			$array_subfields[0] = $msg['facette_isbd'];
 			$result = pmb_mysql_query("select idchamp,titre from authperso_custom where num_type='".($id-$this->get_authperso_start())."' order by titre asc");
@@ -280,31 +304,7 @@ class facette_search_opac {
 				$array_subfields[$row->idchamp] = $row->titre;
 			}
 		} else {
-			$array = array();
-			$callable = array();
-			for($i = 0; $i < count(self::$fields[$this->type]['FIELD']); $i++) {
-				if(self::$fields[$this->type]['FIELD'][$i]['ID']==$id) {
-					if(isset(self::$fields[$this->type]['FIELD'][$i]['ISBD'])) {
-						$isbd=self::$fields[$this->type]['FIELD'][$i]['ISBD'];
-					}
-					if(isset(self::$fields[$this->type]['FIELD'][$i]['TABLE'][0]['TABLEFIELD'])) {
-						$array = self::$fields[$this->type]['FIELD'][$i]['TABLE'][0]['TABLEFIELD'];
-					}
-					if(isset(self::$fields[$this->type]['FIELD'][$i]['CALLABLE'])) {
-						$callable=self::$fields[$this->type]['FIELD'][$i]['CALLABLE'];
-					}
-					break;
-				}
-			}
-			for($i=0;$i<count($array);$i++){
-				if (isset($array[$i]['NAME'])) $array_subfields[$array[$i]['ID']+0] = $msg[$array[$i]['NAME']];
-			}
-			for($i=0;$i<count($callable);$i++){
-				if (isset($callable[$i]['NAME'])) $array_subfields[$callable[$i]['ID']+0] = $msg[$callable[$i]['NAME']];
-			}
-			if($isbd){
-				$array_subfields[$isbd[0]['ID']+0]=$msg['facette_isbd'];
-			}
+		    $array_subfields = $this->get_subfields_from_xml($id);
 		}
 		return $array_subfields;
 	}
@@ -315,28 +315,20 @@ class facette_search_opac {
 				return 0;
 			case 'authors':
 				return 1;
-				break;
 			case 'categories':
 				return 2;
-				break;
 			case 'publishers':
 				return 3;
-				break;
 			case 'collections':
 				return 4;
-				break;
 			case 'subcollections':
 				return 5;
-				break;
 			case 'series':
 				return 6;
-				break;
 			case 'titres_uniformes':
 				return 7;
-				break;
 			case 'indexint':
 				return 8;
-				break;
 			case 'authperso':
 				break;
 		}
@@ -348,6 +340,22 @@ class facette_search_opac {
 		} else {
 			return 100;
 		}
+	}
+	
+	public function get_custom_expl_fields_id() {
+	    if($this->get_prefix_id()) {
+	        return $this->get_prefix_id().'200';
+	    } else {
+	        return 200;
+	    }
+	}
+	
+	public function get_custom_explnum_fields_id() {
+	    if($this->get_prefix_id()) {
+	        return $this->get_prefix_id().'300';
+	    } else {
+	        return 300;
+	    }
 	}
 	
 	public function get_authperso_start() {
@@ -364,39 +372,64 @@ class facette_search_opac {
 				return 'notices';
 			case 'authors':
 				return 'author';
-				break;
 			case 'categories':
 				return 'categ';
-				break;
 			case 'publishers':
 				return 'publisher';
-				break;
 			case 'collections':
 				return 'collection';
-				break;
 			case 'subcollections':
 				return 'subcollection';
-				break;
 			case 'series':
 				return 'serie';
-				break;
 			case 'titres_uniformes':
 				return 'tu';
-				break;
 			case 'indexint':
 				return 'indexint';
-				break;
 			case 'authperso':
 				return 'authperso';
-				break;
 		}
 	}
 	
 	public static function format_url($url) {
 		global $base_path;
-		global $sub, $type;
+		global $sub;
 		
-		return $base_path."/admin.php?categ=opac&sub=".$sub."&type=".$type.$url;
+		return $base_path."/admin.php?categ=opac&sub=".$sub.$url;
+	}
+	
+	protected function get_subfields_from_xml($id) {
+	    global $msg;
+	    $array = array();
+	    $callable = array();
+	    $isbd = array();
+	    $array_subfields = [];
+	    for($i = 0; $i < count(self::$fields[$this->type]['FIELD']); $i++) {
+	        if(self::$fields[$this->type]['FIELD'][$i]['ID']==$id) {
+	            if(isset(self::$fields[$this->type]['FIELD'][$i]['ISBD'])) {
+	                $isbd=self::$fields[$this->type]['FIELD'][$i]['ISBD'];
+	            }
+	            if(isset(self::$fields[$this->type]['FIELD'][$i]['TABLE'][0]['TABLEFIELD'])) {
+	                $array = self::$fields[$this->type]['FIELD'][$i]['TABLE'][0]['TABLEFIELD'];
+	            }
+	            if(isset(self::$fields[$this->type]['FIELD'][$i]['CALLABLE'])) {
+	                $callable=self::$fields[$this->type]['FIELD'][$i]['CALLABLE'];
+	            }
+	            break;
+	        }
+	    }
+	    for($i=0;$i<count($array);$i++){
+	        if (isset($array[$i]['NAME'])) {
+	            $array_subfields[$array[$i]['ID']+0] = (isset($msg[$array[$i]['NAME']]) ? $msg[$array[$i]['NAME']] : $array[$i]['NAME']);
+	        }
+	    }
+	    for($i=0;$i<count($callable);$i++){
+	        if (isset($callable[$i]['NAME'])) $array_subfields[$callable[$i]['ID']+0] = $msg[$callable[$i]['NAME']];
+	    }
+	    if(count($isbd)){
+	        $array_subfields[$isbd[0]['ID']+0]=$msg['facette_isbd'];
+	    }
+	    return $array_subfields;
 	}
 }
 

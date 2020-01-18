@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dico_empty_words.inc.php,v 1.5 2017-01-26 15:36:34 dgoron Exp $
+// $Id: dico_empty_words.inc.php,v 1.6 2019-06-03 07:04:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $search_empty_word, $page, $type_mot_vide, $tri, $clause, $class_path, $include_path, $action, $autorites_list_empty_word, $autorites_add_empty_word;
+global $text_empty_word, $msg, $nb_per_page, $nb_per_page_search, $nb_noti, $id_mot, $type_lien, $pmb_nb_noti_calc_empty_words, $nb_per_page_gestion;
 
 if(!isset($search_empty_word)) $search_empty_word = '';
 if(!isset($page)) $page = 0;

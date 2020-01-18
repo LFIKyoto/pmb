@@ -2,9 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: integre.inc.php,v 1.24 2018-09-25 07:45:41 vtouchard Exp $
+// $Id: integre.inc.php,v 1.26 2019-06-07 08:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $z3950_import_modele, $base_path, $msg, $notice_id, $page, $force, $action, $item, $infos, $signature, $pmb_notice_controle_doublons;
+global $charset, $class_path, $current_module, $force_url, $nb_per_page_search, $maxAffiche, $enCours, $records, $notice_display, $url_view;
+global $retour, $ret, $notice_id_info, $integrate, $form, $javascript_path;
 
 //Recherche de la fonction auxiliaire d'intégration
 if ($z3950_import_modele) {
@@ -224,7 +228,7 @@ switch ($action) {
 				$integrate = true;
 				$id_notice = pmb_mysql_result($res,0,0);
 				$requete = "SELECT * FROM notices where notice_id = '".$id_notice."'";
-				$result = pmb_mysql_query($requete, $dbh);
+				$result = pmb_mysql_query($requete);
 				if(pmb_mysql_num_rows($result)){
 					$notice = pmb_mysql_fetch_object($result);
 					$records = array($notice->notice_id);
@@ -235,7 +239,7 @@ switch ($action) {
 			
 			if($integrate == false || $force == 1) {
 				$z=new z3950_notice("unimarc",$infos['notice'],$infos['source_id']);
-				$z->libelle_form = $notice_id ? $msg[notice_connecteur_remplace_catal] : '';
+				$z->libelle_form = $notice_id ? $msg['notice_connecteur_remplace_catal'] : '';
 				$entity_locking = new entity_locking($notice_id, TYPE_NOTICE);
 				if($z->bibliographic_level == "a" && $z->hierarchic_level=="2"){
 				    if(!$entity_locking->is_locked()){

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fb.php,v 1.13 2017-07-12 15:15:02 tsamson Exp $
+// $Id: fb.php,v 1.14 2019-02-06 10:46:40 ngantier Exp $
 $base_path=".";
 require_once($base_path."/includes/global_vars.inc.php");
 require_once($base_path.'/includes/opac_config.inc.php');
@@ -25,7 +25,7 @@ print "
 		<title>".htmlentities(stripslashes($title),ENT_QUOTES,$charset)."</title>
 		
 		<script type='text/javascript'>
-			document.location='".htmlentities($url_location,ENT_QUOTES,$charset).($id ? "&id=$id" : "").($opac_view ? "&opac_view=$opac_view" : "")."'
+			document.location='".htmlentities($url_location,ENT_QUOTES,$charset).($id ? "&id=" . htmlentities($id,ENT_QUOTES,$charset) : "").($opac_view ? "&opac_view=" . htmlentities($opac_view,ENT_QUOTES,$charset) : "")."'
 		</script>
 	</head>
 </html>";

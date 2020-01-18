@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: campaign_stats.class.php,v 1.5 2018-04-27 12:36:47 dgoron Exp $
+// $Id: campaign_stats.class.php,v 1.6 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -25,7 +25,7 @@ class campaign_stats {
 	protected $unsubscribes_logs;
 	
 	public function __construct($num_campaign=0) {
-		$this->num_campaign = $num_campaign+0;
+	    $this->num_campaign = (int) $num_campaign;
 		$this->fetch_data();
 	}
 	

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution.inc.php,v 1.1 2017-09-13 12:38:33 tsamson Exp $
+// $Id: contribution.inc.php,v 1.2 2019-05-29 12:03:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $pmb_contribution_area_activate, $iframe, $sub, $base_path;
 
 if ($pmb_contribution_area_activate) {
 	if (!empty($iframe)) {

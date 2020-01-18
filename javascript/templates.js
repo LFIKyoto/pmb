@@ -1,11 +1,11 @@
 /* +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: templates.js,v 1.3 2018-10-29 09:01:53 dgoron Exp $ */
+// $Id: templates.js,v 1.7 2019-08-22 08:16:39 btafforeau Exp $ */
 
 if(typeof templates == "undefined"){
 	templates = {
-		input_completion_field : function(name, id, completion, autfield) {
+		input_completion_field : function(name, id, completion, autfield, attributes) {
 			var input = document.createElement('input');
 			input.setAttribute('name',name);
 			input.setAttribute('data-form-name',name);
@@ -15,13 +15,18 @@ if(typeof templates == "undefined"){
 			input.setAttribute('value','');
 			input.setAttribute('completion', completion);
 			input.setAttribute('autfield', autfield);
+			if(typeof attributes !== 'undefined' && attributes.length) {
+				for(var i=0; i<attributes.length; i++) {
+					input.setAttribute(attributes[i].name, attributes[i].value);
+				}
+			}
 			return input;
 		},
-		get_input_completion_field : function(name, completion, autfield, suffixe) {
+		get_input_completion_field : function(name, completion, autfield, suffixe, attributes) {
 			if(document.getElementById(name+'_0')) {
-				return this.input_completion_field(name+'['+suffixe+'][label]', name+'_'+suffixe,completion, autfield+'_'+suffixe);
+				return this.input_completion_field(name+'['+suffixe+'][label]', name+'_'+suffixe,completion, autfield+'_'+suffixe, attributes);
 			} else {
-				return this.input_completion_field(name+suffixe, name+suffixe, completion, autfield+suffixe);
+				return this.input_completion_field(name+suffixe, name+suffixe, completion, autfield+suffixe, attributes);
 			}
 		},
 		delete_button_field : function(name, input_field, hidden_field) {
@@ -44,7 +49,7 @@ if(typeof templates == "undefined"){
 			button.className='bouton';
 			button.setAttribute('readonly','');
 			button.setAttribute('value',pmbDojo.messages.getMessage('template','parcourir'));
-			button.onclick=selector_fonction;
+			button.setAttribute('onclick', selector_fonction);
 			return button;
 		},
 		hidden_field : function(name, id) {
@@ -86,7 +91,15 @@ if(typeof templates == "undefined"){
 		add_completion_field : function(name, id, completion) {
 			var suffixe = this.get_max_node(name).value;
 			
-			var input_completion_field = this.get_input_completion_field(name, completion, id, suffixe);
+			var button_add_field = document.getElementById('button_add_' + name);
+			
+			var attributes = [];
+			var node_attributes = document.getElementById('add'+name);
+			if(node_attributes && node_attributes.getAttribute('data-completion-attributes')) {
+				attributes = JSON.parse(node_attributes.getAttribute('data-completion-attributes'));
+			}
+			
+			var input_completion_field = this.get_input_completion_field(name, completion, id, suffixe, attributes);
 			
 			var hidden_field = this.get_hidden_field(name, id, suffixe);
 			
@@ -98,15 +111,25 @@ if(typeof templates == "undefined"){
 		    div.appendChild(document.createTextNode(' '));
 		    div.appendChild(delete_button_field);
 		    div.appendChild(hidden_field);
+		    if (button_add_field) div.appendChild(button_add_field);
 
 		    this.get_add_node(name).appendChild(div);
 		    this.get_max_node(name).value = suffixe*1+1*1;
 			ajax_pack_element(input_completion_field);
 		},
 		add_completion_selection_field : function(name, id, completion, selector_fonction) {
+			
+			var button_add_field = document.getElementById('button_add_' + id);
+			
 			var suffixe = this.get_max_node(name).value;
 			
-			var input_completion_field = this.get_input_completion_field(name, completion, id, suffixe);
+			var attributes = [];
+			var node_attributes = document.getElementById('add'+name);
+			if(node_attributes && node_attributes.getAttribute('data-completion-attributes')) {
+				attributes = JSON.parse(node_attributes.getAttribute('data-completion-attributes'));
+			}
+			
+			var input_completion_field = this.get_input_completion_field(name, completion, id, suffixe, attributes);
 			
 			var hidden_field = this.get_hidden_field(name, id, suffixe);
 			
@@ -122,6 +145,7 @@ if(typeof templates == "undefined"){
 		    div.appendChild(document.createTextNode(' '));
 		    div.appendChild(delete_button_field);
 		    div.appendChild(hidden_field);
+		    if (button_add_field) div.appendChild(button_add_field);
 
 		    this.get_add_node(name).appendChild(div);
 		    this.get_max_node(name).value = suffixe*1+1*1;
@@ -129,6 +153,8 @@ if(typeof templates == "undefined"){
 		},
 		add_completion_qualified_field : function(name, id, completion, select_name) {
 			var suffixe = this.get_max_node(name).value;
+			
+			var button_add_field = document.getElementById('button_add_' + name);
 			
 		    var select_field = document.getElementById(select_name+'0').cloneNode(true);	
 		    select_field.setAttribute('name', select_name + suffixe);
@@ -148,10 +174,57 @@ if(typeof templates == "undefined"){
 		    div.appendChild(document.createTextNode(' '));
 		    div.appendChild(delete_button_field);
 		    div.appendChild(hidden_field);
+		    if (button_add_field) div.appendChild(button_add_field);
 
 		    this.get_add_node(name).appendChild(div);
 		    this.get_max_node(name).value = suffixe*1+1*1;
 			ajax_pack_element(input_completion_field);
 		},
+		add_completion_qualified_selection_fields: function(name, autfield, completion, select_name, selector_function, attribute) {
+			var suffixe = this.get_max_node(name).value;
+			
+			var button_add_field = document.getElementById('button_add_' + name);
+			
+			var select_field = document.getElementById(select_name+'0').cloneNode(true);	
+		    select_field.setAttribute('name', select_name + suffixe);
+		    select_field.setAttribute('id', select_name + suffixe);
+		    if (attribute) select_field.setAttribute(attribute.name, attribute.value + '(' + suffixe + ')');
+
+		    var input_completion_field = document.getElementById(name+'0').cloneNode(true);
+		    input_completion_field.setAttribute('name', name + suffixe);
+		    input_completion_field.setAttribute('id', name + suffixe);
+		    input_completion_field.setAttribute('autfield', autfield + suffixe);
+		    input_completion_field.setAttribute('param1', select_field.value);
+		    input_completion_field.value = '';
+		    
+		    var selector_button_field = this.selector_button_field('sel_'+name+suffixe, selector_function);
+		    
+		    var hidden_field = this.get_hidden_field(name, autfield, suffixe);
+		    
+		    var delete_button_field = this.delete_button_field('del_'+name+suffixe, input_completion_field, hidden_field);
+		    
+		    var div=document.createElement('div');
+			div.className='row';
+			div.appendChild(select_field);
+		    div.appendChild(document.createTextNode(' '));
+			div.appendChild(input_completion_field);
+		    div.appendChild(document.createTextNode(' '));
+		    div.appendChild(selector_button_field);
+		    div.appendChild(document.createTextNode(' '));
+		    div.appendChild(delete_button_field);
+		    div.appendChild(hidden_field);
+		    if (button_add_field) div.appendChild(button_add_field);
+		    
+		    this.get_add_node(name).appendChild(div);
+		    this.get_max_node(name).value = suffixe*1+1*1;
+			ajax_pack_element(input_completion_field);
+		},
+		clear_values: function(name, id) {
+			var suffixe = this.get_max_node(name).value;
+			for (var i = 0; i < suffixe; i++) {
+				document.getElementById(name+'_'+i).value = '';
+				document.getElementById(id+'_'+i).value = '';
+			}
+		}
 	}
 }

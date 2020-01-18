@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: collstate.tpl.php,v 1.11 2018-01-25 10:13:28 dgoron Exp $
+// $Id: collstate.tpl.php,v 1.12 2019-05-29 11:23:32 btafforeau Exp $
 
 // templates pour gestion des autorités collections
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $msg;
 global $collstate_list_header;
 global $collstate_list_footer;
 global $tpl_collstate_liste;

@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_tpl.tpl.php,v 1.11 2018-01-24 10:54:46 vtouchard Exp $
+// $Id: notice_tpl.tpl.php,v 1.13 2019-05-27 13:12:04 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 // Affichage de la liste des templates de notices
+
+global $notice_tpl_show_loc_btn, $msg, $notice_tpl_liste, $notice_tpl_liste_ligne, $notice_tpl_form, $current_module, $notice_tpl_form_code, $notice_tpl_eval, $notice_tpl_form_import;
 
 $notice_tpl_show_loc_btn = "<input value='".$msg["notice_tpl_show_loc_btn"]."' id='show_loc_btn' class='bouton' type='button' onclick='notice_tpl_load_locations();'>
 <script type='text/javascript'>
@@ -95,7 +97,7 @@ $notice_tpl_form = jscript_unload_question()."
 			<label class='etiquette' for='name'>".$msg["notice_tpl_name"]."</label>
 		</div>
 		<div class='row'>
-			<input type='text' class='saisie-80em' id='name' name='name' value=\"!!name!!\" />
+			<input type='text' class='saisie-80em' id='name' name='name' value=\"!!name!!\" data-pmb-deb-rech='1'/>
 		</div>		
 		<!-- 	Commentaire -->
 		<div class='row'>

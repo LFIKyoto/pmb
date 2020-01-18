@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: requests_selector.php,v 1.3 2012-09-06 08:00:12 ngantier Exp $
+// $Id: requests_selector.php,v 1.4 2019-06-10 08:57:12 btafforeau Exp $
 
 $base_path=".";
 $base_noheader=1;
@@ -42,7 +42,7 @@ endswitch;
 switch ($origine):
 	case 'ARRAY':
 		$i=1;
-		while(list($index, $value) = each($array_selector)) {
+		foreach ($array_selector as $index => $value) {
 			if (strtolower(substr($value['f'],0,strlen($start)))==strtolower($start)) {
 			echo "<div id='l".$id.$i."'";
 			if ($autfield) echo " autid='".$index."'";

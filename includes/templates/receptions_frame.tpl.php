@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: receptions_frame.tpl.php,v 1.12 2017-11-22 11:07:34 dgoron Exp $
+// $Id: receptions_frame.tpl.php,v 1.14 2019-05-27 12:31:44 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $recept_deliv_form, $msg, $charset, $current_module, $recept_deliv_form_notice, $recept_deliv_form_bull, $applicants_tpl, $pmb_rfid_activate, $pmb_rfid_serveur_url, $recept_deliv_form_expl, $recept_deliv_form_expl_auto, $recept_deliv_form_explnum,$recept_deliv_form_sugg,  $recept_deliv_form_suite, $recept_form_qte_liv, $recept_bt_update, $recept_bt_undo, $recept_bt_next;
 
 //	------------------------------------------------------------------------------
 //	$recept_form : template de reception/exemplarisation pour les receptions
@@ -209,7 +211,7 @@ $recept_deliv_form_expl = "
 		</div>
 
 		<div class='row'>
-			<label class='etiquette' for='f_ex_prix'>".htmlentities($msg[4050],ENT_QUOTES,$charset)."</label>
+			<label class='etiquette' for='f_ex_prix'>".htmlentities($msg['expl_price'],ENT_QUOTES,$charset)."</label>
 			<br />
 			<input type='text' class='text' name='f_ex_prix' id='f_ex_prix' value='!!prix!!' />
 		</div>

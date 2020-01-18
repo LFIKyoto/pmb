@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: messages.class.php,v 1.8 2018-05-17 09:27:49 dgoron Exp $
+// $Id: messages.class.php,v 1.9 2019-05-09 10:35:37 ngantier Exp $
 
 
 require_once($class_path."/cache_factory.class.php");
@@ -165,8 +165,8 @@ class message {
  		
  		if(!$dejaParse){
 			if (!($fp = @fopen($this->fichierXml, "r"))) {
-				die("impossible d'ouvrir le fichier XML $this->fichierXml");
-				}
+			    die(htmlentities("impossible d'ouvrir le fichier XML $this->fichierXml", ENT_QUOTES, $charset));
+			}
 			$file_size=filesize ($this->fichierXml);
 			$data = fread ($fp, $file_size);
 	

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: marc_table.class.php,v 1.30 2017-11-13 10:34:53 dgoron Exp $
+// $Id: marc_table.class.php,v 1.32 2019-07-11 14:17:15 btafforeau Exp $
 
 // classe de gestion des tables MARC en XML
 
@@ -161,6 +161,14 @@ class marc_list {
 				$this->attributes = $parser->getAttributes();
 				$this->inverse_of = $parser->inverse_of;
 				break;
+			case 'aut_link':
+			    $parser = new XMLlist_links("$include_path/marc_tables/$lang/aut_link.xml");
+			    $parser->setAttributesToParse(array(array('name' => 'AUT_LINK', 'default_value' => 'yes'), array('name' => 'GROUP', 'default_value' => '')));
+			    $parser->analyser();
+			    $this->table = $parser->table;
+			    $this->attributes = $parser->getAttributes();
+			    $this->inverse_of = $parser->inverse_of;
+			    break;
 			default:
 				$this->table=array();
 				break;
@@ -265,7 +273,7 @@ class marc_select {
 	
 	public function first_item_at_last() {
 		$item = array_shift($this->table);
-		array_push($this->table, $item);
+		$this->table[] = $item;
 	}
 }
 

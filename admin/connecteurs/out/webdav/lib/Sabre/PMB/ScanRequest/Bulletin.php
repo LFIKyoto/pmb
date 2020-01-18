@@ -2,20 +2,20 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Bulletin.php,v 1.5 2016-02-12 09:43:08 vtouchard Exp $
+// $Id: Bulletin.php,v 1.6 2019-07-05 13:25:14 btafforeau Exp $
 namespace Sabre\PMB\ScanRequest;
 
 class Bulletin extends Collection {
 	protected $bulletin_id;
 
-	function __construct($name,$config) {
+	public function __construct($name,$config) {
 		parent::__construct($config);
 		
 		$this->bulletin_id = substr($this->get_code_from_name($name),1);
 		$this->type = "scan_request_bulletin";
 	}
 
-	function getName() {
+	public function getName() {
 		$query = "select concat(bulletins.bulletin_numero, ' - ',bulletins.bulletin_titre) as title from bulletins where bulletin_id = ".$this->bulletin_id;
 		$result = pmb_mysql_query($query);
 		if(pmb_mysql_num_rows($result)){
@@ -25,7 +25,7 @@ class Bulletin extends Collection {
 		return $this->format_name($name);
 	}
 
-	function getChildren() {
+	public function getChildren() {
 		$children = array();
 		$query = "select scan_request_explnum_num_explnum as explnum_id from scan_request_explnum join explnum on scan_request_explnum_num_explnum = explnum_id where explnum_mimetype!= 'URL' and scan_request_explnum_num_bulletin = ".$this->bulletin_id." and scan_request_explnum_num_notice = 0 and scan_request_explnum_num_request = ".$this->parentNode->get_scan_request()->get_id();
 		$query = $this->filterExplnums($query);

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serials_manq.inc.php,v 1.14 2017-11-21 12:01:00 dgoron Exp $
+// $Id: serials_manq.inc.php,v 1.15 2019-06-10 15:14:33 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,8 +17,8 @@ if (!$user_query) $user_query ="*" ;
 $user_query = str_replace("*","%",$user_query ); 
 
 
-$serial_edit_access = str_replace('!!message!!',$msg[1914] , $serial_edit_access);
-$serial_edit_access = str_replace('!!etat!!',manquant , $serial_edit_access);
+$serial_edit_access = str_replace('!!message!!', $msg[1914], $serial_edit_access);
+$serial_edit_access = str_replace('!!etat!!', 'manquant', $serial_edit_access);
 
 print $serial_edit_access;
 

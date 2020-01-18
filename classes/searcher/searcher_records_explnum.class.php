@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_records_explnum.class.php,v 1.2 2018-04-05 14:01:29 apetithomme Exp $
+// $Id: searcher_records_explnum.class.php,v 1.2.6.1 2019-10-22 13:39:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -32,7 +32,7 @@ class searcher_records_explnum extends searcher_records {
 						UNION
 						SELECT notice_id, '.$members["select"].' AS pert 
 						FROM notices
-						JOIN bulletins ON bulletin_notice = notice_id
+						JOIN bulletins ON num_notice = notice_id AND num_notice <> 0
 						JOIN explnum ON explnum_bulletin = bulletin_id
 						WHERE ('.$members["where"].')
 					)  AS uni JOIN notices n ON uni.notice_id = n.notice_id 

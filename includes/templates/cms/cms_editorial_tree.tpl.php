@@ -2,10 +2,10 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_tree.tpl.php,v 1.18 2018-03-12 15:19:04 plmrozowski Exp $
+// $Id: cms_editorial_tree.tpl.php,v 1.20.6.1 2019-10-25 06:52:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
-global $base_path;
+global $base_path, $cms_editorial_tree_layout, $cms_editorial_tree_content, $cms_editorial_tree_selected_item;
 		
 $cms_editorial_tree_layout= "
 		<script type='text/javascript' src='./javascript/misc.js'></script>
@@ -22,10 +22,24 @@ $cms_editorial_tree_layout= "
 			<div data-dojo-type='dojox/layout/ContentPane' data-dojo-props='splitter:true, region:\"left\"' style='width:40%;' id='editorial_tree_container' href='./ajax.php?module=cms&categ=get_tree'></div>
 			<div data-dojo-type='dojox/layout/ContentPane' data-dojo-props='region:\"center\"' style='height:auto;' id='content_infos'></div>
             <script type='text/javascript'>
-                require(['dojo/dom', 'dijit/registry', 'dojo/ready'], function(dom, registry, ready) {
+                require(['dojo/dom','dojo/dom-style','dijit/registry', 'dojo/ready'], function(dom, domStyle, registry, ready) {
                     ready(function(){
                         var mh= Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-                        registry.byId('treeBorderContainer').resize({h:(mh-dom.byId('treeBorderContainer').offsetTop)});
+                        var off=0;
+                        var obj = dom.byId('treeBorderContainer');  
+                        // pour retrouver les top
+                        do {
+                            off+= obj.offsetTop;
+                       	} while (obj = obj.offsetParent); 
+                        var obj = dom.byId('treeBorderContainer');
+                        // on retire également les margin-bottom des parents...
+                        do {
+                            if(obj.nodeType == 1){  
+                                off+= domStyle.get(obj,'marginBottom');
+                            }
+                       	} while (obj = obj.parentNode);
+                        // on n'a donc plus d'ascenseur vertical (sauf si le menu de gauche dépasse, mais là...)
+                        registry.byId('treeBorderContainer').resize({h:(mh-off)});
                     });
                 });
             </script>
@@ -94,3 +108,25 @@ $cms_editorial_tree_content ="
 				dojo.connect(treeModel, 'onChildrenChange', cms_child_change);
 			</script>
 		</div>";
+
+$cms_editorial_tree_selected_item= "
+        <script type='text/javascript'>
+            require(['dojo/dom','dojo/dom-style','dijit/registry', 'dojo/ready'], function(dom, domStyle, registry, ready) {
+                ready(function(){
+                    setTimeout(function(){
+                        if(dijit.byId('section_tree')) {
+                            if('!!item_type!!' == 'article') {
+                                dijit.byId('section_tree').set('selectedItem', 'article_!!item_id!!');
+                            } else {
+                                dijit.byId('section_tree').set('selectedItem', '!!item_id!!');
+                            }
+							setTimeout(function(){
+                            	if(dijit.byId('section_tree').get('selectedItem')) {
+                                	cms_load_content_infos(dijit.byId('section_tree').get('selectedItem'));
+                            	}
+                        	}, 1000);
+                        }
+                    }, 1000);
+                });
+            });
+        </script>";

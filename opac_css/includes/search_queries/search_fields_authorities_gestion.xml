@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id: search_fields_authorities_gestion.xml,v 1.15 2018-10-31 13:34:07 ngantier Exp $ -->
+<!-- $Id: search_fields_authorities_gestion.xml,v 1.19 2019-05-22 09:45:10 ngantier Exp $ -->
 <pmbfields>
 
 	<!-- Zone fixedFields :
@@ -308,7 +308,7 @@
 			<variable name="id_scheme" type="input" comment="Schéma">
 				<default type="var">deflt_concept_scheme</default>
 				<input type="query_list">
-					<query allChoice="yes" titleAllChoice="msg:thes_all">SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
+					<query allChoice="yes" titleAllChoice="msg:thes_all">select 0 as id, 'Sans schéma' as lib union SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
 				</input>
 			</variable>
 			<variable name= "operator_between_multiple_authorities" type="input" comment="msg:operator_between_multiple_authorities">
@@ -414,14 +414,14 @@
 		</field>
 		<field group="1" title="msg:search_extended_author_aut_link" id="1900" >
 			<input type="marc_list">
-				<name>relationtype_aut</name>
+				<name>aut_link</name>
 				<restrictquery>SELECT group_concat(distinct aut_link_type SEPARATOR ',') as all_relation_type from aut_link where aut_link_from = 1 OR aut_link_to = 1</restrictquery>				
 			</input>
 			<query for="EQ">
 				<main><![CDATA[SELECT distinct id_authority from authorities, authors
 						WHERE (authors.author_id=authorities.num_object and authorities.type_object = 1)
 						AND (author_id IN (select aut_link_from_num FROM aut_link WHERE aut_link_from = 1 AND aut_link_type = '!!p!!')
-						OR author_id IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 1 and aut_link_reciproc = 1 and aut_link_type = '!!p!!'))]]></main>
+						OR author_id IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 1 and aut_link_type = '!!p!!'))]]></main>
 			</query>
 		</field>
 		<field group="1" title="msg:search_author_creator" id="1100">
@@ -567,7 +567,7 @@
 			<variable name="id_scheme" type="input" comment="Schéma">
 				<default type="var">deflt_concept_scheme</default>
 				<input type="query_list">
-					<query allChoice="yes" titleAllChoice="msg:thes_all">SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
+					<query allChoice="yes" titleAllChoice="msg:thes_all">select 0 as id, 'Sans schéma' as lib union SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
 				</input>
 			</variable>
 			<variable name= "operator_between_multiple_authorities" type="input" comment="msg:operator_between_multiple_authorities">
@@ -673,14 +673,14 @@
 		</field>
 		<field group="2" title="msg:search_extended_category_aut_link" id="2900" >
 			<input type="marc_list">
-				<name>relationtype_aut</name>
+				<name>aut_link</name>
 				<restrictquery>SELECT group_concat(distinct aut_link_type SEPARATOR ',') as all_relation_type from aut_link where aut_link_from = 2 OR aut_link_to = 2</restrictquery>				
 			</input>
 			<query for="EQ">
 				<main><![CDATA[SELECT distinct id_authority from authorities, noeuds
 						WHERE (noeuds.id_noeud=authorities.num_object and authorities.type_object = 2)
 						AND (id_noeud IN (select aut_link_from_num FROM aut_link WHERE aut_link_from = 2 AND aut_link_type = '!!p!!')
-						OR id_noeud IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 2 and aut_link_reciproc = 1 and aut_link_type = '!!p!!'))]]></main>
+						OR id_noeud IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 2 and aut_link_type = '!!p!!'))]]></main>
 			</query>
 		</field>
 		<field group="2" title="msg:search_category_creator" id="2100">
@@ -875,7 +875,7 @@
 			<variable name="id_scheme" type="input" comment="Schéma">
 				<default type="var">deflt_concept_scheme</default>
 				<input type="query_list">
-					<query allChoice="yes" titleAllChoice="msg:thes_all">SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
+					<query allChoice="yes" titleAllChoice="msg:thes_all">select 0 as id, 'Sans schéma' as lib union SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
 				</input>
 			</variable>
 			<variable name= "operator_between_multiple_authorities" type="input" comment="msg:operator_between_multiple_authorities">
@@ -1020,14 +1020,14 @@
 		</field>
 		<field group="3" title="msg:search_extended_publisher_aut_link" id="3900" >
 			<input type="marc_list">
-				<name>relationtype_aut</name>
+				<name>aut_link</name>
 				<restrictquery>SELECT group_concat(distinct aut_link_type SEPARATOR ',') as all_relation_type from aut_link where aut_link_from = 3 OR aut_link_to = 3</restrictquery>				
 			</input>
 			<query for="EQ">
 				<main><![CDATA[SELECT distinct id_authority from authorities, publishers
 						WHERE (publishers.ed_id=authorities.num_object and authorities.type_object = 3)
 						AND (ed_id IN (select aut_link_from_num FROM aut_link WHERE aut_link_from = 3 AND aut_link_type = '!!p!!')
-						OR ed_id IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 3 and aut_link_reciproc = 1 and aut_link_type = '!!p!!'))]]></main>
+						OR ed_id IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 3 and aut_link_type = '!!p!!'))]]></main>
 			</query>
 		</field>
 		<field group="3" title="msg:search_category_creator" id="3100">
@@ -1179,7 +1179,7 @@
 			<variable name="id_scheme" type="input" comment="Schéma">
 				<default type="var">deflt_concept_scheme</default>
 				<input type="query_list">
-					<query allChoice="yes" titleAllChoice="msg:thes_all">SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
+					<query allChoice="yes" titleAllChoice="msg:thes_all">select 0 as id, 'Sans schéma' as lib union SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
 				</input>
 			</variable>
 			<variable name= "operator_between_multiple_authorities" type="input" comment="msg:operator_between_multiple_authorities">
@@ -1285,14 +1285,14 @@
 		</field>
 		<field group="4" title="msg:search_extended_collection_aut_link" id="4900" >
 			<input type="marc_list">
-				<name>relationtype_aut</name>
+				<name>aut_link</name>
 				<restrictquery>SELECT group_concat(distinct aut_link_type SEPARATOR ',') as all_relation_type from aut_link where aut_link_from = 4 OR aut_link_to = 4</restrictquery>				
 			</input>
 			<query for="EQ">
 				<main><![CDATA[SELECT distinct id_authority from authorities, collections
 						WHERE (collections.collection_id=authorities.num_object and authorities.type_object = 4)
 						AND (collection_id IN (select aut_link_from_num FROM aut_link WHERE aut_link_from = 4 AND aut_link_type = '!!p!!')
-						OR collection_id IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 4 and aut_link_reciproc = 1 and aut_link_type = '!!p!!'))]]></main>
+						OR collection_id IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 4 and aut_link_type = '!!p!!'))]]></main>
 			</query>
 		</field>
 		<field group="4" title="msg:search_coll_creator" id="4100">
@@ -1490,7 +1490,7 @@
 			<variable name="id_scheme" type="input" comment="Schéma">
 				<default type="var">deflt_concept_scheme</default>
 				<input type="query_list">
-					<query allChoice="yes" titleAllChoice="msg:thes_all">SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
+					<query allChoice="yes" titleAllChoice="msg:thes_all">select 0 as id, 'Sans schéma' as lib union SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
 				</input>
 			</variable>
 			<variable name= "operator_between_multiple_authorities" type="input" comment="msg:operator_between_multiple_authorities">
@@ -1596,14 +1596,14 @@
 		</field>
 		<field group="5" title="msg:search_extended_subcollection_aut_link" id="5900" >
 			<input type="marc_list">
-				<name>relationtype_aut</name>
+				<name>aut_link</name>
 				<restrictquery>SELECT group_concat(distinct aut_link_type SEPARATOR ',') as all_relation_type from aut_link where aut_link_from = 5 OR aut_link_to = 5</restrictquery>				
 			</input>
 			<query for="EQ">
 				<main><![CDATA[SELECT distinct id_authority from authorities, sub_collections
 						WHERE (sub_collections.sub_coll_id=authorities.num_object and authorities.type_object = 5)
 						AND (sub_coll_id IN (select aut_link_from_num FROM aut_link WHERE aut_link_from = 5 AND aut_link_type = '!!p!!')
-						OR sub_coll_id IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 5 and aut_link_reciproc = 1 and aut_link_type = '!!p!!'))]]></main>
+						OR sub_coll_id IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 5 and aut_link_type = '!!p!!'))]]></main>
 			</query>
 		</field>
 		<field group="5" title="msg:search_subcoll_creator" id="5100">
@@ -1661,7 +1661,7 @@
 			<variable name="id_scheme" type="input" comment="Schéma">
 				<default type="var">deflt_concept_scheme</default>
 				<input type="query_list">
-					<query allChoice="yes" titleAllChoice="msg:thes_all">SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
+					<query allChoice="yes" titleAllChoice="msg:thes_all">select 0 as id, 'Sans schéma' as lib union SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
 				</input>
 			</variable>
 			<variable name= "operator_between_multiple_authorities" type="input" comment="msg:operator_between_multiple_authorities">
@@ -1767,14 +1767,14 @@
 		</field>
 		<field group="6" title="msg:search_extended_serie_aut_link" id="6900" >
 			<input type="marc_list">
-				<name>relationtype_aut</name>
+				<name>aut_link</name>
 				<restrictquery>SELECT group_concat(distinct aut_link_type SEPARATOR ',') as all_relation_type from aut_link where aut_link_from = 6 OR aut_link_to = 6</restrictquery>				
 			</input>
 			<query for="EQ">
 				<main><![CDATA[SELECT distinct id_authority from authorities, series
 						WHERE (series.serie_id=authorities.num_object and authorities.type_object = 6)
 						AND (serie_id IN (select aut_link_from_num FROM aut_link WHERE aut_link_from = 6 AND aut_link_type = '!!p!!')
-						OR serie_id IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 6 and aut_link_reciproc = 1 and aut_link_type = '!!p!!'))]]></main>
+						OR serie_id IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 6 and aut_link_type = '!!p!!'))]]></main>
 			</query>
 		</field>
 		<field group="6" title="msg:search_serie_creator" id="6100">
@@ -2450,7 +2450,7 @@
 			<variable name="id_scheme" type="input" comment="Schéma">
 				<default type="var">deflt_concept_scheme</default>
 				<input type="query_list">
-					<query allChoice="yes" titleAllChoice="msg:thes_all">SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
+					<query allChoice="yes" titleAllChoice="msg:thes_all">select 0 as id, 'Sans schéma' as lib union SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
 				</input>
 			</variable>
 			<variable name= "operator_between_multiple_authorities" type="input" comment="msg:operator_between_multiple_authorities">
@@ -2576,14 +2576,14 @@
 				<value visibility="no">0</value>
 			</var>
 			<input type="marc_list">
-				<name>relationtype_aut</name>
+				<name>aut_link</name>
 				<restrictquery>SELECT group_concat(distinct aut_link_type SEPARATOR ',') as all_relation_type from aut_link where aut_link_from = 7 OR aut_link_to = 7</restrictquery>				
 			</input>
 			<query for="EQ">
 				<main><![CDATA[SELECT distinct id_authority from authorities, titres_uniformes
 						WHERE (titres_uniformes.tu_id=authorities.num_object and authorities.type_object = 7)
 						AND (tu_id IN (select aut_link_from_num FROM aut_link WHERE aut_link_from = 7 AND aut_link_type = '!!p!!')
-						OR tu_id IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 7 and aut_link_reciproc = 1 and aut_link_type = '!!p!!'))]]></main>
+						OR tu_id IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 7 and aut_link_type = '!!p!!'))]]></main>
 			</query>
 		</field>
 		<field group="7" title="msg:search_tu_creator" id="7100">
@@ -2681,7 +2681,7 @@
 			<variable name="id_scheme" type="input" comment="Schéma">
 				<default type="var">deflt_concept_scheme</default>
 				<input type="query_list">
-					<query allChoice="yes" titleAllChoice="msg:thes_all">SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
+					<query allChoice="yes" titleAllChoice="msg:thes_all">select 0 as id, 'Sans schéma' as lib union SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
 				</input>
 			</variable>
 			<variable name= "operator_between_multiple_authorities" type="input" comment="msg:operator_between_multiple_authorities">
@@ -2787,14 +2787,14 @@
 		</field>
 		<field group="8" title="msg:search_extended_indexint_aut_link" id="8900" >
 			<input type="marc_list">
-				<name>relationtype_aut</name>
+				<name>aut_link</name>
 				<restrictquery>SELECT group_concat(distinct aut_link_type SEPARATOR ',') as all_relation_type from aut_link where aut_link_from = 8 OR aut_link_to = 8</restrictquery>				
 			</input>
 			<query for="EQ">
 				<main><![CDATA[SELECT distinct id_authority from authorities, indexint
 						WHERE (indexint.indexint_id=authorities.num_object and authorities.type_object = 8)
 						AND (indexint_id IN (select aut_link_from_num FROM aut_link WHERE aut_link_from = 8 AND aut_link_type = '!!p!!')
-						OR indexint_id IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 8 and aut_link_reciproc = 1 and aut_link_type = '!!p!!'))]]></main>
+						OR indexint_id IN (select aut_link_to_num FROM aut_link WHERE aut_link_to = 8 and aut_link_type = '!!p!!'))]]></main>
 			</query>
 		</field>
 		<field group="8" title="msg:search_indexint_creator" id="8100">
@@ -3207,7 +3207,31 @@
             <query for="ISNOTEMPTY">
                 <main><![CDATA[select distinct id_authority from authorities left join skos_fields_global_index on skos_fields_global_index.id_item = authorities.num_object and code_champ = 14 where value is not null and authorities.type_object = 10]]></main>
             </query>
-        </field>
+        </field>        
+		<field group="11" title="msg:map_emprise" id="78">
+			<var name="pmb_map_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type="map"/>
+			<query for="CONTAINS">
+				<main>select distinct id_authority from authorities left join map_emprises on map_emprise_type = 10 and contains(geomfromtext('!!p!!'),map_emprise_data) = 1 where authorities.type_object = 10 and map_emprise_obj_num = authorities.num_object</main>
+			</query>
+			<query for="AERASUP">
+				<main>select distinct id_authority from authorities left join map_emprises on map_emprise_type = 10 and Area((map_emprise_data)) &gt; Area(geomfromtext('!!p!!')) where authorities.type_object = 10 and map_emprise_obj_num = authorities.num_object</main>
+			</query>
+			<query for="AERAINF">
+				<main>select distinct id_authority from authorities left join map_emprises on map_emprise_type = 10 and Area((map_emprise_data)) &lt; Area(geomfromtext('!!p!!')) where authorities.type_object = 10 and map_emprise_obj_num = authorities.num_object</main>
+			</query>
+			<query for="INTERSECTS">
+				<main>select distinct id_authority from authorities left join map_emprises on map_emprise_type = 10 and intersects(geomfromtext('!!p!!'),map_emprise_data) = 1 where authorities.type_object = 10 and map_emprise_obj_num = authorities.num_object</main>
+			</query>
+			<query for="ISEMPTY">
+				<main>select distinct id_authority from authorities where authorities.type_object = 10 and authorities.num_object not in (select distinct map_emprise_obj_num from map_emprises where map_emprise_type=10)</main>
+			</query>
+			<query for="ISNOTEMPTY">
+				<main>select distinct id_authority from authorities left join map_emprises on map_emprise_type = 10  where authorities.type_object = 10 and map_emprise_obj_num = authorities.num_object</main>
+			</query>
+		</field>
 	</fixedFields>
 	
 	<dynamicFields>
@@ -3247,11 +3271,11 @@
 					<main><![CDATA[select distinct id_authority from authorities join authors on authors.author_id=authorities.num_object and authorities.type_object = 1 join author_custom_values on author_custom_origine=author_id 
 						where author_custom_champ=!!field!! and author_custom_small_text like '!!p!!']]></main>
 				</query>
-				<query for="ISEMPTY" notAllowedFor="date_flot">
+				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join authors on authors.author_id=authorities.num_object and authorities.type_object = 1 left join author_custom_values on author_custom_origine=author_id 
 						and author_custom_champ=!!field!! where (author_custom_small_text='' or author_custom_small_text is null)]]></main>
 				</query>
-				<query for="ISNOTEMPTY" notAllowedFor="date_flot">
+				<query for="ISNOTEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join authors on authors.author_id=authorities.num_object and authorities.type_object = 1 join author_custom_values on author_custom_origine=author_id 
 						where author_custom_champ=!!field!! and author_custom_small_text != '']]></main>					  
 				</query>
@@ -3373,6 +3397,30 @@
 					<main><![CDATA[select distinct id_authority from authorities join authors on authors.author_id=authorities.num_object and authorities.type_object = 1 join author_custom_values on author_custom_origine=author_id 
 						where author_custom_champ=!!field!! and author_custom_date >= '!!p!!']]></main>
 				</query>
+				<query for="LESS_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join authors on authors.author_id=authorities.num_object and authorities.type_object = 1 join author_custom_values on author_custom_origine=author_id 
+						where author_custom_champ=!!field!! and author_custom_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="MORE_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join authors on authors.author_id=authorities.num_object and authorities.type_object = 1 join author_custom_values on author_custom_origine=author_id 
+						where author_custom_champ=!!field!! and author_custom_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="THIS_WEEK">
+					<main><![CDATA[select distinct id_authority from authorities join authors on authors.author_id=authorities.num_object and authorities.type_object = 1 join author_custom_values on author_custom_origine=author_id 
+						where author_custom_champ=!!field!! and WEEK(author_custom_date,1) = WEEK(NOW()) and YEAR(author_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="THIS_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join authors on authors.author_id=authorities.num_object and authorities.type_object = 1 join author_custom_values on author_custom_origine=author_id 
+						where author_custom_champ=!!field!! and MONTH(author_custom_date) = MONTH(NOW()) and YEAR(author_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="LAST_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join authors on authors.author_id=authorities.num_object and authorities.type_object = 1 join author_custom_values on author_custom_origine=author_id 
+						where author_custom_champ=!!field!! and PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(author_custom_date, '%Y%m')) = 1]]></main>
+				</query>
+				<query for="THIS_YEAR">
+					<main><![CDATA[select distinct id_authority from authorities join authors on authors.author_id=authorities.num_object and authorities.type_object = 1 join author_custom_values on author_custom_origine=author_id 
+						where author_custom_champ=!!field!! and YEAR(author_custom_date) = YEAR(NOW())]]></main>
+				</query>
 				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join authors on authors.author_id=authorities.num_object and authorities.type_object = 1 left join author_custom_values on author_custom_origine=author_id 
 						and author_custom_champ=!!field!! where (author_custom_date='' or author_custom_date is null)]]></main>
@@ -3424,11 +3472,11 @@
 					<main><![CDATA[select distinct id_authority from authorities join noeuds on noeuds.id_noeud=authorities.num_object and authorities.type_object = 2 join categ_custom_values on categ_custom_origine=id_noeud 
 						where categ_custom_champ=!!field!! and categ_custom_small_text like '!!p!!']]></main>
 				</query>
-				<query for="ISEMPTY" notAllowedFor="date_flot">
+				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join noeuds on noeuds.id_noeud=authorities.num_object and authorities.type_object = 2 left join categ_custom_values on categ_custom_origine=id_noeud 
 						and categ_custom_champ=!!field!! where (categ_custom_small_text='' or categ_custom_small_text is null)]]></main>
 				</query>
-				<query for="ISNOTEMPTY" notAllowedFor="date_flot">
+				<query for="ISNOTEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join noeuds on noeuds.id_noeud=authorities.num_object and authorities.type_object = 2 join categ_custom_values on categ_custom_origine=id_noeud 
 						where categ_custom_champ=!!field!! and categ_custom_small_text != '']]></main>					  
 				</query>
@@ -3550,6 +3598,30 @@
 					<main><![CDATA[select distinct id_authority from authorities join noeuds on noeuds.id_noeud=authorities.num_object and authorities.type_object = 2 join categ_custom_values on categ_custom_origine=id_noeud 
 						where categ_custom_champ=!!field!! and categ_custom_date >= '!!p!!']]></main>
 				</query>
+				<query for="LESS_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join noeuds on noeuds.id_noeud=authorities.num_object and authorities.type_object = 2 join categ_custom_values on categ_custom_origine=id_noeud 
+						where categ_custom_champ=!!field!! and categ_custom_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="MORE_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join noeuds on noeuds.id_noeud=authorities.num_object and authorities.type_object = 2 join categ_custom_values on categ_custom_origine=id_noeud 
+						where categ_custom_champ=!!field!! and categ_custom_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="THIS_WEEK">
+					<main><![CDATA[select distinct id_authority from authorities join noeuds on noeuds.id_noeud=authorities.num_object and authorities.type_object = 2 join categ_custom_values on categ_custom_origine=id_noeud 
+						where categ_custom_champ=!!field!! and WEEK(categ_custom_date,1) = WEEK(NOW()) and YEAR(categ_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="THIS_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join noeuds on noeuds.id_noeud=authorities.num_object and authorities.type_object = 2 join categ_custom_values on categ_custom_origine=id_noeud 
+						where categ_custom_champ=!!field!! and MONTH(categ_custom_date) = MONTH(NOW()) and YEAR(categ_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="LAST_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join noeuds on noeuds.id_noeud=authorities.num_object and authorities.type_object = 2 join categ_custom_values on categ_custom_origine=id_noeud 
+						where categ_custom_champ=!!field!! and PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(categ_custom_date, '%Y%m')) = 1]]></main>
+				</query>
+				<query for="THIS_YEAR">
+					<main><![CDATA[select distinct id_authority from authorities join noeuds on noeuds.id_noeud=authorities.num_object and authorities.type_object = 2 join categ_custom_values on categ_custom_origine=id_noeud 
+						where categ_custom_champ=!!field!! and YEAR(categ_custom_date) = YEAR(NOW())]]></main>
+				</query>
 				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join noeuds on noeuds.id_noeud=authorities.num_object and authorities.type_object = 2 left join categ_custom_values on categ_custom_origine=id_noeud 
 						and categ_custom_champ=!!field!! where (categ_custom_date='' or categ_custom_date is null)]]></main>
@@ -3601,11 +3673,11 @@
 					<main><![CDATA[select distinct id_authority from authorities join publishers on publishers.ed_id=authorities.num_object and authorities.type_object = 3 join publisher_custom_values on publisher_custom_origine=ed_id 
 						where publisher_custom_champ=!!field!! and publisher_custom_small_text like '!!p!!']]></main>
 				</query>
-				<query for="ISEMPTY" notAllowedFor="date_flot">
+				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join publishers on publishers.ed_id=authorities.num_object and authorities.type_object = 3 left join publisher_custom_values on publisher_custom_origine=ed_id 
 						and publisher_custom_champ=!!field!! where (publisher_custom_small_text='' or publisher_custom_small_text is null)]]></main>
 				</query>
-				<query for="ISNOTEMPTY" notAllowedFor="date_flot">
+				<query for="ISNOTEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join publishers on publishers.ed_id=authorities.num_object and authorities.type_object = 3 join publisher_custom_values on publisher_custom_origine=ed_id 
 						where publisher_custom_champ=!!field!! and publisher_custom_small_text != '']]></main>					  
 				</query>
@@ -3727,6 +3799,30 @@
 					<main><![CDATA[select distinct id_authority from authorities join publishers on publishers.ed_id=authorities.num_object and authorities.type_object = 3 join publisher_custom_values on publisher_custom_origine=ed_id 
 						where publisher_custom_champ=!!field!! and publisher_custom_date >= '!!p!!']]></main>
 				</query>
+				<query for="LESS_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join publishers on publishers.ed_id=authorities.num_object and authorities.type_object = 3 join publisher_custom_values on publisher_custom_origine=ed_id 
+						where publisher_custom_champ=!!field!! and publisher_custom_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="MORE_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join publishers on publishers.ed_id=authorities.num_object and authorities.type_object = 3 join publisher_custom_values on publisher_custom_origine=ed_id 
+						where publisher_custom_champ=!!field!! and publisher_custom_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="THIS_WEEK">
+					<main><![CDATA[select distinct id_authority from authorities join publishers on publishers.ed_id=authorities.num_object and authorities.type_object = 3 join publisher_custom_values on publisher_custom_origine=ed_id 
+						where publisher_custom_champ=!!field!! and WEEK(publisher_custom_date,1) = WEEK(NOW()) and YEAR(publisher_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="THIS_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join publishers on publishers.ed_id=authorities.num_object and authorities.type_object = 3 join publisher_custom_values on publisher_custom_origine=ed_id 
+						where publisher_custom_champ=!!field!! and MONTH(publisher_custom_date) = MONTH(NOW()) and YEAR(publisher_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="LAST_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join publishers on publishers.ed_id=authorities.num_object and authorities.type_object = 3 join publisher_custom_values on publisher_custom_origine=ed_id 
+						where publisher_custom_champ=!!field!! and PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(publisher_custom_date, '%Y%m')) = 1]]></main>
+				</query>
+				<query for="THIS_YEAR">
+					<main><![CDATA[select distinct id_authority from authorities join publishers on publishers.ed_id=authorities.num_object and authorities.type_object = 3 join publisher_custom_values on publisher_custom_origine=ed_id 
+						where publisher_custom_champ=!!field!! and YEAR(publisher_custom_date) = YEAR(NOW())]]></main>
+				</query>
 				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join publishers on publishers.ed_id=authorities.num_object and authorities.type_object = 3 left join publisher_custom_values on publisher_custom_origine=ed_id 
 						and publisher_custom_champ=!!field!! where (publisher_custom_date='' or publisher_custom_date is null)]]></main>
@@ -3778,11 +3874,11 @@
 					<main><![CDATA[select distinct id_authority from authorities join collections on collections.collection_id=authorities.num_object and authorities.type_object = 4 join collection_custom_values on collection_custom_origine=collection_id 
 						where collection_custom_champ=!!field!! and collection_custom_small_text like '!!p!!']]></main>
 				</query>
-				<query for="ISEMPTY" notAllowedFor="date_flot">
+				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join collections on collections.collection_id=authorities.num_object and authorities.type_object = 4 left join collection_custom_values on collection_custom_origine=collection_id 
 						and collection_custom_champ=!!field!! where (collection_custom_small_text='' or collection_custom_small_text is null)]]></main>
 				</query>
-				<query for="ISNOTEMPTY" notAllowedFor="date_flot">
+				<query for="ISNOTEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join collections on collections.collection_id=authorities.num_object and authorities.type_object = 4 join collection_custom_values on collection_custom_origine=collection_id 
 						where collection_custom_champ=!!field!! and collection_custom_small_text != '']]></main>					  
 				</query>
@@ -3904,6 +4000,30 @@
 					<main><![CDATA[select distinct id_authority from authorities join collections on collections.collection_id=authorities.num_object and authorities.type_object = 4 join collection_custom_values on collection_custom_origine=collection_id 
 						where collection_custom_champ=!!field!! and collection_custom_date >= '!!p!!']]></main>
 				</query>
+				<query for="LESS_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join collections on collections.collection_id=authorities.num_object and authorities.type_object = 4 join collection_custom_values on collection_custom_origine=collection_id 
+						where collection_custom_champ=!!field!! and collection_custom_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="MORE_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join collections on collections.collection_id=authorities.num_object and authorities.type_object = 4 join collection_custom_values on collection_custom_origine=collection_id 
+						where collection_custom_champ=!!field!! and collection_custom_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="THIS_WEEK">
+					<main><![CDATA[select distinct id_authority from authorities join collections on collections.collection_id=authorities.num_object and authorities.type_object = 4 join collection_custom_values on collection_custom_origine=collection_id 
+						where collection_custom_champ=!!field!! and WEEK(collection_custom_date,1) = WEEK(NOW()) and YEAR(collection_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="THIS_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join collections on collections.collection_id=authorities.num_object and authorities.type_object = 4 join collection_custom_values on collection_custom_origine=collection_id 
+						where collection_custom_champ=!!field!! and MONTH(collection_custom_date) = MONTH(NOW()) and YEAR(collection_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="LAST_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join collections on collections.collection_id=authorities.num_object and authorities.type_object = 4 join collection_custom_values on collection_custom_origine=collection_id 
+						where collection_custom_champ=!!field!! and PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(collection_custom_date, '%Y%m')) = 1]]></main>
+				</query>
+				<query for="THIS_YEAR">
+					<main><![CDATA[select distinct id_authority from authorities join collections on collections.collection_id=authorities.num_object and authorities.type_object = 4 join collection_custom_values on collection_custom_origine=collection_id 
+						where collection_custom_champ=!!field!! and YEAR(collection_custom_date) = YEAR(NOW())]]></main>
+				</query>
 				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join collections on collections.collection_id=authorities.num_object and authorities.type_object = 4 left join collection_custom_values on collection_custom_origine=collection_id 
 						and collection_custom_champ=!!field!! where (collection_custom_date='' or collection_custom_date is null)]]></main>
@@ -3955,11 +4075,11 @@
 					<main><![CDATA[select distinct id_authority from authorities join sub_collections on sub_collections.sub_coll_id=authorities.num_object and authorities.type_object = 5 join subcollection_custom_values on subcollection_custom_origine=sub_coll_id 
 						where subcollection_custom_champ=!!field!! and subcollection_custom_small_text like '!!p!!']]></main>
 				</query>
-				<query for="ISEMPTY" notAllowedFor="date_flot">
+				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join sub_collections on sub_collections.sub_coll_id=authorities.num_object and authorities.type_object = 5 left join subcollection_custom_values on subcollection_custom_origine=sub_coll_id 
 						and subcollection_custom_champ=!!field!! where (subcollection_custom_small_text='' or subcollection_custom_small_text is null)]]></main>
 				</query>
-				<query for="ISNOTEMPTY" notAllowedFor="date_flot">
+				<query for="ISNOTEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join sub_collections on sub_collections.sub_coll_id=authorities.num_object and authorities.type_object = 5 join subcollection_custom_values on subcollection_custom_origine=sub_coll_id 
 						where subcollection_custom_champ=!!field!! and subcollection_custom_small_text != '']]></main>					  
 				</query>
@@ -4081,6 +4201,30 @@
 					<main><![CDATA[select distinct id_authority from authorities join sub_collections on sub_collections.sub_coll_id=authorities.num_object and authorities.type_object = 5 join subcollection_custom_values on subcollection_custom_origine=sub_coll_id 
 						where subcollection_custom_champ=!!field!! and subcollection_custom_date >= '!!p!!']]></main>
 				</query>
+				<query for="LESS_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join sub_collections on sub_collections.sub_coll_id=authorities.num_object and authorities.type_object = 5 join subcollection_custom_values on subcollection_custom_origine=sub_coll_id 
+						where subcollection_custom_champ=!!field!! and subcollection_custom_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="MORE_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join sub_collections on sub_collections.sub_coll_id=authorities.num_object and authorities.type_object = 5 join subcollection_custom_values on subcollection_custom_origine=sub_coll_id 
+						where subcollection_custom_champ=!!field!! and subcollection_custom_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="THIS_WEEK">
+					<main><![CDATA[select distinct id_authority from authorities join sub_collections on sub_collections.sub_coll_id=authorities.num_object and authorities.type_object = 5 join subcollection_custom_values on subcollection_custom_origine=sub_coll_id 
+						where subcollection_custom_champ=!!field!! and WEEK(subcollection_custom_date,1) = WEEK(NOW()) and YEAR(subcollection_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="THIS_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join sub_collections on sub_collections.sub_coll_id=authorities.num_object and authorities.type_object = 5 join subcollection_custom_values on subcollection_custom_origine=sub_coll_id 
+						where subcollection_custom_champ=!!field!! and MONTH(subcollection_custom_date) = MONTH(NOW()) and YEAR(subcollection_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="LAST_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join sub_collections on sub_collections.sub_coll_id=authorities.num_object and authorities.type_object = 5 join subcollection_custom_values on subcollection_custom_origine=sub_coll_id 
+						where subcollection_custom_champ=!!field!! and PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(subcollection_custom_date, '%Y%m')) = 1]]></main>
+				</query>
+				<query for="THIS_YEAR">
+					<main><![CDATA[select distinct id_authority from authorities join sub_collections on sub_collections.sub_coll_id=authorities.num_object and authorities.type_object = 5 join subcollection_custom_values on subcollection_custom_origine=sub_coll_id 
+						where subcollection_custom_champ=!!field!! and YEAR(subcollection_custom_date) = YEAR(NOW())]]></main>
+				</query>
 				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join sub_collections on sub_collections.sub_coll_id=authorities.num_object and authorities.type_object = 5 left join subcollection_custom_values on subcollection_custom_origine=sub_coll_id 
 						and subcollection_custom_champ=!!field!! where (subcollection_custom_date='' or subcollection_custom_date is null)]]></main>
@@ -4132,11 +4276,11 @@
 					<main><![CDATA[select distinct id_authority from authorities join series on series.serie_id=authorities.num_object and authorities.type_object = 6 join serie_custom_values on serie_custom_origine=serie_id 
 						where serie_custom_champ=!!field!! and serie_custom_small_text like '!!p!!']]></main>
 				</query>
-				<query for="ISEMPTY" notAllowedFor="date_flot">
+				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join series on series.serie_id=authorities.num_object and authorities.type_object = 6 left join serie_custom_values on serie_custom_origine=serie_id 
 						and serie_custom_champ=!!field!! where (serie_custom_small_text='' or serie_custom_small_text is null)]]></main>
 				</query>
-				<query for="ISNOTEMPTY" notAllowedFor="date_flot">
+				<query for="ISNOTEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join series on series.serie_id=authorities.num_object and authorities.type_object = 6 join serie_custom_values on serie_custom_origine=serie_id 
 						where serie_custom_champ=!!field!! and serie_custom_small_text != '']]></main>					  
 				</query>
@@ -4258,6 +4402,30 @@
 					<main><![CDATA[select distinct id_authority from authorities join series on series.serie_id=authorities.num_object and authorities.type_object = 6 join serie_custom_values on serie_custom_origine=serie_id 
 						where serie_custom_champ=!!field!! and serie_custom_date >= '!!p!!']]></main>
 				</query>
+				<query for="LESS_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join series on series.serie_id=authorities.num_object and authorities.type_object = 6 join serie_custom_values on serie_custom_origine=serie_id 
+						where serie_custom_champ=!!field!! and serie_custom_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="MORE_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join series on series.serie_id=authorities.num_object and authorities.type_object = 6 join serie_custom_values on serie_custom_origine=serie_id 
+						where serie_custom_champ=!!field!! and serie_custom_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="THIS_WEEK">
+					<main><![CDATA[select distinct id_authority from authorities join series on series.serie_id=authorities.num_object and authorities.type_object = 6 join serie_custom_values on serie_custom_origine=serie_id 
+						where serie_custom_champ=!!field!! and WEEK(serie_custom_date,1) = WEEK(NOW()) and YEAR(serie_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="THIS_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join series on series.serie_id=authorities.num_object and authorities.type_object = 6 join serie_custom_values on serie_custom_origine=serie_id 
+						where serie_custom_champ=!!field!! and MONTH(serie_custom_date) = MONTH(NOW()) and YEAR(serie_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="LAST_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join series on series.serie_id=authorities.num_object and authorities.type_object = 6 join serie_custom_values on serie_custom_origine=serie_id 
+						where serie_custom_champ=!!field!! and PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(serie_custom_date, '%Y%m')) = 1]]></main>
+				</query>
+				<query for="THIS_YEAR">
+					<main><![CDATA[select distinct id_authority from authorities join series on series.serie_id=authorities.num_object and authorities.type_object = 6 join serie_custom_values on serie_custom_origine=serie_id 
+						where serie_custom_champ=!!field!! and YEAR(serie_custom_date) = YEAR(NOW())]]></main>
+				</query>
 				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join series on series.serie_id=authorities.num_object and authorities.type_object = 6 left join serie_custom_values on serie_custom_origine=serie_id 
 						and serie_custom_champ=!!field!! where (serie_custom_date='' or serie_custom_date is null)]]></main>
@@ -4309,11 +4477,11 @@
 					<main><![CDATA[select distinct id_authority from authorities join titres_uniformes on titres_uniformes.tu_id=authorities.num_object and authorities.type_object = 7 join tu_custom_values on tu_custom_origine=tu_id 
 						where tu_custom_champ=!!field!! and tu_custom_small_text like '!!p!!']]></main>
 				</query>
-				<query for="ISEMPTY" notAllowedFor="date_flot">
+				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join titres_uniformes on titres_uniformes.tu_id=authorities.num_object and authorities.type_object = 7 left join tu_custom_values on tu_custom_origine=tu_id 
 						and tu_custom_champ=!!field!! where (tu_custom_small_text='' or tu_custom_small_text is null)]]></main>
 				</query>
-				<query for="ISNOTEMPTY" notAllowedFor="date_flot">
+				<query for="ISNOTEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join titres_uniformes on titres_uniformes.tu_id=authorities.num_object and authorities.type_object = 7 join tu_custom_values on tu_custom_origine=tu_id 
 						where tu_custom_champ=!!field!! and tu_custom_small_text != '']]></main>					  
 				</query>
@@ -4435,6 +4603,30 @@
 					<main><![CDATA[select distinct id_authority from authorities join titres_uniformes on titres_uniformes.tu_id=authorities.num_object and authorities.type_object = 7 join tu_custom_values on tu_custom_origine=tu_id 
 						where tu_custom_champ=!!field!! and tu_custom_date >= '!!p!!']]></main>
 				</query>
+				<query for="LESS_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join titres_uniformes on titres_uniformes.tu_id=authorities.num_object and authorities.type_object = 7 join tu_custom_values on tu_custom_origine=tu_id 
+						where tu_custom_champ=!!field!! and tu_custom_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="MORE_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join titres_uniformes on titres_uniformes.tu_id=authorities.num_object and authorities.type_object = 7 join tu_custom_values on tu_custom_origine=tu_id 
+						where tu_custom_champ=!!field!! and tu_custom_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="THIS_WEEK">
+					<main><![CDATA[select distinct id_authority from authorities join titres_uniformes on titres_uniformes.tu_id=authorities.num_object and authorities.type_object = 7 join tu_custom_values on tu_custom_origine=tu_id 
+						where tu_custom_champ=!!field!! and WEEK(tu_custom_date,1) = WEEK(NOW()) and YEAR(tu_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="THIS_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join titres_uniformes on titres_uniformes.tu_id=authorities.num_object and authorities.type_object = 7 join tu_custom_values on tu_custom_origine=tu_id 
+						where tu_custom_champ=!!field!! and MONTH(tu_custom_date) = MONTH(NOW()) and YEAR(tu_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="LAST_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join titres_uniformes on titres_uniformes.tu_id=authorities.num_object and authorities.type_object = 7 join tu_custom_values on tu_custom_origine=tu_id 
+						where tu_custom_champ=!!field!! and PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(tu_custom_date, '%Y%m')) = 1]]></main>
+				</query>
+				<query for="THIS_YEAR">
+					<main><![CDATA[select distinct id_authority from authorities join titres_uniformes on titres_uniformes.tu_id=authorities.num_object and authorities.type_object = 7 join tu_custom_values on tu_custom_origine=tu_id 
+						where tu_custom_champ=!!field!! and YEAR(tu_custom_date) = YEAR(NOW())]]></main>
+				</query>
 				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join titres_uniformes on titres_uniformes.tu_id=authorities.num_object and authorities.type_object = 7 left join tu_custom_values on tu_custom_origine=tu_id 
 						and tu_custom_champ=!!field!! where (tu_custom_date='' or tu_custom_date is null)]]></main>
@@ -4486,11 +4678,11 @@
 					<main><![CDATA[select distinct id_authority from authorities join indexint on indexint.indexint_id=authorities.num_object and authorities.type_object = 8 join indexint_custom_values on indexint_custom_origine=indexint_id 
 						where indexint_custom_champ=!!field!! and indexint_custom_small_text like '!!p!!']]></main>
 				</query>
-				<query for="ISEMPTY" notAllowedFor="date_flot">
+				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join indexint on indexint.indexint_id=authorities.num_object and authorities.type_object = 8 left join indexint_custom_values on indexint_custom_origine=indexint_id 
 						and indexint_custom_champ=!!field!! where (indexint_custom_small_text='' or indexint_custom_small_text is null)]]></main>
 				</query>
-				<query for="ISNOTEMPTY" notAllowedFor="date_flot">
+				<query for="ISNOTEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join indexint on indexint.indexint_id=authorities.num_object and authorities.type_object = 8 join indexint_custom_values on indexint_custom_origine=indexint_id 
 						where indexint_custom_champ=!!field!! and indexint_custom_small_text != '']]></main>					  
 				</query>
@@ -4612,6 +4804,30 @@
 					<main><![CDATA[select distinct id_authority from authorities join indexint on indexint.indexint_id=authorities.num_object and authorities.type_object = 8 join indexint_custom_values on indexint_custom_origine=indexint_id 
 						where indexint_custom_champ=!!field!! and indexint_custom_date >= '!!p!!']]></main>
 				</query>
+				<query for="LESS_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join indexint on indexint.indexint_id=authorities.num_object and authorities.type_object = 8 join indexint_custom_values on indexint_custom_origine=indexint_id 
+						where indexint_custom_champ=!!field!! and indexint_custom_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="MORE_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join indexint on indexint.indexint_id=authorities.num_object and authorities.type_object = 8 join indexint_custom_values on indexint_custom_origine=indexint_id 
+						where indexint_custom_champ=!!field!! and indexint_custom_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="THIS_WEEK">
+					<main><![CDATA[select distinct id_authority from authorities join indexint on indexint.indexint_id=authorities.num_object and authorities.type_object = 8 join indexint_custom_values on indexint_custom_origine=indexint_id 
+						where indexint_custom_champ=!!field!! and WEEK(indexint_custom_date,1) = WEEK(NOW()) and YEAR(indexint_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="THIS_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join indexint on indexint.indexint_id=authorities.num_object and authorities.type_object = 8 join indexint_custom_values on indexint_custom_origine=indexint_id 
+						where indexint_custom_champ=!!field!! and MONTH(indexint_custom_date) = MONTH(NOW()) and YEAR(indexint_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="LAST_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join indexint on indexint.indexint_id=authorities.num_object and authorities.type_object = 8 join indexint_custom_values on indexint_custom_origine=indexint_id 
+						where indexint_custom_champ=!!field!! and PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(indexint_custom_date, '%Y%m')) = 1]]></main>
+				</query>
+				<query for="THIS_YEAR">
+					<main><![CDATA[select distinct id_authority from authorities join indexint on indexint.indexint_id=authorities.num_object and authorities.type_object = 8 join indexint_custom_values on indexint_custom_origine=indexint_id 
+						where indexint_custom_champ=!!field!! and YEAR(indexint_custom_date) = YEAR(NOW())]]></main>
+				</query>
 				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join indexint on indexint.indexint_id=authorities.num_object and authorities.type_object = 8 left join indexint_custom_values on indexint_custom_origine=indexint_id 
 						and indexint_custom_champ=!!field!! where (indexint_custom_date='' or indexint_custom_date is null)]]></main>
@@ -4691,11 +4907,11 @@
 					<main><![CDATA[select distinct id_authority from authorities join authperso_custom_values on authperso_custom_values.authperso_custom_origine=authorities.num_object and authorities.type_object = 9
 						where authperso_custom_champ=!!field!! and authperso_custom_small_text = '!!p!!']]></main>
 				</query>
-				<query for="ISEMPTY" notAllowedFor="date_flot">
+				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities left join authperso_custom_values on authperso_custom_values.authperso_custom_origine=authorities.num_object and authorities.type_object = 9
 						and authperso_custom_champ=!!field!! where (authperso_custom_small_text='' or authperso_custom_small_text is null)]]></main>
 				</query>
-				<query for="ISNOTEMPTY" notAllowedFor="date_flot">
+				<query for="ISNOTEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities join authperso_custom_values on authperso_custom_values.authperso_custom_origine=authorities.num_object and authorities.type_object = 9
 						where authperso_custom_champ=!!field!! and authperso_custom_small_text != '']]></main>					  
 				</query>
@@ -4817,6 +5033,30 @@
 					<main><![CDATA[select distinct id_authority from authorities join authperso_custom_values on authperso_custom_values.authperso_custom_origine=authorities.num_object and authorities.type_object = 9
 						where authperso_custom_champ=!!field!! and authperso_custom_date >= '!!p!!']]></main>
 				</query>
+				<query for="LESS_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join authperso_custom_values on authperso_custom_values.authperso_custom_origine=authorities.num_object and authorities.type_object = 9
+						where authperso_custom_champ=!!field!! and authperso_custom_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="MORE_THAN_DAYS">
+					<main><![CDATA[select distinct id_authority from authorities join authperso_custom_values on authperso_custom_values.authperso_custom_origine=authorities.num_object and authorities.type_object = 9
+						where authperso_custom_champ=!!field!! and authperso_custom_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="THIS_WEEK">
+					<main><![CDATA[select distinct id_authority from authorities join authperso_custom_values on authperso_custom_values.authperso_custom_origine=authorities.num_object and authorities.type_object = 9
+						where authperso_custom_champ=!!field!! and WEEK(authperso_custom_date,1) = WEEK(NOW()) and YEAR(authperso_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="THIS_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join authperso_custom_values on authperso_custom_values.authperso_custom_origine=authorities.num_object and authorities.type_object = 9
+						where authperso_custom_champ=!!field!! and MONTH(authperso_custom_date) = MONTH(NOW()) and YEAR(authperso_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="LAST_MONTH">
+					<main><![CDATA[select distinct id_authority from authorities join authperso_custom_values on authperso_custom_values.authperso_custom_origine=authorities.num_object and authorities.type_object = 9
+						where authperso_custom_champ=!!field!! and PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(authperso_custom_date, '%Y%m')) = 1]]></main>
+				</query>
+				<query for="THIS_YEAR">
+					<main><![CDATA[select distinct id_authority from authorities join authperso_custom_values on authperso_custom_values.authperso_custom_origine=authorities.num_object and authorities.type_object = 9
+						where authperso_custom_champ=!!field!! and YEAR(authperso_custom_date) = YEAR(NOW())]]></main>
+				</query>
 				<query for="ISEMPTY">
 					<main><![CDATA[select distinct id_authority from authorities left join authperso_custom_values on authperso_custom_values.authperso_custom_origine=authorities.num_object and authorities.type_object = 9
 						and authperso_custom_champ=!!field!! where (authperso_custom_date='' or authperso_custom_date is null)]]></main>
@@ -4846,7 +5086,7 @@
 	
 	<operators>
 		<operator name="BOOLEAN">msg:expr_bool_query</operator>
-		<operator name="CONTAINS">msg:203</operator>
+		<operator name="CONTAINS">msg:284</operator>
 		<operator name="CONTAINS_ALL">msg:contient_tous_mots_query</operator>
 		<operator name="CONTAINS_AT_LEAST">msg:contient_plus_un_mot_query</operator>
 		<operator name="STARTWITH">msg:commence_par_query</operator>
@@ -4865,6 +5105,13 @@
 		<operator name="INTERSECTS">msg:map_multisearch_intersects</operator>
 		<operator name="BETWEEN">msg:search_between_query</operator>
 		<operator name="NEAR">msg:parperso_option_duration_type0</operator>
+		<operator name="LESS_THAN_DAYS">msg:less_than_days_query</operator>
+		<operator name="MORE_THAN_DAYS">msg:more_than_days_query</operator>
+		<operator name="THIS_WEEK" emptyAllowed="yes">msg:this_week_query</operator>
+		<operator name="LAST_WEEK" emptyAllowed="yes">msg:last_week_query</operator>
+		<operator name="THIS_MONTH" emptyAllowed="yes">msg:this_month_query</operator>
+		<operator name="LAST_MONTH" emptyAllowed="yes">msg:last_month_query</operator>
+		<operator name="THIS_YEAR" emptyAllowed="yes">msg:this_year_query</operator>
 	</operators>
 	<!-- Les groupes sont associés aux champs (fields) et permettent d'amener une notion de classement -->
 	<groups>

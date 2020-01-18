@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions.class.php,v 1.29 2018-07-04 13:10:28 mbertin Exp $
+// $Id: suggestions.class.php,v 1.29.6.1 2019-11-14 10:11:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/notice_affichage.inc.php");
@@ -343,6 +343,14 @@ class suggestions{
 				<td>".htmlentities($msg['empr_sugg_comment'], ENT_QUOTES, $charset)."</td>
 				<td>".htmlentities($this->commentaires, ENT_QUOTES, $charset)."</td>
 			</tr>";
+		if(empty($_SESSION["id_empr_session"])) {
+		    global $mail;
+		    $table.= "
+			<tr>
+				<td >".htmlentities($msg["empr_sugg_mail"], ENT_QUOTES, $charset)."</td>
+				<td>".htmlentities($mail, ENT_QUOTES, $charset)."</td>
+			</tr>";
+		}
 		if ($opac_sugg_categ=='1') {
 			$categ = new suggestions_categ($this->num_categ);
 			$table.= "

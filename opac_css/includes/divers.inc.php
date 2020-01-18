@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: divers.inc.php,v 1.18 2017-12-28 16:14:23 dgoron Exp $
+// $Id: divers.inc.php,v 1.22 2019-07-02 15:50:25 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -32,6 +32,10 @@ function formatdate_input($date_a_convertir) {
 function extraitdate($date_a_convertir) {
 	global $msg;
 	
+	$date_a_convertir = str_replace ("-","/",$date_a_convertir);
+	$date_a_convertir = str_replace (".","/",$date_a_convertir);
+	$date_a_convertir = str_replace ("\\","/",$date_a_convertir);
+	
 	$format_local = str_replace ("%","",$msg["format_date_input_model"]);
 	$format_local = str_replace ("-","",$format_local);
 	$format_local = str_replace ("/","",$format_local);
@@ -51,8 +55,11 @@ function extraitdate($date_a_convertir) {
 
 function detectFormatDate($date_a_convertir,$compl="01"){
 	global $msg;
+	$date_array = array();
 	if(preg_match("#\d{4}-\d{2}-\d{2}#",$date_a_convertir)){
 		$date = $date_a_convertir;
+	}else if(preg_match("#\d{4}.\d{2}.\d{2}#",$date_a_convertir)){
+		$date = str_replace('.', '-', $date_a_convertir);
 	}else if(preg_match(getDatePattern(),$date_a_convertir)){
 		$date = extraitdate($date_a_convertir);
 	}elseif(preg_match(getDatePattern("short"),$date_a_convertir)){
@@ -63,14 +70,14 @@ function detectFormatDate($date_a_convertir,$compl="01"){
 		$format = str_replace (".","",$format);
 		$format = str_replace (" ","",$format);
 		$format = str_replace ($msg["format_date_input_separator"],"",$format);
-		list($date[substr($format,0,1)],$date[substr($format,1,1)],$date[substr($format,2,1)]) = sscanf($date_a_convertir,$msg["format_date_short_input"]);
-		if ($date['Y'] && $date['m']){
+		list($date_array[substr($format,0,1)],$date_array[substr($format,1,1)],$date_array[substr($format,2,1)]) = sscanf($date_a_convertir,$msg["format_date_short_input"]);
+		if ($date_array['Y'] && $date_array['m']){
 			if ($compl == "min") {
-				$date = sprintf("%04d-%02d-%02s",$date['Y'],$date['m'],"01");
+			    $date = sprintf("%04d-%02d-%02s",$date_array['Y'],$date_array['m'],"01");
 			} elseif ($compl == "max") {
-				$date = sprintf("%04d-%02d-%02s",$date['Y'],$date['m'],date("t",mktime( 0, 0, 0, $date['m'], 1, $date['Y'] )));
+			    $date = sprintf("%04d-%02d-%02s",$date_array['Y'],$date_array['m'],date("t",mktime( 0, 0, 0, $date_array['m'], 1, $date_array['Y'] )));
 			} else{
-				$date = sprintf("%04d-%02d-%02s",$date['Y'],$date['m'],$compl);
+			    $date = sprintf("%04d-%02d-%02s",$date_array['Y'],$date_array['m'],$compl);
 			}
 		}else{
 			$date = "0000-00-00";
@@ -132,28 +139,28 @@ function getDatePattern($format="long"){
 			$format_date = "Y"; 
 			break;
 	}
-	$format_date = str_replace ("-"," ",$format_date);
-	$format_date = str_replace ("/"," ",$format_date);
-	$format_date = str_replace ("\\"," ",$format_date);
-	$format_date = str_replace ("."," ",$format_date);	
-	$format_date=explode(" ",$format_date);
+	$format_date = str_replace("-", " ", $format_date);
+	$format_date = str_replace("/", " ", $format_date);
+	$format_date = str_replace("\\", " ", $format_date);
+	$format_date = str_replace(".", " ", $format_date);	
+	$format_date_array = explode(" ", $format_date);
 	$pattern = array();
-	for($i=0;$i<count($format_date);$i++){
-		switch($format_date[$i]){
+	for ($i = 0; $i < count($format_date_array); $i++) {
+	    switch ($format_date_array[$i]) {
 			case "m" :
 			case "d" :
-				$pattern[$i] =  '\d{1,2}';
+				$pattern[$i] = '\d{1,2}';
 			break;
 			case "Y" :
-				$pattern[$i] =  '\d{4}';
+				$pattern[$i] = '\d{4}';
 			break;
 		}
 	}	
-	return "#".implode($pattern,".")."#";
+	return "#".implode($pattern, ".")."#";
 }
 
 function getDojoPattern($date) {
-	$formatted_date = str_replace (array("%d", "%M", "%Y"),array("dd","MMMM","yyyy"),$date);
+	$formatted_date = str_replace (array("%d", "%m", "%y", "%D", "%M", "%Y"),array("dd","MM","yy","DD","MMMM","yyyy"),$date);
 	if(strpos($formatted_date, '%') !== false) {
 		return '';
 	} else {

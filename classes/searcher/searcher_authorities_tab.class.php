@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_authorities_tab.class.php,v 1.9 2018-05-15 11:35:43 dgoron Exp $
+// $Id: searcher_authorities_tab.class.php,v 1.13 2019-06-17 13:25:08 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -39,8 +39,8 @@ class searcher_authorities_tab extends searcher_autorities {
 	    		foreach ($this->searcher_authorities_instances as $searcher_authority) {
 	    			$created_table = 'search_result'.md5(microtime(true));
 					$rqt = 'create temporary table '.$created_table.' '.$searcher_authority->get_raw_query();
-					$res = pmb_mysql_query($rqt,$dbh);
-					pmb_mysql_query('alter table '.$created_table.' add index i_id('.$this->object_key.')',$dbh);
+					$res = pmb_mysql_query($rqt);
+					pmb_mysql_query('alter table '.$created_table.' add index i_id('.$this->object_key.')');
 					if (!$query) {
 						$reference = $created_table;
 						$query = 'select '.$reference.'.'.$this->object_key.' from '.$reference;
@@ -100,6 +100,17 @@ class searcher_authorities_tab extends searcher_autorities {
 			$this->searcher_authorities_instances = array();
 			foreach ($this->user_query['SEARCHFIELDS'] as $searchfield) {
 				$instance=null;
+				if(isset($searchfield['values']['id'])){
+				    if(!empty($searchfield['values']['id'][0])){
+				        $instance = searcher_factory::get_searcher( $searchfield['type'], 'query',$searchfield['values']);	   
+				        $instance->set_query($searchfield['queryid']);
+				        if(!empty($searchfield['queryfilter'])){
+				            $instance->set_filter($searchfield['queryfilter']);
+				        }
+				    }else{
+				        $searchfield['values'] =  $searchfield['values']['values'];
+				    }
+				}
 				if (isset($searchfield['values'][0]) && $searchfield['values'][0] && $searchfield['type']) {
 					$instance = searcher_factory::get_searcher( $searchfield['type'], $searchfield['mode'],stripslashes($searchfield['values'][0]));				
 				} else if (isset($searchfield['values'][0]) && $searchfield['values'][0] && $searchfield['class']) {
@@ -108,6 +119,9 @@ class searcher_authorities_tab extends searcher_autorities {
 				if(is_object($instance)){
 					if (isset($searchfield['fieldrestrict']) && is_array($searchfield['fieldrestrict'])) {
 						$instance->add_fields_restrict($searchfield['fieldrestrict']);
+					}
+					if (isset($searchfield['query']) && $searchfield['mode'] == "query") {
+					    $instance->set_query($searchfield['query']);
 					}
 					$this->searcher_authorities_instances[] = $instance;
 				}
@@ -125,6 +139,23 @@ class searcher_authorities_tab extends searcher_autorities {
 				if (isset($filterfield['values'][0]) && $filterfield['values'][0] && $filterfield['globalvar']) {
 					global ${$filterfield['globalvar']};
 					${$filterfield['globalvar']} = $filterfield['values'][0];
+				}else{
+				    //cas bizarre on on recolle le filtre comme élément de la recherche
+				    $instance = null;
+				    if (isset($filterfield['values'][0]) && $filterfield['values'][0] && $filterfield['type']) {
+				        $instance = searcher_factory::get_searcher( $filterfield['type'], $filterfield['mode'],stripslashes($filterfield['values'][0]));
+				    } else if (isset($filterfield['values'][0]) && $filterfield['values'][0] && $filterfield['class']) {
+				        $instance = new $filterfield['class'](stripslashes($filterfield['values'][0]));
+				    }
+				    if(is_object($instance)){
+				        if (isset($filterfield['fieldrestrict']) && is_array($filterfield['fieldrestrict'])) {
+				            $instance->add_fields_restrict($filterfield['fieldrestrict']);
+				        }
+				        if (isset($filterfield['query']) && $filterfield['mode'] == "query") {
+				            $instance->set_query($filterfield['query']);
+				        }
+				        $this->searcher_authorities_instances[] = $instance;
+				    }
 				}
 			}
 		}
@@ -141,4 +172,3 @@ class searcher_authorities_tab extends searcher_autorities {
 		return '';
 	}
 }
-?>

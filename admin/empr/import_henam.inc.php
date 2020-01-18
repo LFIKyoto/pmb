@@ -521,8 +521,4 @@ switch($action) {
         show_import_choix_fichier($dbh);
         break;
 }
-
 ?>
-
-
-

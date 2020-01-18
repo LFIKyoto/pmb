@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bull_info.inc.php,v 1.80 2018-07-25 14:16:34 vtouchard Exp $
+// $Id: bull_info.inc.php,v 1.83 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -28,7 +28,7 @@ function get_expl($expl, $show_in_reception=0, $return_count = false) {
 	global $pmb_pret_groupement;
 	
 	// attention, $bul est un array
-	if(!sizeof($expl) || !is_array($expl)) {
+	if (!is_array($expl) || empty($expl)) {
 		return $msg["bull_no_expl"];
 	}
 	$explr_tab_invis=explode(",",$explr_invisible);
@@ -351,7 +351,10 @@ function get_expl($expl, $show_in_reception=0, $return_count = false) {
     					$id_column = "id='groupexpl_name_".$exemplaire->expl_cb."'";
     					$colencours = groupexpls::get_group_name_expl($exemplaire->expl_cb);
     					$aff_column = htmlentities($colencours,ENT_QUOTES, $charset);
-	    			}else {
+	    			}else if ($colonnesarray[$i]=="nb_prets") {
+						$colencours = exemplaire::get_nb_prets_from_id($exemplaire->expl_id);
+						$aff_column = ($colencours ? htmlentities($colencours,ENT_QUOTES, $charset) : '');
+					}else {
 						$aff_column = htmlentities($colencours,ENT_QUOTES, $charset);
 	    			}
     			}
@@ -367,7 +370,7 @@ function get_expl($expl, $show_in_reception=0, $return_count = false) {
 				$notcom=array();
 				$line .= "<tr><td colspan='".$total_columns."'>";
 				if ($exemplaire->expl_note && ($pmb_expl_list_display_comments & 1)) $notcom[] .= "<span class='erreur'>$exemplaire->expl_note</span>";
-				if ($exemplaire->expl_comment && ($pmb_expl_list_display_comments & 2)) $notcom[] .= "$exemplaire->expl_comment";
+				if ($exemplaire->expl_comment && ($pmb_expl_list_display_comments & 2)) $notcom[] .= "<span class='expl_list_comment'>$exemplaire->expl_comment</span>";
 				$line .= implode("<br />",$notcom);
 				$line .= "</tr>";
 			}
@@ -511,7 +514,7 @@ function show_bulletinage_info($bul_id, $lien_cart_ajout=1, $lien_cart_suppr=0, 
 		}
 		
 		$bul_action_bar = str_replace('!!bul_id!!', $bul_id, $bul_action_bar);
-		$bul_action_bar = str_replace('!!nb_expl!!', sizeof($myBul->expl), $bul_action_bar);
+		$bul_action_bar = str_replace('!!nb_expl!!', count($myBul->expl), $bul_action_bar);
 		
 		$bul_isbd = $myBul->display;
 		

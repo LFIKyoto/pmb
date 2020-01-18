@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_article.class.php,v 1.33 2018-03-13 16:36:11 apetithomme Exp $
+// $Id: cms_article.class.php,v 1.34.2.2 2019-10-25 07:00:47 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -162,6 +162,7 @@ class cms_article extends cms_editorial {
 		
 		//audit
 		audit::insert_creation (AUDIT_EDITORIAL_ARTICLE, $id) ;
+		return $id;
 	}
 	
 	public function get_parent_selector(){
@@ -197,38 +198,8 @@ class cms_article extends cms_editorial {
 	}
 	
 	public function format_datas(){
-		global $thesaurus_concepts_active;
-		$parent = new cms_section($this->num_parent);
-		$documents = array();
-		$this->get_documents();
-		foreach($this->documents_linked as $id_doc){
-			$document = new cms_document($id_doc);
-			$documents[] = $document->format_datas();
-		}
-		$formatted_data = array(
-			'id' => $this->id,
-			'parent' => $parent->format_datas(false,false),
-			'title' => $this->title,
-			'resume' => $this->resume,
-			'logo' => $this->logo->format_datas(),
-			'publication_state' => $this->publication_state,
-			'start_date' => format_date($this->start_date),
-			'end_date' => format_date($this->end_date),
-			'descriptors' => $this->get_descriptors(),
-			'content' => $this->contenu,
-			'num_type' => $this->num_type,
-			'fields_type' => $this->get_fields_type(),
-			'type' => $this->type_content,
-			'create_date' => format_date($this->create_date),
-			'documents' => $documents,
-			'nb_documents' => count($documents),
-			'last_update_date' => format_date($this->last_update_date),
-			'permalink' => $this->get_permalink()
-		);
-		if($thesaurus_concepts_active == 1){
-			$formatted_data['concepts'] = $this->index_concept->get_concepts();
-		}
-		return $formatted_data;
+	    $cms_editorial_data = new cms_editorial_data($this->id, $this->type);
+	    return $cms_editorial_data;
 	}
 	
 	public static function get_format_data_structure($type="article",$full=true){

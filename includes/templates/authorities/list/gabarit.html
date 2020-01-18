@@ -1,4 +1,4 @@
-<!-- $Id: gabarit.html,v 1.31 2018-10-18 11:26:17 dgoron Exp $ -->
+<!-- $Id: gabarit.html,v 1.32 2019-01-23 10:22:26 ngantier Exp $ -->
 
 <style type="text/css">
 .aut_display_row {
@@ -37,9 +37,9 @@
 			
 			{% if list_element.context_parameters.in_selector %}
 				{% block element_link %}
-				<a href="#" data-element-id="{{ list_element.id }}" data-element-type="authorities" onclick="set_parent('{{ global.caller }}', '{{ list_element.num_object }}', '{{ list_element.isbd | escape true }}','{{ global.callback }}')">
+				<a href="#" data-element-id="{{ list_element.id }}" data-element-type="authorities" onclick="set_parent('{{ global.caller }}', '{{ list_element.num_object }}', '{{ list_element.isbd | strip_tags | escape true }}','{{ global.callback }}')">
 					{% block element_selector_header %}
-						{{ list_element.isbd | safe }}
+						{{ list_element.isbd | strip_tags | safe }}
 					{% endblock %}
 				</a>
 				{% endblock %}

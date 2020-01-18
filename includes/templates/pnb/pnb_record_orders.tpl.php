@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pnb_record_orders.tpl.php,v 1.4 2018-06-20 10:02:30 tsamson Exp $
+// $Id: pnb_record_orders.tpl.php,v 1.5.6.1 2019-11-08 11:28:01 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+global $pnb_record_orders_tpl, $msg, $pnb_record_orders_tpl_line;
 
 $pnb_record_orders_tpl = "
 	<div class='row'>
@@ -56,12 +58,6 @@ $pnb_record_orders_tpl_line = "
 			!!loan_max_duration!!
 		</td>
 		<td class='center'>
-			<script type=\"text/javascript\">
-				addLoadEvent(function() {		
-					pnb_get_loans_completed_number('!!record_id!!', '!!line_id!!');
-				});
-			</script>
-			<span id='nb_loans_!!line_id!!'></span>
 			!!nb_loans!!
 		</td>
 		<td class='center'>

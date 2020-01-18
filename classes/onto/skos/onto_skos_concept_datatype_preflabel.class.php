@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_skos_concept_datatype_preflabel.class.php,v 1.13 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: onto_skos_concept_datatype_preflabel.class.php,v 1.14 2019-06-11 08:53:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -56,7 +56,7 @@ class onto_skos_concept_datatype_preflabel extends onto_common_datatype{
 						if (!empty($data["display_label"])) {
 							$data_properties["display_label"] = $data["display_label"];
 						}
-						$class_name = get_called_class();
+						$class_name = static::class;
 						$datatypes[$property->uri][] = new $class_name($data["value"], $data["type"], $data_properties);
 					}
 				}
@@ -107,7 +107,7 @@ class onto_skos_concept_datatype_preflabel extends onto_common_datatype{
 							} else {
 								$data_properties["type"] = "uri";
 							}
-							$class_name = get_called_class();
+							$class_name = static::class;
 							$datatypes[$property->uri][] = new $class_name($data["value"], $data["type"], $data_properties);
 						}
 					}

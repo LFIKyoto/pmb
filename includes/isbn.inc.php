@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: isbn.inc.php,v 1.26 2017-11-27 10:37:27 tsamson Exp $
+// $Id: isbn.inc.php,v 1.29 2019-07-15 14:24:31 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,6 +17,8 @@ if ((!isset($array_isbn_ranges))||(!is_array($array_isbn_ranges))||(!count($arra
 
 function isISBN($isbn) {
 	$checksum=0;
+	
+	if(empty($isbn)) return FALSE;
 	// s'il y a des lettres, ce n'est pas un ISBN
 	if(preg_match('/[A-WY-Z]/i', $isbn))
 		return FALSE;
@@ -82,14 +84,18 @@ function key10($isbnwk) {
 }
 
 function key13($isbnwk) {
-	$cksum=0;
-	$p=1;
-	for ($i=0; $i<strlen($isbnwk); $i++) {
-		$cksum+=$p*$isbnwk[$i];
-		$p==1?$p=3:$p=1;
+	$cksum = 0;
+	$p = 1;
+	for ($i = 0; $i < strlen($isbnwk); $i++) {
+		$cksum += $p * $isbnwk[$i];
+		if ($p == 1) {
+		    $p = 3;
+		} else {
+		    $p = 1;
+		}
 	}
-	$key=10-$cksum%10;
-	if ($key==10) $key=0;
+	$key = 10 - $cksum % 10;
+	if ($key==10) $key = 0;
 	return $key;
 }
 
@@ -147,7 +153,7 @@ function formatISBN($isbn,$taille="") {
 
 	$isbn = preg_replace("/^$seg2/", '', $isbn);
 
-	$key = $isbn[strlen($isbn) - 1];
+	$key = substr($isbn, strlen($isbn) - 1, 1);
 
 	$seg3 = substr($isbn, 0, strlen($isbn) - 1);
 
@@ -275,7 +281,7 @@ function EANtoISBN10($ean) {
 
 	// calcul de la clé
 	for ($i = 0; $i < strlen($isbn) ; $i++) {
-		$checksum += (10 - $i) * $isbn[$i];
+		$checksum += (10 - $i) * substr($isbn, $i, 1);
 	}
 	$key = 11 - $checksum % 11;
 

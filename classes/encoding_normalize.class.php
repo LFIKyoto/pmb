@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: encoding_normalize.class.php,v 1.14 2018-06-13 12:41:19 ngantier Exp $
+// $Id: encoding_normalize.class.php,v 1.15 2019-04-04 13:45:53 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -65,7 +65,10 @@ class encoding_normalize {
 			//PMB dans un autre charset, on converti la chaine...
 			$elem = self::clean_cp1252($elem, $input_charset);
 			if($charset != $input_charset){
-				$elem = iconv($input_charset,$charset,$elem);
+			    $str_conv = @iconv($input_charset,$charset,$elem);
+			    if ($str_conv !== false) {
+			        $elem = $str_conv;
+			    }
 			}
 		}
 		return $elem;

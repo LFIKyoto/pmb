@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_request.inc.php,v 1.3 2017-07-10 15:02:49 arenou Exp $
+// $Id: scan_request.inc.php,v 1.4 2019-05-29 12:12:29 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $aff_alerte, $msg, $class_path;
 
 require_once($class_path.'/scan_request/scan_requests.class.php');
 

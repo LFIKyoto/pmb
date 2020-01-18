@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abts_pointage.tpl.php,v 1.19 2017-11-24 14:53:54 ngantier Exp $
+// $Id: abts_pointage.tpl.php,v 1.20 2019-05-27 12:23:40 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $pointage_list, $pointage_form, $msg, $current_module, $abts_gestion_retard_form_filter, $abts_gestion_retard_fournisseur_first, $abts_gestion_retard_fournisseur_suite, $abts_gestion_retard_form, $charset, $abts_gestion_retard_perio, $abts_gestion_retard_bulletin, $abts_gestion_retard_bulletin_relance;
 
 $pointage_list ="
 <script type='text/javascript' src='./javascript/sorttable.js'></script>

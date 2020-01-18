@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_main.inc.php,v 1.20 2017-09-14 09:40:26 dgoron Exp $
+// $Id: ajax_main.inc.php,v 1.21 2019-05-28 15:00:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $sort_asc_desc, $class_path, $sub, $id, $action, $from, $value, $with, $id_entity, $filters, $pager, $sort_by, $id_invoice, $deleted, $uniform_title_id, $invoice_id, $publisher_id, $num_exercice;
 
 if(!isset($sort_asc_desc)) $sort_asc_desc = '';
 

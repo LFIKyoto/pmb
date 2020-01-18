@@ -2,7 +2,9 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_tpl.inc.php,v 1.133 2018-12-27 15:17:07 dgoron Exp $
+// $Id: notice_tpl.inc.php,v 1.144.2.2 2019-10-21 14:20:31 dgoron Exp $
+
+global $include_path, $class_path;
 require_once ($include_path . '/misc.inc.php');
 
 //gestion des droits
@@ -22,6 +24,7 @@ $func_format['replace']= 'replace_str';
 $func_format['htmlentities'] = 'aff_htmlentities';
 $func_format['set_variable'] = 'aff_set_variable';
 $func_format['get_variable'] = 'aff_get_variable';
+$func_format['get_global_variable'] = 'aff_get_global_variable';
 
 $func_format['isbd']= 'aff_isbd';
 $func_format['title']= 'aff_title';
@@ -121,6 +124,7 @@ $func_format['titre_bulletin'] = 'aff_titre_bulletin';
 $func_format['linked_id'] = 'linked_id';
 $func_format['serial_linked_id'] = 'serial_linked_id';
 $func_format['group'] = 'group';
+$func_format['filter_from_notice_info']= 'filter_from_notice_info';
 
 $func_format['publisher_with_tpl'] = 'aff_ed1_with_tpl';
 $func_format['publisher_1_with_tpl'] = 'aff_ed2_with_tpl';
@@ -128,6 +132,7 @@ $func_format['collection_with_tpl'] = 'aff_collection_with_tpl';
 $func_format['subcollection_with_tpl'] = 'aff_subcollection_with_tpl';
 $func_format['categories_with_tpl'] = 'aff_categories_with_tpl';
 $func_format['indexint_with_tpl'] = 'aff_indexint_with_tpl';
+$func_format['expl_num_by_field']= 'aff_expl_num_by_field';
 $func_format['expl_num_with_tpl'] = 'aff_expl_num_with_tpl';
 $func_format['msg'] = 'aff_msg';
 $func_format['serie_with_tpl'] = 'aff_serie_with_tpl';
@@ -160,6 +165,7 @@ $func_format['bull_for_art_expl_num_vign_reduit'] = 'aff_bull_for_art_expl_num_v
 $func_format['bull_for_art_expl_num_with_tpl'] = 'aff_bull_for_art_expl_num_with_tpl';
 
 $func_format['bannette_id'] = 'aff_bannette_id';
+$func_format['bulletin_id'] = 'aff_bulletin_id';
 
 $func_format['strip_tags'] = 'aff_strip_tags';
 $func_format['concepts'] = 'aff_concepts';
@@ -172,7 +178,7 @@ function replace_str($param) {
     global $parser_environnement;
     if(!$parser_environnement['id_notice']) return '';
     $notice=gere_global();   
-    return str_replace("!!".$param[1]."!!", $notice['notice_info']->$param[1], $param[0]);     
+    return str_replace("!!".$param[1]."!!", $notice['notice_info']->{$param[1]}, $param[0]);     
 }
 
 function aff_p_perso($param) {
@@ -226,7 +232,7 @@ function aff_notice_field($param) {
 	global $parser_environnement;
 	if(!$parser_environnement['id_notice']) return '';
 	$notice=gere_global();	
-	return $notice['notice_info']->notice->$param[0];	
+	return $notice['notice_info']->notice->{$param[0]};	
 }
 
 function aff_url($param) {
@@ -366,7 +372,7 @@ function aff_categories_with_tpl($param) {
 function _get_categ_infos($cat,$tpl){
 	if($tpl != "" && preg_match_all("/{([^}]*)}/",$tpl,$matches)){
 		for ($i=0 ; $i<count($matches[1]) ; $i++){
-			$tpl = str_replace($matches[0][$i],$cat->$matches[1][$i],$tpl);
+		    $tpl = str_replace($matches[0][$i],$cat->{$matches[1][$i]},$tpl);
 		}
 	}else{
 		return $cat->isbd_entry_lien_gestion;
@@ -398,7 +404,7 @@ function aff_indexint_with_tpl($param) {
 function _get_indexint_infos($ind,$tpl){
 	if($tpl != "" && preg_match_all("/{([^}]*)}/",$tpl,$matches)){
 		for ($i=0 ; $i<count($matches[1]) ; $i++){
-			$tpl = str_replace($matches[0][$i],$ind->$matches[1][$i],$tpl);
+		    $tpl = str_replace($matches[0][$i],$ind->{$matches[1][$i]},$tpl);
 		}
 	}else{
 		return $ind->isbd_entry_lien_gestion;
@@ -715,8 +721,8 @@ function aff_a_empty($param) {
 function aff_not_empty($param) {
 	if($param[0]) {
 		return $param[1];
-	} else return $param[0];
-	return '';
+	}
+	return $param[0];
 }
 
 function aff_if_empty($param) {
@@ -730,8 +736,8 @@ function aff_if_empty($param) {
 function aff_if($param) {
 	if($param[0]) {
 		return $param[1];
-	} else return $param[2];
-	return '';
+	}
+	return $param[2];
 }
 
 function aff_is_article($param) {
@@ -977,6 +983,7 @@ function aff_categories($param) {
 	// $param[2] = séparateur entre thesaurus
 	// $param[3] = langue à prendre en compte
 	// $param[4] = afficher le nom du ou des thesaurus en entête, 0 ou 1
+	// $param[5] = nb maxi de catégories à afficher
 	
 	global $parser_environnement;
 	if(!$parser_environnement['id_notice']) return '';
@@ -987,6 +994,7 @@ function aff_categories($param) {
 	else $restrict_thes="";
 	
 	$requete="SELECT libelle_thesaurus as thesnom, if(catlg.libelle_categorie is not null,catlg.libelle_categorie,catdef.libelle_categorie) as categnom FROM notices_categories left join categories catlg on (catlg.num_noeud = notices_categories.num_noeud and catlg.langue='".$param[3]."') left join categories catdef on (catdef.num_noeud = notices_categories.num_noeud), thesaurus thesdef  where catdef.num_thesaurus=thesdef.id_thesaurus and notcateg_notice='".$parser_environnement['id_notice']."' and (catdef.langue=thesdef.langue_defaut or catdef.langue is null) $restrict_thes ORDER BY libelle_thesaurus, ordre_categorie";
+	if ($param[5]>0) $requete .= " limit 0,".$param[5] ;
 	$resultat=pmb_mysql_query($requete);
 	$thes_conserve="";$res="";
 	$juste_apresthes=true;
@@ -1085,6 +1093,21 @@ function aff_date_bulletin($param) {
     }
 }
 
+function aff_bulletin_id($param) {
+    global $parser_environnement;
+    if(!$parser_environnement['id_notice']) return '';
+    $notice=gere_global();
+    if ($notice["notice_info"]->notice->niveau_biblio == 'a') {
+        $requete = "SELECT analysis_bulletin FROM analysis WHERE analysis_notice='".$parser_environnement['id_notice']."'";
+        $result = pmb_mysql_query($requete);
+        if ($result && pmb_mysql_num_rows($result)) {
+            $row = pmb_mysql_fetch_object($result);
+            return $row->analysis_bulletin;
+        }
+    }
+    return '';
+}
+
 function aff_numero_bulletin($param) {
 	global $parser_environnement;
 	if(!$parser_environnement['id_notice']) return "1er janvier 1970";
@@ -1117,6 +1140,122 @@ function aff_expl_num($param) {
 	return $notice["notice_info"]->memo_explnum_assoc;
 }
 
+/*
+ * $param[0] : nombre d'élément maximum
+ * $param[1] : séparateur
+ * $param[2] : champ demandé
+ * $param[3] : critères de filtrage des documents numériques. format accepté: explnum_ext=pdf ou [explnum_ext=pdf;odt] ou [explnum_ext=pdf;odt,explnum_docnum_statut=0;1]
+ * liste des champs possible (param 2 et 3) : explnum_id, explnum_nom, explnum_mimetype, explnum_url, explnum_vignette, explnum_nomfichier, explnum_extfichier, explnum_docnum_statut
+ */
+function aff_expl_num_by_field($param){
+	global $parser_environnement;
+
+	$res=$nb_elem=$sep=$field="";
+	if(isset($param) && is_array($param)){
+		$nb_elem=trim($param[0])*1;
+		$sep=$param[1];
+		$field=trim($param[2]);
+		$filters=array();
+		if(isset($param[3]) && $param[3] != ""){
+			if(!preg_match("#\[|\]#",$param[3])){
+				$filters[]=$param[3];
+			}elseif(preg_match("/^\[(.*?)\]$/",$param[3],$matches)){
+				$filters=explode(",",$matches[1]);
+			}
+			if(count($filters)){
+				$tmp=array();
+				foreach ( $filters as $key => $value ) {
+					$tmp2=explode("=",$value);
+					if(count($tmp2) == 2){
+						$tmp[$tmp2[0]]=explode(";",$tmp2[1]);
+					}else{
+						return $res;//Le format n'est pas correct
+					}
+				}
+				$filters=$tmp;
+			}
+		}
+	}
+
+	if(($sep !== "") && $field){
+		$tot=false;
+		if(!$nb_elem) $tot=true;
+		$notice=gere_global();
+
+		$is_article = false;
+		if ($notice["notice_info"]->notice->niveau_biblio == 'a') {
+			//on va chercher le bulletin de l'article
+			$requete = "SELECT analysis_bulletin FROM analysis WHERE analysis_notice='".$parser_environnement['id_notice']."'";
+			$result = pmb_mysql_query($requete);
+			if ($result && pmb_mysql_num_rows($result)) {
+				$row = pmb_mysql_fetch_object($result);
+				$bulletin_id = $row->analysis_bulletin;
+			} else {
+				return '';
+			}
+
+			//on va chercher les exemplaires du bulletin
+			$bulletin = gere_expl_bulletin($bulletin_id);
+			$is_article = true;
+		}
+
+		if ($is_article) {
+			$object = $bulletin;
+		} else {
+			$object = $notice["notice_info"];
+		}
+
+		if(count($object->memo_explnum)){
+			for ($i = 0 ; $i < count($object->memo_explnum); $i++) {
+				$explnum_tabl = (array) $object->memo_explnum[$i];
+				$pass=true;
+				if(count($filters)){
+					foreach ( $filters as $key => $value ) {
+						if(!$explnum_tabl[$key] || !in_array($explnum_tabl[$key],$value)){
+							$pass=false;
+							break;
+						}
+					}
+				}
+				if($pass){
+					$val=trim($explnum_tabl[$field]);
+					if($val !== ""){
+						if($res)$res.=$sep;
+						$res.=$val;
+						if(!$tot){
+							$nb_elem--;
+							if($nb_elem <=0){
+								break;
+							}
+						}
+					}else{
+						$val=$explnum_tabl["parametres_perso"][$field];
+						if(is_array($val)){
+							$need_break=false;
+							foreach($val["VALUE"] as $value){
+								if($res)$res.=$sep;
+								$res.=$value;
+								if(!$tot){
+									$nb_elem--;
+									if($nb_elem <=0){
+										$need_break=true;
+										break;
+									}
+								}
+							}
+							if($need_break){
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return $res;
+}
+
 function aff_expl_num_with_tpl($param) {
 	// Utiliser pour le template les attributs de la classe "explnum", cf classes/explnum.class.php
 	// $param[0] = nb maxi d'explnum à afficher
@@ -1134,7 +1273,7 @@ function aff_expl_num_with_tpl($param) {
 	$notice=gere_global();
 	
 	$mime_type="";
-	if($tmp=trim($param[5])){
+	if(isset($param[5]) && $tmp=trim($param[5])){
 		$mime_type="'".str_replace(',',"','",$tmp)."'";
 	}
 	
@@ -1152,7 +1291,7 @@ function aff_expl_num_with_tpl($param) {
 	if($mime_type){
 		$query.=" AND explnum_mimetype IN(".$mime_type.")";
 	}
-	$id_statut=trim($param[6]);
+	$id_statut=(isset($param[6]) ? trim($param[6]) : 0);
 	if($id_statut){
 		$query .= " AND explnum_docnum_statut IN (".$id_statut.")";
 	}
@@ -1338,12 +1477,24 @@ function aff_expl_by_field($param){
 				$expl_tabl = (array) $object->memo_exemplaires[$i];
 				$pass=true;
 				if(count($filters)){
-					foreach ( $filters as $key => $value ) {
-       					if(!$expl_tabl[$key] || !in_array($expl_tabl[$key],$value)){
-       						$pass=false;
-       						break;
-       					}
-					}
+				    foreach ( $filters as $key => $value ) {
+				        if(isset($expl_tabl[$key]) && is_array($expl_tabl[$key])) {
+				            $found = false;
+				            foreach ($expl_tabl[$key] as $expl_tab_value) {
+				                if(in_array($expl_tab_value,$value)){
+				                    $found=true;
+				                    break;
+				                }
+				            }
+				            if(!$found) {
+				                $pass=false;
+				                break;
+				            }
+				        } elseif(!$expl_tabl[$key] || !in_array($expl_tabl[$key],$value)){
+				            $pass=false;
+				            break;
+				        }
+				    }
 				}
 				if($pass){
 					$val=trim($expl_tabl[$field]);
@@ -1449,12 +1600,24 @@ function aff_expl_with_tpl($param){
 
 				$pass=true;
 				if(count($filters)){
-					foreach ( $filters as $key => $value ) {
-						if(!$expl_tabl[$key] || !in_array($expl_tabl[$key],$value)){
-							$pass=false;
-							break;
-						}
-					}
+				    foreach ( $filters as $key => $value ) {
+				        if(isset($expl_tabl[$key]) && is_array($expl_tabl[$key])) {
+				            $found = false;
+				            foreach ($expl_tabl[$key] as $expl_tab_value) {
+				                if(in_array($expl_tab_value,$value)){
+				                    $found=true;
+				                    break;
+				                }
+				            }
+				            if(!$found) {
+				                $pass=false;
+				                break;
+				            }
+				        } elseif(!$expl_tabl[$key] || !in_array($expl_tabl[$key],$value)){
+				            $pass=false;
+				            break;
+				        }
+				    }
 				}
 				if($pass){
 					$retour[]=_get_aut_infos($expl_object,$param[2]);
@@ -1523,10 +1686,13 @@ function aff_trim($param){
 }
 
 function aff_substr($param){
-	if($param[1] && isset($param[2]) && $param[2]) $sc =substr($param[0],$param[1],$param[2]);
-	else if($param[1] && (!isset($param[2]) || !$param[2])) $sc =substr($param[0],$param[1]);
-	else $sc = "";
-	return $sc; 
+    if(isset($param[1])){
+        if(isset($param[2])) {
+            return substr($param[0],$param[1],$param[2]);
+        }
+        return substr($param[0],$param[1]);
+    } 
+	return ""; 
 }
 
 function aff_lastchr($param){
@@ -1661,8 +1827,8 @@ function aff_authors_by_type($param){
 	if(!$parser_environnement['id_notice']) return '';
 	$notice=gere_global();
 	
-	$param[6] = explode(",",$param[6]);
-	$param[6] = implode("','",$param[6]);
+	$param_array = explode(",",$param[6]);
+	$param[6] = implode("','",$param_array);
 	
 	$rqt_count="select count(*) as nb from responsability, authors 
 			where responsability_notice='".$parser_environnement['id_notice']."' 
@@ -1724,8 +1890,8 @@ function aff_authors_by_type_dir($param){
 	if(!$parser_environnement['id_notice']) return '';
 	$notice=gere_global();
 	
-	$param[6] = explode(",",$param[6]);
-	$param[6] = implode("','",$param[6]);
+	$param_array = explode(",",$param[6]);
+	$param[6] = implode("','",$param_array);
 	
 	$rqt_count="select count(*) as nb from responsability, authors 
 			where responsability_notice='".$parser_environnement['id_notice']."' 
@@ -1796,8 +1962,9 @@ function aff_authors_by_type_with_tpl($param){
 	if(!$parser_environnement['id_notice']) return '';
 	$notice=gere_global();
 
-	$param[6] = explode(",",$param[6]);
-	$param[6] = implode("','",$param[6]);
+	$param_array = explode(",",$param[6]);
+	$param[6] = implode("','",$param_array);
+	
 	if (isset($param[8])) {
 		$filtre_fonctions = " and responsability_fonction='".addslashes($param[8])."'";
 	} else {
@@ -1880,8 +2047,8 @@ function _get_aut_infos($aut,$tpl){
 	global $pmb_perso_sep;
 	if($tpl != "" && preg_match_all("/{([^}]*)}/",$tpl,$matches)){
 		for ($i=0 ; $i<count($matches[1]) ; $i++){
-			if(isset($aut->$matches[1][$i])){
-				$tpl = str_replace($matches[0][$i],$aut->$matches[1][$i],$tpl);
+		    if(isset($aut->{$matches[1][$i]})){
+		        $tpl = str_replace($matches[0][$i],$aut->{$matches[1][$i]},$tpl);
 			}elseif(preg_match('`^p_perso\|(.+)\|(.+)$`',$matches[1][$i],$out)){
 				if($out[2]=="VALUE"){
 					if(is_array($aut->parametres_perso[$out[1]]["VALUE"])){
@@ -1915,8 +2082,8 @@ function aff_parents_authors_by_type_with_tpl($param){
 	//on récupère les parents
 	$notice=gere_global();	
 
-	$param[6] = explode(",",$param[6]);
-	$param[6] = implode("','",$param[6]);
+	$param_array = explode(",",$param[6]);
+	$param[6] = implode("','",$param_array);
 	$return = "";
 	for($i=0 ; $i<count($notice['notice_info']->memo_notice_mere) ; $i++){
 		$aut = array();
@@ -2318,6 +2485,59 @@ function group($param){
 	$parser_environnement=$sav_parser_environnement;
 	return $tpl;
 }
+
+/*
+ * @param[0] = Tableau d'identifiants de notices ou identifiants séparés par une virgule
+ * @param[1] = Nom de la propriété pour le filtrage
+ * @param[2] = Valeur du champ pour le filtrage
+ */
+function filter_from_notice_info($param) {
+    global $parser_environnement;
+    if(!$parser_environnement['id_notice']) return '';
+    
+    if(!isset($param[0])) {
+        $param[0] = array();
+    } elseif(!is_array($param[0])) {
+        $param[0] = explode(',', $param[0]);
+    }
+    $record_ids = array();
+    if(count($param[0])) {
+        foreach ($param[0] as $record_id) {
+            $notice_info = new notice_info($record_id);
+            $method_name = 'get_'.$param[1];
+            if(method_exists($notice_info, $method_name)) {
+                $property_value = $notice_info->{$method_name}();
+                if(is_array($property_value)) {
+                    foreach ($property_value as $value) {
+                        switch ($param[1]) {
+                            case 'memo_lang_or':
+                            case 'memo_lang':
+                                if($value['lang_code'] == $param[2]) {
+                                    $record_ids[] =$record_id;
+                                }
+                                break;
+                            default:
+                                if($value == $param[2]) {
+                                    $record_ids[] =$record_id;
+                                }
+                                break;
+                        }
+                    }
+                } else {
+                    if($property_value == $param[2]) {
+                        $record_ids[] =$record_id;
+                    }
+                }
+            } else {
+                if($property_value == $param[2]) {
+                    $record_ids[] =$record_id;
+                }
+            }
+        }
+    }
+    return $record_ids;
+}
+
 function aff_msg($param) {
 	// Attention : l'aperçu en gestion n'utilise pas le même fichier de messages que le rendu en OPAC
 	// il faut donc utiliser les codes des fichiers langues de l'OPAC
@@ -2460,7 +2680,7 @@ function aff_expl_num_vign_reduit($param) {
 		}
 	}
 	
-	$id_statut=trim($param[5]);
+	$id_statut=(isset($param[5]) ? trim($param[5]) : 0);
 	if($id_statut){
 		$query .= " AND explnum_docnum_statut IN (".$id_statut.")";
 	}
@@ -2956,6 +3176,11 @@ function aff_get_variable($param) {
 	} else {
 		return $notice_tpl_vars[$parser_environnement['id_notice']][$param[0]];
 	}
+}
+
+function aff_get_global_variable($param) {
+	global ${$param[0]};
+	return ${$param[0]};
 }
 
 function aff_bannette_id($param) {

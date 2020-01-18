@@ -1,8 +1,8 @@
 <?php
 // +-------------------------------------------------+
-// © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entities.class.php,v 1.5 2018-11-27 16:26:47 apetithomme Exp $
+// $Id: entities.class.php,v 1.8.2.1 2019-11-05 14:05:45 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -91,5 +91,78 @@ class entities{
 			case TYPE_AUTHPERSO :
 				return 'authperso';
 		}
+		if ($type > 1000) {
+		    return 'authperso_'.($type - 1000);
+		}
+	}
+	
+	public static function get_query_from_entity_linked($id, $get_type, $from_type) {
+		$query = "";
+		switch($get_type){
+			case 'publisher':
+				$query .= "SELECT ed_id FROM publishers";
+				switch($from_type){
+					case 'collection':
+						$query .= " JOIN collections ON ed_id = collection_parent where collection_id = ".$id;
+						break;
+					case 'sub_collection':
+						$query .= " JOIN collections ON ed_id = collection_parent JOIN sub_collections ON sub_coll_parent = collection_id where sub_coll_id = ".$id;
+						break;
+				}
+				break;
+			case 'collection':
+				$query .= "SELECT collection_id FROM collections";
+				switch($from_type){
+					case 'publisher':
+						 $query .= " JOIN publishers ON ed_id = collection_parent where ed_id = ".$id;
+						break;
+					case 'sub_collection':
+						$query .= " JOIN sub_collections ON sub_coll_parent = collection_id  where sub_coll_id = ".$id;
+						break;
+							
+				}
+				break;
+			case 'sub_collection':
+				$query = "SELECT sub_coll_id FROM sub_collections";
+				switch($from_type){
+					case 'publisher':
+						$query .= " JOIN collections ON sub_coll_parent = collection_id WHERE collection_parent = ".$id;
+						break;
+					case 'collection':
+						 $query .= " WHERE sub_coll_parent = ".$id;
+						break;
+							
+				}
+				break;
+		}
+		return $query;
+	}
+	
+	public static function get_aut_table_from_type($type) {
+	    switch ($type) {
+	        case TYPE_AUTHOR :
+	            return AUT_TABLE_AUTHORS;
+	        case TYPE_CATEGORY :
+	            return AUT_TABLE_CATEG;
+	        case TYPE_PUBLISHER :
+	            return AUT_TABLE_PUBLISHERS;
+	        case TYPE_COLLECTION :
+	            return AUT_TABLE_COLLECTIONS;
+	        case TYPE_SUBCOLLECTION :
+	            return AUT_TABLE_SUB_COLLECTIONS;
+	        case TYPE_SERIE :
+	            return AUT_TABLE_SERIES;
+	        case TYPE_TITRE_UNIFORME :
+	            return AUT_TABLE_TITRES_UNIFORMES;
+	        case TYPE_INDEXINT :
+	            return AUT_TABLE_INDEXINT;
+	        case TYPE_CONCEPT_PREFLABEL:
+	        case TYPE_CONCEPT:
+	            return AUT_TABLE_CONCEPT;
+	        case TYPE_AUTHPERSO :
+	            return AUT_TABLE_AUTHPERSO;
+	        default: 
+	            return 0;
+	    }
 	}
 }

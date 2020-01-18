@@ -2,11 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: receptions_frame.php,v 1.15 2018-07-05 09:10:34 dgoron Exp $
+// $Id: receptions_frame.php,v 1.19 2019-07-11 14:17:15 btafforeau Exp $
 
 // définition du minimum nécessaire
+
+global $include_path, $class_path, $pmb_prefill_cote, $action, $msg, $charset;
+
 $base_path="./../../..";
 $base_auth = "ACQUISITION_AUTH";
+$base_use_dojo=1;
 $base_title = "\$msg[acquisition_menu_title]";    
 require_once ("$base_path/includes/init.inc.php");
 
@@ -530,7 +534,7 @@ function update() {
 		$tp = unserialize(rawurldecode(stripslashes($previous)));
 	}
 	if(!is_array($tp)) $tp = array();
-	array_push($tp, $lig_liv->id_ligne);
+	$tp[] = $lig_liv->id_ligne;
 	
 	$previous = addslashes(rawurlencode(serialize($tp)));	
 	
@@ -544,7 +548,8 @@ function update_sug() {
 	$sug = array();
 	$sug[0] = $id_sug;
 	$sug_map = new suggestions_map();
-	$sug_map->doTransition($sug_map->getStateNameFromId($sel_sugstat), $sug, TRUE);						
+	$sug_map->doTransition($sug_map->getStateNameFromId($sel_sugstat), $sug, TRUE);
+	return true;
 }
 
 function undo() {
@@ -610,8 +615,12 @@ switch($action) {
 		show_delivery_form($msg_client);
 		break;
 	case 'update_sug' :
-		update_sug();
-		show_delivery_form();
+	    if (!update_sug()) {
+		    $msg_client = htmlentities($msg['acquisition_recept_update_sug_err'], ENT_QUOTES, $charset);
+		} else {
+		    $msg_client = htmlentities($msg['acquisition_recept_update_sug_ok'], ENT_QUOTES, $charset);
+		}
+		show_delivery_form($msg_client);
 		break;
 	case 'undo' :
 		if (!undo()) {

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_all_sections.class.php,v 1.5 2017-01-20 09:59:54 ngantier Exp $
+// $Id: cms_module_common_datasource_all_sections.class.php,v 1.6 2019-07-05 13:37:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -61,7 +61,7 @@ class cms_module_common_datasource_all_sections extends cms_module_common_dataso
 		return $this->all_section_order;
 	}
 	
-	function get_datas_order($section_num) {		
+	public function get_datas_order($section_num) {		
 		$query_section = "select id_section from cms_sections where section_num_parent=".$section_num." 
 				order by section_order";
 		if ($this->parameters["sort_order"] != "") $query_section .= " ".$this->parameters["sort_order"];		

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_bannette_datasource_bannette.class.php,v 1.2 2016-09-20 10:25:41 apetithomme Exp $
+// $Id: cms_module_bannette_datasource_bannette.class.php,v 1.3 2019-03-13 14:07:40 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -42,7 +42,7 @@ class cms_module_bannette_datasource_bannette extends cms_module_common_datasour
 			$id_bannette = $selector->get_value();
 			
 			if(is_array($id_bannette) && count($id_bannette)){
-				$query = "select id_bannette, nom_bannette, comment_public, entete_mail, piedpage_mail from bannettes where id_bannette = '".($id_bannette[0]*1)."'";
+				$query = "select id_bannette, nom_bannette, comment_public, nb_notices_diff, entete_mail, piedpage_mail from bannettes where id_bannette = '".($id_bannette[0]*1)."'";
 				$result = pmb_mysql_query($query);
 				if(pmb_mysql_num_rows($result)){
 					$row=pmb_mysql_fetch_object($result);
@@ -74,7 +74,7 @@ class cms_module_bannette_datasource_bannette extends cms_module_common_datasour
 							$i++;
 						}
 					}
-					return array("id" => $row->id_bannette, "name" => $row->nom_bannette, "comment" => $row->comment_public, "info" => array("header" => $row->entete_mail, "footer" => $row->piedpage_mail), "flux_rss" => $flux_rss);
+					return array("id" => $row->id_bannette, "name" => $row->nom_bannette, "comment" => $row->comment_public, "record_number" => $row->nb_notices_diff, "info" => array("header" => $row->entete_mail, "footer" => $row->piedpage_mail), "flux_rss" => $flux_rss);
 				}
 			}
 		}

@@ -1070,9 +1070,6 @@ public function _dochecks()
 	//Check mbstring overloading
 	if(ini_get('mbstring.func_overload') & 2)
 		$this->Error('mbstring overloading must be disabled');
-	//Disable runtime magic quotes
-	if(get_magic_quotes_runtime())
-		@set_magic_quotes_runtime(0);
 }
 
 public function _getpageformat($format)
@@ -1470,16 +1467,16 @@ public function _putfonts()
 		$compressed=(substr($file,-2)=='.z');
 		if(!$compressed && isset($info['length2']))
 		{
-			$header=(ord($font[0])==128);
+			$header = (ord(substr($font, 0, 1)) == 128);
 			if($header)
 			{
 				//Strip first binary header
 				$font=substr($font,6);
 			}
-			if($header && ord($font[$info['length1']])==128)
+			if($header && ord(substr($font, $info['length1'], 1))==128)
 			{
 				//Strip second binary header
-				$font=substr($font,0,$info['length1']).substr($font,$info['length1']+6);
+				$font = substr($font, 0, $info['length1']).substr($font, $info['length1']+6);
 			}
 		}
 		$this->_out('<</Length '.strlen($font));
@@ -1492,12 +1489,12 @@ public function _putfonts()
 		$this->_putstream($font);
 		$this->_out('endobj');
 	}
-	foreach($this->fonts as $k=>$font)
+	foreach($this->fonts as $k => $f)
 	{
 		//Font objects
 		$this->fonts[$k]['n']=$this->n+1;
-		$type=$font['type'];
-		$name=$font['name'];
+		$type=$f['type'];
+		$name=$f['name'];
 		if($type=='core')
 		{
 			//Standard font
@@ -1520,10 +1517,10 @@ public function _putfonts()
 			$this->_out('/FirstChar 32 /LastChar 255');
 			$this->_out('/Widths '.($this->n+1).' 0 R');
 			$this->_out('/FontDescriptor '.($this->n+2).' 0 R');
-			if($font['enc'])
+			if($f['enc'])
 			{
-				if(isset($font['diff']))
-					$this->_out('/Encoding '.($nf+$font['diff']).' 0 R');
+				if(isset($f['diff']))
+					$this->_out('/Encoding '.($nf+$f['diff']).' 0 R');
 				else
 					$this->_out('/Encoding /WinAnsiEncoding');
 			}
@@ -1531,7 +1528,7 @@ public function _putfonts()
 			$this->_out('endobj');
 			//Widths
 			$this->_newobj();
-			$cw=&$font['cw'];
+			$cw=&$f['cw'];
 			$s='[';
 			for($i=32;$i<=255;$i++)
 				$s.=$cw[chr($i)].' ';
@@ -1540,9 +1537,9 @@ public function _putfonts()
 			//Descriptor
 			$this->_newobj();
 			$s='<</Type /FontDescriptor /FontName /'.$name;
-			foreach($font['desc'] as $k=>$v)
+			foreach($f['desc'] as $k=>$v)
 				$s.=' /'.$k.' '.$v;
-			$file=$font['file'];
+			$file=$f['file'];
 			if($file)
 				$s.=' /FontFile'.($type=='Type1' ? '' : '2').' '.$this->FontFiles[$file]['n'].' 0 R';
 			$this->_out($s.'>>');
@@ -1554,7 +1551,7 @@ public function _putfonts()
 			$mtd='_put'.strtolower($type);
 			if(!method_exists($this,$mtd))
 				$this->Error('Unsupported font type: '.$type);
-			$this->$mtd($font);
+			$this->$mtd($f);
 		}
 	}
 }
@@ -1563,8 +1560,7 @@ public function _putimages()
 {
 	$filter=($this->compress) ? '/Filter /FlateDecode ' : '';
 	reset($this->images);
-	while(list($file,$info)=each($this->images))
-	{
+	foreach ($this->images as $file => $info) {
 		$this->_newobj();
 		$this->images[$file]['n']=$this->n;
 		$this->_out('<</Type /XObject');

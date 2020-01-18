@@ -37,7 +37,7 @@ class pmb_remote {
 	 * @param string $database Base de donnée utilisée
 	 * @param string $ssl_path path des clés numérique avec / à la fin. Exemple: "/home/xxxxxx/.ssl/"
 	 */
-    function pmb_remote($pmb_url,$port,$proxy,$user,$password,$database,$ssl_path="") {
+    public function pmb_remote($pmb_url,$port,$proxy,$user,$password,$database,$ssl_path="") {
 		$this->http_url=$pmb_url;
 		$this->http_url_login=$pmb_url."main.php";
 		$this->http_port=$port;
@@ -52,13 +52,13 @@ class pmb_remote {
     
 
 	// fonction appeler par curl pour mémoriser la réponse
-	function get_http_core($curl_ressource,$data) {
+	public function get_http_core($curl_ressource,$data) {
 		$this->http_core.=$data;
 		return strlen($data);
 	}
 	
 	// fonction appeler par curl pour mémoriserles entêtes de la réponse http dans ::http_header
-	function get_http_header($curl_ressource,$data) {
+	public function get_http_header($curl_ressource,$data) {
 		if (strpos($data,"Set-Cookie:")!==false) {
 			$this->http_cookies[]=trim(substr($data,12));
 		}
@@ -67,7 +67,7 @@ class pmb_remote {
 	}
 
 	// Intialise et prépare les options curl pour la connexion http
-	function prepare_http($http_params) {
+	public function prepare_http($http_params) {
 		//Initialisation de la connexion
     	$this->curl_link = curl_init();
 		curl_setopt($this->curl_link, CURLOPT_WRITEFUNCTION,array(&$this,"get_http_core"));
@@ -90,13 +90,13 @@ class pmb_remote {
 	}
 
 	//brief Fermeture de la connexion curl
-	function close_http() {
+	public function close_http() {
 		curl_close($this->curl_link);
 	}
 
 	
 	// fait une requête http par GET ou POST en vérifiant la session par cookie
-	function make_logged_http_request($url,$post=0,$post_data="") {
+	public function make_logged_http_request($url,$post=0,$post_data="") {
 		//Initialisation de la requête
 		if($post) {
 			$http_params=array(
@@ -149,7 +149,7 @@ class pmb_remote {
 	}
 	
 	// Exécute la requête http préparée par ::http_prepare()
-	function make_http_request() {
+	public function make_http_request() {
 		$this->http_headers="";
 		$this->http_core="";
 		$cexec=curl_exec($this->curl_link);
@@ -158,7 +158,7 @@ class pmb_remote {
 	}
     
     // Login pour une session cookie
-    function http_do_login() {
+    public function http_do_login() {
     	//Y-a-t-il une autentification par cookies ?
 		if ($this->http_use_cookie) {
 			//Préparation de la requête POST avec les éléments de login
@@ -197,13 +197,13 @@ class pmb_remote {
     }
  
     // Effectue l'ouverture de session de pmb
-    function connection() {
+    public function connection() {
  		if(!$this->http_do_login()) return false; 
     	return true;  
     } 
        
     // Effectue la déconnection
-	function disconnection() {
+	public function disconnection() {
 		 $this->response='';
   		if(!$this->make_logged_http_request("logout.php",1,"")) {
   			return false;
@@ -213,7 +213,7 @@ class pmb_remote {
     }   
     
     // requête http GET
-    function http_get($url) {
+    public function http_get($url) {
     	$this->response='';
   		if(!$this->make_logged_http_request($url)) {
   			return false;
@@ -223,7 +223,7 @@ class pmb_remote {
     } 
     
     // requête http POST   
-    function http_post($url,$param) {
+    public function http_post($url,$param) {
     	$this->response='';
     	$postparam="";
     	foreach($param as $key=>$val) {

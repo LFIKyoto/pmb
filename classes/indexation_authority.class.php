@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: indexation_authority.class.php,v 1.22 2018-07-05 15:32:20 vtouchard Exp $
+// $Id: indexation_authority.class.php,v 1.23 2019-02-25 15:39:40 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -175,15 +175,24 @@ class indexation_authority extends indexation {
 	
 	public function maj($object_id,$datatype = 'all'){
 		global $sphinx_active;
+		$authority = static::get_authority_instance($object_id, $this->type);
+		$vedette_composee_found = vedette_composee::get_vedettes_built_with_element($authority->get_num_object(), $authority->get_type_const());
+		foreach ($vedette_composee_found as $vedette_id) {
+			$vedette = new vedette_composee($vedette_id);
+			$vedette->update_label();
+			$vedette->save();
+			vedette_link::update_objects_linked_with_vedette($vedette);
+		}
+		
 		parent::maj($object_id,$datatype);
 		//SPHINX
 		if($sphinx_active){
 			$si = self::get_sphinx_indexer($this->type);
 			if(is_object($si)) {
-				$authority = static::get_authority_instance($object_id, $this->type);
 				$si->fillIndex($authority->get_id());
 			}
 		}
+		
 	}
 	
 	protected static function get_authority_instance($object_id, $object_type) {

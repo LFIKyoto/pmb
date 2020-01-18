@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_bannetteslist_datasource_bannetteslist.class.php,v 1.3 2016-09-20 10:25:42 apetithomme Exp $
+// $Id: cms_module_bannetteslist_datasource_bannetteslist.class.php,v 1.4 2019-07-25 13:59:08 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -40,7 +40,7 @@ class cms_module_bannetteslist_datasource_bannetteslist extends cms_module_commo
 		$selector = $this->get_selected_selector();
 		if ($selector) {
 			$return = array();
-			if (count($selector->get_value()) > 0) {
+			if (is_array($selector->get_value()) && count($selector->get_value()) > 0) {				
 				foreach ($selector->get_value() as $value) {
 					$return[] = $value*1;
 				}

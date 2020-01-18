@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Source.js,v 1.5 2015-02-25 11:51:41 arenou Exp $
+// $Id: Source.js,v 1.6 2019-03-13 14:48:22 dgoron Exp $
 
 
 define(["dojo/_base/declare", "dojo/parser", "dojo/topic", "dojo/_base/lang", "dojo/dom", "dijit/form/Form", "dojo/dom-construct", "dojo/dom-form"], function(declare, parser, topic, lang, dom, Form, domConstruct, domForm){
@@ -17,6 +17,9 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/topic", "dojo/_base/lang", "d
   				}
 				if(children[i].get("id") == "docwatch_datasource_form_delete") {
 					children[i].onClick = lang.hitch(this,this.deleteSource);
+				}
+				if(children[i].get("id") == "docwatch_datasource_form_duplicate") {
+					children[i].onClick = lang.hitch(this,this.duplicateSource);
 				}
 			}
 			domConstruct.create('input',{
@@ -59,7 +62,16 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/topic", "dojo/_base/lang", "d
 			}
 			
 		},
-				
+		
+		duplicateSource : function(){
+			topic.publish("source","openDuplicateSourceForm",{
+				item: {
+					id: this.getParent().get("sourceId"),
+					title: this.getParent().get("sourceTitle"),
+					className: this.getParent().get("className")
+			}});
+		},
+		
 		onSubmit: function(){
 			if(this.isValid()){
 				topic.publish("source","saveSource",domForm.toObject(this.containerNode));

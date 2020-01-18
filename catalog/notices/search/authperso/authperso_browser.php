@@ -2,7 +2,9 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authperso_browser.php,v 1.4 2017-07-26 07:59:05 dgoron Exp $
+// $Id: authperso_browser.php,v 1.5 2019-06-07 08:05:39 btafforeau Exp $
+
+global $j_offset, $ancre, $browser_url, $limite_affichage, $restriction, $mode, $msg, $select;
 
 // page d'affichage du browser de collections
 
@@ -56,7 +58,7 @@ print $authperso->get_search_list("<a href='#' onclick=\"$select\">!!isbd!!</a><
 
 if(isset($ancre) && $ancre)
 	print $j_offset;
-pmb_mysql_close($dbh);
+pmb_mysql_close();
 
 // affichage du footer
 print "</div></body></html>";

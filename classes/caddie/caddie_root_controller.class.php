@@ -2,14 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: caddie_root_controller.class.php,v 1.34 2018-12-18 13:14:03 dgoron Exp $
+// $Id: caddie_root_controller.class.php,v 1.41.4.3 2019-12-03 10:32:33 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/classementGen.class.php");
 require_once($class_path.'/event/events/event_caddie.class.php');
 require_once($class_path.'/event/events/event_users_group.class.php');
-require_once($class_path."/spreadsheet.class.php");
+require_once($class_path."/spreadsheetPMB.class.php");
 
 abstract class caddie_root_controller {
 	
@@ -158,6 +158,58 @@ abstract class caddie_root_controller {
 		}
 	}
 	
+	public static function proceed_module_remplir($callback, $elements) {
+		global $msg, $charset;
+		global $PMBuserid;
+		
+		$layout = static::get_template_layout();
+		$layout = str_replace('<!--!!sous_menu_choisi!! -->', '', $layout);
+		print $layout;
+		print '<div class="row"><div class="msg-perio">'.$msg['caddie_creation_in_progress'].'</div></div>';
+		
+		$caddie = new authorities_caddie();
+		$caddie->type = $_SESSION['session_history'][$_SESSION['CURRENT']]['AUT']['SEARCH_OBJECTS_TYPE'];
+		$caddie->name = date($msg['1005']." H:i:s - ").html_entity_decode(strip_tags($_SESSION['session_history'][$_SESSION['CURRENT']]['QUERY']['HUMAN_QUERY']), ENT_COMPAT | ENT_HTML401, $charset);
+		$caddie->autorisations = $PMBuserid;
+		$caddie->classementGen = $msg['caddie_classement_created_from_search'];
+		$id_caddie = $caddie->create_cart();
+		
+		$values = array();
+		if (!empty($elements)) { // Vérifie si des éléments sont cochés
+			$elements = explode(",", $elements);
+			foreach ($elements as $element) {
+				$values[] = "('$id_caddie', '$element', '')";
+			}
+		} else {
+			if (!empty($_SESSION['session_history'][$_SESSION['CURRENT']]['AUT']["FORM_VALUES"])) {
+				$sat = new searcher_authorities_tab($_SESSION['session_history'][$_SESSION['CURRENT']]['AUT']["FORM_VALUES"]);
+				$notice_ids = explode(',',$sat->get_result());
+				foreach ($notice_ids as $notice_id) {
+					$values[] = "('$id_caddie', '$notice_id', '')";
+				}
+			} else {
+				foreach ($_SESSION['session_history'][$_SESSION['CURRENT']]['QUERY']['POST'] as $varname => $value) {
+					global ${$varname};
+					${$varname} = $value;
+					
+				}
+				$sh = new search(false, $search_xml_file);
+				$table = $sh->make_search();
+				$requete = "select * from $table";
+				$result = pmb_mysql_query($requete);
+				if (pmb_mysql_num_rows($result)) {
+					while ($row = pmb_mysql_fetch_assoc($result)) {
+						$values[] = "('$id_caddie', '".$row['id_authority']."', '')";
+					}
+				}
+			}
+		}
+		if (!empty($values)) {
+			pmb_mysql_query("INSERT INTO authorities_caddie_content (caddie_id, object_id, flag) VALUES ".implode(",", $values));
+		}
+		print '<script>document.location = "'.str_replace("!!id_caddie!!", $id_caddie, $callback).'";</script>';
+	}
+	
 	public static function get_constructed_link($sub='', $sub_categ='', $action='', $idcaddie=0, $args_others='') {
 	
 	}
@@ -189,8 +241,16 @@ abstract class caddie_root_controller {
 				$myCart = static::get_object_instance($idcaddie);
 				$form_action = static::get_constructed_link('gestion', 'panier', 'save_cart', $idcaddie, "&item=".$item);
 				$form_cancel = "document.location='".static::get_constructed_link('gestion', 'panier')."&item=".$item."';";
-				print $myCart->get_form($form_action, $form_cancel);
+				$form_duplicate = static::get_constructed_link('gestion', 'panier', 'duplicate_cart', $idcaddie);
+				print $myCart->get_form($form_action, $form_cancel, $form_duplicate);
 				break;
+			case 'duplicate_cart':
+			    $myCart = static::get_object_instance($idcaddie);
+			    $myCart->set_idcaddie(0);
+			    $form_action = static::get_constructed_link('gestion', 'panier', 'valid_new_cart')."&item=".$item;
+			    $form_cancel = "history.go(-1);";
+			    print $myCart->get_form($form_action, $form_cancel);
+			    break;
 			case 'del_cart':
 				$myCart = static::get_object_instance($idcaddie);
 				$myCart->delete();
@@ -274,7 +334,7 @@ abstract class caddie_root_controller {
 						}
 						$liste= array_merge($liste_0,$liste_1);
 						if($liste) {
-							while(list($cle, $object) = each($liste)) {
+						    foreach ($liste as $cle => $object) {
 								$myCart_selected->pointe_item($object,$myCart->type);
 							}
 						}
@@ -304,7 +364,7 @@ abstract class caddie_root_controller {
 			switch ($action) {
 				case 'choix_quoi':
 					print pmb_bidi($myCart->aff_cart_nb_items()) ;
-					print $myCart->get_edition_switch_form($mode, static::get_constructed_link('action', 'edition', 'choix_quoi', $idcaddie, '&object_type='.static::$object_type.'&item=0'));
+    				print $myCart->get_edition_switch_form($mode, static::get_constructed_link('action', 'edition', 'choix_quoi', $idcaddie, '&object_type='.static::$object_type.'&item=0'));
 					switch ($mode) {
 						case 'advanced':
 							print $myCart->get_list_caddie_ui()->get_display_list();
@@ -339,7 +399,7 @@ abstract class caddie_root_controller {
 					break;
 				case 'simple':
 				default:
-					$worksheet = new spreadsheet();
+				    $worksheet = new spreadsheetPMB();
 					$worksheet->write_string(0,0,$msg["caddie_numero"].$idcaddie);
 					$worksheet->write_string(0,1,$myCart->type);
 					$worksheet->write_string(0,2,$myCart->name);
@@ -590,13 +650,13 @@ abstract class caddie_root_controller {
 					$res_aff_exp_doc_num="";
 					if ($elt_flag) {
 						$liste = $myCart->get_cart("FLAG", $elt_flag_inconnu) ;
-						while(list($cle, $object) = each($liste)) {
+						foreach ($liste as $cle => $object) {
 							$res_aff_exp_doc_num.=$myCart->export_doc_num ($object,$chemin_export_doc_num) ;
 						}
 					}
 					if ($elt_no_flag) {
 						$liste = $myCart->get_cart("NOFLAG", $elt_no_flag_inconnu) ;
-						while(list($cle, $object) = each($liste)) {
+						foreach ($liste as $cle => $object) {
 							$res_aff_exp_doc_num.=$myCart->export_doc_num ($object,$chemin_export_doc_num) ;
 						}
 					}
@@ -704,7 +764,7 @@ abstract class caddie_root_controller {
 					if($nb_elements_total){
 						$pb=new progress_bar($msg['caddie_situation_access_rights_encours'],$nb_elements_total,5);
 						if ($myCart->type=='NOTI'){
-							while(list($cle, $object) = each($liste)) {
+						    foreach ($liste as $cle => $object) {
 								if ($gestion_acces_user_notice==1) {
 									$dom_1->delRessource($object);
 									$dom_1->applyRessourceRights($object);
@@ -716,7 +776,7 @@ abstract class caddie_root_controller {
 								$pb->progress();
 							}
 						}elseif($myCart->type=='BULL'){
-							while(list($cle, $object) = each($liste)) {
+						    foreach ($liste as $cle => $object) {
 								$requete="SELECT bulletin_titre, num_notice FROM bulletins WHERE bulletin_id='".$object."'";
 								$res=pmb_mysql_query($requete);
 								if(pmb_mysql_num_rows($res)){
@@ -740,7 +800,7 @@ abstract class caddie_root_controller {
 								$pb->progress();
 							}
 						}elseif($myCart->type=='EXPL'){
-							while(list($cle, $object) = each($liste)) {
+						    foreach ($liste as $cle => $object) {
 								$requete="SELECT expl_notice, expl_bulletin FROM exemplaires WHERE expl_id='".$object."' ";
 								$res=pmb_mysql_query($requete);
 								if(pmb_mysql_num_rows($res)){
@@ -997,12 +1057,12 @@ abstract class caddie_root_controller {
 		if($item && $action!="save_cart" && $action!="del_cart") {
 			$display .= (!$nocheck?"<input type='checkbox' id='id_".$valeur['idcaddie']."' name='caddie[".$valeur['idcaddie']."]' value='".$valeur['idcaddie']."'>":"")."&nbsp;";
 			if(!$nocheck){
-				$display.=  "<a href='#' onclick='javascript:document.getElementById(\"id_".$valeur['idcaddie']."\").checked=true;document.forms[\"print_options\"].submit();' /><strong>".$valeur['name']."</strong>";
+				$display.=  "<a href='#' onclick='javascript:document.getElementById(\"id_".$valeur['idcaddie']."\").checked=true;document.forms[\"print_options\"].submit();' />";
 			} else {
 				if ($lien_pointage) {
-					$display.=  "<a href='#' onclick='javascript:document.getElementById(\"idcaddie\").value=".$item.";document.getElementById(\"idcaddie_selected\").value=".$valeur['idcaddie'].";document.forms[\"print_options\"].submit();' /><strong>".$valeur['name']."</strong>";
+					$display.=  "<a href='#' onclick='javascript:document.getElementById(\"idcaddie\").value=".$item.";document.getElementById(\"idcaddie_selected\").value=".$valeur['idcaddie'].";document.forms[\"print_options\"].submit();' />";
 				} else {
-					$display.=  "<a href='#' onclick='javascript:document.getElementById(\"idcaddie\").value=".$valeur['idcaddie'].";document.forms[\"print_options\"].submit();' /><strong>".$valeur['name']."</strong>";
+					$display.=  "<a href='#' onclick='javascript:document.getElementById(\"idcaddie\").value=".$valeur['idcaddie'].";document.forms[\"print_options\"].submit();' />";
 				}
 			}
 		} else {
@@ -1038,11 +1098,14 @@ abstract class caddie_root_controller {
 			} else {
 				$link = static::$lien_origine."&action=".static::$action_click."&object_type=".$caddie_instance->type."&idcaddie=".$valeur['idcaddie']."&item=$item";
 			}
-			$display.= "<a href='$link' /><strong>".$valeur['name']."</strong>";
+			$display.= "<a href='$link' />";
 		}
+		$display .= "<span ".($valeur['favorite_color'] != '#000000' ? "style='color:".$valeur['favorite_color']."'" : "").">";
+		$display .= "<strong>".$valeur['name']."</strong>";
 		if ($valeur['comment']){
 			$display.=  "<br /><small>(".$valeur['comment'].")</small>";
 		}
+		$display .= "</span>";
 		if($item && $action!="save_cart" && $action!="del_cart") {
 			$display.= "
 					</td>
@@ -1068,15 +1131,21 @@ abstract class caddie_root_controller {
 		global $PMBuserid;
 		global $charset;
 		global $deflt_catalog_expanded_caddies;
-	
+		global $idcaddie_new;
+		
 		$display = '';
 		$model_class_name = static::get_model_class_name();
 		$liste = $model_class_name::get_cart_list($object_type);
+		$script_submit = '';
 		if(sizeof($liste)) {
 			$display .= "<div class='row'><a href='javascript:expandAll()'><img src='".get_url_icon('expand_all.gif')."' id='expandall' style='border:0px'></a>
 			<a href='javascript:collapseAll()'><img src='".get_url_icon('collapse_all.gif')."' id='collapseall' style='border:0px'></a>".static::$title."</div>";
 			$parity=array();
-			while(list($cle, $valeur) = each($liste)) {
+			foreach ($liste as $cle => $valeur) {
+			    if (!empty($idcaddie_new) && ($idcaddie_new != $valeur['idcaddie'])) continue;
+			    if (!empty($idcaddie_new) && ($idcaddie_new == $valeur['idcaddie'])) {
+    			    $script_submit = "<script>document.getElementById('id_" . $valeur['idcaddie'] . "').checked=true;document.forms['print_options'].submit()</script>";
+    			}
 				$rqt_autorisation=explode(" ",$valeur['autorisations']);
 				if (array_search ($PMBuserid, $rqt_autorisation)!==FALSE || $PMBuserid==1) {
 					$myCart = new $model_class_name();
@@ -1117,7 +1186,7 @@ abstract class caddie_root_controller {
 		} else {
 			$display .= $msg[398];
 		}
-		return $display;
+		return $display.$script_submit;
 	}
 	
 	public static function get_display_list_from_item($type='display', $object_type='', $item=0) {
@@ -1129,7 +1198,7 @@ abstract class caddie_root_controller {
 		$liste = $model_class_name::get_cart_list_from_item($object_type, 0, $item);
 		if(sizeof($liste)) {
 			$print_cart = array();
-			while(list($cle, $valeur) = each($liste)) {
+			foreach ($liste as $cle => $valeur) {
 				$rqt_autorisation=explode(" ",$valeur['autorisations']);
 				if (array_search ($PMBuserid, $rqt_autorisation)!==FALSE || $PMBuserid==1) {
 					$myCart = new $model_class_name($valeur["idcaddie"]);
@@ -1156,12 +1225,12 @@ abstract class caddie_root_controller {
 		return $display;
 	}
 	
-	public static function process_print() {
+	public static function process_print($idcaddie_new=0) {
 		global $action;
 	
 		switch ($action) {
 			case "print_prepare" :
-				static::print_prepare();
+			    static::print_prepare($idcaddie_new);
 				break;
 			case "print" :
 				static::set_session();

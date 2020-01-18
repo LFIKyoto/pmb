@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution_area_equation.class.php,v 1.4 2018-01-09 10:48:40 vtouchard Exp $
+// $Id: contribution_area_equation.class.php,v 1.6 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-require_once ($class_path."/contribution_area/contribution_area.class.php");
-require_once ($class_path."/search_persopac.class.php");
-require_once("$include_path/templates/contribution_area/contribution_area_equation.tpl.php");
+require_once "$class_path/contribution_area/contribution_area.class.php";
+require_once "$include_path/templates/contribution_area/contribution_area_equation.tpl.php";
+require_once "$include_path/misc.inc.php";
 
 class contribution_area_equation{
 	
@@ -324,16 +324,14 @@ class contribution_area_equation{
 	protected function load_xml($file_name) {
 		global $pmb_opac_url,$lang,$base_path;
 
-		$search_persopac = new search_persopac();
-		
 		// Recherche du fichier lang de l'opac
 		$url=$pmb_opac_url."includes/messages/$lang.xml";
 		$fichier_xml=$base_path."/temp/opac_lang.xml";
-		$search_persopac->curl_load_file($url,$fichier_xml);
+		curl_load_opac_file($url,$fichier_xml);
 		
 		$url=$pmb_opac_url."includes/search_queries/".$file_name.".xml";
 		$fichier_xml="$base_path/temp/".$file_name."_opac.xml";
-		$search_persopac->curl_load_file($url,$fichier_xml);
+		curl_load_opac_file($url,$fichier_xml);
 	}
 	
 	protected function set_properties_form_type($type) {
@@ -471,7 +469,7 @@ class contribution_area_equation{
 				$r.="<input type='hidden' name='".$field_."[]' value='".htmlentities($field[$j],ENT_QUOTES,$charset)."'/>";
 			}
 			reset($fieldvar);
-			while (list($var_name,$var_value)=each($fieldvar)) {
+			foreach ($fieldvar as $var_name => $var_value) {
 				for ($j=0; $j<count($var_value); $j++) {
 					$r.="<input type='hidden' name='".$fieldvar_."[".$var_name."][]' value='".htmlentities($var_value[$j],ENT_QUOTES,$charset)."'/>";
 				}

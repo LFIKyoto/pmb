@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pret_parametres_perso.tpl.php,v 1.4 2018-04-25 09:12:24 dgoron Exp $
+// $Id: pret_parametres_perso.tpl.php,v 1.5 2019-05-27 12:25:04 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 // templates pour les forms paramètres personalisés prêts
 //	----------------------------------
-
+global $form_loan_edit, $current_module, $msg;
 
 $form_loan_edit="<form class='form-$current_module' name='formulaire' action='!!base_url!!' method='post'>
 	<h3>!!form_titre!!</h3>

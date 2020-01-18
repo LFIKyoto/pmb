@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_print_fields.class.php,v 1.19 2017-11-22 11:07:34 dgoron Exp $
+// $Id: serialcirc_print_fields.class.php,v 1.20 2019-06-12 07:09:41 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -30,7 +30,7 @@ class serialcirc_print_fields {
 			$r=pmb_mysql_fetch_object($resultat);
 			if($r->serialcirc_tpl) {
 				//On va récupérer le template prédéfini
-				if ($r->serialcirc_tpl+0 > 0) {
+				if (intval($r->serialcirc_tpl) > 0) {
 					$query = "select * from serialcirc_tpl where serialcirctpl_id=".$r->serialcirc_tpl;
 					$res = pmb_mysql_query($query,$dbh);
 					if ($res) {

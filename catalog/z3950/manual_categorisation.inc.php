@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: manual_categorisation.inc.php,v 1.9 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: manual_categorisation.inc.php,v 1.10 2019-07-11 10:24:50 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -22,7 +22,7 @@ function get_category_automap_information($libelle) {
 	return $result;
 }
 
-function get_manual_categorisation_form($tableau_600="",$tableau_601="",$tableau_602="",$tableau_604="",$tableau_605="",$tableau_606="",$tableau_607="",$tableau_608="") {
+function get_manual_categorisation_form($tableau_600 = array(), $tableau_601 = array(), $tableau_602 = array(), $tableau_604 = array(), $tableau_605 = array(), $tableau_606 = array(), $tableau_607 = array(), $tableau_608 = array()) {
 	global $dbh, $charset, $ptab, $msg;
 	$glue = ' -- ';
 

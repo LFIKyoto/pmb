@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_skos_datatype_resource_selector_ui.class.php,v 1.7 2017-10-30 13:42:59 vtouchard Exp $
+// $Id: onto_skos_datatype_resource_selector_ui.class.php,v 1.10 2019-08-14 08:02:58 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -39,7 +39,7 @@ class onto_skos_datatype_resource_selector_ui extends onto_common_datatype_resou
 		}
 		*/
 		$form=$ontology_tpl['form_row'];
-		$form=str_replace("!!onto_row_label!!",htmlentities($property->label ,ENT_QUOTES,$charset) , $form);
+		$form=str_replace("!!onto_row_label!!",htmlentities($property->get_label() ,ENT_QUOTES,$charset) , $form);
 		
 		$range_for_form = "";
 		foreach($property->range as $range){
@@ -55,7 +55,7 @@ class onto_skos_datatype_resource_selector_ui extends onto_common_datatype_resou
 // 			}
 		}
 		$content = str_replace("!!property_name!!", rawurlencode($property->pmb_name), $content);
-		if(sizeof($datas)){
+		if (!empty($datas)) {
 			$i=1;
 			$first=true;
 			$new_element_order=max(array_keys($datas));

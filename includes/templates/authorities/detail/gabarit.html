@@ -1,4 +1,4 @@
-<!-- $Id: gabarit.html,v 1.1 2018-02-16 15:45:42 apetithomme Exp $ -->
+<!-- $Id: gabarit.html,v 1.2 2019-04-19 12:23:44 ngantier Exp $ -->
 
 <style type="text/css">
 	.aut_display_row {
@@ -17,6 +17,18 @@
 	<br/>
 	{% block detail %}
 	{% endblock detail %}
+	{% block aut_linked %}
+		{% if element.aut_link.display %}
+			<div class="aut_linked aut_display_row">
+				<div class="aut_display_cell">
+					<b>{{ msg.aut_link }} :</b>
+				</div>
+				<div class="aut_display_cell">
+					{{ element.aut_link.display }}
+				</div>
+			</div>
+		{% endif %}
+	{% endblock %}
 	{% block indexing_concept %}
 		{% for concept in element.indexing_concepts %}
 			{% if loop.first %}

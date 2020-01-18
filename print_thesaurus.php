@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: print_thesaurus.php,v 1.27 2018-10-08 12:11:32 tsamson Exp $
+// $Id: print_thesaurus.php,v 1.27.6.1 2019-11-14 10:33:52 tsamson Exp $
 
 $base_path = ".";
 $base_auth = "AUTORITES_AUTH";
@@ -687,7 +687,7 @@ function cree_export_skos(&$dom,&$racine,$num_noeud_racine,$num_noeud_orphelins)
 			
 			//Les renvois
 			if($aff_voir){
-				$requete="SELECT id_noeud, num_parent, libelle_categorie, langue FROM noeuds JOIN categories ON id_noeud=num_noeud AND noeuds.num_thesaurus=categories.num_thesaurus WHERE num_renvoi_voir='".$noeud->id_noeud."' AND noeuds.num_thesaurus='".$aff_num_thesaurus."'";
+				$requete="SELECT id_noeud, num_parent, libelle_categorie, langue FROM noeuds JOIN categories ON id_noeud=num_noeud AND noeuds.num_thesaurus=categories.num_thesaurus WHERE num_renvoi_voir='".$noeud->id_noeud."' AND noeuds.num_thesaurus='".$aff_num_thesaurus."' ORDER BY libelle_categorie";
 				$res_renvoi=pmb_mysql_query($requete);
 				if($res_renvoi && pmb_mysql_num_rows($res_renvoi)){
 					while ($renvoi=pmb_mysql_fetch_object($res_renvoi)) {

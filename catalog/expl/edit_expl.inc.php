@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: edit_expl.inc.php,v 1.42 2018-10-18 14:39:20 dgoron Exp $
+// $Id: edit_expl.inc.php,v 1.43 2019-06-05 09:04:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $msg, $id, $cb, $expl_id;
 
 require_once ($class_path."/caddie/caddie_controller.class.php");
 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_records.class.php,v 1.19 2018-11-29 09:04:17 dgoron Exp $
+// $Id: searcher_records.class.php,v 1.22 2019-04-23 09:19:56 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -52,12 +52,12 @@ class searcher_records extends searcher_generic {
 			if($pmb_show_notice_id && $f_notice_id) {
 				$return = " where notice_id = '".$f_notice_id."' ";
 			} else {
-				if($typdoc_query && $statut_query) {
-					$return = " where typdoc = '".$typdoc_query."' and statut = '".$statut_query."' ";
-				}else if ($typdoc_query){
-					$return = " where typdoc = '".$typdoc_query."' ";
-				}else if ($statut_query){
-					$return = " where statut = '".$statut_query."' ";
+				if(!empty($typdoc_query) && !empty($statut_query) && !empty($typdoc_query[0]) && !empty($statut_query[0])) {
+					$return = " where typdoc in ('".implode("','", $typdoc_query)."') and statut in ('".implode("','", $statut_query)."') ";
+				}else if (!empty($typdoc_query) && !empty($typdoc_query[0])){
+					$return = " where typdoc in ('".implode("','", $typdoc_query)."') ";
+				}else if (!empty($statut_query) && !empty($statut_query[0])){
+					$return = " where statut in ('".implode("','", $statut_query)."') ";
 				}
 			}
 			if($return) {
@@ -75,12 +75,12 @@ class searcher_records extends searcher_generic {
 				$return.= $where_and." date_parution <= '".$date_parution_end."' ";
 			}
 		}else{
-			if($typdoc_query && $statut_query) {
-				$return = " join notices on id_notice = notice_id and typdoc = '".$typdoc_query."' and statut = '".$statut_query."' ";
-			}else if ($typdoc_query){
-				$return = " join notices on id_notice = notice_id and typdoc = '".$typdoc_query."' ";
-			}else if ($statut_query){
-				$return = " join notices on id_notice = notice_id and statut = '".$statut_query."' ";
+			if(!empty($typdoc_query) && !empty($statut_query) && !empty($typdoc_query[0]) && !empty($statut_query[0])) {
+				$return = " join notices on id_notice = notice_id and typdoc in ('".implode("','", $typdoc_query)."') and statut in ('".implode("','", $statut_query)."') ";
+			}else if (!empty($typdoc_query) && !empty($typdoc_query[0])){
+				$return = " join notices on id_notice = notice_id and typdoc in ('".implode("','", $typdoc_query)."') ";
+			}else if (!empty($statut_query) && !empty($statut_query[0])){
+				$return = " join notices on id_notice = notice_id and statut in ('".implode("','", $statut_query)."') ";
 			}
 			if($date_parution_start && $date_parution_end) {
 				$return.= " join notices as notices_date_parution on id_notice = notices_date_parution.notice_id and notices_date_parution.date_parution >= '".$date_parution_start."' and date_parution <= '".$date_parution_end."' ";
@@ -116,7 +116,7 @@ class searcher_records extends searcher_generic {
 		global $date_parution_start_query, $date_parution_end_query, $date_parution_exact_query;
 		
 		$sign = parent::_get_sign($sorted);
-		$sign.= md5('&typdoc='.$typdoc_query.'&statut='.$statut_query.'&date_parution_start_query='.$date_parution_start_query.'&date_parution_end_query='.$date_parution_end_query.'&date_parution_exact_query='.$date_parution_exact_query);
+		$sign.= md5((!empty($typdoc_query) ? '&typdoc='.implode(",",$typdoc_query) : '').(!empty($statut_query) ? '&statut='.implode(",",$statut_query) : '').'&date_parution_start_query='.$date_parution_start_query.'&date_parution_end_query='.$date_parution_end_query.'&date_parution_exact_query='.$date_parution_exact_query);
 		return $sign;
 	}
 	
@@ -252,6 +252,11 @@ class searcher_records extends searcher_generic {
 			$query .= "where ";
 		}
 		return $query;
+	}
+	
+	public static function get_caddie_link() {
+	    global $msg;
+	    print "&nbsp;<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=".$_SESSION['CURRENT']."&action=print_prepare','print_cart'); return false;\"><img src='".get_url_icon('basket_small_20x20.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>&nbsp;";
 	}
 	
 }

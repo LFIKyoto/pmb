@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_display.class.php,v 1.34 2018-08-23 15:09:39 tsamson Exp $
+// $Id: notice_display.class.php,v 1.35.6.1 2019-10-21 13:46:39 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -60,7 +60,9 @@ class notice_display {
 						switch ($cadre['cadre_type']) {
 							case 'isbd':
 								$this->dom->getElementById("noticeNot")->parentNode->appendChild($this->dom->importNode($this->dom->getElementById("blocNotice_descr"),true));
-								$this->dom->getElementById("noticeNot")->parentNode->appendChild($this->dom->importNode($this->dom->getElementById("docnum"),true));
+								if ($this->dom->getElementById("docnum") !== null) {
+								    $this->dom->getElementById("noticeNot")->parentNode->appendChild($this->dom->importNode($this->dom->getElementById("docnum"),true));
+								}
 								break;
 							case 'frbr_graph' :
 								$graph_node = $this->dom->createElement("div");
@@ -224,7 +226,7 @@ class notice_display {
 		}
 		$facettes_tpl = '';
 		//comparateur de facettes : on ré-initialise
-		$_SESSION['facette']="";
+		$_SESSION['facette']=array();
 		if($nbr_lignes){
 			$query = "SELECT distinct notices.notice_id FROM notices ".$this->get_join_recordslist()." ".$this->acces_j." ".$this->statut_j;
 			$query .= " WHERE ".$this->get_clause_authority_id_recordslist()." $this->statut_r ";

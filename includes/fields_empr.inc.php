@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fields_empr.inc.php,v 1.197 2018-12-20 11:00:19 mbertin Exp $
+// $Id: fields_empr.inc.php,v 1.228.2.3 2019-11-22 09:55:59 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -162,16 +162,23 @@ function aff_query_auth_empr($field,&$check_scripts,$script="") {
 	$selection_parameters = get_authority_selection_parameters($field["OPTIONS"][0]["DATA_TYPE"]["0"]["value"]);
 	$what = $selection_parameters['what'];
 	$completion = $selection_parameters['completion'];
+	$concept_schemes = [];
+	
 	switch($field["OPTIONS"][0]["DATA_TYPE"]["0"]["value"]) {
 		case 2:
 			$att_id_filter= $id_thes_unique;
 			break;//categories
 		case 9:
+		    $concept_schemes = [];
+		    if(isset($field['OPTIONS'][0]['ID_SCHEME_CONCEP']))
+    		for($i=0 ; $i<count($field['OPTIONS'][0]['ID_SCHEME_CONCEP']) ; $i++){
+    		    $concept_schemes[] = $field['OPTIONS'][0]['ID_SCHEME_CONCEP'][$i]['value'];
+    		}
 			$element="&element=concept&param1=".$field["NAME"]."&param2=f_".$field["NAME"];
-			if(isset($field['OPTIONS'][0]['ID_SCHEME_CONCEP'][0]['value']) && $field['OPTIONS'][0]['ID_SCHEME_CONCEP'][0]['value'] != -1){
+			if(isset($concept_schemes[0]) && $concept_schemes[0] != -1){
 				//concept_scheme;
-				$params = " param1='".$field['OPTIONS'][0]['ID_SCHEME_CONCEP'][0]['value']."'";
-				$element.="&return_concept_id=1&unique_scheme=1&concept_scheme=".$field['OPTIONS'][0]['ID_SCHEME_CONCEP'][0]['value'];
+			    $params = " param1='".implode(',',$concept_schemes)."'";
+			    $element.="&return_concept_id=1&unique_scheme=1&concept_scheme=".implode(',',$concept_schemes);
 			}
 			$att_id_filter= "http://www.w3.org/2004/02/skos/core#Concept";
 			break;
@@ -206,8 +213,9 @@ function aff_query_auth_empr($field,&$check_scripts,$script="") {
 			document.getElementById(name).value='';
 			document.getElementById('f_'+name).value='';
 		}
-		function add_".$field["NAME"]."() {
-			suffixe = eval('document.$caller.n_".$field["NAME"].".value');
+		function add_".$field["NAME"]."(node) {
+	        var formName = node.form.name;
+			suffixe = eval('document.'+formName+'.n_".$field["NAME"].".value');
 			
 			var node_dnd_id = get_custom_dnd_on_add('div_".$field["NAME"]."', 'customfield_query_auth_".$field["NAME"]."', suffixe);
 			
@@ -219,9 +227,10 @@ function aff_query_auth_empr($field,&$check_scripts,$script="") {
 			f_perso.setAttribute('att_id_filter','".$att_id_filter."');
 			f_perso.setAttribute('persofield','".$field["NAME"]."');
 			f_perso.setAttribute('autfield',nom_id);";
-		if (isset($field['OPTIONS'][0]['ID_SCHEME_CONCEP'][0]['value']) && ($field['OPTIONS'][0]['ID_SCHEME_CONCEP'][0]['value'] != -1) && ($what == "ontology")) {
+		
+		if (count($concept_schemes) && $concept_schemes[0] != -1 && ($what == "ontology")) {
 			$ret.= "
-			f_perso.setAttribute('param1','".$field['OPTIONS'][0]['ID_SCHEME_CONCEP'][0]['value']."');";
+			f_perso.setAttribute('param1','".implode(',',$concept_schemes)."');";
 		}
 		$ret.= "
 			f_perso.setAttribute('type','text');
@@ -249,8 +258,11 @@ function aff_query_auth_empr($field,&$check_scripts,$script="") {
 			perso.appendChild(document.createTextNode(' '));
 			perso.appendChild(del_f_perso);
 			perso.appendChild(f_perso_id);
+
+			var buttonAdd = document.getElementById('button_add_".$field['NAME']."');
+			if (buttonAdd) perso.appendChild(buttonAdd);
 			
-			document.$caller.n_".$field["NAME"].".value=suffixe*1+1*1 ;
+			document[formName].n_".$field["NAME"].".value=suffixe*1+1*1 ;
 			ajax_pack_element(document.getElementById('f_'+nom_id));
 		}
 		</script>
@@ -270,8 +282,8 @@ function aff_query_auth_empr($field,&$check_scripts,$script="") {
 		switch($field["OPTIONS"][0]["DATA_TYPE"]["0"]["value"]) {
 			case 9:// concept
 				$element="&element=concept&param1=".$field["NAME"]."&param2=f_".$field["NAME"];
-				if(isset($field['OPTIONS'][0]['ID_SCHEME_CONCEP'][0]['value']) && $field['OPTIONS'][0]['ID_SCHEME_CONCEP'][0]['value'] != -1){
-					$element.="&return_concept_id=1&unique_scheme=1&concept_scheme=".$field['OPTIONS'][0]['ID_SCHEME_CONCEP'][0]['value'];
+				if(count($concept_schemes) && $concept_schemes[0] != -1){
+				    $element.="&return_concept_id=1&unique_scheme=1&concept_scheme=".implode(',',$concept_schemes);
 				}
 				break;
 			default:
@@ -288,7 +300,7 @@ function aff_query_auth_empr($field,&$check_scripts,$script="") {
 				$ret.="<input type='button' class='bouton' value='...' onclick=\"openPopUp('".$base_path."/select.php?what=$what&caller=$caller&p1=".$field["NAME"]."_$i&p2=f_".$field["NAME"]."_$i&perso_id=".$field["ID"]."&custom_prefixe=".$_custom_prefixe_."&dyn=$val_dyn&perso_name=".$field['NAME']
 				."&max_field=n_".$field["NAME"]."&field_id=".$field["NAME"]."_&field_name_id=f_".$field["NAME"]."_&add_field=add_".$field["NAME"]."&id_thes_unique=".urlencode($id_thes_unique).$element."', 'select_perso_".$field["ID"]
 				."', 700, 500, -2, -2,'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes')\" /> ";
-				$ret.=" <input type='button' class='bouton' value='+' onClick=\"add_".$field["NAME"]."();\"/>";
+				$ret.=" <input type='button' class='bouton' value='+' onClick=\"add_".$field["NAME"]."(this);\"/>";
 			}else {
 				$ret.="<input type='button' class='bouton' value='...' onclick=\"openPopUp('".$base_path."/select.php?what=$what&caller=$caller&p1=".$field["NAME"]."_$i&p2=f_".$field["NAME"]."_$i&perso_id=".$field["ID"]."&custom_prefixe=".$_custom_prefixe_."&dyn=$val_dyn&perso_name=".$field['NAME']
 				."&max_field=n_".$field["NAME"]."&field_id=".$field["NAME"]."_0&field_name_id=f_".$field["NAME"]."_0&add_field=add_".$field["NAME"]."&id_thes_unique=".urlencode($id_thes_unique).$element."', 'select_perso_".$field["ID"]
@@ -296,9 +308,12 @@ function aff_query_auth_empr($field,&$check_scripts,$script="") {
 				
 			}
 		}
-		$display_temp ="<input type='text' att_id_filter='".$att_id_filter."' ".$params." completion='$completion' autfield='".$field["NAME"]."_$i' class='saisie-50emr' id='f_".$field["NAME"]."_$i'  persofield='".$field["NAME"]."' autfield='".$field["NAME"]."_$i' name='f_".$field["NAME"]."[]'  data-form-name='f_".$field["NAME"]."_'  $readonly value=\"".htmlentities($isbd,ENT_QUOTES,$charset)."\" />\n";
+		$display_temp ="<input type='text' att_id_filter='".$att_id_filter."' ".$params." completion='$completion' class='saisie-50emr' id='f_".$field["NAME"]."_$i'  persofield='".$field["NAME"]."' autfield='".$field["NAME"]."_$i' name='f_".$field["NAME"]."[]'  data-form-name='f_".$field["NAME"]."_'  $readonly value=\"".htmlentities($isbd,ENT_QUOTES,$charset)."\" />\n";
 		$display_temp.="<input type='hidden' id='".$field["NAME"]."_$i' name='".$field["NAME"]."[]' data-form-name='".$field["NAME"]."_' value=\"".htmlentities($values[$i],ENT_QUOTES,$charset)."\">";
 		$display_temp.="<input type='button' class='bouton' value='X' onclick=\"this.form.f_".$field["NAME"]."_$i.value=''; this.form.".$field["NAME"]."_$i.value=''; \" />\n";
+		if ($i == $n-1 && $options['MULTIPLE'][0]['value']=="yes") {
+		    $display_temp .= "<input id='button_add_".$field['NAME']."' type='button' class='bouton' value='+' onClick=\"add_".$field["NAME"]."(this);\"/>";
+		}
 		if ($options['MULTIPLE'][0]['value']=="yes") {
 			$ret.=get_block_dnd('query_auth', $field['NAME'], $i, $display_temp, $isbd);
 		} else {
@@ -343,13 +358,20 @@ function aff_query_auth_empr_search($field,&$check_scripts,$varname) {
 			}
 			break;//categories
 		case 9:
-			$element="&element=concept&param1=".$field["NAME"]."&param2=f_".$field["NAME"];
-			if(isset($field['OPTIONS'][0]['ID_SCHEME_CONCEP'][0]['value']) && $field['OPTIONS'][0]['ID_SCHEME_CONCEP'][0]['value'] != -1){
-				$params = "param1='".$field['OPTIONS'][0]['ID_SCHEME_CONCEP'][0]['value']."'";
-				$element.="&return_concept_id=1&unique_scheme=1&concept_scheme=".$field['OPTIONS'][0]['ID_SCHEME_CONCEP'][0]['value'];
-			}
-			$att_id_filter= "http://www.w3.org/2004/02/skos/core#Concept";
-			break;
+		    $concept_schemes = [];
+		    if (!empty($field['OPTIONS'][0]['ID_SCHEME_CONCEP'])) {
+    		    for($i=0 ; $i<count($field['OPTIONS'][0]['ID_SCHEME_CONCEP']) ; $i++){
+    		        $concept_schemes[] = $field['OPTIONS'][0]['ID_SCHEME_CONCEP'][$i]['value'];
+    		    }
+		    }
+		    $element="&element=concept&param1=".$field["NAME"]."&param2=f_".$field["NAME"];
+		    if(!empty($concept_schemes[0]) && $concept_schemes[0] != -1){
+		        //concept_scheme;
+		        $params = " param1='".implode(',',$concept_schemes)."'";
+		        $element.="&return_concept_id=1&unique_scheme=1&concept_scheme=".implode(',',$concept_schemes);
+		    }
+		    $att_id_filter= "http://www.w3.org/2004/02/skos/core#Concept";
+		    break;
 	}
 	$libelle="";
 	if($id){
@@ -500,33 +522,26 @@ function aff_date_box_empr($field,&$check_scripts) {
 		$ret .= '<input class="bouton" type="button" value="+" onclick="add_custom_date_box_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\',\''.(!isset($options["DEFAULT_TODAY"][0]["value"]) || !$options["DEFAULT_TODAY"][0]["value"] ? formatdate(date("Ymd",time())).'\',\''.date("Y-m-d",time()) : '\',\'').'\')">';
 	}
 	foreach ($values as $value) {
-		$d=explode("-",$value);
-		
+		$d=explode("-",$value);		
+		$val = "";
 		if ((!@checkdate($d[1],$d[2],$d[0]))&&(!isset($options["DEFAULT_TODAY"][0]["value"]) || !$options["DEFAULT_TODAY"][0]["value"])) {
 			if(!$flag_id_origine) { //on est en création
-				$val=date("Y-m-d",time());			
-				$val_popup=date("Ymd",time());
-			} else { // c'est une modification, le champ reste vide
-				$val_popup="";
-				$val="";
+				$val = date("Y-m-d",time());
 			}
-		} else if ((!@checkdate($d[1],$d[2],$d[0]))&&(isset($options["DEFAULT_TODAY"][0]["value"]) && $options["DEFAULT_TODAY"][0]["value"])) {
-			$val_popup="";
-			$val="";
+		} elseif ((!@checkdate($d[1],$d[2],$d[0]))&&(isset($options["DEFAULT_TODAY"][0]["value"]) && $options["DEFAULT_TODAY"][0]["value"])) {
+			$val = "";
 		} else {
-			$val_popup=$d[0].$d[1].$d[2];
-			$val=$value;
-		}
-		$display_temp = "
-				<div>
-					<input type='text' style='width: 10em;' name='".$field['NAME']."[]' id='".$field['NAME']."_val_".$count."' value='".$val."' data-form-name='".$field['NAME']."_val_' 
-						data-dojo-type='dijit/form/DateTextBox' required='".(($field['MANDATORY']==1) ? 'true' : 'false')."' constraints=\"{datePattern:'".getDojoPattern($msg['format_date'])."'}\" />	
-					<input class='bouton' type='button' value='X' onClick='empty_dojo_calendar_by_id(\"".$field['NAME']."_val_".$count."\"); '/>
-				</div>";
+			$val = $value;
+		}		
+		$display_temp = get_input_date($field['NAME']."[]", $field['NAME']."_val_".$count, $val, $field['MANDATORY']);		
 		if(isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value']) {
-			$ret.=get_block_dnd('date_box', $field['NAME'], $count, $display_temp, $val);
+			$button_add = '';
+			if (end($values) == $value) {
+				$button_add = '<input id="button_add_'.$field['NAME'].'_'.$field['ID'].'" class="bouton" type="button" value="+" onclick="add_custom_date_box_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\',\''.(!isset($options["DEFAULT_TODAY"][0]["value"]) || !$options["DEFAULT_TODAY"][0]["value"] ? formatdate(date("Ymd",time())).'\',\''.date("Y-m-d",time()) : '\',\'').'\')">';
+			}
+			$ret.= get_block_dnd('date_box', $field['NAME'], $count, $display_temp.$button_add, $val);
 		} else {
-			$ret.=$display_temp;
+			$ret.= $display_temp;
 		}
 		$count++;
 	}
@@ -539,32 +554,27 @@ function aff_date_box_empr($field,&$check_scripts) {
 				var count = document.getElementById('customfield_date_box_'+field_id).value;
 				
 				var node_dnd_id = get_custom_dnd_on_add('spaceformorecustomfielddatebox_'+field_id, 'customfield_date_box_'+field_name, count);
-				
-				var val = document.createElement('input');
-				val.setAttribute('name', field_name + '[]');
-				val.setAttribute('id', field_name + '_val_' + count);
-		        val.setAttribute('data-dojo-type','dijit/form/DateTextBox');
-				val.setAttribute('type','text');
-				val.setAttribute('style','width: 10em;');
-				if (value) {
-		        	val.setAttribute('value',value_popup);
-				} else {
-					val.setAttribute('value','');
-				}
+				var buttonAdd = document.getElementById('button_add_' + field_name + '_' + field_id);
+
+                var val = get_input_date_js(field_name + '[]', field_name + '_val_' + count, value);				
+				document.getElementById(node_dnd_id).appendChild(val);
+
 				var del = document.createElement('input');
 				del.setAttribute('type', 'button');
-		        del.setAttribute('class','bouton');
-		        del.setAttribute('value','X');
-				del.setAttribute('onClick','empty_dojo_calendar_by_id(\"'+field_name + '_val_' + count+'\");');
-				del.addEventListener('click', function() {
-					empty_dojo_calendar_by_id(field_name + '_val_' + count);
-				}, false);
-				
-				var br = document.createElement('br');
-				
-				document.getElementById(node_dnd_id).appendChild(val);
-				document.getElementById(node_dnd_id).appendChild(document.createTextNode (' '));
-				document.getElementById(node_dnd_id).appendChild(del);
+		        del.setAttribute('class', 'bouton');
+		        del.setAttribute('value', 'X');
+                if (use_dojo_calendar == 1) { 
+    				del.setAttribute('onClick','empty_dojo_calendar_by_id(\"'+field_name + '_val_' + count+'\");');
+    				del.addEventListener('click', function() {
+    					empty_dojo_calendar_by_id(field_name + '_val_' + count);
+    				}, false);
+                } else {
+    				del.setAttribute('onClick','document.getElementById(\"'+field_name + '_val_' + count+'\").value = \"\";');
+                }
+			    document.getElementById(node_dnd_id).appendChild(document.createTextNode (' '));
+			    document.getElementById(node_dnd_id).appendChild(del);
+				if (buttonAdd) document.getElementById(node_dnd_id).appendChild(buttonAdd);
+				var br = document.createElement('br');				
 				document.getElementById(node_dnd_id).appendChild(br);
 				document.getElementById('customfield_date_box_'+field_id).value = document.getElementById('customfield_date_box_'+field_id).value * 1 + 1;
 				
@@ -584,27 +594,39 @@ function aff_date_box_empr_search($field,&$check_scripts,$varname) {
 	global $msg;
 
 	$values=$field['VALUES'];
-	$d=explode("-",$values[0]);
-	if (!@checkdate($d[1],$d[2],$d[0])) {
-		$val='';
-	} else {
-		$val=$values[0];
-	}
 	$ret="
-		<div id='".$varname."_start_part[]' style='display: inline-block;'>
-			<input type='text' style='width: 10em;' name='".$varname."[]' id='".$varname."[]' value='".$val."'  data-dojo-type='dijit/form/DateTextBox' required='false' />
+		<div id='".$varname."_start_part[]' style='display: inline-block;'>";
+	if(!isset($field['OP'])) $field['OP'] = '';
+	switch ($field['OP']) {
+		case 'LESS_THAN_DAYS':
+		case 'MORE_THAN_DAYS':
+			$ret.="<input type='text' style='width: 10em;' name='".$varname."[]' id='".$varname."[]' value='".$values[0]."' /> ".htmlentities($msg['days'], ENT_QUOTES, $charset);
+			break;
+		default:
+		    $val='';
+		    if (!empty($values[0])) {
+    			$d=explode("-",$values[0]);
+    			if (@checkdate($d[1],$d[2],$d[0])) {    			
+    				$val=$values[0];
+    			}
+		    }
+			$ret.="<input type='text' style='width: 10em;' name='".$varname."[]' id='".$varname."[]' value='".$val."'  data-dojo-type='dijit/form/DateTextBox' constraints=\"{datePattern:'".getDojoPattern($msg['format_date'])."'}\" required='false' />";
+			break;
+	}
+	$ret.="
 		</div>";
 
 	$values=$field['VALUES1'];
-	$d=explode("-",$values[0]);
-	if (!@checkdate($d[1],$d[2],$d[0])) {
-		$val='';
-	} else {
-		$val=$values[0];
+	$val='';	
+	if (!empty($values[0])) {
+    	$d=explode("-",$values[0]);
+    	if (@checkdate($d[1],$d[2],$d[0])) {
+    		$val=$values[0];
+    	}
 	}
 	$ret.="
 		<div id='".$varname."_end_part[]' style='display: inline-block;'>
-			 - <input type='text' style='width: 10em;' name='".$varname."_1[]' id='".$varname."_1[]' value='".$val."'  data-dojo-type='dijit/form/DateTextBox' required='false' />
+			 - <input type='text' style='width: 10em;' name='".$varname."_1[]' id='".$varname."_1[]' value='".$val."'  data-dojo-type='dijit/form/DateTextBox' constraints=\"{datePattern:'".getDojoPattern($msg['format_date'])."'}\" required='false' />
 		</div>";
 	return $ret;
 }
@@ -658,8 +680,13 @@ function aff_text_empr($field,&$check_scripts) {
 	}
 	foreach ($values as $avalues) {
 		$display_temp = "<input id=\"".$field['NAME'].$count."\" type=\"text\" size=\"".$options['SIZE'][0]['value']."\" maxlength=\"".$options['MAXSIZE'][0]['value']."\" name=\"".$field['NAME']."[]\" data-form-name='".$field['NAME']."' value=\"".htmlentities($avalues,ENT_QUOTES,$charset)."\">";
-		if(isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value']) {
-			$ret.=get_block_dnd('text', $field['NAME'], $count, $display_temp, $avalues);
+		
+		if(!empty($options['REPEATABLE'][0]['value'])) {
+			$button_add = '';
+			if (end($values) == $avalues) {
+				$button_add = '<input id="button_add_'.$field['NAME'].'_'.$field['ID'].'" class="bouton" type="button" value="+" onclick="add_custom_text_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\', \''.addslashes($options['SIZE'][0]['value']).'\', \''.addslashes($options['MAXSIZE'][0]['value']).'\')">';
+			}
+			$ret.=get_block_dnd('text', $field['NAME'], $count, $display_temp.$button_add, $avalues);
 		} else {
 			$ret.=$display_temp."<br />";
 		}
@@ -667,15 +694,15 @@ function aff_text_empr($field,&$check_scripts) {
 	}
 	if (isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value']) {
 		$ret.='<input id="customfield_text_'.$afield_name.'" type="hidden" name="customfield_text_'.$afield_name.'" value="'.(count($values)).'">';
-		//$ret.='<input class="bouton" type="button" value="+" onclick="add_custom_text_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\', \''.addslashes($options['SIZE'][0]['value']).'\', \''.addslashes($options['MAXSIZE'][0]['value']).'\')">';
 		$ret .= '<div id="spaceformorecustomfieldtext_'.$afield_name.'"></div>';
 		$ret.=get_custom_dnd_on_add();
 		$ret.="<script>
-			function add_custom_text_(field_id, field_name, field_size, field_maxlen) {				
+			function add_custom_text_(field_id, field_name, field_size, field_maxlen) {		
 				document.getElementById('customfield_text_'+field_id).value = document.getElementById('customfield_text_'+field_id).value * 1 + 1;
 		        count = document.getElementById('customfield_text_'+field_id).value;
 				
 				var node_dnd_id = get_custom_dnd_on_add('spaceformorecustomfieldtext_'+field_id, 'customfield_text_'+field_name, (count-1));
+				var buttonAdd = document.getElementById('button_add_'+ field_name + '_' + field_id);
 				
 				f_aut0 = document.createElement('input');
 		        f_aut0.setAttribute('name',field_name+'[]');
@@ -687,6 +714,7 @@ function aff_text_empr($field,&$check_scripts) {
 		        f_aut0.setAttribute('value','');
 		        space=document.createElement('br');
 				document.getElementById(node_dnd_id).appendChild(f_aut0);
+				if (buttonAdd) document.getElementById(node_dnd_id).appendChild(buttonAdd);
 				document.getElementById(node_dnd_id).appendChild(space);
 			}
 		</script>";
@@ -753,12 +781,16 @@ function aff_comment_empr($field,&$check_scripts) {
 	}
 	if(isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value']) {
 		$ret .= get_js_function_dnd('comment', $field['NAME']);
-		$ret .= '<span style="vertical-align:top"><input class="bouton" type="button" value="+" onclick="add_custom_comment_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\','.$options['ROWS'][0]['value'].','.$options['COLS'][0]['value'].','.$options['MAXSIZE'][0]['value'].'); "></span>';
+		$ret .= '<span style="vertical-align:top"><input class="bouton" type="button" value="+" onclick="add_custom_comment_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\','.$options['ROWS'][0]['value'].','.$options['COLS'][0]['value'].','.$options['MAXSIZE'][0]['value'].'); "/></span>';
 	}
 	foreach ($values as $avalues) {
 		$display_temp = "<textarea id=\"".$field['NAME']."_".$count."\" cols=\"".$options['COLS'][0]['value']."\"  rows=\"".$options['ROWS'][0]['value']."\" maxlength=\"".$options['MAXSIZE'][0]['value']."\" name=\"".$field['NAME']."[]\" data-form-name='".$field['NAME']."_' wrap=virtual>".htmlentities($avalues,ENT_QUOTES,$charset)."</textarea>";
 		if(isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value']) {
-			$ret.=get_block_dnd('comment', $field['NAME'], $count, $display_temp, $avalues);
+			$button_add = '';
+			if(end($values) == $avalues) {
+				$button_add='<input id="button_add_'.$field['NAME'].'_'.$field['ID'].'" class="bouton" type="button" value="+" onclick="add_custom_comment_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\','.$options['ROWS'][0]['value'].','.$options['COLS'][0]['value'].','.$options['MAXSIZE'][0]['value'].')"/>';
+			}
+			$ret.=get_block_dnd('comment', $field['NAME'], $count, $display_temp.$button_add, $avalues);
 		} else {
 			$ret.=$display_temp."<br />";
 		}
@@ -778,7 +810,8 @@ function aff_comment_empr($field,&$check_scripts) {
 				count = document.getElementById('customfield_text_'+field_id).value;
 				
 				var node_dnd_id = get_custom_dnd_on_add('spaceformorecustomfieldtext_'+field_id, 'customfield_comment_'+field_name, (count-1));
-				
+				var	buttonAdd = document.getElementById('button_add_' + field_name + '_' + field_id);
+
 				f_aut0 = document.createElement('textarea');
 				f_aut0.setAttribute('name',field_name+'[]');
 				f_aut0.setAttribute('id',field_name+'_'+cpt);
@@ -790,7 +823,7 @@ function aff_comment_empr($field,&$check_scripts) {
 				space=document.createElement('br');
 				
 				document.getElementById(node_dnd_id).appendChild(f_aut0);
-				document.getElementById(node_dnd_id).appendChild(space);
+				if (buttonAdd) document.getElementById(node_dnd_id).appendChild(buttonAdd);
 				document.getElementById(node_dnd_id).appendChild(space);
 				cpt++;
 			}
@@ -856,7 +889,7 @@ function val_html_empr($field,$value) {
 function aff_list_empr($field,&$check_scripts,$script="") {
 	global $charset;
 	global $_custom_prefixe_;
-	global $base_path;
+	global $base_path, $msg;
 	
 	$ret = '';
 	$_custom_prefixe_=$field["PREFIX"];
@@ -864,8 +897,25 @@ function aff_list_empr($field,&$check_scripts,$script="") {
 	$options=$field['OPTIONS'][0];
 	$values=$field['VALUES'];
 	if ($values=="") $values=array();
-	
 	if ($options["AUTORITE"][0]["value"]!="yes") {
+		if ($field['MANDATORY'] == 1) {
+			$check_scripts.= '
+						var fieldName = "'.$field['NAME'].'";
+						var fields = document.querySelectorAll("[data-form-name=\'"+fieldName+"\']");
+						fields = fields.length ? fields : document.querySelectorAll("[name=\'"+fieldName+"[]\']")
+								
+						if (("SELECT" == fields[0].tagName) && (-1 == fields[0].options.selectedIndex)) {
+							return cancel_submit("'.sprintf($msg["parperso_field_is_needed"],$field['ALIAS']).'");
+						}
+								
+						if ("checkbox" == fields[0].type) {
+							var valid = false;
+							fields.forEach(field => {
+								if (field.checked) valid = true;
+							})
+							if (!valid) return cancel_submit("'.sprintf($msg["parperso_field_is_needed"],$field['ALIAS']).'");
+						}';
+		}
 		if ($options["CHECKBOX"][0]["value"]=="yes"){
 			if ($options['MULTIPLE'][0]['value']=="yes") $type = "checkbox";
 			else $type = "radio";
@@ -931,24 +981,25 @@ function aff_list_empr($field,&$check_scripts,$script="") {
 			}
 			$ret.= "</select>\n";
 		}
-	}else {
-		$libelles=array();
-		$caller = get_form_name();
-		if ($values) {
-			$values_received=$values;
-			$values=array();
-			$requete="select ".$_custom_prefixe_."_custom_list_value, ".$_custom_prefixe_."_custom_list_lib from ".$_custom_prefixe_."_custom_lists where ".$_custom_prefixe_."_custom_champ=".$field['ID']." order by ordre";
-			$resultat=pmb_mysql_query($requete);
-			$i=0;
-			while ($r=pmb_mysql_fetch_array($resultat)) {
-				$as=array_search($r[$_custom_prefixe_."_custom_list_value"],$values_received);
-				if (($as!==null)&&($as!==false)) {
-					$values[$i]=$r[$_custom_prefixe_."_custom_list_value"];
-					$libelles[$i]=$r[$_custom_prefixe_."_custom_list_lib"];
-					$i++;
-				}
-			}
-		} else {
+	} else {
+	    $libelles=array();
+	    $caller = get_form_name();
+	    if ($values) {
+	        $values_received=$values;
+	        $values=array();
+	        $list_values=array();
+	        $requete="select ".$_custom_prefixe_."_custom_list_value, ".$_custom_prefixe_."_custom_list_lib from ".$_custom_prefixe_."_custom_lists where ".$_custom_prefixe_."_custom_champ=".$field['ID']." order by ordre";
+	        $resultat=pmb_mysql_query($requete);
+	        while ($r=pmb_mysql_fetch_array($resultat)) {
+	            $list_values[$r[$_custom_prefixe_."_custom_list_value"]] = $r[$_custom_prefixe_."_custom_list_lib"];
+	        }
+	        foreach ($values_received as $value_received) {
+	            if (array_key_exists($value_received, $list_values)) {
+	                $values[]=$value_received;
+	                $libelles[]=$list_values[$value_received];
+	            }
+	        }
+	    }else {
 			//Recherche de la valeur par défaut
 			if ($options['DEFAULT_VALUE'][0]['value']) {
 				$requete="select ".$_custom_prefixe_."_custom_list_value, ".$_custom_prefixe_."_custom_list_lib from ".$_custom_prefixe_."_custom_lists where ".$_custom_prefixe_."_custom_champ=".$field['ID']." and ".$_custom_prefixe_."_custom_list_value='".$options['DEFAULT_VALUE'][0]['value']."'  order by ordre";
@@ -979,14 +1030,14 @@ function aff_list_empr($field,&$check_scripts,$script="") {
 			}
 			function fonction_raz_".$field["NAME"]."() {
 				name=this.getAttribute('id').substring(4);
-				document.getElementById(name).value=0;
+				document.getElementById(name).value='';
 				document.getElementById('f_'+name).value='';
 			}
 			function add_".$field["NAME"]."() {
 				suffixe = eval('document.$caller.n_".$field["NAME"].".value');
 						
 				var node_dnd_id = get_custom_dnd_on_add('div_".$field["NAME"]."', 'customfield_list_".$field["NAME"]."', suffixe);
-						
+
 				var nom_id = '".$field["NAME"]."_'+suffixe;
 				var f_perso = document.createElement('input');
 				f_perso.setAttribute('name','f_".$field["NAME"]."[]');
@@ -1014,11 +1065,13 @@ function aff_list_empr($field,&$check_scripts,$script="") {
 				f_perso_id.setAttribute('id',nom_id);
 				f_perso_id.setAttribute('value','');
 		
+				var buttonAdd = document.getElementById('button_add_".$field['NAME']."_".$field['ID']."');
 				var perso = document.getElementById(node_dnd_id);
 				perso.appendChild(f_perso);
 				perso.appendChild(document.createTextNode(' '));				
 				perso.appendChild(del_f_perso);
 				perso.appendChild(f_perso_id);
+				if (buttonAdd) perso.appendChild(buttonAdd);
 		
 				document.$caller.n_".$field["NAME"].".value=suffixe*1+1*1 ;
 				ajax_pack_element(document.getElementById('f_'+nom_id));
@@ -1039,11 +1092,15 @@ function aff_list_empr($field,&$check_scripts,$script="") {
 			
 			$display_temp.="<input type='button' class='bouton' value='X' onclick=\"this.form.f_".$field["NAME"]."_$i.value=''; this.form.".$field["NAME"]."_$i.value=''; \" />\n";
 			if($options['MULTIPLE'][0]['value']=="yes") {
-				$ret.=get_block_dnd('list', $field['NAME'], $i, $display_temp, $libelles[$i]);
+				$button_add = '';
+				if (($n - 1) == $i) {
+					$button_add = '<input id="button_add_'.$field['NAME'].'_'.$field['ID'].'" class="bouton" type="button" value="+" onclick="add_'.$field['NAME'].'(\''.$field['ID'].'\', \''.addslashes($field['NAME']).'\');" />';
+				}
+				$ret.=get_block_dnd('list', $field['NAME'], $i, $display_temp.$button_add, $libelles[$i]);
 			} else {
 				$ret.=$display_temp."<br />";
 			}
-		}
+		}		
 		$ret.="</div>";
 	}
 	return $ret;
@@ -1059,32 +1116,65 @@ function aff_list_empr_search($field,&$check_scripts,$varname,$script="") {
 	$values=$field['VALUES'];
 	if ($values=="") $values=array();
 	if ($options["AUTORITE"][0]["value"]!="yes") {
-		$ret="<select id=\"".$varname."\" name=\"".$varname;
-		$ret.="[]";
-		$ret.="\" ";
-		if ($script) $ret.=$script." ";
-		$ret.="multiple";
-		$ret.=" data-form-name='".$varname."' >\n";
-		if (($options['UNSELECT_ITEM'][0]['VALUE']!="")||($options['UNSELECT_ITEM'][0]['value']!="")) {
-			$ret.="<option value=\"".htmlentities($options['UNSELECT_ITEM'][0]['VALUE'],ENT_QUOTES,$charset)."\">".htmlentities($options['UNSELECT_ITEM'][0]['value'],ENT_QUOTES,$charset)."</option>\n";
-		}
-		$requete="select ".$_custom_prefixe_."_custom_list_value, ".$_custom_prefixe_."_custom_list_lib from ".$_custom_prefixe_."_custom_lists where ".$_custom_prefixe_."_custom_champ=".$field['ID']." order by ordre";
-		$resultat=pmb_mysql_query($requete);
-		if ($resultat) {
-			$i=0;
-			while ($r=pmb_mysql_fetch_array($resultat)) {
-				$options['ITEMS'][0]['ITEM'][$i]['VALUE']=$r[$_custom_prefixe_."_custom_list_value"];
-				$options['ITEMS'][0]['ITEM'][$i]['value']=$r[$_custom_prefixe_."_custom_list_lib"];
-				$i++;
-			}
-		}
-		for ($i=0; $i<count($options['ITEMS'][0]['ITEM']); $i++) {
-			$ret.="<option value=\"".htmlentities($options['ITEMS'][0]['ITEM'][$i]['VALUE'],ENT_QUOTES,$charset)."\"";
-			$as=array_search($options['ITEMS'][0]['ITEM'][$i]['VALUE'],$values);
-			if (($as!==FALSE)&&($as!==NULL)) $ret.=" selected"; 
-			$ret.=">".htmlentities($options['ITEMS'][0]['ITEM'][$i]['value'],ENT_QUOTES,$charset)."</option>\n";
-		}
-		$ret.= "</select>\n";
+	    if ($options["CHECKBOX"][0]["value"]=="yes"){
+	        $ret = "";
+	        if ($options['MULTIPLE'][0]['value']=="yes") $type = "checkbox";
+	        else $type = "radio";
+	        if (($options['UNSELECT_ITEM'][0]['VALUE']!="")&&($options['UNSELECT_ITEM'][0]['value']!="")) {
+	            $ret.= "<input id='".$varname."_".$options['UNSELECT_ITEM'][0]['VALUE']."' type='$type' name='".$varname."[]' checked=checked";
+	            $ret.=" value='".$options['UNSELECT_ITEM'][0]['VALUE']."' /><span id='lib_".$field['NAME']."_".$options['UNSELECT_ITEM'][0]['VALUE']."'>&nbsp;".$options['UNSELECT_ITEM'][0]['value']."</span>";
+	        }
+	        $requete="select ".$_custom_prefixe_."_custom_list_value, ".$_custom_prefixe_."_custom_list_lib from ".$_custom_prefixe_."_custom_lists where ".$_custom_prefixe_."_custom_champ=".$field['ID']." order by ordre";
+	        $resultat=pmb_mysql_query($requete);
+	        if ($resultat) {
+	            $i=0;
+	            $limit = (isset($options['CHECKBOX_NB_ON_LINE'][0]['value']) ? $options['CHECKBOX_NB_ON_LINE'][0]['value'] : 4);
+	            while ($r=pmb_mysql_fetch_array($resultat)) {
+	                if($limit && $i>0 && $i%$limit == 0) $ret.="<br />";
+	                $ret.= "<input id='".$varname."_".$r[$_custom_prefixe_."_custom_list_value"]."' type='$type' name='".$varname."[]'";
+	                if (count($values)) {
+	                    $as=in_array($r[$_custom_prefixe_."_custom_list_value"],$values);
+	                    if (($as!==FALSE)&&($as!==NULL)) $ret.=" checked=checked";
+	                } else {
+	                    //Recherche de la valeur par défaut s'il n'y a pas de choix vide
+	                    if (($options['UNSELECT_ITEM'][0]['VALUE']=="") || ($options['UNSELECT_ITEM'][0]['value']=="")) {
+	                        //si aucune valeur par défaut, on coche le premier pour les boutons de type radio
+	                        if (($i==0)&&($type=="radio")&&($options['DEFAULT_VALUE'][0]['value']=="")) $ret.=" checked=checked";
+	                        elseif ($r[$_custom_prefixe_."_custom_list_value"]==$options['DEFAULT_VALUE'][0]['value']) $ret.=" checked=checked";
+	                    }
+	                }
+	                $ret.=" value='".$r[$_custom_prefixe_."_custom_list_value"]."'/><span id='lib_".$field['NAME']."_".$r[$_custom_prefixe_."_custom_list_value"]."'>&nbsp;".$r[$_custom_prefixe_."_custom_list_lib"]."</span>";
+	                $i++;
+	            }
+	        }
+	    } else {
+	        $ret="<select id=\"".$varname."\" name=\"".$varname;
+	        $ret.="[]";
+	        $ret.="\" ";
+	        if ($script) $ret.=$script." ";
+	        $ret.="multiple";
+	        $ret.=" data-form-name='".$varname."' >\n";
+	        if (($options['UNSELECT_ITEM'][0]['VALUE']!="")||($options['UNSELECT_ITEM'][0]['value']!="")) {
+	            $ret.="<option value=\"".htmlentities($options['UNSELECT_ITEM'][0]['VALUE'],ENT_QUOTES,$charset)."\">".htmlentities($options['UNSELECT_ITEM'][0]['value'],ENT_QUOTES,$charset)."</option>\n";
+	        }
+	        $requete="select ".$_custom_prefixe_."_custom_list_value, ".$_custom_prefixe_."_custom_list_lib from ".$_custom_prefixe_."_custom_lists where ".$_custom_prefixe_."_custom_champ=".$field['ID']." order by ordre";
+	        $resultat=pmb_mysql_query($requete);
+	        if ($resultat) {
+	            $i=0;
+	            while ($r=pmb_mysql_fetch_array($resultat)) {
+	                $options['ITEMS'][0]['ITEM'][$i]['VALUE']=$r[$_custom_prefixe_."_custom_list_value"];
+	                $options['ITEMS'][0]['ITEM'][$i]['value']=$r[$_custom_prefixe_."_custom_list_lib"];
+	                $i++;
+	            }
+	        }
+	        for ($i=0; $i<count($options['ITEMS'][0]['ITEM']); $i++) {
+	            $ret.="<option value=\"".htmlentities($options['ITEMS'][0]['ITEM'][$i]['VALUE'],ENT_QUOTES,$charset)."\"";
+	            $as=array_search($options['ITEMS'][0]['ITEM'][$i]['VALUE'],$values);
+	            if (($as!==FALSE)&&($as!==NULL)) $ret.=" selected";
+	            $ret.=">".htmlentities($options['ITEMS'][0]['ITEM'][$i]['value'],ENT_QUOTES,$charset)."</option>\n";
+	        }
+	        $ret.= "</select>\n";
+	    }
 	} else {
 		$ret="<script>
 			function fonction_selecteur_".$varname."() {
@@ -1094,7 +1184,7 @@ function aff_list_empr_search($field,&$check_scripts,$varname,$script="") {
 			}
 			function fonction_raz_".$varname."() {
 				name=this.getAttribute('id').substring(4);
-				document.getElementById(name).value=0;
+				document.getElementById(name).value='';
 				document.getElementById('f_'+name).value='';
 			}
 			function add_".$varname."() {
@@ -1266,7 +1356,17 @@ function val_list_empr($field,$val) {
 	}
 	if ($exec_func_array_flip) $val_r=array_flip($val);
 	else $val_r=array();
-	$val_c=array_intersect_key($options_[$_custom_prefixe_][$field['ID']],$val_r);
+	if ($field["OPTIONS"][0]["AUTORITE"][0]["value"]!="yes") {
+	    $val_c=array_intersect_key($options_[$_custom_prefixe_][$field['ID']],$val_r);
+	} else {
+	    // CP de type "Autorité", nous conservons l'ordre de saisie
+	    $val_c=array();
+	    foreach ($val_r as $key_r=>$value_r) {
+	        if(!empty($options_[$_custom_prefixe_][$field['ID']][$key_r])) {
+	            $val_c[$key_r] = $options_[$_custom_prefixe_][$field['ID']][$key_r];
+	        }
+	    }
+	}
 	if ($val_c=="") $val_c=array();
 	$val_=implode($pmb_perso_sep,$val_c);
 	return $val_;
@@ -1276,6 +1376,7 @@ function aff_query_list_empr($field,&$check_scripts,$script="") {
 	global $charset;
 	global $_custom_prefixe_;
 	global $base_path;
+	global $lang;
 	
 	$ret = '';
 	$values=$field['VALUES'];
@@ -1287,7 +1388,9 @@ function aff_query_list_empr($field,&$check_scripts,$script="") {
 		if ($options["CHECKBOX"][0]["value"]=="yes"){
 			if ($options['MULTIPLE'][0]['value']=="yes") $type = "checkbox";
 			else $type = "radio";
-			$resultat=pmb_mysql_query($options['QUERY'][0]['value']);
+			//on rajoute la langue si besoin dans le requete
+			$query = str_replace('$lang', $lang, $options['QUERY'][0]['value']);
+			$resultat=pmb_mysql_query($query);
 			if ($resultat) {
 				$i=0;
 				$ret="<table><tr>";
@@ -1311,7 +1414,9 @@ function aff_query_list_empr($field,&$check_scripts,$script="") {
 			if (($options['UNSELECT_ITEM'][0]['VALUE']!="")||($options['UNSELECT_ITEM'][0]['value']!="")) {
 				$ret.="<option value=\"".htmlentities($options['UNSELECT_ITEM'][0]['VALUE'],ENT_QUOTES,$charset)."\">".htmlentities($options['UNSELECT_ITEM'][0]['value'],ENT_QUOTES,$charset)."</option>\n";
 			}
-			$resultat=pmb_mysql_query($options['QUERY'][0]['value']);
+			//on rajoute la langue si besoin dans le requete
+			$query = str_replace('$lang', $lang, $options['QUERY'][0]['value']);
+			$resultat=pmb_mysql_query($query);
 			while ($r=pmb_mysql_fetch_row($resultat)) {
 				$ret.="<option value=\"".htmlentities($r[0],ENT_QUOTES,$charset)."\"";
 				$as=array_search($r[0],$values);
@@ -1327,7 +1432,9 @@ function aff_query_list_empr($field,&$check_scripts,$script="") {
 			$values_received=$values;
 			$values_received_bis=$values;
 			$values=array();
-			$resultat=pmb_mysql_query($options['QUERY'][0]['value']);
+			//on rajoute la langue si besoin dans le requete
+			$query = str_replace('$lang', $lang, $options['QUERY'][0]['value']);
+			$resultat=pmb_mysql_query($query);
 			$i=0;
 			while ($r=pmb_mysql_fetch_row($resultat)) {
 				$as=array_search($r[0],$values_received);
@@ -1402,12 +1509,15 @@ function aff_query_list_empr($field,&$check_scripts,$script="") {
 				f_perso_id.setAttribute('type','hidden');
 				f_perso_id.setAttribute('id',nom_id);
 				f_perso_id.setAttribute('value','');
-		
+
+				var buttonAdd = document.getElementById('button_add_".$field["NAME"]."');
+
 				var perso = document.getElementById(node_dnd_id);
 				perso.appendChild(f_perso);
 				perso.appendChild(document.createTextNode(' '));
 				perso.appendChild(del_f_perso);
 				perso.appendChild(f_perso_id);
+				if (buttonAdd) document.getElementById(node_dnd_id).appendChild(buttonAdd);
 		
 				document.$caller.n_".$field["NAME"].".value=suffixe*1+1*1 ;
 				ajax_pack_element(document.getElementById('f_'+nom_id));
@@ -1431,6 +1541,9 @@ function aff_query_list_empr($field,&$check_scripts,$script="") {
 			$display_temp.="<input type='hidden' id='".$field["NAME"]."_$i' name='".$field["NAME"]."[]' data-form-name='".$field["NAME"]."_' value=\"".htmlentities($values[$i],ENT_QUOTES,$charset)."\">";
 			$display_temp.="<input type='button' class='bouton' value='X' onclick=\"this.form.f_".$field["NAME"]."_$i.value=''; this.form.".$field["NAME"]."_$i.value=''; \" />\n";
 			if($options['MULTIPLE'][0]['value']=="yes") {
+			    if ($i == $n-1) {
+			        $display_temp.= " <input type='button' id='button_add_".$field["NAME"]."' class='bouton' value='+' onClick=\"add_".$field["NAME"]."();\"/>";
+			    }
 				$ret.=get_block_dnd('query_list', $field['NAME'], $i, $display_temp, $libelles[$i]);
 			} else {
 				$ret.=$display_temp."<br />";
@@ -1477,7 +1590,7 @@ function aff_query_list_empr_search($field,&$check_scripts,$varname,$script="") 
 			}
 			function fonction_raz_".$varname."() {
 				name=this.getAttribute('id').substring(4);
-				document.getElementById(name).value=0;
+				document.getElementById(name).value='';
 				document.getElementById('f_'+name).value='';
 			}
 			function add_".$varname."() {
@@ -1643,13 +1756,9 @@ function val_query_list_empr($field,$val) {
 
 function aff_text_i18n_empr($field,&$check_scripts) {
 	global $charset, $base_path;
-	global $msg, $langue_doc;
+	global $msg;
 	
-	if (!count($langue_doc)) {
-		$langue_doc = marc_list_collection::get_instance('lang');
-		$langue_doc = $langue_doc->table;
-	}
-	
+	$langue_doc = get_langue_doc();
 	$options=$field['OPTIONS'][0];
 	$values=$field['VALUES'];
 	$afield_name = $field["ID"];
@@ -1668,13 +1777,17 @@ function aff_text_i18n_empr($field,&$check_scripts) {
 	}
 	foreach ($values as $value) {
 		$exploded_value = explode("|||", $value);
-		$display_temp ="<input id=\"".$field['NAME']."_".$count."\" type=\"text\" size=\"".$options['SIZE'][0]['value']."\" maxlength=\"".$options['MAXSIZE'][0]['value']."\" name=\"".$field['NAME']."[".$count."]\" data-form-name='".$field["NAME"]."_' value=\"".htmlentities($exploded_value[0],ENT_QUOTES,$charset)."\">";
+		$display_temp ="<input id=\"".$field['NAME']."_".$count."\" type=\"text\" size=\"".$options['SIZE'][0]['value']."\" maxlength=\"".$options['MAXSIZE'][0]['value']."\" name=\"".$field['NAME']."[]\" data-form-name='".$field["NAME"]."_' value=\"".htmlentities($exploded_value[0],ENT_QUOTES,$charset)."\">";
 		$display_temp.="&nbsp;".$msg['param_perso_lang_select']." : <input id=\"".$field['NAME']."_lang_".$count."\" class=\"saisie-10emr\" type=\"text\" value=\"".(isset($exploded_value[1]) && $exploded_value[1] ? htmlentities($langue_doc[$exploded_value[1]],ENT_QUOTES,$charset) : '')."\" autfield=\"".$field['NAME']."_lang_code_".$count."\" completion=\"langue\" autocomplete=\"off\" data-form-name='".$field["NAME"]."_lang_' >";
 		$display_temp.="<input class=\"bouton\" type=\"button\" value=\"...\" onClick=\"openPopUp('".$base_path."/select.php?what=lang&caller='+this.form.name+'&p1=".$field['NAME']."_lang_code_".$count."&p2=".$field['NAME']."_lang_".$count."', 'select_lang', 500, 400, -2, -2, 'scrollbars=yes, toolbar=no, dependent=yes, resizable=yes')\">";
 		$display_temp.="<input class=\"bouton\" type=\"button\" onclick=\"this.form.".$field['NAME']."_lang_".$count.".value=''; this.form.".$field['NAME']."_lang_code_".$count.".value=''; \" value=\"X\">";
 		$display_temp.="<input id=\"".$field['NAME']."_lang_code_".$count."\" data-form-name='".$field["NAME"]."_lang_code_' type=\"hidden\" value=\"".(isset($exploded_value[1]) && $exploded_value[1] ? htmlentities($exploded_value[1], ENT_QUOTES, $charset) : '')."\" name=\"".$field['NAME']."_langs[".$count."]\">"; 
 		if(isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value']) {
-			$ret.=get_block_dnd('text_i18n', $field['NAME'], $count, $display_temp, $exploded_value[0]);
+			$button_add = '';
+			if(end($values) == $value) {
+				$button_add='<input id="button_add_'.$field['NAME'].'_'.$field['ID'].'" class="bouton" type="button" value="+" onclick="add_custom_text_i18n_(\''.$field['ID'].'\', \''.addslashes($field['NAME']).'\','.addslashes($options['SIZE'][0]['value']).','.addslashes($options['MAXSIZE'][0]['value']).')"/>';
+			}
+			$ret.=get_block_dnd('text_i18n', $field['NAME'], $count, $display_temp.$button_add, $exploded_value[0]);
 		} else {
 			$ret.=$display_temp."<br />";
 		}
@@ -1689,7 +1802,8 @@ function aff_text_i18n_empr($field,&$check_scripts) {
 		        var count = document.getElementById('customfield_text_i18n_'+field_id).value;
 				
 				var node_dnd_id = get_custom_dnd_on_add('spaceformorecustomfieldtexti18n_'+field_id, 'customfield_text_i18n_'+field_name, count);
-				
+				var buttonAdd = document.getElementById('button_add_'+ field_name + '_' + field_id);
+
 				var text = document.createElement('input');
 				text.setAttribute('id', field_name + '_' + count);
 		        text.setAttribute('name',field_name+'[' + count + ']');
@@ -1739,6 +1853,7 @@ function aff_text_i18n_empr($field,&$check_scripts) {
 				document.getElementById(node_dnd_id).appendChild(lang);
 				document.getElementById(node_dnd_id).appendChild(select);
 				document.getElementById(node_dnd_id).appendChild(del);
+				document.getElementById(node_dnd_id).appendChild(buttonAdd);
 				document.getElementById(node_dnd_id).appendChild(lang_code);
 				document.getElementById(node_dnd_id).appendChild(space_br);
 				
@@ -1758,13 +1873,8 @@ function aff_text_i18n_empr_search($field,&$check_scripts,$varname) {
 	global $charset;
 	global $msg;
 	global $base_path;
-	global $langue_doc;
 	
-	if (!count($langue_doc)) {
-		$langue_doc = marc_list_collection::get_instance('lang');
-		$langue_doc = $langue_doc->table;
-	}
-		
+	$langue_doc = get_langue_doc();
 	$options=$field['OPTIONS'][0];
 	$values=$field['VALUES'];
 	if(!is_array($values)) {
@@ -1808,13 +1918,8 @@ function chk_text_i18n_empr($field,&$check_message) {
 
 function val_text_i18n_empr($field,$value) {
 	global $charset,$pmb_perso_sep;
-	global $langue_doc;
 	
-	if (!count($langue_doc)) {
-		$langue_doc = marc_list_collection::get_instance('lang');
-		$langue_doc = $langue_doc->table;
-	}
-
+	$langue_doc = get_langue_doc();
 	$value=format_output($field,$value);
 	if (!$value) $value=array();
 	
@@ -1984,7 +2089,8 @@ function aff_filter_list_empr($field,$varname,$multiple) {
 			if (($as!==FALSE)&&($as!==NULL)) $ret.=" selected";
 		} else {
 			//Recherche de la valeur par défaut
-			if ($options['ITEMS'][0]['ITEM'][$i]['VALUE']==$options['DEFAULT_VALUE'][0]['value']) $ret.=" selected";
+			//Désactivation au 20/05/19 - Demande #69211
+			//if ($options['ITEMS'][0]['ITEM'][$i]['VALUE']==$options['DEFAULT_VALUE'][0]['value']) $ret.=" selected";
 		}
 		$ret.=">".htmlentities($options['ITEMS'][0]['ITEM'][$i]['value'],ENT_QUOTES,$charset)."</option>\n";
 	}
@@ -2086,8 +2192,8 @@ function aff_url_empr($field,&$check_scripts){
 		$ret .= get_js_function_dnd('url', $field['NAME']);
 		$ret.="<input class='bouton' type='button' value='+' onclick=\"add_custom_url_('$afield_name', '".addslashes($field['NAME'])."', '".addslashes($options['SIZE'][0]['value'])."')\">";
 	}
-	foreach ($values as $avalues) {
-		$avalues = explode("|",$avalues);
+	foreach ($values as $value) {
+		$avalues = explode("|",$value);
 		$display_temp ="<div id='".$field['NAME']."_check_$count' style='display:inline'></div>";
 		$display_temp.= $msg['persofield_url_link']."<input id='".$field['NAME']."_link".$count."' type='text' class='saisie-30em' name='".$field['NAME']."[link][]' data-form-name='".$field['NAME']."_link' onchange='cp_chklnk_".$field["NAME"]."(".$count.",this);' value='".htmlentities($avalues[0],ENT_QUOTES,$charset)."'>";
 		$display_temp.=" <input class=\"bouton\" type='button' value='".$msg['persofield_url_check']."' onclick='cp_chklnk_".$field["NAME"]."(".$count.",this);'>";
@@ -2099,7 +2205,11 @@ function aff_url_empr($field,&$check_scripts){
 		}
 		$display_temp.="&nbsp;<input id='".$field['NAME']."_linktarget".$count."' type='checkbox' name='".$field['NAME']."[linktarget][]' data-form-name='".$field['NAME']."_linktarget' value='1' ".$target_checked."><label for='".$field['NAME']."_linktarget".$count."'>&nbsp;".$msg['persofield_url_linktarget']."</label>&nbsp;";
 		if(isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value']) {
-			$ret.=get_block_dnd('url', $field['NAME'], $count, $display_temp, $avalues[0]);
+			$button_add = '';
+			if (end($values) == $value) {
+				$button_add = "<input id='button_add_".$field['NAME']."_".$field['ID']."' class='bouton' type='button' value='+' onclick=\"add_custom_url_('$afield_name', '".addslashes($field['NAME'])."', '".addslashes($options['SIZE'][0]['value'])."')\">";
+			}
+			$ret.=get_block_dnd('url', $field['NAME'], $count, $display_temp.$button_add, $avalues[0]);				
 		} else {
 			$ret.=$display_temp."<br />";
 		}
@@ -2155,7 +2265,9 @@ function aff_url_empr($field,&$check_scripts){
 				cpt = document.getElementById('customfield_text_'+field_id).value;
 				
 				var node_dnd_id = get_custom_dnd_on_add('spaceformorecustomfieldtext_'+field_id, 'customfield_url_'+field_name, cpt);
-				
+				var buttonAdd = document.getElementById('button_add_' + field_name + '_' + field_id);
+				var prevCheckbox = document.getElementById(field_name+'_linktarget'+(cpt-1));
+
 				var check = document.createElement('div');
 				check.setAttribute('id','".$field['NAME']."_check_'+cpt);
 				check.setAttribute('style','display:inline');
@@ -2167,7 +2279,7 @@ function aff_url_empr($field,&$check_scripts){
 				chklnk.setAttribute('onclick','cp_chklnk_".$field['NAME']."('+cpt+',this);');
 				document.getElementById('customfield_text_'+field_id).value = cpt*1 +1;
 				var link = document.createElement('input');
-		        link.setAttribute('name',field_name+'[link]['+cpt+']');
+		        link.setAttribute('name',field_name+'[link][]');
 		        link.setAttribute('id',field_name+'_link'+cpt);
 		        link.setAttribute('type','text');
 				link.setAttribute('class','saisie-30em');
@@ -2176,18 +2288,18 @@ function aff_url_empr($field,&$check_scripts){
 				link.setAttribute('onchange','cp_chklnk_".$field['NAME']."('+cpt+',this);');
 				var lib_label = document.createTextNode('".$msg['persofield_url_linklabel']."');
 				var lib = document.createElement('input');
-		        lib.setAttribute('name',field_name+'[linkname]['+cpt+']');
+		        lib.setAttribute('name',field_name+'[linkname][]');
 		        lib.setAttribute('id',field_name+'_linkname'+cpt);
 		        lib.setAttribute('type','text');
 				lib.setAttribute('class','saisie-15em');
 		        lib.setAttribute('size',field_size);
 		        lib.setAttribute('value','');
 				var target = document.createElement('input');
-				target.setAttribute('name',field_name+'[linktarget]['+cpt+']');
+				target.setAttribute('name',field_name+'[linktarget][]');
 		        target.setAttribute('id',field_name+'_linktarget'+cpt);
 		        target.setAttribute('type','checkbox');
 		        target.setAttribute('value','1');
-		        target.setAttribute('checked','checked');
+		        target.checked = prevCheckbox.checked;
 				var targetlabel = document.createElement('label');
 				targetlabel.setAttribute('for',field_name+'_linktarget'+cpt);
 				targetlabel.innerHTML = ' ".$msg['persofield_url_linktarget']."';
@@ -2203,6 +2315,7 @@ function aff_url_empr($field,&$check_scripts){
 				document.getElementById(node_dnd_id).appendChild(document.createTextNode(' '));
 				document.getElementById(node_dnd_id).appendChild(target);
 				document.getElementById(node_dnd_id).appendChild(targetlabel);
+				document.getElementById(node_dnd_id).appendChild(buttonAdd);
 				document.getElementById(node_dnd_id).appendChild(space);
 			}
 		</script>";
@@ -2225,28 +2338,29 @@ function aff_url_empr_search($field,&$check_scripts,$varname) {
 	return $ret;
 }
 
-function chk_url_empr($field,&$check_message) {
-	$name=$field['NAME'];
+function chk_url_empr($field, &$check_message) {
+	$name = $field['NAME'];
 	global ${$name};
-	$val=${$name};
+	$val = ${$name};
 	$value = array();
-	for($i=0;$i<sizeof($val['link']);$i++){
-		if($val['link'][$i] != "") {
+	$nb_vals = count($val['link']);
+	for ($i = 0; $i < $nb_vals; $i++) {
+		if ($val['link'][$i] != "") {
 			$linktarget = '|0';
-			if ($val['linktarget'][$i]) {
+			if (!empty($val['linktarget'][$i])) {
 				$linktarget = '|1';
 			}
 			$value[] = $val['link'][$i]."|".$val['linkname'][$i].$linktarget;
 		}
 	}
 	$val = $value;
-	$check_datatype_message="";
-	$val_1=chk_datatype($field,$val,$check_datatype_message);
-	if ($check_datatype_message) {
-		$check_message=$check_datatype_message;
+	$check_datatype_message = "";
+	$val_1 = chk_datatype($field, $val, $check_datatype_message);
+	if (!empty($check_datatype_message)) {
+		$check_message = $check_datatype_message;
 		return 0;
 	}
-	${$name}=$val_1;
+	${$name} = $val_1;
 	return 1;
 }
 
@@ -2291,8 +2405,8 @@ function aff_resolve_empr($field,&$check_scripts){
 		if(!isset($options['MAXSIZE'][0]['value'])) $options['MAXSIZE'][0]['value'] = '';
 		$ret.='<input class="bouton" type="button" value="+" onclick="add_custom_resolve_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\', \''.addslashes($options['SIZE'][0]['value']).'\', \''.addslashes($options['MAXSIZE'][0]['value']).'\')">';
 	}
-	foreach ($values as $avalues) {
-		$avalues = explode("|",$avalues);
+	foreach ($values as $value) {
+		$avalues = explode("|",$value);
 		$display_temp = "<input id='".$field['NAME']."$count' type='text' size='".$options['SIZE'][0]['value']."' name='".$field['NAME']."[id][]' data-form-name='".$field['NAME']."' value='".htmlentities($avalues[0],ENT_QUOTES,$charset)."'>";
 		$display_temp .= "&nbsp;<select id='".$field['NAME']."_select$count'  name='".$field['NAME']."[resolve][]' data-form-name='".$field['NAME']."_select' >";
 		foreach($options['RESOLVE'] as $elem){
@@ -2301,7 +2415,11 @@ function aff_resolve_empr($field,&$check_scripts){
 		}
 		$display_temp .= "</select>";
 		if(isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value']) {
-			$ret.=get_block_dnd('resolve', $field['NAME'], $count, $display_temp, $avalues[0]);
+			$button_add = '';
+			if (end($values) == $value) {
+				$button_add = '<input id="button_add_'.$field['NAME'].'_'.$field['ID'].'" class="bouton" type="button" value="+" onclick="add_custom_resolve_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\', \''.addslashes($options['SIZE'][0]['value']).'\', \''.addslashes($options['MAXSIZE'][0]['value']).'\')">';
+			}
+			$ret.=get_block_dnd('resolve', $field['NAME'], $count, $display_temp.$button_add, $avalues[0]);
 		} else {
 			$ret.=$display_temp."<br />";
 		}
@@ -2318,7 +2436,8 @@ function aff_resolve_empr($field,&$check_scripts){
 		        count = document.getElementById('customfield_text_'+field_id).value;
 				
 				var node_dnd_id = get_custom_dnd_on_add('spaceformorecustomfieldtext_'+field_id, 'customfield_resolve_'+field_name, (count-1));
-				
+				var buttonAdd = document.getElementById('button_add_' + field_name + '_' + field_id);
+
 				f_aut0 = document.createElement('input');
 		        f_aut0.setAttribute('name',field_name+'[id][]');
 		        f_aut0.setAttribute('id',field_name+(count-1));
@@ -2335,7 +2454,7 @@ function aff_resolve_empr($field,&$check_scripts){
 					$ret.="
 				var option = document.createElement('option');
 				option.setAttribute('value','".$elem['ID']."');
-				var text = document.createTextNode('".htmlentities($elem['LABEL'],ENT_QUOTES,$charset)."');
+				var text = document.createTextNode('".$elem['LABEL']."');
 				option.appendChild(text);
 				select.appendChild(option);
 ";
@@ -2344,6 +2463,7 @@ function aff_resolve_empr($field,&$check_scripts){
 				document.getElementById(node_dnd_id).appendChild(f_aut0);
 				document.getElementById(node_dnd_id).appendChild(document.createTextNode(' '));
 				document.getElementById(node_dnd_id).appendChild(select);				
+				if (buttonAdd) document.getElementById(node_dnd_id).appendChild(buttonAdd);
 				document.getElementById(node_dnd_id).appendChild(space);
 			}
 		</script>";
@@ -2355,26 +2475,27 @@ function aff_resolve_empr($field,&$check_scripts){
 	return $ret;
 }
 
-function chk_resolve_empr($field,&$check_message) {
-	$name=$field['NAME'];
+function chk_resolve_empr($field, &$check_message) {
+	$name = $field['NAME'];
 	global ${$name};
-	$val=${$name};
+	$val = ${$name};
 	$value = array();
-	if(isset($val['id'])) {
-		for($i=0;$i<sizeof($val['id']);$i++){
-			if($val['id'][$i] != "")
+	if (isset($val['id'])) {
+	    $nb_vals = count($val['id']);
+	    for ($i = 0; $i < $nb_vals; $i++) {
+		    if ($val['id'][$i] != "") {
 				$value[] = $val['id'][$i]."|".$val['resolve'][$i];
+		    }
 		}
 	}
 	$val = $value;
-
-	$check_datatype_message="";
-	$val_1=chk_datatype($field,$val,$check_datatype_message);
-	if ($check_datatype_message) {
-		$check_message=$check_datatype_message;
+	$check_datatype_message = "";
+	$val_1 = chk_datatype($field, $val, $check_datatype_message);
+	if (!empty($check_datatype_message)) {
+		$check_message = $check_datatype_message;
 		return 0;
 	}
-	${$name}=$val_1;
+	${$name} = $val_1;
 	return 1;
 }
 
@@ -2457,24 +2578,34 @@ function aff_html_empr($field,&$check_scripts) {
 			if ($pmb_javascript_office_editor && $options['HTMLEDITOR'][0]['value']) {
 				$mcename=$field['NAME']."_".$count;
 				$display_temp.= "<script type='text/javascript'>\n";
-				if ((($categ=="create_form")||($categ="modif"))&&($current=="catalog.php")) $display_temp.="document.body.addEventListener('moveend', function(e) {";
+				if (((($categ=="create_form")||($categ=="modif"))&&($current=="catalog.php"))
+				    || ($categ == "get_type_form" && $current=="ajax.php")) {
+				    $display_temp.="document.body.addEventListener('moveend', function(e) {";
+				}
+				$timeout = 1;
+				//Traitement plus long dans le contenu éditorial
+				if($categ == "get_type_form" && $current=="ajax.php") {
+				    $timeout = 1500; 
+				}
 				$display_temp.="
 					if(typeof(tinyMCE)!= 'undefined') {
 						setTimeout(function(){
 							tinyMCE_execCommand('mceAddControl', true, '$mcename');
-						},1);
+						},".$timeout.");
 					}\n";
-				  if ((($categ=="create_form")||($categ="modif"))&&($current=="catalog.php")) $display_temp.="},true);
-				  document.body.addEventListener('movestart',function(e) {
-				  		if(typeof(tinyMCE)!= 'undefined') {
-					  		if (tinyMCE_getInstance('$mcename')) {
-								tinyMCE_execCommand('mceToggleEditor',true,'$mcename');
-								tinyMCE_execCommand('mceRemoveControl',true,'$mcename');
-							}
-						}
-				  },true);		
-				  ";
-				  
+				if (((($categ=="create_form")||($categ=="modif"))&&($current=="catalog.php"))
+				    || ($categ == "get_type_form" && $current=="ajax.php")) {
+				      $display_temp.="},true);
+    				  document.body.addEventListener('movestart',function(e) {
+    				  		if(typeof(tinyMCE)!= 'undefined') {
+    					  		if (tinyMCE_getInstance('$mcename')) {
+    								tinyMCE_execCommand('mceToggleEditor',true,'$mcename');
+    								tinyMCE_execCommand('mceRemoveControl',true,'$mcename');
+    							}
+    						}
+    				  },true);		
+    				  ";
+				}
 				$display_temp.="	</script>";
 			}
 		}
@@ -2492,31 +2623,29 @@ function aff_html_empr($field,&$check_scripts) {
  		$ret.=get_custom_dnd_on_add();
 		if($pmb_editorial_dojo_editor){
 			$ret.="<script>
-			var cpt = $count;
-			
 			function add_custom_html_(field_id, field_name, field_height, field_width,use_html_editor) {
 				document.getElementById('customfield_text_'+field_id).value = document.getElementById('customfield_text_'+field_id).value * 1 + 1;
-				count = document.getElementById('customfield_text_'+field_id).value;
+				var count = document.getElementById('customfield_text_'+field_id).value;
 				
 				var node_dnd_id = get_custom_dnd_on_add('spaceformorecustomfieldtext_'+field_id, 'customfield_html_'+field_name, (count-1));
 				
-				hid = document.createElement('input');
+				var hid = document.createElement('input');
 				hid.setAttribute('type','hidden');
-				hid.setAttribute('name',field_name+'['+(cpt-1)+']');
-				hid.setAttribute('id',field_name+'_'+(cpt-1));
+				hid.setAttribute('name',field_name+'['+(count-1)+']');
+				hid.setAttribute('id',field_name+'_'+(count-1));
 				hid.setAttribute('value','');
-				
-				f_aut0 = document.createElement('div');
+
+				var f_aut0 = document.createElement('div');
 				f_aut0.setAttribute('data-dojo-type','dijit/Editor');
 				f_aut0.setAttribute('class','saisie-80em');
 				f_aut0.setAttribute('wrap','wrap');
 				f_aut0.setAttribute('style','display:inline-block; width:'+field_width+'px');
 				
-				space=document.createElement('br');
+				var space=document.createElement('br');
 				
 				document.getElementById(node_dnd_id).appendChild(hid);
 				document.getElementById(node_dnd_id).appendChild(f_aut0);
-				new dijit.Editor({id : field_name+'_'+cpt, height : field_height+'px', extraPlugins:[
+				new dijit.Editor({id : field_name+'_'+(count-1), height : field_height+'px', extraPlugins:[
 						{name: 'pastefromword', width: '400px', height: '200px'},
 						{name: 'insertTable', command: 'insertTable'},
 					    {name: 'modifyTable', command: 'modifyTable'},
@@ -2540,7 +2669,7 @@ function aff_html_empr($field,&$check_scripts) {
 				]}, f_aut0).startup();
 				document.getElementById(node_dnd_id).appendChild(space);
 				document.getElementById(node_dnd_id).appendChild(space);
-				cpt++;
+                document.getElementById('customfield_text_'+field_id).value = count++;
 			}
 			</script>";
 			$caller = get_form_name();
@@ -2555,8 +2684,6 @@ function aff_html_empr($field,&$check_scripts) {
 		} else {
 			$ret.= get_custom_dnd_on_add();
 			$ret.="<script>
-			var cpt = $count;
-			
 			function add_html_editor(field_name,ind) {
 				if(typeof(tinyMCE)!= 'undefined') {
 					tinyMCE_execCommand('mceAddControl', true, field_name+'_'+ind);
@@ -2564,13 +2691,13 @@ function aff_html_empr($field,&$check_scripts) {
 			}
 			function add_custom_html_(field_id, field_name, field_height, field_width, use_html_editor) {
 				document.getElementById('customfield_text_'+field_id).value = document.getElementById('customfield_text_'+field_id).value * 1 + 1;
-				count = document.getElementById('customfield_text_'+field_id).value;
+				var count = document.getElementById('customfield_text_'+field_id).value;
 				
 				var node_dnd_id = get_custom_dnd_on_add('spaceformorecustomfieldtext_'+field_id, 'customfield_html_'+field_name, (count-1));
 				
 				var f_aut0 = document.createElement('textarea');
 				f_aut0.setAttribute('name',field_name+'[]');
-				f_aut0.setAttribute('id',field_name+'_'+(cpt-1));
+				f_aut0.setAttribute('id',field_name+'_'+(count-1));
 				f_aut0.setAttribute('wrap','wrap');
 				f_aut0.setAttribute('width',field_width+'px');
 				f_aut0.setAttribute('height',field_height+'px');
@@ -2579,9 +2706,9 @@ function aff_html_empr($field,&$check_scripts) {
 				document.getElementById(node_dnd_id).appendChild(document.createElement('br'));
 				document.getElementById(node_dnd_id).appendChild(document.createElement('br'));
 				if (use_html_editor) {
-					add_html_editor(field_name,cpt);
+					add_html_editor(field_name,count);
 				}
-				cpt++;
+                document.getElementById('customfield_text_'+field_id).value = count++;
 			}
 			</script>";
 			$check_scripts.= "
@@ -2606,7 +2733,7 @@ function aff_html_empr($field,&$check_scripts) {
 			var i = 0;
 			while(document.forms['".$caller."'].elements['".$field['NAME']."['+i+']']){
 				if(dijit.byId('".$field['NAME']."_'+i).get('value') && (dijit.byId('".$field['NAME']."_'+i).get('value') != '<br _moz_editor_bogus_node=\"TRUE\" />') && (dijit.byId('".$field['NAME']."_'+i).get('value') != '<br />')) {
-					document.forms['".$caller."'].elements['".$field['NAME']."['+i+']'].value = dijit.byId('".$field['NAME']."_'+i).get('value');
+				    document.forms['".$caller."'].elements['".$field['NAME']."['+i+']'].value = dijit.byId('".$field['NAME']."_'+i).get('value');
 				}
 				i++;
 			}";
@@ -2727,14 +2854,15 @@ function aff_marclist_empr($field,&$check_scripts,$script="") {
 			}
 			function fonction_raz_".$field["NAME"]."() {
 				name=this.getAttribute('id').substring(4);
-				document.getElementById(name).value=0;
+				document.getElementById(name).value='';
 				document.getElementById('f_'+name).value='';
 			}
 			function add_".$field["NAME"]."() {
 				suffixe = eval('document.$caller.n_".$field["NAME"].".value');
 				
 				var node_dnd_id = get_custom_dnd_on_add('div_".$field["NAME"]."', 'customfield_marclist_".$field["NAME"]."', suffixe);
-						
+				var buttonAdd = document.getElementById('button_add_".$field["NAME"]."_".$field["ID"]."')				
+
 				var nom_id = '".$field["NAME"]."_'+suffixe;
 				var f_perso = document.createElement('input');
 				f_perso.setAttribute('name','f_".$field["NAME"]."[]');
@@ -2766,6 +2894,7 @@ function aff_marclist_empr($field,&$check_scripts,$script="") {
 				perso.appendChild(document.createTextNode(' '));
 				perso.appendChild(del_f_perso);
 				perso.appendChild(f_perso_id);
+				perso.appendChild(buttonAdd);
 
 				document.$caller.n_".$field["NAME"].".value=suffixe*1+1*1 ;
 				ajax_pack_element(document.getElementById('f_'+nom_id));
@@ -2777,8 +2906,8 @@ function aff_marclist_empr($field,&$check_scripts,$script="") {
 			<input type='button' class='bouton' value='...' onclick=\"openPopUp('".$base_path."/select.php?what=perso&caller=$caller&p1=".$field["NAME"]."_0&p2=f_".$field["NAME"]."_0&perso_id=".$field["ID"]."&custom_prefixe=".$_custom_prefixe_."&dyn=$val_dyn&perso_name=".$field['NAME']."', 'select_perso_".$field["ID"]."', 700, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes')\" />";
 		$readonly='';
 		if($options['MULTIPLE'][0]['value']=="yes") {
+		    $ret.="<input type='button' class='bouton' value='+' onClick=\"add_".$field["NAME"]."();\"/>";
 			$ret .= get_js_function_dnd('marclist', $field['NAME']);
-			$ret.=" <input type='button' class='bouton' value='+' onClick=\"add_".$field["NAME"]."();\"/>";
 		}
 		for ($i=0; $i<$n; $i++) {
 			$display_temp ="<input type='text' class='saisie-50emr' id='f_".$field["NAME"]."_$i' completion='".$completion."' persofield='".$field["NAME"]."' autfield='".$field["NAME"]."_$i' name='f_".$field["NAME"]."[]'  data-form-name='f_".$field["NAME"]."_' $readonly value=\"".htmlentities($libelles[$i],ENT_QUOTES,$charset)."\" />\n";
@@ -2786,7 +2915,11 @@ function aff_marclist_empr($field,&$check_scripts,$script="") {
 
 			$display_temp.="<input type='button' class='bouton' value='X' onclick=\"this.form.f_".$field["NAME"]."_$i.value=''; this.form.".$field["NAME"]."_$i.value=''; \" />\n";
 			if($options['MULTIPLE'][0]['value']=="yes") {
-				$ret.=get_block_dnd('marclist', $field['NAME'], $i, $display_temp, $libelles[$i]);
+				$add_button = '';
+				if (($n -1) == $i) {
+					$add_button = "<input id='button_add_".$field['NAME']."_".$field['ID']."' type='button' class='bouton' value='+' onClick=\"add_".$field["NAME"]."();\"/>";
+				}
+				$ret.=get_block_dnd('marclist', $field['NAME'], $i, $display_temp.$add_button, $libelles[$i]);
 			} else {
 				$ret.=$display_temp."<br />";
 			}
@@ -2908,7 +3041,7 @@ function aff_marclist_empr_search($field,&$check_scripts,$varname){
 			}
 			function fonction_raz_".$varname."() {
 				name=this.getAttribute('id').substring(4);
-				document.getElementById(name).value=0;
+				document.getElementById(name).value='';
 				document.getElementById('f_'+name).value='';
 			}
 			function add_".$varname."() {
@@ -2989,13 +3122,9 @@ function aff_marclist_empr_search($field,&$check_scripts,$varname){
 
 function aff_q_txt_i18n_empr($field,&$check_scripts) {
 	global $charset, $base_path;
-	global $msg, $langue_doc;
-
-	if (!count($langue_doc)) {
-		$langue_doc = marc_list_collection::get_instance('lang');
-		$langue_doc = $langue_doc->table;
-	}
-
+	global $msg;
+	
+	$langue_doc = get_langue_doc();
 	$options=$field['OPTIONS'][0];
 	$values=$field['VALUES'];
 	$afield_name = $field["ID"];
@@ -3024,9 +3153,10 @@ function aff_q_txt_i18n_empr($field,&$check_scripts) {
 		$ret .= get_js_function_dnd('q_txt_i18n', $field['NAME']);
 		$ret.='<input class="bouton" type="button" value="+" onclick="add_custom_q_txt_i18n_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\', \''.$options['SIZE'][0]['value'].'\', \''.$options['MAXSIZE'][0]['value'].'\')">';
 	}
+	$n = count($values);
 	foreach ($values as $value) {
 		$exploded_value = explode("|||", $value);
-		$display_temp ="<input id=\"".$field['NAME']."_".$count."\" type=\"text\" size=\"".$options['SIZE'][0]['value']."\" maxlength=\"".$options['MAXSIZE'][0]['value']."\" name=\"".$field['NAME']."[".$count."]\" data-form-name='".$field["NAME"]."_' value=\"".htmlentities($exploded_value[0],ENT_QUOTES,$charset)."\">";
+		$display_temp ="<input id=\"".$field['NAME']."_".$count."\" type=\"text\" size=\"".$options['SIZE'][0]['value']."\" maxlength=\"".$options['MAXSIZE'][0]['value']."\" name=\"".$field['NAME']."[]\" data-form-name='".$field["NAME"]."_' value=\"".htmlentities($exploded_value[0],ENT_QUOTES,$charset)."\">";
 		if(count($options['ITEMS']) == 1) {
 			$type = "checkbox";
 			$display_temp.= "<span id='lib_".$field['NAME']."_".$count."'>&nbsp;".$options['ITEMS'][0]['label']."</span><input id='".$field['NAME']."_qualification_".$count."' type='$type' name='".$field['NAME']."_qualifications[".$count."]'";
@@ -3067,6 +3197,9 @@ function aff_q_txt_i18n_empr($field,&$check_scripts) {
 		$display_temp.="<input id=\"".$field['NAME']."_lang_code_".$count."\" data-form-name='".$field["NAME"]."_lang_code_' type=\"hidden\" value=\"".(isset($exploded_value[1]) && $exploded_value[1] ? htmlentities($exploded_value[1], ENT_QUOTES, $charset) : '')."\" name=\"".$field['NAME']."_langs[".$count."]\">";
 
 		if(isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value']) {
+		    if ($count == $n-1) {
+		        $display_temp.= '<input class="bouton" type="button" value="+" id="button_add_'.$afield_name.'" onclick="add_custom_q_txt_i18n_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\', \''.$options['SIZE'][0]['value'].'\', \''.$options['MAXSIZE'][0]['value'].'\')">';
+		    }
 			$avalue = (isset($exploded_value[1]) && $exploded_value[1] ? $langue_doc[$exploded_value[1]] : '');
 			$ret.=get_block_dnd('q_txt_i18n', $field['NAME'], $count, $display_temp, $avalue);
 		} else {
@@ -3140,6 +3273,8 @@ function aff_q_txt_i18n_empr($field,&$check_scripts) {
 				if (lib_qualification) {
 					document.getElementById(node_dnd_id).appendChild(lib_qualification);
 				}
+				var buttonAdd = document.getElementById('button_add_' + field_id);
+
 				document.getElementById(node_dnd_id).appendChild(qualification);
 				document.getElementById(node_dnd_id).appendChild(document.createTextNode(' '));
 				document.getElementById(node_dnd_id).appendChild(lang_label);							
@@ -3147,6 +3282,7 @@ function aff_q_txt_i18n_empr($field,&$check_scripts) {
 				document.getElementById(node_dnd_id).appendChild(select);
 				document.getElementById(node_dnd_id).appendChild(del);
 				document.getElementById(node_dnd_id).appendChild(lang_code);
+				if (buttonAdd) document.getElementById(node_dnd_id).appendChild(buttonAdd);
 				document.getElementById(node_dnd_id).appendChild(space_br);
 
 				document.getElementById('customfield_q_txt_i18n_'+field_id).value = document.getElementById('customfield_q_txt_i18n_'+field_id).value * 1 + 1;
@@ -3165,13 +3301,8 @@ function aff_q_txt_i18n_empr_search($field,&$check_scripts,$varname) {
 	global $charset;
 	global $msg;
 	global $base_path;
-	global $langue_doc;
 	
-	if (!count($langue_doc)) {
-		$langue_doc = marc_list_collection::get_instance('lang');
-		$langue_doc = $langue_doc->table;
-	}
-	
+	$langue_doc = get_langue_doc();	
 	$options=$field['OPTIONS'][0];
 	$values=$field['VALUES'];
 	$_custom_prefixe_=$field["PREFIX"];
@@ -3255,12 +3386,8 @@ function chk_q_txt_i18n_empr($field,&$check_message) {
 
 function val_q_txt_i18n_empr($field,$value) {
 	global $charset,$pmb_perso_sep;
-	global $langue_doc;
 	
-	if (!count($langue_doc)) {
-		$langue_doc = marc_list_collection::get_instance('lang');
-		$langue_doc = $langue_doc->table;
-	}
+	$langue_doc = get_langue_doc();
 	$_custom_prefixe_ = $field['PREFIX'];
 	$requete="select ".$_custom_prefixe_."_custom_list_value, ".$_custom_prefixe_."_custom_list_lib from ".$_custom_prefixe_."_custom_lists where ".$_custom_prefixe_."_custom_champ=".$field['ID']." order by ordre";
 	$resultat=pmb_mysql_query($requete);
@@ -3294,146 +3421,70 @@ function aff_date_inter_empr($field,&$check_scripts) {
 	global $charset;
 	global $msg;
 	global $base_path;
+	
 	$values = ($field['VALUES'] ? $field['VALUES'] : array(""));
 	$options=$field['OPTIONS'][0];
 	$afield_name = $field["ID"];
 	$count = 0;
 	$ret = "";
-
+	if (isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value']) {
+	    $ret.= get_js_function_dnd('date_inter', $field['NAME']);
+	    $ret.= '<input class="bouton" type="button" value="+" onclick="add_custom_date_inter_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\',\''.$options["DEFAULT_TODAY"][0]["value"].'\')">';
+	}
 	foreach ($values as $value) {
+        $timestamp_begin = '';
+        $timestamp_end = '';
 		$dates = explode("|",$value);
-		$timestamp_begin = $dates[0];
-		$timestamp_end = $dates[1];
+        if (isset($dates[0])) $timestamp_begin = $dates[0];
+        if (isset($dates[1])) $timestamp_end = $dates[1];
 
 		if (!$timestamp_begin && !$timestamp_end && !$options["DEFAULT_TODAY"][0]["value"]) {
 			$time = time();
 			$date_begin = date("Y-m-d",$time);
 			$date_end = date("Y-m-d",$time);
-			$time_begin = "null";
-			$time_end = "null";
-		} else if (!$timestamp_begin && !$timestamp_end && $options["DEFAULT_TODAY"][0]["value"]) {
-			$date_begin = "null";
-			$date_end = "null";
-			$time_begin = "null";
-			$time_end = "null";
+			$time_begin = null;
+			$time_end = null;
+		} elseif (!$timestamp_begin && !$timestamp_end && $options["DEFAULT_TODAY"][0]["value"]) {
+			$date_begin = null;
+			$date_end = null;
+			$time_begin = null;	
+			$time_end = null;
 		} else {
 			$date_begin = date("Y-m-d",$timestamp_begin);
 			$date_end = date("Y-m-d",$timestamp_end);
 			$time_begin = "T".date("H:i",$timestamp_begin);
 			$time_end = "T".date("H:i",$timestamp_end);
 		}
-		$ret .= "<div>
-					<label>".$msg['resa_planning_date_debut']."</label>
-					<input type='text' id='".$field['NAME']."_".$count."_date_begin' name='".$field['NAME']."[".$count."][date_begin]' value='".$date_begin."' data-dojo-type='dijit/form/DateTextBox'/>
-					<input type='text' id='".$field['NAME']."_".$count."_time_begin' name='".$field['NAME']."[".$count."][time_begin]' value='".$time_begin."' data-dojo-type='dijit/form/TimeTextBox' data-dojo-props=\"constraints:{timePattern:'HH:mm',clickableIncrement:'T00:15:00', visibleIncrement: 'T01:00:00',visibleRange: 'T01:00:00'}\"/>
-					<label>".$msg['resa_planning_date_fin']."</label>
-					<input type='text' id='".$field['NAME']."_".$count."_date_end' name='".$field['NAME']."[".$count."][date_end]' value='".$date_end."' data-dojo-type='dijit/form/DateTextBox'/>
-					<input type='text' id='".$field['NAME']."_".$count."_time_end' name='".$field['NAME']."[".$count."][time_end]' value='".$time_end."' data-dojo-type='dijit/form/TimeTextBox' data-dojo-props=\"constraints:{timePattern:'HH:mm',clickableIncrement:'T00:15:00', visibleIncrement: 'T01:00:00',visibleRange: 'T01:00:00'}\"/>
-					<input class='bouton' type='button' value='X' onClick='empty_dojo_calendar_by_id(\"".$field['NAME']."_".$count."_date_begin\"); empty_dojo_calendar_by_id(\"".$field['NAME']."_".$count."_time_begin\"); empty_dojo_calendar_by_id(\"".$field['NAME']."_".$count."_date_end\"); empty_dojo_calendar_by_id(\"".$field['NAME']."_".$count."_time_end\");'/>";
-		if (isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value'] && !$count) {
-			$ret .= '<input class="bouton" type="button" value="+" onclick="add_custom_date_inter_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\',\''.$options["DEFAULT_TODAY"][0]["value"].'\')">';
+		$display_temp = get_input_date_time_inter($field['NAME']."[".$count."]", $field['NAME']."_".$count, $date_begin, $time_begin, $date_end, $time_end, $field['MANDATORY']);
+		if (isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value']) {
+			$button_add = '';
+			if (end($values) == $value) {
+				$button_add = '<input id="button_add_'.$field['NAME'].'" class="bouton" type="button" value="+" onclick="add_custom_date_inter_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\',\''.$options["DEFAULT_TODAY"][0]["value"].'\')">';
+			}
+			$ret.= get_block_dnd('date_inter', $field['NAME'], $count, $display_temp.$button_add, $date_begin);
+		} else {
+		    $ret.= $display_temp;
 		}
-		$ret .= '</div>';
 		$count++;
 	}
 	if (isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value']) {
-		$ret .= '<input id="customfield_date_inter_'.$afield_name.'" type="hidden" name="customfield_date_inter_'.$afield_name.'" value="'.$count.'">';
-		$ret .= '<div id="spaceformorecustomfielddateinter_'.$afield_name.'"></div>';
-		$ret .= get_custom_dnd_on_add();
-		$ret .= "<script>
+		$ret.= '<input id="customfield_date_inter_'.$afield_name.'" type="hidden" name="customfield_date_inter_'.$afield_name.'" value="'.$count.'">';
+		$ret.= '<div id="spaceformorecustomfielddateinter_'.$afield_name.'"></div>';
+		$ret.= get_custom_dnd_on_add();
+		$ret.= "
+        <script>
 			function add_custom_date_inter_(field_id, field_name, today) {
 				var count = document.getElementById('customfield_date_inter_'+field_id).value;
-
-				var label_begin = document.createElement('label');
-				label_begin.innerHTML = '".$msg['resa_planning_date_debut']."';
-			
-				var date_begin = document.createElement('input');
-		        date_begin.setAttribute('id',field_name + '_' + count + '_date_begin');
-		        date_begin.setAttribute('type','text');
-
-				var time_begin = document.createElement('input');
-				time_begin.setAttribute('type','text');
-				time_begin.setAttribute('id',field_name + '_' + count + '_time_begin');
-						
-				var label_end = document.createElement('label');
-				label_end.innerHTML = '".$msg['resa_planning_date_fin']."';
-						
-				var date_end = document.createElement('input');
-		        date_end.setAttribute('id',field_name + '_' + count + '_date_end');
-		        date_end.setAttribute('type','text');
-				
-				var time_end = document.createElement('input');
-				time_end.setAttribute('type','text');
-				time_end.setAttribute('id',field_name + '_' + count + '_time_end');
-						
-							
-				var del = document.createElement('input');
-				del.setAttribute('type', 'button');
-		        del.setAttribute('class','bouton');
-		        del.setAttribute('value','X');
-				del.addEventListener('click', function() {
-					require(['dijit/registry'], function(registry) {
-						empty_dojo_calendar_by_id(field_name + '_' + count + '_date_begin');
-						empty_dojo_calendar_by_id(field_name + '_' + count + '_time_begin');
-						empty_dojo_calendar_by_id(field_name + '_' + count + '_date_end');
-						empty_dojo_calendar_by_id(field_name + '_' + count + '_time_end');
-					});
-				}, false);
-
-				var br = document.createElement('br');
-
-				document.getElementById('spaceformorecustomfielddateinter_'+field_id).appendChild(label_begin);
-				document.getElementById('spaceformorecustomfielddateinter_'+field_id).appendChild(document.createTextNode(' '));
-				document.getElementById('spaceformorecustomfielddateinter_'+field_id).appendChild(date_begin);
-				document.getElementById('spaceformorecustomfielddateinter_'+field_id).appendChild(document.createTextNode(' '));
-				document.getElementById('spaceformorecustomfielddateinter_'+field_id).appendChild(time_begin);
-				document.getElementById('spaceformorecustomfielddateinter_'+field_id).appendChild(document.createTextNode(' '));
-				document.getElementById('spaceformorecustomfielddateinter_'+field_id).appendChild(label_end);
-				document.getElementById('spaceformorecustomfielddateinter_'+field_id).appendChild(document.createTextNode(' '));
-				document.getElementById('spaceformorecustomfielddateinter_'+field_id).appendChild(date_end);
-				document.getElementById('spaceformorecustomfielddateinter_'+field_id).appendChild(document.createTextNode(' '));
-				document.getElementById('spaceformorecustomfielddateinter_'+field_id).appendChild(time_end);
-				document.getElementById('spaceformorecustomfielddateinter_'+field_id).appendChild(document.createTextNode(' '));
-				document.getElementById('spaceformorecustomfielddateinter_'+field_id).appendChild(del);
-				document.getElementById('spaceformorecustomfielddateinter_'+field_id).appendChild(br);
-				document.getElementById('customfield_date_inter_'+field_id).value = document.getElementById('customfield_date_inter_'+field_id).value * 1 + 1;
-
-				var date = new Date();
-				if (today) {
-					date = null;
-				}
-
-				require(['dijit/form/TimeTextBox', 'dijit/form/DateTextBox'], function(TimeTextBox,DateTextBox){
-					new DateTextBox({value : date, name : field_name + '[' + count + '][date_begin]'},field_name + '_' + count + '_date_begin').startup();
-
-					new TimeTextBox({value: null,
-						name : field_name + '[' + count + '][time_begin]',
-						constraints : {
-							timePattern:'HH:mm',
-							clickableIncrement:'T00:15:00',
-							visibleIncrement: 'T01:00:00',
-							visibleRange: 'T01:00:00'
-						}
-					},field_name + '_' + count + '_time_begin').startup();
-
-					new DateTextBox({value : date, name : field_name + '[' + count + '][date_end]'},field_name + '_' + count + '_date_end').startup();
-
-					new TimeTextBox({value : null,
-						name : field_name + '[' + count + '][time_end]',
-						constraints : {
-							timePattern:'HH:mm',
-							clickableIncrement:'T00:15:00',
-							visibleIncrement: 'T01:00:00',
-							visibleRange: 'T01:00:00'
-						}
-					},field_name + '_' + count + '_time_end').startup();
-				});
+				var node_dnd_id = get_custom_dnd_on_add('spaceformorecustomfielddateinter_'+field_id, 'customfield_date_inter_'+field_name, count);
+                get_input_date_time_inter_js(document.getElementById(node_dnd_id), field_name + '[' + count + ']', field_name + '_' + count, today, 'date_begin', 'date_end');
+                document.getElementById('customfield_date_inter_'+field_id).value = document.getElementById('customfield_date_inter_'+field_id).value * 1 + 1;
+                dojo.parser.parse(node_dnd_id);
 			}
 		</script>";
 	}
-	if ($field['MANDATORY']==1) {
+	if ($field['MANDATORY'] == 1) {
 		$caller = get_form_name();
-		$check_scripts.="if (document.forms[\"".$caller."\"].elements[\"".$field['NAME']."[]\"].value==\"\") return cancel_submit(\"".sprintf($msg["parperso_field_is_needed"],$field['ALIAS'])."\");\n";
+		$check_scripts.= "if (document.forms[\"".$caller."\"].elements[\"".$field['NAME']."[]\"].value==\"\") return cancel_submit(\"".sprintf($msg["parperso_field_is_needed"],$field['ALIAS'])."\");\n";
 	}
 	return $ret;
 }
@@ -3442,11 +3493,14 @@ function aff_date_inter_empr_search($field,&$check_scripts,$varname) {
 	global $charset;
 	global $msg;
 
+    $timestamp_begin = '';
+    $timestamp_end = '';
 	$values=$field['VALUES'];
+    if(!empty($values[0])) {
 	$dates = explode("|",$values[0]);
-	$timestamp_begin = $dates[0];
-	$timestamp_end = $dates[1];
-
+        if (isset($dates[0])) $timestamp_begin = $dates[0];        
+        if (isset($dates[1])) $timestamp_end = $dates[1];
+    }    
 	if (!$timestamp_begin && !$timestamp_end) {
 		$time = time();
 		$date_begin = date("Y-m-d",$time);
@@ -3554,7 +3608,8 @@ function val_date_inter_empr($field,$value) {
 	$return = "";
 	for ($i=0;$i<count($values);$i++){
 		$val = explode("|",$values[$i]);
-
+		
+		if(empty($val[0]) || empty($val[1])) continue;		
 		$timestamp_begin = $val[0];
 		$timestamp_end = $val[1];
 		if ($return) {
@@ -3567,7 +3622,8 @@ function val_date_inter_empr($field,$value) {
 
 function get_form_name() {
 	global $_custom_prefixe_;
-	
+	global $current_module;
+
 	$caller="";
 	switch ($_custom_prefixe_) {
 		case "empr":
@@ -3577,7 +3633,11 @@ function get_form_name() {
 			$caller="notice";
 			break;
 		case "expl":
-			$caller="expl";
+			if($current_module == 'receptions_frame') {
+				$caller ="recept_deliv_form";
+			} else {
+				$caller="expl";
+			}
 			break;
 		case "gestfic0": // a modifier lorsque il y aura du multi fiches!
 			$caller="formulaire";
@@ -3621,6 +3681,9 @@ function get_form_name() {
 			break;
 		case "explnum":
 			$caller="explnum";
+			break;
+		case "skos":
+			$caller="skos";
 			break;
 	}
 	return $caller;
@@ -3735,7 +3798,7 @@ function get_authority_isbd_from_field($field, $id=0, $with_permalink=false) {
 			$isbd .= html_entity_decode($aut->get_isbd(),ENT_QUOTES, $charset);
 			break;
 		case 9://Concept
-			if($id*1==0){
+			if(!intval($id)){
 				$id = onto_common_uri::get_id($id);	
 			}
 			if(!$id) break;
@@ -3845,7 +3908,7 @@ function get_authority_details_from_field($field, $id=0) {
 			$details = $aut->format_datas();
 			break;
 		case 9://Concept
-			if($id*1==0){
+		    if(!intval($id)){
 				$id = onto_common_uri::get_id($id);
 			}
 			if(!$id) break;
@@ -3876,28 +3939,28 @@ function aff_date_flottante_empr($field, &$check_scripts) {
 
 	$ret .= "
 		<script>
-			function date_flottante_type_onchange(count) {
-				var type = document.getElementById('".$field['NAME']."_' + count + '_date_type').value;
+			function date_flottante_type_onchange(field_name) {
+				var type = document.getElementById(field_name + '_date_type').value;
 				switch(type) {
 					case '4' : // interval date
-						document.getElementById('".$field['NAME']."_' + count + '_date_begin_zone_label').style.display = '';
-						document.getElementById('".$field['NAME']."_' + count + '_date_end_zone').style.display = '';
+						document.getElementById(field_name + '_date_begin_zone_label').style.display = '';
+						document.getElementById(field_name + '_date_end_zone').style.display = '';
 						break;
 					case '0' : // vers
 					case '1' : // avant
 					case '2' : // après
 					case '3' : // date précise
 					default :
-						document.getElementById('".$field['NAME']."_' + count + '_date_begin_zone_label').style.display = 'none';
-						document.getElementById('".$field['NAME']."_' + count + '_date_end_zone').style.display = 'none';
+						document.getElementById(field_name + '_date_begin_zone_label').style.display = 'none';
+						document.getElementById(field_name + '_date_end_zone').style.display = 'none';
 						break;
 				}
 			}
 			
-			function date_flottante_reset_fields(count) {
-				document.getElementById('".$field['NAME']."_' + count + '_date_begin').value = '';
-				document.getElementById('".$field['NAME']."_' + count + '_date_end').value = '';
-				document.getElementById('".$field['NAME']."_' + count + '_comment').value = '';
+			function date_flottante_reset_fields(field_name) {
+				document.getElementById(field_name + '_date_begin').value = '';
+				document.getElementById(field_name + '_date_end').value = '';
+				document.getElementById(field_name + '_comment').value = '';
 			}
 		</script>
 		";
@@ -3909,10 +3972,10 @@ function aff_date_flottante_empr($field, &$check_scripts) {
 		// exemple: 1|||1950|||1960|||commentaires		
 		$data = explode("|||", $value);
 		
-		$date_type = $data[0];
-		$date_begin = $data[1];
-		$date_end = $data[2];
-		$comment = $data[3];
+		$date_type = (!empty($data[0]) ? $data[0] : "");
+		$date_begin = (!empty($data[1]) ? $data[1] : "");
+		$date_end = (!empty($data[2]) ? $data[2] : "");
+		$comment = (!empty($data[3]) ? $data[3] : "");
 
 		if (!$date_begin && !$date_end && !$options["DEFAULT_TODAY"][0]["value"]) {
 			$time = time();
@@ -3926,7 +3989,7 @@ function aff_date_flottante_empr($field, &$check_scripts) {
 			//$date_end = date("Y-m-d", $date_end);			
 		}
 		$ret .= "<div>
-					<select id='" . $field['NAME'] . "_" . $count . "_date_type' name='" . $field['NAME'] . "[" . $count . "][date_type]' onchange=\"date_flottante_type_onchange(" . $count . ");\">
+					<select id='" . $field['NAME'] . "_" . $count . "_date_type' name='" . $field['NAME'] . "[" . $count . "][date_type]' onchange=\"date_flottante_type_onchange('" . $field['NAME'] . '_' . $count . "');\">
  						<option value='0' " . (!$date_type ? ' selected ' : '') . ">" . $msg['parperso_option_duration_type0'] . "</option>
  						<option value='1' " . ($date_type == 1 ? ' selected ' : '') . ">" . $msg['parperso_option_duration_type1'] . "</option>
  						<option value='2' " . ($date_type == 2 ? ' selected ' : '') . ">" . $msg['parperso_option_duration_type2'] . "</option>
@@ -3943,13 +4006,13 @@ function aff_date_flottante_empr($field, &$check_scripts) {
 					</span>
 					<label>" . $msg['parperso_option_duration_comment'] . "</label>
 					<input type='text' id='" . $field['NAME'] . "_" . $count . "_comment' name='" . $field['NAME'] . "[" . $count . "][comment]' value='" . htmlentities($comment, ENT_QUOTES, $charset) . "' class='saisie-30em'/>		
-					<input class='bouton' type='button' value='X' onClick='date_flottante_reset_fields(" . $count . ");'/>";
+					<input class='bouton' type='button' value='X' onClick=\"date_flottante_reset_fields('" . $field['NAME'] . '_' . $count . "');\"/>";
 		if (isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value'] && !$count) {
 			$ret .= '<input class="bouton" type="button" value="+" onclick="add_custom_date_flottante_(\'' . $afield_name . '\', \'' . addslashes($field['NAME']) . '\',\'' . $options["DEFAULT_TODAY"][0]["value"] . '\')" >';
 		}
 		$ret .= "</div>
 		<script>
-			date_flottante_type_onchange(" . $count . ");
+			date_flottante_type_onchange('" . $field['NAME'] . '_' . $count . "');
 		</script>";
 		$count++;
 	}
@@ -3977,8 +4040,10 @@ function aff_date_flottante_empr_search($field, &$check_scripts, $varname) {
 	global $charset;
 	global $msg;
 
-	$date_begin = $field['VALUES'][0];
-	$date_end = $field['VALUES1'][0];
+    $date_begin = '';
+    $date_end = '';
+    if (!empty($field['VALUES'][0])) $date_begin = $field['VALUES'][0];
+    if (!empty($field['VALUES1'][0])) $date_end = $field['VALUES1'][0];
 	$return = "
 			<div>
  				<span id='" . $varname . "_date_begin_zone'>
@@ -4084,13 +4149,23 @@ function val_date_flottante_empr($field, $value) {
 				$return .= $msg['parperso_option_duration_entre']." " . $interval[1] . " ".$msg['parperso_option_duration_et']." " . $interval[2];
 				break;
 			default:
-				$return .= $interval[1];
+				if (!empty($interval[1])) $return .= $interval[1];
 				break;
 		}
 		// Commentaire
-		if ($interval[3]) {
+		if (!empty($interval[3])) {
 			$return .= " (" . $interval[3] . ")";
 		}
 	}
 	return $return;
+}
+
+function get_langue_doc() {
+    global $langue_doc;
+    
+    if (!isset($langue_doc) || !count($langue_doc)) {
+        $langue_doc = marc_list_collection::get_instance('lang');
+        $langue_doc = $langue_doc->table;
+    }
+    return $langue_doc;
 }

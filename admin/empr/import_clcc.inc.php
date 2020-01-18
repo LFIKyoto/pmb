@@ -68,8 +68,8 @@ function import_lect_par_lect($tab,$dbh){
 			if($tab[4]){
 				$data3=array();
 				$data3=explode('/',$tab[4]);
-				$data=$data3[2]."-".$data3[1]."-".$data3[0];
-				$requete=$requete.", empr_date_expiration='".addslashes($data)."'";
+				$empr_date_exp = $data3[2]."-".$data3[1]."-".$data3[0];
+				$requete = $requete.", empr_date_expiration='".addslashes($empr_date_exp)."'";
 			}else{
 				$requete=$requete.", empr_date_expiration=DATE_ADD('".addslashes(date('Y-m-j'))."', INTERVAL 6 MONTH)";
 			}
@@ -361,8 +361,4 @@ switch($action) {
         show_import_choix_fichier($dbh);
         break;
 }
-
 ?>
-
-
-

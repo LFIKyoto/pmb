@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher.class.php,v 1.207 2018-12-17 13:57:57 ngantier Exp $
+// $Id: searcher.class.php,v 1.222.2.1 2019-10-30 13:21:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -253,7 +253,6 @@ class searcher {
 	protected function get_display_icons($current, $from_mode=0) {
 		global $msg;
 		global $pmb_allow_external_search;
-		
 		$display = '';
 		$display .= "<a href='#' onClick=\"openPopUp('./print_cart.php?current_print=$current&action=print_prepare','print',600,700,-2,-2,'scrollbars=yes,menubar=0,resizable=yes'); return false;\">";
 		$display .= "<img src='".get_url_icon('basket_small_20x20.gif')."' style='border:0px' class='center' alt=\"".$msg["histo_add_to_cart"]."\" title=\"".$msg["histo_add_to_cart"]."\"></a>";
@@ -267,7 +266,70 @@ class searcher {
 			$display .= "<img src='".get_url_icon('external_search.png')."' style='border:0px' class='center' alt=\"".$msg["connecteurs_external_search_sources"]."\"/></a>";
 		}
 		$display .= $this->get_display_icon_sort();
+		$display .= self::get_quick_actions();
+		$display .= self::get_check_uncheck_all_buttons();
 		return $display;
+	}
+	
+	public static function get_check_uncheck_all_buttons() {
+		global $msg, $charset;
+		$display = "<br/><input type='button' onclick='checkAllObjects(\"check\",\"objects_selection\")' class='bouton' value='".htmlentities($msg["tout_cocher_checkbox"],ENT_QUOTES,$charset)."' name='check_all'/>
+					<input type='button' onclick='checkAllObjects(\"uncheck\",\"objects_selection\")' class='bouton' value='".htmlentities($msg["tout_decocher_checkbox"],ENT_QUOTES,$charset)."' name='check_all'/>";
+		return $display;
+	}
+	
+	public static function get_quick_actions($type = 'NOTI') {
+		global $msg;
+		$actions_to_remove = array(
+				'edit_cart' => true,
+				'supprpanier' => true
+		);
+		switch ($type) {
+			case 'AUT':
+				$array_actions = authorities_caddie::get_array_actions("!!id_caddie!!", "AUT", $actions_to_remove);
+				$module = "autorites";
+				break;
+			case 'NOTI':
+			case 'EXPL':
+			default:
+				$array_actions = caddie::get_array_actions("!!id_caddie!!", $type, $actions_to_remove);
+				$module = "catalog";
+				break;
+		}
+		$lines = '
+					<div data-dojo-type="dijit/form/DropDownButton" class="tooltip">
+  						<span class="tooltiptext">'.$msg["caddie_shortaction_tooltip_title"].'</span>
+						<span>'.$msg["caddie_menu_action"].'</span>
+						<div data-dojo-type="dijit/DropDownMenu">';
+		if(is_array($array_actions) && count($array_actions)){
+			foreach($array_actions as $item_action){
+				$lines .= '
+							<div data-dojo-type="dijit/MenuItem" data-dojo-props="onClick:function(){quickActionsEvent(\''.urlencode($item_action["location"]).'\');}">
+								<span>'.$item_action['msg'].'</span>
+							</div>';
+			}
+		}
+		$lines .= '</div>
+				</div>
+				<script>
+					function quickActionsEvent(callback) {
+						var list = [];
+						var elements = document.querySelectorAll("input[name=\'objects_selection\']");
+						elements.forEach(function(element) {
+							if (element.checked) {
+								list.push(element.value);
+							}
+						})
+		                if (list.length == 0) {
+		                    if (window.confirm("'.$msg["caddie_shortaction_confirmation"].'")) {
+		                        document.location = "./'.$module.'.php?categ=caddie&sub=remplir&type='.$type.'&callback="+ callback +"&elements="+list.join(\',\');
+		                    }
+	                    } else {
+		                    document.location = "./'.$module.'.php?categ=caddie&sub=remplir&type='.$type.'&callback="+ callback +"&elements="+list.join(\',\');
+		                }
+					}
+				</script>';
+		return $lines;
 	}
 	
 	protected function get_display_records_list() {
@@ -362,15 +424,17 @@ class searcher {
 				$this->current_search=$_SESSION["MAP_CURRENT"];
 				unset($_SESSION["MAP_CURRENT"]);
 			}else{
-				$this->current_search=count($_SESSION['session_history']);
-				switch($mode_search) {
-	  				case 2 :
-	  				case 3 :
-	  				case 9 :
-	  					$this->current_search--;
-				}
-				if($aut_id )$this->current_search--;
-				if(isset($page)) $this->current_search--;
+			    if (isset($_SESSION['session_history'])) {
+    				$this->current_search=count($_SESSION['session_history']);
+    				switch($mode_search) {
+    	  				case 2 :
+    	  				case 3 :
+    	  				case 9 :
+    	  					$this->current_search--;
+    				}
+    				if($aut_id )$this->current_search--;
+    				if(isset($page)) $this->current_search--;
+			    }
 			}
 			if($this->current_search<=0) $this->current_search = 0;
 			$map = "<div id='map_container'><div id='map_search' ></div></div>";
@@ -385,8 +449,13 @@ class searcher {
 
 		$map = "";
 		$size=explode("*",$pmb_map_size_search_result);
-		if(count($size)!=2)$map_size="width:800px; height:480px;";
-		else $map_size= "width:".$size[0]."; height:".$size[1].";";
+		if(count($size)!=2) {
+			$map_size="width:800px; height:480px;";
+		} else {
+			if (is_numeric($size[0])) $size[0].= 'px';
+			if (is_numeric($size[1])) $size[1].= 'px';
+			$map_size= "width:".$size[0]."; height:".$size[1].";";
+		}
 
 		$map_search_controler = new map_search_controler(null, $this->current_search, $pmb_map_max_holds,false);
 		$json = $map_search_controler->get_json_informations();
@@ -451,7 +520,7 @@ class searcher_title extends searcher {
 		$query = "SELECT count(typdoc), typdoc ";
 		$query .= "FROM notices where typdoc!='' GROUP BY typdoc";
 		$result = @pmb_mysql_query($query, $dbh);
-		$toprint_typdocfield = "  <option value=''>$msg[tous_types_docs]</option>\n";
+		$toprint_typdocfield = "  <option value='' ".(empty($typdoc_query) || empty($typdoc_query[0]) ? 'selected' : '').">$msg[tous_types_docs]</option>\n";
 		$doctype = new marc_list('doctype');
 		while (($rt = pmb_mysql_fetch_row($result))) {
 			$obj[$rt[1]]=1;
@@ -461,7 +530,7 @@ class searcher_title extends searcher {
 			if (isset($obj[$key]) && ($obj[$key]==1)){
 				$toprint_typdocfield .= "  <option ";
 				$toprint_typdocfield .= " value='$key'";
-				if ($typdoc_query == $key) $toprint_typdocfield .=" selected='selected' ";
+				if (!empty($typdoc_query) && in_array($key, $typdoc_query)) $toprint_typdocfield .=" selected='selected' ";
 				$toprint_typdocfield .= ">".htmlentities($libelle." (".$qte[$key].")",ENT_QUOTES, $charset)."</option>\n";
 			}
 		}
@@ -470,10 +539,10 @@ class searcher_title extends searcher {
 		$query = "SELECT count(statut), id_notice_statut, gestion_libelle ";
 		$query .= "FROM notices, notice_statut where id_notice_statut=statut GROUP BY id_notice_statut order by gestion_libelle";
 		$result = pmb_mysql_query($query, $dbh);
-		$toprint_statutfield = "  <option value=''>$msg[tous_statuts_notice]</option>\n";
+		$toprint_statutfield = "  <option value='' ".(empty($statut_query) || empty($statut_query[0]) ? 'selected' : '').">$msg[tous_statuts_notice]</option>\n";
 		while ($obj = @pmb_mysql_fetch_row($result)) {
 				$toprint_statutfield .= "  <option value='$obj[1]'";
-				if ($statut_query==$obj[1]) $toprint_statutfield.=" selected";
+				if (!empty($statut_query) && in_array($obj[1], $statut_query)) $toprint_statutfield.=" selected";
 				$toprint_statutfield .=">".htmlentities($obj[2]."  (".$obj[0].")",ENT_QUOTES, $charset)."</OPTION>\n";
 		}
 
@@ -555,11 +624,10 @@ class searcher_title extends searcher {
 		
 		if ($nb_per_page_a_search) $this->nb_per_page=$nb_per_page_a_search; else $this->nb_per_page=3;
 		$author_per_page=10;
-		
 		$restrict='';
 		$queries = array();
-		if ($typdoc_query) $restrict = "and typdoc='".$typdoc_query."' ";
-		if ($statut_query) $restrict.= "and statut='".$statut_query."' ";
+		if (!empty($typdoc_query) && !empty($typdoc_query[0])) $restrict = "and typdoc in ('".implode("','",$typdoc_query)."') ";
+		if (!empty($statut_query) && !empty($statut_query[0])) $restrict.= "and statut in ('".implode("','",$statut_query)."') ";
 
 		if($date_parution_start_query) {
 			$date_parution_start = detectFormatDate($date_parution_start_query);
@@ -729,8 +797,8 @@ class searcher_title extends searcher {
 		global $aut_type;
 
 		$restrict='';
-		if ($typdoc_query) $restrict = "and typdoc='".$typdoc_query."' ";
-		if ($statut_query) $restrict.= "and statut='".$statut_query."' ";
+		if (!empty($typdoc_query) && !empty($typdoc_query[0])) $restrict = "and typdoc in ('".implode("','",$typdoc_query)."') ";
+		if (!empty($statut_query) && !empty($statut_query[0])) $restrict.= "and statut in ('".implode("','",$statut_query)."') ";
 
 		if ($nb_per_page_a_search) $this->nb_per_page=$nb_per_page_a_search; else $this->nb_per_page=3;
 
@@ -781,8 +849,12 @@ class searcher_title extends searcher {
 		$champs.="<input type='hidden' name='all_query' value='".htmlentities(stripslashes($all_query),ENT_QUOTES,$charset)."'/>";
 		$champs.="<input type='hidden' name='author_query' value='".htmlentities(stripslashes($author_query),ENT_QUOTES,$charset)."'/>";
 		$champs.="<input type='hidden' name='author_query_id' value='".$author_query_id."'/>";
-		$champs.="<input type='hidden' name='typdoc_query' value='".htmlentities(stripslashes($typdoc_query),ENT_QUOTES,$charset)."'/>";
-		$champs.="<input type='hidden' name='statut_query' value='".htmlentities(stripslashes($statut_query),ENT_QUOTES,$charset)."'/>";
+		foreach($typdoc_query as $typdoc) {
+		    $champs.="<input type='hidden' name='typdoc_query[]' value='".htmlentities(stripslashes($typdoc),ENT_QUOTES,$charset)."'/>";
+		}
+		foreach($statut_query as $statut) {
+		    $champs.="<input type='hidden' name='statut_query[]' value='".htmlentities(stripslashes($statut),ENT_QUOTES,$charset)."'/>";
+		}
 		$champs.="<input type='hidden' name='categ_query' value='".htmlentities(stripslashes($categ_query),ENT_QUOTES,$charset)."'/>";
 		$champs.="<input type='hidden' name='categ_query_id' value='".$categ_query_id."'/>";
 		$champs.="<input type='hidden' name='date_parution_start_query' value='".htmlentities(stripslashes($date_parution_start_query),ENT_QUOTES,$charset)."'/>";
@@ -807,8 +879,16 @@ class searcher_title extends searcher {
 		global $typdoc_query, $statut_query, $aut_type;
 		global $charset;
 		$champs="<input type='hidden' name='aut_id' value='".htmlentities(stripslashes($this->id),ENT_QUOTES,$charset)."'/>";
-		$champs.="<input type='hidden' name='typdoc_query' value='".htmlentities(stripslashes($typdoc_query),ENT_QUOTES,$charset)."'/>";
-		$champs.="<input type='hidden' name='statut_query' value='".htmlentities(stripslashes($statut_query),ENT_QUOTES,$charset)."'/>";
+		if (!empty($typdoc_query) && !empty($typdoc_query[0])){
+		    foreach ($typdoc_query as $typdoc) {
+		        $champs.="<input type='hidden' name='typdoc_query[]' value='".htmlentities(stripslashes($typdoc),ENT_QUOTES,$charset)."'/>";
+		    }
+		}
+		if (!empty($statut_query) && !empty($statut_query[0])){
+		    foreach ($statut_query as $statut) {
+		        $champs.="<input type='hidden' name='statut_query[]' value='".htmlentities(stripslashes($statut),ENT_QUOTES,$charset)."'/>";
+		    }
+		}
 		$champs.="<input type='hidden' name='aut_type' value='".htmlentities(stripslashes($aut_type),ENT_QUOTES,$charset)."'/>";
 		$this->store_form=str_replace("!!first_search_variables!!",$champs,$this->store_form);
 		print $this->store_form;
@@ -831,6 +911,18 @@ class searcher_title extends searcher {
 				$author_list="<table>\n";
 				$parity = 0 ;
 				if(isset($this->sorted_result) && is_array($this->sorted_result)) {
+				    $link_typdoc_query = '';
+				    if (!empty($typdoc_query) && !empty($typdoc_query[0])){
+				        foreach ($typdoc_query as $typdoc) {
+				            $link_typdoc_query .= "&typdoc_query[]=".$typdoc;
+				        }
+				    }
+				    $link_statut_query = '';
+				    if (!empty($statut_query) && !empty($statut_query[0])){
+				        foreach ($statut_query as $statut) {
+				            $link_statut_query .= "&statut_query[]=".$statut;
+				        }
+				    }
 					foreach ($this->sorted_result as $id_authority) {
 						if ($parity % 2) {
 							$pair_impair = "even";
@@ -848,11 +940,11 @@ class searcher_title extends searcher {
 							$notice_auteur_see_count_sql = "SELECT count(DISTINCT responsability_notice) FROM responsability WHERE responsability_author = ".$auteur->see;
 							$notice_auteur_see_count = pmb_mysql_result(pmb_mysql_query($notice_auteur_see_count_sql), 0, 0);
 							
-							$link = $this->base_url."&aut_id=".$auteur->id."&etat=aut_search&typdoc_query=".$typdoc_query."&statut_query=".$statut_query;
-							$link_see = $this->base_url."&aut_id=".$auteur->see."&etat=aut_search&typdoc_query=".$typdoc_query."&statut_query=".$statut_query;
+							$link = $this->base_url."&aut_id=".$auteur->id."&etat=aut_search".$link_typdoc_query.$link_statut_query;
+							$link_see = $this->base_url."&aut_id=".$auteur->see."&etat=aut_search".$link_typdoc_query.$link_statut_query;
 							$forme = $auteur->display.".&nbsp;- ".$msg["see"]."&nbsp;: <a href='$link_see' class='lien_gestion'>$auteur->see_libelle</a> (".$notice_auteur_see_count.") ";
 						} else {
-							$link = $this->base_url."&aut_id=".$auteur->id."&etat=aut_search&typdoc_query=".$typdoc_query."&statut_query=".$statut_query;
+						    $link = $this->base_url."&aut_id=".$auteur->id."&etat=aut_search".$link_typdoc_query.$link_statut_query;
 							$forme = $auteur->display;
 						}
 	
@@ -947,20 +1039,26 @@ class searcher_title extends searcher {
 			$research.="<b>${msg['search_concept_title']}</b>&nbsp;".htmlentities(stripslashes($concept_query),ENT_QUOTES,$charset);
 		}
 
-		if ($typdoc_query){
-			if ($research != "") $research .= ", ";
+		if (!empty($typdoc_query) && !empty($typdoc_query[0])){
 			$doctype = new marc_list('doctype');
-			$research.= "<b>".$msg["17"].$msg["1901"]."</b>&nbsp;".$doctype->table[$typdoc_query];
-		}
-		if ($statut_query){
+			$lib_typdocs = array();
 			if ($research != "") $research .= ", ";
-			$query = "SELECT gestion_libelle FROM notice_statut WHERE id_notice_statut='".$statut_query."'";
-			$result = pmb_mysql_query($query, $dbh);
-			if($result && pmb_mysql_num_rows($result)){
-				$row=pmb_mysql_fetch_object($result);
-				$statut_libelle=$row->gestion_libelle;
-			}else{
-				$statut_libelle="";
+			foreach ($typdoc_query as $typdoc) {
+				$lib_typdocs[]= $doctype->table[$typdoc];
+			}
+			$research.= "<b>".$msg["17"].$msg["1901"]."</b>&nbsp;".implode(", ", $lib_typdocs);
+		}
+		if (!empty($statut_query) && !empty($statut_query[0])){
+			if ($research != "") $research .= ", ";
+			$query = "SELECT gestion_libelle FROM notice_statut WHERE id_notice_statut in ('".implode("','", $statut_query)."') ";
+			$result = pmb_mysql_query($query);
+			$rows = array();
+			$statut_libelle = "";
+			if(pmb_mysql_num_rows($result)){
+				while ($row = pmb_mysql_fetch_assoc($result)) {
+					$rows[] = $row['gestion_libelle'];
+				}
+				$statut_libelle = implode(", ", $rows);
 			}
 			$research.= "<b>".$msg["noti_statut_noti"].$msg["1901"]."</b>&nbsp;".htmlentities(stripslashes($statut_libelle),ENT_QUOTES,$charset);
 		}
@@ -1073,7 +1171,7 @@ class searcher_title extends searcher {
 
 		$x=0;
 
-		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["title_query"]) {
+		if (!empty($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["title_query"])) {
 			$op_="BOOLEAN";
 			$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["title_query"];
 
@@ -1102,7 +1200,7 @@ class searcher_title extends searcher {
     		$fieldvar=${$fieldvar_};
 			$x++;
 		}
-		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["all_query"]) {
+		if (!empty($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["all_query"])) {
 			$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["all_query"];
 			$op_="BOOLEAN";
 
@@ -1133,7 +1231,7 @@ class searcher_title extends searcher {
     		$fieldvar=${$fieldvar_};
 			$x++;
 		}
-		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["author_query"]) {
+		if (!empty($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["author_query"])) {
 			$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["author_query"];
 
 			$op_="BOOLEAN";
@@ -1166,7 +1264,7 @@ class searcher_title extends searcher {
     		$fieldvar=${$fieldvar_};
 			$x++;
 		} else {
-			if ($_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"]) {
+			if (!empty($_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"])) {
 				$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"];
 
 				$op_="EQ";
@@ -1200,7 +1298,7 @@ class searcher_title extends searcher {
 				$x++;
 			}
 		}
-		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["typdoc_query"]) {
+		if (is_array($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["typdoc_query"]) && $_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["typdoc_query"][0]) {
 			$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["typdoc_query"];
 			$op_="EQ";
 			$search[$x]="f_9";
@@ -1212,7 +1310,7 @@ class searcher_title extends searcher {
     		//contenu de la recherche
     		$field="field_".$x."_".$search[$x];
     		$field_=array();
-    		$field_[0]=$valeur_champ;
+    		$field_=$valeur_champ;
     		global ${$field};
     		${$field}=$field_;
 
@@ -1231,7 +1329,59 @@ class searcher_title extends searcher {
     		$fieldvar=${$fieldvar_};
 			$x++;
 		}
-		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["statut_query"]) {
+		if (!empty($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["categ_query"])) {
+		    $valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["categ_query"];
+		    $op_="EQ";
+		    $search[$x]="f_1";
+		    //opérateur
+		    $op="op_".$x."_".$search[$x];
+		    global ${$op};
+		    ${$op}=$op_;
+		    
+		    //contenu de la recherche
+		    $field="field_".$x."_".$search[$x];
+		    $field_=array();
+		    $field_[0]=$valeur_champ;
+		    global ${$field};
+		    ${$field}=$field_;
+		    
+		    //opérateur inter-champ
+		    $inter="inter_".$x."_".$search[$x];
+		    global ${$inter};
+		    if ($x>0) {
+		        ${$inter}="and";
+		    } else {
+		        ${$inter}="";
+		    }
+		    $x++;
+		}
+		if (!empty($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["concept_query"])) {
+		    $valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["concept_query"];
+		    $op_="BOOLEAN";
+		    $search[$x]="f_1000";
+		    //opérateur
+		    $op="op_".$x."_".$search[$x];
+		    global ${$op};
+		    ${$op}=$op_;
+		    
+		    //contenu de la recherche
+		    $field="field_".$x."_".$search[$x];
+		    $field_=array();
+		    $field_[0]=$valeur_champ;
+		    global ${$field};
+		    ${$field}=$field_;
+		    
+		    //opérateur inter-champ
+		    $inter="inter_".$x."_".$search[$x];
+		    global ${$inter};
+		    if ($x>0) {
+		        ${$inter}="and";
+		    } else {
+		        ${$inter}="";
+		    }
+		    $x++;
+		}
+		if (is_array($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["statut_query"]) && $_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["statut_query"][0]) {
 			$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["statut_query"];
 			$op_="EQ";
 			$search[$x]="f_10";
@@ -1243,7 +1393,7 @@ class searcher_title extends searcher {
     		//contenu de la recherche
     		$field="field_".$x."_".$search[$x];
     		$field_=array();
-    		$field_[0]=$valeur_champ;
+    		$field_=$valeur_champ;
     		global ${$field};
     		${$field}=$field_;
 
@@ -1397,7 +1547,7 @@ class searcher_title extends searcher {
 				$x++;
 			}
 		}
-		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["typdoc_query"]) {
+		if (is_array($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["typdoc_query"]) && $_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["typdoc_query"][0]) {
 			$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["typdoc_query"];
 			$op_="EQ";
 			$search[$x]="f_9";
@@ -1409,7 +1559,7 @@ class searcher_title extends searcher {
     		//contenu de la recherche
     		$field="field_".$x."_".$search[$x];
     		$field_=array();
-    		$field_[0]=$valeur_champ;
+    		$field_=$valeur_champ;
     		global ${$field};
     		${$field}=$field_;
 
@@ -1704,6 +1854,8 @@ class searcher_subject extends searcher {
 								onchange=\"document.location='".$this->base_url."&aut_id=".$this->id."&aut_type=categ&etat=aut_search&no_rec_history=1&nb_level_parents='+this.value\">";
 							$auto_postage_form=str_replace("!!nb_level_parents!!",$input_txt,$msg["categories_autopostage_parents"]);
 						}
+					}elseif (!isset($auto_postage_form)) {
+					    $auto_postage_form = "";
 					}
 					$this->auto_postage_form=$auto_postage_form;
 				}
@@ -1847,7 +1999,9 @@ class searcher_subject extends searcher {
 		global $load_tablist_js;
 		$research=$title;
 		$research .= " => ".sprintf($msg["searcher_results"],$this->nbresults);
-		if($this->auto_postage_form) $research.="&nbsp;&nbsp;".$this->auto_postage_form;
+		if (isset($this->auto_postage_form)) {
+		    $research.="&nbsp;&nbsp;".$this->auto_postage_form;
+		}
 		print "<div class='othersearchinfo'>$research</div>";
 		print $begin_result_liste;
 		$load_tablist_js=1;
@@ -1973,6 +2127,7 @@ class searcher_subject extends searcher {
 	public static function convert_simple_multi($id_champ) {
 		global $search;
 
+		$search=array();
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["search_indexint_id"]) {
 			$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["search_indexint_id"];
 			$op_="EQ";
@@ -2025,6 +2180,7 @@ class searcher_subject extends searcher {
 	public static function convert_simple_multi_unimarc($id_champ) {
 		global $search;
 
+		$search=array();
 		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["search_indexint_id"]) {
 			$indexint_id=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["search_indexint_id"];
 			//Recherche de l'indexation
@@ -2334,6 +2490,7 @@ class searcher_publisher extends searcher {
 
 	public function rec_env() {
 		global $msg;
+		$this->page = intval($this->page);
 		switch ($this->etat) {
 				case 'first_search':
 					if ((string)$this->page=="") {
@@ -2390,6 +2547,7 @@ class searcher_publisher extends searcher {
 		$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"];
 		$op_="EQ";
 
+		$search=array();
 		switch ($_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_type"]) {
 			case "publisher":
 				$search[0]="f_3";
@@ -2432,6 +2590,7 @@ class searcher_publisher extends searcher {
 		$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"];
 		$op_="BOOLEAN";
 
+		$search=array();
 		switch ($_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_type"]) {
 			case "publisher":
 				$search[0]="f_3";
@@ -2671,7 +2830,7 @@ class searcher_titre_uniforme extends searcher {
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["AUT"]['URI']=$this->base_url;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["AUT"]['POST']=$_POST;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["AUT"]['GET']=$_GET;
-					$_SESSION["session_history"][$_SESSION["CURRENT"]]["AUT"]['PAGE']=$this->page+1;
+					$_SESSION["session_history"][$_SESSION["CURRENT"]]["AUT"]['PAGE']=intval($this->page)+1;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["AUT"]["HUMAN_QUERY"]=$this->human_aut_query;
 				}
 				if (($this->first_search_result==NOTICE_LIST)&&($_SESSION["CURRENT"]!==false)) {
@@ -2681,7 +2840,7 @@ class searcher_titre_uniforme extends searcher {
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['GET']=$_GET;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_LIST_QUERY']=$memo_tempo_table_to_rebuild;					
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_QUERY']=$this->text_query;
-					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['PAGE']=$this->page+1;
+					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['PAGE']=intval($this->page)+1;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]["HUMAN_QUERY"]=$this->human_notice_query;
 				}
 			break;
@@ -2694,7 +2853,7 @@ class searcher_titre_uniforme extends searcher {
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['URI']=$this->base_url;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['POST']=$_POST;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['GET']=$_GET;
-					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['PAGE']=$this->page+1;
+					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['PAGE']=intval($this->page)+1;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_QUERY']=$this->text_query;
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['TEXT_LIST_QUERY']=$memo_tempo_table_to_rebuild;	
 					$_SESSION["session_history"][$_SESSION["CURRENT"]]["NOTI"]['HUMAN_QUERY']=$this->human_notice_query;
@@ -2710,6 +2869,7 @@ class searcher_titre_uniforme extends searcher {
 		$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"];
 		$op_="EQ";
 
+		$search=array();
 		switch ($_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_type"]) {
 			case "titre_uniforme":
 				$search[0]="f_3";//!!!!!!!!! a modifier
@@ -2745,6 +2905,7 @@ class searcher_titre_uniforme extends searcher {
 		$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"];
 		$op_="BOOLEAN";
 
+		$search=array();
 		switch ($_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_type"]) {
 			case "titre_uniforme":
 				$search[0]="f_3";
@@ -3183,6 +3344,7 @@ class searcher_authperso extends searcher {
 		$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"];
 		$op_="EQ";
 
+		$search=array();
 		switch ($_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_type"]) {
 			case "authperso":
 				$search[0]="f_3";//!!!!!!!!! a modifier
@@ -3218,6 +3380,7 @@ class searcher_authperso extends searcher {
 		$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_id"];
 		$op_="BOOLEAN";
 
+		$search=array();
 		switch ($_SESSION["session_history"][$id_champ]["NOTI"]["GET"]["aut_type"]) {
 			case "authperso":
 				$search[0]="f_3";
@@ -3318,15 +3481,20 @@ class searcher_map extends searcher {
 		// map
 		$layer_params = json_decode($pmb_map_base_layer_params,true);
 		$baselayer =  "baseLayerType: dojox.geo.openlayers.BaseLayerType.".$pmb_map_base_layer_type;
-		if(count($layer_params)){
+		if(!empty($layer_params) && count($layer_params)){
 			if($layer_params['name']) $baselayer.=",baseLayerName:\"".$layer_params['name']."\"";
 			if($layer_params['url']) $baselayer.=",baseLayerUrl:\"".$layer_params['url']."\"";
 			if($layer_params['options']) $baselayer.=",baseLayerOptions:".json_encode($layer_params['options']);
 		}
 
 		$size=explode("*",$pmb_map_size_search_edition);
-		if(count($size)!=2)$map_size="width:800px; height:480px;";
-		else $map_size= "width:".$size[0]."; height:".$size[1].";";
+		if(count($size)!=2) {
+			$map_size="width:800px; height:480px;";
+		} else {
+			if (is_numeric($size[0])) $size[0].= 'px';
+			if (is_numeric($size[1])) $size[1].= 'px';
+			$map_size= "width:".$size[0]."; height:".$size[1].";";
+		}
 		
 		$initialFit = '';
 		if(!$map_emprises_query){
@@ -3421,13 +3589,16 @@ class searcher_map extends searcher {
 		global $map_echelle_query,$map_projection_query,$map_ref_query,$map_equinoxe_query,$map_emprises_query;
 		global $dbh;
 
-
 		if ($nb_per_page_a_search) $this->nb_per_page=$nb_per_page_a_search; else $this->nb_per_page=3;
 
-		$restrict='';
-
-		//Ou les notices qui ont une catégories qui a une emprise
-		$restriction_emprise = "and (notices.notice_id IN (select distinct map_emprise_obj_num FROM map_emprises where map_emprise_type=11) or (notices.notice_id IN (select distinct notcateg_notice from notices_categories join map_emprises on map_emprises.map_emprise_obj_num = notices_categories.num_noeud where map_emprises.map_emprise_type=2)))";
+		$restrict = '';
+		$queries = array();
+		//limitation aux notices avec emprises, dans les notices, les categ, les concepts
+		$restriction_emprise = "and (
+            (notices.notice_id IN (select distinct map_emprise_obj_num FROM map_emprises where map_emprise_type=11)) 
+            or (notices.notice_id IN (select distinct notcateg_notice from notices_categories join map_emprises on map_emprises.map_emprise_obj_num = notices_categories.num_noeud where map_emprises.map_emprise_type=2))
+            or (notices.notice_id IN (select distinct num_object from index_concept join map_emprises on map_emprise_type = 10 where type_object = 1 and map_emprise_obj_num = num_concept))
+        )";
 		//$restrict.= "and notice_id IN (select distinct map_emprise_obj_num FROM map_emprises)";
 		$no_results = false;
 
@@ -3510,109 +3681,95 @@ class searcher_map extends searcher {
 				$queries[]=$requete;
 			}
 		}
-
 		//pour la suite, avant de déclencher les recherches, on vérifie si la recherche est différente de celle tous les champs (on s'économise quelques requetes qui ne serviront à rien)
-
 		//les concepts
 		if($thesaurus_concepts_active && $concept_query && $concept_query != $all_query){
 			$concept_searcher = searcher_factory::get_searcher("records", "concepts",stripslashes($concept_query));
-// 			$concept_searcher = new searcher_records_concepts(stripslashes($concept_query));
 			if($concept_searcher->get_nb_results()){
 				$queries[]=$concept_searcher->get_full_query()." ";
 			}else{
 				$no_results =true;
 			}
 		}
-
 		//catégorie
 		if($categ_query && $categ_query != $all_query){
 			$categ_searcher = searcher_factory::get_searcher("records", "categories",stripslashes($categ_query));
-// 			$categ_searcher = new searcher_records_categories(stripslashes($categ_query));
 			if($categ_searcher->get_nb_results()){
 				$queries[]=$categ_searcher->get_full_query()." ";
 			}else{
 					$no_results = true;
 			}
 		}
-
 		//echelle
 		if($map_echelle_query){
 			//$queries[] = "select notice_id from notices where map_echelle_num=".$map_echelle_query." ";
 			$queries[]= " select notice_id, 100 as pert from notices where map_echelle_num='".$map_echelle_query."' ";
-		}
-		
+		}		
 		//projection
 		if($map_projection_query){
 			$queries[]= " select notice_id, 100 as pert from notices where map_projection_num='".$map_projection_query."' ";
-		}
-		
+		}		
 		//ref
 		if($map_ref_query){
 			$queries[]= " select notice_id, 100 as pert from notices where map_ref_num='".$map_ref_query."' ";
-		}
-		
+		}		
 		//équinoxe
 		if($map_equinoxe_query){
 			$queries[]= " select notice_id, 100 as pert from notices where map_equinoxe='".$map_equinoxe_query."' ";
 		}
 		//map
 		if($map_emprises_query){
-			/*
-			$map_map_emprises_searcher = new searcher_records_map_emprises($map_emprises_query);
-			if($map_emprises_searcher->get_nb_results()){
-				$queries[]=$map_map_emprises_searcher->get_full_query()." ";
-			}
-			*/
 			foreach($map_emprises_query as $map_emprise_query){
-				//récupération des emprise de notices correspondantes
+			    $restriction_emprise = '';
+				//récupération des emprises de notices correspondantes
 				$query_notice="select map_emprise_obj_num as notice_id, 100 as pert from map_emprises where map_emprise_type=11 and contains(geomfromtext('$map_emprise_query'),map_emprise_data) = 1 ";
-				//récupération des emprise d'autorité correspondantes
+				// dans les categ
 				$query_categories = "select notcateg_notice as notice_id, 100 as pert from notices_categories join map_emprises on num_noeud = map_emprises.map_emprise_obj_num where map_emprise_type = 2 and contains(geomfromtext('$map_emprise_query'),map_emprise_data) = 1";
-				//récupérations des notices indexés avec une categorie
-				//$query = "select notcateg_notice as notice_id, 100 as pert from notices_categories join map_emprises on num_noeud = map_emprises.map_emprise_obj_num where map_emprise_type = 2 and contains(geomfromtext('$map_emprise_query'),map_emprise_data) = 1 union select map_emprise_obj_num as notice_id, 100 as pert from map_emprises where map_emprise_type=11 and contains(geomfromtext('$map_emprise_query'),map_emprise_data) = 1";
-				$queries[] = "select * from (".$query_notice." union ".$query_categories.") as uni";//TODO-> faire le mapage et mettre le tout dans $queries...
+				// dans les concepts
+				$query_concepts = "select num_object as notice_id, 100 as pert from index_concept join map_emprises on map_emprise_type = 10 and contains(geomfromtext('$map_emprise_query'), map_emprise_data) = 1 where type_object = 1 and map_emprise_obj_num = num_concept";
+				
+				$queries[] = "select * from ( $query_notice union $query_categories union $query_concepts ) as uni";//TODO-> faire le mapage et mettre le tout dans $queries...
 			}
-		}
-
+		}		
 		//on fait un et donc si un élément ne renvoi rien ,on s'embete pas avec les jointures...
-		if($no_results || !count($queries)){
+		$restrict='';
+		if ($no_results || !count($queries)) {
 			$this->nbresults = 0;
-			if($typdoc_query || $statut_query){
-				if($typdoc_query && $statut_query){
-					$restrict = "notices.typdoc=".$typdoc_query." and notices.statut=".$statut_query." ";
-				}elseif ($typdoc_query){
-					$restrict = "notices.typdoc=".$typdoc_query;
-				}elseif ($statut_query){
-					$restrict = "notices.statut=".$statut_query;
-				}
-			}else{
+			if ((!empty($typdoc_query) && !empty($typdoc_query[0])) || (!empty($statut_query) && !empty($statut_query[0]))) {	    
+			    if (!empty($typdoc_query) && !empty($typdoc_query[0])) {
+			        $restrict.= " and notices.typdoc in ('".implode("','", $typdoc_query)."') ";
+			    }
+			    if (!empty($statut_query) && !empty($statut_query[0])) {
+			        $restrict.= " and notices.statut in ('".implode("','", $statut_query)."') ";
+			    }
+			} else {
 				$restrict = "notice_id = 0";
 			}
 			$this->text_query = "select notice_id from notices where ".$restrict;
-		}else{
+		} else {
 			//TODO le tri sur la pertinance desc, titre devrait être automatique...
 			$from = "";
 			$select_pert = "";
-			for($i=0 ; $i<count($queries) ; $i++){
-				if($i==0){
+			for ($i=0 ; $i<count($queries) ; $i++) {
+				if ($i==0) {
 					$from = "(".$queries[$i].") as t".$i;
 					$select_pert = "t".$i.".pert";
-				}else {
+				} else {
 					$from.= " inner join (".$queries[$i].") as t".$i." on t".$i.".notice_id = t".($i-1).".notice_id";
 					$select_pert.= " + t".$i.".pert";
 				}
 			}
-			$restrict="";
-			if ($typdoc_query){
-				$restrict.= " and notices.typdoc='$typdoc_query' ";
-			}elseif ($statut_query){
-				$restrict.= " and notices.statut='$statut_query' ";
+			if (!empty($typdoc_query) && !empty($typdoc_query[0])) {
+				$restrict.= " and notices.typdoc in ('".implode("','", $typdoc_query)."') ";
+			}
+			if (!empty($statut_query) && !empty($statut_query[0])) {
+			    $restrict.= " and notices.statut in ('".implode("','", $statut_query)."') ";
 			}
 			$this->text_query = "select t0.notice_id, (".$select_pert.") as pert from ".$from." join notices on t0.notice_id = notices.notice_id ".$restriction_emprise.$restrict." group by t0.notice_id  order by pert desc, notices.index_sew ";
 			$result = pmb_mysql_query($this->text_query,$dbh);
 			$this->nbresults = pmb_mysql_num_rows($result);
 		}
-		$this->nbepage=ceil($this->nbresults/$this->nb_per_page);
+		$this->nbepage = ceil($this->nbresults/$this->nb_per_page);
 
 		return NOTICE_LIST;
 	}
@@ -3623,8 +3780,16 @@ class searcher_map extends searcher {
 		global $map_echelle_query,$map_projection_query,$map_ref_query,$map_equinoxe_query,$map_emprises_query;
 		global $charset;
 		$champs="<input type='hidden' name='all_query' value='".htmlentities(stripslashes($all_query),ENT_QUOTES,$charset)."'/>";
-		$champs.="<input type='hidden' name='typdoc_query' value='".htmlentities(stripslashes($typdoc_query),ENT_QUOTES,$charset)."'/>";
-		$champs.="<input type='hidden' name='statut_query' value='".htmlentities(stripslashes($statut_query),ENT_QUOTES,$charset)."'/>";
+		if (!empty($typdoc_query) && count($typdoc_query)) {
+    		foreach ($typdoc_query as $elt) {
+    		    $champs.="<input type='hidden' name='typdoc_query[]' value='".htmlentities(stripslashes($elt),ENT_QUOTES,$charset)."'/>";
+    		}
+		}
+		if (!empty($statut_query) && count($statut_query)) {
+    		foreach ($statut_query as $elt) {
+    		    $champs.="<input type='hidden' name='statut_query[]' value='".htmlentities(stripslashes($elt),ENT_QUOTES,$charset)."'/>";
+    		}
+    	}
 		$champs.="<input type='hidden' name='categ_query' value='".htmlentities(stripslashes($categ_query),ENT_QUOTES,$charset)."'/>";
 		if($thesaurus_concepts_active){
 			$champs.="<input type='hidden' name='concept_query' value='".htmlentities(stripslashes($concept_query),ENT_QUOTES,$charset)."'/>";
@@ -3924,7 +4089,7 @@ class searcher_map extends searcher {
 				$x++;
 			}
 		}
-		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["typdoc_query"]) {
+		if (is_array($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["typdoc_query"]) && $_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["typdoc_query"][0]) {
 			$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["typdoc_query"];
 			$op_="EQ";
 			$search[$x]="f_9";
@@ -3936,7 +4101,7 @@ class searcher_map extends searcher {
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
-			$field_[0]=$valeur_champ;
+			$field_=$valeur_champ;
 			global ${$field};
 			${$field}=$field_;
 
@@ -3955,7 +4120,7 @@ class searcher_map extends searcher {
 			$fieldvar=${$fieldvar_};
 			$x++;
 		}
-		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["statut_query"]) {
+		if (is_array($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["statut_query"]) && $_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["statut_query"][0]) {
 			$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["statut_query"];
 			$op_="EQ";
 			$search[$x]="f_10";
@@ -3967,7 +4132,7 @@ class searcher_map extends searcher {
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
-			$field_[0]=$valeur_champ;
+			$field_=$valeur_champ;
 			global ${$field};
 			${$field}=$field_;
 
@@ -4110,7 +4275,7 @@ class searcher_map extends searcher {
 				${$inter}="";
 			}
 		}
-		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["categ_query"]) {
+		if (!empty($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["categ_query"])) {
 			$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["categ_query"];
 			$op_="EQ";
 			$search[$x]="f_1";
@@ -4122,7 +4287,7 @@ class searcher_map extends searcher {
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
-			$field_=$valeur_champ;
+			$field_[0]=$valeur_champ;
 			global ${$field};
 			${$field}=$field_;
 
@@ -4135,7 +4300,7 @@ class searcher_map extends searcher {
 				${$inter}="";
 			}
 		}
-		if ($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["concept_query"]) {
+		if (!empty($_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["concept_query"])) {
 			$valeur_champ=$_SESSION["session_history"][$id_champ]["NOTI"]["POST"]["concept_query"];
 			$op_="BOOLEAN";
 			$search[$x]="f_1000";
@@ -4147,7 +4312,7 @@ class searcher_map extends searcher {
 			//contenu de la recherche
 			$field="field_".$x."_".$search[$x];
 			$field_=array();
-			$field_=$valeur_champ;
+			$field_[0]=$valeur_champ;
 			global ${$field};
 			${$field}=$field_;
 

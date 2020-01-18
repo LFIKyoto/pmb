@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_articleslist.class.php,v 1.12 2018-05-16 14:18:35 apetithomme Exp $
+// $Id: cms_module_common_view_articleslist.class.php,v 1.12.6.1 2019-09-17 09:59:20 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -64,7 +64,7 @@ class cms_module_common_view_articleslist extends cms_module_common_view_django{
 					$cms_article->update_permalink();
 				}
 				$infos= $cms_article->format_datas();
-				$infos['link'] = $this->get_constructed_link("article",$article);
+				$infos->link = $this->get_constructed_link("article",$article);
 				$render_datas['articles'][]=$infos;
 			}
 		}

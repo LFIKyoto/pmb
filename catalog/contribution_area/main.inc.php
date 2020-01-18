@@ -2,12 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.4 2018-09-11 11:33:09 tsamson Exp $
+// $Id: main.inc.php,v 1.5 2019-06-05 09:04:42 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $pmb_contribution_area_activate, $class_path, $database_window_title, $msg, $action, $params, $id, $form_id, $type, $include_path;
+
 // functions particulières à ce module
-;if (!$pmb_contribution_area_activate) {
+if (!$pmb_contribution_area_activate) {
 	die();
 }
 

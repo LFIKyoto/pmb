@@ -18,7 +18,7 @@ function ReadUFM($file, &$cidtogidmap)
   $fm=array();
   foreach($a as $l)
   {
-    $e=explode(' ',chop($l));
+    $e=explode(' ',rtrim($l));
     if(count($e)<2)
       continue;
     $code=$e[0];
@@ -115,7 +115,7 @@ function MakeFontDescriptor($fm)
   //StemV
   if(isset($fm['StdVW']))
     $stemv=$fm['StdVW'];
-  elseif(isset($fm['Weight']) and eregi('(bold|black)',$fm['Weight']))
+  elseif(isset($fm['Weight']) and preg_match('/(bold|black)/i',$fm['Weight']))
     $stemv=120;
   else
     $stemv=70;
@@ -211,7 +211,6 @@ function CheckTTF($file)
 function MakeFont($fontfile,$ufmfile)
 {
   //Generate a font definition file
-  set_magic_quotes_runtime(0);
   if(!file_exists($ufmfile))
     die('<B>Error:</B> UFM file not found: '.$ufmfile);
   $cidtogidmap = '';

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serial_display.class.php,v 1.213 2018-11-13 14:14:13 vtouchard Exp $
+// $Id: serial_display.class.php,v 1.221.2.1 2019-10-14 13:57:57 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -337,7 +337,11 @@ class serial_display extends record_display {
 			}
 
 			if($this->notice->year) {
-				$editeurs ? $editeurs .= ', '.$this->notice->year : $editeurs = $this->notice->year;
+			    if ($editeurs) {
+			        $editeurs .= ', '.$this->notice->year;
+			    } else {
+			        $editeurs = $this->notice->year;
+			    }
 			}
 
 			if($editeurs) {
@@ -400,7 +404,7 @@ class serial_display extends record_display {
 				$explnum = show_explnum_per_notice($this->notice_id, 0, $this->lien_explnum);
 				if ($explnum) $this->isbd .= "<br /><div id='explnum_list_container_serial_".$this->notice->notice_id."'><b>$msg[explnum_docs_associes]</b><br />".$explnum."</div>";
 				if ($this->notice->niveau_biblio == 'a' && $this->notice->niveau_hierar == '2' && (SESSrights & CATALOGAGE_AUTH) && $this->bouton_explnum) $this->isbd .= "<br /><input type='button' class='bouton' value=' $msg[explnum_ajouter_doc] ' onClick=\"document.location='".$base_path."/catalog.php?categ=serials&analysis_id=$this->notice_id&sub=analysis&action=explnum_form&bul_id=$this->bul_id'\">" ;
-				if((SESSrights & CIRCULATION_AUTH) && $pmb_scan_request_activate){
+				if((SESSrights & CIRCULATION_AUTH) && $pmb_scan_request_activate && !$this->context_dsi_id_bannette){
 					$this->isbd .= "<input type='button' class='bouton' value='".$msg["scan_request_record_button"]."' onclick='document.location=\"./circ.php?categ=scan_request&sub=request&action=edit&from_record=".$this->notice_id."\"' />";
 				}
 				$this->isbd .= '</div>'; 
@@ -443,7 +447,9 @@ class serial_display extends record_display {
 		// Concepts
 		if ($thesaurus_concepts_active == 1) {
 			$index_concept = new index_concept($this->notice_id, TYPE_NOTICE);
-			$this->isbd .= $index_concept->get_isbd_display();
+			if ($index_concept->get_concepts()) {
+			    $this->isbd .= "<br /><b>${msg['param_concepts']}</b>&nbsp;: ".$index_concept->get_isbd_display();
+			}
 		}
 
 		// fin du niveau 4
@@ -534,16 +540,15 @@ class serial_display extends record_display {
 			if ($this->notice->niveau_biblio == 'a' && $this->notice->niveau_hierar == '2' && (SESSrights & CATALOGAGE_AUTH) && $this->bouton_explnum) {
 				$boutons.= "<br /><input type='button' class='bouton' value=' $msg[explnum_ajouter_doc] ' onClick=\"document.location='".$base_path."/catalog.php?categ=serials&analysis_id=".$this->notice_id."&sub=analysis&action=explnum_form&bul_id=".$this->bul_id."&explnum_id=0'\">" ;
 			}
-			if((SESSrights & CIRCULATION_AUTH) && $pmb_scan_request_activate){
+			if((SESSrights & CIRCULATION_AUTH) && $this->bouton_explnum && $pmb_scan_request_activate && !$this->context_dsi_id_bannette){
 				$boutons .= "<input type='button' class='bouton' value='".$msg["scan_request_record_button"]."' onclick='document.location=\"./circ.php?categ=scan_request&sub=request&action=edit&from_record=".$this->notice_id."\"' />";
 			}
 			if ((SESSrights & CATALOGAGE_AUTH) && $this->bouton_explnum && $pmb_type_audit && $this->notice->niveau_biblio == 'a') {
 				$boutons.= audit::get_dialog_button($this->notice_id, 1);
 			}
 		}
-		if ($pmb_use_uniform_title) {
-			$boutons.= form_mapper::get_action_button('notice', $this->notice_id);
-		}
+		$boutons.= form_mapper::get_action_button('notice', $this->notice_id);
+		
 		$this->isbd.= $boutons;
 		$this->isbd.= '</div>'; // end of <div id="expl_area_' . $this->notice_id . '">
 
@@ -779,8 +784,15 @@ class serial_display extends record_display {
 			if($this->notice->niveau_biblio == 'a' && $this->notice->niveau_hierar == 2) {
 				if($this->action_analysis)
 					$this->header= "<a href=\"".$this->action_analysis."\">".$this->header.'</a>';
-				if ($this->level!=2)
-					$this->header=$this->header." <i>in ".$this->parent_title." (".$this->parent_numero." ".($this->parent_date?$this->parent_date:$this->parent_aff_date_date).")</i> ";
+					if ($this->level!=2) {
+					    $this->header .= " <i>in ".$this->parent_title." ".$this->parent_numero;
+					    if ($this->parent_date) {
+					        $this->header .= " (".$this->parent_date.")";
+					    } else if ($this->parent_date_date) {
+					        $this->header .= " [".$this->parent_aff_date_date."]";
+					    }
+					    $this->header .= "</i>";
+					}
 			}
 		}
 		if (isset($this->icon_is_new)) $this->header = $this->header." ".$this->icon_is_new;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesNotices.class.php,v 1.30 2018-06-01 08:25:11 dgoron Exp $
+// $Id: pmbesNotices.class.php,v 1.31 2019-06-10 10:05:02 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -132,7 +132,7 @@ class pmbesNotices extends external_services_api_class {
 		if (!$notice_ids)
 			throw new Exception("Missing parameter: notice_ids");
 
-		array_walk($notice_ids, create_function('&$a', '$a+=0;'));	//Virons ce qui n'est pas entier
+		array_walk($notice_ids, function(&$a) {$a = intval($a);});	//Virons ce qui n'est pas entier
 		$notice_ids = array_unique($notice_ids);
 		
 		//Je filtre les notices en fonction des droits
@@ -248,7 +248,7 @@ class pmbesNotices extends external_services_api_class {
 		if (!$bulletin_ids)
 			throw new Exception("Missing parameter: bulletin_ids");
 			
-		array_walk($bulletin_ids, create_function('&$a', '$a+=0;'));	//Virons ce qui n'est pas entier
+		array_walk($bulletin_ids, function(&$a) {$a = intval($a);});	//Virons ce qui n'est pas entier
 		$bulletin_ids = array_unique($bulletin_ids);
 		if (!$bulletin_ids)
 			return array();
@@ -394,7 +394,7 @@ class pmbesNotices extends external_services_api_class {
 		if (!$bulletin_ids)
 			throw new Exception("Missing parameter: bulletin_ids");
 
-		array_walk($bulletin_ids, create_function('&$a', '$a+=0;'));	//Virons ce qui n'est pas entier
+		array_walk($bulletin_ids, function(&$a) {$a = intval($a);});	//Virons ce qui n'est pas entier
 		$bulletin_ids = array_unique($bulletin_ids);
 		if (!$bulletin_ids)
 			return array();
@@ -489,7 +489,7 @@ class pmbesNotices extends external_services_api_class {
 		if (!$notice_ids)
 			throw new Exception("Missing parameter: notice_ids");
 
-		array_walk($notice_ids, create_function('&$a', '$a+=0;'));	//Virons ce qui n'est pas entier
+		array_walk($notice_ids, function(&$a) {$a = intval($a);});	//Virons ce qui n'est pas entier
 		$notice_ids = array_unique($notice_ids);
 		if (!$notice_ids)
 			return array();
@@ -564,7 +564,7 @@ class pmbesNotices extends external_services_api_class {
 		if (!$serial_ids)
 			throw new Exception("Missing parameter: serial_ids");
 	
-		array_walk($serial_ids, create_function('&$a', '$a+=0;'));	//Virons ce qui n'est pas entier
+		array_walk($serial_ids, function(&$a) {$a = intval($a);});	//Virons ce qui n'est pas entier
 		$serial_ids = array_unique($serial_ids);
 		if (!$serial_ids)
 			return array();
@@ -687,7 +687,7 @@ public function fetchNoticeListFullWithBullId($noticelist, $recordFormat, $recor
 		if (!$notice_ids)
 			throw new Exception("Missing parameter: notice_ids");
 	
-		array_walk($notice_ids, create_function('&$a', '$a+=0;'));	//Virons ce qui n'est pas entier
+		array_walk($notice_ids, function(&$a) {$a = intval($a);});	//Virons ce qui n'est pas entier
 		$notice_ids = array_unique($notice_ids);
 		if (!$notice_ids)
 			return array();
@@ -780,7 +780,7 @@ ORDER  BY tit1  ";
 		if (!$notice_ids)
 			throw new Exception("Missing parameter: notice_ids");
 	
-		array_walk($notice_ids, create_function('&$a', '$a+=0;'));	//Virons ce qui n'est pas entier
+		array_walk($notice_ids, function(&$a) {$a = intval($a);});	//Virons ce qui n'est pas entier
 		$notice_ids = array_unique($notice_ids);
 		if (!$notice_ids)
 			return array();

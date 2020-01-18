@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entrez_protocol.class.php,v 1.9 2017-07-12 09:07:56 dgoron Exp $
+// $Id: entrez_protocol.class.php,v 1.11 2019-07-11 10:24:50 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -135,8 +135,8 @@ class xml_dom_entrez {
 	 Les attributs ne peuvent être cités que sur le noeud final.
 	 \endverbatim
 	 */
-	public function get_node($path,$node="") {
-		if ($node=="") $node=&$this->tree;
+	public function get_node($path, $node = array()) {
+		if (empty($node)) $node =& $this->tree;
 		$paths=explode("/",$path);
 		for ($i=0; $i<count($paths); $i++) {
 			if ($i==count($paths)-1) {
@@ -157,14 +157,16 @@ class xml_dom_entrez {
 			}
 			$nc=0;
 			$found=false;
-			for ($j=0; $j<count($node["CHILDS"]); $j++) {
-				if (($node["CHILDS"][$j]["TYPE"]==1)&&($node["CHILDS"][$j]["NAME"]==$name)) {
-					//C'est celui là !!
-					if ($nc==$n) {
-						$node=&$node["CHILDS"][$j];
-						$found=true;
-						break;
-					} else $nc++;
+			if(is_array($node["CHILDS"]) && count($node["CHILDS"])){
+				for ($j=0; $j<count($node["CHILDS"]); $j++) {
+					if (($node["CHILDS"][$j]["TYPE"]==1)&&($node["CHILDS"][$j]["NAME"]==$name)) {
+						//C'est celui là !!
+						if ($nc==$n) {
+							$node=&$node["CHILDS"][$j];
+							$found=true;
+							break;
+						} else $nc++;
+					}
 				}
 			}
 			if (!$found) return false;
@@ -199,7 +201,7 @@ class xml_dom_entrez {
 	 */
 	public function get_nodes($path,$node="") {
 		$n=0;
-		$nodes="";
+		$nodes=array();
 		while ($nod=$this->get_node($path."[$n]",$node)) {
 			$nodes[]=$nod;
 			$n++;
@@ -222,27 +224,31 @@ class xml_dom_entrez {
 		if ($node["TYPE"]!=1) return false;
 		//Recherche des fils et vérification qu'il n'y a que du texte !
 		$flag_text=true;
-		for ($i=0; $i<count($node["CHILDS"]); $i++) {
-			if ($node["CHILDS"][$i]["TYPE"]!=2) $flag_text=false;
+		if(is_array($node["CHILDS"]) && count($node["CHILDS"])){
+			for ($i=0; $i<count($node["CHILDS"]); $i++) {
+				if ($node["CHILDS"][$i]["TYPE"]!=2) $flag_text=false;
+			}
 		}
 		if ((!$flag_text)&&(!$force_entities)) {
 			$force_entities=true;
 		}
-		for ($i=0; $i<count($node["CHILDS"]); $i++) {
-			if ($node["CHILDS"][$i]["TYPE"]==2)
-				if ($force_entities) 
-					$char.=htmlspecialchars($node["CHILDS"][$i]["DATA"],ENT_NOQUOTES,$this->charset);
-				else $char.=$node["CHILDS"][$i]["DATA"];
-			else {
-				$char.="<".$node["CHILDS"][$i]["NAME"];
-				if (count($node["CHILDS"][$i]["ATTRIBS"])) {
-					foreach ($node["CHILDS"][$i]["ATTRIBS"] as $key=>$val) {
-						$char.=" ".$key."=\"".htmlspecialchars($val,ENT_NOQUOTES,$this->charset)."\"";
+		if(is_array($node["CHILDS"]) && count($node["CHILDS"])){
+			for ($i=0; $i<count($node["CHILDS"]); $i++) {
+				if ($node["CHILDS"][$i]["TYPE"]==2)
+					if ($force_entities) 
+						$char.=htmlspecialchars($node["CHILDS"][$i]["DATA"],ENT_NOQUOTES,$this->charset);
+					else $char.=$node["CHILDS"][$i]["DATA"];
+				else {
+					$char.="<".$node["CHILDS"][$i]["NAME"];
+					if (count($node["CHILDS"][$i]["ATTRIBS"])) {
+						foreach ($node["CHILDS"][$i]["ATTRIBS"] as $key=>$val) {
+							$char.=" ".$key."=\"".htmlspecialchars($val,ENT_NOQUOTES,$this->charset)."\"";
+						}
 					}
+					$char.=">";
+					$char.=$this->get_datas($node["CHILDS"][$i],$force_entities);
+					$char.="</".$node["CHILDS"][$i]["NAME"].">";
 				}
-				$char.=">";
-				$char.=$this->get_datas($node["CHILDS"][$i],$force_entities);
-				$char.="</".$node["CHILDS"][$i]["NAME"].">";
 			}
 		}
 		return $char;

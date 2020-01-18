@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_pmb.inc.php,v 1.7 2018-01-09 08:54:31 jpermanne Exp $
+// $Id: func_pmb.inc.php,v 1.8.2.1 2019-11-21 12:40:38 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -452,8 +452,9 @@ function traite_exemplaires () {
 		}
 	}
 	
+	$nb_exemplaires = count($exemplaires);
 	// la zone 995 est répétable
-	for ($nb_expl = 0; $nb_expl < sizeof ($exemplaires); $nb_expl++) {
+	for ($nb_expl = 0; $nb_expl < $nb_exemplaires; $nb_expl++) {
 		/* RAZ expl */
 		$expl = array();
 		
@@ -647,15 +648,17 @@ function export_traite_exemplaires ($ex=array()) {
 
 }
 
-function affiche_mes_erreurs($mon_msg,$affiche=true,$log=true){
-	global $charset;
-	if($charset == "utf-8"){
-		$mon_msg= utf8_encode($mon_msg);
-	}
-	if($affiche){
-		echo $mon_msg."<br>";
-	}
-	if($log){
-		pmb_mysql_query("insert into error_log (error_origin, error_text) values ('import_".addslashes(SESSid).".inc', '".addslashes($mon_msg)."') ") ;
-	}
-}	
+if(!function_exists('affiche_mes_erreurs')) {
+    function affiche_mes_erreurs($mon_msg,$affiche=true,$log=true){
+        global $charset;
+        if($charset == "utf-8"){
+            $mon_msg= utf8_encode($mon_msg);
+        }
+        if($affiche){
+            echo $mon_msg."<br>";
+        }
+        if($log){
+            pmb_mysql_query("insert into error_log (error_origin, error_text) values ('import_".addslashes(SESSid).".inc', '".addslashes($mon_msg)."') ") ;
+        }
+    }
+}

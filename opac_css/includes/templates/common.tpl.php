@@ -2,9 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: common.tpl.php,v 1.259 2018-11-19 16:25:17 dgoron Exp $
+// $Id: common.tpl.php,v 1.263.2.3 2019-11-07 14:25:48 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
+
+global $class_path, $include_path, $msg, $cms_active_toolkits, $css, $opac_ie_reload_on_resize, $opac_default_style_addon, $opac_cookies_consent, $opac_script_analytics;
+global $opac_show_social_network, $pmb_logs_activate, $opac_url_more_about_cookies, $std_header, $charset, $opac_meta_author, $opac_meta_keywords, $opac_meta_description;
+global $opac_biblio_name, $lvl, $opac_faviconurl, $opac_map_activate, $opac_map_base_layer_type, $javascript_path, $lang, $opac_param_social_network, $opac_allow_affiliate_search;
+global $opac_allow_simili_search, $opac_visionneuse_allow, $opac_scan_request_activate, $opac_url_base, $opac_notice_enrichment, $opac_recherche_ajax_mode, $base_path;
+global $inclus_header, $inclure_recherche, $short_header, $short_footer, $popup_header, $popup_footer, $liens_bas, $opac_lien_bas_supplementaire, $opac_biblio_website;
+global $opac_lien_moteur_recherche, $opac_accessibility, $accessibility, $home_on_left, $opac_logosmall, $common_tpl_lang_select, $home_on_top, $loginform, $opac_show_loginform;
+global $opac_show_meteo, $opac_show_meteo_url, $meteo, $opac_biblio_town, $adresse, $opac_biblio_adr1, $opac_biblio_cp, $opac_biblio_country, $opac_biblio_phone, $opac_biblio_email;
+global $opac_biblio_post_adress, $opac_facettes_ajax, $map_location_search, $facette, $lvl1, $footer, $inclus_footer, $std_header_suite, $opac_biblio_important_p1;
+global $opac_biblio_important_p2, $footer_suite, $opac_biblio_preamble_p1, $opac_biblio_preamble_p2, $script_analytics_html, $liens_opac, $begin_result_liste, $opac_recherche_show_expand;
 
 require_once($class_path."/sort.class.php");
 require_once($class_path."/cms/cms_toolkits.class.php");
@@ -143,6 +153,7 @@ if (!isset($_COOKIE['PhpMyBibli-COOKIECONSENT']) || !$_COOKIE['PhpMyBibli-COOKIE
 			var msg_script_analytics_content = '".addslashes($msg["script_analytics_content"])."';
 			var msg_script_analytics_inform_ask_opposite = '".addslashes($msg["script_analytics_inform_ask_opposite"])."';
 			var msg_script_analytics_inform_ask_accept = '".addslashes($msg["script_analytics_inform_ask_accept"])."';
+            var msg_script_analytics_button_dnt_confirm = '".addslashes($msg["script_analytics_button_dnt_confirm"])."';
 		";
 		if ($opac_url_more_about_cookies) {
 			$script_analytics_html .= "	var script_analytics_content_link_more = '".$opac_url_more_about_cookies."';
@@ -176,19 +187,27 @@ $std_header = "<!DOCTYPE html>
 
 	<meta name=\"keywords\" content=\"".($opac_meta_keywords?htmlentities($opac_meta_keywords,ENT_QUOTES,$charset):$msg['opac_keywords'])."\" />
 	<meta name=\"description\" content=\"".($opac_meta_description?htmlentities($opac_meta_description,ENT_QUOTES,$charset):$msg['opac_title']." $opac_biblio_name.")."\" />";
-if ($lvl=="show_cart") {
-	$std_header.="
-		<meta name=\"robots\" content=\"noindex, nofollow\" />";
-} else {
-	$std_header.="
-		<meta name=\"robots\" content=\"all\" />";
+
+switch ($lvl) {
+    case 'contribution_area':
+        $title =  $msg['empr_menu_contribution_area'].' '.$opac_biblio_name;
+        $std_header .= "<meta name='robots' content='all' />";
+        break;
+    case 'show_cart':
+        $std_header .= "<meta name='robots' content='noindex, nofollow' />";
+        break;
+    default :
+        $title = $msg['opac_title'].' '.$opac_biblio_name;
+        $std_header .= "<meta name='robots' content='all' />";
+        break;
 }
+
 $std_header.="
 	<!--IE et son enfer de compatibilité-->
 	<meta http-equiv='X-UA-Compatible' content='IE=Edge' />
 	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1\" />
 			
-	<title>".$msg['opac_title']." $opac_biblio_name</title>
+	<title>$title</title>
 	!!liens_rss!!
 	".$toolkits_scripts_html.$stylescsscodehtml.$css_addon."
 	<!-- css_authentication -->";
@@ -284,7 +303,7 @@ if($opac_show_social_network){
 		$addThisParams=json_decode($opac_param_social_network);
 	}
 	//ra-4d9b1e202c30dea1
-	if(sizeof($addThisParams->addthis_share)){
+	if(is_countable($addThisParams->addthis_share) && sizeof($addThisParams->addthis_share)){
 		$std_header.="<script type='text/javascript'>var addthis_share = ".json_encode($addThisParams->addthis_share).";</script>";
 	}
 	$std_header.="<script type='text/javascript'>var addthis_config = ".json_encode($addThisParams->addthis_config).";</script>
@@ -393,7 +412,9 @@ $std_header.="
 	<div id='att' style='z-Index:1000'></div>
 	<div id=\"container\"><div id=\"main\"><div id='main_header'>!!main_header!!</div><div id=\"main_hors_footer\">!!home_on_top!!
 						\n";
-$std_header.="<script type='text/javascript' src='".$include_path."/javascript/auth_popup.js'></script>	\n";
+$std_header.="
+<script type='text/javascript' src='".$include_path."/javascript/auth_popup.js'></script>	
+<script type='text/javascript' src='".$include_path."/javascript/pnb.js'></script>";
 
 $inclus_header = "
 !!liens_rss!!
@@ -513,7 +534,7 @@ if($opac_show_social_network){
 		$addThisParams=json_decode($opac_param_social_network);
 	}
 	//ra-4d9b1e202c30dea1
-	if(sizeof($addThisParams->addthis_share)){
+	if(is_countable($addThisParams->addthis_share) && sizeof($addThisParams->addthis_share)){
 		$inclus_header.="<script type='text/javascript'>var addthis_share = ".json_encode($addThisParams->addthis_share).";</script>";
 	}
 	$inclus_header.="<script type='text/javascript'>var addthis_config = ".json_encode($addThisParams->addthis_config).";</script>
@@ -647,7 +668,7 @@ if($opac_show_social_network){
 		$addThisParams=json_decode($opac_param_social_network);
 	}
 	//ra-4d9b1e202c30dea1
-	if(sizeof($addThisParams->addthis_share)){
+	if(is_countable($addThisParams->addthis_share) && sizeof($addThisParams->addthis_share)){
 		$short_header.="<script type='text/javascript'>var addthis_share = ".json_encode($addThisParams->addthis_share).";</script>";
 	}
 	$short_header.="<script type='text/javascript'>var addthis_config = ".json_encode($addThisParams->addthis_config).";</script>
@@ -784,7 +805,7 @@ if ($opac_biblio_website)	$liens_bas .= "
 $liens_bas .= "
 <span id=\"footer_link_pmb\">
 $opac_lien_moteur_recherche &nbsp;
-		<a class=\"lien_pmb_footer\" href=\"http://www.sigb.net\" title=\"".$msg['common_tpl_motto']."\" target='_blank'>".$msg['common_tpl_motto_pmb']."</a> 	
+		<a class=\"lien_pmb_footer\" href=\"https://www.sigb.net\" title=\"".$msg['common_tpl_motto']."\" target='_blank'>".$msg['common_tpl_motto_pmb']."</a> 	
 </span>		
 		
 </div>" ;
@@ -1000,7 +1021,6 @@ if($opac_recherche_ajax_mode){
 		$begin_result_liste = "<span class=\"expandAll\"><a href='javascript:expandAll()'><img class='img_plusplus' src='".get_url_icon("expand_all.gif")."' style='border:0px' id='expandall'></a></span>".$begin_result_liste."<span class=\"collapseAll\"><a href='javascript:collapseAll()'><img class='img_moinsmoins' src='".get_url_icon("collapse_all.gif")."' style='border:0px' id='collapseall'></a></span>";
 	}
 }
-$affich_tris_result_liste = sort::show_tris_selector();
 
 define( 'AFF_ETA_NOTICES_NON', 0 );
 define( 'AFF_ETA_NOTICES_ISBD', 1 );

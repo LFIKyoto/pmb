@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_pret.class.php,v 1.42 2018-06-29 15:15:08 vtouchard Exp $
+// $Id: ajax_pret.class.php,v 1.47.2.1 2019-10-25 13:54:50 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,12 +13,14 @@ require_once("$class_path/serial_display.class.php");
 require_once("$class_path/quotas.class.php");
 require_once("$class_path/comptes.class.php");
 require_once("$class_path/mono_display.class.php");
+require_once($class_path."/expl.class.php");
 require_once($include_path."/parser.inc.php");
 require_once("$base_path/circ/pret_func.inc.php");
 require_once($include_path."/expl_info.inc.php");
 require_once($class_path."/pret_parametres_perso.class.php");
 require_once($class_path.'/event/events/event_loan.class.php');
 require_once($class_path."/ajax_retour_class.php");
+require_once("$base_path/circ/pret_func.inc.php");
 
 /*
  Pour effectuer un pret:
@@ -81,6 +83,7 @@ class do_pret {
 	public $trap_func=array();
 	public $expl_notice;
 	public $expl_bulletin=0;
+	public $expl_comment;
 
 	// constructeur
 	public function __construct() {
@@ -533,7 +536,6 @@ class do_pret {
 	public function check_document_has_resa_false($id_empr, $id_expl) {
 		global $msg;
 		global $dbh;
-		global $pmb_resa_planning;
 		// on tente de récupérer les infos exemplaire utiles
 		$query = "select e.expl_cb as cb, e.expl_id as id, s.pret_flag as pretable, e.expl_notice as notice, e.expl_bulletin as bulletin, e.expl_note as note, expl_comment, s.statut_libelle as statut";
 		$query .= " from exemplaires e, docs_statut s";
@@ -541,54 +543,20 @@ class do_pret {
 		$query .= " and s.idstatut=e.expl_statut";
 		$query .= " limit 1";
 		$result = pmb_mysql_query($query, $dbh);
-		$retour=new stdClass;
 		// exemplaire inconnu
 		if (!pmb_mysql_num_rows($result)) {
-			$this->error_message=$msg[367];
+			$this->error_message = $msg[367];
 			return -1;
 		}
 		$expl = pmb_mysql_fetch_object($result);
-		$retour->expl_cb = $expl->cb;
-		// on checke si l'exemplaire a une réservation
-		$query = "select resa_idempr as empr, id_resa, resa_cb, concat(ifnull(concat(empr_nom,' '),''),empr_prenom) as nom_prenom, empr_cb from resa left join empr on resa_idempr=id_empr where resa_idnotice='$expl->notice' and resa_idbulletin='$expl->bulletin' order by resa_date limit 1";
-		$result = pmb_mysql_query($query, $dbh);
-		if (pmb_mysql_num_rows($result)) {
-			$reservataire = pmb_mysql_result($result, 0, 'empr');
-			$resa_cb = pmb_mysql_result($result, 0, 'resa_cb');
-			
-			if ($reservataire != $id_empr) {
-				if ($expl->cb == $resa_cb) { // réservé (validé) pour un autre lecteur
-					$this->error_message=$msg[383];
-					return 1;
-				}	
-			}
+		
+		$reserve = check_document($expl->id, $id_empr);
+		if ($reserve->flag & HAS_RESA_FALSE) {
+		    $this->error_message = $msg[383];
+		    return 1;
 		}
-		// cas des réservations planifiées		
-		if ($pmb_resa_planning) {
-			// On compte les réservations planifiées sur ce document à des dates ultérieures
-			$q = "select resa_idempr as empr, id_resa, concat(ifnull(concat(empr_nom,' '),''),empr_prenom) as nom_prenom ";
-			$q .= "from resa_planning left join empr on resa_idempr=id_empr ";
-			$q .= "where resa_idnotice = '" . $expl->notice . "' ";
-			$q .= "and resa_date_fin >= curdate() ";
-			$q .= "order by resa_date_debut ";
-			$r = pmb_mysql_query($q, $dbh);
-			$nb_resa = pmb_mysql_num_rows($r);
-	
-			// On compte les exemplaires disponibles
-			$q = "select count(1) ";
-			$q .= "from exemplaires left join pret on expl_notice = pret_idexpl ";
-			$q .= "and pret_idexpl is null ";
-			$q .= "where expl_notice = '" . $expl->notice . "' ";
-			$r = pmb_mysql_query($q, $dbh);
-			$nb_dispo = pmb_mysql_result($r, 0, 0);
-	
-			if (($nb_dispo - $nb_resa) <= 0) { // réservé (validé) pour un autre lecteur
-				$this->error_message=$msg['resa_planning_encours'];
-				return 1;
-			}	
-		}	
-		$this->error_message="";
-		return 0;
+		$this->error_message = "";
+		return 0;		
 	}
 		
 	public function check_quotas($id_empr, $id_expl) {
@@ -604,6 +572,8 @@ class do_pret {
 			//Tableau de passage des paramètres
 			$struct["READER"] = $id_empr;
 			$struct["EXPL"] = $id_expl;
+			$struct["NOTI"] = exemplaire::get_expl_notice_from_id($id_expl);
+			$struct["BULL"] = exemplaire::get_expl_bulletin_from_id($id_expl);
 			//Test du quota pour l'exemplaire et l'emprunteur
 			if ($qt->check_quota($struct)) {
 				//Si erreur, récupération du message et peut-on forcer ou non ?
@@ -762,7 +732,7 @@ class do_pret {
 		return TRUE;
 	}
 	
-	public function confirm_pret($id_empr, $id_expl, $short_loan=0) {
+	public function confirm_pret($id_empr, $id_expl, $short_loan=0, $source_device='') {
 		// le lien MySQL
 		global $dbh, $msg;
 		global $pmb_quotas_avances, $pmb_utiliser_calendrier;
@@ -786,6 +756,8 @@ class do_pret {
 				$qt=new quota("SHORT_LOAN_TIME_QUOTA");
 				$struct["READER"]=$id_empr;
 				$struct["EXPL"]=$id_expl;
+				$struct["NOTI"] = exemplaire::get_expl_notice_from_id($id_expl);
+				$struct["BULL"] = exemplaire::get_expl_bulletin_from_id($id_expl);
 				$duree_pret=$qt->get_quota_value($struct);
 				if ($duree_pret==-1) $duree_pret=0; 
 			} else {
@@ -803,6 +775,8 @@ class do_pret {
 				$qt = new quota("LEND_TIME_QUOTA");
 				$struct["READER"] = $id_empr;
 				$struct["EXPL"] = $id_expl;
+				$struct["NOTI"] = exemplaire::get_expl_notice_from_id($id_expl);
+				$struct["BULL"] = exemplaire::get_expl_bulletin_from_id($id_expl);
 				$duree_pret = $qt->get_quota_value($struct);
 				if ($duree_pret == -1) $duree_pret = 0;
 			} else {
@@ -867,6 +841,7 @@ class do_pret {
 	
 		// insérer la trace en stat, récupérer l'id et le mettre dans la table des prêts pour la maj ultérieure
 		$stat_avant_pret = pret_construit_infos_stat($id_expl);
+		$stat_avant_pret->source_device = $source_device;
 		$stat_id = stat_stuff($stat_avant_pret);
 		$query = "update pret SET pret_arc_id='$stat_id' where ";
 		$query .= "pret_idempr = '" . $id_empr . "' and ";
@@ -912,6 +887,8 @@ class do_pret {
 					$qt_tarif = new quota("COST_LEND_QUOTA", "$include_path/quotas/own/$lang/finances.xml");
 					$struct["READER"] = $id_empr;
 					$struct["EXPL"] = $id_expl;
+					$struct["NOTI"] = exemplaire::get_expl_notice_from_id($id_expl);
+					$struct["BULL"] = exemplaire::get_expl_bulletin_from_id($id_expl);
 					$tarif_pret = $qt_tarif->get_quota_value($struct);
 					break;
 			}

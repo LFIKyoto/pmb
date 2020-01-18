@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: view_bulletins.inc.php,v 1.29 2018-12-20 11:00:19 mbertin Exp $
+// $Id: view_bulletins.inc.php,v 1.31 2019-08-01 13:16:36 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -112,14 +112,14 @@ if((pmb_mysql_num_rows($myQuery))) {
 			$bulletins .= "&nbsp;";
 		}
 		$bulletins .= "</td><td class='center'>".$href_start;
-		if (is_array($bulletin->nbexplnum) && sizeof($bulletin->nbexplnum)) {
+		if (is_array($bulletin->nbexplnum) && !empty($bulletin->nbexplnum)) {
 			$bulletins .= $bulletin->nbexplnum; 
-		}else {
+		} else {
 			$bulletins .= "&nbsp;";
 		}
 		$bulletins .= "</a></td><td class='center'>".$href_start;
-		if (is_array($bulletin->expl) && sizeof($bulletin->expl)) {
-			$bulletins .= sizeof($bulletin->expl); 
+		if (is_array($bulletin->expl) && !empty($bulletin->expl)) {
+			$bulletins .= count($bulletin->expl); 
 		} else {
 			$bulletins .= "&nbsp;";
 		}
@@ -143,7 +143,7 @@ if((pmb_mysql_num_rows($myQuery))) {
 	$bulletins .= "</table></form>";
 } else {
 	$bulletins .= "</table><br />";
-   	if ($aff_bulletins_restrict_periode || $aff_bulletins_restrict_date || $aff_bulletins_restrict_numero) $bulletins .= $msg[perio_restrict_no_bulletin];
+   	if ($aff_bulletins_restrict_periode || $aff_bulletins_restrict_date || $aff_bulletins_restrict_numero) $bulletins .= $msg['perio_restrict_no_bulletin'];
    	else $bulletins .= $msg[4024] ;
 }
 $bulletins .= "<script type='text/javascript'>ajax_parse_dom();</script>";

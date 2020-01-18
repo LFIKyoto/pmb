@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions_display_genes.inc.php,v 1.29 2018-01-18 14:47:22 jpermanne Exp $
+// $Id: suggestions_display_genes.inc.php,v 1.34 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die ("no access");
+
+global $class_path, $include_path;
 
 require_once($class_path.'/suggestions.class.php');
 require_once($class_path.'/suggestions_origine.class.php');
@@ -97,16 +99,16 @@ function show_list_sug($id_bibli=0) {
 	$i=0;
 	if (is_array($user_id) && count($user_id) && is_array($user_statut) && count($user_statut)) {
 		foreach($user_id as $k=>$v) {
- 			if ($user_id[$k]) {
+ 			if ($v) {
 				$user_name = $user_txt[$k];
 				if(!$user_txt[$k]){
 					if ($user_statut[$k]==='0') {
-						$req = "select nom, prenom from users where userid='".$user_id[$k]."'";
+						$req = "select nom, prenom from users where userid='".$v."'";
 						$res = pmb_mysql_query($req,$dbh);
 						$user = pmb_mysql_fetch_object($res);
 						$user_name = $user->nom.($user->prenom ? ", ".$user->prenom : "");
 					} else {
-						$req = "select concat(empr_nom,', ',empr_prenom) as nom from empr where id_empr='".$user_id[$k]."'";
+						$req = "select concat(empr_nom,', ',empr_prenom) as nom from empr where id_empr='".$v."'";
 						$res = pmb_mysql_query($req,$dbh);
 						$empr = pmb_mysql_fetch_object($res);
 						$user_name = $empr->nom;
@@ -117,7 +119,7 @@ function show_list_sug($id_bibli=0) {
 	 				$sug_search_form=str_replace('!!i!!',$i,$sug_search_form);
 				}
 				$sug_search_form = str_replace('!!user_txt!!',htmlentities($user_name,ENT_QUOTES,$charset), $sug_search_form);
-				$sug_search_form = str_replace('!!user_id!!',htmlentities($user_id[$k],ENT_QUOTES,$charset), $sug_search_form);
+				$sug_search_form = str_replace('!!user_id!!',htmlentities($v,ENT_QUOTES,$charset), $sug_search_form);
 				$sug_search_form = str_replace('!!user_statut!!',htmlentities($user_statut[$k],ENT_QUOTES,$charset), $sug_search_form);
 				$i++;
  			}
@@ -203,8 +205,8 @@ function show_list_sug($id_bibli=0) {
 		$url_base = "acquisition.php?categ=sug&action=list&id_bibli=$id_bibli&user_input=".rawurlencode(stripslashes($user_input))."&statut=$statut&num_categ=$num_categ&sugg_location_id=$sugg_location_id&filtre_src=$filtre_src&date_inf=$date_inf&date_sup=$date_sup";
 		if (is_array($user_id) && count($user_id) && is_array($user_statut) && count($user_statut)) {
 			foreach($user_id as $k=>$v) {
-				if ($user_id[$k] && (isset($user_statut[$k]))) {
-					$url_base.="&user_id[]=".$user_id[$k]."&user_statut[]=".$user_statut[$k];
+				if ($v && (isset($user_statut[$k]))) {
+					$url_base.="&user_id[]=".$v."&user_statut[]=".$user_statut[$k];
 				}
 			}
 		}else{
@@ -594,13 +596,13 @@ function show_form_sug($update_action) {
 				$typ = $row_orig->type_origine;
 				$poids = $tab_poids[$row_orig->type_origine]; 
 			}
-			array_push($users,$row_orig);
+			$users[] = $row_orig;
 			$poids_tot = $poids_tot + $tab_poids[$row_orig->type_origine];
 		}
 		
 		//On parcourt tous les créateurs de suggestions
-		for($i=0;$i<sizeof($users);$i++){
-   			
+		$nb_users = count($users);
+		for ($i = 0; $i < $nb_users; $i++) {
 			$orig = $users[$i]->origine;
 			$typ = $users[$i]->type_origine;
 			
@@ -645,18 +647,20 @@ function show_form_sug($update_action) {
 		<input type='text' id='creator_lib_orig' name='creator_lib_orig' class='saisie-10emr'/>
 		<input type='button' class='bouton_small' value='...' onclick=\"openPopUp('./select.php?what=origine&caller=sug_modif_form&param1=creator_orig_id&param2=creator_lib_orig&param3=typ&param4=&param5=&param6=&deb_rech=', 'selector')\" />";
 				
-		if(sizeof($users)>1) {
+		if ($nb_users > 1) {
 			//on ajoute le champ à la liste
 			$list_user.=$ajout_create;
 			$form = str_replace('!!creator_ajout!!', '', $form);
 		} else $form = str_replace('!!creator_ajout!!', "<br />".$ajout_create, $form);
 		
 		//Menu dépliant
-		$deroul_user=gen_plus('ori',$msg['suggest_creator']. " (".(sizeof($users)-1).")",$list_user,0);
+		$deroul_user = gen_plus('ori',$msg['suggest_creator']. " (".($nb_users-1).")", $list_user, 0);
 		
 		if ($lib_orig) {
 			$form = str_replace('!!lib_orig!!', htmlentities($premier_user, ENT_QUOTES, $charset), $form);
-			if(sizeof($users)>1) $form = str_replace('!!list_user!!', $deroul_user, $form);
+			if ($nb_users > 1) {
+			    $form = str_replace('!!list_user!!', $deroul_user, $form);
+			}
 			else $form = str_replace('!!list_user!!', '', $form);
 		} else {
 			$form = str_replace('!!lib_orig!!', '&nbsp;', $form);
@@ -785,6 +789,4 @@ function show_form_sug($update_action) {
 	print "<script type=\"text/javascript\" src=\"".$javascript_path."/tablist.js\"></script>";
 	print $form;
 }
-
 ?>
-

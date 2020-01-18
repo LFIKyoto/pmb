@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facette_search.class.php,v 1.98 2018-12-11 09:41:42 dgoron Exp $
+// $Id: facette_search.class.php,v 1.101.2.1 2019-11-08 11:07:11 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -228,9 +228,12 @@ class facettes extends facettes_root {
 		global $field_0_s_1;
 		
 		//historique des recherches
+		if(empty($search)) {
+			$search = array();
+		}
 		$search[] = "s_1";
 		$op_0_s_1 = "EQ";
-		$field_0_s_1[] = $_SESSION['last_query']+0; 
+		$field_0_s_1[] = intval($_SESSION['last_query']); 
 		
 		//creation des globales => parametres de recherche
 		if ($_SESSION['facette']) {
@@ -267,6 +270,11 @@ class facettes extends facettes_root {
 	protected static function get_link_not_clicked($name, $label, $code_champ, $code_ss_champ, $id, $nb_result) {
 		$link =  "document.location=\"".static::format_url("lvl=more_results&mode=extended&facette_test=1");
 		$link .= "&name=".rawurlencode($name)."&value=".rawurlencode($label)."&champ=".$code_champ."&ss_champ=".$code_ss_champ."\";";
+		return $link;
+	}
+	
+	protected static function get_link_reinit_facettes() {
+		$link =  "document.location=\"".static::format_url("lvl=more_results&get_last_query=1&reinit_facette=1")."\";";
 		return $link;
 	}
 	
@@ -364,7 +372,7 @@ class facettes extends facettes_root {
 		global $dbh;
 		global $opac_nb_notices_similaires;
 		
-		$id_notice+=0;
+		$id_notice = intval($id_notice);
 		$notice_list=array();	
 		$req = "select expl_cote from exemplaires where expl_notice=$id_notice";
 		$res = @pmb_mysql_query($req,$dbh);
@@ -418,7 +426,7 @@ class facettes extends facettes_root {
 		global $opac_nb_notices_similaires;
 		global $gestion_acces_active,$gestion_acces_empr_notice;
 		
-		$id_notice+=0;		
+		$id_notice = intval($id_notice);
 		$req="select distinct code_champ, code_ss_champ, num_word from notices_mots_global_index 
 				".gen_where_in('code_champ', '1,17,19,20,25')."
 						and	id_notice=".$id_notice;

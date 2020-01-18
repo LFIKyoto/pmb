@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_formation_admin.class.php,v 1.6 2016-03-30 14:34:53 ngantier Exp $
+// $Id: nomenclature_formation_admin.class.php,v 1.7 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -243,7 +243,7 @@ class nomenclature_formation_admins {
 		return $tpl;
 	}	
 	
-	function order_up($id){
+	public function order_up($id){
 		global $dbh;	
 	
 		$requete="select formation_order from nomenclature_formations where id_formation=$id";
@@ -264,7 +264,7 @@ class nomenclature_formation_admins {
 		}
 	}
 	
-	function order_down($id){
+	public function order_down($id){
 		global $dbh;
 		$requete="select formation_order from nomenclature_formations where id_formation=$id";
 		$resultat=pmb_mysql_query($requete);
@@ -324,7 +324,7 @@ class nomenclature_formation_type_admins {
 		return $tpl;
 	}
 	
-	function order_up($id){
+	public function order_up($id){
 		global $dbh;
 	
 		$requete="select type_order from nomenclature_types where id_type=$id";
@@ -345,7 +345,7 @@ class nomenclature_formation_type_admins {
 		}
 	}
 	
-	function order_down($id){
+	public function order_down($id){
 		global $dbh;
 		$requete="select type_order from nomenclature_types where id_type=$id";
 		$resultat=pmb_mysql_query($requete, $dbh);

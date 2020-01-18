@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_articles_categories.class.php,v 1.9 2018-12-06 09:34:14 dgoron Exp $
+// $Id: cms_module_common_datasource_articles_categories.class.php,v 1.10.6.1 2019-10-24 08:04:40 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -32,15 +32,61 @@ class cms_module_common_datasource_articles_categories extends cms_module_common
 			"id_article",
 			"article_title",
 			"article_order",
-			"pert"
+			"pert",
+		    "rand()"
 		);
+	}
+	
+	public function get_form(){
+		$form = parent::get_form();
+		if(!isset($this->parameters['operator_between_authorities'])) $this->parameters['operator_between_authorities'] = 'or';
+		$form.= '
+        <div class="row">
+            <div class="colonne3"><label for="'.$this->get_form_value_name('operator_between_authorities').'">'.$this->format_text($this->msg['cms_module_common_datasource_operator_between_authorities']).'</label></div>
+            <div class="colonne_suite">
+                '.$this->format_text($this->msg['cms_module_common_datasource_operator_between_authorities_or']).' <input type="radio" '.($this->parameters['operator_between_authorities'] == 'or' ? 'checked="checked"' : '').' name="'.$this->get_form_value_name('operator_between_authorities').'" value="or"/>
+                '.$this->format_text($this->msg['cms_module_common_datasource_operator_between_authorities_and']).' <input type="radio" '.($this->parameters['operator_between_authorities'] == 'and' ? 'checked="checked"' : '').' name="'.$this->get_form_value_name('operator_between_authorities').'" value="and"/></div>
+        </div>';
+			
+		return $form;
+	}
+	
+	public function save_form(){
+		$this->parameters['operator_between_authorities'] = $this->get_value_from_form('operator_between_authorities');
+		return parent::save_form();
 	}
 	
 	protected function get_query_base() {
 		$selector = $this->get_selected_selector();
 		if ($selector) {
-			$query = "select distinct id_article,if(article_start_date != '0000-00-00 00:00:00',article_start_date,article_creation_date) as publication_date, notices_categories.num_noeud from cms_articles join cms_articles_descriptors on id_article=num_article join notices_categories on cms_articles_descriptors.num_noeud=notices_categories.num_noeud and notcateg_notice = '".($selector->get_value()*1)."'";
-			return $query;
+			if(!isset($this->parameters['operator_between_authorities'])) $this->parameters['operator_between_authorities'] = 'or';
+			switch ($this->parameters["operator_between_authorities"]) {
+				case 'and':
+					$query = "select distinct notices_categories.num_noeud
+						from notices_categories
+					    where notices_categories.notcateg_notice = '".($selector->get_value()*1)."'";
+					$result = pmb_mysql_query($query);
+					$descriptors = array();
+					if($result && (pmb_mysql_num_rows($result) > 0)){
+						while($row = pmb_mysql_fetch_object($result)){
+							$descriptors[] = $row->num_noeud;
+						}
+					}
+					if(count($descriptors)) {
+						$query = "select distinct id_article,if(article_start_date != '0000-00-00 00:00:00',article_start_date,article_creation_date) as publication_date, notices_categories.num_noeud
+							from cms_articles join cms_articles_descriptors on id_article=num_article
+							where cms_articles_descriptors.num_article != '".($selector->get_value()*1)."' and cms_articles_descriptors.num_noeud IN (".implode(',', $descriptors).")
+							group by id_article
+							having count(id_article) = ".count($descriptors);
+						return $query;
+					}
+					break;
+				case 'or':
+				default:
+					$query = "select distinct id_article,if(article_start_date != '0000-00-00 00:00:00',article_start_date,article_creation_date) as publication_date, notices_categories.num_noeud from cms_articles join cms_articles_descriptors on id_article=num_article join notices_categories on cms_articles_descriptors.num_noeud=notices_categories.num_noeud and notcateg_notice = '".($selector->get_value()*1)."'";
+					return $query;
+					break;
+			}
 		}
 		return false;
 	}

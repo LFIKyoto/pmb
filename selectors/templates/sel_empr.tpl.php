@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_empr.tpl.php,v 1.15 2017-10-13 12:30:48 dgoron Exp $
+// $Id: sel_empr.tpl.php,v 1.16 2019-06-06 13:42:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
-global $param1, $param2;
+global $param1, $param2, $infield, $jscript, $auto_submit;
 //-------------------------------------------
 //	$jscript : script de m.a.j. du parent
 //-------------------------------------------

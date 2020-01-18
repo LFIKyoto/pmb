@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: location.inc.php,v 1.35 2018-10-12 11:59:35 dgoron Exp $
+// $Id: location.inc.php,v 1.36 2019-06-07 12:30:10 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -149,7 +149,9 @@ switch($action) {
 			} else {
 				if(empty($form_sur_localisation)) {
 					$form_sur_localisation = '';
-					$form_location_use_surloc=0;
+				}
+				if(empty($form_location_use_surloc)) {
+				    $form_location_use_surloc=0;
 				}
 				// O.K.,  now if item already exists UPDATE else INSERT
 				$set_values = "SET location_libelle='$form_libelle', locdoc_codage_import='$form_locdoc_codage_import', locdoc_owner='$form_locdoc_owner', location_pic='$form_location_pic', location_visible_opac='$form_location_visible_opac', name= '$form_locdoc_name', adr1= '$form_locdoc_adr1', adr2= '$form_locdoc_adr2', cp= '$form_locdoc_cp', town= '$form_locdoc_town', state= '$form_locdoc_state', country= '$form_locdoc_country', phone= '$form_locdoc_phone', email= '$form_locdoc_email', website= '$form_locdoc_website', logo= '$form_locdoc_logo', commentaire='$form_locdoc_commentaire', num_infopage='$form_num_infopage', css_style='$form_css_style', surloc_num='$form_sur_localisation', surloc_used='$form_location_use_surloc' " ;

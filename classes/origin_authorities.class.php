@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: origin_authorities.class.php,v 1.4 2018-05-31 08:48:15 dgoron Exp $
+// $Id: origin_authorities.class.php,v 1.5 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -60,10 +60,10 @@ class origin_authorities {
 		global $dbh;
 	
 		// check sur le type de  la variable passée en paramètre
-		if(!sizeof($data) || !is_array($data)) {
+		if (!is_array($data) || empty($data)) {
 			// si ce n'est pas un tableau ou un tableau vide, on retourne 0
 			return 0;
-			}
+		}
 		// check sur les éléments du tableau
 		$long_maxi = pmb_mysql_field_len(pmb_mysql_query("SELECT origin_authorities_name FROM origin_authorities "),0);
 		$data['nom'] = rtrim(substr(preg_replace('/\[|\]/', '', rtrim(ltrim($data['nom']))),0,$long_maxi));

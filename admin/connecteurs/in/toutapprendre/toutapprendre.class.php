@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: toutapprendre.class.php,v 1.9 2017-07-12 15:15:02 tsamson Exp $
+// $Id: toutapprendre.class.php,v 1.11 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -38,7 +38,7 @@ class toutapprendre extends connector {
 	}
     
    public function source_get_property_form($source_id) {
-    	global $charset, $dbh;
+       global $charset;
     	
     	$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
@@ -64,7 +64,7 @@ class toutapprendre extends connector {
 				<div class='colonne-suite'>
 					<select name='cp_field'>";
     	$query = "select idchamp, titre from notices_custom where datatype='integer'";
-    	$result = pmb_mysql_query($query, $dbh);
+    	$result = pmb_mysql_query($query);
     	if($result && pmb_mysql_num_rows($result)){
     		while($row = pmb_mysql_fetch_object($result)){
     			$form.="
@@ -83,7 +83,7 @@ class toutapprendre extends connector {
 		$form .= "<div class='row'>
 				<div class='colonne3'><label>".$this->msg["toutapprendre_enrichment_template"]."</label></div>
 				<div class='colonne-suite'>
-					<textarea name='enrichment_template'>".($vars['enrichment_template'] ? stripslashes($vars['enrichment_template']) : stripslashes($this->default_enrichment_template))."</textarea>
+					<textarea name='enrichment_template'>".(!empty($vars['enrichment_template']) ? stripslashes($vars['enrichment_template']) : stripslashes($this->default_enrichment_template))."</textarea>
 				</div>
 			</div>";
 		
@@ -111,6 +111,8 @@ class toutapprendre extends connector {
 	
 	//Formulaire des propriétés générales
 	public function get_property_form() {
+	    global $charset;
+	    
 		$this->fetch_global_properties();
 		
     	//Affichage du formulaire en fonction de $this->parameters
@@ -210,7 +212,7 @@ class toutapprendre extends connector {
 	 			'|[\x00-\x7F][\x80-\xBF]+'.
 	 			'|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*'.
 	 			'|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})'.
-	 			'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
+	 			'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/',
 	 			'?', $xml );	 	 
 	 	
 	 	@ini_set("zend.ze1_compatibility_mode", "0");

@@ -2,12 +2,13 @@
  // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: options_q_txt_i18n.php,v 1.5 2018-06-21 16:09:19 dgoron Exp $
+// $Id: options_q_txt_i18n.php,v 1.7 2019-05-22 12:34:47 arenou Exp $
 
 //Gestion des options de type q_txt_i18n
 $base_path = "../..";
 $base_auth = "CATALOGAGE_AUTH|ADMINISTRATION_AUTH";
 $base_title = "";
+$base_use_dojo=1;
 include ($base_path."/includes/init.inc.php");
 
 require_once ("$include_path/parser.inc.php");
@@ -133,12 +134,12 @@ if ($first == 1) {
  		}
  		if($first == 3) {
  			//Tri des options
-			$options = array();
+			$opts = array();
 			for($i=0; $i<count($ITEMS);$i++){
-				$options[$i] = convert_diacrit($ITEMS[$i]['label']);
+			    $opts[$i] = convert_diacrit($ITEMS[$i]['label']);
  			}
- 			asort($options);
- 			foreach ($options as $i=>$option) {
+ 			asort($opts);
+ 			foreach ($opts as $i=>$opt) {
  				$array= array(
  						'value' => $ITEMS[$i]['value'],
  						'label' => $ITEMS[$i]['label'],

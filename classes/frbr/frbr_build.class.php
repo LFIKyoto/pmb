@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_build.class.php,v 1.2 2018-08-22 16:23:31 tsamson Exp $
+// $Id: frbr_build.class.php,v 1.5 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -37,7 +37,7 @@ class frbr_build {
 	protected $datanodes;
 	
 	public function __construct($object_id=0, $object_type='') {
-		$this->object_id = $object_id+0;
+	    $this->object_id = (int) $object_id;
 		$this->object_type = $object_type;
 		$this->fetch_data();
 	}
@@ -101,7 +101,7 @@ class frbr_build {
 	}
 	
 	public function has_page() {
-		if($this->page->get_id()) {
+		if(isset($this->page) && $this->page->get_id()) {
 			return true;
 		} else {
 			return false;
@@ -296,7 +296,7 @@ class frbr_build {
 	}
 	
 	protected function get_type_from_class_name($class_name) {
-		$node_type = '';
+		
 		if ($class_name) {
 			$node_type = explode('_', $class_name);
 			if (is_array($node_type) && isset($node_type[2]) && $node_type[2]) {

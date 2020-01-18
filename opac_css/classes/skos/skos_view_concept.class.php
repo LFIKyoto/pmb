@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: skos_view_concept.class.php,v 1.21 2018-12-28 15:15:37 ngantier Exp $
+// $Id: skos_view_concept.class.php,v 1.22.6.1 2019-11-20 17:00:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -111,10 +111,12 @@ class skos_view_concept {
 			    foreach ($vedette_elements as $subdivision => $elements) {
 			        if($subdivision_header['code'] == $subdivision) {
 			            foreach ($elements as $element) {
-			                $display_datas['composed_concept_elements'][$vedette->get_subdivision_name_by_code($subdivision)][] = array(
-			                    'label' => $element->get_isbd(),
-			                    'link' => str_replace("!!id!!", $element->get_db_id(), $element->get_lien_opac())
-			                );
+			                if ($element->get_db_id()) {
+    			                $display_datas['composed_concept_elements'][$vedette->get_subdivision_name_by_code($subdivision)][] = array(
+    			                    'label' => $element->get_isbd(),
+    			                    'link' => str_replace("!!id!!", $element->get_db_id(), $element->get_lien_opac())
+    			                );
+			                }
 			            }
 			        }
 			    }
@@ -132,6 +134,7 @@ class skos_view_concept {
 		global $msg, $liens_opac, $charset;
 		
 		$indexed_authorities = $concept->get_indexed_authorities();
+		$datas = [];
 		foreach ($indexed_authorities as $type => $authorities) {
 			foreach ($authorities as $authority) {
 				switch ($type) {

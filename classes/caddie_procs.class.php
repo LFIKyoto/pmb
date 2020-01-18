@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: caddie_procs.class.php,v 1.18 2018-08-08 12:47:14 dgoron Exp $
+// $Id: caddie_procs.class.php,v 1.23 2019-07-17 12:06:27 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,8 +14,8 @@ require_once ($class_path."/parameters.class.php");
 
 class caddie_procs extends procs {
 	
-	static $module = 'catalog';
-	static $table = 'caddie_procs';
+	public static $module = 'catalog';
+	public static $table = 'caddie_procs';
 	
 	public static function get_display_list() {
 		global $base_path, $msg;
@@ -24,15 +24,15 @@ class caddie_procs extends procs {
 		$display = "<hr /><table>";
 		
 		// affichage du tableau des procédures
-		if ($PMBuserid!=1) $where=" where (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid') ";
+		if ($PMBuserid!=1) $where=" where (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid' or autorisations_all=1) ";
 		else $where="";
-		$query = "SELECT idproc, type, name, requete, comment, autorisations FROM ".static::$table." $where ORDER BY type, name ";
+		$query = "SELECT idproc, type, name, requete, comment, autorisations, autorisations_all FROM ".static::$table." $where ORDER BY type, name ";
 		$result = pmb_mysql_query($query);
 		if($result) {
 			$parity=1;
 			while($row = pmb_mysql_fetch_object($result)) {
 				$autorisations=explode(" ",$row->autorisations);
-				if (array_search ($PMBuserid, $autorisations)!==FALSE || $PMBuserid == 1) {
+				if ($row->autorisations_all || array_search ($PMBuserid, $autorisations)!==FALSE || $PMBuserid == 1) {
 					if ($parity % 2) {
 						$pair_impair = "even";
 					} else {
@@ -86,6 +86,7 @@ class caddie_procs extends procs {
 		global $f_proc_code;
 		global $f_proc_comment;
 		global $userautorisation;
+		global $autorisations_all;
 		
 		if($f_proc_name && $f_proc_code) {
 			$query = "SELECT count(1) FROM ".static::$table." WHERE name='$f_proc_name' ";
@@ -97,12 +98,13 @@ class caddie_procs extends procs {
 				} else {
 					$autorisations='';
 				}
+				$autorisations_all += 0;
 				$param_name=parameters::check_param($f_proc_code);
 				if ($param_name!==true) {
 					error_message_history($param_name, sprintf($msg["proc_param_check_field_name"],$param_name), 1);
 					exit();
 				}
-				$query = "INSERT INTO ".static::$table." (idproc,type,name,requete,comment,autorisations) VALUES ('', '$f_proc_type', '$f_proc_name', '$f_proc_code', '$f_proc_comment', '$autorisations' ) ";
+				$query = "INSERT INTO ".static::$table." (idproc,type,name,requete,comment,autorisations,autorisations_all) VALUES ('', '$f_proc_type', '$f_proc_name', '$f_proc_code', '$f_proc_comment', '$autorisations', '$autorisations_all' ) ";
 				pmb_mysql_query($query);
 			} else {
 				print "<script language='Javascript'>alert(\"$msg[709]\");</script>";
@@ -117,6 +119,7 @@ class caddie_procs extends procs {
 		global $f_proc_code;
 		global $f_proc_comment;
 		global $userautorisation;
+		global $autorisations_all;
 		
 		$id += 0;
 		if($id) {
@@ -125,12 +128,13 @@ class caddie_procs extends procs {
 			} else {
 				$autorisations="";
 			}
+			$autorisations_all += 0;
 			$param_name=parameters::check_param($f_proc_code);
 			if ($param_name!==true) {
 				error_message_history($param_name, sprintf($msg["proc_param_check_field_name"],$param_name), 1);
 				exit();
 			}
-			$query = "UPDATE ".static::$table." SET name='$f_proc_name',requete='$f_proc_code',comment='$f_proc_comment' , autorisations='$autorisations' WHERE idproc=$id ";
+			$query = "UPDATE ".static::$table." SET name='$f_proc_name',requete='$f_proc_code',comment='$f_proc_comment' , autorisations='$autorisations' , autorisations_all='$autorisations_all' WHERE idproc=$id ";
 			pmb_mysql_query($query);
 			return true;
 		}
@@ -153,7 +157,7 @@ class caddie_procs extends procs {
 			case 'authorities_caddie_procs':
 				$example_code = $msg['cart_ex_selection']." select id_authority as <b>object_id</b>, 'AUTHORS' as object_type from authorities JOIN <b>authors</b> ON <b>author_id</b>=authorities.num_object and authorities.type_object = 1 where ...<br />
 				".$msg['cart_ex_action']." update authorities set num_statut=!!nouveau_statut!! where id_authority in (CADDIE(<b>AUTHORS</b>))<br />
-				MIXED / AUTHORS / CATEGORIES / PUBLISHERS / COLLECTIONS / SUBCOLLECTIONS / SERIES / TITRES_UNIFORMES / INDEXINT";
+				MIXED / AUTHORS / CATEGORIES / PUBLISHERS / COLLECTIONS / SUBCOLLECTIONS / SERIES / TITRES_UNIFORMES / INDEXINT / AUTHPERSO";
 				break;
 			case 'caddie_procs':
 			default:
@@ -166,12 +170,14 @@ class caddie_procs extends procs {
 		$form = str_replace('!!example_code!!', $example_code, $form);
 		$form = str_replace('!!cancel_link!!', static::format_url(), $form);
 		$autorisations = array();
+		$autorisations_all = 0;
 		if($id) {
-			$query = "SELECT idproc, name, requete, comment, autorisations, type FROM ".static::$table." WHERE idproc=".$id;
+			$query = "SELECT idproc, name, requete, comment, autorisations, autorisations_all, type FROM ".static::$table." WHERE idproc=".$id;
 			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)) {
 				$row = pmb_mysql_fetch_object($result);
 				$autorisations_donnees=explode(" ",$row->autorisations);
+				$autorisations_all = $row->autorisations_all;
 				$query_users = "SELECT userid, username FROM users order by username ";
 				$result_users = pmb_mysql_query($query_users);
 				$all_users=array();
@@ -230,7 +236,7 @@ class caddie_procs extends procs {
 		
 		$autorisations_users="";
 		$id_check_list='';
-		while (list($row_number, $row_data) = each($autorisations)) {
+		foreach ($autorisations as $row_number => $row_data) {
 			$id_check="auto_".$row_data[1];
 			if($id_check_list)$id_check_list.='|';
 			$id_check_list.=$id_check;
@@ -239,6 +245,8 @@ class caddie_procs extends procs {
 		}
 		$autorisations_users.="<input type='hidden' id='auto_id_list' name='auto_id_list' value='$id_check_list' >";
 		$form = str_replace('!!autorisations_users!!', $autorisations_users, $form);
+		
+		$form = str_replace('!!autorisations_all!!', ($autorisations_all ? "checked='checked'" : ""), $form);
 		
 		$form .= confirmation_delete(static::format_url("&action=del&id="));
 		return $form;
@@ -277,14 +285,14 @@ class caddie_procs extends procs {
 		
 		if ($PMBuserid!=1) $where=" and (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid') ";
 		else $where="";
-		$query = "SELECT idproc, type, name, requete, comment, autorisations, parameters FROM ".static::$table." WHERE type='".$type."' $where ORDER BY name ";
+		$query = "SELECT idproc, type, name, requete, comment, autorisations, autorisations_all, parameters FROM ".static::$table." WHERE type='".$type."' $where ORDER BY name ";
 		$result = pmb_mysql_query($query);
 		$n_proc=0;
 		if($result) {
 			$parity=1;
 			while($row = pmb_mysql_fetch_object($result)) {
 				$autorisations=explode(" ",$row->autorisations);
-				if ((array_search ($PMBuserid, $autorisations)!==FALSE || $PMBuserid == 1)&&($type != 'ACTION' || static::is_for_cart($idcaddie, $row->requete))) {
+				if (($row->autorisations_all || array_search ($PMBuserid, $autorisations)!==FALSE || $PMBuserid == 1)&&($type != 'ACTION' || static::is_for_cart($idcaddie, $row->requete))) {
 					$n_proc++;
 					if ($parity % 2) {
 						$pair_impair = "even";
@@ -353,10 +361,11 @@ class caddie_procs extends procs {
 		global $PMBuserid;
 	
 		if ($id) {
-			$requete = "SELECT autorisations FROM ".static::$table." WHERE idproc='$id' ";
+			$requete = "SELECT autorisations, autorisations_all FROM ".static::$table." WHERE idproc='$id' ";
 			$result = @pmb_mysql_query($requete);
 			if(pmb_mysql_num_rows($result)) {
 				$temp = pmb_mysql_fetch_object($result);
+				if($temp->autorisations_all) return 1;
 				$rqt_autorisation=explode(" ",$temp->autorisations);
 				if (array_search ($PMBuserid, $rqt_autorisation)!==FALSE || $PMBuserid == 1) return 1 ;
 			}

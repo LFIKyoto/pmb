@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sms.class.php,v 1.7 2018-11-28 15:47:50 arenou Exp $
+// $Id: sms.class.php,v 1.9 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -37,7 +37,7 @@ class smstrend {
 	private $messageQty='GOLD';
 	private $messageType='PLUS';
 	
-	function __construct ($param_list) {		
+	public function __construct ($param_list) {		
 		$this->login=$param_list["login"];
 		$this->password=$param_list["password"];
 		$this->tpoa=$param_list["tpoa"];
@@ -49,12 +49,15 @@ class smstrend {
 		}
 	}
 	
-	function send_sms($telephone, $message) {
+	public function send_sms($telephone, $message) {
 		global $charset;
-		$telephone=preg_replace("/.[^0-9]/","",$telephone); 
-		$telephone=preg_replace("/^[\+|[^0-9]]/",'',$telephone);
-		if ($telephone[0]=="0") $telephone="+33".substr($telephone,1); 
-		else if ($telephone[0]!="+") return false;
+		$telephone = preg_replace("/.[^0-9]/", "", $telephone); 
+		$telephone = preg_replace("/^[\+|[^0-9]]/", "", $telephone);
+		if (substr($telephone, 0, 1) == "0") {
+		    $telephone = "+33" . substr($telephone, 1); 
+		} else if (substr($telephone, 0, 1) != "+") {
+		    return false;
+		}
 		$fields=array(
 			"login"=>$this->login,
 			"password"=>$this->password,
@@ -88,14 +91,14 @@ class sms_rouenbs {
 	private $ws;
 	private $from='';
 	
-	function __construct ($param_list) {
+	public function __construct ($param_list) {
 		$this->from=$param_list['from'];
 		global $class_path;
 		require_once($class_path.'/ws_rouenbs.class.php');
 		$this->ws = new ws_rouenbs();
 	}
 	
-	function send_sms($telephone, $message) {
+	public function send_sms($telephone, $message) {
 		global $charset;
 		$r=FALSE;
 		$telephone=preg_replace("/.[^0-9]/",'',$telephone);

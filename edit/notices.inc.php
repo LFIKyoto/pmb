@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notices.inc.php,v 1.28 2018-07-09 12:54:33 dgoron Exp $
+// $Id: notices.inc.php,v 1.29 2019-06-05 06:41:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -18,7 +18,7 @@ switch($sub) {
 	case "resa_a_traiter" :
 		switch($dest) {
 			case "TABLEAU":
-				$worksheet = new spreadsheet();
+			    $worksheet = new spreadsheetPMB();
 				$worksheet->write_string(0,0,$msg[350].": ".$msg['edit_resa_menu_a_traiter']);
 
 				$worksheet->write_string(2,0,$msg[366]);

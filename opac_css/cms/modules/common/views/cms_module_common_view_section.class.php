@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_section.class.php,v 1.15 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: cms_module_common_view_section.class.php,v 1.16.2.1 2019-09-17 09:59:20 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -109,7 +109,7 @@ class cms_module_common_view_section extends cms_module_common_view_django{
 	}
 	
 	public function get_page_env_select($pageid,$name,$var=""){
-		$pageid+=0;
+	    $pageid = intval($pageid);
 		$page = new cms_page($pageid);
 		$form="
 		<div class='row'>
@@ -136,18 +136,21 @@ class cms_module_common_view_section extends cms_module_common_view_django{
 	
 	protected function add_links($data,$type='section'){
 		global $opac_url_base;
-		$data['link'] = $opac_url_base."?lvl=cmspage&pageid=".$this->parameters['links'][$type]['page']."&".$this->parameters['links'][$type]['var']."=".$data['id'];
-		if(isset($data['parent']['id'])) {
-			$data['parent'] = $this->add_links($data['parent']);
+		if (!is_object($data)) {
+		   return $data;
 		}
-		if(isset($data['children'])) {
-			for ($i=0; $i<count($data['children']) ; $i++){
-				$data['children'][$i] = $this->add_links($data['children'][$i]);
+		$data->link = $opac_url_base."?lvl=cmspage&pageid=".$this->parameters['links'][$type]['page']."&".$this->parameters['links'][$type]['var']."=".$data->id;
+		if(isset($data->parent->id)) {
+			$data->parent = $this->add_links($data->parent);
+		}
+		if(isset($data->children)) {
+			for ($i=0; $i<count($data->children) ; $i++){
+				$data->children[$i] = $this->add_links($data->children[$i]);
 			}
 		}
-		if(isset($data['articles'])) {
-			for ($i=0; $i<count($data['articles']) ; $i++){
-				$data['articles'][$i] = $this->add_links($data['articles'][$i],'article');
+		if(isset($data->articles)) {
+			for ($i=0; $i<count($data->articles) ; $i++){
+				$data->articles[$i] = $this->add_links($data->articles[$i],'article');
 			}
 		}
 		return $data;

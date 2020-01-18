@@ -2,27 +2,27 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frais.inc.php,v 1.22 2018-03-07 09:55:20 dgoron Exp $
+// $Id: frais.inc.php,v 1.23 2019-08-01 13:52:57 dbellamy Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // gestion des frais annexes
-require_once("$class_path/frais.class.php");
-require_once("$class_path/tva_achats.class.php");
+require_once "{$class_path}/frais.class.php";
+require_once "{$class_path}/tva_achats.class.php";
 
 
 function show_list_frais() {
 	
-	global $dbh;
 	global $msg;
 	global $charset;
 	global $pmb_gestion_devise;
 	
-	print "<table>
-	<tr>
-		<th>".htmlentities($msg[103], ENT_QUOTES, $charset)."</th>
-		<th>".htmlentities($msg['acquisition_frais_montant'], ENT_QUOTES, $charset)."</th>
-	</tr>";
+	echo "<table>
+    	<tr>
+    		<th>".htmlentities($msg[103], ENT_QUOTES, $charset)."</th>
+    		<th>".htmlentities($msg['acquisition_frais_montant'], ENT_QUOTES, $charset)."</th>
+            <th>".htmlentities($msg['acquisition_frais_add_to_new_order'], ENT_QUOTES, $charset)."</th>
+    	</tr>";
 
 	$res = frais::listFrais();
 	$nbr = pmb_mysql_num_rows($res);
@@ -37,10 +37,20 @@ function show_list_frais() {
 			}
 			$parity += 1;
 			$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./admin.php?categ=acquisition&sub=frais&action=modif&id=$row->id_frais';\" ";
-	        print "<tr class='$pair_impair' $tr_javascript style='cursor: pointer' ><td><i>".htmlentities($row->libelle, ENT_QUOTES, $charset)."</i></td><td><i>".htmlentities($row->montant, ENT_QUOTES, $charset)." ".$pmb_gestion_devise."</i></td>";
-			print "</tr>";
+	        echo "<tr class='$pair_impair' $tr_javascript style='cursor: pointer' >
+                <td><i>".htmlentities($row->libelle, ENT_QUOTES, $charset)."</i></td>
+                <td><i>".htmlentities($row->montant, ENT_QUOTES, $charset)." ".$pmb_gestion_devise."</i></td>
+                <td>";
+	        if($row->add_to_new_order) {
+                echo "<input type=\"checkbox\" class=\"switch\" disabled=\"disabled\" checked=\"checked\" />
+                    <label>".htmlentities($msg['acquisition_frais_add_to_new_order_enabled'], ENT_QUOTES, $charset)."</label></td>";
+            } else {
+                echo "<input type=\"checkbox\" class=\"switch\" disabled=\"disabled\" />
+                    <label>".htmlentities($msg['acquisition_frais_add_to_new_order_disabled'], ENT_QUOTES, $charset)."</label></td>";
+            }
+            echo "</tr>";
 	}
-	print "</table>
+	echo "</table>
 		<input class='bouton' type='button' value=' ".$msg['acquisition_ajout_frais']." ' onClick=\"document.location='./admin.php?categ=acquisition&sub=frais&action=add'\" />";
 
 }
@@ -48,7 +58,7 @@ function show_list_frais() {
 
 function show_frais_form($id=0) {
 		
-	global $dbh, $msg;
+	global $msg;
 	global $charset;
 	global $frais_form;
 	global $ptab;
@@ -82,7 +92,7 @@ function show_frais_form($id=0) {
 	if ($acquisition_gestion_tva) {
 		$form_tva = "<select id='tva_achat' name ='tva_achat' >";
 		$q = tva_achats::listTva();
-		$res = pmb_mysql_query($q, $dbh);
+		$res = pmb_mysql_query($q);
 		while ($row=pmb_mysql_fetch_object($res)) {
 			$form_tva.="<option value='".$row->id_tva."' ";
 			if ($id ) {
@@ -94,7 +104,11 @@ function show_frais_form($id=0) {
 		$frais_form = str_replace('!!tva_achat!!', $form_tva, $frais_form);
 	}
 	
-	print confirmation_delete("./admin.php?categ=acquisition&sub=frais&action=del&id=");
+	$frais_form_add_to_new_order = "<input type=\"checkbox\" id=\"add_to_new_order\" name=\"add_to_new_order\" class=\"switch\" ".(($frais->add_to_new_order)?"checked=\"checked\" ":"")." value=\"1\" />
+        <label for=\"add_to_new_order\">".htmlentities($msg['acquisition_frais_add_to_new_order_enable'], ENT_QUOTES, $charset)."</label></td>";
+    $frais_form = str_replace('!!add_to_new_order!!', $frais_form_add_to_new_order, $frais_form);
+        
+    print confirmation_delete("./admin.php?categ=acquisition&sub=frais&action=del&id=");
 	print $frais_form;
 	
 }
@@ -147,7 +161,14 @@ $frais_form.="
 ";
 }
 
-
+$frais_form.="
+	<div class='row'>
+		<label class='etiquette'>".htmlentities($msg['acquisition_frais_add_to_new_order'], ENT_QUOTES, $charset)."</label>
+	</div>
+	<div class='row'>
+		!!add_to_new_order!!
+	</div>
+";
 $frais_form.= "
 	<div class='row'></div>
 </div>
@@ -227,7 +248,13 @@ switch($action) {
 		$frais->condition_frais = $condition;
 		$frais->montant = $montant;
 		$frais->num_cp_compta = $cp_compta;
-		$frais->num_tva_achat = (isset($tva_achat) ? $tva_achat : '');	
+		$frais->num_tva_achat = $tva_achat;	
+		if(isset($add_to_new_order)) {
+		    $add_to_new_order=1;
+		} else {
+		    $add_to_new_order=0;
+		}
+		$frais->add_to_new_order = $add_to_new_order;	
 		$frais->save();
 		show_list_frais();
 
@@ -254,7 +281,3 @@ switch($action) {
 		show_list_frais();
 		break;
 }
-
-
-
-?>

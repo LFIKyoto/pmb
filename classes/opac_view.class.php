@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: opac_view.class.php,v 1.18 2017-10-27 06:40:44 jpermanne Exp $
+// $Id: opac_view.class.php,v 1.20 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -180,8 +180,12 @@ class opac_view {
 	public function gen() {
 		global $dbh,$msg;
 		for($i=0;$i<count($this->opac_views_list);$i++) {
-			$req="TRUNCATE TABLE opac_view_notices_".$this->opac_views_list[$i]->id;
-			@pmb_mysql_query($req, $dbh);
+			$query="SHOW TABLES LIKE 'opac_view_notices_".$this->opac_views_list[$i]->id."'";
+			$result = pmb_mysql_query($query);
+			if(pmb_mysql_num_rows($result)) {
+				$req="TRUNCATE TABLE opac_view_notices_".$this->opac_views_list[$i]->id;
+				@pmb_mysql_query($req, $dbh);
+			}
 			if($this->opac_views_list[$i]->query) {
 				$this->search_class->unserialize_search($this->opac_views_list[$i]->query);
 				$table=$this->search_class->make_search() ;
@@ -526,7 +530,7 @@ class opac_view {
 	    		$r.="<input type='hidden' name='".$field_."[]' value='".htmlentities($field[$j],ENT_QUOTES,$charset)."'/>";
 	    	}
 	    	reset($fieldvar);
-	    	while (list($var_name,$var_value)=each($fieldvar)) {
+	    	foreach ($fieldvar as $var_name => $var_value) {
 	    		for ($j=0; $j<count($var_value); $j++) {
 	    			$r.="<input type='hidden' name='".$fieldvar_."[".$var_name."][]' value='".htmlentities($var_value[$j],ENT_QUOTES,$charset)."'/>";
 	    		}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_common_entity_cadre.class.php,v 1.20 2018-06-13 14:13:39 tsamson Exp $
+// $Id: frbr_entity_common_entity_cadre.class.php,v 1.22 2019-09-04 13:20:56 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -58,7 +58,7 @@ class frbr_entity_common_entity_cadre extends frbr_entity_common_entity {
 	protected $datanodes_path;
 	
 	/**
-	 * afficher le template même sans données
+	 * affiche le template même sans données
 	 * @var string
 	 */
 	protected $display_empty_template;
@@ -91,7 +91,7 @@ class frbr_entity_common_entity_cadre extends frbr_entity_common_entity {
 					switch ($ligne->cadre_content_type) {
 						case "view":
 							$this->view = array(
-								'id' => $ligne->id_cadre_content+0,
+							    'id' => (int) $ligne->id_cadre_content,
 								'name' => $ligne->cadre_content_object
 							);
 							break;
@@ -296,8 +296,8 @@ class frbr_entity_common_entity_cadre extends frbr_entity_common_entity {
 				cadre_num_datanode = "'.(isset($this->datanode) ? $this->datanode->get_id() : 0).'",
 				cadre_num_page = "'.(isset($this->page) ? $this->page->get_id() : 0).'",		
 				cadre_visible_in_graph = "'.addslashes($this->visible_in_graph).'",
-				cadre_display_empty_template = "'.addslashes($this->display_empty_template).'",
-				cadre_datanodes_path = "'.(isset($this->datanode) ? $this->datanode->get_path() : 0).'"
+				cadre_datanodes_path = "'.(isset($this->datanode) ? $this->datanode->get_path() : 0).'",
+				cadre_display_empty_template = "'.addslashes($this->display_empty_template).'"
 				'.$where;
 		$result = pmb_mysql_query($query);
 		if($result) {
@@ -410,9 +410,18 @@ class frbr_entity_common_entity_cadre extends frbr_entity_common_entity {
 	public function show_cadre($datanodes_data = array()) {
 		if(isset($this->datanode) && is_object($this->datanode)) {
 			if ($this->view['id'] != 0) {
-				if (isset($datanodes_data[$this->datanode->get_id()]) && count($datanodes_data[$this->datanode->get_id()][0])) {
-					$datanode_datasource_class_name = $this->datanode->get_datasource()['name'];
-					$datasource = new $datanode_datasource_class_name($this->datanode->get_datasource()['id']);
+			    if (!empty($datanodes_data[$this->datanode->get_id()]) && count($datanodes_data[$this->datanode->get_id()][0])) {
+			        //cas particulier des autorites perso
+			        if (strpos($this->datanode->get_datasource()['name'], "authperso")) {
+			            $authperso =  preg_split("#_([\d]+)#", $this->datanode->get_datasource()['name'], 0 ,PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+			            $datasource = new $authperso[0]($this->datanode->get_datasource()['id']);
+			            if (!empty($authperso[1])) {
+			                $datasource->set_authperso_id($authperso[1]);
+			            }
+			        } else {
+			            $datanode_datasource_class_name = $this->datanode->get_datasource()['name'];
+			            $datasource = new $datanode_datasource_class_name($this->datanode->get_datasource()['id']);
+			        }
 					$limit = $datasource->get_parameters()->nb_max_elements;
 					$data = array_slice($datanodes_data[$this->datanode->get_id()][0], 0, $limit);
 					return $this->get_content_cadre($data);

@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: avis.tpl.php,v 1.27 2018-01-25 10:13:28 dgoron Exp $
+// $Id: avis.tpl.php,v 1.28 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
+global $msg, $base_path;
 global $avis_tpl_header;
 global $avis_tpl_post_add;
 global $avis_tpl_post_add_pb;

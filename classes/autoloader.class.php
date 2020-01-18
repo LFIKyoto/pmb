@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: autoloader.class.php,v 1.15 2018-04-18 09:46:50 dgoron Exp $
+// $Id: autoloader.class.php,v 1.17 2019-07-23 09:22:05 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -25,7 +25,7 @@ class autoloader{
 	 * à partir de php 5.3
 	 */
 	public function add_register($type="classic",$first = false){
-		if(substr(phpversion(),2,1) >= 3){
+	    if(PHP_MAJOR_VERSION >= 5 && PHP_MINOR_VERSION >= 3){
 			spl_autoload_register(array($this, $type),true,$first);
 		}else{
 			spl_autoload_register(array($this, $type),true);

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id: search_fields_gestion.xml,v 1.48 2018-12-13 13:23:18 dgoron Exp $ -->
+<!-- $Id: search_fields_gestion.xml,v 1.53 2019-05-22 12:49:36 ngantier Exp $ -->
 
 	<!-- 
 	Copie multi-criteres de gestion utilisée pour le calcul des vues 
@@ -51,13 +51,13 @@
 				<index_i>index_sew</index_i>
 				<id_field>notice_id</id_field>
 			</query>
-			<query for="STARTWITH" regDiacrit="yes" Keep_EmptyWord="yes">
+			<query for="STARTWITH">
 				<main><![CDATA[select distinct notice_id from notices where (tit1 like '!!p!!%') ]]></main>
 			</query>
-			<query for="ENDWITH" regDiacrit="yes" Keep_EmptyWord="yes">
+			<query for="ENDWITH">
 				<main><![CDATA[select distinct notice_id from notices where (tit1 like '%!!p!!') ]]></main>
 			</query>
-			<query for="EXACT" regDiacrit="yes" Keep_EmptyWord="yes">
+			<query for="EXACT">
 				<main><![CDATA[select distinct notice_id from notices where (tit1='!!p!!') ]]></main>
 			</query>
 		</field>
@@ -587,6 +587,14 @@
 				<fulltext>yes</fulltext>
 			</query>
 		</field>
+		<field group="1" title="msg:external_source" id="105">
+			<input type="query_list">
+				<query>select source_id, name from connectors_sources order by name</query>
+			</input>
+			<query for="EQ">
+				<main><![CDATA[select distinct notice_id from notices join notices_externes on notices_externes.num_notice = notices.notice_id join external_count on external_count.recid = notices_externes.recid where external_count.source_id=!!p!!]]></main>
+			</query>
+		</field>
 		<field group="2" title="msg:265" id="7">
 			<input type="text"/>
 			<query for="BOOLEAN" booleanSearch="yes">
@@ -596,13 +604,13 @@
 				<index_i>index_n_gen</index_i>
 				<id_field>notice_id</id_field>
 			</query>
-			<query for="STARTWITH" regDiacrit="yes">
+			<query for="STARTWITH" regDiacrit="yes" Keep_EmptyWord="yes">
 				<main><![CDATA[select distinct notice_id from notices where (n_gen like '!!p!!%')]]></main>
 			</query>
-			<query for="ENDWITH" regDiacrit="yes">
+			<query for="ENDWITH" regDiacrit="yes" Keep_EmptyWord="yes">
 				<main><![CDATA[select distinct notice_id from notices where (n_gen like '%!!p!!')]]></main>
 			</query>
-			<query for="EXACT" regDiacrit="yes">
+			<query for="EXACT" regDiacrit="yes" Keep_EmptyWord="yes">
 				<main><![CDATA[select distinct notice_id from notices where (n_gen like '!!p!!')]]></main>
 			</query>
 			<query for="ISEMPTY" regDiacrit="yes">
@@ -621,13 +629,13 @@
 				<index_i>index_n_contenu</index_i>
 				<id_field>notice_id</id_field>
 			</query>
-			<query for="STARTWITH" regDiacrit="yes">
+			<query for="STARTWITH" regDiacrit="yes" Keep_EmptyWord="yes">
 				<main><![CDATA[select distinct notice_id from notices where (n_contenu like '!!p!!%')]]></main>
 			</query>
-			<query for="ENDWITH" regDiacrit="yes">
+			<query for="ENDWITH" regDiacrit="yes" Keep_EmptyWord="yes">
 				<main><![CDATA[select distinct notice_id from notices where (n_contenu like '%!!p!!')]]></main>
 			</query>
-			<query for="EXACT" regDiacrit="yes">
+			<query for="EXACT" regDiacrit="yes" Keep_EmptyWord="yes">
 				<main><![CDATA[select distinct notice_id from notices where (n_contenu like '!!p!!')]]></main>
 			</query>
 			<query for="ISEMPTY" regDiacrit="yes">
@@ -646,13 +654,13 @@
 				<index_i>index_n_resume</index_i>
 				<id_field>notice_id</id_field>
 			</query>
-			<query for="STARTWITH" regDiacrit="yes">
+			<query for="STARTWITH" regDiacrit="yes" Keep_EmptyWord="yes">
 				<main><![CDATA[select distinct notice_id from notices where (n_resume like '!!p!!%')]]></main>
 			</query>
-			<query for="ENDWITH" regDiacrit="yes">
+			<query for="ENDWITH" regDiacrit="yes" Keep_EmptyWord="yes">
 				<main><![CDATA[select distinct notice_id from notices where (n_resume like '%!!p!!')]]></main>
 			</query>
-			<query for="EXACT" regDiacrit="yes">
+			<query for="EXACT" regDiacrit="yes" Keep_EmptyWord="yes">
 				<main><![CDATA[select distinct notice_id from notices where (n_resume like '!!p!!')]]></main>
 			</query>
 			<query for="ISEMPTY" regDiacrit="yes">
@@ -1002,7 +1010,7 @@
 			<variable name="id_scheme" type="input" comment="Schéma">
 				<default type="var">deflt_concept_scheme</default>
 				<input type="query_list">
-					<query allChoice="yes" titleAllChoice="msg:thes_all">select 0 as id, 'Sans schéma' as lib union SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
+					<query allChoice="yes" titleAllChoice="msg:thes_all">select -1 as id, 'Sans schéma' as lib union SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
 				</input>
 			</variable>
 			<variable name= "operator_between_multiple_authorities" type="input" comment="msg:operator_between_multiple_authorities">
@@ -1022,6 +1030,34 @@
 						<op>or</op>
 					</fieldrestrict>
 				</class>
+			</query>
+			<query for="AUTHORITY">
+				<main><![CDATA[ SELECT DISTINCT num_object AS notice_id FROM index_concept WHERE type_object = 1 AND num_concept = !!p!! 
+				UNION SELECT DISTINCT num_object AS notice_id FROM index_concept JOIN skos_fields_global_index ON authority_num = num_concept WHERE type_object = 1 AND code_champ IN (5,6) AND id_item = !!p!!]]></main>
+			</query>
+		</field>		     
+		<field group="3" title="msg:map_emprise" id="1004">
+			<var name="pmb_map_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type="map"/>
+			<query for="CONTAINS">
+				<main>select distinct num_object as notice_id from index_concept left join map_emprises on map_emprise_type = 10 and contains(geomfromtext('!!p!!'),map_emprise_data) = 1 where type_object = 1 and map_emprise_obj_num = num_concept</main>
+			</query>
+			<query for="AERASUP">
+				<main>select distinct num_object as notice_id from index_concept left join map_emprises on map_emprise_type = 10 and Area((map_emprise_data)) &gt; Area(geomfromtext('!!p!!')) where type_object = 1 and map_emprise_obj_num = num_concept</main>
+			</query>
+			<query for="AERAINF">
+				<main>select distinct num_object as notice_id from index_concept left join map_emprises on map_emprise_type = 10 and Area((map_emprise_data)) &lt; Area(geomfromtext('!!p!!')) where type_object = 1 and map_emprise_obj_num = num_concept</main>
+			</query>
+			<query for="INTERSECTS">
+				<main>select distinct num_object as notice_id from index_concept left join map_emprises on map_emprise_type = 10 and intersects(geomfromtext('!!p!!'),map_emprise_data) = 1 where type_object = 1 and map_emprise_obj_num = num_concept</main>
+			</query>
+			<query for="ISEMPTY">
+				<main>select distinct num_object as notice_id from index_concept where type_object = 1 and num_concept not in (select distinct map_emprise_obj_num from map_emprises where map_emprise_type=10)</main>
+			</query>
+			<query for="ISNOTEMPTY">
+				<main>select distinct num_object as notice_id from index_concept where type_object = 1 and num_concept in (select distinct map_emprise_obj_num from map_emprises where map_emprise_type=10)</main>
 			</query>
 		</field>
 		<field group="3" title="msg:indexint_menu_title" id="12">
@@ -1207,6 +1243,24 @@
 				<main><![CDATA[SELECT distinct notice_id from notices where 
 				if('!!p!!', create_date>='!!p!!', 1) and if('!!p1!!', create_date<='!!p1!! 23:59:59', 1)]]></main>
 			</query>
+			<query for="LESS_THAN_DAYS">
+				<main><![CDATA[SELECT distinct notice_id from notices where create_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+			</query>
+			<query for="MORE_THAN_DAYS">
+				<main><![CDATA[SELECT distinct notice_id from notices where create_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+			</query>
+			<query for="THIS_WEEK">
+				<main><![CDATA[SELECT distinct notice_id from notices where WEEK(create_date,1) = WEEK(NOW()) AND YEAR(create_date) = YEAR(NOW())]]></main>
+			</query>
+			<query for="THIS_MONTH">
+				<main><![CDATA[SELECT distinct notice_id from notices where MONTH(create_date) = MONTH(NOW()) AND YEAR(create_date) = YEAR(NOW())]]></main>
+			</query>
+			<query for="LAST_MONTH">
+				<main><![CDATA[SELECT distinct notice_id from notices where PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(create_date, '%Y%m')) = 1]]></main>
+			</query>
+			<query for="THIS_YEAR">
+				<main><![CDATA[SELECT distinct notice_id from notices where YEAR(create_date) = YEAR(NOW())]]></main>
+			</query>		
 		</field>
 		<field group="5" title="msg:date_update_query" id="67">
 			<input type='date' placeholder='msg:format_date_input_placeholder'/>
@@ -1228,6 +1282,24 @@
 			<query for="BETWEEN" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[SELECT distinct notice_id from notices where 
 				if('!!p!!', update_date>='!!p!!', 1) and if('!!p1!!', update_date<='!!p1!! 23:59:59', 1)]]></main>
+			</query>
+			<query for="LESS_THAN_DAYS">
+				<main><![CDATA[SELECT distinct notice_id from notices where update_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+			</query>
+			<query for="MORE_THAN_DAYS">
+				<main><![CDATA[SELECT distinct notice_id from notices where update_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+			</query>
+			<query for="THIS_WEEK">
+				<main><![CDATA[SELECT distinct notice_id from notices where WEEK(update_date,1) = WEEK(NOW()) AND YEAR(update_date) = YEAR(NOW())]]></main>
+			</query>
+			<query for="THIS_MONTH">
+				<main><![CDATA[SELECT distinct notice_id from notices where MONTH(update_date) = MONTH(NOW()) AND YEAR(update_date) = YEAR(NOW())]]></main>
+			</query>
+			<query for="LAST_MONTH">
+				<main><![CDATA[SELECT distinct notice_id from notices where PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(update_date, '%Y%m')) = 1]]></main>
+			</query>
+			<query for="THIS_YEAR">
+				<main><![CDATA[SELECT distinct notice_id from notices where YEAR(update_date) = YEAR(NOW())]]></main>
 			</query>
 		</field>
 		<field group="5" title="msg:print_numeric_ex_title" id="44">
@@ -1334,6 +1406,17 @@
 				<main><![CDATA[select distinct notice_id from notices where notice_is_new = '!!p!!']]></main>
 			</query>
 		</field>
+		<field group="5" title="msg:notice_is_numeric_search" id="102">
+			<input type="list">
+				<options>
+					<option value="0">msg:39</option>
+					<option value="1">msg:40</option>										
+				</options>	
+			</input>
+			<query for="EQ" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from notices where is_numeric = '!!p!!']]></main>
+			</query>
+		</field>
 		<field group="5" title="msg:search_record_creator" id="92">
 			<var name="pmb_type_audit" visibility="yes">
 				<value visibility="no">0</value>
@@ -1343,6 +1426,43 @@
 			</input>
 			<query for="EQ">
 				<main><![CDATA[SELECT DISTINCT notice_id FROM notices JOIN audit ON object_id = notice_id AND type_obj=1 AND type_modif=1 WHERE user_id=!!p!!]]></main>
+			</query>
+		</field>
+		<field group="5" title="msg:search_record_modifier" id="104">
+			<var name="pmb_type_audit" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type="query_list">
+				<query>select distinct userid, CONCAT(nom, ' ', prenom,' (',username,')') from users order by 1</query>
+			</input>
+			<query for="EQ">
+				<main><![CDATA[SELECT DISTINCT notice_id 
+				FROM notices 
+				JOIN audit A ON object_id = notice_id 
+				AND type_obj=1 
+				AND type_modif=2 
+				WHERE user_id=!!p!! 
+				AND quand IN (
+					SELECT MAX(quand) FROM audit WHERE type_obj=1 AND type_modif=2 AND object_id = A.object_id
+				)]]></main>
+			</query>
+		</field>
+		<field group="5" title="msg:search_record_contributor" id="98">
+			<var name="pmb_type_audit" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type="query_list">
+				<query>select distinct user_id,  concat(empr_prenom, ' ', empr_nom) as prenom_nom from audit 
+				 join empr on user_id = id_empr and type_user = 1 where type_obj = 1 order by 2</query>
+			</input>
+			<query for="EQ">
+				<main><![CDATA[SELECT DISTINCT notice_id FROM notices JOIN audit ON object_id = notice_id AND type_obj=1 AND type_modif=1 AND type_user=1 WHERE user_id=!!p!!]]></main>
+			</query>
+		</field>
+		<field group="5" title="msg:search_extended_record_id" id="106">
+			<input type="text" />
+			<query for="EQ">
+				<main><![CDATA[SELECT DISTINCT notice_id FROM notices WHERE notice_id  IN (!!p!!)]]></main>
 			</query>
 		</field>
 		<field group="6" title="msg:map_echelle" id="74">
@@ -1845,6 +1965,36 @@
 				UNION (SELECT notices.notice_id FROM exemplaires JOIN bulletins ON (expl_bulletin=bulletins.bulletin_id AND expl_bulletin!=0) JOIN notices ON (bulletins.num_notice=notices.notice_id AND bulletins.num_notice!=0) 
 				WHERE expl_cb like '%!!p!!' GROUP BY notice_id)) AS sub1]]></main>
 			</query>
+			<query for="EXACT">
+				<main><![CDATA[SELECT distinct notice_id FROM ((SELECT notice_id FROM notices JOIN exemplaires ON ( notice_id = expl_notice )
+				WHERE expl_cb like '!!p!!' GROUP BY notice_id) 
+				UNION (SELECT notice_id FROM notices JOIN bulletins ON bulletin_notice = notice_id JOIN exemplaires ON expl_bulletin = bulletin_id 
+				WHERE expl_cb like '!!p!!' GROUP BY notice_id) 
+				UNION (SELECT analysis_notice AS notice_id FROM exemplaires JOIN analysis ON (expl_bulletin = analysis_bulletin AND expl_bulletin !=0) 
+				WHERE expl_cb like '!!p!!' GROUP BY notice_id) 
+				UNION (SELECT notices.notice_id FROM exemplaires JOIN bulletins ON (expl_bulletin=bulletins.bulletin_id AND expl_bulletin!=0) JOIN notices ON (bulletins.num_notice=notices.notice_id AND bulletins.num_notice!=0) 
+				WHERE expl_cb like '!!p!!' GROUP BY notice_id)) AS sub1]]></main>
+			</query>
+			<query for="ISEMPTY">
+				<main><![CDATA[SELECT distinct notice_id FROM ((SELECT notice_id FROM notices JOIN exemplaires ON ( notice_id = expl_notice )
+				WHERE expl_cb like '' GROUP BY notice_id) 
+				UNION (SELECT notice_id FROM notices JOIN bulletins ON bulletin_notice = notice_id JOIN exemplaires ON expl_bulletin = bulletin_id 
+				WHERE expl_cb like '' GROUP BY notice_id) 
+				UNION (SELECT analysis_notice AS notice_id FROM exemplaires JOIN analysis ON (expl_bulletin = analysis_bulletin AND expl_bulletin !=0) 
+				WHERE expl_cb like '' GROUP BY notice_id) 
+				UNION (SELECT notices.notice_id FROM exemplaires JOIN bulletins ON (expl_bulletin=bulletins.bulletin_id AND expl_bulletin!=0) JOIN notices ON (bulletins.num_notice=notices.notice_id AND bulletins.num_notice!=0) 
+				WHERE expl_cb like '' GROUP BY notice_id)) AS sub1]]></main>
+			</query>
+			<query for="ISNOTEMPTY">
+				<main><![CDATA[SELECT distinct notice_id FROM ((SELECT notice_id FROM notices JOIN exemplaires ON ( notice_id = expl_notice )
+				WHERE expl_cb not like '' GROUP BY notice_id) 
+				UNION (SELECT notice_id FROM notices JOIN bulletins ON bulletin_notice = notice_id JOIN exemplaires ON expl_bulletin = bulletin_id 
+				WHERE expl_cb not like '' GROUP BY notice_id) 
+				UNION (SELECT analysis_notice AS notice_id FROM exemplaires JOIN analysis ON (expl_bulletin = analysis_bulletin AND expl_bulletin !=0) 
+				WHERE expl_cb not like '' GROUP BY notice_id) 
+				UNION (SELECT notices.notice_id FROM exemplaires JOIN bulletins ON (expl_bulletin=bulletins.bulletin_id AND expl_bulletin!=0) JOIN notices ON (bulletins.num_notice=notices.notice_id AND bulletins.num_notice!=0) 
+				WHERE expl_cb not like '' GROUP BY notice_id)) AS sub1]]></main>
+			</query>
 		</field>
 		<field group="9" title="msg:297" id="30">
 			<input type="query_list">
@@ -1942,6 +2092,26 @@
 				<multipleTerm>expl_note like '%!!p!!%'</multipleTerm>
 				<multipleOperator>and</multipleOperator>
 			</query>
+			<query for="ISEMPTY" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id FROM ((SELECT notice_id FROM notices JOIN exemplaires ON ( notice_id = expl_notice )
+				WHERE expl_note like '' GROUP BY notice_id) 
+				UNION (SELECT notice_id FROM notices JOIN bulletins ON bulletin_notice = notice_id JOIN exemplaires ON expl_bulletin = bulletin_id 
+				WHERE expl_note like '' GROUP BY notice_id) 
+				UNION (SELECT analysis_notice AS notice_id FROM exemplaires JOIN analysis ON (expl_bulletin = analysis_bulletin AND expl_bulletin !=0) 
+				WHERE expl_note like '' GROUP BY notice_id) 
+				UNION (SELECT notices.notice_id FROM exemplaires JOIN bulletins ON (expl_bulletin=bulletins.bulletin_id AND expl_bulletin!=0) JOIN notices ON (bulletins.num_notice=notices.notice_id AND bulletins.num_notice!=0) 
+				WHERE expl_note like '' GROUP BY notice_id)) AS sub1]]></main>
+			</query>
+			<query for="ISNOTEMPTY" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id FROM ((SELECT notice_id FROM notices JOIN exemplaires ON ( notice_id = expl_notice )
+				WHERE expl_note not like '' GROUP BY notice_id) 
+				UNION (SELECT notice_id FROM notices JOIN bulletins ON bulletin_notice = notice_id JOIN exemplaires ON expl_bulletin = bulletin_id 
+				WHERE expl_note not like '' GROUP BY notice_id) 
+				UNION (SELECT analysis_notice AS notice_id FROM exemplaires JOIN analysis ON (expl_bulletin = analysis_bulletin AND expl_bulletin !=0) 
+				WHERE expl_note not like '' GROUP BY notice_id) 
+				UNION (SELECT notices.notice_id FROM exemplaires JOIN bulletins ON (expl_bulletin=bulletins.bulletin_id AND expl_bulletin!=0) JOIN notices ON (bulletins.num_notice=notices.notice_id AND bulletins.num_notice!=0) 
+				WHERE expl_note not like '' GROUP BY notice_id)) AS sub1]]></main>
+			</query>
 		</field>
 		<field group="9" title="msg:expl_zone_comment" id="53">
 			<input type='text'/>
@@ -2008,6 +2178,26 @@
 				WHERE !!multiple_term!! GROUP BY notice_id)) AS sub1]]></main>
 				<multipleTerm>expl_comment like '%!!p!!%'</multipleTerm>
 				<multipleOperator>and</multipleOperator>
+			</query>
+			<query for="ISEMPTY" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id FROM ((SELECT notice_id FROM notices JOIN exemplaires ON ( notice_id = expl_notice )
+				WHERE expl_comment like '' GROUP BY notice_id) 
+				UNION (SELECT notice_id FROM notices JOIN bulletins ON bulletin_notice = notice_id JOIN exemplaires ON expl_bulletin = bulletin_id 
+				WHERE expl_comment like '' GROUP BY notice_id) 
+				UNION (SELECT analysis_notice AS notice_id FROM exemplaires JOIN analysis ON (expl_bulletin = analysis_bulletin AND expl_bulletin !=0) 
+				WHERE expl_comment like '' GROUP BY notice_id) 
+				UNION (SELECT notices.notice_id FROM exemplaires JOIN bulletins ON (expl_bulletin=bulletins.bulletin_id AND expl_bulletin!=0) JOIN notices ON (bulletins.num_notice=notices.notice_id AND bulletins.num_notice!=0) 
+				WHERE expl_comment like '' GROUP BY notice_id)) AS sub1]]></main>
+			</query>
+			<query for="ISNOTEMPTY" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id FROM ((SELECT notice_id FROM notices JOIN exemplaires ON ( notice_id = expl_notice )
+				WHERE expl_comment not like '' GROUP BY notice_id) 
+				UNION (SELECT notice_id FROM notices JOIN bulletins ON bulletin_notice = notice_id JOIN exemplaires ON expl_bulletin = bulletin_id 
+				WHERE expl_comment not like '' GROUP BY notice_id) 
+				UNION (SELECT analysis_notice AS notice_id FROM exemplaires JOIN analysis ON (expl_bulletin = analysis_bulletin AND expl_bulletin !=0) 
+				WHERE expl_comment not like '' GROUP BY notice_id) 
+				UNION (SELECT notices.notice_id FROM exemplaires JOIN bulletins ON (expl_bulletin=bulletins.bulletin_id AND expl_bulletin!=0) JOIN notices ON (bulletins.num_notice=notices.notice_id AND bulletins.num_notice!=0) 
+				WHERE expl_comment not like '' GROUP BY notice_id)) AS sub1]]></main>
 			</query>
 		</field>
 		<field group="9" title="msg:date_creation_query" id="50">
@@ -2323,11 +2513,44 @@
 				union (select distinct notice_id from bulletins join notices notb on num_notice=notb.notice_id where 
 				if('!!p!!', date_date >= '!!p!!', 1) and if('!!p1!!', date_date <= '!!p1!!', 1))]]></main>
 			</query>
+			<query for="ISEMPTY">
+				<main><![CDATA[(SELECT DISTINCT notice_id 
+				FROM bulletins 
+				JOIN analysis ON analysis_bulletin=bulletin_id 
+				JOIN notices nota ON analysis_notice=nota.notice_id 
+				WHERE date_date='0000-00-00') 
+				UNION 
+				(SELECT DISTINCT notice_id 
+				FROM bulletins 
+				JOIN notices notb ON num_notice=notb.notice_id 
+				WHERE date_date='0000-00-00')]]></main>
+			</query>
+			<query for="ISNOTEMPTY">
+				<main><![CDATA[(SELECT DISTINCT notice_id 
+				FROM bulletins 
+				JOIN analysis ON analysis_bulletin=bulletin_id 
+				JOIN notices nota ON analysis_notice=nota.notice_id 
+				WHERE date_date !='0000-00-00') 
+				UNION 
+				(SELECT DISTINCT notice_id 
+				FROM bulletins 
+				JOIN notices notb ON num_notice=notb.notice_id 
+				WHERE date_date !='0000-00-00')]]></main>
+			</query>	
 		</field>
 		<field group="10" title="msg:titre_perio_query" id="34">
-			<input type="query_list">
+			<input type="query_list" completion="yes">
 				<query>select notice_id, tit1 from notices, notice_statut where statut=id_notice_statut and niveau_biblio='s' and notice_visible_gestion=1 order by tit1, index_sew</query>
 			</input>
+			<variable name= "operator_between_multiple_authorities" type="input" comment="msg:operator_between_multiple_selection">
+				<default type="value">or</default>
+				<input type="radio">
+					<options>
+						<label value="or">msg:operator_between_multiple_selection_or</label>
+						<label value="and">msg:operator_between_multiple_selection_and</label>
+					</options>
+				</input>
+			</variable>
 			<query for="EQ">
 				<main><![CDATA[(select distinct notice_id from notices where niveau_biblio='s' and notice_id = !!p!!) union (select distinct notice_id from notices, bulletins where bulletin_notice in (!!p!!) and num_notice = notice_id) union (select distinct notice_id from notices, analysis, bulletins where bulletin_notice in (!!p!!) and analysis_bulletin=bulletin_id and analysis_notice=notice_id)]]></main>
 			</query>
@@ -2340,6 +2563,42 @@
 					) as sub)
 				]]></main>
 			</query>
+			<query for="ISEMPTY">
+				<main><![CDATA[SELECT DISTINCT notice_id 
+					FROM notices 
+					WHERE notice_id IN (
+  						SELECT notice_id FROM (
+							(SELECT notice_id FROM notices WHERE niveau_biblio='s' AND index_sew LIKE '')
+							union 
+							(SELECT num_notice AS notice_id FROM bulletins WHERE num_notice <> 0 AND bulletin_notice IN 
+								(SELECT notice_id FROM notices WHERE niveau_biblio='s' AND index_sew like '')
+							)
+							union 
+							(SELECT analysis_notice AS notice_id FROM analysis, bulletins WHERE bulletin_notice IN 
+								(SELECT notice_id FROM notices WHERE niveau_biblio='s' AND index_sew like '') 
+							AND analysis_bulletin=bulletin_id)
+						) AS sub
+					) 
+					ORDER BY index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISNOTEMPTY">
+				<main><![CDATA[SELECT DISTINCT notice_id 
+					FROM notices 
+					WHERE notice_id IN (
+  						SELECT notice_id FROM (
+							(SELECT notice_id FROM notices WHERE niveau_biblio='s' AND index_sew NOT LIKE '')
+							union 
+							(SELECT num_notice AS notice_id FROM bulletins WHERE num_notice <> 0 AND bulletin_notice IN 
+								(SELECT notice_id FROM notices WHERE niveau_biblio='s' AND index_sew NOT like '')
+							)
+							union 
+							(SELECT analysis_notice AS notice_id FROM analysis, bulletins WHERE bulletin_notice IN 
+								(SELECT notice_id FROM notices WHERE niveau_biblio='s' AND index_sew NOT like '') 
+							AND analysis_bulletin=bulletin_id)
+						) AS sub
+					) 
+					ORDER BY index_serie, tnvol, index_sew]]></main>
+			</query>
 		</field>
 		<field group="10" title="msg:num_bull_query" id="35">
 			<input type="text"/>
@@ -2348,7 +2607,7 @@
   					select notice_id from (
 					(select notice_id from bulletins join notices on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero like '%!!p!!%')
 					union (select num_notice as notice_id from bulletins where num_notice <> 0 and bulletin_numero like '%!!p!!%')
-					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero like '%!!p!!%') and analysis_bulletin=bulletin_id)
+					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s') and bulletin_numero like '%!!p!!%' and analysis_bulletin=bulletin_id)
 					) as sub) order by index_serie, tnvol, index_sew
 				]]></main>
 			</query>
@@ -2357,7 +2616,7 @@
   					select notice_id from (
 					(select notice_id from bulletins join notices on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero like '')
 					union (select num_notice as notice_id from bulletins where num_notice <> 0 and bulletin_numero like '')
-					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero like '') and analysis_bulletin=bulletin_id)
+					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s') and bulletin_numero like '' and analysis_bulletin=bulletin_id)
 					) as sub) order by index_serie, tnvol, index_sew
 				]]></main>
 			</query>
@@ -2366,7 +2625,7 @@
   					select notice_id from (
 					(select notice_id from bulletins join notices on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero not like '')
 					union (select num_notice as notice_id from bulletins where num_notice <> 0 and bulletin_numero not like '')
-					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero not like '') and analysis_bulletin=bulletin_id)
+					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s') and bulletin_numero not like '' and analysis_bulletin=bulletin_id)
 					) as sub) order by index_serie, tnvol, index_sew
 				]]></main>
 			</query>
@@ -3364,6 +3623,37 @@
 				<main><![CDATA[SELECT distinct ntu_num_notice as notice_id from notices_titres_uniformes join titres_uniformes on tu_id = ntu_num_tu join index_concept on index_concept.num_object = titres_uniformes.tu_id and index_concept.type_object = 8 join skos_fields_global_index on index_concept.num_concept = skos_fields_global_index.id_item and skos_fields_global_index.code_champ = 1 where id_item in (select id_item from skos_fields_global_index where code_champ = 4 and authority_num IN (!!id_scheme!!))]]></main>
 			</query>
 		</field>
+		<field group="13" title="msg:search_extended_titre_uniforme_concepts_autopostage" id="7029">
+			<var name="thesaurus_concepts_autopostage" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type="authoritie" ajax="onto" selector="ontology" p1="param1" p2="param2" />
+			<variable name="deflt_concept_scheme" type="global"/>
+			<variable name="id_scheme" type="input" comment="Schéma">
+				<default type="var">deflt_concept_scheme</default>
+				<input type="query_list">
+					<query allChoice="yes" titleAllChoice="msg:thes_all">select 0 as id, 'Sans schéma' as lib union SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
+				</input>
+			</variable>
+			<variable name= "operator_between_multiple_authorities" type="input" comment="msg:operator_between_multiple_authorities">
+				<default type="value">or</default>
+				<input type="radio">
+					<options>
+						<label value="or">msg:operator_between_multiple_authorities_or</label>
+						<label value="and">msg:operator_between_multiple_authorities_and</label>
+					</options>
+				</input>
+			</variable>
+			<query for="BOOLEAN" wordSearch="yes">
+				<class type="records" mode="titres_uniformes">
+					<fieldrestrict>
+						<field>code_champ</field>
+						<values>129</values>
+						<op>or</op>
+					</fieldrestrict>
+				</class>
+			</query>
+		</field>
 		<field group="13" title="msg:search_extended_titre_uniforme_completude" id="7026" >
 			<var name="pmb_use_uniform_title" visibility="yes">
 				<value visibility="no">0</value>
@@ -3603,6 +3893,24 @@
 				</query>
 				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date>='!!p!!']]></main>
+				</query>
+				<query for="LESS_THAN_DAYS">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="MORE_THAN_DAYS">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="THIS_WEEK">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and WEEK(notices_custom_date,1) = WEEK(NOW()) and YEAR(notices_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="THIS_MONTH">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and MONTH(notices_custom_date) = MONTH(NOW()) and YEAR(notices_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="LAST_MONTH">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(notices_custom_date, '%Y%m')) = 1]]></main>
+				</query>
+				<query for="THIS_YEAR">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and YEAR(notices_custom_date) = YEAR(NOW())]]></main>
 				</query>
 				<query for="ISEMPTY">
 					<main><![CDATA[select distinct notice_id from notices left join notices_custom_values on notices_custom_origine=notice_id and notices_custom_champ=!!field!! where (notices_custom_date='' or notices_custom_date='0000-00-00' or notices_custom_date is null)]]></main>
@@ -4329,6 +4637,11 @@
 	<specialFields>
 		<field group="1001" type="combine" title="msg:histo_title" id="1"/>
 		<field type="openurl" title="msg:special_search_openurl" id="2" delnotallowed="yes" opacVisibility="no" visible="no"/>
+		<field type="facette" title="msg:search_facette" id="3" opacVisibility="no" visible="no"/>
+		<field type="simple_search" title="msg:search_persopac_table_humanquery" id="4" opacVisibility="no" visible="no"/>
+		<field group="1001" type="last_import_isbn_doublons" title="msg:last_import_isbn_doublons" id="5" opacVisibility="no"/>
+		<field type="combine_extended_search" title="msg:combine_extended_search" id="11" opacVisibility="no"/>
+		<field type="map_circle" group="6" title="msg:search_extended_map_circle" id="104" />		
 	</specialFields>
 	
 	<operators>
@@ -4351,7 +4664,14 @@
 		<operator name="AERAINF">msg:map_multisearch_aerainf</operator>
 		<operator name="INTERSECTS">msg:map_multisearch_intersects</operator>
 		<operator name="BETWEEN">msg:search_between_query</operator>
-		<operator name="NEAR">msg:parperso_option_duration_type0</operator>		
+		<operator name="NEAR">msg:parperso_option_duration_type0</operator>
+		<operator name="LESS_THAN_DAYS">msg:less_than_days_query</operator>
+		<operator name="MORE_THAN_DAYS">msg:more_than_days_query</operator>
+		<operator name="THIS_WEEK" emptyAllowed="yes">msg:this_week_query</operator>
+		<operator name="LAST_WEEK" emptyAllowed="yes">msg:last_week_query</operator>
+		<operator name="THIS_MONTH" emptyAllowed="yes">msg:this_month_query</operator>
+		<operator name="LAST_MONTH" emptyAllowed="yes">msg:last_month_query</operator>
+		<operator name="THIS_YEAR" emptyAllowed="yes">msg:this_year_query</operator>
 	</operators>
 	
 	<!-- Les groupes sont associés aux champs (fields) et permettent d'amener une notion de classement -->

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions_map.class.php,v 1.28 2017-11-23 16:00:31 ngantier Exp $
+// $Id: suggestions_map.class.php,v 1.29 2019-07-24 09:08:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -238,7 +238,7 @@ class suggestions_map {
 
 
 	//Construction du sélecteur en fonction de la liste des états possibles
-	public function getStateSelector() {
+	public function getStateSelector($selected=0) {
 		
 		global $msg, $charset;
 			
@@ -247,7 +247,7 @@ class suggestions_map {
 		
 		foreach ($this->states as $name=>$content) {
 			if ($this->getState_DISPLAY($name) != 'NO') {
-				$selector.= "<option value='".$this->getState_ID($name)."'>";
+			    $selector.= "<option value='".$this->getState_ID($name)."' ".($this->getState_ID($name) == $selected ? "selected='selected'" : "").">";
 				$selector.= htmlentities($msg[$this->getState_COMMENT($name)], ENT_QUOTES, $charset);
 				$selector.= "</option>";
 			}

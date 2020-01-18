@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pointage_exemplarise.php,v 1.2 2018-10-03 12:45:49 ngantier Exp $
+// $Id: pointage_exemplarise.php,v 1.3 2019-02-04 14:40:42 dgoron Exp $
 
 // définition du minimum nécéssaire
 $base_path=".";                            
@@ -319,7 +319,8 @@ if(($act=='update') ) {
 			$value['tit1'] = $value["bul_no"].($value["bul_date"]?" - ".$value["bul_date"]:"").($bul_titre?" - ".$bul_titre:"");
 			$value['typdoc']=$xmlta_doctype_bulletin;
 			$value['statut']=$deflt_notice_statut;
-		
+			$value['notice_is_new']=$deflt_notice_is_new;
+			
 			if($value['date_date'] == '0000-00-00' || !isset($value['bul_date'])) $value['year'] = "";
 			else $value['year'] = substr($value['date_date'],0,4);
 		

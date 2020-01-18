@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: clean_expl.inc.php,v 1.20 2017-11-22 11:07:33 dgoron Exp $
+// $Id: clean_expl.inc.php,v 1.21 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -29,7 +29,7 @@ $query = pmb_mysql_query("delete notices
 $affected = pmb_mysql_affected_rows();
  
 $spec = $spec - CLEAN_NOTICES;
-$v_state .= "<br /><img src='".get_url_icon('d.gif')."' hspace=3>".htmlentities($msg[nettoyage_suppr_notices], ENT_QUOTES, $charset);
+$v_state .= "<br /><img src='".get_url_icon('d.gif')."' hspace=3>".htmlentities($msg['nettoyage_suppr_notices'], ENT_QUOTES, $charset);
 $v_state .= $affected." ".htmlentities($msg["nettoyage_res_suppr_notices"], ENT_QUOTES, $charset);
 $opt = pmb_mysql_query('OPTIMIZE TABLE notices');
 // mise à jour de l'affichage de la jauge

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: edition_func.inc.php,v 1.12 2018-03-22 16:09:14 dgoron Exp $
+// $Id: edition_func.inc.php,v 1.13 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -60,7 +60,7 @@ switch($dest) {
 		
 	// boucle de parcours des exemplaires trouvés
 	$entete=0;
-	while(list($cle, $empr) = each($liste)) {
+	foreach ($liste as $cle => $empr) {
 		$rqt_tout = "select id_empr,empr_cb,empr_nom,empr_prenom,empr_adr1,empr_adr2,empr_cp,empr_ville,empr_pays,empr_mail,empr_tel1,empr_tel2,empr_prof,empr_year,";
 		$rqt_tout .=" empr_categ.libelle as categ,";
 		$rqt_tout .=" empr_codestat.libelle as code_stat,statut_libelle,location_libelle,type_abt_libelle,";

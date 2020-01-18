@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authperso_notice.class.php,v 1.32 2018-03-19 14:26:17 arenou Exp $
+// $Id: authperso_notice.class.php,v 1.34 2019-03-28 21:47:25 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -191,6 +191,8 @@ class authperso_notice {
 	        authperso.appendChild(space);
 	        authperso.appendChild(del_f_authperso);
 	        authperso.appendChild(f_authperso_id);
+			var addButton = document.getElementById('button_add_field_authperso_' + authperso_id);
+			if (addButton) authperso.appendChild(addButton);
 	
 	        template.appendChild(authperso);
 	
@@ -295,6 +297,7 @@ class authperso_notice {
 				        <input type='text' class='saisie-80emr' id='f_authperso_!!authperso_id!!_!!iauthperso!!' name='f_authperso_!!authperso_id!!_!!iauthperso!!' data-form-name='f_authperso_!!authperso_id!!_' completion='authperso_!!authperso_id!!' value=\"!!authperso_libelle!!\" autfield=\"f_authperso_id_!!authperso_id!!_!!iauthperso!!\" />
 				        <input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.f_authperso_!!authperso_id!!_!!iauthperso!!.value=''; this.form.f_authperso_id_!!authperso_id!!_!!iauthperso!!.value='0'; \" />
 				       	<input type='hidden' name='f_authperso_id_!!authperso_id!!_!!iauthperso!!' data-form-name='f_authperso_id_!!authperso_id!!_' id='f_authperso_id_!!authperso_id!!_!!iauthperso!!' value='!!auth_id!!' />       
+						!!button_add_field_authperso!!
 					</div>	
 		";				
 		$onglet_used=array();
@@ -304,6 +307,7 @@ class authperso_notice {
 		$this->onglets_info=$authpersos->get_onglet_list();
 		foreach($this->onglets_info as $onglet_num => $onglet){	
 			$onglet_contens="";
+			$last_elt = count($onglet) - 1;
 			foreach($onglet as $elt){
 				// Pour chaque type d'autorité dans l'onglet
 				//printr($elt);
@@ -311,23 +315,30 @@ class authperso_notice {
 				$iauthperso=0;
 				$auth_list_tpl="";
 				$tab_authperso_order=array();
+				
 				if(!isset($this->onglets_auth_list[$onglet_num][$elt['id']]) || !count($this->onglets_auth_list[$onglet_num][$elt['id']])){
 					// pas d'autorité					
 					$auth_list_tpl=$authperso_notice_elt_tpl_num;	
 					$auth_list_tpl=str_replace('!!authperso_libelle!!',"", $auth_list_tpl);		
 					$auth_list_tpl=str_replace('!!iauthperso!!',$iauthperso, $auth_list_tpl);	
 					$auth_list_tpl=str_replace('!!auth_id!!',"", $auth_list_tpl);
+					$button_add_field_authperso = "<input id='button_add_field_authperso_".$elt['id']."' type='button' class='bouton' value='+' onClick=\"add_authperso('".$elt['id']."');\"/>";
+					$auth_list_tpl=str_replace('!!button_add_field_authperso!!',$button_add_field_authperso, $auth_list_tpl);
 					$max_authperso=1;
 					$tab_authperso_order[]="authperso_".$elt['id']."_0";
 				}else{
 					foreach ($this->onglets_auth_list[$onglet_num][$elt['id']] as $auth_id =>$auth){	
 						// Pour chaque autorité	répétée	
-						$auth_tpl=$authperso_notice_elt_tpl_num;						
-						
-						$auth_tpl=str_replace('!!authperso_libelle!!',$auth['isbd'], $auth_tpl);
+						$auth_tpl=$authperso_notice_elt_tpl_num;
+						$auth_tpl=str_replace('!!authperso_libelle!!',strip_tags($auth['isbd']), $auth_tpl);
 						$auth_tpl=str_replace('!!iauthperso!!',$iauthperso, $auth_tpl);
 						$auth_tpl=str_replace('!!auth_id!!',$auth_id, $auth_tpl);		
+						$button_add_field_authperso = '';
+						if ($auth_id == end($this->onglets_auth_list[$onglet_num][$elt['id']])['id']) {
+							$button_add_field_authperso = "<input id='button_add_field_authperso_".$elt['id']."' type='button' class='bouton' value='+' onClick=\"add_authperso('".$elt['id']."');\"/>";
+						}
 						
+						$auth_tpl=str_replace('!!button_add_field_authperso!!',$button_add_field_authperso, $auth_tpl);
 						$auth_list_tpl.=$auth_tpl;
 						$tab_authperso_order[]="authperso_".$elt['id']."_".$iauthperso;
 						$iauthperso++;

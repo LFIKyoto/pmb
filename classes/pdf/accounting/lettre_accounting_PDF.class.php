@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lettre_accounting_PDF.class.php,v 1.1 2018-08-07 12:42:34 dgoron Exp $
+// $Id: lettre_accounting_PDF.class.php,v 1.6.2.1 2019-10-31 14:40:53 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
+global $class_path;
 require_once($class_path."/pdf/lettre_PDF.class.php");
 require_once("$class_path/entites.class.php");
 require_once("$class_path/coordonnees.class.php");
@@ -55,6 +56,7 @@ class lettre_accounting_PDF extends lettre_PDF {
 	public $fs_adr_fou = 14;			//Police adr fournisseur
 	public $text_adr_fou = '';		
 	public $x_num = 10;				//Distance num acte / bord gauche de page
+	public $w_num = 0;
 	public $y_num = 110;				//Distance num acte / bord haut de page
 	public $l_num = 0;					//Largeur num acte
 	public $h_num = 10;				//Hauteur num acte
@@ -138,6 +140,20 @@ class lettre_accounting_PDF extends lettre_PDF {
 		else $this->PDF->fs_footer=$this->fs_footer;
 	}
 	
+	protected function _init_PDF() {
+		if($this->get_parameter_value('orient_page')) {
+			$this->orient_page = $this->get_parameter_value('orient_page');
+		} else {
+			$this->orient_page = 'P';
+		}
+	
+		$format_page = explode('x',$this->get_parameter_value('format_page'));
+		if(!empty($format_page[0])) $this->largeur_page = $format_page[0];
+		if(!empty($format_page[1])) $this->hauteur_page = $format_page[1];
+	
+		$this->PDF = pdf_factory::make($this->orient_page, $this->unit, array($this->largeur_page, $this->hauteur_page));
+	}
+	
 	protected function _init_pos_logo() {
 		$pos_logo = explode(',', $this->get_parameter_value('pos_logo'));
 		$this->_init_position('logo', $pos_logo);
@@ -178,6 +194,8 @@ class lettre_accounting_PDF extends lettre_PDF {
 	
 	protected function _init_pos_sign() {
 		$pos_sign = explode(',', $this->get_parameter_value('pos_sign'));
+		//Insertion de la valeur 0 pour la position Y inexistante dans le paramétrage
+		array_splice($pos_sign, 1, 0, array('0'));
 		$this->_init_position('sign', $pos_sign);
 	}
 	
@@ -204,16 +222,16 @@ class lettre_accounting_PDF extends lettre_PDF {
 		$coord = $this->get_coord_fou();
 		$address = '';
 		if($this->get_fou()->raison_sociale != '') {
-			$address.= $this->get_fou()->raison_sociale."\n";
-		} else {
-			$address.= $coord->libelle."\n";
+		    $address.= $this->get_fou()->raison_sociale.PHP_EOL;
+		} elseif (!empty($address)) {
+		    $address.= $coord->libelle.PHP_EOL;
 		}
 		if(is_object($coord)) {
-			if($coord->adr1 != '') $address.= $coord->adr1."\n";
-			if($coord->adr2 != '') $address.= $coord->adr2."\n";
+			if($coord->contact != '') $address.= $coord->contact.PHP_EOL;
+			if($coord->adr1 != '') $address.= $coord->adr1.PHP_EOL;
+			if($coord->adr2 != '') $address.= $coord->adr2.PHP_EOL;
 			if($coord->cp != '') $address.= $coord->cp." ";
-			if($coord->ville != '') $address.= $coord->ville."\n\n";
-			if($coord->contact != '') $address.= $this->text_adr_fou.$coord->contact;
+			if($coord->ville != '') $address.= $coord->ville.PHP_EOL.PHP_EOL;
 		}
 		return $address;
 	}

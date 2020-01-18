@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: SourcesStore.js,v 1.9 2015-03-13 09:28:46 ngantier Exp $
+// $Id: SourcesStore.js,v 1.10 2019-03-13 14:48:22 dgoron Exp $
 
 
 define(["dojo/_base/declare", "apps/pmb/Store", "dojo/topic", "dojo/_base/lang","dojo/request/xhr"], function(declare, PMBStore, topic, lang, xhr){
@@ -14,12 +14,16 @@ define(["dojo/_base/declare", "apps/pmb/Store", "dojo/topic", "dojo/_base/lang",
 			topic.subscribe("source",lang.hitch(this,this.handleEvents));
 			topic.subscribe("itemsStore", lang.hitch(this,this.handleEvents));
 			topic.subscribe("watchesUI", lang.hitch(this, this.handleEvents));
+			topic.subscribe("duplicateSource", lang.hitch(this, this.handleEvents));
 		},
 		handleEvents:function(evtType, evtArgs){
 			//console.log('sourceStore', evtType, evtArgs);
 			switch(evtType){
 				case "saveSource":
 					this.saveSource(evtArgs);
+					break;
+				case "duplicateSource":
+					this.duplicateSource(evtArgs);
 					break;
 				case "deleteSource":
 					this.deleteSource(evtArgs.sourceId);
@@ -72,6 +76,14 @@ define(["dojo/_base/declare", "apps/pmb/Store", "dojo/topic", "dojo/_base/lang",
 				}
 				topic.publish("sourcesStore","sourceSaved", {source : response.response});
 			}
+		},
+		
+		duplicateSource: function(item){
+			xhr(this.url+"&action=duplicate_source",{
+				handleAs: "json",
+				method: "post",
+				data: item
+			}).then(lang.hitch(this,this.savedSource,item));
 		},
 		
 		deleteSource: function(SourceId){

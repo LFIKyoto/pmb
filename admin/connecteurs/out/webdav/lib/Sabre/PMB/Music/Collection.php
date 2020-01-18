@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Collection.php,v 1.7 2016-03-30 15:31:14 apetithomme Exp $
+// $Id: Collection.php,v 1.9 2019-07-05 13:25:14 btafforeau Exp $
 namespace Sabre\PMB\Music;
 
 use Sabre\DAV;
@@ -12,7 +12,8 @@ class Collection extends PMB\Collection {
 	
 	protected $sub_manifestations;
 	
-	function get_code_from_name($name){
+	public function get_code_from_name($name){
+	    global $matches;
 		$val="";
 		if(preg_match("/\(([ERMBKWCFPIVA][0-9]{1,})\)$/i",$name,$matches)){
 			$val=$matches[1];
@@ -22,11 +23,11 @@ class Collection extends PMB\Collection {
 		return $val;
 	}
 	
-	function getChildren(){
+	public function getChildren(){
 	}
 	
 	
-	function getChild($name){
+	public function getChild($name){
 		switch($name){
 			default :
 				$code = $this->get_code_from_name($name);
@@ -84,7 +85,7 @@ class Collection extends PMB\Collection {
 						$row = pmb_mysql_fetch_object($result);
 						$child = new PMB\Explnum("(E".$row->explnum_id.")");
 					}else{
-						throw new DAV\Exception\FileNotFound('File not found: ' . $name);
+					    throw new DAV\Exception\NotFound('File not found: ' . $name);
 					}
 					break;
 				}
@@ -94,15 +95,15 @@ class Collection extends PMB\Collection {
 	
 	
 	
-	function getName(){
+	public function getName(){
 		//must be defined
 	}
 	
-	function createFile($name, $data = null) {
+	public function createFile($name, $data = null) {
 		throw new DAV\Exception\Forbidden('Permission denied to create file (filename ' . $name . ')');
     }
     
-    function filter_sub_manifestations($query){
+    public function filter_sub_manifestations($query){
     	//on remonte d'abord les parents...
     	$current = $this;
     	$parents = array();

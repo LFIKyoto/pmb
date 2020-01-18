@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: level2_search.class.php,v 1.6 2018-10-31 16:21:29 ngantier Exp $
+// $Id: level2_search.class.php,v 1.7 2019-02-12 11:30:44 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -82,7 +82,7 @@ class level2_search {
 		if(!$opac_allow_affiliate_search || ($opac_allow_affiliate_search && $tab == "catalog")){
 		    $display = $this->get_display_elements_list();
 		    print $this->get_search_title();
-			print '<div id=\"resultatrech_liste\">' . $display . '</div>';
+			print '<div id="resultatrech_liste">' . $display . '</div>';
 			if($opac_allow_affiliate_search) print $catal_navbar;
 			else print "</div></div>";
 			if ($this->type == 'extended') print "</div>"; // un div en +

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_integer.class.php,v 1.2 2017-07-12 15:15:01 tsamson Exp $
+// $Id: onto_common_datatype_integer.class.php,v 1.3 2019-06-11 08:53:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -47,7 +47,7 @@ class onto_common_datatype_integer extends onto_common_datatype {
 				if($data['value'] || $data['value']=='0') {
 					$data_properties = array();
 					$data_properties["type"] = "literal";
-					$class_name = get_called_class();
+					$class_name = static::class;
 					$datatypes[$property->uri][] = new $class_name($data["value"], $data["type"], $data_properties);
 				}
 			}

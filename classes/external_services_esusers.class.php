@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external_services_esusers.class.php,v 1.4 2017-05-19 10:06:11 dgoron Exp $
+// $Id: external_services_esusers.class.php,v 1.5 2019-07-05 13:25:14 btafforeau Exp $
 
 //Gestion des utilisateurs et des groupes externes des services externes
 
@@ -199,7 +199,7 @@ class es_esgroup extends es_base {
 		return clone new es_esgroup($new_esgroup_id);
 	}
 	
-	function commit_to_db() {
+	public function commit_to_db() {
 		global $dbh;
 		//on oublie pas que includes/global_vars.inc.php s'amuse à tout addslasher tout seul donc on le fait pas ici
 		$sql = "UPDATE es_esgroups SET esgroup_name = '".$this->esgroup_name."', esgroup_fullname = '".$this->esgroup_fullname."', esgroup_pmbusernum = '".$this->esgroup_pmbuserid."' WHERE esgroup_id = '".$this->esgroup_id."'";
@@ -238,7 +238,7 @@ class es_esgroup extends es_base {
 		}
 	}
 	
-	function delete() {
+	public function delete() {
 		global $dbh;
 		//Suppression du groupe
 		$sql = "DELETE FROM es_esgroups WHERE esgroup_id = ".$this->esgroup_id;
@@ -253,7 +253,7 @@ class es_esgroup extends es_base {
 class es_esgroups extends es_base {
 	public $groups=array();//Array of es_group
 	
-	function __construct() {
+	public function __construct() {
 		global $dbh;
 		$sql = 'SELECT esgroup_id from es_esgroups WHERE esgroup_id <> -1';
 		$res = pmb_mysql_query($sql, $dbh);

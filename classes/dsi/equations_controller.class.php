@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: equations_controller.class.php,v 1.2 2018-06-20 10:30:22 dgoron Exp $
+// $Id: equations_controller.class.php,v 1.3 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,7 +13,7 @@ class equations_controller{
 	protected $id;
 	
 	public function __construct($id=0) {
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 	}
 	
 	public function proceed($suite) {

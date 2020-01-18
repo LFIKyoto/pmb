@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authority_page.class.php,v 1.27 2018-09-25 15:34:21 tsamson Exp $
+// $Id: authority_page.class.php,v 1.32.4.1 2019-09-18 09:36:24 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -52,7 +52,7 @@ class authority_page {
 		}
 		static::$template_directory = "";		
 		
-		$frbr_build = frbr_build::get_instance($this->id, $entity_type);
+		$frbr_build = $this->get_frbr_build_instance($entity_type);
 		
 		$facettes_tpl = '';
 		$display_graph = false;
@@ -83,7 +83,6 @@ class authority_page {
 			if (!$this->dom->getElementById('aut_details')) {
 				$this->dom = $this->setAllId($this->dom);
 			}
-			
 			foreach ($frbr_build->get_cadres() as $cadre) {
 				if ($cadre['place_visibility']) {
 					if($cadre['cadre_type']) {
@@ -263,7 +262,8 @@ class authority_page {
 			$requete.= " WHERE ".$this->get_clause_authority_id_recordslist()." $this->statut_r ";
 		
 			//gestion du tri
-			$requete = sort::get_sort_query($requete, $nbr_lignes, $debut);
+			global $opac_nb_aut_rec_per_page;
+			$requete = sort::get_sort_query($requete, $nbr_lignes, $debut, "notices", "notice_id", $opac_nb_aut_rec_per_page);
 			
 			$res = pmb_mysql_query($requete);
 		
@@ -304,7 +304,7 @@ class authority_page {
 				//fin etendre
 				
 				/*****Spécifique au catégories***/
-				if(get_called_class() == 'authority_page_category') {
+				if(static::class == 'authority_page_category') {
 					global $auto_postage_form;
 					if ($auto_postage_form) $recordslist.= "<div id='autopostageform'>".$auto_postage_form."</div>";
 				}
@@ -333,9 +333,12 @@ class authority_page {
 			$recordslist.= $only_recordslist;
 		
 // 			$recordslist.= "</div><!-- fermeture #aut_details_liste -->\n";
+			if (!isset($l_typdoc)) {
+			   $l_typdoc = '';
+			}
 			$recordslist.= "<div id='navbar'><hr /><div style='text-align:center'>".printnavbar($page, $nbr_lignes, $opac_nb_aut_rec_per_page, "./index.php?lvl=".$this->get_mode_recordslist()."&id=".$this->id."&page=!!page!!&nbr_lignes=$nbr_lignes&l_typdoc=".rawurlencode($l_typdoc).($nb_per_page_custom ? "&nb_per_page_custom=".$nb_per_page_custom : ''))."</div></div>\n";
 		} else {
-			switch (get_called_class()) {
+		    switch (static::class) {
 				case 'authority_page_indexint':
 					$recordslist.= "<blockquote>".$msg['categ_empty']."</blockquote>";
 					break;
@@ -353,6 +356,21 @@ class authority_page {
 		return $recordslist;
 	}
 	
+	public function get_records_ids() {
+		if(!isset($this->acces_j)) {
+			$this->calculate_restrict_access_rights();
+		}
+		// on lance la requête de sélection des notices
+		$query = "SELECT distinct notices.notice_id FROM notices ".$this->get_join_recordslist()." ".$this->acces_j." ".$this->statut_j;
+		$query .= " WHERE ".$this->get_clause_authority_id_recordslist()." $this->statut_r ";
+		$result = pmb_mysql_query($query);
+		$records_ids = array();
+		while($row = pmb_mysql_fetch_object($result)) {
+			$records_ids[] = $row->notice_id;
+		}
+		return $records_ids;
+	}
+	
 	public function get_facetteslist() {
 		global $nbr_lignes;	
 		
@@ -361,7 +379,7 @@ class authority_page {
 		}
 		$facettes_tpl = '';
 		//comparateur de facettes : on ré-initialise
-		$_SESSION['facette']="";
+		$_SESSION['facette']=array();
 		if($nbr_lignes){
 			$query = "SELECT distinct notices.notice_id FROM notices ".$this->get_join_recordslist()." ".$this->acces_j." ".$this->statut_j;
 			$query .= " WHERE ".$this->get_clause_authority_id_recordslist()." $this->statut_r ";
@@ -435,5 +453,9 @@ class authority_page {
 			}
 		}
 		return $DOMNode;
+	}
+	
+	protected function get_frbr_build_instance($entity_type) {
+	    return frbr_build::get_instance($this->id, $entity_type);
 	}
 }

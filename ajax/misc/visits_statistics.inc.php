@@ -2,8 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: visits_statistics.inc.php,v 1.2 2017-12-28 10:11:08 apetithomme Exp $
+// $Id: visits_statistics.inc.php,v 1.3 2019-05-29 12:03:09 btafforeau Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $empr_visits_statistics_active, $class_path, $sub, $counter_type, $value;
 
 if (!$empr_visits_statistics_active) die();
 

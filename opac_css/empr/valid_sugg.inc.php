@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: valid_sugg.inc.php,v 1.21 2017-11-07 15:43:32 ngantier Exp $
+// $Id: valid_sugg.inc.php,v 1.22.4.1 2019-11-14 10:11:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -72,75 +72,8 @@ if (($tit != "") && ($aut != "" || $edi != "" || $code != "" || $_FILES['piece_j
 		$orig->save();
 		
 		//Ré-affichage de la suggestion
-		$sug_form.= "
-		<table style='width:60%' cellpadding='5'>
-			<tr>
-				<td >".htmlentities($msg["empr_sugg_tit"], ENT_QUOTES, $charset)."</td>
-				<td>".htmlentities($su->titre, ENT_QUOTES, $charset)."</td>
-			</tr>
-			<tr>
-				<td >".htmlentities($msg["empr_sugg_aut"], ENT_QUOTES, $charset)."</td>
-				<td>".htmlentities($su->auteur, ENT_QUOTES, $charset)."</td>
-			</tr>
-			<tr>
-				<td >".htmlentities($msg["empr_sugg_edi"], ENT_QUOTES, $charset)."</td>
-				<td>".htmlentities($su->editeur, ENT_QUOTES, $charset)."</td>
-			</tr>
-			<tr>
-				<td >".htmlentities($msg["empr_sugg_code"], ENT_QUOTES, $charset)."</td>
-				<td>".htmlentities($su->code, ENT_QUOTES, $charset)."</td>
-			</tr>
-			<tr>
-				<td >".htmlentities($msg["empr_sugg_prix"], ENT_QUOTES, $charset)."</td>
-				<td>".htmlentities($su->prix, ENT_QUOTES, $charset)."</td>
-			</tr>
-			<tr>
-				<td >".htmlentities($msg['empr_sugg_url'], ENT_QUOTES, $charset)."</td>
-				<td>".htmlentities($su->url_suggestion, ENT_QUOTES, $charset)."</td>
-			</tr>
-			<tr>
-				<td>".htmlentities($msg['empr_sugg_comment'], ENT_QUOTES, $charset)."</td>
-				<td>".htmlentities($su->commentaires, ENT_QUOTES, $charset)."</td>
-			</tr>";
-			
-		if(!$_SESSION["id_empr_session"]) {
-		
-			$sug_form.= "
-			<tr>
-				<td >".htmlentities($msg["empr_sugg_mail"], ENT_QUOTES, $charset)."</td>
-				<td>".htmlentities($mail, ENT_QUOTES, $charset)."</td>
-			</tr>";
-		}
-		if ($opac_sugg_categ=='1') {
-			$categ = new suggestions_categ($su->num_categ);
-			$sug_form.= "
-			<tr>
-				<td >".htmlentities($msg['acquisition_categ'], ENT_QUOTES, $charset)."</td>
-				<td>".htmlentities($categ->libelle_categ, ENT_QUOTES, $charset)."</td>
-			</tr>";
-		}
-		$sug_form.= "
-		<tr>
-			<td >".htmlentities($msg["empr_sugg_datepubli"], ENT_QUOTES, $charset)."</td>
-			<td>".htmlentities($su->date_publi, ENT_QUOTES, $charset)."</td>
-		</tr>";
-		$sug_form.= "
-		<tr>
-			<td >".htmlentities($msg["empr_sugg_qte"], ENT_QUOTES, $charset)."</td>
-			<td>".htmlentities($su->nb, ENT_QUOTES, $charset)."</td>
-		</tr>";
-		$source = new suggestion_source($su->sugg_src);
-		$sug_form.= "
-		<tr>
-			<td >".htmlentities($msg["empr_sugg_src"], ENT_QUOTES, $charset)."</td>
-			<td>".htmlentities($source->libelle_source, ENT_QUOTES, $charset)."</td>
-		</tr>";
-		$sug_form.= "
-		<tr>
-			<td >".htmlentities($msg["empr_sugg_piece_jointe"], ENT_QUOTES, $charset)."</td>
-			<td>".htmlentities($explnum_doc->explnum_doc_nomfichier, ENT_QUOTES, $charset)."</td>
-		</tr>";
-		$sug_form.= "</table><br />";
+		$sug_form.= $su->get_table();
+		$sug_form.= "<br />";
 		$sug_form.= "<b>".htmlentities($msg["empr_sugg_ok"], ENT_QUOTES, $charset)."</b><br /><br />";
 		
 		//Envoi mail
@@ -180,7 +113,7 @@ if (($tit != "") && ($aut != "" || $edi != "" || $code != "" || $_FILES['piece_j
 	}
 } else {	// Les données minimun n'ont pas été saisies
 	$sug_form.= str_replace('\n','<br />',$msg["empr_sugg_ko"])."<br /><br />";
-	$sug_form.= "<input type='button' class='bouton' name='ok' value='&nbsp;".addslashes($msg[acquisition_sugg_retour])."&nbsp;' onClick='history.go(-1)'/>";
+	$sug_form.= "<input type='button' class='bouton' name='ok' value='&nbsp;".addslashes($msg['acquisition_sugg_retour'])."&nbsp;' onClick='history.go(-1)'/>";
 }
 
 print $sug_form;

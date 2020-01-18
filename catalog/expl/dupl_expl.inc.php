@@ -6,6 +6,7 @@
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $msg, $id, $cb, $expl_id;
 
 // gestion des exemplaires
 print "<h1>".$msg["dupl_expl_titre"]."</h1>";

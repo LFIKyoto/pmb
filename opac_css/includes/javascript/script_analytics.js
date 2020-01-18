@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: script_analytics.js,v 1.5 2017-09-12 12:02:59 dgoron Exp $
+// $Id: script_analytics.js,v 1.6.6.1 2019-09-19 13:33:32 dgoron Exp $
 
 
 var scriptAnalytics = {}
@@ -84,7 +84,18 @@ scriptAnalytics.CookieConsent = function() {
         "</div>";
         bodytag.appendChild(div);
 //        renderInformAndAsk();
-    }         
+    }
+    
+    function renderNotToTrack() {
+    	var bodytag = document.getElementsByTagName('body')[0];
+        var div = document.createElement('div');
+        div.setAttribute('id','script_analytics');
+        div.setAttribute('align','center');
+        div.innerHTML = "<div id='script_analytics_content'>"+pmbDojo.messages.getMessage("opac","opac_dnt_enabled")+
+        "<button style='text-decoration:underline;' name='dnt-confirm' onclick='scriptAnalytics.CookieConsent.dntConfirm();' id='dnt-confirm-button'>"+msg_script_analytics_button_dnt_confirm+"</button>" +
+        "</div>";
+        bodytag.appendChild(div);
+    }
           
     //R�cup�re la version d'Internet Explorer, si c'est un autre navigateur la fonction renvoie -1
     function getInternetExplorerVersion() {
@@ -157,6 +168,15 @@ scriptAnalytics.CookieConsent = function() {
 	        window[disableStr] = true;
 	        deleteAnalyticsCookies();
 	    },
+	    
+	    dntConfirm: function() {
+    		document.cookie = disableStr + '=true;'+ getCookieExpireDate() +' ; path=/';       
+	        document.cookie = 'PhpMyBibli-COOKIECONSENT=false;'+ getCookieExpireDate() +' ; path=/';
+    		var div = document.getElementById('script_analytics');
+    		// Message affiché après que l'utilisateur est accepté
+    		if ( div!= null ) div.innerHTML = '';
+    		window[disableStr] = true;
+    	},
         
 	    showInform: function() {
 	    	var div = document.getElementById("inform_and_ask");
@@ -179,7 +199,12 @@ scriptAnalytics.CookieConsent = function() {
                 if ( notToTrack() ) {
                     //L'utilisateur a activ� DoNotTrack. Do not ask for consent and just opt him out
                     scriptAnalytics.CookieConsent.opposite();
-                    alert(pmbDojo.messages.getMessage("opac","opac_dnt_enabled"))
+//                    alert(pmbDojo.messages.getMessage("opac","opac_dnt_enabled"))
+                    if (window.addEventListener) {
+	                  window.addEventListener("load", renderNotToTrack, false);
+                    } else {
+                      window.attachEvent("onload", renderNotToTrack);
+                    }
                 } else {
                     if (!isToTrack() ) { 
 	                    if (window.addEventListener) {

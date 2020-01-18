@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_configuration_search_perso_ui.class.php,v 1.1 2018-10-12 12:18:37 dgoron Exp $
+// $Id: list_configuration_search_perso_ui.class.php,v 1.1.6.3 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,10 +10,13 @@ require_once($class_path."/list/configuration/list_configuration_ui.class.php");
 
 class list_configuration_search_perso_ui extends list_configuration_ui {
 	
+    protected static $type;
+    
 	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		global $module, $current_module;
+	    global $module, $current_module, $type;
 		static::$module = ($module ? $module : $current_module);
 		static::$categ = 'search_perso';
+		static::$type = ($type ? $type : '');
 		parent::__construct($filters, $pager, $applied_sort);
 	}
 	
@@ -56,10 +59,7 @@ class list_configuration_search_perso_ui extends list_configuration_ui {
 	}
 	
 	protected function init_default_applied_sort() {
-		$this->applied_sort = array(
-				'by' => 'search_order',
-				'asc_desc' => 'asc'
-		);
+	    $this->add_applied_sort('search_order');
 	}
 	
 	protected function get_main_fields_from_sub() {
@@ -106,7 +106,7 @@ class list_configuration_search_perso_ui extends list_configuration_ui {
 				$content .= "<img src='".get_url_icon('sort.png')."' style='width:12px; vertical-align:middle' />";
 				break;
 			case 'search_name':
-				$content .= "<b>".$object->search_name."</b>".$object->search_comment;
+				$content .= "<b>".$object->search_name."</b><br />".$object->search_comment;
 				break;
 			case 'search_directlink':
 				$content .= $this->get_cell_visible_flag($object, $property);
@@ -139,6 +139,9 @@ class list_configuration_search_perso_ui extends list_configuration_ui {
 			case 'EMPR':
 				$my_search=new search(true, 'search_fields_empr');
 				break;
+			case 'EXPL':
+			    $my_search=new search(true, 'search_fields_expl');
+			    break;
 			default:
 				$my_search=new search();
 				break;
@@ -147,6 +150,8 @@ class list_configuration_search_perso_ui extends list_configuration_ui {
 	}
 	
 	protected function get_target_url($id_predefined_search=0) {
+	    global $option_show_notice_fille, $option_show_expl;
+	    
 		switch ($this->filters['type']) {
 			case 'AUTHORITIES':
 				$searcher_tabs = new searcher_tabs();
@@ -155,6 +160,9 @@ class list_configuration_search_perso_ui extends list_configuration_ui {
 			case 'EMPR':
 				$target_url = "./circ.php?categ=search";
 				break;
+			case 'EXPL':
+			    $target_url = "./catalog.php?categ=search&mode=8&option_show_notice_fille=$option_show_notice_fille&option_show_expl=$option_show_expl";
+			    break;
 			default:
 				$target_url = "./catalog.php?categ=search&mode=6";
 				break;
@@ -226,7 +234,11 @@ class list_configuration_search_perso_ui extends list_configuration_ui {
 	public static function get_controller_url_base() {
 		global $base_path;
 	
-		return $base_path.'/'.static::$module.'.php?categ='.static::$categ;
+		$controller_url_base = $base_path.'/'.static::$module.'.php?categ='.static::$categ;
+		if(static::$type) {
+		    $controller_url_base .= '&type='.static::$type; 
+		}
+		return $controller_url_base;
 	}
 	
 	public function run_action_save_order($action='') {

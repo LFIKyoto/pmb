@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmb.class.php,v 1.54 2018-06-22 09:57:10 ngantier Exp $
+// $Id: pmb.class.php,v 1.60.2.1 2019-12-05 08:10:57 btafforeau Exp $
 require_once("$include_path/notice_affichage.inc.php");
 require_once("$include_path/bulletin_affichage.inc.php");
 require_once("$class_path/upload_folder.class.php");
@@ -16,7 +16,7 @@ if($opac_search_other_function){
 class pmb extends base_params implements params {
 	public $listeDocs = array();		//tableau de documents
 	public $current = 0;				//position courante dans le tableau
-	public $currentDoc = "";			//tableau décrivant le document courant
+	public $currentDoc = array();			//tableau décrivant le document courant
 	public $params;					//tableau de paramètres utiles pour la recontructions des requetes...et même voir plus
 	public $listeBulls = array();
 	public $listeNotices = array();
@@ -273,6 +273,7 @@ class pmb extends base_params implements params {
 				}
 				$this->current = 0;
 				$this->checkCurrentExplnumId();		
+				
 			}else{
 				if($requete_noti){
 					$res_notice = pmb_mysql_query($requete_noti,$dbh);
@@ -280,7 +281,7 @@ class pmb extends base_params implements params {
 						while(($not_ids = pmb_mysql_fetch_object($res_notice))){
 							//cas d'une notice de bulletin, le docnum peut etre rattaché au bulletin
 							//donc on va le chercher et le rajoute à la liste...
-							if($not_ids->niveau_biblio == "b" && $not_ids->niveau_hierar == "2"){
+						    if(isset($not_ids->niveau_biblio) && $not_ids->niveau_biblio == "b" && isset($not_ids->niveau_hierar) && $not_ids->niveau_hierar == "2"){
 								$req = "select bulletin_id from bulletins where num_notice = ".$not_ids->notice_id." LIMIT 1";
 								$res_notibull = pmb_mysql_query($req);
 								if(pmb_mysql_num_rows($res_notibull))
@@ -311,13 +312,13 @@ class pmb extends base_params implements params {
  	public function getExplnums($id=0){
 		global $dbh;
 		global $opac_photo_filtre_mimetype; //filtre des mimetypes
-		global $gestion_acces_active,$gestion_acces_empr_notice;
+		global $gestion_acces_active,$gestion_acces_empr_notice,$gestion_acces_empr_docnum;
 		global $opac_explnum_order,$opac_show_links_invisible_docnums;
 		
 		if( sizeof($this->listeDocs) ==0 ){
 			$requete = "select explnum_id,explnum_notice,explnum_bulletin,explnum_nom,explnum_mimetype,explnum_url,explnum_extfichier,explnum_nomfichier,explnum_repertoire,explnum_path from explnum ";
 			if($id !=0){
-				$id+=0;
+			    $id = intval($id);
 				$requete .= "where explnum_id = $id";
 				$this->current = 0;
 			}else {
@@ -409,7 +410,7 @@ class pmb extends base_params implements params {
 	}
 	
 	public function getCurrentDoc(){
-		$this->currentDoc = "";
+		$this->currentDoc = array();
 		//on peut récup déjà un certain nombre d'infos...
 		$this->currentDoc["id"] = $this->listeDocs[$this->current]->explnum_id;
 		$this->params["explnum_id"] = $this->listeDocs[$this->current]->explnum_id;
@@ -417,14 +418,16 @@ class pmb extends base_params implements params {
 		$req_expl = "select explnum_id from explnum ";
 		$req_expl.= "where explnum_id = ".$this->listeDocs[$this->current]->explnum_id." and ";
 		$terms = explode(" ",$this->params["user_query"]);
-		if(sizeof($terms>0)) $req_expl.="(";
-		$search = '';
-		for ($i=0 ; $i<sizeof($terms) ; $i++){
-			if( $search != "") $search .= " or ";
-			$search .= "explnum_index_sew LIKE '%".$terms[$i]."%'";
+		if(is_array($terms) && sizeof($terms)){
+			$req_expl.="(";
+			$search = '';
+			for ($i=0 ; $i<sizeof($terms) ; $i++){
+				if( $search != "") $search .= " or ";
+				$search .= "explnum_index_sew LIKE '%".$terms[$i]."%'";
+			}
+			if( $search != "") $req_expl .= $search;
+			$req_expl.=")";
 		}
-		if( $search != "") $req_expl .= $search;
-		if(sizeof($terms>0)) $req_expl.=")";
 		$searchInExplnum = pmb_mysql_query($req_expl);
 		if(pmb_mysql_num_rows($searchInExplnum)==0){
 			$this->currentDoc["searchterms"]  ="";
@@ -444,7 +447,7 @@ class pmb extends base_params implements params {
 			$this->currentDoc["path"] = $rep->encoder_chaine($this->currentDoc["path"]);
 		}else{
 			//il est en base
-			//faudra revoir ce truc
+		    $this->setInCache($this->listeDocs[$this->current]->explnum_id, $this->openCurrentDoc());
 			$this->currentDoc["path"] = "";
 		}
 
@@ -474,7 +477,7 @@ class pmb extends base_params implements params {
 		if (!$ext && $this->listeDocs[$this->current]->explnum_url) $ext=substr($this->listeDocs[$this->current]->explnum_url,strrpos($this->listeDocs[$this->current]->explnum_url,'.')*1+1);
 		$this->currentDoc['extension'] = $ext;
 		
-		if($this->params['nodesc'] == 0){
+		if(empty($this->params['nodesc'])){
 			//on récup la notice associée...
 			if($this->listeDocs[$this->current]->explnum_notice)
 				$this->currentDoc["desc"]=aff_notice($this->listeDocs[$this->current]->explnum_notice,1,1,0,"",0,1);

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_localisation_mpba.inc.php,v 1.6 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: search_localisation_mpba.inc.php,v 1.7.2.1 2019-10-15 09:59:04 btafforeau Exp $
 
 /*
  * 
@@ -43,7 +43,7 @@ function search_other_function_get_values(){
 
 function search_other_function_clause() {
 	global $cnl_bibli;
-	$cnl_bibli+=0;
+	$cnl_bibli = intval($cnl_bibli);
 	if ($cnl_bibli) {
 		$r = "select distinct notice_id from notices where notice_id in ( ";
 		//notices de mono dont un exemplaire est localise a $cnl_bibli
@@ -94,6 +94,6 @@ function search_other_function_human_query($n) {
 }
 
 function search_other_function_post_values() {
-	global $cnl_bibli;
-	return "<input type=\"hidden\" name=\"cnl_bibli\" value=\"$cnl_bibli\" />\n";
+	global $cnl_bibli, $charset;
+	return "<input type=\"hidden\" name=\"cnl_bibli\" value=\"".htmlentities($cnl_bibli, ENT_QUOTES, $charset)."\" />\n";
 }

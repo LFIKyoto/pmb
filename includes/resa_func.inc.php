@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa_func.inc.php,v 1.148 2018-08-01 13:44:51 dgoron Exp $
+// $Id: resa_func.inc.php,v 1.149 2019-02-05 10:08:40 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -314,9 +314,12 @@ function resa_list ($idnotice=0, $idbulletin=0, $idempr=0, $order="", $where = "
 			if($resa->get_restrict_expl_location_query() && !$total_ex) $no_aff=1;
 			// on compte le nombre d'exemplaires sortis
 			$total_sortis = $resa->get_number_expl_out();
-
+			
+			// on compte le nombre d'exemplaires en circulation
+			$total_in_circ = $resa->get_number_expl_in_circ();
+			
 			// on en déduit le nombre d'exemplaires disponibles
-			$total_dispo = $total_ex - $total_sortis;
+			$total_dispo = $total_ex - $total_sortis - $total_in_circ;
 
 			$lien_transfert = false;
 
@@ -367,7 +370,11 @@ function resa_list ($idnotice=0, $idbulletin=0, $idempr=0, $order="", $where = "
 						$situation = pmb_mysql_result($tresult, 0, 0);
 						$info_retour_prevu=$situation;
 					}else {
-						$situation = $msg["resa_no_expl"];
+						if($total_in_circ) {
+							$situation = $msg['transferts_circ_retour_filtre_circ'];
+						} else {
+							$situation = $msg["resa_no_expl"];
+						}
 						$info_retour_prevu='';
 					}
 					if ( ($pmb_transferts_actif=="1") &&  $transferts_choix_lieu_opac!=3) {// && ($f_loc!=0) ?

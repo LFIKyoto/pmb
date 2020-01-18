@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: FormCategorySelector.js,v 1.2 2018-10-26 15:08:48 ngantier Exp $
+// $Id: FormCategorySelector.js,v 1.3 2019-07-17 14:07:55 dgoron Exp $
 
 define([
         'dojo/_base/declare',
@@ -14,9 +14,10 @@ define([
         'apps/pmb/form/category/SubTabHierarchicalSearch',
         'apps/pmb/form/category/SubTabTermsSearch',
         'apps/pmb/form/category/SubTabAutoindexSearch',
+        'apps/pmb/form/category/SubTabCategoryAdd',
         'apps/pmb/form/category/SubTabCategoryResults',
         'apps/pmb/form/FormSelector',
-        ], function(declare, lang, topic, query, on, request, domAttr, SubTabHierarchicalSearch, SubTabTermsSearch, SubTabAutoindexSearch, SubTabCategoryResults, FormSelector){
+        ], function(declare, lang, topic, query, on, request, domAttr, SubTabHierarchicalSearch, SubTabTermsSearch, SubTabAutoindexSearch, SubTabCategoryAdd, SubTabCategoryResults, FormSelector){
 		return declare([FormSelector], {
 			hierarchicalSearchTab: null,   //Onglet rech hiérarchique
 			termsSearchTab: null,   //Onglet rech par termes
@@ -84,6 +85,10 @@ define([
 					this.autoindexSearchTab.resize();
 					this.autoindexSearchTab.startup();
 				}
+				
+				this.newTab = new SubTabCategoryAdd({title: pmbDojo.messages.getMessage('selector', 'selector_tab_add'), style: 'width:95%; height:100%;', loadScripts: true, parameters: this.parameters});
+				this.newTab.href = this.parameters.selectorURL+'&action=add&form_display_mode=2';
+				
 				this.inherited(arguments);
 			},
 			printResults: function(evtData, autoSelect){

@@ -2,12 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: actes.tpl.php,v 1.21 2017-10-19 14:42:59 dgoron Exp $
+// $Id: actes.tpl.php,v 1.22 2019-05-27 16:04:40 btafforeau Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $search_form_actes;
+global $search_form_actes, $current_module, $msg, $charset;
 
 //	------------------------------------------------------------------------------
 //	$search_form : template de recherche pour les actes

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: z3950.class.php,v 1.24 2018-11-05 14:09:15 mbertin Exp $
+// $Id: z3950.class.php,v 1.26 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,14 +13,14 @@ require_once($base_path."/admin/convert/convert.class.php");
 require_once($base_path."/admin/convert/xml_unimarc.class.php");
 
 if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
-	if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "0");
+    if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "0");
 	require_once($include_path.'/xslt-php4-to-php5.inc.php');
 }
 
 function _item_z3950_($param) {
 	global $catalog;
 	global $n_typ_total;
-	if ($param["IMPORT"]=="yes") {
+	if (isset($param["IMPORT"]) && $param["IMPORT"]=="yes") {
 		$t["NAME"]=$param["NAME"];
 		$t["INDEX"]=$n_typ_total;
 		$t["PATH"]=$param["PATH"];
@@ -48,22 +48,33 @@ class z3950 extends connector {
 	}
     
     public function get_profiles() {
-    	$xml_profile=file_get_contents($this->connector_path."/profil.xml");
-    	$param=_parser_text_no_function_($xml_profile,"PROFILES");
-    	for ($i=0; $i<count($param["PROFILE"]); $i++) {
-    		$profile=$param["PROFILE"][$i];
-    		$t=array();
-    		$t["name"]=$profile["NAME"];
-    		if (substr($profile["COMMENT"],0,4)=="msg:") 
-    			$t["comment"]=$this->msg[substr($profile["COMMENT"],4)]; 
-    		else $t["comment"]=$profile["COMMENT"];
-    		for ($j=0; $j<count($profile["UFIELDS"][0]["UFIELD"]); $j++) {
-    			$ufield=$profile["UFIELDS"][0]["UFIELD"][$j];
-    			$t["ufields"][$ufield["NAME"]]=$ufield["IDS"];
+    	$xml_profile = file_get_contents($this->connector_path."/profil.xml");
+    	$param = _parser_text_no_function_($xml_profile, "PROFILES");
+    	$nb_profiles = count($param["PROFILE"]);
+    	
+    	for ($i = 0; $i < $nb_profiles; $i++) {
+    		$profile = $param["PROFILE"][$i];
+    		$t = array();
+    		$t["name"] = $profile["NAME"];
+    		
+    		if (substr($profile["COMMENT"], 0, 4) == "msg:") {
+    			$t["comment"] = $this->msg[substr($profile["COMMENT"], 4)]; 
+    		} else {
+    		    $t["comment"] = $profile["COMMENT"];
     		}
-    		for ($j=0; $j<count($profile["OPERATORS"][0]["OPERATOR"]); $j++) {
-    			$operator=$profile["OPERATORS"][0]["OPERATOR"][$j];
-    			$t["operators"][$operator["NAME"]]=$operator["TYPES"];
+    		
+    		$nb_ufields = count($profile["UFIELDS"][0]["UFIELD"]);
+    		for ($j = 0; $j < $nb_ufields; $j++) {
+    			$ufield = $profile["UFIELDS"][0]["UFIELD"][$j];
+    			$t["ufields"][$ufield["NAME"]] = $ufield["IDS"];
+    		}
+    		
+    		if (isset($profile["OPERATORS"][0]["OPERATOR"])) {
+    		    $nb_operators = count($profile["OPERATORS"][0]["OPERATOR"]);
+    		    for ($j = 0; $j < $nb_operators; $j++) {
+        			$operator = $profile["OPERATORS"][0]["OPERATOR"][$j];
+        			$t["operators"][$operator["NAME"]] = $operator["TYPES"];
+        		}
     		}
     		$this->profiles[]=$t;
     	}
@@ -84,8 +95,8 @@ class z3950 extends connector {
     }
     
     public function source_get_property_form($source_id) {
-    	global $charset,$base_path,$catalog,$reload;
-    	
+        global $charset, $base_path, $catalog, $reload, $xslt_exemplaire;
+
     	if (!$reload) {    	
 	    	$params=$this->get_source_params($source_id);
 			if ($params["PARAMETERS"]) {
@@ -180,7 +191,7 @@ class z3950 extends connector {
 		</div>";
 		
 		$xsl_exemplaire_input = "";
-		if ($xslt_exemplaire) {
+		if (!empty($xslt_exemplaire)) {
 			$xsl_exemplaire_input .= '<select name="action_xsl_expl"><option value="keep">'.sprintf($this->msg["z3950_keep_xsl_exemplaire"], $xslt_exemplaire["name"]).'</option><option value="delete">'.$this->msg["z3950_delete_xsl_exemplaire"].'</option></select>';
 		}
 		

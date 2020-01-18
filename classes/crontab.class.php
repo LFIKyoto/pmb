@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: crontab.class.php,v 1.2 2015-04-03 11:16:19 jpermanne Exp $
+// $Id: crontab.class.php,v 1.3 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,7 +11,7 @@ class crontab {
 	/*
 	 * Ajoute ou modifie la tâche PMB dans le cron de l'OS 
 	 */
-	function addTaskCron($id) {
+	public function addTaskCron($id) {
 		global $dbh;
 		
 		$requete = "select id_planificateur, num_type_tache, libelle_tache, desc_tache, calc_next_date_deb, calc_next_heure_deb 
@@ -64,7 +64,7 @@ class crontab {
 	}
 	
 
-	function delTaskCron($ident) {
+	public function delTaskCron($ident) {
 		$oldCrontab = Array();						/* récupère les informations de l'ancien crontab */
 		$newCrontab = Array();						/* ajoute le nouveau crontab */
 		exec('crontab -l', $oldCrontab);			/* on récupère l'ancienne crontab dans $oldCrontab */

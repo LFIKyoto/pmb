@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sphinx_authorities_indexer.class.php,v 1.6 2018-07-16 09:44:44 arenou Exp $
+// $Id: sphinx_authorities_indexer.class.php,v 1.7.6.1 2019-11-27 10:54:05 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -24,6 +24,7 @@ class sphinx_authorities_indexer extends sphinx_indexer {
 	
 	public function fillIndex($object_id=0)
 	{
+	    global $sphinx_indexes_prefix;
 		//$options['size'] = 80;
 		$this->parse_file();
 		$object_id+=0;
@@ -38,7 +39,7 @@ class sphinx_authorities_indexer extends sphinx_indexer {
 				$langs = $this->getAvailableLanguages();
 				for($i=0 ; $i<count($langs) ; $i++){
 					foreach($this->indexes as $index_name => $infos){
-						if(!pmb_mysql_query('delete from '.$index_name.($langs[$i] != '' ? '_'.$langs[$i] :'').' where id = '.$object->{$this->object_key},$this->getDBHandler())){
+						if(!pmb_mysql_query('delete from '.$sphinx_indexes_prefix.$index_name.($langs[$i] != '' ? '_'.$langs[$i] :'').' where id = '.$object->{$this->object_key},$this->getDBHandler())){
 							print $table. ' : '.pmb_mysql_error($this->getDBHandler()). "(".$query.")\n";;
 						}
 					}
@@ -54,7 +55,7 @@ class sphinx_authorities_indexer extends sphinx_indexer {
 						$field='f_'.$code_champ.'_'.$code_ss_champ;
 	
 						if($this->insert_index[$field]){
-							$inserts[$this->insert_index[$field].($champ->lang ? '_'.$champ->lang : '')][$field] = addslashes($champ->value);
+							$inserts[$this->insert_index[$field].($champ->lang ? '_'.$champ->lang : '')][$field] = addslashes(encoding_normalize::utf8_normalize($champ->value));
 						}
 	
 					}
@@ -74,7 +75,7 @@ class sphinx_authorities_indexer extends sphinx_indexer {
 						    $values.='\''.$value.'\'';
 						};
 					}
-					$query = 'insert into '.$table.' (id,'.$keys.') values ('.$object->{$this->object_key}.','.$values.')';
+					$query = 'insert into '.$sphinx_indexes_prefix.$table.' (id,'.$keys.') values ('.$object->{$this->object_key}.','.$values.')';
 					if(!pmb_mysql_query($query,$this->getDBHandler())){
 						print $table. ' : '.pmb_mysql_error($this->getDBHandler()). "(".$query.")\n";
 					}

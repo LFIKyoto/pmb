@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: champs_base.xml,v 1.3 2018-01-22 10:55:44 tsamson Exp $ -->
+$Id: champs_base.xml,v 1.4 2019-04-19 12:28:25 ngantier Exp $ -->
 
 <indexation>
 
@@ -86,8 +86,8 @@ $Id: champs_base.xml,v 1.3 2018-01-22 10:55:44 tsamson Exp $ -->
 			<idkey>author_id</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 4 or (collections.collection_id = aut_link_to_num and aut_link_to = 4 and aut_link_reciproc = 1)</referencefield>
-				<externalfield>aut_link_to_num=authors.author_id and aut_link_to = 1 or (aut_link_reciproc = 1 and aut_link_from = 1 and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 4 or (collections.collection_id = aut_link_to_num and aut_link_to = 4)</referencefield>
+				<externalfield>aut_link_to_num=authors.author_id and aut_link_to = 1 or (aut_link_from = 1 and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>
@@ -102,8 +102,8 @@ $Id: champs_base.xml,v 1.3 2018-01-22 10:55:44 tsamson Exp $ -->
 			<idkey>num_noeud</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 4 or (collections.collection_id = aut_link_to_num and aut_link_to = 4 and aut_link_reciproc = 1)</referencefield>
-				<externalfield>aut_link_to_num=categories.num_noeud and aut_link_to = 2 or (aut_link_reciproc = 1 and aut_link_from = 2 and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 4 or (collections.collection_id = aut_link_to_num and aut_link_to = 4)</referencefield>
+				<externalfield>aut_link_to_num=categories.num_noeud and aut_link_to = 2 or (aut_link_from = 2 and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>
@@ -124,8 +124,8 @@ $Id: champs_base.xml,v 1.3 2018-01-22 10:55:44 tsamson Exp $ -->
 			<idkey>ed_id</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 4 or (collections.collection_id = aut_link_to_num and aut_link_to = 4 and aut_link_reciproc = 1)</referencefield>
-				<externalfield>aut_link_to_num=publishers.ed_id and aut_link_to = 3 or (aut_link_reciproc = 1 and aut_link_from = 3 and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 4 or (collections.collection_id = aut_link_to_num and aut_link_to = 4)</referencefield>
+				<externalfield>aut_link_to_num=publishers.ed_id and aut_link_to = 3 or (aut_link_from = 3 and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>
@@ -140,8 +140,8 @@ $Id: champs_base.xml,v 1.3 2018-01-22 10:55:44 tsamson Exp $ -->
 			<idkey>collection_id</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 4 and aut_link_from_num != !!object_id!! or (collections.collection_id = aut_link_to_num and aut_link_to = 4 and aut_link_reciproc = 1 and aut_link_to_num != !!object_id!!)</referencefield>
-				<externalfield>aut_link_to_num=collection_link.collection_id and aut_link_to = 4 and aut_link_to_num != !!object_id!! or (aut_link_reciproc = 1 and aut_link_from = 4 and aut_link_from_num != !!object_id!! and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 4 and aut_link_from_num != !!object_id!! or (collections.collection_id = aut_link_to_num and aut_link_to = 4 and aut_link_to_num != !!object_id!!)</referencefield>
+				<externalfield>aut_link_to_num=collection_link.collection_id and aut_link_to = 4 and aut_link_to_num != !!object_id!! or (aut_link_from = 4 and aut_link_from_num != !!object_id!! and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>
@@ -156,8 +156,8 @@ $Id: champs_base.xml,v 1.3 2018-01-22 10:55:44 tsamson Exp $ -->
 			<idkey>sub_coll_id</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 4 or (collections.collection_id = aut_link_to_num and aut_link_to = 4 and aut_link_reciproc = 1)</referencefield>
-				<externalfield>aut_link_to_num=sub_collections.sub_coll_id and aut_link_to = 5 or (aut_link_reciproc = 1 and aut_link_from = 5 and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 4 or (collections.collection_id = aut_link_to_num and aut_link_to = 4)</referencefield>
+				<externalfield>aut_link_to_num=sub_collections.sub_coll_id and aut_link_to = 5 or (aut_link_from = 5 and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>
@@ -171,8 +171,8 @@ $Id: champs_base.xml,v 1.3 2018-01-22 10:55:44 tsamson Exp $ -->
 			<idkey>serie_id</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 4 or (collections.collection_id = aut_link_to_num and aut_link_to = 4 and aut_link_reciproc = 1)</referencefield>
-				<externalfield>aut_link_to_num=series.serie_id and aut_link_to = 6 or (aut_link_reciproc = 1 and aut_link_from = 6 and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 4 or (collections.collection_id = aut_link_to_num and aut_link_to = 4)</referencefield>
+				<externalfield>aut_link_to_num=series.serie_id and aut_link_to = 6 or (aut_link_from = 6 and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>
@@ -198,8 +198,8 @@ $Id: champs_base.xml,v 1.3 2018-01-22 10:55:44 tsamson Exp $ -->
 			<idkey>tu_id</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 4 or (collections.collection_id = aut_link_to_num and aut_link_to = 4 and aut_link_reciproc = 1)</referencefield>
-				<externalfield>aut_link_to_num=titres_uniformes.tu_id and aut_link_to = 7 or (aut_link_reciproc = 1 and aut_link_from = 7 and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 4 or (collections.collection_id = aut_link_to_num and aut_link_to = 4)</referencefield>
+				<externalfield>aut_link_to_num=titres_uniformes.tu_id and aut_link_to = 7 or (aut_link_from = 7 and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>
@@ -214,8 +214,8 @@ $Id: champs_base.xml,v 1.3 2018-01-22 10:55:44 tsamson Exp $ -->
 			<idkey>indexint_id</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 4 or (collections.collection_id = aut_link_to_num and aut_link_to = 4 and aut_link_reciproc = 1)</referencefield>
-				<externalfield>aut_link_to_num=indexint.indexint_id and aut_link_to = 8 or (aut_link_reciproc = 1 and aut_link_from = 8 and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 4 or (collections.collection_id = aut_link_to_num and aut_link_to = 4)</referencefield>
+				<externalfield>aut_link_to_num=indexint.indexint_id and aut_link_to = 8 or (aut_link_from = 8 and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>

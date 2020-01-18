@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_cnl.inc.php,v 1.18 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: func_cnl.inc.php,v 1.20 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -91,22 +91,14 @@ function import_new_notice_suite() {
 		$rqt_ajout = "INSERT INTO notices_custom_lists (notices_custom_champ, notices_custom_list_value, notices_custom_list_lib, ordre) VALUES ('".$id949_c."', '".$info_949[0]['c']."', '".$info_949[0]['c']." -Importé','0')" ;
 		$res_ajout = pmb_mysql_query($rqt_ajout, $dbh) ;
 		}
-	$rqt = "SELECT count(1) FROM notices_custom_values WHERE notices_custom_champ='".$id949_c."' AND notices_custom_origine='".$notice_id."' " ;
-	if (!pmb_mysql_result(pmb_mysql_query($rqt, $dbh),0,0)) {
-		$rqt_ajout = "INSERT INTO notices_custom_values (notices_custom_champ, notices_custom_origine, notices_custom_small_text) VALUES ('".$id949_c."', '".$notice_id."', '".$info_949[0]['c']."') " ;
-		$res_ajout = pmb_mysql_query($rqt_ajout, $dbh) ;
-		}
+	import_records::insert_value_custom_field($id949_c, $notice_id, $info_949[0]['c']);
 	
 	// 949$b est stocké dans un champ personnalisé texte
 	// ce champ personnalisé a l'id $id949_b
 	// TRAITEMENT :
 	//	Rechercher si l'enregistrement existe déjà dans notices_custom_values = SELECT 1 FROM notices_custom_values WHERE notices_custom_champ=$id949_b AND notices_custom_origine=$notice_id
 	//	Créer si besoin
-	$rqt = "SELECT count(1) FROM notices_custom_values WHERE notices_custom_champ='".$id949_b."' AND notices_custom_origine='".$notice_id."' " ;
-	if (!pmb_mysql_result(pmb_mysql_query($rqt, $dbh),0,0)) {
-		$rqt_ajout = "INSERT INTO notices_custom_values (notices_custom_champ, notices_custom_origine, notices_custom_small_text) VALUES ('".$id949_b."', '".$notice_id."', '".$info_949[0]['b']."')" ;
-		$res_ajout = pmb_mysql_query($rqt_ajout, $dbh) ;
-		}
+	import_records::insert_value_custom_field($id949_b, $notice_id, $info_949[0]['b']);
 
 	// les champs $606 sont stockés dans les catégories
 	//	$a >> en sous catégories de $id_rech_theme
@@ -140,8 +132,10 @@ function import_new_notice_suite() {
 	//			SELECT categ_id FROM categories WHERE categ_parent='".$categ_parent."' AND categ_libelle='".addslashes($info_606_z[$a][$y])."' "
 	//		Créer si besoin et récupérer l'id $categid_parent
 	//
-	for ($a=0; $a<sizeof($info_606_a); $a++) {
-		for ($j=0; $j<sizeof($info_606_j[$a]); $j++) {
+	$nb_infos_606_a = count($info_606_a);
+	for ($a = 0; $a < $nb_infos_606_a; $a++) {
+	    $nb_infos_606_j = count($info_606_j[$a]);
+	    for ($j = 0; $j < $nb_infos_606_j; $j++) {
 			if (!$libelle_j) $libelle_j .= $info_606_j[$a][$j] ;
 				else $libelle_j .= " ** ".$info_606_j[$a][$j] ;
 			}
@@ -159,7 +153,8 @@ function import_new_notice_suite() {
 				}
 		// récup des sous-categ en cascade sous $a
 		$categ_parent =  $categid_a ;
-		for ($x=0 ; $x < sizeof($info_606_x[$a]) ; $x++) {
+		$nb_info_606_x = count($info_606_x[$a]);
+		for ($x = 0; $x < $nb_info_606_x; $x++) {
 			$rqt_x = "SELECT categ_id FROM categories WHERE categ_parent='".$categ_parent."' AND categ_libelle='".addslashes($info_606_x[$a][$x])."' " ;
 			$res_x = pmb_mysql_query($rqt_x,$dbh) ;
 			if (pmb_mysql_num_rows($res_x)) {
@@ -179,7 +174,8 @@ function import_new_notice_suite() {
 				
 		// récup des categ géo à loger sous la categ géo principale
 		$categ_parent =  $id_rech_geo ;
-		for ($y=0 ; $y < sizeof($info_606_y[$a]) ; $y++) {
+		$nb_info_606_y = count($info_606_y[$a]);
+		for ($y = 0; $y < $nb_info_606_y; $y++) {
 			$rqt_y = "SELECT categ_id FROM categories WHERE categ_parent='".$categ_parent."' AND categ_libelle='".addslashes($info_606_y[$a][$y])."' " ;
 			$res_y = pmb_mysql_query($rqt_y,$dbh) ;
 			if (pmb_mysql_num_rows($res_y)) {
@@ -199,7 +195,8 @@ function import_new_notice_suite() {
 		
 		// récup des categ chrono à loger sous la categ chrono principale
 		$categ_parent =  $id_rech_chrono ;
-		for ($z=0 ; $z < sizeof($info_606_z[$a]) ; $z++) {
+		$nb_info_606_z = count($info_606_z[$a]);
+		for ($z = 0; $z < $nb_info_606_z; $z++) {
 			$rqt_z = "SELECT categ_id FROM categories WHERE categ_parent='".$categ_parent."' AND categ_libelle='".addslashes($info_606_z[$a][$z])."' " ;
 			$res_z = pmb_mysql_query($rqt_z,$dbh) ;
 			if (pmb_mysql_num_rows($res_z)) {
@@ -234,8 +231,9 @@ function traite_exemplaires () {
 	// lu en 010$d de la notice
 	$price = $prix[0];
 	
+	$nb_infos_997 = count($info_997);
 	// la zone 997 est répétable ?
-	for ($nb_expl = 0; $nb_expl < sizeof ($info_997); $nb_expl++) {
+	for ($nb_expl = 0; $nb_expl < $nb_infos_997; $nb_expl++) {
 		/* RAZ expl */
 		$expl = array();
 		
@@ -292,47 +290,5 @@ function traite_exemplaires () {
 
 // fonction spécifique d'export de la zone 995
 function export_traite_exemplaires ($ex=array()) {
-	global $msg, $dbh ;
-	
-	$subfields["a"] = $ex -> lender_libelle;
-	$subfields["c"] = $ex -> lender_libelle;
-	$subfields["f"] = $ex -> expl_cb;
-	$subfields["k"] = $ex -> expl_cote;
-	$subfields["u"] = $ex -> expl_note;
-
-	if ($ex->statusdoc_codage_import) $subfields["o"] = $ex -> statusdoc_codage_import;
-	if ($ex -> tdoc_codage_import) $subfields["r"] = $ex -> tdoc_codage_import;
-		else $subfields["r"] = "uu";
-	if ($ex -> sdoc_codage_import) $subfields["q"] = $ex -> sdoc_codage_import;
-		else $subfields["q"] = "u";
-	
-	global $export996 ;
-	$export996['f'] = $ex -> expl_cb ;
-	$export996['k'] = $ex -> expl_cote ;
-	$export996['u'] = $ex -> expl_note ;
-
-	$export996['m'] = substr($ex -> expl_date_depot, 0, 4).substr($ex -> expl_date_depot, 5, 2).substr($ex -> expl_date_depot, 8, 2) ;
-	$export996['n'] = substr($ex -> expl_date_retour, 0, 4).substr($ex -> expl_date_retour, 5, 2).substr($ex -> expl_date_retour, 8, 2) ;
-
-	$export996['a'] = $ex -> lender_libelle;
-	$export996['b'] = $ex -> expl_owner;
-
-	$export996['v'] = $ex -> location_libelle;
-	$export996['w'] = $ex -> ldoc_codage_import;
-
-	$export996['x'] = $ex -> section_libelle;
-	$export996['y'] = $ex -> sdoc_codage_import;
-
-	$export996['e'] = $ex -> tdoc_libelle;
-	$export996['r'] = $ex -> tdoc_codage_import;
-
-	$export996['1'] = $ex -> statut_libelle;
-	$export996['2'] = $ex -> statusdoc_codage_import;
-	$export996['3'] = $ex -> pret_flag;
-	
-	global $export_traitement_exemplaires ;
-	$export996['0'] = $export_traitement_exemplaires ;
-	
-	return 	$subfields ;
-
-	}	
+	return import_expl::export_traite_exemplaires($ex);
+}

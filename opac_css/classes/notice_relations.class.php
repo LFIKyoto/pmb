@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_relations.class.php,v 1.14 2018-06-13 14:32:10 dgoron Exp $
+// $Id: notice_relations.class.php,v 1.16.6.1 2019-10-11 14:19:13 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -183,7 +183,7 @@ class notice_relations {
 		foreach(static::$liste_type_relation[$direction]->table as $key=>$val){
 			$reverse_code = static::$liste_type_relation[$direction]->attributes[$key]['REVERSE_CODE'];
 			$reverse_direction = static::$liste_type_relation[$direction]->attributes[$key]['REVERSE_DIRECTION'];
-			if($key.'-'.$direction == $selected) {
+			if((is_array($selected) && in_array($key.'-'.$direction, $selected)) || ($key.'-'.$direction == $selected)) {
 				$options .='<option  style="color:#000000" value="'.$key.'-'.$direction.'" selected="selected" data-reverse-code="'.$reverse_code.'-'.$reverse_direction.'">'.$val.'</option>';
 			}else{
 				$options .='<option  style="color:#000000" value="'.$key.'-'.$direction.'" data-reverse-code="'.$reverse_code.'-'.$reverse_direction.'">'.$val.'</option>';
@@ -192,13 +192,13 @@ class notice_relations {
 		return $options;
 	}
 	
-	public static function get_selector($name='', $selected='', $on_change='') {
+	public static function get_selector($name='', $selected='', $on_change='', $multiple = false) {
 		global $msg;
 	
 		static::parse();
 		
 		$select = "
-			<select onchange='".$on_change."' id='".$name."' name='".$name."' size='1'>
+			<select onchange='".$on_change."' id='".$name."' name='".$name."' ".($multiple ? "multiple='multiple'" : "").">
 				<optgroup class='erreur' label='".$msg['notice_lien_montant']."'>";
 		$select .= static::get_selector_options('up', $selected);
 		$select .= "
@@ -508,6 +508,10 @@ class notice_relations {
 			}
 		}
 		return $nb_pairs;
+	}
+	
+	public function get_links() {
+	    return $this->links;
 	}
 	
 	public function get_nb_links() {

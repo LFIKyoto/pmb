@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: categ_browser.class.php,v 1.26 2017-11-22 11:07:34 dgoron Exp $
+// $Id: categ_browser.class.php,v 1.29 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -94,7 +94,7 @@ class categ_browser {
 			$this->display = "<div style='margin:$this->current_margin'>".$up_link.$this->up_folder."<...</a></div>\n";
 		
 		// adding path
-		while(list($cle, $valeur) = each($this->parents_tab)) {
+		foreach ($this->parents_tab as $cle => $valeur) {
 			$link = str_replace('!!id!!', $valeur['id'], $this->folder_link);
 			$doc_l = str_replace('!!id!!', $valeur['id'], $this->document_link);
 
@@ -109,7 +109,7 @@ class categ_browser {
 		}
 
 		// adding children
-		while(list($cle, $valeur) = each($this->children_tab)) {
+		foreach ($this->children_tab as $cle => $valeur) {
 			if($valeur['has_children']) {
 				$link = str_replace('!!id!!', $valeur['id'], $this->folder_link);
 				$doc_l = str_replace('!!id!!', $valeur['id'], $this->document_link);
@@ -148,7 +148,7 @@ class categ_browser {
 					}
 					$this->display .=  "\n<div style='margin-left:".$this->current_margin."px'>";
 					$this->display .= $doc_l;
-					$this->display .= $icon.$valeur[name];
+					$this->display .= $icon.$valeur['name'];
 					$this->display .= "</a></div>";
 				} else {
 					if($valeur['has_records']) {
@@ -156,7 +156,7 @@ class categ_browser {
 						$doc_l = str_replace('!!id!!', $valeur['id'], $this->document_link);
 						$this->display .=  "\n<div style='margin-left:".$this->current_margin."px'>";
 						$this->display .= $doc_l;
-						$this->display .= $icon.$valeur[name];
+						$this->display .= $icon.$valeur['name'];
 						$this->display .= "</a></div>";
 					} else {
 						$this->display .=  "\n<div style='margin-left:".$this->current_margin."px'>";
@@ -208,7 +208,9 @@ class categ_browser {
 							'has_records' => $has_records);
 			$temp = $upper->categ_parent;
 		}
-		if(sizeof($this->parents_tab)) $this->parents_tab = array_reverse($this->parents_tab);
+		if (!empty($this->parents_tab)) {
+		    $this->parents_tab = array_reverse($this->parents_tab);
+		}
 	}
 
 	public function get_children() {

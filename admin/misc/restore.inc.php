@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: restore.inc.php,v 1.11 2017-11-21 12:01:00 dgoron Exp $
+// $Id: restore.inc.php,v 1.12 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -36,7 +36,7 @@ if($file)
 
 		$error_flag = FALSE;
 
-		while(list($cle,$valeur)=each($req_table)) {
+		foreach ($req_table as $cle => $valeur) {
 			// exécution du lot de requêtes
 
 			// on nettoie les retours chariot

@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: upload_folder.tpl.php,v 1.5 2017-12-27 09:47:01 apetithomme Exp $
+// $Id: upload_folder.tpl.php,v 1.7 2019-05-27 16:04:40 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $liste_rep_form, $rep_edit_form, $up_frame, $current_module, $msg;
 
 $liste_rep_form = "
 <form class='form-$current_module' id='folder_list_form' name='folder_list_form' method='post' action=\"./admin.php?categ=docnum&sub=rep\" >

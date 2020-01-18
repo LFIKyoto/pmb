@@ -2,13 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl_list.tpl.php,v 1.19 2018-01-25 10:13:28 dgoron Exp $
+// $Id: expl_list.tpl.php,v 1.20 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
 global $expl_list_header;
 global $expl_list_footer;
 global $expl_list_header_loc_tpl;
+global $msg;
 
 // template for PMB OPAC
 

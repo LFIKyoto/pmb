@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: oecd.class.php,v 1.6 2017-07-12 15:15:01 tsamson Exp $
+// $Id: oecd.class.php,v 1.7 2019-01-15 14:14:59 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,30 +12,20 @@ require_once($class_path."/search.class.php");
 //
 // Scandir for PHP4
 //
-if(!function_exists('scandir'))
-{
-    function scandir($dir, $sortorder = 0)
-    {
-        if(is_dir($dir))
-        {
+if(!function_exists('scandir')){
+    function scandir($dir, $sortorder = 0){
+        if(is_dir($dir))        {
             $dirlist = opendir($dir);
            
-            while( ($file = readdir($dirlist)) !== false)
-            {
-                if(!is_dir($file))
-                {
+            while( ($file = readdir($dirlist)) !== false){
+                if(!is_dir($file)){
                     $files[] = $file;
                 }
             }
-           
             ($sortorder == 0) ? asort($files) : arsort($files);
-           
             return $files;
-        }
-        else
-        {
-        return FALSE;
-        break;
+        }else{
+        	return FALSE;
         }
     }
 }

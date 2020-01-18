@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_onglet.class.php,v 1.10 2017-12-19 13:56:54 ngantier Exp $
+// $Id: notice_onglet.class.php,v 1.12 2019-06-18 12:50:18 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -43,7 +43,7 @@ class notice_onglets {
 	}
 	
 	public function insert_onglets($id_notice,$retour_aff) {			
-		$id_notice+=0;
+	    $id_notice = intval($id_notice);
 		$onglets_title="";
 		$onglets_content="";
 		if($this->ids) {
@@ -83,7 +83,7 @@ class notice_onglets {
 	public function build_onglets($id_notice,$li_tags){
 		global $opac_notices_format,$msg;
 	
-		$id_notice+=0;
+		$id_notice = intval($id_notice);
 		$onglets_title="";
 		$onglets_content="";
 		$this->data_onglets_perso = array();

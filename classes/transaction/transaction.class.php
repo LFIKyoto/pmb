@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: transaction.class.php,v 1.3 2017-02-20 19:04:07 dgoron Exp $
+// $Id: transaction.class.php,v 1.4 2019-06-07 12:23:10 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,7 +16,7 @@ class transactype  {
 	public $quick_allowed = 0;		// Autorisation de l'encaissement rapide
 	
 	public function __construct($id=0){		
-		$this->id=$id+0;		
+		$this->id = intval($id);		
 		$this->fetch_data();		
 	}
 	

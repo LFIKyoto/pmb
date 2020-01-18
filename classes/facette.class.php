@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facette.class.php,v 1.11 2018-10-26 09:12:25 dgoron Exp $
+// $Id: facette.class.php,v 1.11.6.1 2019-11-05 14:05:45 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -92,9 +92,9 @@ class facette {
 			$form = str_replace('!!val_submit_suppr!!', '', $form);
 		}
 		$form = str_replace('!!name_del_facette!!',sprintf($msg['label_alert_delete_facette'],htmlentities($this->name,ENT_QUOTES,$charset)),$form);
+		$form = str_replace('!!authperso_selector!!',$this->get_authperso_selector(),$form);
 		$form = str_replace('!!label!!',htmlentities($this->name,ENT_QUOTES,$charset),$form);
-
-		$facette_search = new facette_search_opac($this->type,$this->is_external);
+		$facette_search = facettes_controller::get_facette_search_opac_instance($this->type,$this->is_external);
 		$form = str_replace('!!liste1!!', $facette_search->create_list_fields($this->crit, $this->ss_crit), $form);
 		
 		$form = str_replace('!!type_sort_nb_results_checked!!', (!$this->type_sort ? "checked='checked'" : ""), $form);
@@ -308,6 +308,10 @@ class facette {
 	
 	public function set_type($type) {
 		$this->type = $type;
+	}
+	
+	protected function get_authperso_selector() {
+	    return "";
 	}
 }
 

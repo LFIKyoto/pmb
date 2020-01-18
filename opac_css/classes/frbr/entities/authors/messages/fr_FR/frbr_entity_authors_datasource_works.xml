@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE XMLlist SYSTEM "../XMLlist.dtd" [<!ENTITY nbsp "&amp;nbsp;">]>
+
+<!-- messages localisés en français pour le module Articleslist
+****************************************************************************************
+© 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+****************************************************************************************
+$Id: frbr_entity_authors_datasource_works.xml,v 1.2 2019-07-31 08:43:19 arenou Exp $ -->
+
+<XMLlist>
+	<entry code='frbr_entity_authors_datasource_authors_function'>Fonctions d'auteur</entry>
+	<entry code='frbr_entity_authors_datasource_authors_type'>Type d'auteur</entry>
+	<entry code='frbr_entity_authors_datasource_authors_type_all'>Tous</entry>
+	<entry code='frbr_entity_authors_datasource_authors_type_author'>Auteur</entry>
+	<entry code='frbr_entity_authors_datasource_authors_type_interpreter'>Interprète</entry>
+</XMLlist>

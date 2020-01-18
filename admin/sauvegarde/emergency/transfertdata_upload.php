@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: transfertdata_upload.php,v 1.6 2017-08-02 08:49:00 tsamson Exp $
+// $Id: transfertdata_upload.php,v 1.8 2019-08-01 13:16:36 btafforeau Exp $
 
 //Restauration d'urgence
 
@@ -36,14 +36,16 @@ function restore($src) {
 	global $link;
 	global $buffer_sql;
 
-	$SQL='';
-	if($src) {
-		$filename=$src;
-		if(open_restore_stream($src) && $buffer_sql) {
+	$SQL = array();
+	if (!empty($src)) {
+		if (open_restore_stream($src) && !empty($buffer_sql)) {
 			// open source file
 			$SQL = preg_split('/;\s*\n|;\n/m', $buffer_sql);
-			for($i=0; $i < sizeof($SQL); $i++) {
-				if($SQL[$i]) $result = pmb_mysql_query($SQL[$i], $link);
+			$nb_queries = count($SQL);
+			for ($i = 0; $i < $nb_queries; $i++) {
+			    if ($SQL[$i]) {
+			        $result = pmb_mysql_query($SQL[$i], $link);
+			    }
 			}
 		} else {
 			die("can't open file $src to restore");

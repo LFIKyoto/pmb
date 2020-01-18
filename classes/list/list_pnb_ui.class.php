@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_pnb_ui.class.php,v 1.10 2018-11-09 14:45:19 dgoron Exp $
+// $Id: list_pnb_ui.class.php,v 1.10.6.4 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -76,31 +76,24 @@ class list_pnb_ui extends list_ui {
 	 * Initialisation de la pagination par défaut
 	 */
 	protected function init_default_pager() {
-		$this->pager = array(
-				'page' => 1,
-				'nb_per_page' => 10,
-				'nb_results' => 0,
-				'nb_page' => 1
-		);
+	    parent::init_default_pager();
+	    $this->pager['nb_per_page'] = 10;
 	}
 	
 	/**
 	 * Initialisation du tri par défaut appliqué
 	 */
 	protected function init_default_applied_sort() {
-		$this->applied_sort = array(
-				'by' => 'offer_date',
-				'asc_desc' => 'desc'
-		);
+	    $this->add_applied_sort('offer_date', 'desc');
 	}
 	
 	/**
 	 * Tri SQL
 	 */
 	protected function _get_query_order() {	
-		if ($this->applied_sort['by']) {
+	    if ($this->applied_sort[0]['by']) {
 			$order = '';
-			$sort_by = $this->applied_sort['by'];
+			$sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				case 'offer_date':
 					$order .= 'pnb_order_offer_date';
@@ -114,7 +107,7 @@ class list_pnb_ui extends list_ui {
 			}
 			if ($order) {
 				$this->applied_sort_type = 'SQL';
-				return " order by ".$order." ".$this->applied_sort['asc_desc']; 
+				return " order by ".$order." ".$this->applied_sort[0]['asc_desc']; 
 			} else {
 				return "";
 			}
@@ -194,12 +187,12 @@ class list_pnb_ui extends list_ui {
 	
 	/**
 	 * Fonction de callback
-	 * @param account $a
-	 * @param account $b
+	 * @param object $a
+	 * @param object $b
 	 */
 	protected function _compare_objects($a, $b) {
-		if ($this->applied_sort['by']) {
-			$sort_by = $this->applied_sort['by'];
+	    if ($this->applied_sort[0]['by']) {
+	        $sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				default :
 					return parent::_compare_objects($a, $b);
@@ -239,21 +232,15 @@ class list_pnb_ui extends list_ui {
 				}
 				break;
 			case 'nb_loans':
-				$content.=  "
-					<script type=\"text/javascript\">
-						addLoadEvent(function() {
-						pnb_get_loans_completed_number_by_line_id('" . $object->get_line_id() . "');
-						});
-					</script>
-					<span id='nb_loans_" . $object->get_line_id() . "'></span> / 
-				";
-				$content.=  parent::get_cell_content($object, $property);
+			    $content.=  $object->get_loans_completed_number() . " / " . parent::get_cell_content($object, $property);
 				break;
+			case 'nb_simultaneous_loans':
+			    $content.=  $object->get_loans_in_progress() . " / " . parent::get_cell_content($object, $property);
+			    break;
 			case 'order_id':
 			case 'order_line_id':
 			case 'order_notice':
 			case 'order_loan_max_duration':
-			case 'order_nb_simultaneous_loans':
 			case 'order_nb_consult_in_situ':
 			case 'order_nb_consult_ex_situ':
 			case 'order_offer_date':

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: upload_folder_storage.class.php,v 1.3 2015-04-24 13:00:11 mbertin Exp $
+// $Id: upload_folder_storage.class.php,v 1.4 2019-06-11 08:53:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/storages/storage.class.php");
@@ -14,7 +14,7 @@ class upload_folder_storage extends storage {
 	public $filepath;
 	
 	public function __construct($id=0){
-		$this->class_name = __CLASS__;
+	    $this->class_name = self::class;
 		parent::__construct($id);
 		if($this->parameters['id_rep']){
 			$this->up_rep = new upload_folder($this->parameters['id_rep']);

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_voice_admin.class.php,v 1.5 2016-03-30 14:34:53 ngantier Exp $
+// $Id: nomenclature_voice_admin.class.php,v 1.6 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -132,7 +132,7 @@ class nomenclature_voice_admins {
 		return $tpl;
 	}	
 	
-	function order_up($id){
+	public function order_up($id){
 		global $dbh;	
 	
 		$requete="select voice_order from nomenclature_voices where id_voice=$id";
@@ -153,7 +153,7 @@ class nomenclature_voice_admins {
 		}
 	}
 	
-	function order_down($id){
+	public function order_down($id){
 		global $dbh;
 		$requete="select voice_order from nomenclature_voices where id_voice=$id";
 		$resultat=pmb_mysql_query($requete);

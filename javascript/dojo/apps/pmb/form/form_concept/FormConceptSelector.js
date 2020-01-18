@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: FormConceptSelector.js,v 1.15 2018-11-23 16:31:07 arenou Exp $
+// $Id: FormConceptSelector.js,v 1.16 2019-02-06 07:51:50 arenou Exp $
 
 /*****
  * 
@@ -154,6 +154,9 @@ define([
 
 			},
 			printResults: function(evtData, autoSelect){
+				if(this.resultConceptTab){
+					this.resultConceptTab.getParent().closeChild(this.resultConceptTab);
+				}
 				if(!this.resultTab){
 					this.resultTab = new SubTabConceptResults({title: pmbDojo.messages.getMessage('selector', 'selector_tab_results'), style: 'width:95%; height:100%;', loadScripts: true, parameters: this.parameters});
 					this.addChild(this.resultTab);

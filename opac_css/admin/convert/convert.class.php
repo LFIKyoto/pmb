@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: convert.class.php,v 1.5 2018-07-26 13:54:21 dgoron Exp $
+// $Id: convert.class.php,v 1.6 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -218,7 +218,7 @@ class convert {
 						$r = texttoxml($notice, $s, $islast, $isfirst, $param_path);
 						break;
 					case "custom" :
-						eval("\$r=".$s['CALLBACK'][0][value]."(\$notice, \$s, \$islast, \$isfirst, \$param_path);");
+						eval("\$r=".$s['CALLBACK'][0]['value']."(\$notice, \$s, \$islast, \$isfirst, \$param_path);");
 						break;
 			}
 			if (!$r['VALID']) {

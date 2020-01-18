@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: commandes.inc.php,v 1.102 2018-09-25 13:22:30 dgoron Exp $
+// $Id: commandes.inc.php,v 1.110.2.1 2019-12-06 10:50:13 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $id_cde, $id_exer, $id_bibli, $class_path, $include_path, $base_path, $msg, $charset, $action, $id_exercice, $id_dev, $chk, $sugchk, $by_mail;
 
 if(!isset($id_cde)) $id_cde = 0; else $id_cde += 0;
 if(!isset($id_exer)) $id_exer = 0; else $id_exer += 0;
@@ -32,6 +34,7 @@ require_once("$base_path/acquisition/achats/func_achats.inc.php");
 require_once("$base_path/acquisition/suggestions/func_suggestions.inc.php");
 require_once("$base_path/acquisition/achats/commandes/lettre_commande.class.php");
 require_once($class_path."/list/accounting/list_accounting_commandes_ui.class.php");
+require_once($class_path."/mail/accounting/mail_accounting_commande.class.php");
 require_once("$class_path/user.class.php");
 
 //Affiche la liste des commandes pour une bibliotheque
@@ -39,11 +42,11 @@ function show_list_cde($id_bibli, $id_exercice = 0) {
 	global $accounting_commandes_ui_user_input;
 	global $accounting_commandes_ui_status;
 	global $statut;
-	
+
 	$filters = array();
 	$filters['user_input'] = stripslashes($accounting_commandes_ui_user_input);
 	$filters['status'] = ($statut ? $statut : $accounting_commandes_ui_status);
-	
+
 	$list_accounting_commandes_ui = new list_accounting_commandes_ui($filters);
 	print $list_accounting_commandes_ui->get_display_list();
 }
@@ -98,6 +101,7 @@ function show_cde($id_bibli, $id_exer, $id_cde) {
 	global $pmb_gestion_devise;
 	global $PMBuserid;
 	global $pmb_type_audit;
+	global $modif_cde_sel_typ_for_checked, $modif_cde_sel_rub_for_checked;
 
 	//Recuperation etablissement
 	$bibli = new entites($id_bibli);
@@ -115,12 +119,12 @@ function show_cde($id_bibli, $id_exer, $id_cde) {
 
 	$date_liv = '';
 	$lien_dev = '';
-	
+
 	//Recuperation commande
 	$id_cde += 0;
 	$cde = new actes($id_cde);
 	$fou = new entites($cde->num_fournisseur);
-	
+
 	if(!$id_cde) {		//creation de commmande
 		//Recuperation exercice
 		$exer = new exercices($id_exer);
@@ -129,7 +133,7 @@ function show_cde($id_bibli, $id_exer, $id_cde) {
 		$exer = new exercices($cde->num_exercice);
 		$titre = htmlentities($msg['acquisition_cde_mod'], ENT_QUOTES, $charset);
 	}
-	
+
 	if(!$id_cde) {		//creation de commmande
 		$form = $modif_cde_form;
 		$statut = STA_ACT_AVA;
@@ -195,7 +199,9 @@ function show_cde($id_bibli, $id_exer, $id_cde) {
 		$bt_audit = '';
 		$bt_arc = '';
 		$bt_sup = '';
-		$lignes= show_lig_cde(0);
+		
+		$lignes= show_lig_new_cde();
+		
 	} else {		//visualisation ou modification de commmande
 		//elements communs
 		$coord = entites::get_coordonnees($fou->id_entite, '1');
@@ -282,14 +288,14 @@ function show_cde($id_bibli, $id_exer, $id_cde) {
 			if ($statut_fac) $sel_statut.='&nbsp;/&nbsp;'.$statut_fac;
 			if( ($cde->statut & STA_ACT_ARC) == STA_ACT_ARC ) $sel_statut = '<s>'.$sel_statut.'</s>';
 			$sel_statut.= "<input type='hidden' id='statut' name='statut' value='".$statut."' />";
-				
+
 			$sel_date_liv=$sel_date_liv_fix;
 			if ($cde->date_ech=='0000-00-00') {
 				$date_liv_lib = $msg['parperso_nodate'];
 			} else {
 				$date_liv_lib = formatdate($cde->date_ech);
 			}
-				
+
 			if (($cde->statut & STA_ACT_ARC) == STA_ACT_ARC ){	//Commande archivee
 				$bt_enr = '';
 				$bt_enr_valid = '';
@@ -309,20 +315,18 @@ function show_cde($id_bibli, $id_exer, $id_cde) {
 				if (($cde->statut & STA_ACT_FAC) == STA_ACT_FAC) {	//Commande facturee
 					$bt_fac = '';
 				}
-				if ( (($cde->statut & STA_ACT_REC) != STA_ACT_REC)
-						|| (($cde->statut & STA_ACT_FAC) != STA_ACT_FAC)
-						|| (($cde->statut & STA_ACT_PAY) != STA_ACT_PAY) ) { //Commande ni soldee, ni facturee, ni payee
-							$bt_arc = '';
+				if (($cde->statut & STA_ACT_REC) != STA_ACT_REC) { //Commande non soldee
+					$bt_arc = '';
 				}
 			}
 			$lignes= show_lig_cde($id_cde, FALSE);
 		} else {	//Commande modifiable
 			$form = $modif_cde_form;
-				
+
 			$statut = STA_ACT_AVA;
 			$sel_statut = "<input type='hidden' id='statut' name='statut' value='".$statut."' />";
 			$sel_statut.=htmlentities($msg['acquisition_cde_aval'], ENT_QUOTES, $charset);
-				
+
 			$sel_date_liv = $sel_date_liv_mod;
 			if ($cde->date_ech=='0000-00-00') {
 				$date_liv = '';
@@ -335,8 +339,9 @@ function show_cde($id_bibli, $id_exer, $id_cde) {
 			$bt_rec = '';
 			$bt_fac = '';
 			$bt_sol = '';
-				
+
 			$lignes= show_lig_cde($id_cde);
+
 		}
 	}
 	//Date validation
@@ -365,6 +370,12 @@ function show_cde($id_bibli, $id_exer, $id_cde) {
 	$form = str_replace('<!-- bouton_sup -->', $bt_sup, $form);
 	$form = str_replace('!!act_nblines!!', $lignes[0], $form);
 	$form = str_replace('<!-- lignes -->', $lignes[1], $form);
+
+	//selecteurs de type de produit et de budget pour affectation aux lignes cochees
+	if ($cde->statut == STA_ACT_AVA) {
+		$form = str_replace('<!-- sel_type_for_checked -->', $modif_cde_sel_typ_for_checked, $form);
+		$form = str_replace('<!-- sel_budget_for_checked -->', $modif_cde_sel_rub_for_checked, $form);
+	}
 
 	//Remplissage formulaire
 	$form = str_replace('!!form_title!!', $titre, $form);
@@ -406,7 +417,178 @@ function show_cde($id_bibli, $id_exer, $id_cde) {
 		$form.="<script type='text/javascript' src='./javascript/ajax.js'/>";
 		$form.="<script type='text/javascript'>ajax_parse_dom();</script>";
 	}
+
+
 	print $form;
+}
+
+
+//Affiche les lignes d'une commande
+function show_lig_new_cde() {
+    
+    global $charset,$msg;
+    global $acquisition_gestion_tva;
+    global $modif_cde_row_form;
+    global $first_applicant_line;
+    global $applicants_common_tpl;
+    global $deflt3lgstatcde, $deflt3rubrique;
+    
+    $form = "
+    <script type='text/javascript'>
+        acquisition_force_ttc='".$msg["acquisition_force_ttc"]."';
+        acquisition_force_ht='".$msg["acquisition_force_ht"]."';
+    </script>";
+            
+    $i=0;
+    $row_form = $modif_cde_row_form;
+    $lgstat_form=lgstat::getHtmlSelect(array(), FALSE, array('id'=>'lg_statut[!!i!!]', 'name'=>'lg_statut[!!i!!]'));
+    $rows_frais = frais::getFraisForNewOrder();
+        
+    //Ligne de frais
+    if(count($rows_frais)) {
+        
+        foreach($rows_frais as $row) {
+        
+            $i++;
+            $form.= $row_form;
+        
+            $std_applicants = str_replace('!!applicant_label!!', '', $first_applicant_line);
+            $std_applicants = str_replace('!!applicant_id!!', '', $std_applicants);
+            $std_applicants = str_replace('!!std_applicants!!', $std_applicants, $applicants_common_tpl);
+            $form = str_replace('!!applicants_tr!!', $std_applicants, $form);
+            $form = str_replace('!!applicants_visibility!!', 'style="display:none;"', $form);
+                
+            $form = str_replace('!!no!!', $i, $form);
+            $form = str_replace('!!code!!', '', $form);
+            $form = str_replace('!!lib!!', htmlentities($row['libelle_frais'], ENT_QUOTES, $charset), $form);
+                
+            $form = str_replace('!!qte!!', '1', $form);
+            $form = str_replace('!!prix!!', $row['montant_frais'], $form);
+                
+            if ($acquisition_gestion_tva) {
+                $form = str_replace('!!tva!!', $row['taux_tva'] , $form);
+                if ($acquisition_gestion_tva==1 ) {
+                    $prix_ttc=round($row['montant_frais']+($row['montant_frais']/100*$row['taux_tva']),2);
+                    $onchange_tva="
+    					onChange='document.getElementById(\"convert_ht_ttc_$i\").innerHTML=
+    						ht_to_ttc(document.getElementById(\"prix[$i]\").value,document.getElementById(\"tva[$i]\").value);
+    						thresholds_notification();
+    					' ";
+$convert_prix="
+    					onChange='document.getElementById(\"convert_ht_ttc_$i\").innerHTML=
+    						ht_to_ttc(document.getElementById(\"prix[$i]\").value,document.getElementById(\"tva[$i]\").value);
+    						thresholds_notification();
+    					' ";
+$convert_ht_ttc="
+    				<span class='convert_ht_ttc' id='convert_ht_ttc_$i'
+    					onclick='
+    						document.getElementById(\"input_convert_ht_ttc_$i\").value=\"\";
+    						document.getElementById(\"input_convert_ht_ttc_$i\").style.visibility=\"visible\";
+    						document.getElementById(\"input_convert_ht_ttc_$i\").focus();
+    					'
+    				>".$prix_ttc."</span>
+    				<input style='visibility:hidden' type='text' id='input_convert_ht_ttc_$i' name='convert_ht_ttc_$i' value=''
+    					onBlur='document.getElementById(\"input_convert_ht_ttc_$i\").style.visibility=\"hidden\";'
+    					onChange='document.getElementById(\"prix[$i]\").value=
+    						ttc_to_ht(document.getElementById(\"input_convert_ht_ttc_$i\").value,document.getElementById(\"tva[$i]\").value);
+    						document.getElementById(\"input_convert_ht_ttc_$i\").style.visibility=\"hidden\";
+    						document.getElementById(\"convert_ht_ttc_$i\").innerHTML=document.getElementById(\"input_convert_ht_ttc_$i\").value;
+    						thresholds_notification();
+    					'
+    				/>";
+} elseif ($acquisition_gestion_tva==2 ) {
+    $prix=$row['montant_frais'];
+    $tva=$row['taux_tva'];
+    $prix_ht=round( $prix / (($tva/100)+1),2);
+    $onchange_tva="
+    					onChange='document.getElementById(\"convert_ht_ttc_$i\").innerHTML=
+    						ttc_to_ht(document.getElementById(\"prix[$i]\").value,document.getElementById(\"tva[$i]\").value);
+    						thresholds_notification();
+    					' ";
+    $convert_prix="
+    					onChange='document.getElementById(\"convert_ht_ttc_$i\").innerHTML=
+    						ttc_to_ht(document.getElementById(\"prix[$i]\").value,document.getElementById(\"tva[$i]\").value);
+    						thresholds_notification();
+    					' ";
+    $convert_ht_ttc="
+    				<span class='convert_ht_ttc' id='convert_ht_ttc_$i'
+    					onclick='
+    						document.getElementById(\"input_convert_ht_ttc_$i\").value=\"\";
+    						document.getElementById(\"input_convert_ht_ttc_$i\").style.visibility=\"visible\";
+    						document.getElementById(\"input_convert_ht_ttc_$i\").focus();
+    					'
+    				>".$prix_ht."</span>
+    				<input style='visibility:hidden' type='text' id='input_convert_ht_ttc_$i' name='convert_ht_ttc_$i' value='$prix_ttc'
+    					onBlur='document.getElementById(\"input_convert_ht_ttc_$i\").style.visibility=\"hidden\";'
+    					onChange='document.getElementById(\"prix[$i]\").value=
+    						ht_to_ttc(document.getElementById(\"input_convert_ht_ttc_$i\").value,document.getElementById(\"tva[$i]\").value);
+    						document.getElementById(\"input_convert_ht_ttc_$i\").style.visibility=\"hidden\";
+    						document.getElementById(\"convert_ht_ttc_$i\").innerHTML=document.getElementById(\"input_convert_ht_ttc_$i\").value;
+    						thresholds_notification();
+    					'
+    				/>";
+}
+
+$force_ht_ttc="<br />
+    			<input type='hidden' id='force_debit[$i]' name='force_debit[$i]' value='2' />
+    			<span class='force_ht_ttc' id='force_ht_ttc_$i'
+    				onclick='
+    					if(document.getElementById(\"force_debit[$i]\").value==2){
+    						document.getElementById(\"force_ht_ttc_$i\").innerHTML=\"".$msg["acquisition_force_ht"]."\";
+    						document.getElementById(\"force_debit[$i]\").value=1;
+    					}else{
+    						document.getElementById(\"force_ht_ttc_$i\").innerHTML=\"".$msg["acquisition_force_ttc"]."\";
+    						document.getElementById(\"force_debit[$i]\").value=2;
+    					}
+    				'
+    			>".$msg["acquisition_force_ttc"]."</span>";
+}
+if (!$convert_prix) {
+    $convert_prix = "onChange='thresholds_notification();'";
+}
+$form = str_replace('!!onchange_tva!!', $onchange_tva, $form);
+$form = str_replace('!!convert_prix!!', $convert_prix, $form);
+$form = str_replace('!!convert_ht_ttc!!', $convert_ht_ttc, $form);
+$form = str_replace('!!force_ht_ttc!!', $force_ht_ttc, $form);
+$form = str_replace('!!rem!!', '0.00', $form);
+$lgstat=str_replace('!!i!!',$i,$lgstat_form);
+$lgstat=str_replace("value='{$deflt3lgstatcde}' ","value='{$deflt3lgstatcde}' selected='selected' ",$lgstat);
+$form=str_replace('!!lgstat!!',$lgstat,$form);
+$form=str_replace('!!comment_lg!!',htmlentities($row->commentaires_gestion,ENT_QUOTES,$charset),$form);
+$form=str_replace('!!comment_lo!!',htmlentities($row->commentaires_opac,ENT_QUOTES,$charset),$form);
+$form=str_replace('!!id_cde!!',0,$form);
+
+$form = str_replace('!!typ!!', '0', $form);
+$form = str_replace('!!lib_typ!!', '', $form);
+
+if ($deflt3rubrique) {
+    $rub = new rubriques($deflt3rubrique);
+    $bud = new budgets($rub->num_budget);
+    $form = str_replace('!!rub!!', $rub->id_rubrique, $form);
+    
+    $tab_rub = rubriques::listAncetres($rub->id_rubrique, true);
+    $lib_rub = '';
+    foreach ($tab_rub as $value) {
+        $lib_rub.= $value[1];
+        if($value[0] != $row->num_rubrique) $lib_rub.= ":";
+    }
+    
+    $form = str_replace('!!lib_rub!!', htmlentities($bud->libelle.":".$lib_rub, ENT_QUOTES, $charset), $form);
+} else {
+    $form = str_replace('!!rub!!', '0', $form);
+    $form = str_replace('!!lib_rub!!', '', $form);
+}
+
+$form = str_replace('!!id_sug!!', '0', $form);
+$form = str_replace('!!id_lig!!', '0', $form);
+$form = str_replace('!!typ_lig!!', '3', $form); //typ_lig : type de ligne frais annexe
+$form = str_replace('!!id_prod!!', $row['id_frais'], $form); // id_prod = id frais annexe
+
+}
+}
+
+$t = array(0=>$i, 1=>$form);
+return $t;
 }
 
 //Affiche les lignes d'une commande
@@ -492,7 +674,7 @@ function show_lig_cde($id_cde, $mod=TRUE) {
 		if ($acquisition_gestion_tva) {
 			$form = str_replace('!!tva!!', $row->tva , $form);
 			if ($acquisition_gestion_tva==1 ) {
-				$prix_ttc=round($row->prix+($row->prix/100*$row->tva),2);
+    			$prix_ttc = round($row->prix+($row->prix/100*$row->tva),2);
 				$onchange_tva="
 				onChange='document.getElementById(\"convert_ht_ttc_$i\").innerHTML=
 				ht_to_ttc(document.getElementById(\"prix[$i]\").value,document.getElementById(\"tva[$i]\").value);
@@ -520,11 +702,11 @@ function show_lig_cde($id_cde, $mod=TRUE) {
 				thresholds_notification();
 				'
 				/>";
-			}elseif ($acquisition_gestion_tva==2 ) {
-				$prix=$row->prix;
-				$tva=$row->tva;
-				$prix_ht=round( $prix / (($tva/100)+1),2);
-				$onchange_tva="
+			} elseif ($acquisition_gestion_tva == 2) {
+			    $prix_ttc = $row->prix;
+				$tva = $row->tva;
+				$prix_ht = round($prix_ttc / (($tva / 100) + 1), 2);
+				$onchange_tva = "
 				onChange='document.getElementById(\"convert_ht_ttc_$i\").innerHTML=
 				ttc_to_ht(document.getElementById(\"prix[$i]\").value,document.getElementById(\"tva[$i]\").value);
 				thresholds_notification();
@@ -1104,7 +1286,7 @@ function get_empr_origins($origin_array){
 
 //Affiche les lignes de commande depuis les suggestions
 function show_lig_cde_from_sug($sugchk) {
-	global $charset;
+	global $msg,$charset;
 	global $acquisition_gestion_tva;
 	global $modif_cde_row_form,$deflt3lgstatcde;
 	global $others_applicants_line;
@@ -1196,7 +1378,7 @@ function show_lig_cde_from_sug($sugchk) {
 				break;
 		}
 		$applicants = '';
-		if($typ_lig == 1 || $typ_lig == 2){
+		if($typ_lig == 1 || $typ_lig == 2 || count($sugg_origins)){
 			if(count($sugg_origins)){
 				$j = 0;
 				foreach($sugg_origins as $array_origin_details){
@@ -1234,6 +1416,11 @@ function show_lig_cde_from_sug($sugchk) {
 		$form = str_replace('!!lib!!', $taec, $form);
 		$form = str_replace('!!qte!!', $sug->nb, $form);
 		$form = str_replace('!!prix!!', $prix, $form);
+		
+		$onchange_tva="";
+		$convert_prix="";
+		$convert_ht_ttc="";
+		$force_ht_ttc="";
 		if ($acquisition_gestion_tva) {
 			$form = str_replace('!!tva!!', $row->tva , $form);
 			if ($acquisition_gestion_tva==1 ) {
@@ -1535,7 +1722,7 @@ function update_cde() {
 			$cde->date_ech = $date_liv;
 			$cde->devise = trim($devise);
 			$cde->save();
-				
+
 			//Recuperation des lignes valides
 			$tab_lig=array();
 			if (count($id_lig)) {
@@ -1549,7 +1736,7 @@ function update_cde() {
 					}
 				}
 			}
-				
+
 			//maj des lignes de commande
 			foreach($tab_lig as $k=>$v) {
 				$lig_cde = new lignes_actes($v);
@@ -1602,10 +1789,10 @@ function update_cde() {
 					$tab_lig[$k]=$v;
 				}
 			}
-				
+
 			//maj des lignes de commande
 			foreach($tab_lig as $k=>$v) {
-					
+
 				$lig_cde = new lignes_actes($v);
 				$lig_cde->code = addslashes($lig_cde->code);
 				$lig_cde->libelle = addslashes($lig_cde->libelle);
@@ -1678,7 +1865,7 @@ function duplicate_cde($id_bibli, $id_cde) {
 	$lignes= show_lig_cde($id_cde);
 
 	$id_cde=0;
-		
+
 	//complement formulaire
 	$form = str_replace('<!-- sel_statut -->', $sel_statut, $form);
 	$form = str_replace('<!-- sel_date_liv -->', $sel_date_liv_mod, $form);
@@ -1782,7 +1969,7 @@ function verif_bud() {
 				}
 			}
 		}
-			
+
 		//Vérifie que les budgets affectés globalement ne sont pas dépassés
 		foreach ($tot_bud as $key=>$value) {
 			$b = new budgets($key);
@@ -1820,34 +2007,15 @@ function print_cde($id_bibli=0, $id_cde=0, $by_mail=FALSE) {
 	if ( $by_mail==FALSE || !($acquisition_pdfcde_by_mail && strpos($bib_coord->email,'@') && strpos($fou_coord->email,'@')) ) {
 		$no_mail=TRUE;
 	} else {
-		$dest_name='';
-		if($fou_coord->libelle) {
-			$dest_name = $fou_coord->libelle;
-		} else {
-			$dest_name = $fou->raison_sociale;
-		}
-		if($fou_coord->contact) $dest_name.=" ".$fou_coord->contact;
-		$dest_mail=$fou_coord->email;
-		$obj_mail = $acquisition_pdfcde_obj_mail;
-		$text_mail = $acquisition_pdfcde_text_mail;
-		$bib_name = $bib_coord->raison_sociale;
-		$bib_mail = $bib_coord->email;
-
-		$lettre = lettreCommande_factory::make();
-		$lettre->doLettre($id_bibli,$id_cde);
-		$piece_jointe=array();
-		$piece_jointe[0]['contenu']=$lettre->getLettre('S');
-		$piece_jointe[0]['nomfichier']=$lettre->getFileName();
-
-		//         mailpmb($to_nom="", $to_mail,   $obj="",   $corps="",  $from_name="", $from_mail, $headers, $copie_CC="", $copie_BCC="", $faire_nl2br=0, $pieces_jointes=array())
-		$res_envoi=mailpmb($dest_name, $dest_mail, $obj_mail, $text_mail ,$bib_name, $bib_mail, "Content-Type: text/plain; charset=\"$charset\"", '', $PMBuseremailbcc, 1, $piece_jointe);
+	    $mail_accounting_commande = new mail_accounting_commande();
+	    $res_envoi = $mail_accounting_commande->send_mail($id_bibli, $id_cde);
 		if (!$res_envoi) {
 			$no_mail=TRUE;
 		}
 		if (!$no_mail) {
-			print "<h3>".sprintf($msg["acquisition_print_emailsucceed"],$dest_mail)."</h3>";
+		    print "<h3>".sprintf($msg["acquisition_print_emailsucceed"],$mail_accounting_commande->get_dest_mail())."</h3>";
 		} else {
-			print "<h3>".sprintf($msg["acquisition_print_emailfailed"],$dest_mail)."</h3>";
+		    print "<h3>".sprintf($msg["acquisition_print_emailfailed"],$mail_accounting_commande->get_dest_mail())."</h3>";
 		}
 	}
 	if ($no_mail) {
@@ -1887,6 +2055,7 @@ switch($action) {
 	case 'update' :
 	case 'valid' :
 		update_cde();
+		$statut = STA_ACT_ENC;
 		show_list_cde($id_bibli, $id_exercice);
 		break;
 	case 'from_devis' :

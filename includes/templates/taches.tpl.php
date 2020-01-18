@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: taches.tpl.php,v 1.5 2017-01-26 15:36:34 dgoron Exp $
+// $Id: taches.tpl.php,v 1.6.6.1 2019-10-09 10:14:45 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $planificateur_id, $subaction, $template_result, $base_path, $msg, $admin_planificateur_global_params, $planificateur_form;
 
 if(!isset($planificateur_id)) $planificateur_id = 0;
 if(!isset($subaction)) $subaction = '';
@@ -262,7 +264,7 @@ $planificateur_form="
 				alert(\"$msg[planificateur_alert_name]\");
 				return false;
 			}
-			if (document.forms[0].form_users.value == '') {
+			if (document.forms['planificateur_form'].form_users.value == '') {
 				alert(\"$msg[planificateur_alert_user]\");
 				return false;
 			}
@@ -272,6 +274,16 @@ $planificateur_form="
 					return false;
 				}
 			}
+            var checkboxes_quotidien = Array.prototype.slice.call(document.querySelectorAll('input[type=\"checkbox\"][name=\"chkbx_task_quotidien[]\"]:checked:enabled'));
+            var checkboxes_hebdo = Array.prototype.slice.call(document.querySelectorAll('input[type=\"checkbox\"][name=\"chkbx_task_hebdo[]\"]:checked:enabled'));
+            var checkboxes_mensuel = Array.prototype.slice.call(document.querySelectorAll('input[type=\"checkbox\"][name=\"chkbx_task_mensuel[]\"]:checked:enabled'));
+            if((checkboxes_quotidien && !checkboxes_quotidien.length) 
+                || (checkboxes_hebdo && !checkboxes_hebdo.length) 
+                || (checkboxes_mensuel && !checkboxes_mensuel.length)
+            ) {
+                alert(\"$msg[planificateur_alert_perio]\");
+                return false;
+            }
 			if ((heure != '') && (heure != '*')) {
 				if (reg_horaire_fixe.test(heure)) {
 					if ((heure < 0) || (heure > 23)) {

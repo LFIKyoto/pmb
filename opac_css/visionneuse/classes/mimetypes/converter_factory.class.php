@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: converter_factory.class.php,v 1.4 2018-06-08 10:46:38 mbertin Exp $
+// $Id: converter_factory.class.php,v 1.5 2019-07-10 06:44:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -68,7 +68,7 @@ abstract class convert_to {
 	protected $params=array();
 	protected $tmp_dir='';
 
-	function __construct($filename, $filepath, $mimetype='', $extension='', $convert_to='', $tmp_dir, $parameters=array()) {
+	public function __construct($filename, $filepath, $mimetype='', $extension='', $convert_to='', $tmp_dir, $parameters=array()) {
 		$this->filename=$filename;
 		$this->filepath=$filepath;
 		if ($mimetype)$this->mimetype=$mimetype;
@@ -82,9 +82,9 @@ abstract class convert_to {
 		$this->params['pdf2swf_cmd']=$parameters['pdf2swf_cmd'];
 	}
 	
-	abstract function convert();
+	abstract public function convert();
 
-	abstract function remove_tmp_files();
+	abstract public function remove_tmp_files();
 }
 
 

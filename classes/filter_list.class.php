@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: filter_list.class.php,v 1.48 2017-11-21 13:38:21 dgoron Exp $
+// $Id: filter_list.class.php,v 1.50 2019-07-11 10:24:50 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -22,8 +22,8 @@ class filter_list {
 	public $multiple; //option multiple de la liste des filtres
 	public $error; //booléen d'erreur
 	public $error_message; //message de l'erreur
-	public $css=""; //style d'affichage
-	public $scripts=""; //scripts sur les lignes de résultat
+	public $css = array(); //style d'affichage
+	public $scripts = array(); //scripts sur les lignes de résultat
 	public $page; //page en cours
 	public $nb_per_page; //nombre d'enregistrements par page
 	public $query; //texte de la requête finale
@@ -124,7 +124,7 @@ class filter_list {
     				global ${$valeurs_post};
     				$v=array();
     				if (${$valeurs_post}) $v=${$valeurs_post};
-    				if(count($v) > 1 || (is_array($v) && $v[0] != "-1" && $v[0] != "")){
+    				if(count($v) > 1 || (is_array($v) && isset($v[0]) && $v[0] != "-1" && $v[0] != "")){
     					//Récupération du champ
 	    				$field=array();
 						$field['ID']=$id;

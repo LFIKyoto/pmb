@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_licence.tpl.php,v 1.7 2018-04-20 15:26:05 dgoron Exp $
+// $Id: explnum_licence.tpl.php,v 1.9 2019-05-27 10:43:47 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $what, $admin_explnum_licence_content_form, $msg, $charset, $admin_explnum_licence_list, $current_module, $admin_explnum_licence_list_row;
+global $admin_explnum_licence_settings_menu, $admin_explnum_licence_profile_list, $admin_explnum_licence_profile_list_row, $admin_explnum_licence_right_list, $admin_explnum_licence_right_list_row, $explnum_licence_selector, $explnum_licence_selector_script, $base_path, $explnum_licence_profiles_form_list_item, $explnum_licence_profile_details, $explnum_licence_pdf_container_template, $explnum_licence_right_details, $explnum_licence_info_picto, $explnum_licence_script_dialog, $explnum_licence_profile_quotation;
 
 if (!isset($what)) {
 	$what = 'profiles';
@@ -182,7 +185,6 @@ $explnum_licence_profile_details = "
 			<a target='_blank' href='!!explnum_licence_profile_uri!!'>!!explnum_licence_profile_uri!!</a>
 	
 			<p>!!explnum_licence_profile_explanation!!</p>
-			<i>!!explnum_licence_profile_quotation_rights!!</i>
 			!!explnum_licence_rights_details!!
 		";
 
@@ -198,13 +200,14 @@ $explnum_licence_right_details = "
 		<p>!!explnum_licence_right_explanation!!</p>
 		";
 
-$explnum_licence_info_picto = '<i style="cursor:pointer;" data-parsed="" class="fa fa-info-circle" data-explnum-id="!!explnum_id!!"></i>
-							  <i style="cursor:pointer;" data-parsed="" class="fa fa-file-pdf-o" data-is-pdf="true" data-explnum-id="!!explnum_id!!"></i>
-		';
+$explnum_licence_info_picto = '
+	<i style="cursor:pointer;" data-parsed="" class="fa fa-info-circle" data-explnum-id="!!explnum_id!!" data-content-type="tooltip"></i>
+	<i style="cursor:pointer;" data-parsed="" class="fa fa-file-pdf-o" data-is-pdf="true" data-explnum-id="!!explnum_id!!"></i>
+	<i style="cursor:pointer;" data-parsed="" class="fa fa-quote-left" data-explnum-id="!!explnum_id!!" data-content-type="quotation"></i>';
 
 $explnum_licence_script_dialog = '			
-		<script type="text/javascript">
-require(["dojo/dom", 
+<script type="text/javascript">
+	require(["dojo/dom", 
 		"dojo/query", 
 		"dojo/ready", 
 		"dojo/on", 
@@ -220,7 +223,7 @@ require(["dojo/dom",
                 if (!inode.getAttribute("data-is-pdf")) {
                     on(inode, "mouseover", function (e) {
                         if (!domAttr.get(this, "id")) { 
-							request.post("'.$base_path.'/ajax.php?module=catalog&categ=explnum&quoifaire=get_licence_tooltip", {
+							request.post("'.$base_path.'/ajax.php?module=catalog&categ=explnum&quoifaire=get_licence_" + domAttr.get(this, "data-content-type"), {
 	                            data: {
 	                                id: domAttr.get(this, "data-explnum-id")
 	                            },
@@ -253,4 +256,14 @@ require(["dojo/dom",
         }
     });
 });
+
+	function profile_quotation_copy_to_clipboard(copyButton){
+		var copyText = copyButton.previousElementSibling;
+		copyText.select();
+		document.execCommand("copy");
+	}
 </script>';
+
+$explnum_licence_profile_quotation = '
+<input type="text" value="!!profile_quotation!!" size="50"/>
+<i style="cursor:pointer;" class="fa fa-copy" onclick="profile_quotation_copy_to_clipboard(this);"></i>';

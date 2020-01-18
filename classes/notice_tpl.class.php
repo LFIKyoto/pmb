@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_tpl.class.php,v 1.15 2018-12-20 11:00:19 mbertin Exp $
+// $Id: notice_tpl.class.php,v 1.15.6.1 2019-11-15 13:11:16 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -397,7 +397,20 @@ class notice_tpl {
 		$onchange="";
 		return gen_liste ($requete, "notpl_id", "nom", $select_name, $onchange, $selected_id, 0, $msg["notice_tpl_list_default"], 0,$msg["notice_tpl_list_default"], 0) ;
 	}
-		
+	
+	static public function get_list() {
+	    
+	    $list = array();
+	    $query = "SELECT notpl_id, if(notpl_comment!='',concat(notpl_name,'. ',notpl_comment),notpl_name) as nom FROM notice_tpl ORDER BY notpl_name ";
+	    $result = pmb_mysql_query($query);
+	    if (pmb_mysql_num_rows($result)) {
+	        while($row = pmb_mysql_fetch_object($result)) {
+	            $list[$row->notpl_id] = $row->nom;
+	        }
+	    }
+	    return $list;
+	}
+	
 	public function show_eval($notice_id=0) {
 		global $notice_tpl_eval;
 		global $deflt2docs_location;

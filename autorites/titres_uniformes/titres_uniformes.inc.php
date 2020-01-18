@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: titres_uniformes.inc.php,v 1.28 2017-08-04 07:23:57 dgoron Exp $
+// $Id: titres_uniformes.inc.php,v 1.29 2019-06-03 07:04:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $msg, $id;
 
 // fonctions communes aux pages de gestion des autorités
 require_once('./autorites/auth_common.inc.php');

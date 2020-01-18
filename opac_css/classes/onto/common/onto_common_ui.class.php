@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_ui.class.php,v 1.4 2018-02-15 16:23:18 apetithomme Exp $
+// $Id: onto_common_ui.class.php,v 1.5.2.1 2019-09-18 09:12:22 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -109,12 +109,10 @@ class onto_common_ui extends onto_root_ui{
 				$item_label = (isset($item[substr($lang,0,2)]) ? $item[substr($lang,0,2)] : $item['default']);
 				$current_element_form = str_replace("!!item_libelle!!", htmlentities($item_label,ENT_QUOTES,$charset), $current_element_form);
 				if($multiple_range){
-					$item = "[".$controler->get_class_label($element)."] ".$item_label;
-				}else{
-					$item = $item_label;
+				    $item_label = "[".$controler->get_class_label($element)."] ".$item_label;
 				}
 				
-				$current_element_form = str_replace("!!item!!", addslashes($item), $current_element_form);
+				$current_element_form = str_replace("!!item!!", addslashes($item_label), $current_element_form);
 				$elements_form.= $current_element_form;
 			}
 			$list = str_replace("!!elements_form!!", $elements_form, $list);
@@ -223,5 +221,20 @@ class onto_common_ui extends onto_root_ui{
 		$list = str_replace("!!href_continue!!", "./".$controler->get_base_resource()."categ=".$params->categ."&sub=".$params->sub."&id=".$params->id."&action=delete", $list);
 		
 		return $list;
+	}
+	
+	/**
+	 * retourne le message associe au label
+	 * @param string $label
+	 * @return string
+	 */
+	public static function get_message($label) {
+	    global $msg;
+	    if (substr($label,0,4)=="msg:") {
+	        if (isset($msg[substr($label,4)])) {
+	            return  $msg[substr($label,4)];
+	        }
+	    }
+	    return $label;
 	}
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax.php,v 1.29 2018-12-04 08:53:31 ngantier Exp $
+// $Id: ajax.php,v 1.30 2019-01-14 15:34:20 arenou Exp $
 /*
 Mode d'emploi des transactions client - serveur utilisant les requettes Ajax.
 Cette technique permet d'interroger le serveur dynamiquement sans recharger toute la page.
@@ -206,7 +206,14 @@ switch($module) {
 			$autoloader = new autoloader();
 		}
 		$autoloader->add_register("selectors_class",true);
-		
+		global $what,$concept_scheme;
+		if($what == 'ontology'){
+    		if(!is_array($concept_scheme) && $concept_scheme != ''){
+    		    $concept_scheme = explode(",",$concept_scheme);
+    		}else{
+    		    $concept_scheme = [];
+    		}
+		}
 		require_once($base_path.'/selectors/classes/selector_controller.class.php');
 		$selector_controller = new selector_controller();
 		$selector_controller->proceed();

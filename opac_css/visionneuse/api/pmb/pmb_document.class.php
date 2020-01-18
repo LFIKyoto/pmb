@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmb_document.class.php,v 1.5 2017-06-30 14:55:37 dgoron Exp $
+// $Id: pmb_document.class.php,v 1.7 2019-07-11 13:01:58 btafforeau Exp $
 
 require_once($class_path."/cms/cms_document.class.php");
 
@@ -10,7 +10,7 @@ require_once($class_path."/cms/cms_document.class.php");
 class pmb_document extends base_params implements params {
 	public $listeDocs = array();		//tableau de documents
 	public $current = 0;				//position courante dans le tableau
-	public $currentDoc = "";			//tableau décrivant le document courant
+	public $currentDoc = array();			//tableau décrivant le document courant
 	public $params;					//tableau de paramètres utiles pour la recontructions des requetes...et même voir plus
 	public $watermark = array();			//Url du watermark si défini  + transparence
   
@@ -125,7 +125,7 @@ class pmb_document extends base_params implements params {
 //	}
 //	
 	public function getCurrentDoc(){
-		$this->currentDoc = "";
+		$this->currentDoc = array();
 		//on peut récup déjà un certain nombre d'infos...
 		$this->currentDoc["id"] = $this->listeDocs[$this->current];
 		$document = new cms_document($this->currentDoc["id"]);

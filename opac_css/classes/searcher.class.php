@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher.class.php,v 1.100 2018-12-17 13:57:26 ngantier Exp $
+// $Id: searcher.class.php,v 1.109 2019-07-03 08:42:14 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -31,6 +31,7 @@ class searcher {
 	public $explnums=array();	// tableau contenant les documents numériques associés à la recherche
 	public $table_tempo;		// table temporaire contenant les résultats filtrés triés..;
 	public $map_emprises_query;	// recherche map emprises
+	public $result;	
 
 	public function __construct($user_query,$map_emprises=array()){
 		$this->searched=false;
@@ -65,6 +66,7 @@ class searcher {
 				$query.= $this->_get_typdoc_filter(true);
 			}
 		}
+			
 		$this->_get_filter_by_custom_search($query);
 		return $query;
 	}
@@ -80,6 +82,7 @@ class searcher {
 	protected function _get_notices_ids(){
 		if(!$this->searched){
 			$query = $this->_get_search_query();
+				
 			$this->notices_ids="";
 			$res = pmb_mysql_query($query);
 			if($res){
@@ -251,16 +254,20 @@ class searcher {
 				}
 			}			
 			if($this->map_emprises_query){
-				$restriction_emprise.= "and (notices.notice_id IN (select distinct map_emprise_obj_num FROM map_emprises where map_emprise_type=11) or (notices.notice_id IN (select distinct notcateg_notice from notices_categories join map_emprises on map_emprises.map_emprise_obj_num = notices_categories.num_noeud where map_emprises.map_emprise_type=2)))";
-			
+			    $queries = array();
+			    $restriction_emprise = " and (
+                    (notices.notice_id IN (select distinct map_emprise_obj_num FROM map_emprises where map_emprise_type=11))
+                    or (notices.notice_id IN (select distinct notcateg_notice from notices_categories join map_emprises on map_emprises.map_emprise_obj_num = notices_categories.num_noeud where map_emprises.map_emprise_type=2))
+                    or (notices.notice_id IN (select distinct num_object from index_concept join map_emprises on map_emprise_type = 10 where type_object = 1 and map_emprise_obj_num = num_concept))
+                )";
 				foreach($this->map_emprises_query as $map_emprise_query){
 					//récupération des emprise de notices correspondantes
-					$query_notice="select map_emprise_obj_num as notice_id from map_emprises where map_emprise_type=11 and contains(geomfromtext('$map_emprise_query'),map_emprise_data) = 1  ";
-					//récupération des emprise d'autorité correspondantes
-					$query_categories = "select notcateg_notice as notice_id from notices_categories join map_emprises on num_noeud = map_emprises.map_emprise_obj_num where map_emprise_type = 2 and contains(geomfromtext('$map_emprise_query'),map_emprise_data) = 1";
+					$query_notice = "select map_emprise_obj_num as notice_id from map_emprises where map_emprise_type=11 and contains(geomfromtext('$map_emprise_query'),map_emprise_data) = 1  ";
 					//récupérations des notices indexés avec une categorie
-					//$query = "select notcateg_notice as notice_id, 100 as pert from notices_categories join map_emprises on num_noeud = map_emprises.map_emprise_obj_num where map_emprise_type = 2 and contains(geomfromtext('$map_emprise_query'),map_emprise_data) = 1 union select map_emprise_obj_num as notice_id, 100 as pert from map_emprises where map_emprise_type=11 and contains(geomfromtext('$map_emprise_query'),map_emprise_data) = 1";
-					$queries[] = "select * from (".$query_notice." union ".$query_categories.") as uni";//TODO-> faire le mapage et mettre le tout dans $queries...
+					$query_categories = "select notcateg_notice as notice_id from notices_categories join map_emprises on num_noeud = map_emprises.map_emprise_obj_num where map_emprise_type = 2 and contains(geomfromtext('$map_emprise_query'),map_emprise_data) = 1";
+					// dans les concepts
+					$query_concepts = "select num_object as notice_id from index_concept join map_emprises on map_emprise_type = 10 and contains(geomfromtext('$map_emprise_query'), map_emprise_data) = 1 where type_object = 1 and map_emprise_obj_num = num_concept";
+					$queries[] = "select * from (".$query_notice." union ".$query_categories." union ". $query_concepts . ") as uni";//TODO-> faire le mapage et mettre le tout dans $queries...
 				}
 				$from = "";
 				$select_pert = "";
@@ -271,6 +278,7 @@ class searcher {
 						$from.= " inner join (".$queries[$i].") as t".$i." on t".$i.".notice_id = t".($i-1).".notice_id";
 					}
 				}
+				$restriction_query = '';
 				if($this->user_query!="" && $this->user_query!="*" ){
 					$restriction_query ="and notices.notice_id in (".$this->notices_ids.")";
 				}
@@ -574,14 +582,19 @@ class searcher {
 		return $map;
 	}
 	
-   function check_emprises(){
+   public static function check_emprises(){
 		global $opac_map_activate;
 		global $opac_map_max_holds;
 		global $opac_map_size_search_result;
 		$map = "";
 		$size=explode("*",$opac_map_size_search_result);
-		if(count($size)!=2)$map_size="width:800px; height:480px;";
-		$map_size= "width:".$size[0]."; height:".$size[1].";";
+		if(count($size)!=2) {
+			$map_size="width:800px; height:480px;";
+		} else {
+			if (is_numeric($size[0])) $size[0].= 'px';
+			if (is_numeric($size[1])) $size[1].= 'px';
+			$map_size= "width:".$size[0]."; height:".$size[1].";";
+		}
 		$current_search = $_SESSION['nb_queries'];
 		$map_search_controler = new map_search_controler(null, $current_search, $opac_map_max_holds,false);
 		$json = $map_search_controler->get_json_informations();
@@ -610,12 +623,20 @@ class searcher {
 		print $map;
 	}
 	
+	public function add_fields_restrict($fields_restrict = array()) {
+	    $this->field_restrict = array_merge($this->field_restrict, $fields_restrict);
+	}
+	
+	public function set_fields_restrict($fields_restrict = array()) {
+	    $this->field_restrict = $fields_restrict;
+	}
+	
 	public function init_fields_restrict($mode){
 		return false;
 	}
 	
 	public function get_temporary_table_name($suffix='') {
-		return get_called_class().substr(md5(microtime(true)), 0, 16).$suffix;
+	    return static::class.substr(md5(microtime(true)), 0, 16).$suffix;
 	}
 }
 
@@ -1006,40 +1027,47 @@ class searcher_extended extends searcher{
 
 	protected function _get_search_query(){
 		global $es,$msg;
+		
 		if(!is_object($es)) $es = new search();
 		if($this->serialized_query){
 			$es->unserialize_search($this->serialized_query);
 		}else{
 			global $search;
     		//Vérification des champs vides
-    		for ($i=0; $i<count($search); $i++) {
-    			if($i==0){//On supprime le premier opérateur inter (il est renseigné pour les recherches prédéfinies avec plusieurs champs et une recherche avec le premier champ vide
-    				$inter="inter_".$i."_".$search[$i];
-    				global ${$inter};
-    				${$inter}="";
-    			}
-	    		$op="op_".$i."_".$search[$i];
-    			global ${$op};
-    			$field_="field_".$i."_".$search[$i];
-	   			global ${$field_};
-	   			$field=${$field_};
-	   			$s=explode("_",$search[$i]);
-	   			if ($s[0]=="f") {
-		    		$champ=$es->fixedfields[$s[1]]["TITLE"];
-	   			} elseif ($s[0]=="s") {
-		    		$champ=$es->specialfields[$s[1]]["TITLE"];
-	   			} else {
-		    		$champ=$es->pp->t_fields[$s[1]]["TITRE"];
-	   			}
-	   			if (((string)$field[0]=="") && (!$es->op_empty[${$op}])) {
-		    		$search_error_message=sprintf($msg["extended_empty_field"],$champ);
-	   				$flag=true;
-					break;
-	   			}
-	   		}
+    		if(is_array($search) && count($search)){
+	    		for ($i=0; $i<count($search); $i++) {
+	    			if($i==0){//On supprime le premier opérateur inter (il est renseigné pour les recherches prédéfinies avec plusieurs champs et une recherche avec le premier champ vide
+	    				$inter="inter_".$i."_".$search[$i];
+	    				global ${$inter};
+	    				${$inter}="";
+	    			}
+		    		$op="op_".$i."_".$search[$i];
+	    			global ${$op};
+	    			$field_="field_".$i."_".$search[$i];
+		   			global ${$field_};
+		   			$field=${$field_};
+		   			$s=explode("_",$search[$i]);
+		   			if ($s[0]=="f") {
+			    		$champ=$es->fixedfields[$s[1]]["TITLE"];
+		   			} elseif ($s[0]=="s") {
+		   			    $champ=$es->specialfields[$s[1]]["TITLE"];
+		   			} elseif ($s[0] == 'authperso') {
+		   			    // TO DO
+		   			} else {
+			    		$champ=$es->pp->t_fields[$s[1]]["TITRE"];
+		   			}
+		   			if (!is_array($field[0]) && ((string)$field[0]=="") && (!$es->op_empty[${$op}])) {
+		   			    // TO DO ?
+			    		$search_error_message=sprintf($msg["extended_empty_field"],$champ);
+		   				$flag=true;
+						break;
+		   			}
+		   		}
+    		}
     	}
 		//$es->remove_forbidden_fields();
     	$this->with_make_search=true;
+    	
     	$this->table = $es->make_search($this->get_temporary_table_name("_".rand(0,10)."_"));
 		return "select notice_id as id_notice, pert from ".$this->table;
 	}

@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_holds_reducer.class.php,v 1.13 2016-11-05 14:49:07 ngantier Exp $
+// $Id: map_holds_reducer.class.php,v 1.15 2019-07-05 13:25:15 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
     die("no access");
@@ -47,12 +47,14 @@ class map_holds_reducer {
 
      * @return void
      */
-    function __construct($map_hold, $holds) {
+    public function __construct($map_hold, $holds) {
         $this->map_hold = $map_hold;
         $this->holds = $holds;
         $this->clusters = array();
-        $this->init();
-        $this->map_hold->get_coords();
+        if(is_object($this->map_hold)) {
+        	$this->init();
+        	$this->map_hold->get_coords();
+        }
     }
 
     public function init() {

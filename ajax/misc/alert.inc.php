@@ -2,8 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: alert.inc.php,v 1.11 2018-09-10 13:21:36 dgoron Exp $
+// $Id: alert.inc.php,v 1.13 2019-05-29 12:12:29 btafforeau Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $base_path, $current_alert, $pmb_transferts_actif, $pmb_pnb_param_login, $charset, $aff_alerte;
 
 // définition du minimum nécéssaire                         
 $base_auth = "CIRCULATION_AUTH|CATALOGAGE_AUTH|AUTORITES_AUTH|ADMINISTRATION_AUTH|EDIT_AUTH";  

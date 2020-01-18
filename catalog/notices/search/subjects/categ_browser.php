@@ -2,7 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: categ_browser.php,v 1.11 2017-11-22 11:07:34 dgoron Exp $
+// $Id: categ_browser.php,v 1.13 2019-06-07 08:05:39 btafforeau Exp $
+
+global $base_path, $base_auth, $base_title, $class_path, $id_thes, $browser_url, $up_folder, $closed_folder, $open_folder, $document, $see;
+global $parent, $myBrowser;
 
 // affichage du browser de catégories
 
@@ -14,7 +17,7 @@ require_once ("$base_path/includes/init.inc.php");
 
 include("$class_path/categ_browser.class.php");
 
-
+if (!isset($id_thes)) $id_thes = 0;
 // url du présent browser
 $browser_url = "./categ_browser.php";
 
@@ -53,7 +56,7 @@ if ($id_thes != -1) {
 } else {
 //	Afficher ici la liste des thesaurus si besoin en mode tous les thesaurus
 }
-pmb_mysql_close($dbh);
+pmb_mysql_close();
 
 // affichage du footer
 print "</div></body></html>";

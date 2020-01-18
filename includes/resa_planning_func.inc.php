@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa_planning_func.inc.php,v 1.38 2018-10-22 12:47:47 dgoron Exp $
+// $Id: resa_planning_func.inc.php,v 1.40 2019-07-05 12:06:47 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($include_path."/mail.inc.php") ;
+require_once($class_path."/mail/reader/resa/mail_reader_resa_planning.class.php");
 
 // defines pour flag affichage info de gestion
 if (!defined('NO_INFO_GESTION')) define ('NO_INFO_GESTION', 0); // 0 >> aucune info de gestion : liste simple
@@ -594,7 +595,11 @@ function aff_entete($id_empr,&$layout_begin='',&$empr_cb=0) {
 		if(pmb_mysql_num_rows($r)) {
  			$o = pmb_mysql_fetch_object($r);
  			$name = $o->empr_prenom;
- 			$name ? $name .= ' '.$o->empr_nom : $name = $o->empr_nom;
+ 			if ($name) {
+ 			    $name .= ' '.$o->empr_nom;
+ 			} else {
+ 			    $name = $o->empr_nom;
+ 			}
  			$layout_begin = str_replace('!!nom_lecteur!!', htmlentities($name,ENT_QUOTES,$charset), $layout_begin);
  			$layout_begin = str_replace('!!cb_lecteur!!', htmlentities($o->empr_cb,ENT_QUOTES,$charset), $layout_begin);
  			$empr_cb=$o->empr_cb;
@@ -686,39 +691,13 @@ function alert_empr_resa_planning($id_resa=0, $id_empr_concerne=0) {
 
 	$result = pmb_mysql_query($query, $dbh);
 	if (pmb_mysql_num_rows($result)) {
-
-		$headers  = "MIME-Version: 1.0\n";
-		$headers .= "Content-type: text/html; charset=".$charset."\n";
-
-		$var = "pdflettreresa_fdp";
-		eval ("\$pdflettreresa_fdp=\"".${$var}."\";");
-
-		// le texte après la liste des ouvrages en résa
-		$var = "pdflettreresa_after_list";
-		eval ("\$pdflettreresa_after_list=\"".${$var}."\";");
-
-		// le texte avant la liste des ouvrages en réservation
-		$var = "pdflettreresa_before_list";
-		eval ("\$pdflettreresa_before_list=\"".${$var}."\";");
-
-		// le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
-		$var = "pdflettreresa_madame_monsieur";
-		eval ("\$pdflettreresa_madame_monsieur=\"".${$var}."\";");
-
 		while ($o=pmb_mysql_fetch_object($result)) {
 			if (($pdflettreresa_priorite_email_manuel==1 || $pdflettreresa_priorite_email_manuel==2) && $o->empr_mail) {
 				$to = $o->empr_prenom." ".$o->empr_nom." <".$o->empr_mail.">";
-				$output_final = "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /></head><body>" ;
-				$texte_madame_monsieur=str_replace("!!empr_name!!", $o->empr_nom,$pdflettreresa_madame_monsieur);
-				$texte_madame_monsieur=str_replace("!!empr_first_name!!", $o->empr_prenom,$texte_madame_monsieur);
-				$output_final .= $texte_madame_monsieur.' <br />'.$pdflettreresa_before_list ;
-				$output_final .= '<hr /><strong>'.$o->tit.'</strong>';
-				$output_final .= '<br />' ;
-				$output_final .= $msg['resa_planning_date_debut'].'  '.$o->aff_resa_date_debut.'  '.$msg['resa_planning_date_fin'].'  '.$o->aff_resa_date_fin ;
-
-				$output_final .= '<hr />'.$pdflettreresa_after_list.' <br />'.$pdflettreresa_fdp."<br /><br />".mail_bloc_adresse() ;
-				$output_final .= '</body></html>';
-				$res_envoi=mailpmb($o->empr_prenom.' '.$o->empr_nom, $o->empr_mail, sprintf($msg['mail_obj_resa_validee'], ''),$output_final,$biblio_name, $biblio_email, $headers, "", $PMBuseremailbcc);
+				
+				$mail_reader_resa_planning = new mail_reader_resa_planning();
+				$res_envoi = $mail_reader_resa_planning->send_mail($o);
+				
 				if (!$res_envoi || $pdflettreresa_priorite_email_manuel==2) {
 					print "<script type='text/javascript'>openPopUp('./pdf.php?pdfdoc=lettre_resa_planning&id_resa=$tmp_id_resa', 'lettre_confirm_resa".$tmp_id_resa."', 600, 500, -2, -2, 'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes');</script>";
 				}

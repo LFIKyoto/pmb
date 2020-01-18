@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_records_all_fields.class.php,v 1.7 2018-05-31 13:38:28 arenou Exp $
+// $Id: searcher_records_all_fields.class.php,v 1.8 2019-07-17 06:41:54 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -61,7 +61,8 @@ class searcher_records_all_fields extends searcher_records {
 	protected function _get_search_query(){
 		global $docnum_query, $mutli_crit_indexation_docnum_allfields;
 
-		if($docnum_query || $mutli_crit_indexation_docnum_allfields){
+		// Valeurs possibles pour mutli_crit_indexation_docnum_allfields : -1 et 1
+		if($docnum_query || ($mutli_crit_indexation_docnum_allfields*1 > 0)){
 			$this->with_docnums =true;
 		}
 		
@@ -84,7 +85,8 @@ class searcher_records_all_fields extends searcher_records {
  		global $dbh;
  		global $docnum_query, $mutli_crit_indexation_docnum_allfields;
  		
- 		if($docnum_query || $mutli_crit_indexation_docnum_allfields){
+ 		// Valeurs possibles pour mutli_crit_indexation_docnum_allfields : -1 et 1
+ 		if($docnum_query || ($mutli_crit_indexation_docnum_allfields*1 > 0)){
  			$this->with_docnums =true;
  		}
  		if ($this->with_docnums){

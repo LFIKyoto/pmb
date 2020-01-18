@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_contribution_datatype_merge_properties_ui.class.php,v 1.3 2017-07-28 14:31:37 vtouchard Exp $
+// $Id: onto_contribution_datatype_merge_properties_ui.class.php,v 1.7 2019-08-14 08:02:58 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -87,7 +87,7 @@ class onto_contribution_datatype_merge_properties_ui extends onto_common_datatyp
 		 */
 		$sub_instance_name = $property->pmb_name.'_'.$class->pmb_name;
 		$form = $ontology_tpl['form_row_merge_properties'];				
-		$form = str_replace("!!onto_row_label!!",htmlentities($property->label ,ENT_QUOTES,$charset) , $form);
+		$form = str_replace("!!onto_row_label!!",htmlentities($property->get_label() ,ENT_QUOTES,$charset) , $form);
 					
 		$content='';
 		
@@ -96,7 +96,7 @@ class onto_contribution_datatype_merge_properties_ui extends onto_common_datatyp
 			$properties[] = $class->get_property($uri_property);
 		}
 		
-		if(sizeof($datas)){
+		if (!empty($datas)) {
 			$new_element_order=max(array_keys($datas));
 				
 			$form=str_replace("!!onto_new_order!!",$new_element_order , $form);
@@ -148,7 +148,7 @@ class onto_contribution_datatype_merge_properties_ui extends onto_common_datatyp
 	
 		$display='<div id="'.$instance_name.'_'.$property->pmb_name.'">';
 		$display.='<p>';
-		$display.=$property->label.' : ';
+		$display.=$property->get_label().' : ';
 		foreach($datas as $data){
 			$display.=$data->get_formated_value();
 		}
@@ -170,12 +170,12 @@ class onto_contribution_datatype_merge_properties_ui extends onto_common_datatyp
 		
 		for ($i = 0; $i < count($properties); $i++) {
 			if ((!$flag || (in_array($flag,$properties[$i]->flags)))) {
-				if (!$valid_js) {
+				if (!empty($valid_js)) {
 					$valid_js.= ",";
 				}
 				$valid_js.= parent::get_validation_js($item_uri, $properties[$i], $restrictions, $datas, $instance_name, $flag);
 				
-				if ($i < (count($properties)-1) && $valid_js[count($valid_js)-1] != ",") {
+				if ($i < (count($properties) - 1) && substr($valid_js, 0, 1) != ",") {
 					$valid_js.= ",";
 				}
 			}			
@@ -185,7 +185,7 @@ class onto_contribution_datatype_merge_properties_ui extends onto_common_datatyp
 	
 	protected static function get_sub_properties($properties, $property, $item, $class, $data){
 		$content = "";
-		if(sizeof($properties)){
+		if (!empty($properties)) {
 			$content .= "<div style='border:1px solid black; border-color: #c5c5c5; border-radius:2px; padding:10px;'>";
 			$index = 0;
 			

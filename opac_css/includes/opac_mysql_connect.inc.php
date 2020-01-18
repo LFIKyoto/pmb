@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: opac_mysql_connect.inc.php,v 1.14 2017-07-31 13:21:40 tsamson Exp $
+// $Id: opac_mysql_connect.inc.php,v 1.15 2019-07-05 12:36:24 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -41,7 +41,9 @@ if ( ! defined( 'DB_CONNECT' ) ) {
 		$my_connec = @pmb_mysql_connect(SQL_SERVER, USER_NAME, USER_PASS);
 		if($my_connec===0 && $er_connec==1) die(my_error(0));
 		if($bd) {
-			$my_bd == '' ? $my_bd=DATA_BASE : $my_bd;
+		    if ($my_bd == '') {
+		        $my_bd = DATA_BASE;
+		    }
 			if( pmb_mysql_select_db($my_bd, $my_connec)==0 && $er_bd==1 ) die(my_error(0));
 		}
 		$opac_nb_documents=(@pmb_mysql_result(pmb_mysql_query("select count(*) from notices",$my_connec),0,0))*1;

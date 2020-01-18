@@ -2,8 +2,9 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: transferts_popup.php,v 1.12 2018-11-26 13:53:53 dgoron Exp $
+// $Id: transferts_popup.php,v 1.14 2019-06-13 15:26:51 btafforeau Exp $
 
+global $id_notice, $id_bulletin, $hook_tansfert_popup_result, $selecteur;
 
 // d?finition du minimum n?c?ssaire
 $base_path="../..";
@@ -27,17 +28,17 @@ if ($action=="enregistre") {
 	if(isset($transfert_type) && $transfert_type == "1"){
 		$createdGhostsIds = array();
 		$ghost = new exemplaire($expl_virtual_cb, '');
-		$ghost->typdoc_id = $from_typdoc+0;
+		$ghost->typdoc_id = (int) $from_typdoc;
 		$ghost->cote = stripslashes($expl_virtual_cote);
-		$ghost->location_id = $from_location+0;
-		$ghost->section_id = $from_section+0;
-		$ghost->codestat_id = $from_codestat+0;
-		$ghost->owner_id = $from_owner+0;
-		$ghost->statut_id = $expl_virtual_status+0;
+		$ghost->location_id = (int) $from_location;
+		$ghost->section_id = (int) $from_section;
+		$ghost->codestat_id = (int) $from_codestat;
+		$ghost->owner_id = (int) $from_owner;
+		$ghost->statut_id = (int) $expl_virtual_status;
 		$ghost->expl_comment = stripslashes($expl_virtual_comment);
-		if(isset($from_notice)) $ghost->id_notice = $from_notice+0;
-		else $ghost->id_bulletin = $from_bulletin+0;
-		$ghost->ref_num = $from_expl_parent_id+0; 
+		if(isset($from_notice)) $ghost->id_notice = (int) $from_notice;
+		else $ghost->id_bulletin = (int) $from_bulletin;
+		$ghost->ref_num = (int) $from_expl_parent_id; 
 		$ghost->save();
 		$createdGhostsIds[] = $ghost->expl_id;
 		$tab_id = $createdGhostsIds;

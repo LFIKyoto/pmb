@@ -2,14 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: error_handler.inc.php,v 1.5 2007-03-10 09:46:47 touraine37 Exp $
+// $Id: error_handler.inc.php,v 1.6 2019-07-18 12:45:31 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // error_handler pour PMB
 
 // fonction interne de gestion des erreurs
-function internal_error_handler( $errno, $errmsg, $filename, $linenum, $vars) {
+function internal_error_handler($errno, $errmsg, $filename, $linenum) {
 
 	// fichier de log
 	global $logfile;

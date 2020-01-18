@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr_func.inc.php,v 1.97 2018-12-05 07:58:30 dgoron Exp $
+// $Id: empr_func.inc.php,v 1.101 2019-06-14 08:12:56 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -30,7 +30,7 @@ function make_empr_lang_combo($lang='') {
 	$clang = $langues->table;
 	reset($clang);
 	$combo = "<select name='form_empr_lang' id='empr_lang'>";
-	while(list($cle, $value) = each($clang)) {
+	foreach ($clang as $cle => $value) {
 		// arabe seulement si on est en utf-8
 		if (($charset != 'utf-8' and $cle != 'ar') or ($charset == 'utf-8')) {
 			if(strcmp($cle, $lang) != 0) $combo .= "<option value='$cle'>$value ($cle)</option>";
@@ -224,12 +224,8 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 		else $empr_form = str_replace("!!cb!!",      $cb,      $empr_form);
 		
 		$date_adhesion = (!$duplicate_empr_from_id ? $empr->empr_date_adhesion : date('Y-m-d'));
-		
-		$adhesion = "<input type='text' style='width: 10em;' name='form_adhesion' id='form_adhesion' value='".$date_adhesion."'
-					data-dojo-type='dijit/form/DateTextBox' required='false' />";
-	
-				
-		$empr_form = str_replace("!!adhesion!!", $adhesion, $empr_form);
+			
+		$empr_form = str_replace("!!adhesion!!", get_input_date('form_adhesion', 'form_adhesion', $date_adhesion), $empr_form);
 
 		if ($duplicate_empr_from_id) {
 			/* AJOUTER ICI LE CALCUL EN FONCTION DE LA CATEGORIE */
@@ -244,16 +240,14 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 			$empr->empr_date_expiration = $resdate->date_expiration;
 		}
 
-		$expiration  ="<input type='text' style='width: 10em;' name='form_expiration' id='form_expiration' value='".$empr->empr_date_expiration."'
-					data-dojo-type='dijit/form/DateTextBox' required='false' />";
-		$empr_form = str_replace("!!expiration!!", $expiration, $empr_form);
+		$empr_form = str_replace("!!expiration!!", get_input_date('form_expiration', 'form_expiration', $empr->empr_date_expiration), $empr_form);
 
 		// ajout ici des trucs sur la relance adhésion
 		$empr_temp = new emprunteur($id, '', FALSE, 0) ;
 		$aff_relance = "";
 		if ($empr_temp->adhesion_renouv_proche() || $empr_temp->adhesion_depassee()) {
 			if ($empr_temp->adhesion_depassee()) $mess_relance = $msg['empr_date_depassee'];
-				else $mess_relance = $msg[empr_date_renouv_proche];
+				else $mess_relance = $msg['empr_date_renouv_proche'];
 
 			$rqt="select duree_adhesion from empr_categ where id_categ_empr='$empr_temp->categ'";
 			$res_dur_adhesion = pmb_mysql_query($rqt, $dbh);
@@ -277,7 +271,7 @@ function show_empr_form($form_action, $form_cancel, $link, $id, $cb,$duplicate_e
 			$nouv_date_fin_formatee = formatdate($nouv_date_fin) ;
 
 			// on conserve la date d'adhésion initiale
-			$action_prolonger = "dijit.byId('form_expiration').set('value','".$nouv_date_fin."');this.form.is_subscription_extended.value = 1;";
+			$action_prolonger = "document.getElementById('form_expiration').value='".$nouv_date_fin."';this.form.is_subscription_extended.value = 1;";
 
 			$action_relance_courrier = "openPopUp('./pdf.php?pdfdoc=lettre_relance_adhesion&id_empr=$id', 'lettre'); return(false) ";
 

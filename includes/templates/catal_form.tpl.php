@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: catal_form.tpl.php,v 1.188 2018-09-26 14:59:56 mbertin Exp $
+// $Id: catal_form.tpl.php,v 1.194 2019-08-05 09:55:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -15,7 +15,7 @@ global $pmb_form_editables;
 global $PMBuserid;
 global $pmb_use_uniform_title;
 global $deflt_notice_replace_links;
-
+global $ptab, $msg, $charset, $notice_tab_uniform_title_form_tpl, $pmb_authors_qualification, $notice_tab_isbn_form_tpl, $notice_tab_notes_form_tpl, $notice_tab_indexation_form_tpl, $notice_indexation_first_form_tpl, $notice_indexation_next_form_tpl, $notice_tab_lang_form_tpl, $notice_lang_first_form_tpl, $notice_lang_next_form_tpl, $notice_langorg_first_form_tpl, $notice_langorg_next_form_tpl, $notice_tab_links_form_tpl, $notice_tab_map_form_tpl, $notice_tab_customs_perso_form_tpl, $notice_tab_gestion_fields_form_tpl, $form_notice, $notice_replace,  $notice_replace_categories, $notice_replace_category;
 
 // template pour le form de catalogage
 
@@ -40,7 +40,7 @@ $ptab[0] = "
 	        <label for='f_tit1' class='etiquette'>$msg[237]</label>
 	        </div>
 	    <div id='el0Child_0b' class='row'>
-	        <input type='text' class='saisie-80em' id='f_tit1' name='f_tit1' data-form-name='f_tit1' value=\"!!tit1!!\" />
+	        <input type='text' class='saisie-80em' id='f_tit1' name='f_tit1' data-form-name='f_tit1' data-pmb-deb-rech='1' value=\"!!tit1!!\"/>
         </div>
 	</div>
     <div id='el0Child_1' title='".htmlentities($msg[238],ENT_QUOTES, $charset)."' movable='yes'>
@@ -190,6 +190,8 @@ $notice_tab_responsabilities_form_tpl = "
         row.className='row';
         suffixe = eval('document.notice.max_aut'+n+'.value');
         nom_id = 'f_aut'+n+suffixe;
+		var buttonAdd = document.getElementById('button_add_f_aut' + n);
+
         f_aut0 = document.createElement('input');
         f_aut0.setAttribute('name',nom_id);
         f_aut0.setAttribute('id',nom_id);
@@ -248,7 +250,7 @@ $notice_tab_responsabilities_form_tpl = "
         f_f0.setAttribute('id',nom_id);
         f_f0.setAttribute('type','text');
         f_f0.className='saisie-15emr';
-        f_f0.setAttribute('value','".(isset($value_deflt_fonction) && $value_deflt_fonction ? $aut_fonctions->table[$value_deflt_fonction] : '')."');
+        f_f0.setAttribute('value','".(!empty($value_deflt_fonction) ? $aut_fonctions->table[$value_deflt_fonction] : '')."');
 		f_f0.setAttribute('completion','fonction');
         f_f0.setAttribute('autfield','f_f'+n+'_code'+suffixe);
 
@@ -281,6 +283,11 @@ $notice_tab_responsabilities_form_tpl = "
 		duplicate.setAttribute('readonly','readonly');
 		duplicate.setAttribute('value','".$msg["duplicate"]."');
 
+		add_aut_node = document.getElementById('button_add_f_aut'+n);
+        add_aut_node_clone = add_aut_node.cloneNode();
+        parent = add_aut_node.parentNode;
+        parent.removeChild(add_aut_node);
+
         row.appendChild(f_f0);
         space=document.createTextNode(' ');
         row.appendChild(space);
@@ -289,15 +296,16 @@ $notice_tab_responsabilities_form_tpl = "
         row.appendChild(space);
         row.appendChild(del_f_f0);
         row.appendChild(f_f0_code);
-		if(!('".$pmb_authors_qualification."'*1)){
+		if(!('$pmb_authors_qualification'*1)){
 			space=document.createTextNode(' ');
 			row.appendChild(space);
 			row.appendChild(duplicate);
+			row.appendChild(add_aut_node_clone);
 		}
         colonne.appendChild(row);
         aut.appendChild(colonne);
 
-		if('".$pmb_authors_qualification."'*1){
+		if('$pmb_authors_qualification'*1){
 	        var role_field='role';
 	        if(n==1) role_field='role_autre';
 	        if(n==2) role_field='role_secondaire';
@@ -355,6 +363,7 @@ $notice_tab_responsabilities_form_tpl = "
 			space=document.createTextNode(' ');
 			row.appendChild(space);
 			row.appendChild(duplicate);
+			if (buttonAdd) row.appendChild(buttonAdd);
 			colonne.appendChild(row);
 			aut.appendChild(colonne);
 
@@ -370,14 +379,14 @@ $notice_tab_responsabilities_form_tpl = "
 		init_drag();
     }
 
-	function duplicate(n,suffixe){
+	function duplicate(n, suffixe) {
 		add_aut(n);
         new_suffixe = eval('document.notice.max_aut'+n+'.value')-1;
         document.getElementById('f_aut'+n+new_suffixe).value = document.getElementById('f_aut'+n+suffixe).value;
         document.getElementById('f_aut'+n+'_id'+new_suffixe).value = document.getElementById('f_aut'+n+'_id'+suffixe).value;
 
-        document.getElementById('f_f'+n+new_suffixe).value = '';
-        document.getElementById('f_f'+n+'_code'+new_suffixe).value = '';
+        document.getElementById('f_f'+n+new_suffixe).value = document.getElementById('f_f'+n+suffixe).value;
+        document.getElementById('f_f'+n+'_code'+new_suffixe).value = document.getElementById('f_f'+n+'_code'+suffixe).value;
 	}
 
     function fonction_selecteur_categ() {
@@ -459,6 +468,11 @@ $notice_tab_responsabilities_form_tpl = "
         tab_categ_order = document.getElementById('tab_categ_order');
 		if (tab_categ_order.value != '') tab_categ_order.value += ','+suffixe;
 
+        add_categ_node = document.getElementById('add_categ_btn');
+        add_categ_node_clone = add_categ_node.cloneNode();
+        document.getElementById('drag_'+(suffixe-1)).removeChild(add_categ_node);
+        categ.appendChild(add_categ_node_clone);
+
 		document.notice.max_categ.value=suffixe*1+1*1 ;
         ajax_pack_element(f_categ);
         init_drag();
@@ -538,6 +552,7 @@ $notice_tab_responsabilities_form_tpl = "
 	    	<div class='row'>
 		        <label for='f_aut1' class='etiquette'>$msg[246]</label>
 		        <input type='hidden' name='max_aut1' value=\"!!max_aut1!!\" />
+				<input type='button' class='bouton' value='+' onClick=\"add_aut(1);\"/>
 	        </div>
 	        <div class='row' id='addaut1'>
 		        !!autres_auteurs!!
@@ -551,6 +566,7 @@ $notice_tab_responsabilities_form_tpl = "
 	    	<div class='row'>
 		        <label for='f_aut2' class='etiquette'>$msg[247]</label>
 		        <input type='hidden' name='max_aut2' value=\"!!max_aut2!!\" />
+				<input type='button' class='bouton' value='+' onClick=\"add_aut(2);\"/>
 	        </div>
 	        <div class='row' id='addaut2'>
 	        	!!auteurs_secondaires!!
@@ -573,7 +589,7 @@ if($pmb_authors_qualification){
 			<input type='text' class='saisie-30emr'  readonly='readonly'  name='notice_role_autre_composed_!!iaut!!_vedette_composee_apercu_autre' id='notice_role_autre_composed_!!iaut!!_vedette_composee_apercu_autre'  data-form-name='vedette_composee_autre' value=\"!!vedette_apercu!!\" />
 			<input type='button' class='bouton' value='$msg[raz]' onclick=\"del_vedette('role_autre',!!iaut!!);\" />
 			<input class='bouton' type='button' onclick='duplicate(1,!!iaut!!);' value='".$msg['duplicate']."'>
-			<input type='button' style='!!bouton_add_display!!' class='bouton' value='+' onClick=\"add_aut(1);\"/>
+			!!button_add_aut1!!
 		</div>
 		<div class='row' id='vedette!!iaut!!_autre' style='margin-bottom:6px;display:none'>
 			!!vedette_author!!
@@ -584,8 +600,7 @@ if($pmb_authors_qualification){
 	";
 }else{
 	$authors_add_aut_button_tpl="
-		<input class='bouton' type='button' onclick='duplicate(1,!!iaut!!);' value='".$msg['duplicate']."'>
-		<input type='button' style='!!bouton_add_display!!' class='bouton' value='+' onClick=\"add_aut(1);\"/>";
+		<input class='bouton' type='button' onclick='duplicate(1,!!iaut!!);' value='".$msg['duplicate']."'>";
 	$authors_qualification_tpl="";
 }
 global $notice_responsabilities_others_form_tpl;
@@ -603,6 +618,7 @@ $notice_responsabilities_others_form_tpl = "
             <input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=function&caller=notice&p1=f_f1_code!!iaut!!&p2=f_f1!!iaut!!', 'selector')\" />
             <input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.f_f1!!iaut!!.value=''; this.form.f_f1_code!!iaut!!.value='0'; \" />
             $authors_add_aut_button_tpl
+            !!button_add_aut1!!
             <input type='hidden' name='f_f1_code!!iaut!!' data-form-name='f_f1_code' id='f_f1_code!!iaut!!' value=\"!!f1_code!!\" />
         </div>
 		$authors_qualification_tpl
@@ -612,16 +628,16 @@ $notice_responsabilities_others_form_tpl = "
 //    ----------------------------------------------------
 //    Autres secondaires
 //    ----------------------------------------------------
-if($pmb_authors_qualification){
-	$authors_add_aut_button_tpl="";
-	$authors_qualification_tpl="
+if (!empty($pmb_authors_qualification)) {
+	$authors_add_aut_button_tpl = "";
+	$authors_qualification_tpl = "
         <!--    Vedettes    -->
         <div id='el1Child_3b_others_vedettes' style='float:left;'>
 			<img class='img_plus' hspace='3' border='0' onclick=\"expand_vedette(this,'vedette!!iaut!!_secondaire'); return false;\" title='détail' name='imEx' src='".get_url_icon('plus.gif')."'>
 			<input type='text' class='saisie-30emr'  readonly='readonly'  name='notice_role_secondaire_composed_!!iaut!!_vedette_composee_apercu_autre' id='notice_role_secondaire_composed_!!iaut!!_vedette_composee_apercu_autre'  data-form-name='vedette_composee' value=\"!!vedette_apercu!!\" />
 			<input type='button' class='bouton' value='$msg[raz]' onclick=\"del_vedette('role_secondaire',!!iaut!!);\" />
 			<input class='bouton' type='button' onclick='duplicate(2,!!iaut!!);' value='".$msg['duplicate']."'>
-			<input type='button' style='!!bouton_add_display!!' class='bouton' value='+' onClick=\"add_aut(2);\"/>
+			!!button_add_aut2!!
 		</div>
 		<div class='row' id='vedette!!iaut!!_secondaire' style='margin-bottom:6px;display:none'>
 			!!vedette_author!!
@@ -630,11 +646,11 @@ if($pmb_authors_qualification){
 			vedette_composee_update_all('notice_role_secondaire_composed_!!iaut!!_vedette_composee_subdivisions');
 		</script>
 	";
-}else{
-	$authors_add_aut_button_tpl="
+} else {
+	$authors_add_aut_button_tpl = "
 		<input class='bouton' type='button' onclick='duplicate(2,!!iaut!!);' value='".$msg['duplicate']."'>
-		<input type='button' style='!!bouton_add_display!!' class='bouton' value='+' onClick=\"add_aut(2);\"/>	";
-	$authors_qualification_tpl="";
+		!!button_add_aut2!!";
+	$authors_qualification_tpl = "";
 }
 global $notice_responsabilities_secondary_form_tpl;
 $notice_responsabilities_secondary_form_tpl = "
@@ -675,7 +691,11 @@ $ptab[2] = "
 		    <label for='f_ed1' class='etiquette'>$msg[164]</label>
 		</div>
 		<div id='el2Child_0b' class='row'>
-			<input type='text' completion='publishers' autfield='f_ed1_id' id='f_ed1' name='f_ed1' data-form-name='f_ed1' value=\"!!ed1!!\" class='saisie-30emr' />
+			<script type='text/javascript'>
+				function f_ed1_id_callback() {
+				}
+			</script>
+			<input type='text' completion='publishers' autfield='f_ed1_id' id='f_ed1' name='f_ed1' data-form-name='f_ed1' value=\"!!ed1!!\" class='saisie-30emr' callback='f_ed1_id_callback' />
 		    <input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=editeur&caller=notice&p1=f_ed1_id&p2=f_ed1&p3=f_coll_id&p4=f_coll&p5=f_subcoll_id&p6=f_subcoll&deb_rech='+".pmb_escape()."(this.form.f_ed1.value), 'selector')\" />
 		    <input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.f_ed1.value=''; this.form.f_ed1_id.value='0'; \" />
 		    <input type='hidden' name='f_ed1_id' data-form-name='f_ed1_id' id='f_ed1_id' value=\"!!ed1_id!!\" />
@@ -687,7 +707,12 @@ $ptab[2] = "
 		    <div id='el2Child_1a' class='colonne2'>
 		    <label for='f_coll' class='etiquette'>$msg[250]</label>
 		    <div class='row'>
-				<input type='text' completion='collections' autfield='f_coll_id' id='f_coll' name='f_coll' data-form-name='f_coll' value=\"!!coll!!\" class='saisie-30emr' linkfield='f_ed1_id' />
+		    	<script type='text/javascript'>
+					function f_coll_id_callback() {
+						ajax_get_entity('get_publisher', 'collection', document.getElementById('f_coll_id').value, 'f_ed1_id', 'f_ed1');
+					}
+				</script>
+				<input type='text' completion='collections' autfield='f_coll_id' id='f_coll' name='f_coll' data-form-name='f_coll' value=\"!!coll!!\" class='saisie-30emr' linkfield='f_ed1_id' callback='f_coll_id_callback'/>
 		        <input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=collection&caller=notice&p1=f_ed1_id&p2=f_ed1&p3=f_coll_id&p4=f_coll&p5=f_subcoll_id&p6=f_subcoll&deb_rech='+".pmb_escape()."(this.form.f_coll.value), 'selector')\" />
 		        <input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.f_coll.value=''; this.form.f_coll_id.value='0'; \" />
 		        <input type='hidden' name='f_coll_id' data-form-name='f_coll_id' id='f_coll_id' value=\"!!coll_id!!\" />
@@ -707,7 +732,13 @@ $ptab[2] = "
 		    <!--    Sous collection    -->
 		        <label for='f_subcoll' class='etiquette'>$msg[251]</label>
 		        <div class='row'>
-					<input type='text' completion='subcollections' autfield='f_subcoll_id' id='f_subcoll' name='f_subcoll' data-form-name='f_subcoll' value=\"!!subcoll!!\" class='saisie-30emr' linkfield='f_coll_id' />
+		        	<script type='text/javascript'>
+						function f_subcoll_id_callback() {
+							ajax_get_entity('get_publisher', 'sub_collection', document.getElementById('f_subcoll_id').value, 'f_ed1_id', 'f_ed1');
+							ajax_get_entity('get_collection', 'sub_collection', document.getElementById('f_subcoll_id').value, 'f_coll_id', 'f_coll');
+						}
+					</script>
+					<input type='text' completion='subcollections' autfield='f_subcoll_id' id='f_subcoll' name='f_subcoll' data-form-name='f_subcoll' value=\"!!subcoll!!\" class='saisie-30emr' linkfield='f_coll_id' callback='f_subcoll_id_callback'/>
 			
 					<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=subcollection&caller=notice&p1=f_ed1_id&p2=f_ed1&p3=f_coll_id&p4=f_coll&p5=f_subcoll_id&p6=f_subcoll&deb_rech='+".pmb_escape()."(this.form.f_subcoll.value), 'selector')\" />
 					<input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.f_subcoll.value=''; this.form.f_subcoll_id.value='0'; \" />
@@ -949,6 +980,7 @@ $notice_indexation_first_form_tpl = "
         <input type='text' class='saisie-80emr' id='f_categ!!icateg!!' name='f_categ!!icateg!!' data-form-name='f_categ' value=\"!!categ_libelle!!\" completion=\"categories_mul\" autfield=\"f_categ_id!!icateg!!\" />
         <input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.f_categ!!icateg!!.value=''; this.form.f_categ_id!!icateg!!.value='0'; \" />
        	<input type='hidden' name='f_categ_id!!icateg!!' data-form-name='f_categ_id' id='f_categ_id!!icateg!!' value='!!categ_id!!' />
+       	!!add_categ_btn!!
 	</div>
     ";
 $notice_indexation_next_form_tpl = "
@@ -960,6 +992,7 @@ $notice_indexation_next_form_tpl = "
     	<input type='text' class='saisie-80emr' id='f_categ!!icateg!!' name='f_categ!!icateg!!' value=\"!!categ_libelle!!\" completion=\"categories_mul\" autfield=\"f_categ_id!!icateg!!\" />
         <input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.f_categ!!icateg!!.value=''; this.form.f_categ_id!!icateg!!.value='0'; \" />
         <input type='hidden' name='f_categ_id!!icateg!!' id='f_categ_id!!icateg!!' value='!!categ_id!!' />
+        !!add_categ_btn!!
 	</div>
     ";
 
@@ -975,11 +1008,12 @@ $notice_tab_lang_form_tpl = "
 	    $msg[710]
 	</h3>
 </div>
-<div id='el7Child' class='child' etirable='yes' title='".htmlentities($msg[710],ENT_QUOTES, $charset)."'>
-	<div id='el7Child_0' title='".htmlentities($msg[710],ENT_QUOTES, $charset)."' movable='yes'>
+<div id='el7Child' class='child' etirable='yes' title='".htmlentities($msg[710], ENT_QUOTES, $charset)."'>
+	<div id='el7Child_0' title='".htmlentities($msg[710], ENT_QUOTES, $charset)."' movable='yes'>
 	    <!--    Langues    -->
 	    <div id='el7Child_0a' class='row'>
 	        <label for='f_langue' class='etiquette'>$msg[710]</label>
+			<input type='button' class='bouton' value='+' onClick=\"add_lang();\"/>
 	    </div>
 	    <input type='hidden' id='max_lang' name='max_lang' value=\"!!max_lang!!\" />
 	    !!langues_repetables!!
@@ -990,6 +1024,7 @@ $notice_tab_lang_form_tpl = "
 	    <!--    Langues    -->
 	    <div id='el7Child_1a' class='row'>
 	        <label for='f_langorg' class='etiquette'>$msg[711]</label>
+			<input type='button' class='bouton' value='+' onClick=\"add_langorg();\"/>
 	    </div>
 	    <input type='hidden' id='max_langorg' name='max_langorg' value=\"!!max_langorg!!\" />
 	    !!languesorg_repetables!!
@@ -1007,8 +1042,8 @@ $notice_lang_first_form_tpl = "
         <input type='text' class='saisie-30emr' id='f_lang!!ilang!!' name='f_lang!!ilang!!' data-form-name='f_lang' value=\"!!lang!!\" completion=\"langue\" autfield=\"f_lang_code!!ilang!!\" />
 		<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=lang&caller=notice&p1=f_lang_code!!ilang!!&p2=f_lang!!ilang!!', 'selector')\" />
         <input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.f_lang!!ilang!!.value=''; this.form.f_lang_code!!ilang!!.value=''; \" />
+        !!button_add_lang!!
         <input type='hidden' name='f_lang_code!!ilang!!' data-form-name='f_lang_code' id='f_lang_code!!ilang!!' value='!!lang_code!!' />
-        <input type='button' class='bouton' value='+' onClick=\"add_lang();\"/>
     </div>
     ";
 
@@ -1017,6 +1052,7 @@ $notice_lang_next_form_tpl = "
         <input type='text' class='saisie-30emr' id='f_lang!!ilang!!' name='f_lang!!ilang!!' value=\"!!lang!!\" completion=\"langue\" autfield=\"f_lang_code!!ilang!!\" />
 		<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=lang&caller=notice&p1=f_lang_code!!ilang!!&p2=f_lang!!ilang!!', 'selector')\" />
         <input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.f_lang!!ilang!!.value=''; this.form.f_lang_code!!ilang!!.value=''; \" />
+        !!button_add_lang!!
         <input type='hidden' name='f_lang_code!!ilang!!' id='f_lang_code!!ilang!!' value='!!lang_code!!' />
     </div>
     ";
@@ -1030,7 +1066,7 @@ $notice_langorg_first_form_tpl = "
 		<input type='button' class='bouton' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=lang&caller=notice&p1=f_langorg_code!!ilangorg!!&p2=f_langorg!!ilangorg!!', 'selector')\" />
         <input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.f_langorg!!ilangorg!!.value=''; this.form.f_langorg_code!!ilangorg!!.value=''; \" />
         <input type='hidden' name='f_langorg_code!!ilangorg!!' data-form-name='f_langorg_code' id='f_langorg_code!!ilangorg!!' value='!!langorg_code!!' />
-        <input type='button' class='bouton' value='+' onClick=\"add_langorg();\"/>
+        <input id='button_add_f_langorg_code' type='button' class='bouton' value='+' onClick=\"add_langorg();\"/>
     </div>
     ";
 $notice_langorg_next_form_tpl = "

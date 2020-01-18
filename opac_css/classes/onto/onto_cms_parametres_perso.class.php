@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_cms_parametres_perso.class.php,v 1.1 2018-03-12 16:44:30 vtouchard Exp $
+// $Id: onto_cms_parametres_perso.class.php,v 1.2 2019-01-07 11:39:09 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/cms/cms_editorial_parametres_perso.class.php");
+require_once($class_path."/onto/onto_parametres_perso.class.php");
 
 class onto_cms_parametres_perso extends onto_parametres_perso{
 	

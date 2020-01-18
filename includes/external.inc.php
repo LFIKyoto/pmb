@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external.inc.php,v 1.14 2018-09-26 12:09:55 dgoron Exp $
+// $Id: external.inc.php,v 1.15 2019-05-14 09:58:10 dgoron Exp $
 
 //Fonctions pour les recherches externes
 
@@ -50,6 +50,9 @@ function entrepot_to_unimarc($recid) {
 				$unimarc->add_field($r->ufield,$r->field_ind);
 				break;
 			case "aut":
+				$unimarc->add_field($r->ufield,$r->field_ind);
+				break;
+			case "col":
 				$unimarc->add_field($r->ufield,$r->field_ind);
 				break;
 			case "001":

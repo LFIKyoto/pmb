@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: images.class.php,v 1.12 2017-07-03 09:07:10 dgoron Exp $
+// $Id: images.class.php,v 1.12.8.1 2019-09-16 09:10:16 arenou Exp $
 
 require_once($visionneuse_path."/classes/mimetypes/affichage.class.php");
 
@@ -43,7 +43,16 @@ class images extends affichage{
     public function resizeToDisplay(){
 
     	$src_img = imagecreatefromstring($this->driver->openCurrentDoc());
-
+    	
+    	if($src_img === false){
+    	    $im = new Imagick();
+    	    $im->readimageblob($this->driver->openCurrentDoc());
+    	    $file = tempnam(sys_get_temp_dir(), 'imagick');
+    	    $im->writeImage($file.".png");
+    	    $src_img = imagecreatefrompng($file.".png");
+    	    unlink($file.".png");
+    	}
+    	
 		if ($src_img) {
 			$photo_mean_size_x=imagesx($src_img);
 			$photo_mean_size_y=imagesy($src_img);

@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: consolidation.inc.php,v 1.49 2018-08-06 11:59:02 plmrozowski Exp $
+// $Id: consolidation.inc.php,v 1.53 2019-07-19 08:02:14 dgoron Exp $
 
 global $include_path, $class_path, $base_path;
-require_once ($include_path . "/misc.inc.php");
-require_once ($class_path."/XMLlist.class.php");
-require_once ($class_path."/search.class.php");
-require_once ($class_path."/consolidation.class.php");
+require_once "$include_path/misc.inc.php";
+require_once "$class_path/XMLlist.class.php";
+require_once "$class_path/search.class.php";
+require_once "$class_path/consolidation.class.php";
 
 $func_format['mots_saisis']= 'aff_mots_saisis';
 $func_format['url_ori']= 'aff_url_ori';
@@ -19,6 +19,7 @@ $func_format['adresse_ip']='aff_adresse_ip';
 $func_format['adresse_ip_forward']='aff_adresse_ip_forward';
 $func_format['user_agent']='aff_user_agent';
 $func_format['top_level_domain']='aff_top_level_domain';
+$func_format['host_ip_info']='aff_host_ip_info';
 $func_format['var_post']='aff_var_post';
 $func_format['var_get']='aff_var_get';
 $func_format['var_server']='aff_var_server';
@@ -351,6 +352,23 @@ function aff_top_level_domain($param,$parser){
     if (!$domain || $domain == parse_url($opac_url_base, PHP_URL_HOST)) return ''; //On ne retourne rien si ce n'est pas une arrivée depuis l'exterieur du site
     $domain = substr($domain, strrpos($domain, '.')); //On enlève le point suivant les "www"
     return $domain;
+}
+
+/**
+ * Retourne des informations sur la position géographique de l'utilisateur
+ */
+function aff_host_ip_info($param,$parser){
+	$adresse_ip = aff_adresse_ip($param,$parser);
+	
+	$aCurl = new Curl();
+	$json_content = $aCurl->get('http://ip-api.com/json/'.$adresse_ip);
+	if($json_content) {
+		$content = encoding_normalize::json_decode($json_content, true);
+		if(isset($content[$param[0]]) && $content['status'] != 'fail') {
+			return $content[$param[0]];
+		}
+	}
+	return '';
 }
 
 /**
@@ -901,6 +919,11 @@ function aff_sous_type_page($param,$parser){
 				return '2901';
 				break;
 		}
+	}
+	
+	//appel AJAX - Consultation d'un document du portfolio
+	if(strpos($url,'ajax.php') && strpos($url,'cms') && strpos($url,'document') && strpos($url,'render')) {
+	    return '2003';
 	}
 	
 	//appel AJAX - Log url externe
@@ -1456,11 +1479,11 @@ function get_search_class(){
 		// Recherche du fichier lang de l'opac
 		$url = $pmb_opac_url."includes/messages/$lang.xml";
 		$fichier_xml = $base_path."/temp/opac_lang.xml";
-		curl_load_file($url,$fichier_xml);
+		curl_load_opac_file($url,$fichier_xml);
 		
 		$url = $pmb_opac_url."includes/search_queries/search_fields.xml";
 		$fichier_xml="$base_path/temp/search_fields_opac.xml";
-		curl_load_file($url,$fichier_xml);
+		curl_load_opac_file($url,$fichier_xml);
 		
 		$consolidation_search_class = new search(false,"search_fields_opac",$base_path."/temp/");
 	}
@@ -1551,13 +1574,13 @@ function aff_facettes_multicritere($param,$parser){
 	
 		if(!isset($opac_languages_messages) && !is_array($opac_languages_messages)) {
 			$opac_languages_messages = array();
-			while(list($codelang, $libelle) = each($languages)) {
+			foreach ($languages as $codelang => $libelle) {
 				// arabe seulement si on est en utf-8
 				if (($charset != 'utf-8' and $codelang != 'ar') or ($charset == 'utf-8')) {
 					// Recherche du fichier lang de l'opac
 					$url=$pmb_opac_url."includes/messages/$codelang.xml";
 					$fichier_xml=$base_path."/temp/opac_lang_$codelang.xml";
-					consolidation::curl_load_file($url,$fichier_xml);
+					curl_load_opac_file($url,$fichier_xml);
 					$messages = new XMLlist("$base_path/temp/opac_lang_$codelang.xml", 0);
 					$messages->analyser();
 					$opac_languages_messages[$codelang] = array(
@@ -1840,41 +1863,6 @@ function aff_desabo_bannette($param,$parser){
 	$diff = array_diff($array_liste_avant_post,$array_liste_post);
 
 	return count($diff);
-}
-
-function curl_load_file($url, $filename) {
-	global $opac_curl_available, $msg ;
-	if (!$opac_curl_available) die("PHP Curl must be available");
-	//Calcul du subst
-	$url_subst=str_replace(".xml","_subst.xml",$url);
-	$curl = curl_init();
-	curl_setopt ($curl, CURLOPT_URL, $url_subst);
-	curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-	$filename_subst=str_replace(".xml","_subst.xml",$filename);
-	$fp = fopen($filename_subst, "w+");
-	curl_setopt($curl, CURLOPT_FILE, $fp);
-
-	//pour déclarer un certificat ou des options supplémentaires sur le même domaine
-	if (strpos($url,$_SERVER["HTTP_HOST"])) {
-		global $curl_addon_array_cert;
-		if (is_array($curl_addon_array_cert) && count($curl_addon_array_cert)) {
-			curl_setopt_array($curl, $curl_addon_array_cert);
-		}
-	}
-
-	if(curl_exec ($curl)) {
-		fclose($fp);
-		if (curl_getinfo($curl,CURLINFO_HTTP_CODE)=="404") {
-			unset($fp);
-			@unlink($filename_subst);
-		}
-		curl_setopt ($curl, CURLOPT_URL, $url);
-		$fp = fopen($filename, "w+");
-		curl_setopt($curl, CURLOPT_FILE, $fp);
-		if(!curl_exec ($curl)) die($msg["search_perso_error_param_opac_url"]);
-	} else die($msg["search_perso_error_param_opac_url"]);
-	curl_close ($curl);
-	fclose($fp);
 }
 
 /****************************************

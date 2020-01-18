@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entities_authperso_controller.class.php,v 1.9 2018-12-04 13:03:07 dgoron Exp $
+// $Id: entities_authperso_controller.class.php,v 1.11 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -31,7 +31,7 @@ class entities_authperso_controller extends entities_authorities_controller {
 	}
 	
 	public function set_id_authperso($id_authperso=0) {
-		$this->id_authperso = $id_authperso+0;
+	    $this->id_authperso = (int) $id_authperso;
 	}
 	
 	public function get_display_list() {
@@ -58,14 +58,14 @@ class entities_authperso_controller extends entities_authorities_controller {
 	
 	public function proceed_replace() {
 		global $msg;
-		global $by, $aut_link_save;
+		global $by, $aut_link_save; 
 	
 		$object_instance = $this->get_object_instance();
 		if(!$by) {
 			print $object_instance->replace_form($this->id);
 		}else {
 // 		    routine de remplacement
-			$rep_result = $object_instance->replace($id, $by,$aut_link_save);
+			$rep_result = $object_instance->replace($this->id, $by,$aut_link_save);
 			if(!$rep_result) {
 				print $this->get_display_list();
 			}else {

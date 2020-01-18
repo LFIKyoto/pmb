@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_skos.php,v 1.2 2013-08-19 07:16:11 mbertin Exp $
+// $Id: import_skos.php,v 1.3 2019-07-12 10:25:27 btafforeau Exp $
 
 // définition du minimum nécéssaire 
 $base_path="../..";                            
@@ -133,4 +133,3 @@ switch ($action) {
 		break;
 }
 ?>
-

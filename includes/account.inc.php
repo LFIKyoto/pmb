@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: account.inc.php,v 1.12 2015-04-07 10:02:20 jpermanne Exp $
+// $Id: account.inc.php,v 1.13 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -60,7 +60,7 @@ function make_user_lang_combo($lang='') {
 	$langues->analyser();
 	$clang = $langues->table;
 	$combo = "<select name='user_lang' id='user_lang' class='saisie-20em'>";
-	while(list($cle, $value) = each($clang)) {
+	foreach ($clang as $cle => $value) {
 		// arabe seulement si on est en utf-8
 		if (($charset != 'utf-8' and $lang != 'ar') or ($charset == 'utf-8')) {
 			if(strcmp($cle, $lang) != 0) $combo .= "<option value='$cle'>$value ($cle)</option>";
@@ -76,7 +76,7 @@ function make_user_style_combo($dstyle='') {
 	global $msg;
 	$style = get_styles();
 	$combo = "<select name='form_style' id='form_style' class='saisie-20em'>";
-	while(list($cle, $valeur) = each($style)) {
+	foreach ($style as $cle => $valeur) {
         	$libelle = $valeur; 
         	if(strcmp($valeur, $dstyle) == 0)
             		$combo .= "<option value=\"$valeur\" selected='selected'>$libelle</option>";

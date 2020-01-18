@@ -2,7 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: start_import.php,v 1.28 2018-07-25 06:19:18 dgoron Exp $
+// $Id: start_import.php,v 1.30 2019-06-24 10:27:53 btafforeau Exp $
+
+global $base_path, $base_auth, $base_title, $include_path, $n_current, $encodage_fic_source, $step, $input_type, $output_type, $first, $msg;
+global $output_params, $input_params, $redirect, $import_type_l, $n_per_pass, $message_convert, $import_type, $noimport, $output, $redirect_string;
 
 //Execution de l'import
 $base_path = "../..";
@@ -13,6 +16,7 @@ require_once ("$include_path/parser.inc.php");
 
 require_once ($base_path."/admin/convert/start_import.class.php");
 require_once ($base_path."/admin/convert/start_export.class.php");
+require_once ($base_path."/admin/convert/imports/pmb2prisme/pmb2prisme.class.php");
 
 if(!isset($n_current)) $n_current = 0;
 //Gestion de l'encodage du fichier d'import
@@ -94,11 +98,13 @@ _parser_($fic_catal, array("ITEM" => "_item_"), "CATALOG");
 _parser_("imports/".$param_path."/params.xml", array("IMPORTNAME" => "_import_name_", "NPERPASS" => "_n_per_pass_", "INPUT" => "_input_", "STEP" => "_step_", "OUTPUT" => "_output_"), "PARAMS");
 
 //Inclusion des librairies éventuelles
-for ($i = 0; $i < count($step); $i ++) {
-	if ($step[$i]['TYPE'] == "custom") {
-		//echo "imports/".$param_path."/".$step[$i][SCRIPT][0][value];
-		require_once ("imports/".$param_path."/".$step[$i]['SCRIPT'][0]['value']);
-	}
+if (is_array($step)) {
+    for ($i = 0; $i < count($step); $i ++) {
+    	if ($step[$i]['TYPE'] == "custom") {
+    		//echo "imports/".$param_path."/".$step[$i][SCRIPT][0][value];
+    		require_once ("imports/".$param_path."/".$step[$i]['SCRIPT'][0]['value']);
+    	}
+    }
 }
 
 require_once ("xmltransform.php");
@@ -163,19 +169,17 @@ if (!$first) {
 
 	//Entête
 	if(isset($output_params['SCRIPT'])) {
-		$class_name = str_replace('.class.php', '', $output_params['SCRIPT']);
-		if(class_exists($class_name)) {
-			$import_instance = new $class_name();
-			fwrite($fo, $import_instance->_get_header_($output_params));
-		} else {
-			fwrite($fo, _get_header_($output_params));
-		}
+	    $class_name = str_replace('.class.php', '', $output_params['SCRIPT']);
+	}
+	
+	if(is_object($output_instance)) {
+	    fwrite($fo, $output_instance->_get_header_($output_params));
+	} elseif (isset($class_name) && class_exists($class_name)) {
+	    $import_instance = new $class_name();
+	    fwrite($fo, $import_instance->_get_header_($output_params));
 	} else {
-		if(is_object($output_instance)) {
-			fwrite($fo, $output_instance->_get_header_($output_params));
-		} else {
-			fwrite($fo, _get_header_($output_params));
-		}
+	    $def = new convert_output();
+	    fwrite($fo, $def->_get_header_($output_params));
 	}
 	fclose($fo);
 
@@ -191,41 +195,44 @@ function convert_notice($notice,$encoding) {
 	global $n_current;
 	global $z;
 
-	for ($i = 0; $i < count($step); $i ++) {
-		$s = $step[$i];
-		//si on a un encodage sur la notice, on le rajoute aux parametres
-		if($encoding) $s['ENCODING'] = $encoding;
-		$islast=($i==count($step)-1);
-		$isfirst=($i==0);
-		switch ($s['TYPE']) {
-				case "xmltransform" :
-					$r = perform_xslt($notice, $s, $islast, $isfirst, $param_path);
-					break;
-				case "toiso" :
-					$r = toiso($notice, $s, $islast, $isfirst, $param_path);
-					break;
-				case "isotoxml" :
-					$r = isotoxml($notice, $s, $islast, $isfirst, $param_path);
-					break;
-				case "texttoxml":
-					$r = texttoxml($notice, $s, $islast, $isfirst, $param_path);
-					break;
-				case "custom" :
-					eval("\$r=".$s['CALLBACK'][0][value]."(\$notice, \$s, \$islast, \$isfirst, \$param_path);");
-					break;
-		}
-		if (!$r['VALID']) {
-				$n_errors ++;
-				$message_convert.= "<b>Notice ". ($n_current + $z)." : </b>".$r['ERROR']."<br />\n";
-				$notice = "";
-				break;
-		} else {
-				$notice = $r['DATA'];
-				if(isset($r['WARNING']) && $r['WARNING']){
-					$n_errors ++;
-					$message_convert.= "<b>Notice ". ($n_current + $z)." : </b>".$r['WARNING']."<br />\n";
-				}
-		}
+	if (is_array($step)) {
+    	for ($i = 0; $i < count($step); $i ++) {
+    		$s = $step[$i];
+    		//si on a un encodage sur la notice, on le rajoute aux parametres
+    		if($encoding) $s['ENCODING'] = $encoding;
+    		$islast=($i==count($step)-1);
+    		$isfirst=($i==0);
+    		switch ($s['TYPE']) {
+    				case "xmltransform" :
+    					$r = perform_xslt($notice, $s, $islast, $isfirst, $param_path);
+    					break;
+    				case "toiso" :
+    					$r = toiso($notice, $s, $islast, $isfirst, $param_path);
+    					break;
+    				case "isotoxml" :
+    					$r = isotoxml($notice, $s, $islast, $isfirst, $param_path);
+    					break;
+    				case "texttoxml":
+    					$r = texttoxml($notice, $s, $islast, $isfirst, $param_path);
+    					break;
+    				case "custom" :
+    				    $static = explode('.', $s['SCRIPT'][0]['value']);
+    					eval("\$r=".$static[0]."::".$s['CALLBACK'][0]['value']."(\$notice, \$s, \$islast, \$isfirst, \$param_path);");
+    					break;
+    		}
+    		if (!$r['VALID']) {
+    				$n_errors ++;
+    				$message_convert.= "<b>Notice ". ($n_current + $z)." : </b>".$r['ERROR']."<br />\n";
+    				$notice = "";
+    				break;
+    		} else {
+    				$notice = $r['DATA'];
+    				if(isset($r['WARNING']) && $r['WARNING']){
+    					$n_errors ++;
+    					$message_convert.= "<b>Notice ". ($n_current + $z)." : </b>".$r['WARNING']."<br />\n";
+    				}
+    		}
+    	}
 	}
 	return $notice;
 }
@@ -249,6 +256,7 @@ $f = explode(".", $file_in);
 if (count($f) > 1) {
 	unset($f[count($f) - 1]);
 }
+if (empty($output_params['SUFFIX'])) $output_params['SUFFIX'] = '';
 $file_out = implode(".", $f).".".$output_params['SUFFIX']."~";
 
 $fo = fopen("$base_path/temp/".$file_out, "r+");
@@ -281,29 +289,30 @@ if ($message_convert != "") {
 if ($z < $n_per_pass) {
 	$n_current = $n_current + $z;
 	if(isset($output_params['SCRIPT'])) {
-		$class_name = str_replace('.class.php', '', $output_params['SCRIPT']);
-		if(class_exists($class_name)) {
-			$export_instance = new $class_name();
-			fwrite($fo, $export_instance->_get_footer_($output_params));
-		} else {
-			fwrite($fo, _get_footer_($output_params));
-		}
+	    $class_name = str_replace('.class.php', '', $output_params['SCRIPT']);
+	}
+	
+	if(is_object($output_instance)) {
+	    fwrite($fo, $output_instance->_get_footer_($output_params));
+	} elseif (isset($class_name) && class_exists($class_name)) {
+	    $export_instance = new $class_name();
+	    fwrite($fo, $export_instance->_get_footer_($output_params));
 	} else {
-		if(is_object($output_instance)) {
-			fwrite($fo, $output_instance->_get_footer_($output_params));
-		} else {
-			fwrite($fo, _get_footer_($output_params));
-		}
+	    $def = new convert_output();
+	    fwrite($fo, $def->_get_footer_($output_params));
 	}
 	fclose($fo);
+	
 	$requete="delete from import_marc where origine='$origine'";
 	pmb_mysql_query($requete);
 	if ($redirect) {
 		$redirect .= "&file_in=".rawurlencode($file_in)."&suffix=".$output_params['SUFFIX']."&origine=".$origine."&import_type=$import_type&outputtype=".$output_params["TYPE"]."&converted=1";
 		$location = "parent.document.location='".$redirect."'";
-	}
-	else
+	} else {
+	    if (!isset($output_params['MIMETYPE'])) $output_params['MIMETYPE'] = '';
+	    if (!isset($index)) $index = array();
 		$location = "document.location='end_import.php?file_in=".rawurlencode($file_in)."&first=1&n_current=".$n_current."&import_type=".$import_type."&n_total=".count($index)."&n_errors=$n_errors&output=$output&suffix=".$output_params['SUFFIX']."&import_type_l=".rawurlencode($import_type_l)."&noimport=$noimport".$redirect_string."&mimetype=".rawurlencode($output_params['MIMETYPE'])."&origine=".$origine."'"; 
+	}
 	echo "<script>setTimeout(\"$location\",1000);</script>";
 } else {
 	//Si pas fin, recharegement de la page pour les $n_per_pass_suivants

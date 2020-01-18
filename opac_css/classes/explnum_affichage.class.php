@@ -2,16 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_affichage.class.php,v 1.17 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: explnum_affichage.class.php,v 1.18 2019-03-12 10:59:25 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once("$class_path/notice_affichage.class.php");
 require_once("$include_path/explnum.inc.php");
 
-define(DOCNUM_NOTI,0);
-define(DOCNUM_DMDE,1);
-define(DOCNUM_SUGG,2);
+
+define("DOCNUM_NOTI",0);
+define("DOCNUM_DMDE",1);
+define("DOCNUM_SUGG",2);
 
 /**
  * Classe qui permet d'afficher les documents numériques après une recherche OPAC
@@ -42,6 +43,8 @@ class explnum_affichage{
 		
 		global $_mimetypes_bymimetype_, $_mimetypes_byext_, $dbh, $charset, $opac_url_base;
 		global $opac_visionneuse_allow;
+		
+		$ligne_finale = "";
 		
 		if(!$this->tableau_id)
 			$this->display = "";

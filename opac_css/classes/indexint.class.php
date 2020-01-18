@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: indexint.class.php,v 1.36 2018-12-05 09:11:55 ngantier Exp $
+// $Id: indexint.class.php,v 1.37 2019-06-19 08:28:05 ngantier Exp $
 
 // définition de la classe de gestion des 'indexations internes'
 if ( ! defined( 'INDEXINT_CLASS' ) ) {
@@ -20,7 +20,8 @@ class indexint {
 	public	$childs = array();
 	public	$has_child = 0 ;
 	public $num_statut = 1;
-	protected $p_perso;	
+	protected $p_perso;
+	public $name_pclass = '';
 
 	// ---------------------------------------------------------------
 	//		indexint($id) : constructeur

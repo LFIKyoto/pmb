@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: options_list.php,v 1.32 2017-02-24 15:34:34 dgoron Exp $
+// $Id: options_list.php,v 1.33 2019-06-10 08:57:12 btafforeau Exp $
 
 //Gestion des options de type list
 $base_path="../..";
@@ -192,7 +192,7 @@ if ($first==1) {
 			if($ITEM){
 				$ITEM_REVERSE=$ITEM;
 				reset($ITEM_REVERSE);
-				while (list($key,$val)=each($ITEM_REVERSE)) {
+				foreach ($ITEM_REVERSE as $key => $val) {
 					$ITEM_REVERSE[$key]=convert_diacrit($ITEM_REVERSE[$key]);
 				}
 				/*asort($ITEM_REVERSE);*/
@@ -200,7 +200,7 @@ if ($first==1) {
 				natcasesort($ITEM_REVERSE);
 				reset($ITEM_REVERSE);
 				$n_o=0;
-				while (list($key,$val)=each($ITEM_REVERSE)) {
+				foreach ($ITEM_REVERSE as $key => $val) {
 					$ORDRE[$key]=$n_o;
 					$n_o++;
 				}

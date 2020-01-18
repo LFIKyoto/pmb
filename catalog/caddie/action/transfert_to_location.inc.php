@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: transfert_to_location.inc.php,v 1.2 2018-01-11 14:01:20 ngantier Exp $
+// $Id: transfert_to_location.inc.php,v 1.3 2019-06-05 09:04:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $idcaddie, $action, $msg, $charset, $transferts_nb_jours_pret_defaut, $elt_flag, $elt_no_flag, $dest_id, $date_retour, $motif, $ask_date;
+global $PMBuserid;
 
 require_once("./classes/transfert.class.php");
 
@@ -91,7 +94,7 @@ if ($idcaddie) {
 					if ($num) {	
 						// Le transfert est généré !	
 						$query = 'update transferts set transfert_ask_user_num= "'.$PMBuserid.'" where id_transfert="'.$num.'" ';
-						pmb_mysql_query($query, $dbh);
+						pmb_mysql_query($query);
 						$transferts_ok[] = $id_expl;
 					} else {
 						// Erreur, Le transfert ne peut etre généré	

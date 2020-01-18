@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: show_group.inc.php,v 1.29 2018-02-09 15:55:44 ngantier Exp $
+// $Id: show_group.inc.php,v 1.31 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -57,7 +57,7 @@ if ($empr_allow_prolong_members_group) {
 		<div class='colonne_suite'>
 		<script>
 			function confirm_group_prolong_members() {
-				result = confirm(\"${msg[group_confirm_prolong_members_group]}\");
+				result = confirm(\"" . $msg['group_confirm_prolong_members_group'] . "\");
 				if (result) {					
 					document.getElementById('action').value = 'prolonggroup';
 					return true;
@@ -67,10 +67,10 @@ if ($empr_allow_prolong_members_group) {
 		</script>	
 		<div class='row'><input type='button' name='allow_prolong_members_group' class='bouton' value=\"".$msg["group_allow_prolong_members_group"]."\" onclick=\"if(confirm_group_prolong_members()){this.form.submit();}\" /></div>");
 	if (($pmb_gestion_financiere)&&($pmb_gestion_abonnement)) {
-		$finance_abt.="<div class='row'><input type='radio' name='debit' value='0' id='debit_0' ".(!$dbt ? "checked" : "")." /><label for='debit_0'>".$msg["finance_abt_no_debit"]."</label>&nbsp;<input type='radio' name='debit' value='1' id='debit_1' ".(($dbt == 1) ? "checked" : "")." />";
-		$finance_abt.="<label for='debit_1'>".$msg["finance_abt_debit_wo_caution"]."</label>&nbsp;";
-		if ($pmb_gestion_abonnement==2) $finance_abt.="<input type='radio' name='debit' value='2' id='debit_2' ".(($dbt == 2) ? "checked" : "")." /><label for='debit_2'>".$msg["finance_abt_debit_wt_caution"]."</label>";
-		$finance_abt.="</div>";
+		$finance_abt = "<div class='row'><input type='radio' name='debit' value='0' id='debit_0' ".(!$dbt ? "checked" : "")." /><label for='debit_0'>".$msg["finance_abt_no_debit"]."</label>&nbsp;<input type='radio' name='debit' value='1' id='debit_1' ".(($dbt == 1) ? "checked" : "")." />";
+		$finance_abt.= "<label for='debit_1'>".$msg["finance_abt_debit_wo_caution"]."</label>&nbsp;";
+		if ($pmb_gestion_abonnement==2) $finance_abt.= "<input type='radio' name='debit' value='2' id='debit_2' ".(($dbt == 2) ? "checked" : "")." /><label for='debit_2'>".$msg["finance_abt_debit_wt_caution"]."</label>";
+		$finance_abt.= "</div>";
 		print pmb_bidi($finance_abt);
 	}
 	print "</div>";
@@ -116,7 +116,7 @@ if($myGroup->nb_members) {
 	print "<th></th>
 	</tr>";
 	$parity=1;
-	while(list($cle, $membre) = each($myGroup->members)) {
+	foreach ($myGroup->members as $cle => $membre) {
 		if ($parity % 2) {
 			$pair_impair = "even";
 		} else {

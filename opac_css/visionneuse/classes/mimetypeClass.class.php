@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mimetypeClass.class.php,v 1.7 2017-07-21 08:46:14 vtouchard Exp $
+// $Id: mimetypeClass.class.php,v 1.8 2019-05-09 10:35:37 ngantier Exp $
 
 require_once("$visionneuse_path/classes/XMLClass.class.php");
 
@@ -51,8 +51,8 @@ class mimetypeClass extends XMLClass{
  		global $charset;
 		
 		if (!($fp = @fopen($file , "r"))) {
-			die("impossible d'ouvrir le fichier $file");
-			}
+		    die(htmlentities("impossible d'ouvrir le fichier $file", ENT_QUOTES, $charset));
+		}
 		$data = fread ($fp,filesize($file));
 
  		$rx = "/<?xml.*encoding=[\'\"](.*?)[\'\"].*?>/m";

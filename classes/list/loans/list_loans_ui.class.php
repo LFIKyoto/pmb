@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_loans_ui.class.php,v 1.1 2018-12-27 10:32:05 dgoron Exp $
+// $Id: list_loans_ui.class.php,v 1.2.6.4 2019-11-28 15:04:53 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,10 +12,6 @@ require_once($class_path."/pret.class.php");
 require_once($class_path."/expl.class.php");
 
 class list_loans_ui extends list_ui {
-		
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	protected function _get_query_base() {
 		/* Conservation des anciens éléments du select
@@ -41,6 +37,26 @@ class list_loans_ui extends list_ui {
 	}
 		
 	/**
+	 * Initialisation des filtres disponibles
+	 */
+	protected function init_available_filters() {
+		global $pmb_lecteurs_localises;
+		
+		$this->available_filters =
+		array('main_fields' =>
+				array(
+						'doc_location' => 'editions_filter_docs_location',
+						'empr_categorie' => 'editions_filter_empr_categ',
+						'empr_codestat_one' => 'editions_filter_empr_codestat',
+				)
+		);
+		if($pmb_lecteurs_localises) {
+			$this->available_filters['main_fields']['empr_location'] = 'editions_filter_empr_location';
+		}
+		$this->available_filters['custom_fields'] = array();
+	}
+	
+	/**
 	 * Initialisation des filtres de recherche
 	 */
 	public function init_filters($filters=array()) {
@@ -48,7 +64,6 @@ class list_loans_ui extends list_ui {
 		global $deflt2docs_location;
 		
 		$this->filters = array(
-				'empr_location_id' => ($pmb_lecteurs_localises ? $deflt2docs_location : 0),
 				'docs_location_id' => '',
 				'empr_categ_filter' => '',
 				'empr_codestat_filter' => '',
@@ -56,9 +71,31 @@ class list_loans_ui extends list_ui {
 				'pret_date_end' => '',
 				'pret_retour_start' => '',
 				'pret_retour_end' => '',
-				'short_loan_flag' => ''
+				'short_loan_flag' => '',
+                'associated_group' => '',
+                'empr_resp_group_location_id' => ''
 		);
+		if(array_key_exists('empr_location', $this->selected_filters)) {
+		    $this->filters['empr_location_id'] = ($pmb_lecteurs_localises ? $deflt2docs_location : 0);
+		} else {
+		    $this->filters['empr_location_id'] = 0;
+		}
 		parent::init_filters($filters);
+	}
+	
+	protected function init_default_selected_filters() {
+		global $pmb_lecteurs_localises;
+		if($pmb_lecteurs_localises) {
+			$this->add_selected_filter('empr_location');
+		}
+		$this->add_selected_filter('doc_location');
+		$this->add_empty_selected_filter();
+		$this->add_selected_filter('empr_categorie');
+		$this->add_selected_filter('empr_codestat_one');
+	}
+	
+	protected function init_default_applied_sort() {
+	    $this->add_applied_sort('pret_retour');
 	}
 	
 	/**
@@ -76,7 +113,8 @@ class list_loans_ui extends list_ui {
 						'empr' => 'empr_nom_prenom',
 						'pret_date' => 'circ_date_emprunt',
 						'pret_retour' => 'circ_date_retour',
-						'late_letter' => '369'
+						'late_letter' => '369',
+				        'groups' => 'groupes_empr'
 				)
 		);
 		
@@ -91,9 +129,9 @@ class list_loans_ui extends list_ui {
 	 */
 	protected function _get_query_order() {
 	
-		if($this->applied_sort['by']) {
+	    if($this->applied_sort[0]['by']) {
 			$order = '';
-			$sort_by = $this->applied_sort['by'];
+			$sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				case 'record' :
 					break;
@@ -117,24 +155,27 @@ class list_loans_ui extends list_ui {
 				case 'pret_retour':
 					$order .= 'pret_retour';
 					break;
+				case 'groups':
+				    $order .= 'groups, empr_nom, empr_prenom, pret_retour';
+				    break;
 				default :
 					$order .= parent::_get_query_order();
 					break;
 			}
 			if($order) {
 				$this->applied_sort_type = 'SQL';
-				if($this->applied_sort['asc_desc'] == 'desc' && strpos($order, ',')) {
+				if($this->applied_sort[0]['asc_desc'] == 'desc' && strpos($order, ',')) {
 					$cols = explode(',', $order);
 					$query_order = " order by ";
 					foreach ($cols as $i=>$col) {
 						if($i) {
 							$query_order .= ","; 
 						}
-						$query_order .= " ".$col." ".$this->applied_sort['asc_desc'];
+						$query_order .= " ".$col." ".$this->applied_sort[0]['asc_desc'];
 					}
 					return $query_order;
 				} else {
-					return " order by ".$order." ".$this->applied_sort['asc_desc'];
+				    return " order by ".$order." ".$this->applied_sort[0]['asc_desc'];
 				}
 			} else {
 				return "";
@@ -150,6 +191,7 @@ class list_loans_ui extends list_ui {
 		global $docs_location_id;
 		global $empr_categ_filter;
 		global $empr_codestat_filter;
+		global $empr_groupes_localises, $empr_resp_group_location;
 		
 		if(isset($empr_location_id)) {
 			$this->filters['empr_location_id'] = $empr_location_id*1;
@@ -163,26 +205,34 @@ class list_loans_ui extends list_ui {
 		if(isset($empr_codestat_filter)) {
 			$this->filters['empr_codestat_filter'] = $empr_codestat_filter*1;
 		}
+		if(isset($empr_resp_group_location)) {
+		    $this->filters['empr_resp_group_location'] = $empr_resp_group_location*1;
+		} elseif(!$empr_groupes_localises) {
+		    $this->filters['empr_resp_group_location'] = '';
+		}
 		parent::set_filters_from_form();
 	}
-		
-	/**
-	 * Affichage des filtres du formulaire de recherche
-	 */
-	public function get_search_filters_form() {
-		global $pmb_lecteurs_localises;
-		global $list_loans_ui_search_filters_form_tpl;
 	
-		$search_filters_form = $list_loans_ui_search_filters_form_tpl;
-		if ($pmb_lecteurs_localises) {
-			$search_filters_form = str_replace('!!empr_locations!!', docs_location::gen_combo_box_empr($this->filters['empr_location_id']), $search_filters_form);
-		} else {
-			$search_filters_form = str_replace('!!empr_locations!!', '', $search_filters_form);
-		}
-		$search_filters_form = str_replace('!!docs_locations!!', docs_location::gen_combo_box_docs($this->filters['docs_location_id']), $search_filters_form);
-		$search_filters_form = str_replace('!!categories!!', emprunteur::gen_combo_box_categ($this->filters['empr_categ_filter']), $search_filters_form);
-		$search_filters_form = str_replace('!!codestat!!', emprunteur::gen_combo_box_codestat($this->filters['empr_codestat_filter']), $search_filters_form);
-		return $search_filters_form;
+	protected function get_search_filter_empr_location() {
+		return docs_location::gen_combo_box_empr($this->filters['empr_location_id']);
+	}
+	
+	protected function get_search_filter_doc_location() {
+		return docs_location::gen_combo_box_docs($this->filters['docs_location_id']);
+	}
+	
+	protected function get_search_filter_empr_categorie() {
+		return emprunteur::gen_combo_box_categ($this->filters['empr_categ_filter']);
+	}
+	
+	protected function get_search_filter_empr_codestat_one() {
+		return emprunteur::gen_combo_box_codestat($this->filters['empr_codestat_filter']);
+	}
+	
+	protected function get_search_filter_empr_resp_group_location() {
+	    global $msg;
+	    
+	    return docs_location::get_html_select(array($this->filters['empr_resp_group_location_id']),array('id'=> 0,'msg'=> $msg['all_location']),array('id'=>'empr_resp_group_location_id','name'=>'empr_resp_group_location_id'));
 	}
 	
 	/**
@@ -195,10 +245,24 @@ class list_loans_ui extends list_ui {
 	}
 		
 	/**
+	 * Jointure externes SQL pour les besoins des filtres
+	 */
+	protected function _get_query_join_filters() {
+	    global $empr_groupes_localises;
+	    
+	    $filter_join_query = '';
+	    if($empr_groupes_localises && $this->filters['empr_resp_group_location_id']) {
+	        $filter_join_query .= " LEFT JOIN empr as coords_resp_group ON coords_resp_group.id_empr=groupe.resp_groupe";
+	    }
+	    return $filter_join_query;
+	}
+	
+	/**
 	 * Filtre SQL
 	 */
 	protected function _get_query_filters() {
-		
+	    global $empr_groupes_localises;
+	    
 		$filter_query = '';
 		
 		$this->set_filters_from_form();
@@ -231,7 +295,14 @@ class list_loans_ui extends list_ui {
 		if($this->filters['short_loan_flag']) {
 			$filters [] = 'short_loan_flag = "'.$this->filters['short_loan_flag'].'"';
 		}
+		if($this->filters['associated_group'] == 1) {
+		    $filters [] = 'groupe_id IS NOT NULL';
+		}
+		if($empr_groupes_localises && $this->filters['empr_resp_group_location_id']) {
+		    $filters [] = 'coords_resp_group.empr_location="'.$this->filters['empr_resp_group_location_id'].'"';
+		}
 		if(count($filters)) {
+		    $filter_query .= $this->_get_query_join_filters();
 			$filter_query .= ' where '.implode(' and ', $filters);		
 		}
 		return $filter_query;
@@ -239,12 +310,12 @@ class list_loans_ui extends list_ui {
 	
 	/**
 	 * Fonction de callback
-	 * @param account $a
-	 * @param account $b
+	 * @param object $a
+	 * @param object $b
 	 */
 	protected function _compare_objects($a, $b) {
-		if($this->applied_sort['by']) {
-			$sort_by = $this->applied_sort['by'];
+	    if($this->applied_sort[0]['by']) {
+	        $sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				case 'cote':
 				case 'typdoc':
@@ -268,11 +339,50 @@ class list_loans_ui extends list_ui {
 				case 'late_letter':
 					return '';
 					break;
+				case 'groups':
+				    $cmp_a = '';
+				    $groupes_a = emprunteur::get_groupes($a->id_empr);
+				    if(count($groupes_a)) {
+				        $cmp_a = strip_tags($groupes_a[0]);
+				    }
+				    $cmp_b = '';
+				    $groupes_b = emprunteur::get_groupes($b->id_empr);
+				    if(count($groupes_b)) {
+				        $cmp_b = strip_tags($groupes_b[0]);
+				    }
+				    return strcmp($cmp_a, $cmp_b);
+				    break;
 				default :
 					return parent::_compare_objects($a, $b);
 					break;
 			}
 		}
+	}
+	
+	protected function get_grouped_label($object, $property) {
+	    global $msg;
+	    
+	    $grouped_label = '';
+	    switch($property) {
+// 	        case 'date_start':
+// 	        case 'date_end':
+// 	        case 'date_next':
+// 	            $grouped_label = substr($object->{$this->applied_group[0]},0,10);
+// 	            break;
+	        case 'groups':
+	            $groupes = emprunteur::get_groupes($object->id_empr);
+	            if(count($groupes)) {
+	                $grouped_label = array();
+	                foreach ($groupes as $groupe) {
+	                    $grouped_label[] = strip_tags($groupe);
+	                }
+	            }
+	            break;
+	        default:
+	            $grouped_label = parent::get_grouped_label($object, $property);
+	            break;
+	    }
+	    return $grouped_label;
 	}
 	
 	/**
@@ -360,6 +470,9 @@ class list_loans_ui extends list_ui {
 					}
 				}
 				break;
+			case 'groups':
+			    $content .= emprunteur::get_groupes($object->id_empr);
+			    break;
 			default :
 				$content .= parent::get_cell_content($object, $property);
 				break;
@@ -392,6 +505,10 @@ class list_loans_ui extends list_ui {
 		if($this->filters['empr_codestat_filter']) {
 			$query = "select libelle from empr_codestat where idcode = ".$this->filters['empr_codestat_filter'];
 			$humans[] = $this->_get_label_query_human_from_query($msg['editions_filter_empr_codestat'], $query);
+		}
+		if($this->filters['empr_resp_group_location_id']) {
+		    $docs_location = new docs_location($this->filters['empr_resp_group_location_id']);
+		    $humans[] = $this->_get_label_query_human($msg['empr_resp_group_location'], $docs_location->libelle);
 		}
 		return $this->get_display_query_human($humans);;
 	}

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: origin.tpl.php,v 1.2 2015-02-02 09:45:02 touraine37 Exp $
+// $Id: origin.tpl.php,v 1.3 2019-05-27 12:43:22 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $origin_form, $current_module, $msg, $charset, $origin_tab_display;
 
 $origin_form="
 <form class='form-".$current_module."' name='origin' method='post' action='./admin.php?categ=!!type!!&sub=origins&action=update&id=!!id!!'>

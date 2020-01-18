@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: irts_bretagne.inc.php,v 1.5 2015-11-19 10:29:25 jpermanne Exp $
+// $Id: irts_bretagne.inc.php,v 1.8.4.1 2019-10-15 09:59:04 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -35,13 +35,13 @@ function search_other_function_clause() {
 	
 	//Filtrage niveau bilbio
 	$where="";
-	$t_n=array();
+	$t_n_tab=array();
 	if(is_array($typ_notice)){
 		reset($typ_notice);
-		while (list($key,$val)=each($typ_notice)) {
-			$t_n[]=$key;
+		foreach ($typ_notice as $key => $val) {
+			$t_n_tab[]=$key;
 		}
-		$t_n=implode("','",$t_n);
+		$t_n=implode("','",$t_n_tab);
 		if ($t_n) {
 			$t_n="'".$t_n."'";
 			$where .= " and niveau_biblio in (".$t_n.")";
@@ -105,7 +105,7 @@ function search_other_function_human_query($n) {
 		$r.="pour les types de notices ";
 		reset($typ_notice);
 		$t_l=array();
-		while (list($key,$val)=each($typ_notice)) {
+		foreach ($typ_notice as $key => $val) {
 			$t_l[]=$notices_t[$key];
 		}
 		$r.=implode(", ",$t_l);
@@ -115,14 +115,14 @@ function search_other_function_human_query($n) {
 }
 
 function search_other_function_post_values() {
-	global $irts_bibli,$typ_notice;
+	global $irts_bibli,$typ_notice, $charset;
 	
 	$ret = "";
-	if ($typ_notice[m] != "") $ret .= "<input type=\"hidden\" name=\"typ_notice[m]\" value=\"$typ_notice[m]\">";
-	if ($typ_notice[s] != "") $ret .= "<input type=\"hidden\" name=\"typ_notice[s]\" value=\"$typ_notice[s]\">";
-	if ($typ_notice[b] != "") $ret .= "<input type=\"hidden\" name=\"typ_notice[b]\" value=\"$typ_notice[b]\">";
-	if ($typ_notice[a] != "") $ret .= "<input type=\"hidden\" name=\"typ_notice[a]\" value=\"$typ_notice[a]\">";
-	return "<input type=\"hidden\" name=\"irts_bibli\" value=\"$irts_bibli\">".$ret."\n";
+	if ($typ_notice['m'] != "") $ret .= "<input type=\"hidden\" name=\"typ_notice[m]\" value=\"".htmlentities($typ_notice['m'], ENT_QUOTES, $charset)."\">";
+	if ($typ_notice['s'] != "") $ret .= "<input type=\"hidden\" name=\"typ_notice[s]\" value=\"".htmlentities($typ_notice['s'], ENT_QUOTES, $charset)."\">";
+	if ($typ_notice['b'] != "") $ret .= "<input type=\"hidden\" name=\"typ_notice[b]\" value=\"".htmlentities($typ_notice['b'], ENT_QUOTES, $charset)."\">";
+	if ($typ_notice['a'] != "") $ret .= "<input type=\"hidden\" name=\"typ_notice[a]\" value=\"".htmlentities($typ_notice['a'], ENT_QUOTES, $charset)."\">";
+	return "<input type=\"hidden\" name=\"irts_bibli\" value=\"".htmlentities($irts_bibli, ENT_QUOTES, $charset)."\">".$ret."\n";
 	
 }
 

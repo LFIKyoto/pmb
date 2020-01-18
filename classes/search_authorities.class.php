@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_authorities.class.php,v 1.19 2018-07-11 15:08:02 ngantier Exp $
+// $Id: search_authorities.class.php,v 1.26 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -62,6 +62,7 @@ class search_authorities extends search {
 		if(count($objects_ids)) {
 			$elements_class_name = $this->get_elements_list_ui_class_name();
 			$elements_instance_list_ui = new $elements_class_name($objects_ids, count($objects_ids), 1);
+			$elements_instance_list_ui->add_context_parameter('in_search', true);
 			$elements = $elements_instance_list_ui->get_elements_list();
 			print $elements;
 		}
@@ -106,12 +107,12 @@ class search_authorities extends search {
 			$bool=false;
 			if ($s[0]=="f") {
 				$champ=$this->fixedfields[$s[1]]["TITLE"];
-				if ((string)$field[0]=="" && (string)$field1[0]=="") {
+				if ($this->is_empty($field, "field_".$i."_".$search[$i]) && $this->is_empty($field1, "field_".$i."_".$search[$i]."_1")) {
 					$bool=true;
 				}
 			} elseif(array_key_exists($s[0],$this->pp)) {
 				$champ=$this->pp[$s[0]]->t_fields[$s[1]]["TITRE"];
-				if ((string)$field[0]=="" && (string)$field1[0]=="") {
+				if ($this->is_empty($field, "field_".$i."_".$search[$i]) && $this->is_empty($field1, "field_".$i."_".$search[$i]."_1")) {
 					$bool=true;
 				}
 			} elseif($s[0]=="s") {
@@ -184,10 +185,12 @@ class search_authorities extends search {
 			print $this->get_display_icons($nb_results, $recherche_externe);
 		} else print "<br />".$msg["1915"]." ";		
 		
-		self::get_caddie_link();		
+		self::get_caddie_link();
+		print searcher::get_quick_actions('AUT');
 		
 		print "<input type='button' class='bouton' onClick=\"document.".$this->get_hidden_form_name().".action='".$url_to_search_form."'; document.".$this->get_hidden_form_name().".target='".$search_target."'; document.".$this->get_hidden_form_name().".submit(); return false;\" value=\"".$msg["search_back"]."\"/>";
 		print $this->get_display_actions();
+		print searcher::get_check_uncheck_all_buttons();
 		
 		print $this->get_current_search_map();
 	
@@ -233,9 +236,6 @@ class search_authorities extends search {
 			case 9 :
 				$type = "CONCEPTS";
 				break;
-			case 10 :
-			    $type = "AUTHPERSO";
-			    break;
 		}		
 		return $type;
 	}
@@ -271,7 +271,7 @@ class search_authorities extends search {
 				$open_optgroup=0;
 				$open_optgroup_deja_affiche=0;
 				$open_optgroup_en_attente_affiche=0;
-				while (list($id,$ff)=each($this->fixedfields)) {
+				foreach ($this->fixedfields as $id => $ff) {
 					if ($ff["SEPARATOR"]) {
 						if ($open_optgroup) $r.="</optgroup>\n";
 						// $r.="<option disabled style='border-left:0px;border-right:0px;border-top:0px;border-bottom:1px;border-style:solid;'></option>\n";
@@ -306,7 +306,7 @@ class search_authorities extends search {
 						if ($this->dynamicfields_hidebycustomname[$value["TYPE"]]) {
 							$hide_customfields_array = explode(",",$this->dynamicfields_hidebycustomname[$value["TYPE"]]);
 						}
-						while (list($id,$df)=each($this->pp[$key]->t_fields)) {
+						foreach ($this->pp[$key]->t_fields as $id => $df) {
 							//On n'affiche pas les champs persos cités par nom dans le fichier xml
 							if ((!count($hide_customfields_array)) || (!in_array($df["NAME"],$hide_customfields_array))) {
 								$array_dyn_tmp[strtolower($df["TITRE"])]="<option value='".$key."_".$id."' style='color:#000000'>".htmlentities($df["TITRE"],ENT_QUOTES,$charset)."</option>\n";
@@ -339,10 +339,11 @@ class search_authorities extends search {
 	
 			//Champs speciaux
 			if (!$this->specials_not_visible && $this->specialfields) {
-				while (list($id,$sf)=each($this->specialfields)) {
+			    foreach ($this->specialfields as $id => $sf) {
 					for($i=0 ; $i<count($this->tableau_speciaux['TYPE']) ; $i++){
 						if ($this->tableau_speciaux["TYPE"][$i]["NAME"] == $sf['TYPE']) {
-							require_once($include_path."/search_queries/specials/".$this->tableau_speciaux["TYPE"][$i]["PATH"]."/search.class.php");
+							global $include_path;
+						    require_once($include_path."/search_queries/specials/".$this->tableau_speciaux["TYPE"][$i]["PATH"]."/search.class.php");
 							$classname = $this->tableau_speciaux["TYPE"][$i]["CLASS"];
 							if((isset($sf['VISIBLE']) && $sf['VISIBLE'] && !method_exists($classname, 'check_visibility')) || (method_exists($classname, 'check_visibility') && $classname::check_visibility() == true)){
 								if ($sf["SEPARATOR"]) {
@@ -366,7 +367,7 @@ class search_authorities extends search {
 			$lonely_fields = array();
 			if($this->fixedfields){
 				reset($this->fixedfields);
-				while (list($id,$ff)=each($this->fixedfields)) {
+				foreach ($this->fixedfields as $id => $ff) {
 					if ($this->visibility($ff)) {
 						if(isset($ff["GROUP"])){
 							$fields_array[$ff["GROUP"]][]="<option value='f_".$id."' style='color:#000000'>".htmlentities($ff["TITLE"],ENT_QUOTES,$charset)."</option>\n";
@@ -385,10 +386,10 @@ class search_authorities extends search {
 						$array_dyn_tmp=array();
 						//liste des champs persos à cacher par type
 						$hide_customfields_array = array();
-						if ($this->dynamicfields_hidebycustomname[$value["TYPE"]]) {
+						if (isset($this->dynamicfields_hidebycustomname[$value["TYPE"]])) {
 							$hide_customfields_array = explode(",",$this->dynamicfields_hidebycustomname[$value["TYPE"]]);
 						}
-						while (list($id,$df)=each($this->pp[$key]->t_fields)) {
+						foreach ($this->pp[$key]->t_fields as $id => $df) {
 							//On n'affiche pas les champs persos cités par nom dans le fichier xml
 							if ((!count($hide_customfields_array)) || (!in_array($df["NAME"],$hide_customfields_array))) {
 								$array_dyn_tmp[strtolower($df["TITRE"])]="<option value='".$key."_".$id."' style='color:#000000'>".htmlentities($df["TITRE"],ENT_QUOTES,$charset)."</option>\n";
@@ -417,12 +418,19 @@ class search_authorities extends search {
 	
 			//Traitement des champs spéciaux
 			if (!$this->specials_not_visible && $this->specialfields) {
-				while (list($id,$sf)=each($this->specialfields)) {
-					if($sf['VISIBLE']){
-						if(isset($sf["GROUP"])){
-							$fields_array[$sf["GROUP"]][] = "<option value='s_".$id."' style='color:#000000'>".htmlentities($sf["TITLE"],ENT_QUOTES,$charset)."</option>\n";
-						}else{
-							$lonely_fields[] = "<option value='s_".$id."' style='color:#000000'>".htmlentities($sf["TITLE"],ENT_QUOTES,$charset)."</option>\n";
+			    foreach ($this->specialfields as $id => $sf) {
+					for($i=0 ; $i<count($this->tableau_speciaux['TYPE']) ; $i++){
+						if ($this->tableau_speciaux["TYPE"][$i]["NAME"] == $sf['TYPE']) {
+						    global $include_path;
+						    require_once($include_path."/search_queries/specials/".$this->tableau_speciaux["TYPE"][$i]["PATH"]."/search.class.php");
+							$classname = $this->tableau_speciaux["TYPE"][$i]["CLASS"];
+							if((isset($sf['VISIBLE']) && $sf['VISIBLE'] && !method_exists($classname, 'check_visibility')) || (method_exists($classname, 'check_visibility') && $classname::check_visibility() == true)){
+								if(isset($sf["GROUP"]) && $sf["GROUP"]){
+									$fields_array[$sf["GROUP"]][] = "<option value='s_".$id."' style='color:#000000'>".htmlentities($sf["TITLE"],ENT_QUOTES,$charset)."</option>\n";
+								}else{
+									$lonely_fields[] = "<option value='s_".$id."' style='color:#000000'>".htmlentities($sf["TITLE"],ENT_QUOTES,$charset)."</option>\n";
+								}
+							}
 						}
 					}
 				}

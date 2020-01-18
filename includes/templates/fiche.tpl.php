@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fiche.tpl.php,v 1.9 2017-11-21 12:00:59 dgoron Exp $
+// $Id: fiche.tpl.php,v 1.12 2019-08-26 15:09:21 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $form_edit_fiche, $form_reindex, $form_search, $current_module, $msg, $charset, $base_path;
 
 $form_edit_fiche = "
 <script src='javascript/ajax.js'></script>		
@@ -36,7 +38,7 @@ $form_edit_fiche = "
 
 
 $form_reindex = "
-<form class='form-$current_module' name='formulaire' action='$base_path/fichier.php?categ=gerer&mode=reindex&sub=reindex' method='post'>
+<form class='form-$current_module' name='formulaire' action='$base_path/fichier.php?categ=gerer&mode=reindex&sub=run' method='post'>
 	<h3>".htmlentities($msg['fichier_reindex_title'],ENT_QUOTES,$charset)."</h3>
 	<input type='hidden' name='act' value='' />
 	<div class='form-contenu'>

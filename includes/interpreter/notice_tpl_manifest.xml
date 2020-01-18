@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: notice_tpl_manifest.xml,v 1.20 2018-12-27 15:17:07 dgoron Exp $ -->
+$Id: notice_tpl_manifest.xml,v 1.22.2.3 2019-11-07 09:39:04 dgoron Exp $ -->
 <manifest>
 	<name>notice_tpl</name>
 	<description>msg:Notice_tpl_functions_description</description>
@@ -97,7 +97,7 @@ $Id: notice_tpl_manifest.xml,v 1.20 2018-12-27 15:17:07 dgoron Exp $ -->
 				<description>msg:avis_with_tpl_output_description</description>
 			</outputs>
 		</method>
-		<method name="#categories(param0,param1,param2,param3,param4);" rights="" version="1.0" comment="msg:categories_description" language_independant="true">
+		<method name="#categories(param0,param1,param2,param3,param4,param5);" rights="" version="1.0" comment="msg:categories_description" language_independant="true">
 			<inputs>
 				<description>msg:categories_input_description</description>
 			</inputs>
@@ -215,6 +215,14 @@ $Id: notice_tpl_manifest.xml,v 1.20 2018-12-27 15:17:07 dgoron Exp $ -->
 			</inputs>
 			<outputs>
 				<description>msg:expl_num_vign_reduit_output_description</description>
+			</outputs>
+		</method>
+		<method name="#expl_num_by_field(param0,param1,param2,param3);" rights="" version="1.0" comment="msg:expl_num_by_field_description" language_independant="true">
+			<inputs>
+				<description>msg:expl_num_by_field_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:expl_num_by_field_output_description</description>
 			</outputs>
 		</method>
 		<method name="#expl_num_with_tpl(param0,param1,param2,param3,param4,param5,param6);" rights="" version="1.0" comment="msg:expl_num_with_tpl_description" language_independant="true">
@@ -661,7 +669,15 @@ $Id: notice_tpl_manifest.xml,v 1.20 2018-12-27 15:17:07 dgoron Exp $ -->
 				<description>msg:date_bulletin_output_description</description>
 			</outputs>
 		</method>
-			<method name="#issn();" rights="" version="1.0" comment="msg:issn_description" language_independant="true">
+		<method name="#bulletin_id();" rights="" version="1.0" comment="msg:bulletin_id_description" language_independant="true">
+			<inputs>
+				<description>msg:bulletin_id_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:bulletin_id_output_description</description>
+			</outputs>
+		</method>
+		<method name="#issn();" rights="" version="1.0" comment="msg:issn_description" language_independant="true">
 			<inputs>
 				<description>msg:issn_input_description</description>
 			</inputs>
@@ -719,6 +735,14 @@ $Id: notice_tpl_manifest.xml,v 1.20 2018-12-27 15:17:07 dgoron Exp $ -->
 			</inputs>
 			<outputs>
 				<description>msg:group_output_description</description>
+			</outputs>
+		</method>
+		<method name="#filter_from_notice_info(param0,param1,param2);" rights="" version="1.0" comment="msg:filter_from_notice_info_description" language_independant="true">
+			<inputs>
+				<description>msg:filter_from_notice_info_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:filter_from_notice_info_output_description</description>
 			</outputs>
 		</method>
 		<method name="#linked_id(param0,param1);" rights="" version="1.0" comment="msg:linked_id_description" language_independant="true">
@@ -1023,6 +1047,14 @@ $Id: notice_tpl_manifest.xml,v 1.20 2018-12-27 15:17:07 dgoron Exp $ -->
 			</inputs>
 			<outputs>
 				<description>msg:get_variable_output_description</description>
+			</outputs>
+		</method>
+		<method name="#get_global_variable(param0);" rights="" version="1.0" comment="msg:get_global_variable_description" language_independant="true">
+			<inputs>
+				<description>msg:get_global_variable_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:get_global_variable_output_description</description>
 			</outputs>
 		</method>
 		<method name="#strip_tags(param0);" rights="" version="1.0" comment="msg:strip_tags_description" language_independant="true">

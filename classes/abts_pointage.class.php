@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abts_pointage.class.php,v 1.86 2018-12-20 11:00:19 mbertin Exp $
+// $Id: abts_pointage.class.php,v 1.92.2.2 2019-10-09 08:39:42 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
 	die("no access");
@@ -13,12 +13,12 @@ require_once ($include_path . "/abts_func.inc.php");
 require_once ($include_path . "/misc.inc.php");
 require_once ($class_path . "/parse_format.class.php");
 require_once ($class_path.'/entites.class.php');
-require_once($base_path."/classes/rtf/Rtf.php");
 require_once($base_path."/classes/fpdf.class.php");
 require_once($base_path."/classes/ufpdf.class.php");
 require_once("$class_path/coordonnees.class.php");
 require_once($class_path."/cache_factory.class.php");
 require_once($class_path."/abts_status.class.php");
+require_once($class_path."/pdf/abts/lettre_abts_PDF.class.php");
 	
 class abts_pointage {
 	public $num_notice; //notice id
@@ -159,7 +159,7 @@ class abts_pointage {
 							$resultat_n = pmb_mysql_query($requete,$dbh);
 							if ($r_abt = pmb_mysql_fetch_object($resultat_n)) {
 								$numero_modele[$r->modele_id][$r->num_abt]['num'] = $r_abt->num;
-								$numero_modele[$r->modele_id][$r->num_abt]['vol'] = $r_abt->vol;
+								$numero_modele[$r->modele_id][$r->num_abt]['vol'] = $r_abt->vol;						
 								$numero_modele[$r->modele_id][$r->num_abt]['tom'] = $r_abt->tome;
 								$numero_modele[$r->modele_id][$r->num_abt]['delais'] = $r_abt->delais;
 								$numero_modele[$r->modele_id][$r->num_abt]['critique'] = $r_abt->critique;
@@ -170,12 +170,10 @@ class abts_pointage {
 								$numero_modele[$r->modele_id][$r->num_abt]['vol_date_fin_cycle'] = $numero_modele[$r->modele_id]['vol_date_fin_cycle'];
 								$numero_modele[$r->modele_id][$r->num_abt]['tom_date_fin_cycle'] = $numero_modele[$r->modele_id]['tom_date_fin_cycle'];
 							}							
-							
 							$numero_modele[$r->modele_id][$r->num_abt]['date_parution'] = $r->date_parution;
 							$numero_modele[$r->modele_id][$r->num_abt]['num']--;
-							increment_bulletin($r->modele_id, $numero_modele[$r->modele_id],$r->num_abt);							
+							increment_bulletin($r->modele_id, $numero_modele[$r->modele_id],$r->num_abt);	
 							$numero_modele[$r->modele_id][$r->num_abt]['ordre'] = $r->ordre;
-							
 						} elseif (($numero_modele[$r->modele_id][$r->num_abt]['date_parution'] != $r->date_parution) || ($numero_modele[$r->modele_id][$r->num_abt]['ordre'] != $r->ordre)) {
 							$numero_modele[$r->modele_id][$r->num_abt]['date_parution'] = $r->date_parution;
 							$numero_modele[$r->modele_id][$r->num_abt]['ordre'] = $r->ordre;
@@ -183,12 +181,10 @@ class abts_pointage {
 						}
 					}
 					
-					if ($r->type == 1) {				
-						$numero_modele[$r->modele_id]['abt_name'] = $r->abt_name;
-						$libelle_abonnement = $numero_modele[$r->modele_id]['modele_name'] . " / " . $numero_modele[$r->modele_id]['abt_name'];			
-						
+					if ($r->type == 1) {		
+					    $numero_modele[$r->modele_id][$r->num_abt]['abt_name'] = $r->abt_name;
+					    $libelle_abonnement = $numero_modele[$r->modele_id]['modele_name'] . " / " . $numero_modele[$r->modele_id][$r->num_abt]['abt_name'];			
 						$numero = $numero_modele[$r->modele_id][$r->num_abt]['num'];
-						
 						$volume = $numero_modele[$r->modele_id][$r->num_abt]['vol'];
 						$tome = $numero_modele[$r->modele_id][$r->num_abt]['tom'];
 						$format_aff = $numero_modele[$r->modele_id]['format_aff'];
@@ -202,7 +198,6 @@ class abts_pointage {
 							$print_format->var_format['START_TOM'] = $numero_modele[$r->modele_id][$r->num_abt]['start_tom'];
 							$print_format->var_format['START_DATE'] = $r->date_debut;
 							$print_format->var_format['END_DATE'] = $r->date_fin;
-												
 							$print_format->cmd = $format_aff;
 							$libelle_numero=$print_format->exec_cmd();
 						}	
@@ -214,8 +209,8 @@ class abts_pointage {
 						}
 					}
 					else if ($r->type == 2) {				
-						$numero_modele[$r->modele_id]['abt_name'] = $r->abt_name;
-						$libelle_abonnement = $numero_modele[$r->modele_id]['modele_name'] . " / " . $numero_modele[$r->modele_id]['abt_name'];
+					    $numero_modele[$r->modele_id][$r->num_abt]['abt_name'] = $r->abt_name;
+					    $libelle_abonnement = $numero_modele[$r->modele_id]['modele_name'] . " / " . $numero_modele[$r->modele_id][$r->num_abt]['abt_name'];
 						
 						$volume = $numero_modele[$r->modele_id][$r->num_abt]['vol'];
 						$tome = $numero_modele[$r->modele_id][$r->num_abt]['tom'];
@@ -331,12 +326,9 @@ class abts_pointage {
 				$type=$this->fiche_bulletin[3][$obj]['type'];
 				$abt_name=$this->fiche_bulletin[3][$obj]['abt_name'];
 				
-				for($i=0; $i<$this->fiche_bulletin[3][$obj]['deja_bulletine']; $i++ ){									
-					increment_bulletin($modele_id, $numero_modele[$modele_id],$num_abt);
-				}
-							
-				if (!$numero_modele[$modele_id][$num_abt]['ordre']) {
+				if (empty($numero_modele[$modele_id][$num_abt]['ordre'])) {
 					$requete = "SELECT num,vol, tome, delais,	critique FROM abts_abts_modeles WHERE modele_id=".$modele_id." and abt_id=".$num_abt;
+					
 					$resultat_n = pmb_mysql_query($requete,$dbh);
 					if ($r_abt = pmb_mysql_fetch_object($resultat_n)) {
 						$numero_modele[$modele_id][$num_abt]['num'] = $r_abt->num;
@@ -353,7 +345,12 @@ class abts_pointage {
 					increment_bulletin($modele_id, $numero_modele[$modele_id],$num_abt);
 					
 				} elseif (($numero_modele[$modele_id][$num_abt]['date_parution'] != $date_parution) || ($numero_modele[$modele_id][$num_abt]['ordre'] != $ordre)) {
+ 				    $numero_modele[$modele_id][$num_abt]['date_parution'] = $date_parution;
 					increment_bulletin($modele_id, $numero_modele[$modele_id],$num_abt);
+				}
+				
+				for($i=0; $i<$this->fiche_bulletin[3][$obj]['deja_bulletine']; $i++ ){
+				    increment_bulletin($modele_id, $numero_modele[$modele_id],$num_abt);
 				}
 				
 				if ($type == 1) {
@@ -373,8 +370,6 @@ class abts_pointage {
 						$print_format->var_format['START_NUM'] = $numero_modele[$modele_id][$num_abt]['start_num'];
 						$print_format->var_format['START_VOL'] = $numero_modele[$modele_id][$num_abt]['start_vol'];
 						$print_format->var_format['START_TOM'] = $numero_modele[$modele_id][$num_abt]['start_tom'];
-						$print_format->var_format['START_DATE'] = $date_debut;
-						$print_format->var_format['END_DATE'] = $date_fin;
 							
 						$print_format->cmd = $format_aff;
 						$libelle_numero=$print_format->exec_cmd();
@@ -403,8 +398,6 @@ class abts_pointage {
 						$print_format->var_format['START_NUM'] = $numero_modele[$modele_id][$num_abt]['start_num'];
 						$print_format->var_format['START_VOL'] = $numero_modele[$modele_id][$num_abt]['start_vol'];
 						$print_format->var_format['START_TOM'] = $numero_modele[$modele_id][$num_abt]['start_tom'];
-						$print_format->var_format['START_DATE'] = $date_debut;
-						$print_format->var_format['END_DATE'] = $date_fin;
 							
 						$print_format->cmd = $format_aff;
 						$libelle_numero=$print_format->exec_cmd();
@@ -896,8 +889,11 @@ ENDOFTEXT;
 		}
 		
 		$fourn_repetables = '';
-		if (sizeof($fournisseurs)==0) $max_fourn = 1 ;
-		else $max_fourn = sizeof($fournisseurs) ; 
+		if (empty($fournisseurs)) {
+		    $max_fourn = 1;
+		} else {
+		    $max_fourn = count($fournisseurs); 
+		}
 		for ($i = 0 ; $i < $max_fourn ; $i++) {
 			if(isset($fournisseurs[$i]["id"])) {
 				$fourn_id = $fournisseurs[$i]["id"] ;
@@ -909,10 +905,10 @@ ENDOFTEXT;
 			else $tmp_fourn = str_replace('!!ifourn!!', $i, $abts_gestion_retard_fournisseur_suite) ;
 				
 			$tmp_fourn = str_replace('!!fourn_id!!',			$fourn_id, $tmp_fourn);
-			if ( sizeof($fournisseurs)==0 ) { 
+			if (empty($fournisseurs)) { 
 				$tmp_fourn = str_replace('!!fourn_libelle!!', '', $tmp_fourn);		
 			} else {
-				$tmp_fourn = str_replace('!!fourn_libelle!!',	htmlentities($fournisseurs[$i]["libelle"],ENT_QUOTES, $charset), $tmp_fourn);
+				$tmp_fourn = str_replace('!!fourn_libelle!!',	htmlentities($fournisseurs[$i]["libelle"], ENT_QUOTES, $charset), $tmp_fourn);
 			}
 			$fourn_repetables .= $tmp_fourn ;
 		}
@@ -1095,7 +1091,7 @@ ENDOFTEXT;
 			$result = pmb_mysql_query($req,$dbh);	
 			if(pmb_mysql_num_rows($result)){
 				$r = pmb_mysql_fetch_object($result);
-				$nb=$r->nb;
+				$nb=$r->rel_nb;
 				$bulletin_info['abt_id']=$r->rel_abt_num;
 				$bulletin_info['date_parution']=$r->rel_date_parution;
 				$bulletin_info['libelle_numero']=$r->rel_libelle_numero;
@@ -1141,204 +1137,75 @@ ENDOFTEXT;
 	}
 	
 	public function generate_PDF(){
-		global $base_path,$charset, $msg, $biblio_logo;
-		global $biblio_name, $biblio_logo, $biblio_adr1, $biblio_adr2, $biblio_cp, $biblio_town, $biblio_state, $biblio_country, $biblio_phone, $biblio_email, $biblio_website ;
-		global $madame_monsieur;
-		global $pmb_pdf_font,$fpdf;
-		
-		//Document
-		$largeur_page = '210';
-		$hauteur_page = '297';
-		$orient_page = 'P';
-		$marge_haut = '10';
-		$marge_bas = '20';
-		$marge_gauche = '10';
-		$marge_droite = '10';
-		
-		$retraitFournisseur=100;
-		
-		$taille_doc=array($largeur_page,$hauteur_page);
-		$ourPDF = new $fpdf($orient_page, 'mm', $taille_doc);
-		$ourPDF->Open();
-		$ourPDF->SetMargins($marge_gauche, $marge_haut, $marge_droite);
-		$ourPDF->setFont($pmb_pdf_font);
-		
-		foreach($this->liste_rel as $id_fournisseur =>$info_fournisseur ){
-			//Nouvelle page
-			$ourPDF->addPage();
-			
-			//Affichage Bibli / date édition
-			$ourPDF->setFontSize(12);
-			$ourPDF->Cell(150,4,$this->to_utf8($biblio_name),0);
-			$ourPDF->Cell(0,4,$this->to_utf8($msg['fpdf_edite']." ".formatdate(date("Y-m-d",time()))),0);
-			$ourPDF->Ln();
-			$ourPDF->setFontSize(10);
-			if($biblio_adr1){
-				$ourPDF->Cell(0,4,$this->to_utf8($biblio_adr1),0);
-				$ourPDF->Ln();
-			}			
-			if($biblio_adr2){
-				$ourPDF->Cell(0,4,$this->to_utf8($biblio_adr2),0);
-				$ourPDF->Ln();
-			}
-			if($biblio_cp || $biblio_town){
-				$ourPDF->Cell(0,4,$this->to_utf8(trim($biblio_cp." ".$biblio_town)),0);
-				$ourPDF->Ln();
-			}
-			if($biblio_phone){
-				$ourPDF->Cell(0,4,$this->to_utf8($biblio_phone),0);
-				$ourPDF->Ln();
-			}
-			if($biblio_email){
-				$ourPDF->Cell(0,4,$this->to_utf8($biblio_email),0);
-				$ourPDF->Ln();
-			}
-			//Fournisseur
-			if($id_fournisseur){
-				$fou = new entites($id_fournisseur);
-				$coord_fou = entites::get_coordonnees($id_fournisseur,1);
-				$coord_fou = pmb_mysql_fetch_object($coord_fou);
-				if($fou->raison_sociale != '') {
-					$libelleFou = $fou->raison_sociale;
-				} else {
-					$libelleFou = $coord_fou->libelle;
-				}
-				
-				//Affichage fournisseur
-				$ourPDF->Ln();
-				$ourPDF->Ln();
-				$ourPDF->setFontSize(12);
-				$ourPDF->Cell($retraitFournisseur,4,"",0);
-				$ourPDF->Cell(0,4,$this->to_utf8($libelleFou),0);
-				$ourPDF->Ln();
-				$ourPDF->setFontSize(10);
-				if($coord_fou->adr1){
-					$ourPDF->Cell($retraitFournisseur,4,"",0);
-					$ourPDF->Cell(0,4,$this->to_utf8($coord_fou->adr1),0);
-					$ourPDF->Ln();
-				}
-				if($coord_fou->adr2){
-					$ourPDF->Cell($retraitFournisseur,4,"",0);
-					$ourPDF->Cell(0,4,$this->to_utf8($coord_fou->adr2),0);
-					$ourPDF->Ln();
-				}
-				if($coord_fou->cp){
-					$ourPDF->Cell($retraitFournisseur,4,"",0);
-					$ourPDF->Cell(0,4,$this->to_utf8($coord_fou->cp),0);
-					$ourPDF->Ln();
-				}
-				if($coord_fou->ville){
-					$ourPDF->Cell($retraitFournisseur,4,"",0);
-					$ourPDF->Cell(0,4,$this->to_utf8($coord_fou->ville),0);
-					$ourPDF->Ln();
-				}
-				if($coord_fou->contact!=''){
-					$ourPDF->Cell($retraitFournisseur,4,"",0);
-					$ourPDF->Cell(0,4,$this->to_utf8($msg['acquisition_act_formule']." ".$coord_fou->contact),0);
-					$ourPDF->Ln();
-				}
-			}
-			
-			$ourPDF->Ln();
-			$ourPDF->Ln();
-			$ourPDF->Ln();
-			$ourPDF->Ln();
-			$ourPDF->Ln();
-			$ourPDF->setFontSize(10);
-			$ourPDF->Cell(0,4,$this->to_utf8($msg["abts_gestion_retard_lettre_monsieur"]),0);
-			$ourPDF->Ln();
-			$ourPDF->Ln();
-			$ourPDF->Ln();
-			
-			foreach($info_fournisseur as $num_notice =>$info_notice ){
-				$perio= new serial_display($num_notice);
-				$ourPDF->Cell(0,4,$this->to_utf8($perio->notice->tit1),0);
-				$ourPDF->Ln();
-				$ourPDF->Cell(0,4,$this->to_utf8("________________________________________"),0);
-				$ourPDF->Ln();
-				$ourPDF->Ln();
-				foreach($info_notice as $abt_num => $info_abt){
-					foreach($info_abt as $rel_id => $rel_info){
-						$ourPDF->SetFont('','U');
-						$ourPDF->Cell(20,4,$this->to_utf8($rel_info["rel_libelle_numero"]." :"),0,0);
-						$ourPDF->SetFont('','');
-						$ourPDF->Cell(0,4,$this->to_utf8(formatdate($rel_info["rel_date_parution"])),0);
-						$ourPDF->Ln();
-						$ourPDF->Cell(0,4,$this->to_utf8($rel_info["rel_comment_gestion"]),0);
-						$ourPDF->Ln();
-					}
-				}
-			}
-		}
-		$ourPDF->OutPut();
+	    $lettre_abts_PDF = lettre_abts_PDF::get_instance('abts');
+	    $lettre_abts_PDF->set_liste_rel($this->liste_rel);
+	    $lettre_abts_PDF->doLettre();
 	}
 	
 	public function generate_RTF(){
-		
-		global  $base_path,$charset, $msg, $biblio_logo;
-		global $biblio_name, $biblio_logo, $biblio_adr1, $biblio_adr2, $biblio_cp, $biblio_town, $biblio_state, $biblio_country, $biblio_phone, $biblio_email, $biblio_website ;
+		global $base_path, $charset, $msg, $biblio_logo;
+		global $biblio_name, $biblio_logo, $biblio_adr1, $biblio_adr2, $biblio_cp, $biblio_town, $biblio_state, $biblio_country, $biblio_phone, $biblio_email, $biblio_website;
 		global $madame_monsieur;
-		//Format des fonts		
-		$fontHead = new Font(12, 'Arial','#0E298A');
+		
+		//Format des fonts
+		$fontHead = new PHPRtfLite_Font(12, 'Arial','#0E298A');
 		$fontHead->setBold();
-		$fontSmall = new Font(1);
-		$fontComment = new Font(10,'Arial');
+		$fontSmall = new PHPRtfLite_Font(1);
+		$fontComment = new PHPRtfLite_Font(10,'Arial');
 		$fontComment->setItalic();
-		$fontChapter = new Font(10,'Arial');
-		$fontSubChapter = new Font(10,'Arial');
-		$fontSubChapter->setUnderline();		
+		$fontChapter = new PHPRtfLite_Font(10,'Arial');
+		$fontSubChapter = new PHPRtfLite_Font(10,'Arial');
+		$fontSubChapter->setUnderline();
 		
 		//Format des paragraphes
-		$parPmb = new ParFormat();
+		$parPmb = new PHPRtfLite_ParFormat();
 		$parPmb->setIndentRight(12.5);
-		$parPmb->setBackColor('#0E298A');
+		$parPmb->setBackgroundColor('#0E298A');
 		$parPmb->setSpaceAfter(8);			
-		$parHead = new ParFormat();
+		$parHead = new PHPRtfLite_ParFormat();
 		$parHead->setSpaceBefore(5);		
-		$parChapter = new ParFormat();
+		$parChapter = new PHPRtfLite_ParFormat();
 		$parChapter->setSpaceBefore(2);
 		$parChapter->setSpaceAfter(1);			
-		$parComment = new ParFormat();
+		$parComment = new PHPRtfLite_ParFormat();
 		$parComment->setIndentLeft(1);
 		$parComment->setIndentRight(0.5);			
-		$parContenu = new ParFormat('justify');
+		$parContenu = new PHPRtfLite_ParFormat('justify');
 		$parContenu->setIndentLeft(1);				
-		$parSubChapter = new ParFormat();
+		$parSubChapter = new PHPRtfLite_ParFormat();
 		$parSubChapter->setIndentLeft(0.5);		
-		$parInfo = new ParFormat();
+		$parInfo = new PHPRtfLite_ParFormat();
 		$parInfo->setIndentLeft(0,5);
 		$parInfo->setSpaceAfter(1.5);
-			
-		$parInfoBib = new ParFormat();
+		$parInfoBib = new PHPRtfLite_ParFormat();
 		$parInfoBib->setIndentLeft(0);
 		$parInfoBib->setSpaceAfter(1.5);		
 		
 		//Document
-		$rtf = new Rtf();
+		$rtf = new PHPRtfLite();
 		$rtf->setMargins(1, 1, 1 ,1);
 		
 		foreach($this->liste_rel as $id_fournisseur =>$info_fournisseur ){	
 		
-		$rtf->setMargins(1, 1, 1 ,1);
-		
-			$sect = &$rtf->addSection();
-			$table = &$sect->addTable();
+		    $rtf->setMargins(1, 1, 1 ,1);
+			$sect = $rtf->addSection();
+			$table = $sect->addTable();
 			$table->addRows(1, 2);
 			$table->addColumnsList(array(15,4));
-			//$table->addImageToCell(1,1,$base_path."/images/".$biblio_logo,new ParFormat('center'),0,0);
+			//$table->addImageToCell(1,1,$base_path."/images/".$biblio_logo,new PHPRtfLite_ParFormat('center'),0,0);
 			
 			// Info biblio
-			$cell = &$table->getCell(1,1);	
-			$cell->writeText($this->to_utf8($biblio_name), new Font(14,'Arial','#0E298A'), new ParFormat('left'));
-			if($biblio_adr1)$cell->writeText($this->to_utf8($biblio_adr1), new Font(12,'Arial','#0E298A'), new ParFormat('left'));
-			if($biblio_adr2)$cell->writeText($this->to_utf8($biblio_adr2), new Font(12,'Arial','#0E298A'), new ParFormat('left'));
-			if($biblio_cp || $biblio_town)$cell->writeText($this->to_utf8($biblio_cp." ".$biblio_town), new Font(12,'Arial','#0E298A'), new ParFormat('left'));
-			if($biblio_phone)$cell->writeText($this->to_utf8($biblio_phone), new Font(12,'Arial','#0E298A'), new ParFormat('left'));
-			if($biblio_email)$cell->writeText($this->to_utf8($biblio_email), new Font(12,'Arial','#0E298A'), new ParFormat('left'));
+			$cell = $table->getCell(1,1);	
+			$cell->writeText($this->to_utf8($biblio_name), new PHPRtfLite_Font(14,'Arial','#0E298A'), new PHPRtfLite_ParFormat('left'));
+			if($biblio_adr1)$cell->writeText($this->to_utf8($biblio_adr1), new PHPRtfLite_Font(12,'Arial','#0E298A'), new PHPRtfLite_ParFormat('left'));
+			if($biblio_adr2)$cell->writeText($this->to_utf8($biblio_adr2), new PHPRtfLite_Font(12,'Arial','#0E298A'), new PHPRtfLite_ParFormat('left'));
+			if($biblio_cp || $biblio_town)$cell->writeText($this->to_utf8($biblio_cp." ".$biblio_town), new PHPRtfLite_Font(12,'Arial','#0E298A'), new PHPRtfLite_ParFormat('left'));
+			if($biblio_phone)$cell->writeText($this->to_utf8($biblio_phone), new PHPRtfLite_Font(12,'Arial','#0E298A'), new PHPRtfLite_ParFormat('left'));
+			if($biblio_email)$cell->writeText($this->to_utf8($biblio_email), new PHPRtfLite_Font(12,'Arial','#0E298A'), new PHPRtfLite_ParFormat('left'));
 	
 			// Info date de génération 		
-			$cell = &$table->getCell(1,2);
-			if($biblio_email)$cell->writeText($this->to_utf8("\n".$msg['fpdf_edite']." ".formatdate(date("Y-m-d",time())),ENT_QUOTES,$charset), new Font(12,'Arial','#0E298A'), new ParFormat('right'));
+			$cell = $table->getCell(1,2);
+			if($biblio_email)$cell->writeText($this->to_utf8("\n".$msg['fpdf_edite']." ".formatdate(date("Y-m-d",time())),ENT_QUOTES,$charset), new PHPRtfLite_Font(12,'Arial','#0E298A'), new PHPRtfLite_ParFormat('right'));
 	
 			if($id_fournisseur){		
 				$fou = new entites($id_fournisseur);
@@ -1349,33 +1216,33 @@ ENDOFTEXT;
 				} else { 
 					$libelle = $coord_fou->libelle;
 				}			
-				$table = &$sect->addTable();
+				$table = $sect->addTable();
 				$table->addRows(2, 2);
 				$table->addColumnsList(array(9, 10));
-				$cell = &$table->getCell(1,2);
-				$cell->writeText($this->to_utf8($libelle), new Font(14,'Arial','#0E298A'), new ParFormat('left'));
-				if($coord_fou->adr1) $cell->writeText($this->to_utf8($coord_fou->adr1), new Font(12,'Arial','#0E298A'), new ParFormat('left'));
-				if($coord_fou->adr2) $cell->writeText($this->to_utf8($coord_fou->adr2), new Font(12,'Arial','#0E298A'), new ParFormat('left'));			
-				if($coord_fou->cp) $cell->writeText($this->to_utf8($coord_fou->cp), new Font(12,'Arial','#0E298A'), new ParFormat('left'));
-				if($coord_fou->ville)$cell->writeText($this->to_utf8($coord_fou->ville), new Font(12,'Arial','#0E298A'), new ParFormat('left'));
+				$cell = $table->getCell(1,2);
+				$cell->writeText($this->to_utf8($libelle), new PHPRtfLite_Font(14,'Arial','#0E298A'), new PHPRtfLite_ParFormat('left'));
+				if($coord_fou->adr1) $cell->writeText($this->to_utf8($coord_fou->adr1), new PHPRtfLite_Font(12,'Arial','#0E298A'), new PHPRtfLite_ParFormat('left'));
+				if($coord_fou->adr2) $cell->writeText($this->to_utf8($coord_fou->adr2), new PHPRtfLite_Font(12,'Arial','#0E298A'), new PHPRtfLite_ParFormat('left'));			
+				if($coord_fou->cp) $cell->writeText($this->to_utf8($coord_fou->cp), new PHPRtfLite_Font(12,'Arial','#0E298A'), new PHPRtfLite_ParFormat('left'));
+				if($coord_fou->ville)$cell->writeText($this->to_utf8($coord_fou->ville), new PHPRtfLite_Font(12,'Arial','#0E298A'), new PHPRtfLite_ParFormat('left'));
 				if ($coord_fou->contact != ''){
-					$cell = &$table->getCell(2,2);
-					$cell->writeText($this->to_utf8($msg['acquisition_act_formule']." ".$coord_fou->contact), new Font(12,'Arial','#0E298A'), new ParFormat('left'));
+					$cell = $table->getCell(2,2);
+					$cell->writeText($this->to_utf8($msg['acquisition_act_formule']." ".$coord_fou->contact), new PHPRtfLite_Font(12,'Arial','#0E298A'), new PHPRtfLite_ParFormat('left'));
 				}
 			}		
 			
-			$sect->writeText($this->to_utf8($msg["abts_gestion_retard_lettre_monsieur"]."<br />"), new Font(12,'Arial','#0E298A'), new ParFormat('left'));			
+			$sect->writeText($this->to_utf8($msg["abts_gestion_retard_lettre_monsieur"]."<br />"), new PHPRtfLite_Font(12,'Arial','#0E298A'), new PHPRtfLite_ParFormat('left'));			
 			foreach($info_fournisseur as $num_notice =>$info_notice ){			
 				//print $num_notice; print_r($info_notice) ;exit;
 				$perio= new serial_display($num_notice);
 				$sect->writeText($this->to_utf8($perio->notice->tit1), $fontHead, $parHead);
-				$sect->emptyParagraph($fontSmall, $parPmb);
-				foreach($info_notice as $abt_num => $info_abt){
-					//$sect->writeText($this->to_utf8($doc), new Font(10,'Arial'), $parInfo);
-					foreach($info_abt as $rel_id => $rel_info){			
+				$sect->addEmptyParagraph($fontSmall, $parPmb);
+				foreach($info_notice as $info_abt) {
+					//$sect->writeText($this->to_utf8($doc), new PHPRtfLite_Font(10,'Arial'), $parInfo);
+					foreach($info_abt as $rel_info) {			
 						$date = "<u>".$rel_info["rel_libelle_numero"]."</u> : ".formatdate($rel_info["rel_date_parution"]);			
-						$sect->writeText($this->to_utf8($date), new Font(10,'Arial'), $parInfo);	
-						$sect->writeText($this->to_utf8($rel_info["rel_comment_gestion"]), new Font(10,'Arial'), $parSubChapter);
+						$sect->writeText($this->to_utf8($date), new PHPRtfLite_Font(10,'Arial'), $parInfo);	
+						$sect->writeText($this->to_utf8($rel_info["rel_comment_gestion"]), new PHPRtfLite_Font(10,'Arial'), $parSubChapter);
 					}				
 				}	
 			}	
@@ -1450,8 +1317,11 @@ function increment_bulletin($modele_id, &$num,$num_abt) {
 	// num_cycle 	num_combien 	num_increment 	num_date_unite 	num_increment_date 	num_depart 	
 	// vol_actif 	vol_increment 	vol_date_unite 	vol_increment_numero 	vol_increment_date 	vol_cycle 	vol_combien 	vol_depart 	
 	// tom_actif 	tom_increment 	tom_date_unite 	tom_increment_numero 	tom_increment_date 	tom_cycle 	tom_combien 	tom_depart 	
-	// format_aff			
-	$num[$num_abt]['num']++;
+	// format_aff		
+    if (empty($num[$num_abt]['num'])){
+        $num[$num_abt]['num'] = 0;
+    }
+    $num[$num_abt]['num']++;
 
 	if ($num['num_cycle']) {
 		if (!$num['num_increment']) { //numero cyclique selon un nombre de bulletin
@@ -1472,14 +1342,14 @@ function increment_bulletin($modele_id, &$num,$num_abt) {
 	}
 
 	if ($num['vol_actif']) {
-		if ($num['inc_vol'] == 1) {
-			$num[$num_abt]['vol']++;
-			$num['inc_vol'] = 0;
+	    if (!empty($num[$num_abt]['inc_vol']) && $num[$num_abt]['inc_vol'] == 1) {
+	        $num[$num_abt]['vol']++;
+	        $num[$num_abt]['inc_vol'] = 0;
 		}
 		if (!$num['vol_increment']) { //volume s'incrémente selon un nombre de bulletin
 			$modulo = ($num[$num_abt]['num']) % ($num['vol_increment_numero']);
 			if ($modulo == 0) {
-				$num['inc_vol'] = 1;
+			    $num[$num_abt]['inc_vol'] = 1;
 			}
 		} elseif($num[$num_abt]['vol_date_fin_cycle'] && $num[$num_abt]['date_parution']){ // volume s'incrémente selon la date 			
 			while (pmb_sql_value("SELECT DATEDIFF('" . $num[$num_abt]['vol_date_fin_cycle'] . "','" . $num[$num_abt]['date_parution'] . "')") <= 0) {
@@ -1499,18 +1369,21 @@ function increment_bulletin($modele_id, &$num,$num_abt) {
 			}
 		}
 	}
+	if (empty($num[$num_abt]['inc_tom'])) $num[$num_abt]['inc_tom'] = 0;
+	if (empty($num[$num_abt]['val_vol'])) $num[$num_abt]['val_vol'] = 0;
+	
 
 	if ($num['tom_actif']) {
-		if (($num['inc_tom'] == 1) && ($num['val_vol'] != $num[$num_abt]['vol'])) {
+	    if (($num[$num_abt]['inc_tom'] == 1) && ($num[$num_abt]['val_vol'] != $num[$num_abt]['vol'])) {
 			$num[$num_abt]['tom']++;
-			$num['inc_tom'] = 0;
+			$num[$num_abt]['inc_tom'] = 0;
 		}
 		if (!$num['tom_increment']) { //tome s'incrémente selon un nombre de volume
-			if ($num['val_vol'] != $num[$num_abt]['vol']) {
-				$num['val_vol'] = $num[$num_abt]['vol'];
+		    if ($num[$num_abt]['val_vol'] != $num[$num_abt]['vol']) {
+		        $num[$num_abt]['val_vol'] = $num[$num_abt]['vol'];
 				$modulo = ($num[$num_abt]['vol']) % ($num['tom_increment_numero']);
 				if ($modulo == 0) {
-					$num['inc_tom'] = 1;
+				    $num[$num_abt]['inc_tom'] = 1;
 				}
 			}
 		} elseif($num[$num_abt]['tom_date_fin_cycle'] && $num[$num_abt]['date_parution']){ // tome s'incrémente selon la date

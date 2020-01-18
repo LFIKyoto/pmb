@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_sectionslist_view_carousel.class.php,v 1.7 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: cms_module_sectionslist_view_carousel.class.php,v 1.7.6.1 2019-09-17 09:59:20 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -50,7 +50,7 @@ class cms_module_sectionslist_view_carousel extends cms_module_carousel_view_car
 		for($i=0 ; $i<count($ids) ; $i++){
 			$section = cms_provider::get_instance("section",$ids[$i]);
 			$infos = $section->format_datas(false,false);
-			$infos['link']=$this->get_constructed_link("section",$infos['id']);
+			$infos->link=$this->get_constructed_link("section",$infos->id);
 			$datas[]= $infos;
 		}
 		return parent::render(array('sections' => $datas));

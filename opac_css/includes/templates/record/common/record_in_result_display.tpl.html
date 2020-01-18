@@ -1,4 +1,4 @@
-<!-- $Id: record_in_result_display.tpl.html,v 1.60 2018-10-30 16:11:10 dgoron Exp $ -->
+<!-- $Id: record_in_result_display.tpl.html,v 1.61.6.1 2019-11-07 14:25:48 ngantier Exp $ -->
 
 <div id="record_container_{{ record.id }}" class="parentNotCourte uk-clearfix">
 	{% block record_case_traitement %}
@@ -68,7 +68,7 @@
 									{% else %}
 										 ; 
 									{% endif %}
-										<a href="{{ record.liens_opac.lien_rech_auteur | replace '!!id!!' auteur.id }}">{{ auteur.auteur_titre }}</a>{% if auteur.fonction_aff %}, {{ auteur.fonction_aff }}{% endif %}
+										<a href="{{ record.liens_opac.lien_rech_auteur | replace '!!id!!' auteur.id }}">{{ auteur.auteur_titre }}</a>{% if auteur.fonction_aff %}, {{ auteur.fonction_aff }}{% endif %}{% if auteur.qualification %} ({{ auteur.qualification }}){% endif %}
 									{% if loop.last %}
 										</span>
 									{% endif %}
@@ -245,6 +245,24 @@
 
 	{% block record_footer %}
 		<div class="footer_notice">
+			{% block record_pnb_availability %}
+				{% if record.availability.availability != 'none' %}
+					{% if record.availability.availability != 'empty' %}
+						{% block record_pnb %}
+							<!-- Bouton de pnb -->
+							{% if record.pnb_datas.flag_pnb_visible %}
+								<div id="pnb_notice-{{ record.id }}" class="pnb_notice">
+									<h3>
+										<a href="#" id="bt_pnb_NotCourte-{{ record.id }}" onclick="{{ record.pnb_datas.onclick }}" class="bt_pnb_NotCourte">{{ msg.empr_bt_checkout }}</a>
+									</h3> 									
+					                <div id="response_pnb_pret_{{ record.id }}">
+					                </div>
+					            </div>   
+							{% endif %}						
+						{% endblock %}
+					{% endif %}
+				{% endif %}
+			{% endblock %}
 			{% block record_resa_availability %}
 				{% if record.availability.availability != 'none' %}
 					{% if record.availability.availability != 'empty' %}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: category_auto.class.php,v 1.5 2017-07-13 12:14:17 tsamson Exp $
+// $Id: category_auto.class.php,v 1.7.2.1 2019-12-05 15:40:23 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -34,7 +34,7 @@ class category_auto {
 				    foreach ( $thes["CATEGORY"] as $root_field ) {
 					    foreach ( $root_field["FIELD"] as $field_val ) {
 							$name_field=$field_val["CODE"];
-							if($field_val["AUTHORITY_NUMBER"]){
+							if(!empty($field_val["AUTHORITY_NUMBER"])){
 								$tmp=array();
 								$tmp["field"]=$name_field;
 								$tmp["subfield"]=$field_val["AUTHORITY_NUMBER"];
@@ -73,7 +73,12 @@ class category_auto {
     )
     Dans le cas d'une reprise hiérarchique sans créatation direct (Z-3950) la gestion des autorités n'est pas encore réalisée
     */
-    public static function save_info_categ(&$tabl_categ_lib=""){
+    /*
+     * DG (05/12/2019)
+     * Non conforme Exakat mais le passage en tableau change le passage des conditions
+     * On est d'accord que le code est mauvais à la base mais je ne vois pas comment le corriger
+     */
+    public static function save_info_categ(&$tabl_categ_lib = ""){
     	global $tabl_categ_recovery,$tabl_categ_recovered;
     	$tabl_link_authority=array();
     	/*echo "<pre>";
@@ -118,9 +123,9 @@ class category_auto {
 									foreach ( $field_val["SUBFIELD"] as $subfield_root ) {
 										$subfield[$subfield_root["CODE"]]=$subfield_root;
 									}
-									for ($_1=0; $_1<sizeof($tabl_categ_recovered[$name_field]); $_1++) {
+									for ($_1=0; $_1<count($tabl_categ_recovered[$name_field]); $_1++) {
 										$wording="";
-										for ($_2=0; $_2<sizeof($tabl_categ_recovered[$name_field][$_1]); $_2++) {
+										for ($_2=0; $_2<count($tabl_categ_recovered[$name_field][$_1]); $_2++) {
 											if(($info_subfield=$subfield[$tabl_categ_recovered[$name_field][$_1][$_2]["label"]]) && ($tmp=$tabl_categ_recovered[$name_field][$_1][$_2]["content"])){
 												if($wording)$wording.=$info_subfield["PREFIX"];
 												$wording.=$tmp;
@@ -149,13 +154,13 @@ class category_auto {
 									$subfield=array();
 									$subfield=$field_val["SUBFIELD"];
 									//On parcours les champs de la notice pour créer les catégories
-									for ($_1=0; $_1<sizeof($tabl_categ_recovered[$name_field.$subfield[0]["CODE"]]); $_1++) {
+									for ($_1=0; $_1<count($tabl_categ_recovered[$name_field.$subfield[0]["CODE"]]); $_1++) {
 										//$tabl_libelle=array();
 										if($subfield[0]["REPEAT"] == "1"){
 											//Le premier sous champ est aussi répétable et on procède à une association 1-1 avec les sous champs suivant si il y en a
-											for ($_2=0; $_2<sizeof($tabl_categ_recovered[$name_field.$subfield[0]["CODE"]][$_1]); $_2++) {
+											for ($_2=0; $_2<count($tabl_categ_recovered[$name_field.$subfield[0]["CODE"]][$_1]); $_2++) {
 												if($wording=trim($tabl_categ_recovered[$name_field.$subfield[0]["CODE"]][$_1][$_2])){
-													for($_pos_subfiel=1;$_pos_subfiel<sizeof($subfield);$_pos_subfiel++){//Parcour des autres sous champs
+													for($_pos_subfiel=1;$_pos_subfiel<count($subfield);$_pos_subfiel++){//Parcour des autres sous champs
 														if($tmp=trim($tabl_categ_recovered[$name_field.$subfield[$_pos_subfiel]["CODE"]][$_1][$_2])){
 															if($wording)$wording.=$subfield[$_pos_subfiel]["PREFIX"];
 															$wording.=$tmp;
@@ -187,7 +192,7 @@ class category_auto {
 												$wording=trim($tabl_categ_recovered[$name_field.$subfield[0]["CODE"]][$_1][0]);
 											}elseif($subfield[0]["REPEAT"] == "2"){
 												//On répette le premier sous champs dans le libellé
-												for ($_2=0; $_2<sizeof($tabl_categ_recovered[$name_field.$subfield[0]["CODE"]][$_1]); $_2++) {
+												for ($_2=0; $_2<count($tabl_categ_recovered[$name_field.$subfield[0]["CODE"]][$_1]); $_2++) {
 													if($tmp=trim($tabl_categ_recovered[$name_field.$subfield[0]["CODE"]][$_1][$_2])){
 														if($wording)$wording.=$subfield[0]["PREFIX"];
 														$wording.=$tmp;
@@ -197,8 +202,8 @@ class category_auto {
 											}
 											
 											if(!$subfield[0]["SUBFIELD"]){//Si pas fils
-												for($_pos_subfiel=1;$_pos_subfiel<sizeof($subfield);$_pos_subfiel++){
-													for ($_2=0; $_2<sizeof($tabl_categ_recovered[$name_field.$subfield[$_pos_subfiel]["CODE"]][$_1]); $_2++) {
+												for($_pos_subfiel=1;$_pos_subfiel<count($subfield);$_pos_subfiel++){
+													for ($_2=0; $_2<count($tabl_categ_recovered[$name_field.$subfield[$_pos_subfiel]["CODE"]][$_1]); $_2++) {
 														if($tmp=trim($tabl_categ_recovered[$name_field.$subfield[$_pos_subfiel]["CODE"]][$_1][$_2])){
 															if($wording)$wording.=$subfield[$_pos_subfiel]["PREFIX"];
 															$wording.=$tmp;
@@ -285,7 +290,7 @@ class category_auto {
 		$id_noeud=$root_node_number;
 		foreach ( $subfield as $key => $subfield_root ) {
 			//Je parcours les sous-champs	
-			for ($_2=0; $_2<sizeof($tabl_categ_recovered[$name_field.$subfield_root["CODE"]][$counter_field]); $_2++) {
+			for ($_2=0; $_2<count($tabl_categ_recovered[$name_field.$subfield_root["CODE"]][$counter_field]); $_2++) {
 				if($tmp=trim($tabl_categ_recovered[$name_field.$subfield_root["CODE"]][$counter_field][$_2])){
 					if($creation){
 						//Si j'ai dans un même champ plusieurs fois le même sous champ je lie la notice à tous sauf le dernier si il a des enfants

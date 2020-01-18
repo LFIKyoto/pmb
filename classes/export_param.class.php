@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export_param.class.php,v 1.11 2017-08-23 07:25:05 ngantier Exp $
+// $Id: export_param.class.php,v 1.14 2019-06-24 08:18:23 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -35,6 +35,7 @@ class export_param {
 	public $export_notice_fille_link=0;
 	public $export_notice_horizontale_link=0;
 	public $generer_liens=0;
+	public $export_map=0;
 	public $dsi_params=array();	
 	
 	// ---------------------------------------------------------------
@@ -54,9 +55,12 @@ class export_param {
 		global $exportparam_export_art_link, $exportparam_export_bulletinage, $exportparam_export_bull_link, $exportparam_export_perio_link;
 		global $exportparam_export_notice_perio_link, $exportparam_export_notice_art_link, $exportparam_export_mere, $exportparam_export_fille, $exportparam_export_horizontale, $exportparam_generer_liens;
 		global $exportparam_export_notice_mere_link, $exportparam_export_notice_fille_link, $exportparam_export_notice_horizontale_link;
+		global $exportparam_export_map;
 		global $opac_exp_export_art_link, $opac_exp_export_bulletinage, $opac_exp_export_bull_link, $opac_exp_export_perio_link, $opac_exp_export_notice_perio_link;
 		global $opac_exp_export_notice_art_link, $opac_exp_export_mere, $opac_exp_export_fille, $opac_exp_export_horizontale, $opac_exp_generer_liens, $opac_exp_export_notice_mere_link, $opac_exp_export_notice_fille_link, $opac_exp_export_notice_horizontale_link;
+		global $opac_exp_export_map;
 		global $genere_lien, $mere, $fille, $horizontale, $art_link, $bull_link, $perio_link, $bulletinage, $notice_art, $notice_perio, $notice_mere, $notice_fille, $notice_horizontale;
+		global $map;
 		global $include_links;
 		
 		switch($context){
@@ -75,6 +79,7 @@ class export_param {
 				$this->export_notice_mere_link=$exportparam_export_notice_mere_link;
 				$this->export_notice_fille_link=$exportparam_export_notice_fille_link;
 				$this->export_notice_horizontale_link=$exportparam_export_notice_horizontale_link;
+				$this->export_map=$exportparam_export_map;
 				break;
 			case EXP_DEFAULT_OPAC :
 				$this->export_art_link=$opac_exp_export_art_link;
@@ -89,7 +94,8 @@ class export_param {
 				$this->generer_liens=$opac_exp_generer_liens;
 				$this->export_notice_mere_link=$opac_exp_export_notice_mere_link;
 				$this->export_notice_fille_link=$opac_exp_export_notice_fille_link;		
-				$this->export_notice_horizontale_link=$opac_exp_export_notice_horizontale_link;		
+				$this->export_notice_horizontale_link=$opac_exp_export_notice_horizontale_link;
+				$this->export_map=$opac_exp_export_map;		
 				break;
 			case EXP_SESSION_CONTEXT :
 				$this->export_art_link=$_SESSION["param_export"]["art_link"];
@@ -105,11 +111,13 @@ class export_param {
 				$this->export_notice_mere_link=$_SESSION["param_export"]["notice_mere"];
 				$this->export_notice_fille_link=$_SESSION["param_export"]["notice_fille"];
 				$this->export_notice_horizontale_link=$_SESSION["param_export"]["notice_horizontale"];
+				$this->export_map=$_SESSION["param_export"]["map"];
 				break;
 			case EXP_DSI_CONTEXT :
 				if($this->dsi_params){
 					if(!isset($this->dsi_params["horizontale"])) $this->dsi_params["horizontale"] = '';
 					if(!isset($this->dsi_params["notice_horizontale"])) $this->dsi_params["notice_horizontale"] = '';
+					if(!isset($this->dsi_params["map"])) $this->dsi_params["map"] = '';
 					$this->export_art_link=$this->dsi_params["art_link"];
 					$this->export_bull_link=$this->dsi_params["bull_link"];
 					$this->export_perio_link=$this->dsi_params["perio_link"];
@@ -123,6 +131,7 @@ class export_param {
 					$this->export_notice_mere_link=	$this->dsi_params["notice_mere"];
 					$this->export_notice_fille_link=$this->dsi_params["notice_fille"];
 					$this->export_notice_horizontale_link=$this->dsi_params["notice_horizontale"];
+					$this->export_map=$this->dsi_params["map"];
 				}	
 				break;
 			case EXP_OAI_CONTEXT :
@@ -139,6 +148,7 @@ class export_param {
 				$this->export_notice_mere_link=$include_links['notice_mere'];
 				$this->export_notice_fille_link=$include_links['notice_fille'];
 				$this->export_notice_horizontale_link=$include_links['notice_horizontale'];
+				$this->export_map=$include_links['map'];
 				break;
 			default :
 				$this->export_art_link=$art_link;
@@ -154,6 +164,7 @@ class export_param {
 				$this->export_notice_mere_link=$notice_mere;
 				$this->export_notice_fille_link=$notice_fille;
 				$this->export_notice_horizontale_link=$notice_horizontale;
+				$this->export_map=$map;
 				break;
 		}		
 	}
@@ -162,7 +173,7 @@ class export_param {
 	 * Initialisation des paramètres d'export de la session
 	 ***/
 	public static function init_session(){
-		global $genere_lien, $mere, $fille, $horizontale, $art_link, $bull_link, $perio_link, $bulletinage, $notice_art, $notice_perio, $notice_mere, $notice_fille, $notice_horizontale;
+	    global $genere_lien, $mere, $fille, $horizontale, $art_link, $bull_link, $perio_link, $bulletinage, $notice_art, $notice_perio, $notice_mere, $notice_fille, $notice_horizontale, $map;
 		
 		$_SESSION["param_export"]=array();
 		$_SESSION["param_export"]["genere_lien"]=$genere_lien;
@@ -178,6 +189,7 @@ class export_param {
 		$_SESSION["param_export"]["bulletinage"]=$bulletinage;
 		$_SESSION["param_export"]["notice_perio"]=$notice_perio;
 		$_SESSION["param_export"]["notice_art"]=$notice_art;
+		$_SESSION["param_export"]["map"]=$map;
 			
 	}
 	
@@ -189,7 +201,7 @@ class export_param {
 		return "genere_lien=".rawurlencode($this->generer_liens)."&mere=".rawurlencode($this->export_mere)."&fille=".rawurlencode($this->export_fille)."&horizontale=".rawurlencode($this->export_horizontale).
 			"&notice_mere=".rawurlencode($this->export_notice_mere_link)."&notice_fille=".rawurlencode($this->export_notice_fille_link)."&notice_horizontale=".rawurlencode($this->export_notice_horizontale_link)."&art_link=".rawurlencode($this->export_art_link).
 		"&perio_link=".rawurlencode($this->export_perio_link)."&bull_link=".rawurlencode($this->export_bull_link)."&bulletinage=".rawurlencode($this->export_bulletinage).
-		"&notice_perio=".rawurlencode($this->export_notice_perio_link)."&notice_art=".rawurlencode($this->export_notice_art_link);
+		"&notice_perio=".rawurlencode($this->export_notice_perio_link)."&notice_art=".rawurlencode($this->export_notice_art_link)."&map=".rawurlencode($this->export_map);
 	}	
 	
 	/***
@@ -283,9 +295,13 @@ class export_param {
 		if($this->export_notice_horizontale_link)
 			$form_param = str_replace('!!checked_12!!','checked',$form_param);
 		 else 
-			$form_param = str_replace('!!checked_12!!','',$form_param);
+			$form_param = str_replace('!!checked_12!!','',$form_param);			
 			
-	
+		if($this->export_map)
+		    $form_param = str_replace('!!checked_13!!','checked',$form_param);
+		else
+		    $form_param = str_replace('!!checked_13!!','',$form_param);
+			        
 		return $form_param;
 	}
 	
@@ -311,6 +327,7 @@ class export_param {
 				$requetes[] = "update parametres set valeur_param='".$this->export_notice_mere_link."' WHERE type_param = 'exportparam' and sstype_param='export_notice_mere_link'";
 				$requetes[] = "update parametres set valeur_param='".$this->export_notice_fille_link."' WHERE type_param = 'exportparam' and sstype_param='export_notice_fille_link'";				
 				$requetes[] = "update parametres set valeur_param='".$this->export_notice_horizontale_link."' WHERE type_param = 'exportparam' and sstype_param='export_notice_horizontale_link'";				
+				$requetes[] = "update parametres set valeur_param='".$this->export_map."' WHERE type_param = 'exportparam' and sstype_param='export_map'";
 			break;
 			case EXP_DEFAULT_OPAC :
 				$requetes[] = "update parametres set valeur_param='".$this->generer_liens."' WHERE type_param = 'opac' and sstype_param='exp_generer_liens'";
@@ -326,6 +343,7 @@ class export_param {
 				$requetes[] = "update parametres set valeur_param='".$this->export_notice_mere_link."' WHERE type_param = 'opac' and sstype_param='exp_export_notice_mere_link'";
 				$requetes[] = "update parametres set valeur_param='".$this->export_notice_fille_link."' WHERE type_param = 'opac' and sstype_param='exp_export_notice_fille_link'";
 				$requetes[] = "update parametres set valeur_param='".$this->export_notice_horizontale_link."' WHERE type_param = 'opac' and sstype_param='exp_export_notice_horizontale_link'";
+				$requetes[] = "update parametres set valeur_param='".$this->export_map."' WHERE type_param = 'opac' and sstype_param='exp_export_map'";
 			break;
 		}
 		if (count($requetes)) {
@@ -344,19 +362,20 @@ class export_param {
 		$this->context = $context;
 		switch ($context){
 			case EXP_DEFAULT_OPAC :
-				$parametres["exp_generer_liens"]=$this->generer_liens*1;
-				$parametres["exp_export_mere"]=$this->export_mere*1;
-				$parametres["exp_export_fille"]=$this->export_fille*1;
-				$parametres["exp_export_horizontale"]=$this->export_horizontale*1;
-				$parametres["exp_export_notice_art_link"]=$this->export_notice_art_link*1;
-				$parametres["exp_export_notice_perio_link"]=$this->export_notice_perio_link*1;
-				$parametres["exp_export_bulletinage"]=$this->export_bulletinage*1;
-				$parametres["exp_export_bull_link"]=$this->export_bull_link*1;
-				$parametres["exp_export_perio_link"]=$this->export_perio_link*1;
-				$parametres["exp_export_art_link"]=$this->export_art_link*1;
-				$parametres["exp_export_notice_mere_link"]=$this->export_notice_mere_link*1;
-				$parametres["exp_export_notice_fille_link"]=$this->export_notice_fille_link*1;
-				$parametres["exp_export_notice_horizontale_link"]=$this->export_notice_horizontale_link*1;
+				$parametres["exp_generer_liens"] = (int) $this->generer_liens;
+				$parametres["exp_export_mere"] = (int) $this->export_mere;
+				$parametres["exp_export_fille"] = (int) $this->export_fille;
+				$parametres["exp_export_horizontale"] = (int) $this->export_horizontale;
+				$parametres["exp_export_notice_art_link"] = (int) $this->export_notice_art_link;
+				$parametres["exp_export_notice_perio_link"] = (int) $this->export_notice_perio_link;
+				$parametres["exp_export_bulletinage"] = (int) $this->export_bulletinage;
+				$parametres["exp_export_bull_link"] = (int) $this->export_bull_link;
+				$parametres["exp_export_perio_link"] = (int) $this->export_perio_link;
+				$parametres["exp_export_art_link"] = (int) $this->export_art_link;
+				$parametres["exp_export_notice_mere_link"] = (int) $this->export_notice_mere_link;
+				$parametres["exp_export_notice_fille_link"] = (int) $this->export_notice_fille_link;
+				$parametres["exp_export_notice_horizontale_link"] = (int) $this->export_notice_horizontale_link;
+				$parametres["exp_export_map"] = (int) $this->export_map;
 				break;
 			case EXP_DSI_CONTEXT :
 				$parametres = $this->dsi_params; 
@@ -364,19 +383,20 @@ class export_param {
 			case EXP_DEFAULT_GESTION :
 			case EXP_OAI_CONTEXT :
 			default :
-				$parametres["genere_lien"]=$this->generer_liens*1;
-				$parametres["mere"]=$this->export_mere*1;
-				$parametres["fille"]=$this->export_fille*1;
-				$parametres["horizontale"]=$this->export_horizontale*1;
-				$parametres["notice_art"]=$this->export_notice_art_link*1;
-				$parametres["notice_perio"]=$this->export_notice_perio_link*1;
-				$parametres["bulletinage"]=$this->export_bulletinage*1;
-				$parametres["bull_link"]=$this->export_bull_link*1;
-				$parametres["perio_link"]=$this->export_perio_link*1;
-				$parametres["art_link"]=$this->export_art_link*1;
-				$parametres["notice_mere"]=$this->export_notice_mere_link*1;
-				$parametres["notice_fille"]=$this->export_notice_fille_link*1;
-				$parametres["notice_horizontale"]=$this->export_notice_horizontale_link*1;
+				$parametres["genere_lien"] = (int) $this->generer_liens;
+				$parametres["mere"] = (int) $this->export_mere;
+				$parametres["fille"] = (int) $this->export_fille;
+				$parametres["horizontale"] = (int) $this->export_horizontale;
+				$parametres["notice_art"] = (int) $this->export_notice_art_link;
+				$parametres["notice_perio"] = (int) $this->export_notice_perio_link;
+				$parametres["bulletinage"] = (int) $this->export_bulletinage;
+				$parametres["bull_link"] = (int) $this->export_bull_link;
+				$parametres["perio_link"] = (int) $this->export_perio_link;
+				$parametres["art_link"] = (int) $this->export_art_link;
+				$parametres["notice_mere"] = (int) $this->export_notice_mere_link;
+				$parametres["notice_fille"] = (int) $this->export_notice_fille_link;
+				$parametres["notice_horizontale"] = (int) $this->export_notice_horizontale_link;
+				$parametres["map"] = (int) $this->export_map;
 				break;
 		}
 		

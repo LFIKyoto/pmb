@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entity_locking.class.php,v 1.8 2018-09-20 09:45:59 vtouchard Exp $
+// $Id: entity_locking.class.php,v 1.9 2019-04-19 12:23:43 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -199,7 +199,7 @@ class entity_locking {
 	 */
 	protected function get_authorities_linked(){
 	    $query = 'select aut_link_to, aut_link_to_num 
-                from aut_link where aut_link_reciproc=1 
+                from aut_link where
                 and aut_link_from_num='.$this->id.' 
                 and aut_link_from = '.authority::$type_table[$this->type];
 	    

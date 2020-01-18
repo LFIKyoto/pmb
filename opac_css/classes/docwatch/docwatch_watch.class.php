@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_watch.class.php,v 1.10 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: docwatch_watch.class.php,v 1.12 2019-07-10 06:44:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -740,16 +740,16 @@ class docwatch_watch extends docwatch_root{
 					'|[\x00-\x7F][\x80-\xBF]+'.
 					'|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*'.
 					'|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})'.
-					'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
+					'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/',
 					'', $xmlrss );
 		} else {
-			$xmlrss = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]/S',
+			$xmlrss = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]/',
 					'', $xmlrss );
 		}
 		return $xmlrss;
 	}
 	
-	function get_items_xmlrss() {
+	public function get_items_xmlrss() {
 		global $charset;
 		
 		$items_xmlrss = "";

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_achats.inc.php,v 1.25 2018-05-26 06:51:26 dgoron Exp $
+// $Id: func_achats.inc.php,v 1.27 2019-08-22 09:44:33 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $acquisition_custom_calc_numero, $base_path;
 
 if(!isset($acquisition_custom_calc_numero)) $acquisition_custom_calc_numero = '';
 if ($acquisition_custom_calc_numero && file_exists($base_path."/acquisition/achats/".$acquisition_custom_calc_numero)) {
@@ -14,7 +16,6 @@ if ($acquisition_custom_calc_numero && file_exists($base_path."/acquisition/acha
 	//Calcul du numero d'acte
 	function calcNumero($id_entite, $type_acte) {
 		
-		global $dbh;
 		global $acquisition_format;
 		
 		$p = array();
@@ -24,7 +25,7 @@ if ($acquisition_custom_calc_numero && file_exists($base_path."/acquisition/acha
 		//recuperation du dernier numero pour le type d'acte concerné et l'entité en cours
 		$q = "select max(substring(numero,".(strlen($prefix)+1).")*1) from actes where type_acte = '".$type_acte."' ";
 		$q.= "and num_entite = '".$id_entite."' ";
-		$r = pmb_mysql_query($q, $dbh); 
+		$r = pmb_mysql_query($q); 
 	
 		$res = pmb_mysql_result($r,0,0);
 		if (!$res) $res = '0';
@@ -75,7 +76,7 @@ function calc($tab, $precision=0) {
 			case '2' :	//saisie des prix ttc
 				$mnt_ttc=$mnt_ttc+($v['q']*$v['p']*((100-$v['r'])/100));
 				$mnt_ht=$mnt_ht+(($v['q']*$v['p']*((100-$v['r'])/100))/(1+($v['t']/100))) ;
-				if($v['debit_tva']==1){ // on enlève le montant de la TVA
+				if (isset($v['debit_tva']) && $v['debit_tva'] == 1) { // on enlève le montant de la TVA
 					$mnt_ttc-=($v['q']*$v['p']*((100-$v['r'])/100)) - (($v['q']*$v['p']*((100-$v['r'])/100))/(1+($v['t']/100)));
 				}	
 				break;

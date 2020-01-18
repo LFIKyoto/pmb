@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cbgenlibre.inc.php,v 1.4 2009-05-16 11:11:51 dbellamy Exp $
+// $Id: cbgenlibre.inc.php,v 1.5 2019-06-05 09:04:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $current_module, $msg;
 
 // $cbgen_query : form de demande d'info pour génération
 

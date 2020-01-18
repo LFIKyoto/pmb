@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_workshop.class.php,v 1.15 2016-03-30 13:13:27 apetithomme Exp $
+// $Id: nomenclature_workshop.class.php,v 1.16 2019-06-27 13:57:54 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -90,18 +90,18 @@ class nomenclature_workshop{
 		$this->instruments[$id_workshop_instrument] = $instrument;
 	}
 	
-	public function get_data(){
+	public function get_data($duplicate = false){
 		$data_intruments=array();
 		foreach ($this->instruments as $key => $instrument)	{			
-			$data=$instrument->get_data();
+		    $data=$instrument->get_data($duplicate);
 			$data['effective'] = $this->instruments_data[$key]['effective'];
 			$data['order'] = $this->instruments_data[$key]['order'];
-			$data['id_workshop_instrument'] = $key;
+			$data['id_workshop_instrument'] = ($duplicate ? 0 : $key);
 			$data_intruments[] = $data;
 		}
 		return(
 			array(
-				"id" => $this->id,
+			    "id" => ($duplicate ? 0 : $this->id),
 				"label" => $this->label,
 				"num_nomenclature" => $this->num_nomenclature,
 				"instruments" => $data_intruments,

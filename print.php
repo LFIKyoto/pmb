@@ -2,9 +2,11 @@
 // +--------------------------------------------------------------------------+
 // | PMB est sous licence GPL, la réutilisation du code est cadrée            |
 // +--------------------------------------------------------------------------+
-// $Id: print.php,v 1.62 2018-12-20 11:00:19 mbertin Exp $
+// $Id: print.php,v 1.63.4.1 2019-10-23 07:10:24 dgoron Exp $
 
 //Impression
+
+global $selected_objects;
 
 $base_path = ".";
 $base_auth = "CATALOGAGE_AUTH|CIRCULATION_AUTH";
@@ -146,7 +148,7 @@ if ($action_print=="print_prepare") {
 			<input class='bouton' value='+' onclick='add_dest_field(this);' counter='0' type='button'>
 			<input type='hidden' name='emaildest_id[]' id='emaildest_id_0'/>
 		</div>
-		<div class='row'>
+		<div id='emailObj' class='row'>
 			<div>".$msg["print_emailobj_label"]."</div>
 			<input type='text' size='40' name='emailobj' value='".htmlentities(trim($msg["print_emailobj"]." ".$opac_biblio_name." - ".formatdate(today())), ENT_QUOTES, $charset)."' />
 		</div>
@@ -199,7 +201,7 @@ if ($action_print=="print_prepare") {
 			newLine.appendChild(newPurge);
 			
 			buttonClicked.setAttribute('counter', currentCounter);
-			buttonClicked.parentElement.parentElement.insertBefore(newLine, document.getElementById('emailContent')); 
+			buttonClicked.parentElement.parentElement.insertBefore(newLine, document.getElementById('emailObj')); 
 			ajax_pack_element(newInput);
 		}
 			

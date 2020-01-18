@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_account_types.tpl.php,v 1.2 2016-10-26 08:27:54 ngantier Exp $
+// $Id: rent_account_types.tpl.php,v 1.3 2019-05-27 10:05:16 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $rent_request_type_pref_account_list_tpl, $msg, $charset, $rent_request_type_pref_account_tpl, $rent_account_types_list_tpl, $rent_account_type_line_tpl;
 
 $rent_request_type_pref_account_list_tpl = "
 <div class='row'>

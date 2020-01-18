@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: titre_uniforme.class.php,v 1.58 2018-11-12 14:41:07 dgoron Exp $
+// $Id: titre_uniforme.class.php,v 1.61.2.1 2019-10-03 08:18:23 btafforeau Exp $
 if (stristr ( $_SERVER ['REQUEST_URI'], ".class.php" ))
 	die ( "no access" );
 
@@ -152,7 +152,7 @@ class titre_uniforme {
 				$this->num_statut = $this->get_authority()->get_num_statut();
 				
 				$mc_oeuvre_type = marc_list_collection::get_instance('oeuvre_type');
-				$this->oeuvre_type_name = $mc_oeuvre_type->table [$this->oeuvre_type];
+				$this->oeuvre_type_name = (!empty($mc_oeuvre_type->table[$this->oeuvre_type]) ? $mc_oeuvre_type->table[$this->oeuvre_type] : "");
 				$mc_oeuvre_nature = marc_list_collection::get_instance('oeuvre_nature');
 				$this->oeuvre_nature_name = $mc_oeuvre_nature->table [$this->oeuvre_nature];
 				
@@ -185,6 +185,9 @@ class titre_uniforme {
 				
 				// recuperation des responsabilites pour l'affichage
 				$this->responsabilites = $this->get_authors ( $this->id );
+				
+				// recuperation des oeuvres liees
+				$this->get_other_links_datas();
 				
 				// $as = array_keys ($this->responsabilites["responsabilites"], "0" ) ;
 				// if(count($as))$this->display.= ", ";
@@ -554,13 +557,13 @@ class titre_uniforme {
 		return $this->enrichment;
 	}
 	public static function get_marc_key() {
-		if (! count ( titre_uniforme::$marc_key )) {
+		if (empty(titre_uniforme::$marc_key)) {
 			titre_uniforme::$marc_key = new marc_list ( "music_key" );
 		}
 		return titre_uniforme::$marc_key;
 	}
 	public static function get_marc_form() {
-		if (! count ( titre_uniforme::$marc_form )) {
+	    if (empty(titre_uniforme::$marc_form)) {
 			titre_uniforme::$marc_form = new marc_list ( "music_form" );
 		}
 		return titre_uniforme::$marc_form;
@@ -581,7 +584,7 @@ class titre_uniforme {
 	 * @return titre_uniforme Tableau de titre uniformes
 	 */
 	public function get_oeuvre_parent_expressions_datas() {
-		if (!count($this->oeuvre_parent_expressions_datas)) {
+		if (!is_array($this->oeuvre_parent_expressions_datas) || !count($this->oeuvre_parent_expressions_datas)) {
 			$this->oeuvre_parent_expressions_datas = array();
 			$this->get_oeuvre_parent_expressions();
 			if (is_array($this->oeuvre_parent_expressions) && count($this->oeuvre_parent_expressions)) {
@@ -632,7 +635,7 @@ class titre_uniforme {
 	public function get_oeuvre_events_datas() {
 		//on initialise oeuvre_events
 		$this->get_oeuvre_events();
-		if (!count($this->oeuvre_events_datas)) {
+		if (!is_array($this->oeuvre_events_datas) || !count($this->oeuvre_events_datas)) {
 			$this->oeuvre_events_datas = array();
 			if (isset($this->oeuvre_events) && is_array($this->oeuvre_events)) {
 				foreach ($this->oeuvre_events as $oeuvre_event) {
@@ -648,7 +651,7 @@ class titre_uniforme {
 	 * @return titre_uniforme Tableau de titres uniformes
 	 */
 	public function get_other_links_datas() {
-		if (!count($this->other_links_datas)) {
+		if (!is_array($this->other_links_datas) || !count($this->other_links_datas)) {
 			if($this->get_other_links()){
 				foreach ($this->get_other_links() as $other_link) {
 					if (!isset($this->other_links_datas[$other_link['type']]['label'])) $this->other_links_datas[$other_link['type']]['label'] = $other_link['type_name'];
@@ -662,12 +665,10 @@ class titre_uniforme {
 	}
 	
 	public function get_oeuvre_links() {
-		global $dbh;
-	
-		$query = 'select oeuvre_link_to, tu_name, oeuvre_link_type, oeuvre_link_expression, oeuvre_link_other_link
+		$query = 'select oeuvre_link_to, tu_name, oeuvre_link_type, oeuvre_link_expression, oeuvre_link_other_link, tu_oeuvre_type
 				from tu_oeuvres_links join titres_uniformes on tu_id = oeuvre_link_to where oeuvre_link_from = "'.$this->id.'"
 				order by oeuvre_link_type, index_tu, oeuvre_link_order';
-		$result = pmb_mysql_query($query, $dbh);
+		$result = pmb_mysql_query($query);
 		if ($result && pmb_mysql_num_rows($result)) {
 			while ($link = pmb_mysql_fetch_object($result)) {
 				$type_name = "";
@@ -683,6 +684,7 @@ class titre_uniforme {
 					$this->other_links[] = array(
 							'to_id' => $link->oeuvre_link_to,
 							'to_name' => $link->tu_name,
+							'oeuvre_type' => $link->tu_oeuvre_type,
 							'type' => $link->oeuvre_link_type,
 							'type_name' => $type_name
 					);
@@ -691,6 +693,7 @@ class titre_uniforme {
 					$this->oeuvre_parent_expressions[] = array(
 							'to_id' => $link->oeuvre_link_to,
 							'to_name' => $link->tu_name,
+							'oeuvre_type' => $link->tu_oeuvre_type,
 							'type' => $link->oeuvre_link_type,
 							'type_name' => $type_name
 					);
@@ -699,6 +702,7 @@ class titre_uniforme {
 					$this->oeuvre_expressions[] = array(
 							'to_id' => $link->oeuvre_link_to,
 							'to_name' => $link->tu_name,
+							'oeuvre_type' => $link->tu_oeuvre_type,
 							'type' => $link->oeuvre_link_type,
 							'type_name' => $type_name
 					);

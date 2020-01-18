@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: faq_questions.class.php,v 1.3 2017-04-14 14:27:25 jpermanne Exp $
+// $Id: faq_questions.class.php,v 1.4 2019-04-11 09:40:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/templates/faq_question.tpl.php");
@@ -101,7 +101,7 @@ class faq_questions  {
 				$answer_title="";
 				if(strlen($answer) > 200){
 					$answer_title = $answer;
-					$answer = substr($answer,0,200)."[...]";
+					$answer = pmb_substr($answer,0,200)."[...]";
 				}
 				
 				$list.="

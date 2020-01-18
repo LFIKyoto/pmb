@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_common_module.xml,v 1.4 2017-01-23 16:09:56 ngantier Exp $ -->
+$Id: cms_module_common_module.xml,v 1.5.6.2 2019-11-06 14:07:01 jlaurent Exp $ -->
 
 <XMLlist>
 	<entry code="cms_module_datasource_choice">Choose a data source</entry>
@@ -61,4 +61,6 @@ $Id: cms_module_common_module.xml,v 1.4 2017-01-23 16:09:56 ngantier Exp $ -->
 	<entry code="cms_module_common_module_cache_all">Invariable</entry>
 	<entry code="cms_module_common_module_css_class">CSS class</entry>
 	<entry code="cms_module_common_condition_lang">Langues de l'OPAC</entry>
+	<entry code="cms_module_common_condition_readers_categories">Catégories de lecteurs</entry>
+	<entry code="cms_module_common_condition_readers_statuses">Statuts de lecteurs</entry>
 </XMLlist>

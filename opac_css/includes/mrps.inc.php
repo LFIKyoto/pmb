@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mrps.inc.php,v 1.9 2016-10-26 12:29:49 mbertin Exp $
+// $Id: mrps.inc.php,v 1.10.4.1 2019-10-15 09:59:04 btafforeau Exp $
 
 function search_other_function_filters() {
 	global $cnl_bibli;
@@ -10,7 +10,7 @@ function search_other_function_filters() {
 	global $msg,$dbh;
 	$r.="<select name='cnl_bibli'>";
 	$r.="<option value=''>".htmlentities($msg["search_loc_all_site"],ENT_QUOTES,$charset)."</option>";
-	$requete="select location_libelle,idlocation from docs_location where location_visible_opac=1";
+	$requete="select location_libelle,idlocation from docs_location where location_visible_opac=1 order by location_libelle";
 	$result = pmb_mysql_query($requete, $dbh);
 	if (pmb_mysql_num_rows($result)){
 		while ($loc = pmb_mysql_fetch_object($result)) {
@@ -68,8 +68,8 @@ function search_other_function_human_query($n) {
 }
 
 function search_other_function_post_values() {
-	global $cnl_bibli;
-	return "<input type=\"hidden\" name=\"cnl_bibli\" value=\"$cnl_bibli\">\n";
+	global $cnl_bibli, $charset;
+	return "<input type=\"hidden\" name=\"cnl_bibli\" value=\"".htmlentities($cnl_bibli, ENT_QUOTES, $charset)."\">\n";
 }
 
 ?>

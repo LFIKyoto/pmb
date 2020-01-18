@@ -2,11 +2,9 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_display.inc.php,v 1.86 2017-09-21 09:55:18 dgoron Exp $
+// $Id: notice_display.inc.php,v 1.89 2019-06-18 12:36:09 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
-
-$libelle = $msg[270];
 
 require_once($base_path.'/includes/templates/notice_display.tpl.php');
 require_once($base_path.'/includes/explnum.inc.php');
@@ -66,7 +64,7 @@ if (isset($ref) && $ref) {
 	}
 }
 
-$id+=0;
+$id = intval($id);
 
 if(isset($show_bull) && $show_bull && $id != 0){
 	$query = "select bulletin_id from bulletins where num_notice = ".$id;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: faq.class.php,v 1.13 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: faq.class.php,v 1.14.6.1 2019-11-21 11:31:40 moble Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -19,13 +19,13 @@ class faq {
 	public $questions_ids = array();
 	public $questions = array();
 	public $nb_questions_by_page=0;
-	public $page;
+	public $page=0;
 	public $filters =array();
 	public $user_query = "";
 
 	public function __construct($page=1, $nb_questions_by_page=0,$filters=array()){
 		global $opac_search_results_per_page;
-		$this->page = ($page*1);
+		$this->page = intval($page);
 		if($this->page>=1) $this->page-=1;
 		$this->nb_questions_by_page = ($nb_questions_by_page ? $nb_questions_by_page : $opac_search_results_per_page);
 		$this->themes = array_filter((isset($filters['themes']) && $filters['themes'] ? $filters['themes'] : array()));
@@ -95,7 +95,7 @@ class faq {
 		global $include_path;		
 		$html="
 		<script type='text/javascript' src='".$include_path."/javascript/faq.js'></script>
-		<div class='faq' id=faq'>
+		<div class='faq' id='faq'>
 			<h3>".$this->get_page_title()."</h3>
 			<div class='row'>&nbsp;</div>
 			<div class='faq_content'>";

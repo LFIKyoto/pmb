@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: account_types.inc.php,v 1.4 2016-10-26 08:27:54 ngantier Exp $
+// $Id: account_types.inc.php,v 1.5 2019-08-20 09:18:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $action, $id_entity, $id_exercice, $msg, $charset;
 
 // gestion des types de décompte
 require_once($class_path.'/rent/rent_account_types.class.php');

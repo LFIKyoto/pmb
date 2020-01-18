@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index_concept.class.php,v 1.26 2018-11-20 11:18:18 tsamson Exp $
+// $Id: index_concept.class.php,v 1.31 2019-08-28 08:14:10 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -44,16 +44,18 @@ class index_concept {
 	
 	
 	private static $type_table = array(
-			TYPE_AUTHOR => AUT_TABLE_AUTHORS,
-			TYPE_CATEGORY => AUT_TABLE_CATEG,
-			TYPE_PUBLISHER => AUT_TABLE_PUBLISHERS,
-			TYPE_COLLECTION => AUT_TABLE_COLLECTIONS,
-			TYPE_SUBCOLLECTION => AUT_TABLE_SUB_COLLECTIONS,
-			TYPE_SERIE => AUT_TABLE_SERIES,
-			TYPE_TITRE_UNIFORME => AUT_TABLE_TITRES_UNIFORMES,
-			TYPE_INDEXINT => AUT_TABLE_INDEXINT,
-			TYPE_AUTHPERSO => AUT_TABLE_AUTHPERSO
+	    TYPE_AUTHOR => AUT_TABLE_AUTHORS,
+	    TYPE_CATEGORY => AUT_TABLE_CATEG,
+	    TYPE_PUBLISHER => AUT_TABLE_PUBLISHERS,
+	    TYPE_COLLECTION => AUT_TABLE_COLLECTIONS,
+	    TYPE_SUBCOLLECTION => AUT_TABLE_SUB_COLLECTIONS,
+	    TYPE_SERIE => AUT_TABLE_SERIES,
+	    TYPE_TITRE_UNIFORME => AUT_TABLE_TITRES_UNIFORMES,
+	    TYPE_INDEXINT => AUT_TABLE_INDEXINT,
+	    TYPE_AUTHPERSO => AUT_TABLE_AUTHPERSO
 	);
+	
+	private static $entities_caches = [];
 	
 	public function __construct($object_id, $object_type) {
 		$this->object_id = $object_id;
@@ -82,16 +84,19 @@ class index_concept {
 		$concepts_repetables = str_replace("!!caller!!", $caller, $concepts_repetables);
 		
 		if ( count($this->concepts)==0 ) {
+			$button_add_field = "<input id='add_field_index_concept' type='button' class='bouton' value='+' onClick=\"onto_add('concept',0);\"/>";
 			$current_concept_form = str_replace('!!iconcept!!', "0", $index_concept_text_form) ;
 			$current_concept_form = str_replace('!!concept_display_label!!', '', $current_concept_form);
 			$current_concept_form = str_replace('!!concept_uri!!', '', $current_concept_form);
 			$current_concept_form = str_replace('!!concept_type!!', '', $current_concept_form);
 			$current_concept_form = str_replace('!!concept_comment!!', '', $current_concept_form);
 			$current_concept_form = str_replace('!!concept_comment_visible_opac!!', '', $current_concept_form);
+			$current_concept_form = str_replace('!!button_add_field!!', $button_add_field, $current_concept_form);
 			$tab_concept_order = "0";
 			$concepts_repetables.= $current_concept_form;
 		} else {
 			foreach ($this->concepts as $i => $concept) {
+				$button_add_field = "";
 				$current_concept_form = str_replace('!!iconcept!!', $i, $index_concept_text_form) ;
 				
 				$current_concept_form = str_replace('!!concept_display_label!!', htmlentities($concept->get_isbd(),ENT_QUOTES, $charset), $current_concept_form);
@@ -99,8 +104,11 @@ class index_concept {
 				$current_concept_form = str_replace('!!concept_type!!', $concept->get_type(), $current_concept_form);
 				$current_concept_form = str_replace('!!concept_comment!!', (isset($this->comments[$i]) ? $this->comments[$i]['value'] : ""), $current_concept_form);
 				$current_concept_form = str_replace('!!concept_comment_visible_opac!!', (!empty($this->comments[$i]['visible']) ? "checked" : ""), $current_concept_form);
-				
-				if($tab_concept_order!="")$tab_concept_order.=",";
+				if ($i === ($max_concepts - 1)) {
+					$button_add_field = "<input id='add_field_index_concept' type='button' class='bouton' value='+' onClick=\"onto_add('concept',0);\"/>";
+				}
+				$current_concept_form = str_replace('!!button_add_field!!', $button_add_field, $current_concept_form);
+				if($tab_concept_order!="") $tab_concept_order.=",";
 				$tab_concept_order.= $i;
 				$concepts_repetables.= $current_concept_form;
 			}
@@ -251,7 +259,7 @@ class index_concept {
 					
 					// Si affichage les uns en dessous des autres, on affiche le schema à chaque fois
 					if ($thesaurus_concepts_concept_in_line != 1) {
-						$current_concept = "[".$scheme."] ";
+						$concept_display_label = "[".$scheme."] " . $concept_display_label;
 					}
 					$current_concept .= $index_concept_isbd_display_concept_link;
 					$current_concept = str_replace("!!concept_id!!", $concept_id, $current_concept);
@@ -391,9 +399,9 @@ class index_concept {
 	 * Retourne un tableau des libellés des concepts qui indexent une entité
 	 * (Utilisée en callback par l'indexation)
 	 */
-	public static function get_concepts_labels_from_entity($entity_id, $entity_type) {
+	public static function get_concepts_labels_from_entity($entity_id, $entity_type, $scheme_id = 0) {
 		$concepts_labels = array();
-		$concepts = self::get_concepts_form_entity($entity_id, $entity_type);
+		$concepts = self::get_concepts_form_entity($entity_id, $entity_type, $scheme_id);
 		
 		foreach ($concepts as $concept) {
 			$concepts_labels[] = self::get_concept_label_from_id($concept['num_concept']);
@@ -401,12 +409,33 @@ class index_concept {
 		return $concepts_labels;
 	}
 	
+	
+	public static function get_concepts_altlabels_from_entity($entity_id, $entity_type, $scheme_id = 0) {
+	    $concepts_labels = array();
+	    $concepts = self::get_concepts_form_entity($entity_id, $entity_type, $scheme_id);
+	    
+	    foreach ($concepts as $concept) {
+	        $concepts_labels = array_merge($concepts_labels,self::get_concept_altlabel_from_id($concept['num_concept']));
+	    }
+	    return $concepts_labels;
+	}
+	
+	public static function get_concepts_hiddenlabels_from_entity($entity_id, $entity_type, $scheme_id = 0) {
+	    $concepts_labels = array();
+	    $concepts = self::get_concepts_form_entity($entity_id, $entity_type, $scheme_id);
+	    
+	    foreach ($concepts as $concept) {
+	        $concepts_labels = array_merge($concepts_labels,self::get_concept_hiddenlabel_from_id($concept['num_concept']));
+	    }
+	    return $concepts_labels;
+	}
+	
 	public static function get_generic_concepts_labels_from_entity($entity_id, $entity_type) {
 		global $thesaurus_concepts_autopostage;
 		
-		$concepts_broaders_labels = array();		
+		$concepts_broaders_labels = array();
 		if ($thesaurus_concepts_autopostage) {
-			$concepts = self::get_concepts_form_entity($entity_id, $entity_type);			
+			$concepts = self::get_concepts_form_entity($entity_id, $entity_type);
 			foreach ($concepts as $concept) {	
 				$concept_uri = onto_common_uri::get_uri($concept['num_concept']);
 				$query = "SELECT ?broadpath {<".$concept_uri."> pmb:broadPath ?broadpath}";
@@ -432,9 +461,9 @@ class index_concept {
 	public static function get_specific_concepts_labels_from_entity($entity_id, $entity_type) {
 		global $thesaurus_concepts_autopostage;
 		
-		$concepts_narrowers_labels = array();		
+		$concepts_narrowers_labels = array();
 		if ($thesaurus_concepts_autopostage) {
-			$concepts = self::get_concepts_form_entity($entity_id, $entity_type);			
+			$concepts = self::get_concepts_form_entity($entity_id, $entity_type);
 			foreach ($concepts as $concept) {	
 				$concept_uri = onto_common_uri::get_uri($concept['num_concept']);
 				$query = "SELECT ?narrowpath {<".$concept_uri."> pmb:narrowPath ?narrowpath}";
@@ -471,15 +500,76 @@ class index_concept {
 		return null;
 	}
 	
-	protected static function get_concepts_form_entity($entity_id, $entity_type) {
+	
+	protected static function get_concept_altlabel_from_id($concept_id) {
+	    $concept_uri = onto_common_uri::get_uri($concept_id);
+	    $query = 'select ?label where {
+					<'.$concept_uri.'> <http://www.w3.org/2004/02/skos/core#altLabel> ?label
+				}';
+	    $labels = [];
+	    skos_datastore::query($query);
+	    if (skos_datastore::num_rows()) {
+	        foreach (skos_datastore::get_result() as $concept) {
+	            $labels[]= $concept->label;
+	        }
+	    }
+	    return $labels;
+	}
+	
+	protected static function get_concept_hiddenlabel_from_id($concept_id) {
+	    $concept_uri = onto_common_uri::get_uri($concept_id);
+	    $query = 'select ?label where {
+					<'.$concept_uri.'> <http://www.w3.org/2004/02/skos/core#hiddenLabel> ?label
+				}';
+	    $labels = [];
+	    skos_datastore::query($query);
+	    if (skos_datastore::num_rows()) {
+	        foreach (skos_datastore::get_result() as $concept) {
+	            $labels[]= $concept->label;
+	        }
+	    }
+	    return $labels;
+	}
+	
+	protected static function get_concepts_form_entity($entity_id, $entity_type, $scheme_id = 0) {
+		$scheme_uri = 0;
+		if (!empty($scheme_id)) {
+			$scheme_uri = onto_common_uri::get_uri($scheme_id);
+		}
+		
+		if(isset(self::$entities_caches[$entity_id."_".$entity_type."_".$scheme_id])){
+		    return self::$entities_caches[$entity_id."_".$entity_type."_".$scheme_id];
+		}
+		
 		$concepts = array();
 		$query = "SELECT num_concept, order_concept FROM index_concept WHERE type_object = ".$entity_type." AND num_object = ".$entity_id." ORDER BY order_concept";
 		$result = pmb_mysql_query($query);		
 		if (pmb_mysql_num_rows($result)) {
 			while ($row = pmb_mysql_fetch_assoc($result)){
+				if (!empty($scheme_uri)) {
+					$concept_uri = onto_common_uri::get_uri($row['num_concept']);
+					$query = 'select ?scheme_uri where {
+						<'.$concept_uri.'> <http://www.w3.org/2004/02/skos/core#inScheme> ?scheme_uri
+					}';
+					skos_datastore::query($query);
+					if (skos_datastore::num_rows()) {
+						foreach (skos_datastore::get_result() as $scheme) {
+							if ($scheme->scheme_uri == $scheme_uri) {
+								$concepts[] = $row;
+								break;
+							}
+						}
+					}
+					continue;
+				}
 				$concepts[] = $row;
 			}
 		}
+		if(count(self::$entities_caches) > 2000){
+		    self::$entities_caches = [];	 
+		    
+		}
+		self::$entities_caches[$entity_id."_".$entity_type."_".$scheme_id] = $concepts;
 		return $concepts;
 	}
 } // fin de définition de la classe index_concept

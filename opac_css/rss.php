@@ -2,11 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rss.php,v 1.13 2016-02-23 10:49:46 mbertin Exp $
+// $Id: rss.php,v 1.14.4.1 2019-09-12 10:38:36 dgoron Exp $
 
 $base_path=".";
-$include_path=$base_path."/includes";
-$class_path=$base_path."/classes";
+$base_nocheck = 1;
+$base_noheader = 1;
+$base_nobody = 1;
+
+require_once($base_path."/includes/init.inc.php");
+
+//fichiers nécessaires au bon fonctionnement de l'environnement
+require_once($base_path."/includes/common_includes.inc.php");
 require_once($base_path."/includes/includes_rss.inc.php");
 
 // pour affichage de liens sur les éléments affichés :
@@ -48,10 +54,10 @@ if (!$flux->contenu_du_flux) {
 			'|[\x00-\x7F][\x80-\xBF]+'.
 			'|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*'.
 			'|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})'.
-			'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
+			'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/',
 			'', $flux->contenu_du_flux );
 	} else {
-		$flux->contenu_du_flux = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]/S',
+		$flux->contenu_du_flux = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]/',
 			'', $flux->contenu_du_flux );
 	}
 	$flux->stocke_cache() ;

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: messages.inc.php,v 1.3 2015-02-19 13:56:20 vtouchard Exp $
+// $Id: messages.inc.php,v 1.4 2019-05-29 12:03:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $action, $group, $messages;
 
 require_once($class_path."/encoding_normalize.class.php");
 

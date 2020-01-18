@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_parametres_perso.class.php,v 1.33 2018-08-08 09:49:44 plmrozowski Exp $
+// $Id: cms_editorial_parametres_perso.class.php,v 1.40 2019-07-23 09:30:38 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -31,7 +31,7 @@ class cms_editorial_parametres_perso extends parametres_perso {
 		$this->base_url=$base_url;
 		$_custom_prefixe_="cms_editorial";
 
-		$this->num_type = $type*1;
+		$this->num_type = intval($type);
 
 		$this->fetch_data_cache();
 	}	
@@ -316,7 +316,8 @@ class cms_editorial_parametres_perso extends parametres_perso {
 				$this->values[$this->t_fields[$r[$this->prefix."_custom_champ"]]["NAME"]]['values'][] = array(
 					'value' => $r[$this->prefix."_custom_".$this->t_fields[$r[$this->prefix."_custom_champ"]]["DATATYPE"]],
 					'format_value' => $this->get_formatted_output(array($r[$this->prefix."_custom_".$this->t_fields[$r[$this->prefix."_custom_champ"]]["DATATYPE"]]),$r[$this->prefix."_custom_champ"],true),
-					'order' => $r[$this->prefix."_custom_order"]
+					'order' => $r[$this->prefix."_custom_order"],
+				    'details' => $this->get_details($this->t_fields[$r[$this->prefix."_custom_champ"]], $r[$this->prefix."_custom_".$this->t_fields[$r[$this->prefix."_custom_champ"]]["DATATYPE"]])
 				);
 			}
 			$this->sort_out_values();
@@ -406,7 +407,7 @@ class cms_editorial_parametres_perso extends parametres_perso {
 			$this->get_values($id);
 			$check_scripts="";
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				if(!isset($this->values[$key])) $this->values[$key] = array();
 				$t=array();
 				$t["NAME"]=$val["NAME"];
@@ -414,19 +415,19 @@ class cms_editorial_parametres_perso extends parametres_perso {
 					
 				$field=array();
 				$field["ID"]=$key;
-				$field["NAME"]=$this->t_fields[$key]["NAME"];
-				$field["MANDATORY"]=$this->t_fields[$key]["MANDATORY"];
-				$field["SEARCH"]=$this->t_fields[$key]["SEARCH"];
-				$field["EXPORT"]=$this->t_fields[$key]["EXPORT"];
-				$field["EXCLUSION"]=$this->t_fields[$key]["EXCLUSION"];
-				$field["OPAC_SORT"]=$this->t_fields[$key]["OPAC_SORT"];
-				$field["ALIAS"]=$this->t_fields[$key]["TITRE"];
-				$field["DATATYPE"]=$this->t_fields[$key]["DATATYPE"];
-				$field["OPTIONS"]=$this->t_fields[$key]["OPTIONS"];
+				$field["NAME"]=$val["NAME"];
+				$field["MANDATORY"]=$val["MANDATORY"];
+				$field["SEARCH"]=$val["SEARCH"];
+				$field["EXPORT"]=$val["EXPORT"];
+				$field["EXCLUSION"]=$val["EXCLUSION"];
+				$field["OPAC_SORT"]=$val["OPAC_SORT"];
+				$field["ALIAS"]=$val["TITRE"];
+				$field["DATATYPE"]=$val["DATATYPE"];
+				$field["OPTIONS"]=$val["OPTIONS"];
 				$field["VALUES"]=$this->values[$key];
 				$field["PREFIX"]=$this->prefix;
 				$field["ID_ORIGINE"]=$id;
-				eval("\$aff=".$aff_list_empr[$this->t_fields[$key]["TYPE"]]."(\$field,\$check_scripts);");
+				eval("\$aff=".$aff_list_empr[$val["TYPE"]]."(\$field,\$check_scripts);");
 				$t["AFF"]=$aff;
 				$t["NAME"]=$field["NAME"];
 				$perso["FIELDS"][]=$t;
@@ -464,7 +465,7 @@ class cms_editorial_parametres_perso extends parametres_perso {
 			}
 		}
 		reset($this->t_fields);
-		while (list($key,$val)=each($this->t_fields)) {
+		foreach ($this->t_fields as $key => $val) {
 			$name=$val["NAME"];
 			global ${$name};
 			$value=${$name};
@@ -537,25 +538,31 @@ class cms_editorial_parametres_perso extends parametres_perso {
     			static::$fields[$this->prefix.'_'.$this->num_type][$field_id]["PREFIX"]=$this->prefix;
     		}
 		}
-		if(!empty($this->t_fields[$field_id])){
-    		$aff=$val_list_empr[$this->t_fields[$field_id]["TYPE"]](static::$fields[$this->prefix.'_'.$this->num_type][$field_id],$values);
-		}else {
-		    $aff='';
+		if (!empty($this->t_fields[$field_id])) {
+    		$aff = $val_list_empr[$this->t_fields[$field_id]["TYPE"]](static::$fields[$this->prefix.'_'.$this->num_type][$field_id], $values);
 		}
-		if(is_array($aff)){
-			if($keep_html){
-				return $aff['value'];
-			} else {
-				return $aff['withoutHTML'];
-			}
-		} else {
-			return $aff;
+		if (isset($aff)) {
+    		if (is_array($aff)) {
+    			if ($keep_html) {
+    				return $aff['value'];
+    			}
+    			return $aff['withoutHTML'];
+    		}
+    		return $aff;
 		}
+		return '';
 	}
 	
 	public static function get_num_type_from_name($name) {
 		$query = "select num_type from cms_editorial_custom where name = '".addslashes($name)."'";
 		$result = pmb_mysql_query($query);
 		return pmb_mysql_result($result, 0, 'num_type');
+	}
+	
+	protected function get_details($custom_field, $id) {
+	    if (!empty($custom_field["TYPE"]) && $custom_field["TYPE"] == "query_auth" && !empty($id)) {
+	        return get_authority_details_from_field($custom_field, $id);
+	    }
+	    return "";
 	}
 }

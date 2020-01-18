@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authorities_caddie_procs.class.php,v 1.1 2017-05-06 12:03:22 dgoron Exp $
+// $Id: authorities_caddie_procs.class.php,v 1.2 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,6 +12,6 @@ require_once ($class_path."/caddie_procs.class.php");
 
 class authorities_caddie_procs extends caddie_procs {
 	
-	static $module = 'autorites';
-	static $table = 'authorities_caddie_procs';
+	public static $module = 'autorites';
+	public static $table = 'authorities_caddie_procs';
 }

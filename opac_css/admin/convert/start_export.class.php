@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: start_export.class.php,v 1.22 2018-07-25 06:19:18 dgoron Exp $
+// $Id: start_export.class.php,v 1.23 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -280,7 +280,7 @@ class start_export {
 						$r = texttoxml($notice, $s, $islast, $isfirst, $param_path);
 						break;
 					case "custom" :
-						eval("\$r=".$s['CALLBACK'][0][value]."(\$notice, \$s, \$islast, \$isfirst, \$param_path);");
+						eval("\$r=".$s['CALLBACK'][0]['value']."(\$notice, \$s, \$islast, \$isfirst, \$param_path);");
 						break;
 			}
 			if (!$r['VALID']) {

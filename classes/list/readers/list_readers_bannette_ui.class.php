@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_readers_bannette_ui.class.php,v 1.2 2018-12-28 16:30:36 dgoron Exp $
+// $Id: list_readers_bannette_ui.class.php,v 1.5.2.2 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,14 +16,36 @@ class list_readers_bannette_ui extends list_readers_ui {
 	
 	protected $bannette;
 	
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
-	
 	protected function get_form_title() {
 		global $msg, $charset;
 		
 		return htmlentities($msg['dsi_ban_lec_assoce'], ENT_QUOTES, $charset)." : ".$this->get_bannette()->nom_bannette;
+	}
+	
+	protected function init_default_selected_filters() {
+		global $pmb_lecteurs_localises;
+		
+		$this->add_selected_filter('categories');
+		$this->add_selected_filter('groups');
+		if($pmb_lecteurs_localises) {
+			$this->add_selected_filter('locations');
+		} else {
+			$this->add_empty_selected_filter();
+		}
+		$this->add_selected_filter('name');
+		$this->add_selected_filter('has_mail');
+		$this->add_selected_filter('has_affected');
+		$this->add_selected_filter('mail');
+	}
+	
+	protected function get_search_filter_has_affected() {
+		global $msg, $charset;
+	
+		return "
+			<input type='radio' id='".$this->objects_type."_has_affected_no' name='".$this->objects_type."_has_affected' value='0' ".(!$this->filters['has_affected'] ? "checked='checked'" : "")." />
+			<label for='".$this->objects_type."_has_affected_no'>".$msg['39']."</label>		
+			<input type='radio' id='".$this->objects_type."_has_affected_yes' name='".$this->objects_type."_has_affected' value='1' ".($this->filters['has_affected'] ? "checked='checked'" : "")." />
+			<label for='".$this->objects_type."_has_affected_yes'>".$msg['40']."</label>";
 	}
 	
 	/**
@@ -31,28 +53,13 @@ class list_readers_bannette_ui extends list_readers_ui {
 	 */
 	public function get_search_filters_form() {
 		global $msg;
-		global $pmb_lecteurs_localises;
-		global $list_readers_bannette_ui_search_filters_form_tpl;
 		global $faire;
 		
-		$search_filters_form = $list_readers_bannette_ui_search_filters_form_tpl;
+		$search_filters_form = '';
 		if($faire == "enregistrer") {
-			$search_filters_form = str_replace("!!bannette_lecteurs_saved!!", "<div class='erreur'>".$msg["dsi_bannette_lecteurs_update"]."</div><br />", $search_filters_form);
-		} else {
-			$search_filters_form = str_replace("!!bannette_lecteurs_saved!!", "", $search_filters_form);
+			$search_filters_form .= "<div class='erreur'>".$msg["dsi_bannette_lecteurs_update"]."</div><br />";
 		}
-		$search_filters_form = str_replace('!!categories!!', $this->get_multiple_selector($this->get_selector_query('categories'), 'categories', $msg['dsi_all_categories']), $search_filters_form);
-		$search_filters_form = str_replace('!!groups!!', $this->get_multiple_selector($this->get_selector_query('groups'), 'groups', $msg['dsi_all_groups']), $search_filters_form);
-		if ($pmb_lecteurs_localises) {
-			$search_filters_form = str_replace('!!locations!!', $this->get_multiple_selector($this->get_selector_query('locations'), 'locations', $msg['all_location']), $search_filters_form);
-		}
-		$search_filters_form = str_replace('!!name!!', $this->filters['name'], $search_filters_form);
-		$search_filters_form = str_replace('!!has_mail_unchecked!!', (!$this->filters['has_mail'] ? "checked='checked'" : ""), $search_filters_form);
-		$search_filters_form = str_replace('!!has_mail_checked!!', ($this->filters['has_mail'] ? "checked='checked'" : ""), $search_filters_form);
-		$search_filters_form = str_replace('!!has_affected_unchecked!!', (!$this->filters['has_affected'] ? "checked='checked'" : ""), $search_filters_form);
-		$search_filters_form = str_replace('!!has_affected_checked!!', ($this->filters['has_affected'] ? "checked='checked'" : ""), $search_filters_form);
-		$search_filters_form = str_replace('!!mail!!', $this->filters['mail'], $search_filters_form);
-		$search_filters_form = str_replace('!!objects_type!!', $this->objects_type, $search_filters_form);
+		$search_filters_form .= parent::get_search_filters_form();
 		return $search_filters_form;
 	}
 	
@@ -131,24 +138,8 @@ class list_readers_bannette_ui extends list_readers_ui {
 		return $content;
 	}
 	
-	protected function add_column_selection() {
-		global $msg, $charset;
-	
-		// Bloc HTML toggle
-// 		<input type='checkbox' id='".$this->objects_type."_selection_!!id!!' name='".$this->objects_type."_selection[!!id!!]' class='".$this->objects_type."_selection switch' value='!!id!!' !!subscribed!!>
-// 		<label for='".$this->objects_type."_selection_!!id!!'>".htmlentities($msg['dsi_ban_affect_lecteur'], ENT_QUOTES, $charset)."</label>
-		$this->columns[] = array(
-				'property' => '',
-				'label' => "<div class='center'>
-							<i class='fa fa-plus-square' onclick='".$this->objects_type."_selection_all(document.".$this->get_form_name().");' style='cursor:pointer;' title='".htmlentities($msg['tout_cocher_checkbox'], ENT_QUOTES, $charset)."'></i>
-							&nbsp;
-							<i class='fa fa-minus-square' onclick='".$this->objects_type."_unselection_all(document.".$this->get_form_name().");' style='cursor:pointer;' title='".htmlentities($msg['tout_decocher_checkbox'], ENT_QUOTES, $charset)."'></i>
-						</div>",
-				'html' => "<div class='center'>
-							<input type='checkbox' id='".$this->objects_type."_selection_!!id!!' name='".$this->objects_type."_selection[!!id!!]' class='".$this->objects_type."_selection' value='!!id!!' !!subscribed!!>
-						</div>"
-		
-		);
+	protected function get_display_html_content_selection() {
+		return "<div class='center'><input type='checkbox' id='".$this->objects_type."_selection_!!id!!' name='".$this->objects_type."_selection[!!id!!]' class='".$this->objects_type."_selection' value='!!id!!' !!subscribed!!></div>";
 	}
 	
 	protected function get_display_cell_html_value($object, $value) {
@@ -263,8 +254,8 @@ class list_readers_bannette_ui extends list_readers_ui {
 	}
 	
 	public function run_action_affect_lecteurs() {
-		$selected_objects = static::get_selected_objects();
-		if(count($selected_objects)) {
+	    $selected_objects = static::get_selected_objects();
+		if(is_array($selected_objects)) {
 			$name = $this->objects_type."_mails_selection";
 			global ${$name};
 			$sel_mail = ${$name};

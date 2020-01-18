@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: out_auth.inc.php,v 1.3 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: out_auth.inc.php,v 1.5 2019-06-13 15:26:51 btafforeau Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($class_path."/external_services_esusers.class.php");
@@ -168,14 +168,14 @@ switch ($action) {
 			list_esgroups();
 			exit();
 		}
-		show_auth_edit_form($id+0);
+		show_auth_edit_form((int)$id);
 		break;
 	case "editanonymous":
 		show_auth_edit_form_anonymous();
 		break;
 	case "update":
 		if (isset($id) && $id) {
-			array_walk($authorized_sources, create_function('&$a', '$a+=0;')); //Virons de la liste ce qui n'est pas entier
+		    array_walk($authorized_sources, function(&$a) {$a = intval($a);}); //Virons de la liste ce qui n'est pas entier
 			//Croisons ce que l'on nous propose avec ce qui existe vraiment dans la base
 			//Vérifions que les sources existents
 			$sql = "SELECT connectors_out_source_id FROM connectors_out_sources WHERE connectors_out_source_id IN (".implode(",", $authorized_sources).')';
@@ -209,7 +209,7 @@ switch ($action) {
 		if (!$authorized_sources)
 			$final_authorized_sources=array();
 		else {
-			array_walk($authorized_sources, create_function('&$a', '$a+=0;')); //Virons de la liste ce qui n'est pas entier
+		    array_walk($authorized_sources, function(&$a) {$a = intval($a);}); //Virons de la liste ce qui n'est pas entier
 			//Croisons ce que l'on nous propose avec ce qui existe vraiment dans la base
 			//Vérifions que les sources existents
 			$sql = "SELECT connectors_out_source_id FROM connectors_out_sources WHERE connectors_out_source_id IN (".implode(",", $authorized_sources).')';

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_contribution_datatype_linked_authority_selector_ui.class.php,v 1.1 2018-09-24 13:39:22 tsamson Exp $
+// $Id: onto_contribution_datatype_linked_authority_selector_ui.class.php,v 1.4 2019-08-14 08:02:58 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -67,7 +67,7 @@ class onto_contribution_datatype_linked_authority_selector_ui extends onto_commo
 		global $msg,$charset,$ontology_tpl;
 		
 		$form=$ontology_tpl['form_row'];
-		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->label, 'utf-8') ,ENT_QUOTES,$charset) , $form);
+		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->get_label(), 'utf-8') ,ENT_QUOTES,$charset) , $form);
 		
 		/** traitement initial du range ?!*/
 		$range_for_form = ""; 
@@ -78,12 +78,20 @@ class onto_contribution_datatype_linked_authority_selector_ui extends onto_commo
 			}
 		}
 		
-		$marc_list = marc_list_collection::get_instance('relationtype_aut');
+		$marc_list = marc_list_collection::get_instance('aut_link');
+		$tmp = array();
+		if (count($marc_list->inverse_of)) {
+		    // sous tableau genre ascendant descendant...
+		    foreach ($marc_list->table as $table) {
+		        $tmp = array_merge($tmp, $table);
+		    }
+		    $marc_list->table = $tmp;
+		} 
 		$content='';
 		$content.=$ontology_tpl['form_row_content_input_sel'];
 		
 		$content = str_replace("!!property_name!!", rawurlencode($property->pmb_name), $content);
-		if(sizeof($datas)){
+		if (!empty($datas)) {
 			$i = 1;
 			$first = true;
 			$new_element_order = max(array_keys($datas));

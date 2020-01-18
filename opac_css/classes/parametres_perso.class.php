@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: parametres_perso.class.php,v 1.42 2018-08-08 09:49:44 plmrozowski Exp $
+// $Id: parametres_perso.class.php,v 1.49 2019-07-30 08:38:23 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -23,6 +23,7 @@ class parametres_perso {
 	public static $fields = array();
 	public static $st_fields = array();
 	protected static $out_values = array();
+	public $t_fields = array();
 	
 	//Créateur : passer dans $prefix le type de champs persos et dans $base_url l'url a appeller pour les formulaires de gestion	
 	public function __construct($prefix) {
@@ -120,7 +121,7 @@ class parametres_perso {
 			}
 			$check_scripts="";
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				$t=array();
 				$t["NAME"]=$val["NAME"];
 				$t["TITRE"]=$val["TITRE"];
@@ -130,14 +131,16 @@ class parametres_perso {
 				$field["NAME"]=$this->t_fields[$key]["NAME"];
 				$field["MANDATORY"]=$this->t_fields[$key]["MANDATORY"];				
 				$field["SEARCH"]=$this->t_fields[$key]["SEARCH"];
-				$field["EXPORT"]=$this->t_fields[$key]["EXPORT"];	
-				$field["EXCLUSION"]=$this->t_fields[$key]["EXCLUSION"];	
+				$field["EXPORT"]=$this->t_fields[$key]["EXPORT"];
+				$field["EXCLUSION"] = '';
+				if(isset($this->t_fields[$key]["EXCLUSION"])) $field["EXCLUSION"]=$this->t_fields[$key]["EXCLUSION"];
 				$field["OPAC_SORT"]=$this->t_fields[$key]["OPAC_SORT"];	
 				$field["COMMENT"]=$this->t_fields[$key]["COMMENT"];
 				$field["ALIAS"]=$this->t_fields[$key]["TITRE"];
 				$field["DATATYPE"]=$this->t_fields[$key]["DATATYPE"];
 				$field["OPTIONS"]=$this->t_fields[$key]["OPTIONS"];
-				$field["VALUES"]=$this->values[$key];
+				$field["VALUES"] = '';
+				if(isset($this->values[$key]))	$field["VALUES"]=$this->values[$key];
 				$field["PREFIX"]=$this->prefix;
 				$field["ID_ORIGINE"]=$id;
 				eval("\$aff=".$aff_list_empr[$this->t_fields[$key]['TYPE']]."(\$field,\$check_scripts);");
@@ -166,7 +169,7 @@ class parametres_perso {
 			//Affichage champs persos
 			$c=0;
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				$t=array();
 				$titre = translation::get_text($this->t_fields[$key]['idchamp'], $this->prefix."_custom", 'titre',  $val['TITRE']);
 				$t['TITRE']='<b>'.htmlentities($titre,ENT_QUOTES,$charset).' : </b>';
@@ -190,15 +193,16 @@ class parametres_perso {
 				$t['TYPE']=$this->t_fields[$key]['TYPE'];
 				$aff=$val_list_empr[$this->t_fields[$key]['TYPE']](static::$fields[$this->prefix][$key],$this->values[$key]);
 				if(is_array($aff) && $aff['ishtml'] == true){
-					$t['AFF'] = $aff['value'];
+				    $t['AFF'] = $aff['value'];
 					if(isset($aff['details'])) {
 						$t['DETAILS'] = $aff['details'];
 					}
 				} else {
-					$t['AFF']=htmlentities($aff,ENT_QUOTES,$charset);
+				    $t['AFF'] = htmlentities($aff,ENT_QUOTES,$charset);
 				}
 				$t['ID']=static::$fields[$this->prefix][$key]['ID'];
 				$t['NAME']=static::$fields[$this->prefix][$key]['NAME'];
+				$t['DATATYPE']=static::$fields[$this->prefix][$key]['DATATYPE'];
 				$perso['FIELDS'][]=$t;
 			}
 		}
@@ -226,11 +230,14 @@ class parametres_perso {
 		}
 		if(!empty($this->t_fields[$field_id])){
     		$aff=$val_list_empr[$this->t_fields[$field_id]["TYPE"]](static::$fields[$this->prefix][$field_id],$values);
-		}else{
-		    $aff='';
 		}
-		if(is_array($aff)) return $aff['withoutHTML']; 
-		else return $aff;
+		if (isset($aff)) {
+		    if (is_array($aff)) {
+		        return $aff['withoutHTML']; 
+		    }
+    		return $aff;
+		}
+		return '';
 	}
 
 	//Appelé par sort_out_values
@@ -290,8 +297,8 @@ class parametres_perso {
 		
 		$this->get_values($id);
 		if (!$this->no_special_fields) {
-			reset($this->t_fields);		
-			while (list($key,$val)=each($this->t_fields)) {
+			reset($this->t_fields);
+			foreach ($this->t_fields as $key => $val) {
 				if($this->t_fields[$key]["SEARCH"] ) {
 					for ($i=0; $i<count($this->values[$key]); $i++) {
 						$return_val.=$this->values[$key][$i].' ';
@@ -307,7 +314,7 @@ class parametres_perso {
 
 		$values=array();
 		reset($this->t_fields);
-		while (list($key,$val)=each($this->t_fields)) {
+		foreach ($this->t_fields as $key => $val) {
 			if($val['NAME'] == $name) {
 				switch ($val['TYPE']) {
 					case 'list' :
@@ -410,7 +417,7 @@ class parametres_perso {
 	
 		$perso=array();
 		reset($this->t_fields);
-		while (list($key,$val)=each($this->t_fields)) {
+		foreach ($this->t_fields as $key => $val) {
 			if($this->t_fields[$key]["SEARCH"]) {
 				$t=array();
 				$t["DATATYPE"]=$val["DATATYPE"];
@@ -443,7 +450,7 @@ class parametres_perso {
 		$requete = "delete from ".$this->prefix."_custom_dates where ".$this->prefix."_custom_origine=$id";
 		pmb_mysql_query($requete);
 		reset($this->t_fields);
-		while (list($key,$val)=each($this->t_fields)) {
+		foreach ($this->t_fields as $key => $val) {
 			$name=$val["NAME"];
 			global ${$name};
 			$value=${$name};

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: custom_parametres_perso.class.php,v 1.12 2018-08-08 09:49:44 plmrozowski Exp $
+// $Id: custom_parametres_perso.class.php,v 1.18 2019-07-23 09:30:38 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -64,7 +64,7 @@ class custom_parametres_perso extends parametres_perso {
 	}	
 	
 	//Gestion des actions en administration
-	function proceed() {
+	public function proceed() {
 		global $action;
 		global $name,$titre,$type,$datatype,$_options,$multiple,$obligatoire,$search,$export,$exclusion,$ordre,$idchamp,$id,$pond,$opac_sort;
 		
@@ -345,26 +345,26 @@ class custom_parametres_perso extends parametres_perso {
 			$this->get_values($id);
 			$check_scripts="";
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				$t=array();
 				$t["NAME"]=$val["NAME"];
 				$t["TITRE"]=$val["TITRE"];
 					
 				$field=array();
 				$field["ID"]=$key;
-				$field["NAME"]=$this->t_fields[$key]["NAME"];
-				$field["MANDATORY"]=$this->t_fields[$key]["MANDATORY"];
-				$field["SEARCH"]=$this->t_fields[$key]["SEARCH"];
-				$field["EXPORT"]=$this->t_fields[$key]["EXPORT"];
-				$field["EXCLUSION"]=$this->t_fields[$key]["EXCLUSION"];
-				$field["OPAC_SORT"]=$this->t_fields[$key]["OPAC_SORT"];
-				$field["ALIAS"]=$this->t_fields[$key]["TITRE"];
-				$field["DATATYPE"]=$this->t_fields[$key]["DATATYPE"];
-				$field["OPTIONS"][0]=_parser_text_no_function_("<?xml version='1.0' encoding='".$charset."'?>\n".$this->t_fields[$key]["OPTIONS"], "OPTIONS");
+				$field["NAME"]=$val["NAME"];
+				$field["MANDATORY"]=$val["MANDATORY"];
+				$field["SEARCH"]=$val["SEARCH"];
+				$field["EXPORT"]=$val["EXPORT"];
+				$field["EXCLUSION"]=$val["EXCLUSION"];
+				$field["OPAC_SORT"]=$val["OPAC_SORT"];
+				$field["ALIAS"]=$val["TITRE"];
+				$field["DATATYPE"]=$val["DATATYPE"];
+				$field["OPTIONS"][0]=_parser_text_no_function_("<?xml version='1.0' encoding='".$charset."'?>\n".$val["OPTIONS"], "OPTIONS");
 				$field["VALUES"]=$this->values[$key];
 				$field["PREFIX"]=$this->prefix;
 				$field["ID_ORIGINE"]=$id;
-				eval("\$aff=".$aff_list_empr[$this->t_fields[$key][TYPE]]."(\$field,\$check_scripts);");
+				eval("\$aff=".$aff_list_empr[$val["TYPE"]]."(\$field,\$check_scripts);");
 				$t["AFF"]=$aff;
 				$t["NAME"]=$field["NAME"];
 				$perso["FIELDS"][]=$t;
@@ -379,14 +379,14 @@ class custom_parametres_perso extends parametres_perso {
 	}
 	
 	//Enregistrement des champs perso soumis lors de la saisie d'une fichie emprunteur ou autre...
-	function rec_fields_perso($id,$type="") {
+	public function rec_fields_perso($id,$type="") {
 		
 		$this->check_submited_fields();
 		$requete="delete ".$this->prefix."_custom_values from ".$this->prefix."_custom_values where ".$this->prefix."_custom_origine=$id";
 		pmb_mysql_query($requete);	
 
 		reset($this->t_fields);
-		while (list($key,$val)=each($this->t_fields)) {
+		foreach ($this->t_fields as $key => $val) {
 			$name=$val["NAME"];
 			global ${$name};
 			$value=${$name};
@@ -426,15 +426,17 @@ class custom_parametres_perso extends parametres_perso {
     		$field["OPTIONS"][0]=_parser_text_no_function_("<?xml version='1.0' encoding='".$charset."'?>\n".$this->t_fields[$field_id]["OPTIONS"], "OPTIONS");
     		$field["VALUES"]=$values;
     		$field["PREFIX"]=$this->prefix;
-    		$aff=$val_list_empr[$this->t_fields[$field_id]["TYPE"]]($field,$values);
-		}else{
-		    $aff='';
+    		$aff = $val_list_empr[$this->t_fields[$field_id]["TYPE"]]($field, $values);
 		}
-		if(is_array($aff)){
-			if($keep_html){
-				return $aff['value'];
-			}else return $aff['withoutHTML'];
+		if (isset($aff)) {
+    		if (is_array($aff)) {
+    			if ($keep_html) {
+    				return $aff['value'];
+    			}
+    			return $aff['withoutHTML'];
+    		}
+    		return $aff;
 		}
-		else return $aff;
+		return '';
 	}
 }

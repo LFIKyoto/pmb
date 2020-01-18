@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_custom_fields_ui.class.php,v 1.7 2018-11-09 14:45:19 dgoron Exp $
+// $Id: list_custom_fields_ui.class.php,v 1.12.2.2 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -23,10 +23,6 @@ class list_custom_fields_ui extends list_ui {
 		static::$option_visibilite = $option_visibilite;
 	}
 	
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
-	
 	public function get_form_title() {
 		return '';
 	}
@@ -40,7 +36,21 @@ class list_custom_fields_ui extends list_ui {
 	protected function add_object($row) {
 		$this->objects[] = $row;
 	}
-		
+	
+	/**
+	 * Initialisation des filtres disponibles
+	 */
+	protected function init_available_filters() {
+		$this->available_filters =
+		array('main_fields' =>
+				array(
+						'input_type' => 'parperso_input_type',
+						'data_type' => 'parperso_data_type',
+				)
+		);
+		$this->available_filters['custom_fields'] = array();
+	}
+	
 	/**
 	 * Initialisation des filtres de recherche
 	 */
@@ -52,6 +62,11 @@ class list_custom_fields_ui extends list_ui {
 			'data_type' => array()
 		);
 		parent::init_filters($filters);
+	}
+	
+	protected function init_default_selected_filters() {
+		$this->add_selected_filter('input_type');
+		$this->add_selected_filter('data_type');
 	}
 	
 	/**
@@ -102,13 +117,13 @@ class list_custom_fields_ui extends list_ui {
 	}
 	
 	protected function add_column_dnd() {
-		global $msg;
+		global $msg, $charset;
 		
 		$this->columns[] = array(
 				'property' => 'ordre',
 				'label' => $msg['parperso_options_list_order'],
-				'html' => "<input type='button' class='bouton_small' value='-' onClick='document.location=\"".static::get_controller_url_base()."&action=up&id=!!id!!\"' />
-					<input type='button' class='bouton_small' value='+' onClick='document.location=\"".static::get_controller_url_base()."&action=down&id=!!id!!\"' />"
+		    'html' => "<img src='".get_url_icon('bottom-arrow.png')."' title='".htmlentities($msg['move_bottom_arrow'], ENT_QUOTES, $charset)."' alt='".htmlentities($msg['move_bottom_arrow'], ENT_QUOTES, $charset)."' onClick='document.location=\"".static::get_controller_url_base()."&action=down&id=!!id!!\"' style='cursor:pointer;' />
+					<img src='".get_url_icon('top-arrow.png')."' title='".htmlentities($msg['move_top_arrow'], ENT_QUOTES, $charset)."' alt='".htmlentities($msg['move_top_arrow'], ENT_QUOTES, $charset)."' onClick='document.location=\"".static::get_controller_url_base()."&action=up&id=!!id!!\"' style='cursor:pointer;' />"
 		);
 	}
 	
@@ -148,23 +163,15 @@ class list_custom_fields_ui extends list_ui {
 	 * Initialisation de la pagination par défaut
 	 */
 	protected function init_default_pager() {
-		global $nb_per_page_empr;
-		$this->pager = array(
-				'page' => 1,
-				'nb_per_page' => 100,
-				'nb_results' => 0,
-				'nb_page' => 1
-		);
+	    parent::init_default_pager();
+	    $this->pager['nb_per_page'] = 100;
 	}
 	
 	/**
 	 * Initialisation du tri par défaut appliqué
 	 */
 	protected function init_default_applied_sort() {
-		$this->applied_sort = array(
-				'by' => 'ordre',
-				'asc_desc' => 'asc'
-		);
+	    $this->add_applied_sort('ordre');
 	}
 	
 	/**
@@ -172,9 +179,9 @@ class list_custom_fields_ui extends list_ui {
 	 */
 	protected function _get_query_order() {
 	
-		if($this->applied_sort['by']) {
+	    if($this->applied_sort[0]['by']) {
 			$order = '';
-			$sort_by = $this->applied_sort['by'];
+			$sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				default :
 					$order .= $sort_by;
@@ -182,7 +189,7 @@ class list_custom_fields_ui extends list_ui {
 			}
 			if($order) {
 				$this->applied_sort_type = 'SQL';
-				return " order by ".$order." ".$this->applied_sort['asc_desc'];
+				return " order by ".$order." ".$this->applied_sort[0]['asc_desc'];
 			} else {
 				return "";
 			}
@@ -216,13 +223,13 @@ class list_custom_fields_ui extends list_ui {
 	/**
 	 * Liste des types
 	 */
-	protected function get_input_type_selector() {
+	protected function get_search_filter_input_type() {
 		global $msg, $charset;
 		global $type_list_empr;
 		
-		$selector = "<select name='".$this->objects_type."_input_type' multiple='3'>";
+		$selector = "<select name='".$this->objects_type."_input_type[]' multiple='3'>";
 		reset($type_list_empr);
-		while (list($key,$val)=each($type_list_empr)) {
+		foreach ($type_list_empr as $key => $val) {
 			$selector .= "<option value='".$key."' ".(in_array($key, $this->filters['input_type']) ? "selected='selected'" : "").">".htmlentities($val,ENT_QUOTES, $charset)."</option>";
 		}
 		$selector .= "</select>";
@@ -232,13 +239,13 @@ class list_custom_fields_ui extends list_ui {
 	/**
 	 * Liste des types de données
 	 */
-	protected function get_data_type_selector() {
+	protected function get_search_filter_data_type() {
 		global $msg, $charset;
 		global $datatype_list;
 	
-		$selector = "<select name='".$this->objects_type."_data_type' multiple='3'>";
+		$selector = "<select name='".$this->objects_type."_data_type[]' multiple='3'>";
 		reset($datatype_list);
-		while (list($key,$val)=each($datatype_list)) {
+		foreach ($datatype_list as $key => $val) {
 			$selector .= "<option value='".$key."' ".(in_array($key, $this->filters['data_type']) ? "selected='selected'" : "").">".htmlentities($val,ENT_QUOTES, $charset)."</option>";
 		}
 		$selector .= "</select>";
@@ -247,20 +254,6 @@ class list_custom_fields_ui extends list_ui {
 	
 	public function get_export_icons() {
 		return "";
-	}
-	
-	/**
-	 * Affichage des filtres du formulaire de recherche
-	 */
-	public function get_search_filters_form() {
-		global $msg;
-		global $pmb_lecteurs_localises;
-		global $list_custom_fields_ui_search_filters_form_tpl;
-	
-		$search_filters_form = $list_custom_fields_ui_search_filters_form_tpl;
-		$search_filters_form = str_replace('!!input_type!!', $this->get_input_type_selector(), $search_filters_form);
-		$search_filters_form = str_replace('!!data_type!!', $this->get_data_type_selector(), $search_filters_form);
-		return $search_filters_form;
 	}
 	
 	/**
@@ -283,6 +276,12 @@ class list_custom_fields_ui extends list_ui {
 		$this->set_filters_from_form();
 		
 		$filters = array();
+		if(is_array($this->filters['input_type']) && count($this->filters['input_type'])) {
+		    $filters [] = 'type IN ("'.implode('","', $this->filters['input_type']).'")';
+		}
+		if(is_array($this->filters['data_type']) && count($this->filters['data_type'])) {
+		    $filters [] = 'datatype IN ("'.implode('","', $this->filters['data_type']).'")';
+		}
 		if(count($filters)) {
 			$filter_query .= ' where '.implode(' and ', $filters);
 		}
@@ -337,9 +336,25 @@ class list_custom_fields_ui extends list_ui {
 	}
 	
 	protected function _get_query_human() {
-		global $msg, $charset;
+		global $msg;
+		global $type_list_empr;
+		global $datatype_list;
 		
 		$humans = array();
+		if(is_array($this->filters['input_type']) && count($this->filters['input_type'])) {
+		    $labels = array();
+		    foreach ($this->filters['input_type'] as $input_type) {
+		        $labels[] = $type_list_empr[$input_type];
+		    }
+		    $humans[] = $this->_get_label_query_human($msg['parperso_input_type'], $labels);
+		}
+		if(is_array($this->filters['data_type']) && count($this->filters['data_type'])) {
+		    $labels = array();
+		    foreach ($this->filters['data_type'] as $data_type) {
+		        $labels[] = $datatype_list[$data_type];
+		    }
+		    $humans[] = $this->_get_label_query_human($msg['parperso_data_type'], $labels);
+		}
 		return $this->get_display_query_human($humans);
 	}
 	

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export_param.class.php,v 1.3 2016-12-30 10:54:13 dgoron Exp $
+// $Id: export_param.class.php,v 1.4 2019-01-15 12:46:26 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -32,6 +32,7 @@ class export_param {
 	public $export_notice_fille_link=0;
 	public $export_notice_horizontale_link=0;
 	public $generer_liens=0;
+	public $export_map=0;
 	
 	// ---------------------------------------------------------------
 	//		Constructeur de la classe
@@ -49,10 +50,12 @@ class export_param {
 		global $exportparam_export_art_link, $exportparam_export_bulletinage, $exportparam_export_bull_link, $exportparam_export_perio_link;
 		global $exportparam_export_notice_perio_link, $exportparam_export_notice_art_link, $exportparam_export_mere, $exportparam_export_fille, $exportparam_export_horizontale, $exportparam_generer_liens;
 		global $exportparam_export_notice_mere_link, $exportparam_export_notice_fille_link, $exportparam_export_notice_horizontale_link;
+		global $exportparam_export_map;
 		global $opac_exp_export_art_link, $opac_exp_export_bulletinage, $opac_exp_export_bull_link, $opac_exp_export_perio_link, $opac_exp_export_notice_perio_link;
 		global $opac_exp_export_notice_art_link, $opac_exp_export_mere, $opac_exp_export_fille, $opac_exp_export_horizontale, $opac_exp_generer_liens, $opac_exp_export_notice_mere_link, $opac_exp_export_notice_fille_link, $opac_exp_export_notice_horizontale_link;
+		global $opac_exp_export_map;
 		global $genere_lien, $mere, $fille, $horizontale, $art_link, $bull_link, $perio_link, $bulletinage, $notice_art, $notice_perio, $notice_mere, $notice_fille, $notice_horizontale;
-		
+		global $map;
 		
 		if($context==EXP_DEFAULT_GESTION){
 			$this->export_art_link=$exportparam_export_art_link;
@@ -68,6 +71,7 @@ class export_param {
 			$this->export_notice_mere_link=$exportparam_export_notice_mere_link;
 			$this->export_notice_fille_link=$exportparam_export_notice_fille_link;
 			$this->export_notice_horizontale_link=$exportparam_export_notice_horizontale_link;
+			$this->export_map=$exportparam_export_map;
 		} elseif($context==EXP_DEFAULT_OPAC){
 			$this->export_art_link=$opac_exp_export_art_link;
 			$this->export_bull_link=$opac_exp_export_bull_link;
@@ -82,6 +86,7 @@ class export_param {
 			$this->export_notice_mere_link=$opac_exp_export_notice_mere_link;
 			$this->export_notice_fille_link=$opac_exp_export_notice_fille_link;
 			$this->export_notice_horizontale_link=$opac_exp_export_notice_horizontale_link;
+			$this->export_map=$opac_exp_export_map;	
 		} elseif($context==EXP_SESSION_CONTEXT){
 			$this->export_art_link=$_SESSION["param_export"]["art_link"];
 			$this->export_bull_link=$_SESSION["param_export"]["bull_link"];
@@ -96,6 +101,7 @@ class export_param {
 			$this->export_notice_mere_link=$_SESSION["param_export"]["notice_mere"];
 			$this->export_notice_fille_link=$_SESSION["param_export"]["notice_fille"];
 			$this->export_notice_horizontale_link=$_SESSION["param_export"]["notice_horizontale"];
+			$this->export_map=$_SESSION["param_export"]["map"];
 		} elseif($context==EXP_GLOBAL_CONTEXT) {
 			$this->export_art_link=$art_link;
 			$this->export_bull_link=$bull_link;
@@ -110,6 +116,7 @@ class export_param {
 			$this->export_notice_mere_link=$notice_mere;
 			$this->export_notice_fille_link=$notice_fille;
 			$this->export_notice_horizontale_link=$notice_horizontale;
+			$this->export_map=$map;	
 		}		
 	}
 	
@@ -117,7 +124,7 @@ class export_param {
 	 * Initialisation des paramètres d'export de la session
 	 ***/
 	public static function init_session(){
-		global $genere_lien, $mere, $fille, $horizontale, $art_link, $bull_link, $perio_link, $bulletinage, $notice_art, $notice_perio, $notice_mere, $notice_fille, $notice_horizontale;
+	    global $genere_lien, $mere, $fille, $horizontale, $art_link, $bull_link, $perio_link, $bulletinage, $notice_art, $notice_perio, $notice_mere, $notice_fille, $notice_horizontale, $map;
 		
 		$_SESSION["param_export"]=array();
 		$_SESSION["param_export"]["genere_lien"]=$genere_lien;
@@ -133,6 +140,7 @@ class export_param {
 		$_SESSION["param_export"]["bulletinage"]=$bulletinage;
 		$_SESSION["param_export"]["notice_perio"]=$notice_perio;
 		$_SESSION["param_export"]["notice_art"]=$notice_art;
+		$_SESSION["param_export"]["map"]=$map;
 			
 	}
 	
@@ -229,7 +237,11 @@ class export_param {
 		 else 
 			$form_param = str_replace('!!checked_12!!','',$form_param);
 			
-	
+		if($this->export_map)
+		    $form_param = str_replace('!!checked_13!!','checked',$form_param);
+		else
+		    $form_param = str_replace('!!checked_13!!','',$form_param);
+			        
 		return $form_param;
 	}
 	
@@ -273,6 +285,7 @@ class export_param {
 			$parametres["export_notice_mere_link"]=$this->export_notice_mere_link*1;
 			$parametres["export_notice_fille_link"]=$this->export_notice_fille_link*1;
 			$parametres["export_notice_horizontale_link"]=$this->export_notice_horizontale_link*1;
+			$parametres["export_map"]=$this->export_map*1;			
 		} elseif ($context == EXP_DEFAULT_OPAC){
 			$parametres["exp_generer_liens"]=$this->generer_liens*1;
 			$parametres["exp_export_mere"]=$this->export_mere*1;
@@ -287,6 +300,8 @@ class export_param {
 			$parametres["exp_export_notice_mere_link"]=$this->export_notice_mere_link*1;
 			$parametres["exp_export_notice_fille_link"]=$this->export_notice_fille_link*1;
 			$parametres["exp_export_notice_horizontale_link"]=$this->export_notice_horizontale_link*1;
+			$parametres["exp_export_map"]=$this->export_map*1;
+			
 		} elseif ($context == EXP_GLOBAL_CONTEXT || $context == EXP_SESSION_CONTEXT){
 			$parametres["genere_lien"]=$this->generer_liens*1;
 			$parametres["mere"]=$this->export_mere*1;
@@ -301,6 +316,7 @@ class export_param {
 			$parametres["notice_mere"]=$this->export_notice_mere_link*1;
 			$parametres["notice_fille"]=$this->export_notice_fille_link*1;
 			$parametres["notice_horizontale"]=$this->export_notice_horizontale_link*1;
+			$parametres["map"]=$this->export_map*1;			
 		}
 		
 		if($parametres)

@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: printer_data_converter.class.php,v 1.2 2014-05-12 15:28:40 dbellamy Exp $
+// $Id: printer_data_converter.class.php,v 1.4 2019-07-18 12:47:43 btafforeau Exp $
 
 //if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class printer_data_converter {
 	
-	static function convert_to($data='', $encoding='') {
+	public static function convert_to($data=array(), $encoding='') {
 		if(method_exists('printer_data_converter', 'convert_to_'.$encoding)) {
 			$method_name = 'convert_to_'.$encoding;
 			if (is_string($data)) {
@@ -17,13 +17,16 @@ class printer_data_converter {
 			if(is_array($data)) {
 				foreach($data as $k=>$v) {
 					$data[$k] = printer_data_converter::$method_name($v);
-				}	
+				}
+				if (empty($data)) {
+				    $data = printer_data_converter::$method_name($data);
+				}
 			}
 		}
 		return $data;
 	}
 		
-	static function convert_to_cp850($data) {
+	public static function convert_to_cp850($data) {
 		global $charset;
 		if(is_string($data)) {
 			$data = iconv($charset,'cp850',$data);
@@ -37,7 +40,7 @@ class printer_data_converter {
 	}
 
 	
-	static function convert_to_ci8($data) {
+	public static function convert_to_ci8($data) {
 		global $charset;
 		$to_ci8 = array(
 				"#"=>"\\23",

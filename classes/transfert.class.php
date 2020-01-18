@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: transfert.class.php,v 1.64 2018-11-30 13:06:30 dgoron Exp $
+// $Id: transfert.class.php,v 1.66 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr ( $_SERVER ['REQUEST_URI'], ".class.php" ))
 	die ( "no access" );
@@ -62,6 +62,7 @@ class transfert {
 	public $validation_send_event=0;
 	
 	public $num_exemplaire;
+	public $new_location_libelle;
 	
 	// constructeur
 	public function __construct($id=0) {
@@ -120,7 +121,7 @@ class transfert {
 	}
 	//********************************************************************************************
 	
-	function _creer_transfert( $id_expl, $src, $dest, $t_trans, $date_ret='', $origine=0, $ori_comp ='', $motif='', $sens=0, $etat=0, $ask_date='') {
+	public function _creer_transfert( $id_expl, $src, $dest, $t_trans, $date_ret='', $origine=0, $ori_comp ='', $motif='', $sens=0, $etat=0, $ask_date='') {
 	
 		//on recupere le no de notice
 		$rqt = "SELECT expl_notice, expl_bulletin, expl_statut, expl_section  
@@ -592,7 +593,7 @@ class transfert {
 	}	
 	
 	// reset la loc d'origine de l'exemplaire par $deflt_docs_location
-	function reset_origine($expl_id) {	
+	public function reset_origine($expl_id) {	
 		global $deflt_docs_location;
 		
 		$rqt = "DELETE FROM transferts_source WHERE trans_source_numexpl=".$expl_id ;
@@ -603,7 +604,7 @@ class transfert {
 	}		
 	
 	// retourne la loc d'origine de l'exemplaire
-	function get_origine($expl_id) {
+	public function get_origine($expl_id) {
 		
 		// on teste s'il y a un transfert actif sur l'exemplaire
 		$rqt = "SELECT * FROM transferts, transferts_demande WHERE id_transfert = num_transfert AND etat_transfert=0 AND num_expl=".$expl_id;
@@ -640,7 +641,7 @@ class transfert {
 	}	
 	
 	//restaure la localisation apres une sauvegarde
-	function retour_exemplaire_restaure_localisation($expl_id, $loc_id) {
+	public function retour_exemplaire_restaure_localisation($expl_id, $loc_id) {
 		$rqt = "UPDATE exemplaires SET expl_location=".$loc_id." WHERE expl_id=".$expl_id;
 		pmb_mysql_query( $rqt );
 	}

@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: module_modelling.tpl.php,v 1.3 2018-01-22 09:16:28 tsamson Exp $
+// $Id: module_modelling.tpl.php,v 1.4 2019-05-27 09:41:33 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $module_modelling_left_menu, $pmb_contribution_area_activate, $module_modelling_menu_ontologies, $module_modelling_menu_contribution_area; 
+global $module_modelling_menu_frbr, $msg;
 
 $module_modelling_left_menu = "
 <div id='menu'>

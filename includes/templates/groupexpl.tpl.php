@@ -2,9 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: groupexpl.tpl.php,v 1.8 2017-10-27 14:03:40 ngantier Exp $
+// $Id: groupexpl.tpl.php,v 1.9 2019-05-27 13:47:15 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $url_gestion, $groupexpl_list_tpl, $msg, $current_module, $groupexpl_list_line_tpl, $th_sur_location, $td_sur_location, $pmb_sur_location_activate, $groupexpl_see_form_tpl;
+global $groupexpl_see_form_list_line_tpl, $groupexpl_see_form_principale_tpl, $groupexpl_confirm_form_tpl, $groupexpl_confirm_form_list_line_tpl, $groupexpl_form_tpl;
+global $groupexpl_form_add_expl_tpl, $groupexpl_form_list_line_tpl;
 
 if(!isset($url_gestion)) $url_gestion = '';
 

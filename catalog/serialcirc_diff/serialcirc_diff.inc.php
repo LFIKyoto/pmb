@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_diff.inc.php,v 1.12 2017-08-23 07:22:08 ngantier Exp $
+// $Id: serialcirc_diff.inc.php,v 1.13 2019-04-20 14:45:16 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -44,7 +44,7 @@ switch($sub){
 		}
 	break;	
 	case 'ficheformat_form':
-		if(!isset($data)) $data = '';
+		if(!isset($data)) $data = array();
 		if($action=='save'){
 			
 			$serialcirc_diff->ficheformat_save($data); 

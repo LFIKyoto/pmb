@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: catalog.xml,v 1.7 2015-05-26 10:31:07 ngantier Exp $ -->
+$Id: catalog.xml,v 1.7.12.1 2019-11-12 15:16:44 dbellamy Exp $ -->
 
 <catalog>
 	<item name="oai" path="oai" id="3"/>
@@ -15,4 +15,5 @@ $Id: catalog.xml,v 1.7 2015-05-26 10:31:07 ngantier Exp $ -->
 	<item name="webdav" path="webdav" id="8"/>
 	<item name="rdf" path="rdf" id="9"/>
 	<item name="bibloto" path="bibloto" id="10"/>
+	<item name="diverscities" path="diverscities" id="11"/>
 </catalog>

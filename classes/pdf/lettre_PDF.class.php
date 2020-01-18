@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lettre_PDF.class.php,v 1.1 2018-08-07 12:42:34 dgoron Exp $
+// $Id: lettre_PDF.class.php,v 1.7 2019-08-09 10:49:03 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-require_once($class_path."/pdf_factory.class.php");
+global $class_path;
+require_once($class_path."/parameters_subst.class.php");
 
 class lettre_PDF {
 	
@@ -24,22 +25,45 @@ class lettre_PDF {
 	public $fs = 10;					//Taille police
 	
 	public function __construct() {
+	    $this->_substitution_parameters();
 		$this->_init();
 		$this->_open();
 	}
 	
+	protected function _substitution_parameters() {
+	    global $include_path;
+	    global $deflt2docs_location;
+	    
+	    //Globalisons tout d'abord les paramètres communs à toutes les localisations
+	    if (file_exists($include_path."/parameters_subst/pdf_per_localisations_subst.xml")){
+	        $parameter_subst = new parameters_subst($include_path."/parameters_subst/pdf_per_localisations_subst.xml", 0);
+	    } else {
+	        $parameter_subst = new parameters_subst($include_path."/parameters_subst/pdf_per_localisations.xml", 0);
+	    }
+	    $parameter_subst->extract();
+	    
+	    if(isset($deflt2docs_location)) {
+	        if (file_exists($include_path."/parameters_subst/pdf_per_localisations_subst.xml")){
+	            $parameter_subst = new parameters_subst($include_path."/parameters_subst/pdf_per_localisations_subst.xml", $deflt2docs_location);
+	        } else {
+	            $parameter_subst = new parameters_subst($include_path."/parameters_subst/pdf_per_localisations.xml", $deflt2docs_location);
+	        }
+	        $parameter_subst->extract();
+	    }
+	}
+	
+	protected function _init_default_parameters() {
+		
+	}
+	
+	protected function _init_default_positions() {
+	
+	}
+	
 	protected function _init() {
 		global $msg, $charset, $pmb_pdf_font;
-			
-		if($this->get_parameter_value('orient_page')) {
-			$this->orient_page = $this->get_parameter_value('orient_page');
-		}
 		
-		$format_page = explode('x',$this->get_parameter_value('format_page'));
-		if($format_page[0]) $this->largeur_page = $format_page[0];
-		if($format_page[1]) $this->hauteur_page = $format_page[1];
-		
-		$this->PDF = pdf_factory::make($this->orient_page, $this->unit, array($this->largeur_page, $this->hauteur_page));
+		$this->_init_PDF();
 		
 		$this->_init_marges();
 		
@@ -49,6 +73,8 @@ class lettre_PDF {
 		if($this->get_parameter_value('text_size')) {
 			$this->fs = $this->get_parameter_value('text_size');
 		}
+		$this->_init_default_parameters();
+		$this->_init_default_positions();
 	}
 	
 	protected function _open() {
@@ -60,23 +86,29 @@ class lettre_PDF {
 	}
 	
 	protected function get_parameter_value($name) {
+	    $parameter_name = static::get_parameter_prefix().'_'.$name;
+	    global $$parameter_name;
+	    return $$parameter_name;
+	}
+	
+	protected function set_parameter_value($name, $value) {
 		//A surcharger
 	}
 	
 	protected function _init_marges() {
 		$marges_page = explode(',', $this->get_parameter_value('marges_page'));
-		if ($marges_page[0]) $this->marge_haut = $marges_page[0];
-		if ($marges_page[1]) $this->marge_bas = $marges_page[1];
-		if ($marges_page[2]) $this->marge_droite = $marges_page[2];
-		if ($marges_page[3]) $this->marge_gauche = $marges_page[3];
+		if (!empty($marges_page[0])) $this->marge_haut = $marges_page[0];
+		if (!empty($marges_page[1])) $this->marge_bas = $marges_page[1];
+		if (!empty($marges_page[2])) $this->marge_droite = $marges_page[2];
+		if (!empty($marges_page[3])) $this->marge_gauche = $marges_page[3];
 	}
 	
 	protected function _init_position($name, $position=array()) {
-		if (isset($position[0]) && $position[0]) $this->x_{$name} = $position[0];
-		if (isset($position[1]) && $position[1]) $this->y_{$name} = $position[1];
-		if (isset($position[2]) && $position[2]) $this->l_{$name} = $position[2];
-		if (isset($position[3]) && $position[3]) $this->h_{$name} = $position[3];
-		if (isset($position[4]) && $position[4]) $this->fs_{$name} = $position[4];
+		if (isset($position[0]) && $position[0]) $this->{"x_".$name} = $position[0];
+		if (isset($position[1]) && $position[1]) $this->{"y_".$name} = $position[1];
+		if (isset($position[2]) && $position[2]) $this->{"l_".$name} = $position[2];
+		if (isset($position[3]) && $position[3]) $this->{"h_".$name} = $position[3];
+		if (isset($position[4]) && $position[4]) $this->{"fs_".$name} = $position[4];
 	}
 	
 	public function getLettre($format=0,$name='lettre.pdf') {
@@ -90,18 +122,34 @@ class lettre_PDF {
 	public function getFileName() {
 		return $this->filename;
 	}
+	
+	protected static function get_parameter_prefix() {
+	    return '';
+	}
+	
+	public static function get_instance($group='') {
+	    global $msg, $charset;
+	    global $base_path, $class_path, $include_path;
+	    
+	    $className = static::class;
+	    if($group) {
+	        $prefix = static::get_parameter_prefix();
+	        $print_parameter = $prefix."_print";
+	        global ${$print_parameter};
+	        if(!empty(${$print_parameter}) && file_exists($class_path."/pdf/".$group."/".${$print_parameter}.".class.php")) {
+	            require_once($class_path."/pdf/".$group."/".${$print_parameter}.".class.php");
+	            $className = ${$print_parameter};
+	        } else {
+	            require_once($class_path."/pdf/".$group."/".$className.".class.php");
+	        }
+	    } else {
+	        if(!empty(${$print_parameter}) && file_exists($class_path."/pdf/".${$print_parameter}.".class.php")) {
+	            require_once($class_path."/pdf/".${$print_parameter}.".class.php");
+	            $className = ${$print_parameter};
+	        } else {
+	            require_once($class_path."/pdf/".$className.".class.php");
+	        }
+	    }
+	    return new $className();
+	}
 }
-
-// class lettrePDF_factory {
-
-// 	public static function make() {
-
-// 		global $acquisition_pdfdev_print, $base_path;
-// 		$className = 'lettreDevis_PDF';
-// 		if (file_exists("$base_path/acquisition/achats/devis/$acquisition_pdfdev_print.class.php")) {
-// 			require_once("$base_path/acquisition/achats/devis/$acquisition_pdfdev_print.class.php");
-// 			$className = $acquisition_pdfdev_print;
-// 		}
-// 		return new $className();
-// 	}
-// }

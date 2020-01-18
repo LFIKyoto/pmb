@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docs_section.class.php,v 1.10 2017-07-11 15:10:04 dbellamy Exp $
+// $Id: docs_section.class.php,v 1.11 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -61,10 +61,10 @@ class docs_section {
 		global $dbh;
 	
 		// check sur le type de  la variable passée en paramètre
-		if(!sizeof($data) || !is_array($data)) {
-			// si ce n'est pas un tableau ou un tableau vide, on retourne 0
+		if ((empty($data) && !is_array($data)) || !is_array($data)) {
+		    // si ce n'est pas un tableau ou un tableau vide, on retourne 0
 			return 0;
-			}
+		}
 		// check sur les éléments du tableau
 		$long_maxi = pmb_mysql_field_len(pmb_mysql_query("SELECT section_libelle FROM docs_section limit 1"),0);
 		$data['section_libelle'] = rtrim(substr(preg_replace('/\[|\]/', '', rtrim(ltrim($data['section_libelle']))),0,$long_maxi));

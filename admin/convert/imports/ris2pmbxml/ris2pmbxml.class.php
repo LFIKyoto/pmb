@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ris2pmbxml.class.php,v 1.1 2018-07-25 06:19:18 dgoron Exp $
+// $Id: ris2pmbxml.class.php,v 1.2 2019-03-04 16:46:24 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -42,7 +42,7 @@ class ris2pmbxml extends convert {
 			
 		if (!$tab_functions) $tab_functions=new marc_list('function');
 		$fields=explode("\n",$notice);
-		$error="";
+		$error=$warning="";
 		if($fields)
 			$data="<notice>\n";
 		$lignes = static::organize_line($fields);
@@ -94,7 +94,10 @@ class ris2pmbxml extends convert {
 						$infos_isbn=$code;
 					} elseif(isISSN($code)){
 						$infos_issn=$code;
-					} else $error = "wrong ISBN/ISSN \n";
+					} else {
+						$infos_isbn=$infos_issn=$code;
+						$warning = "wrong ISBN/ISSN \n";
+					}
 				break;
 				case 'UR':
 					//URL
@@ -116,8 +119,8 @@ class ris2pmbxml extends convert {
 					} else if($year && !$month && !$day){
 						$date_sql = $year."-01-01";
 						$mention_date = $year;
-					}
-					break;
+					}			
+				break;
 				case 'Y1' :
 					$dates = explode("/",$value);
 					if($dates[0]) $year = $dates[0];
@@ -191,7 +194,6 @@ class ris2pmbxml extends convert {
 						$notes.='###';
 					}
 					$notes.= $value;
-					break;
 				break;	
 				case 'SP':
 					//Start page
@@ -257,6 +259,12 @@ class ris2pmbxml extends convert {
 		$data.="<f c='001' ind='  '>\n";
 		$data.=htmlspecialchars(microtime(),ENT_QUOTES,$charset);
 		$data.="</f>\n";
+
+		if($infos_isbn){
+			$data.="<f c='010' ind='  '>\n";
+			$data.="	<s c='a'>".htmlspecialchars($infos_isbn,ENT_QUOTES,$charset)."</s>\n";
+			$data.="</f>\n";
+		}
 	
 		if($titre){
 			$data.="<f c='200' ind='  '>\n";								
@@ -267,7 +275,7 @@ class ris2pmbxml extends convert {
 		if($editeur_nom || $publication_date || $editeur_ville){
 			$data.="<f c='210' ind='  '>\n";				
 			if($editeur_ville) $data.="	<s c='a'>".htmlspecialchars($editeur_ville,ENT_QUOTES,$charset)."</s>\n";		
-			if($editeur_nom) $data.="	<s c='c'>".htmlspecialchars($editeur_nom,ENT_QUOTES,$charset)."</s>\n";			
+			if($editeur_nom) $data.="	<s c='c'>".htmlspecialchars($editeur_nom,ENT_QUOTES,$charset)."</s>\n";
 			if($publication_date) $data.="	<s c='d'>".htmlspecialchars($publication_date,ENT_QUOTES,$charset)."</s>";	
 			$data.="</f>\n";
 		}	
@@ -440,6 +448,7 @@ class ris2pmbxml extends convert {
 	
 		if (!$error) $r['VALID'] = true; else $r['VALID']=false;
 		$r['ERROR'] = $error;
+		$r['WARNING'] = $warning;
 		$r['DATA'] = $data;
 		return $r;
 	}

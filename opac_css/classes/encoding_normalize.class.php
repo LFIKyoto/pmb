@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: encoding_normalize.class.php,v 1.10 2018-06-13 12:41:19 ngantier Exp $
+// $Id: encoding_normalize.class.php,v 1.10.6.1 2019-11-08 11:07:11 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -76,6 +76,9 @@ class encoding_normalize {
 	
 	public static function json_decode($obj,$assoc=false){
 	    $elem = json_decode($obj,$assoc);
+	    if (empty($elem)) {
+	        return;
+	    }
 	    foreach ($elem as $key =>$value){
 	        $json[encoding_normalize::charset_normalize($key,'utf-8')] = encoding_normalize::charset_normalize($value,'utf-8');
 	    }

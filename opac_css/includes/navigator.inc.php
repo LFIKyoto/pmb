@@ -3,7 +3,7 @@
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
 
-// $Id: navigator.inc.php,v 1.50 2018-10-31 11:23:01 ngantier Exp $
+// $Id: navigator.inc.php,v 1.52 2019-06-19 08:31:58 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -16,9 +16,11 @@ if ($lvl=="etagere_see")
 //Si le niveau 1 est shunté
 if(!isset($autolevel1)) $autolevel1 = '';
 if(!isset($get_last_query)) $get_last_query = '';
+if(!isset($facette_test)) $facette_test = '';
 if(!isset($map_emprises_query)) $map_emprises_query = array();
 if(!isset($_SESSION["nb_queries"])) $_SESSION["nb_queries"] = '';
 if(!isset($_SESSION["last_query"])) $_SESSION["last_query"] = '';
+if(!isset($mode)) $mode = '';
 
 if (($opac_autolevel2)&&($autolevel1)&&(!$get_last_query)&&($user_query)) {
 	//On fait la recherche tous les champs

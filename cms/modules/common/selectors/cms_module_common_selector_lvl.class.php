@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_lvl.class.php,v 1.11 2016-11-14 11:01:26 dgoron Exp $
+// $Id: cms_module_common_selector_lvl.class.php,v 1.12 2019-03-21 14:29:29 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -44,6 +44,19 @@ class cms_module_common_selector_lvl extends cms_module_common_selector{
 			"index",
 			//search_type_asked	
 			"simple_search",
+			"simple_search_mode_simple_search",
+			"simple_search_mode_auteur",
+			"simple_search_mode_categorie",
+			"simple_search_mode_collection",
+			"simple_search_mode_concept",
+			"simple_search_mode_docnum",
+			"simple_search_mode_indexint",
+			"simple_search_mode_keyword",
+			"simple_search_mode_editeur",
+			"simple_search_mode_souscollection",
+			"simple_search_mode_title",
+			"simple_search_mode_titre_uniforme",
+			"simple_search_mode_abstract",
 			"extended_search",
 			"term_search",
 			"tags_search",

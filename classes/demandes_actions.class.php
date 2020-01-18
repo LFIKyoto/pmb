@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_actions.class.php,v 1.47 2018-12-03 10:15:23 ngantier Exp $
+// $Id: demandes_actions.class.php,v 1.51 2019-08-27 10:15:58 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -41,7 +41,7 @@ class demandes_actions{
 	 * Constructeur
 	 */
 	public function __construct($id=0,$lazzy_load=true){
-		$id += 0;
+		$id = intval($id);
 		$this->fetch_data($id,$lazzy_load);
 	}
 	
@@ -119,7 +119,7 @@ class demandes_actions{
 			$this->actions_read_opac = 0;
 		}
 		
-		if(!sizeof($this->workflow)){
+		if(empty($this->workflow)){
 			$this->workflow = new workflow('ACTIONS','INITIAL');
 			$this->list_type = $this->workflow->getTypeList();
 			$this->list_statut = $this->workflow->getStateList();
@@ -602,7 +602,7 @@ class demandes_actions{
 			$list_actions = $js_liste_action.$form_liste_action;
 		}
 		$liste ="";
-		if(sizeof($actions)){
+		if (!empty($actions)) {
 			$parity=1;						
 			foreach($actions as $id_action=>$action){
 				
@@ -668,7 +668,7 @@ class demandes_actions{
 						<img src='".get_url_icon('jauge.png')."' style='height:16px;' width=\"".$action->progression_action."%\" title='".$action->progression_action."%' />
 						</span>
 					</td>
-					<td $onclick>".sizeof($action->notes)."</td>
+					<td $onclick>".count($action->notes)."</td>
 					
 					<td><input type='checkbox' id='chk_action_".$id_demande."[".$action->id_action."]' name='chk_action_".$id_demande."[]' value='".$action->id_action."'/></td>
 				"; 
@@ -723,24 +723,21 @@ class demandes_actions{
 	/*
 	 * Suppression d'une action 
 	 */
-	public static function delete(demandes_actions $action){
-		
-		global $dbh,$chk;
-		
-		if($action->id_action){
-			$action->fetch_data($action->id_action,false);
-			if(sizeof($action->notes)){
-				foreach($action->notes as $note){
+	public static function delete(demandes_actions $action) {
+		if (!empty($action->id_action)) {
+			$action->fetch_data($action->id_action, false);
+			if (!empty($action->notes)) {
+				foreach($action->notes as $note) {
 					demandes_notes::delete($note);
 				}
 			}
 			
-			$req = "delete from demandes_actions where id_action='".$action->id_action."'"; 
-			pmb_mysql_query($req,$dbh);
+			$req = "delete from demandes_actions where id_action='$action->id_action'"; 
+			pmb_mysql_query($req);
 
 			$q = "delete ed,eda from explnum_doc ed join explnum_doc_actions eda on ed.id_explnum_doc=eda.num_explnum_doc where eda.num_action=$action->id_action";
-			pmb_mysql_query($q, $dbh);
-			audit::delete_audit(AUDIT_ACTION,$action->id_action);
+			pmb_mysql_query($q);
+			audit::delete_audit(AUDIT_ACTION, $action->id_action);
  		}		
 	}
 	
@@ -794,9 +791,12 @@ class demandes_actions{
 					}
 				} else $list = "<tr><td>".htmlentities($msg['demandes_no_com'],ENT_QUOTES,$charset)."</td></tr>";
 			}
-		} else $list = "<tr><td>".htmlentities($msg['demandes_no_com'],ENT_QUOTES,$charset)."</td></tr>";
+    		$btn_action = "<input type='submit' class='bouton' name='close_fil' id='close_fil' value='".$msg['demandes_action_close_fil']."' onclick='this.form.act.value=\"close_fil\"'>";
+		} else {
+		    $list = "<tr><td>".htmlentities($msg['demandes_no_com'],ENT_QUOTES,$charset)."</td></tr>";
+    		$btn_action = "";
+		}
 		
-		$btn_action = "<input type='submit' class='bouton' name='close_fil' id='close_fil' value='".$msg['demandes_action_close_fil']."' onclick='this.form.act.value=\"close_fil\"'>";
 		$form_communication=str_replace('!!btn_action!!',$btn_action,$form_communication);
 		$form_communication=str_replace('!!form_title!!',$msg['demandes_action_com'],$form_communication);
 		$form_communication=str_replace('!!liste_comm!!',$list,$form_communication);
@@ -812,7 +812,7 @@ class demandes_actions{
 	public function show_planning_form(){
 		global $form_communication, $dbh, $charset, $msg;
 		
-		
+		$list = '';
 		$req_dmde = "select id_demande, titre_demande from demandes
 			join demandes_actions on num_demande=id_demande
 			join demandes_users du on du.num_demande=id_demande
@@ -854,11 +854,16 @@ class demandes_actions{
 							<td><input type='checkbox' id='chk[".$com->id_action."]' name='chk[]' value='".$com->id_action."'></td>
 						</tr>";
 					}
-				} else $list = "<tr><td>".htmlentities($msg['demandes_no_rdv_plan'],ENT_QUOTES,$charset)."</td></tr>";
+				} else {
+				    $list = "<tr><td>".htmlentities($msg['demandes_no_rdv_plan'],ENT_QUOTES,$charset)."</td></tr>";
+				}
 			}
-		} else $list = "<tr><td>".htmlentities($msg['demandes_no_rdv_plan'],ENT_QUOTES,$charset)."</td></tr>";
+    		$btn_action = "<input type='submit' class='bouton' name='close_rdv' id='close_rdv' value='".$msg['demandes_action_close_rdv']."'  onclick='this.form.act.value=\"close_rdv\"'>";
+		} else {
+		    $list = "<tr><td>".htmlentities($msg['demandes_no_rdv_plan'],ENT_QUOTES,$charset)."</td></tr>";
+    		$btn_action = "";
+		}
 		
-		$btn_action = "<input type='submit' class='bouton' name='close_rdv' id='close_rdv' value='".$msg['demandes_action_close_rdv']."'  onclick='this.form.act.value=\"close_rdv\"'>";
 		$form_communication=str_replace('!!btn_action!!',$btn_action,$form_communication);
 		$form_communication=str_replace('!!form_title!!',$msg['demandes_menu_rdv_planning'],$form_communication);
 		$form_communication=str_replace('!!liste_comm!!',$list,$form_communication);
@@ -872,6 +877,7 @@ class demandes_actions{
 	public function show_rdv_val_form(){
 		global $form_communication, $dbh, $charset, $msg;
 		
+		$list = '';
 		$req_dmde = "select id_demande, titre_demande from demandes
 			join demandes_actions on num_demande=id_demande
 			join demandes_users du on du.num_demande=id_demande
@@ -913,11 +919,16 @@ class demandes_actions{
 							<td><input type='checkbox' id='chk[".$com->id_action."]' name='chk[]' value='".$com->id_action."'></td>
 						</tr>";
 					}
-				} else $list = "<tr><td>".htmlentities($msg['demandes_no_rdv_val'],ENT_QUOTES,$charset)."</td></tr>";
+				} else {
+				    $list = "<tr><td>".htmlentities($msg['demandes_no_rdv_val'],ENT_QUOTES,$charset)."</td></tr>";
+				}
 			}
-		} else $list = "<tr><td>".htmlentities($msg['demandes_no_rdv_val'],ENT_QUOTES,$charset)."</td></tr>";
+    		$btn_action = "<input type='submit' class='bouton' name='val_rdv' id='val_rdv' value='".$msg['demandes_action_valid_rdv']."' onclick='this.form.act.value=\"val_rdv\"'>";
+		} else {
+		    $list = "<tr><td>".htmlentities($msg['demandes_no_rdv_val'],ENT_QUOTES,$charset)."</td></tr>";
+    		$btn_action = "";
+		}
 		
-		$btn_action = "<input type='submit' class='bouton' name='val_rdv' id='val_rdv' value='".$msg['demandes_action_valid_rdv']."' onclick='this.form.act.value=\"val_rdv\"'>";
 		$form_communication=str_replace('!!btn_action!!',$btn_action,$form_communication);
 		$form_communication=str_replace('!!form_title!!',$msg['demandes_menu_rdv_a_valide'],$form_communication);
 		$form_communication=str_replace('!!liste_comm!!',$list,$form_communication);
@@ -929,11 +940,15 @@ class demandes_actions{
 	 * Ferme toutes les discussions en cours
 	 */
 	public function close_fil(){
-		global $chk, $dbh;
+		global $chk;
 		
-		for($i=0;$i<count($chk);$i++){		
+		$nb_fil = 0;
+		if (is_array($chk)) {
+		    $nb_fil = count($chk);
+		}
+		for ($i = 0; $i < $nb_fil; $i++) {
 			$req = "update demandes_actions set statut_action=3 where id_action='".$chk[$i]."'";
-			pmb_mysql_query($req,$dbh);
+			pmb_mysql_query($req);
 		}
 	}
 	
@@ -941,11 +956,15 @@ class demandes_actions{
 	 * Annule tous les RDV
 	 */
 	public function close_rdv(){
-		global $chk, $dbh;
+		global $chk;
 		
-		for($i=0;$i<count($chk);$i++){		
+		$nb_rdv = 0;
+		if (is_array($chk)) {
+		    $nb_rdv = count($chk);
+		}
+		for ($i = 0; $i < $nb_rdv; $i++) {		
 			$req = "update demandes_actions set statut_action=3 where id_action='".$chk[$i]."'";
-			pmb_mysql_query($req,$dbh);
+			pmb_mysql_query($req);
 		}
 	}
 	
@@ -953,11 +972,15 @@ class demandes_actions{
 	 * Valide tous les RDV
 	 */
 	public function valider_rdv(){
-		global $chk, $dbh;
+		global $chk;
 		
-		for($i=0;$i<count($chk);$i++){		
+		$nb_rdv = 0;
+		if (is_array($chk)) {
+		    $nb_rdv = count($chk);
+		}
+		for ($i = 0; $i < $nb_rdv; $i++) {
 			$req = "update demandes_actions set statut_action=1 where id_action='".$chk[$i]."'";
-			pmb_mysql_query($req,$dbh);
+			pmb_mysql_query($req);
 		}
 	}
 	

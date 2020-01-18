@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sessions.inc.php,v 1.9 2018-08-08 09:34:36 ccraig Exp $
+// $Id: sessions.inc.php,v 1.10 2019-06-21 08:10:45 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -168,9 +168,11 @@ function startSession($SESSNAME, $login) {
 	header("Expires: Sat, 01 Jan 2000 00:00:00 GMT");
 	header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT");
 	header("Cache-Control: post-check=0, pre-check=0",false);
-	session_cache_limiter('must-revalidate');
-	session_name("pmb".SESSid);
-	session_start();
+	if (session_status() !== PHP_SESSION_ACTIVE) {
+    	session_cache_limiter('must-revalidate');
+    	session_name("pmb".SESSid);
+	    session_start();
+	}
 
 	return CHECK_EMPR_SESSION_OK ;
 	}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_display.class.php,v 1.24 2018-12-27 16:06:03 dgoron Exp $
+// $Id: sel_display.class.php,v 1.27 2019-08-20 09:18:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,6 +12,7 @@ require_once("$class_path/editor.class.php");
 require_once("$class_path/collection.class.php");
 require_once("$class_path/subcollection.class.php");
 require_once("$class_path/serie.class.php");
+require_once("$class_path/serialcirc_diff.class.php");
 require_once("$include_path/notice_authors.inc.php");
 require_once("$include_path/isbn.inc.php");
 
@@ -280,10 +281,18 @@ class sel_mono_display {
 		if($this->notice->ed2_id) {
 			$editeur = new editeur($this->notice->ed2_id);
 			$ed_isbd=$editeur->get_isbd();
-			$editeurs ? $editeurs .= '&nbsp;; '.$ed_isbd : $editeurs = $ed_isbd;
+			if ($editeurs) {
+			    $editeurs .= '&nbsp;; '.$ed_isbd;
+			} else {
+			    $editeurs = $ed_isbd;
+			}
 		}
 		if($this->notice->year) {
-			$editeurs ? $editeurs .= ', '.$this->notice->year : $editeurs = $this->notice->year;
+		    if ($editeurs) {
+		        $editeurs .= ', '.$this->notice->year;
+		    } else {
+		        $editeurs = $this->notice->year;
+		    }
 		}
 		if ($editeurs) {
 			$this->isbd .= ".&nbsp;-&nbsp;$editeurs";
@@ -549,7 +558,7 @@ class sel_serial_display {
 	
 	// creation contenu
 	public function doContent() {
-		global $dbh, $msg;
+		global $msg;
 		global $fonction_auteur;
 		global $pmb_etat_collections_localise, $pmb_droits_explr_localises, $explr_visible_mod;
 		
@@ -607,22 +616,27 @@ class sel_serial_display {
 		// zone de l'adresse
 		if($this->notice->ed1_id) {
 			$editeur = new editeur($this->notice->ed1_id);
-			$editeurs .= $editeur->get_isbd();
+			$editeurs = $editeur->get_isbd();
 		}
 		if($this->notice->ed2_id) {
 			$editeur = new editeur($this->notice->ed2_id);
 			$ed_isbd=$editeur->get_isbd(); 
-			if($editeurs) {
+			if (!empty($editeurs)) {
 				$editeurs .= '&nbsp;; '.$ed_isbd;
 			} else {
-				$editeurs .= $ed_isbd;
+				$editeurs = $ed_isbd;
 			}
 		}
 
-		if($this->notice->year) 
-			$editeurs ? $editeurs .= ', '.$this->notice->year : $editeurs = $this->notice->year;
+		if($this->notice->year) {
+		    if (!empty($editeurs)) {
+		        $editeurs .= ', '.$this->notice->year;
+		    } else {
+		        $editeurs = $this->notice->year;
+		    }
+		}
 			
-		if($editeurs) {
+		if (!empty($editeurs)) {
 			$this->isbd .= ".&nbsp;-&nbsp;$editeurs";
 		}
 
@@ -639,15 +653,15 @@ class sel_serial_display {
 		// Si notice-mère alors on compte le nombre de numéros (bulletins)
 		if($this->notice->niveau_biblio=="s") {
 			$requete = "SELECT * FROM bulletins WHERE bulletin_notice=".$this->notice_id;
-			$Query = pmb_mysql_query($requete, $dbh);
+			$Query = pmb_mysql_query($requete);
 			$this->nb_bull=pmb_mysql_num_rows($Query);
 			while (($row = pmb_mysql_fetch_array($Query))) {
 				$requete2 = "SELECT count( * )  AS nb_art FROM  analysis WHERE analysis_bulletin =".$row['bulletin_id'];
-				$Query2 = pmb_mysql_query($requete2, $dbh);
+				$Query2 = pmb_mysql_query($requete2);
 				$analysis_array=pmb_mysql_fetch_array($Query2);
 				$this->nb_art+=$analysis_array['nb_art'];
 				$requete3 = "SELECT count( expL_id ) AS nb_expl FROM  exemplaires WHERE expl_bulletin =".$row['bulletin_id'];
-				$Query3 = pmb_mysql_query($requete3, $dbh);
+				$Query3 = pmb_mysql_query($requete3);
 				$expl_array=pmb_mysql_fetch_array($Query3);
 				$this->nb_expl+=$expl_array['nb_expl'];			
 			}
@@ -680,22 +694,28 @@ class sel_serial_display {
 				$table_location=",docs_location";
 				$select_location=",location_libelle";
 			} else {
-				$restrict_location=" group by id_serial";
+				$restrict_location = " group by id_serial";
+				$select_location = "";
+				$table_location = "";
 			}
 			$rqt="select state_collections$select_location from collections_state$table_location where id_serial=".$this->notice_id.$restrict_location;
 			$execute_query=pmb_mysql_query($rqt);
 			if ($execute_query) {
 				if (pmb_mysql_num_rows($execute_query)) {
-					$bool=false;
-					$affichage="<br /><strong>".$msg["4001"]."</strong><br />";
-					while (($r=pmb_mysql_fetch_object($execute_query))) {
-						if ($r->state_collections) {
-							if ($r->location_libelle) $affichage .= "<strong>".$r->location_libelle."</strong> : ";
+					$bool = false;
+					$affichage = "<br /><strong>".$msg["4001"]."</strong><br />";
+					while ($r = pmb_mysql_fetch_object($execute_query)) {
+						if (!empty($r->state_collections)) {
+						    if (!empty($r->location_libelle)) {
+						        $affichage .= "<strong>".$r->location_libelle."</strong> : ";
+						    }
 							$affichage .= $r->state_collections."<br />\n";
-							$bool=true;
+							$bool = true;
 						}	
 					}
-					if ($bool==true) $this->isbd .= $affichage;
+					if ($bool == true) {
+					    $this->isbd .= $affichage;
+					}
 				}
 			}
 		}
@@ -829,6 +849,7 @@ class sel_abt_display {
 	public $isbd = '';					// isbd notice
 	public $responsabilites =	array("responsabilites" => array(),"auteurs" => array());  //auteurs
 	public $aff_date_echeance = '';	//date echeance abt actuel	
+	public $aff_nb_recipients = 0;	//nombre de destinataires abt actuel
 	
  	public $base_url = '';				// URL à associer aux éléments cliquables
   	public $action = '';				// URL à associer aux notices		
@@ -891,8 +912,8 @@ class sel_abt_display {
 	
 	// creation header
 	public function doHeader() {
-		
 		global $dbh, $msg, $charset;
+		global $pmb_serialcirc_active;
 		
 		//aff. nom pério
 		$this->header = htmlentities($this->abt->tit1, ENT_QUOTES, $charset);
@@ -915,6 +936,12 @@ class sel_abt_display {
 
 		//aff. date echeance
 		$this->aff_date_echeance = format_date($this->abt->date_fin); 
+		
+		//aff. nb destinataire
+		if($pmb_serialcirc_active) {
+		    $serialcirc_diff=new serialcirc_diff(0,$this->abt_id);
+		    $this->aff_nb_recipients = $serialcirc_diff->diffusion_nb_recipients;
+		}
 		
 		//renv. nom abonnement
 		$this->abt_name.= $this->abt->abt_name;
@@ -1004,12 +1031,17 @@ class sel_abt_display {
 		}
 	
 		// zone de l'adresse
+		$ed_isbd = '';
 		if($this->abt->ed1_id) {
 			$editeur = new editeur($this->abt->ed1_id);
 			$ed_isbd .= $editeur->get_isbd();
 		}
 		if($this->abt->year) {
-			$ed_isbd ? $ed_isbd .= ', '.$this->abt->year : $ed_isbd = $this->abt->year;
+		    if ($ed_isbd) {
+		        $ed_isbd .= ', '.$this->abt->year;
+		    } else {
+		        $ed_isbd = $this->abt->year;
+		    }
 		}	
 		if($ed_isbd) {
 			$this->isbd .= ".&nbsp;-&nbsp;$ed_isbd";

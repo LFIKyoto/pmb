@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestion_multi.tpl.php,v 1.14 2017-09-28 09:23:36 dgoron Exp $
+// $Id: suggestion_multi.tpl.php,v 1.15 2019-05-27 12:26:22 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $multi_sug_form, $msg, $charset, $import_sug_form;
 
 $multi_sug_form= "<div id='make_mul_sugg'>
 <h1>".htmlentities($msg['acquisition_sug_ges'], ENT_QUOTES, $charset)."</h1>

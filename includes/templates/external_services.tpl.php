@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external_services.tpl.php,v 1.2 2013-04-11 08:21:05 mbertin Exp $
+// $Id: external_services.tpl.php,v 1.3 2019-05-27 13:05:23 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $es_admin_general, $current_module, $es_admin_peruser;
 
 //Administration générale
 $es_admin_general="

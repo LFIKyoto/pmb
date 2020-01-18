@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: liste_simple.class.php,v 1.9 2017-04-20 16:25:28 dgoron Exp $
+// $Id: liste_simple.class.php,v 1.10 2019-07-30 14:23:25 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/templates/liste_simple.tpl.php");
@@ -26,7 +26,7 @@ class liste_simple{
 		$this->colonne_id_nom = $col_id_name;
 		$this->colonne_lib_nom = $col_lib_name;
 		
-		$this->id_liste = $id_liste+0;
+		$this->id_liste = intval($id_liste);
 		
 		if(!$this->id_liste){
 			$this->lib_liste ='';

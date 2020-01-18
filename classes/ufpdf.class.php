@@ -11,13 +11,13 @@
  * @package UFPDF
  * @see fpdf.php
  * @see reportpdf.php
- * @version $Id: ufpdf.class.php,v 1.14 2018-12-20 11:00:19 mbertin Exp $
+ * @version $Id: ufpdf.class.php,v 1.18 2019-07-11 10:24:50 btafforeau Exp $
  */
 
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ufpdf.class.php,v 1.14 2018-12-20 11:00:19 mbertin Exp $
+// $Id: ufpdf.class.php,v 1.18 2019-07-11 10:24:50 btafforeau Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
@@ -296,6 +296,7 @@ public function GetStringWidth($s)
 
 public function AddFont($family,$style='',$file='')
 {
+    global $type, $ctg, $desc, $up, $ut, $cw, $originalsize, $size1, $size2;
   //Add a TrueType or Type1 font
   $family=strtolower($family);
   if($family=='arial')
@@ -746,11 +747,11 @@ $toreverse = '';
     if (preg_match('/[\x{0600}-\x{06FF}\x{0750}-\x{077F}]/u', $s)) {
   	  $i=0;
 	  while($i< strlen($s)) {
-	  	$char = $s[$i];
+	  	$char = substr($s, $i, 1);
 	  	// arabic character, take the second byte.
 	  	if (($char == chr(0xD8)) or ($char == chr(0xD9))) {
 	  		$i++;
-		  	$char .= $s[$i];
+	  		$char .= substr($s, $i, 1);
 	  	}
 	  	// we have to have three characters to see what's before and what follow the letter.
 	  	if (!$char1) $char1 = $char;
@@ -1054,8 +1055,7 @@ public function utf8_to_utf16be(&$txt, $bom = true) {
             $out .= chr($cp >> 8);
             $out .= chr($cp & 0xFF);
           }
-          continue;
-
+          break;
         case 3:
           $cp = (($q[0] ^ 0xE0) << 12) | (($q[1] ^ 0x80) << 6) | ($q[2] ^ 0x80);
           // Overlong sequence
@@ -1070,8 +1070,7 @@ public function utf8_to_utf16be(&$txt, $bom = true) {
             $out .= chr($cp >> 8);
             $out .= chr($cp & 0xFF);
           }
-          continue;
-
+          break;
         case 4:
           $cp = (($q[0] ^ 0xF0) << 18) | (($q[1] ^ 0x80) << 12) | (($q[2] ^ 0x80) << 6) | ($q[3] ^ 0x80);
           // Overlong sequence
@@ -1093,7 +1092,7 @@ public function utf8_to_utf16be(&$txt, $bom = true) {
             $out .= chr($s2 >> 8);
             $out .= chr($s2 & 0xFF);
           }
-          continue;
+          break;
       }
     }
   }
@@ -1155,8 +1154,7 @@ public function utf8_to_codepoints(&$txt) {
           else {
             $out[] = $cp;
           }
-          continue;
-
+          break;
         case 3:
           $cp = (($q[0] ^ 0xE0) << 12) | (($q[1] ^ 0x80) << 6) | ($q[2] ^ 0x80);
           // Overlong sequence
@@ -1170,8 +1168,7 @@ public function utf8_to_codepoints(&$txt) {
           else {
             $out[] = $cp;
           }
-          continue;
-
+          break;
         case 4:
           $cp = (($q[0] ^ 0xF0) << 18) | (($q[1] ^ 0x80) << 12) | (($q[2] ^ 0x80) << 6) | ($q[3] ^ 0x80);
           // Overlong sequence
@@ -1185,7 +1182,7 @@ public function utf8_to_codepoints(&$txt) {
           else {
             $out[] = $cp;
           }
-          continue;
+          break;
       }
     }
   }

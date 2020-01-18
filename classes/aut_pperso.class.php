@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: aut_pperso.class.php,v 1.23 2018-11-21 13:07:14 dgoron Exp $
+// $Id: aut_pperso.class.php,v 1.24 2019-07-22 09:47:15 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 // gestion champs perso des autorités
@@ -264,13 +264,21 @@ class aut_pperso {
 			if(pmb_mysql_num_rows($result)){
 				while($row = pmb_mysql_fetch_object($result)){
 					$row_name = $prefix.'_custom_'.$row->datatype;
-					$test_id = $id;
+					$test_id = $id;$test =  "$row_name = $test_id";
+					$test = "";
 					if($row_name == $prefix.'_custom_small_text'){
+					    if($aut_tab == AUT_TABLE_CONCEPT){
+					        // Petit merdier, on peut avoirnune URI...
+					        $test = "($row_name = '".$id."' or $row_name = '".onto_common_uri::get_uri($id)."')";
+					    }
 						$test_id =  "'".$id."'";
 					}
 					$id_name=$prefix.'_custom_origine';
+					if("" === $test){
+					   $test =  "$row_name = $test_id";
+					}
 					// Mémorisation des usages
-					$query_to_view= "SELECT ".$id_name." FROM ".$prefix."_custom_values where $row_name = ".$test_id." and ".$prefix."_custom_champ=".$row->idchamp;
+					$query_to_view= "SELECT ".$id_name." FROM ".$prefix."_custom_values where $test and ".$prefix."_custom_champ=".$row->idchamp;
 					$result_to_view = pmb_mysql_query($query_to_view);
 					if(pmb_mysql_num_rows($result_to_view)){
 						while($row_to_view = pmb_mysql_fetch_object($result_to_view)){

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bulletins.inc.php,v 1.6 2017-11-21 13:38:21 dgoron Exp $
+// $Id: bulletins.inc.php,v 1.7 2019-06-06 13:42:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -29,7 +29,7 @@ function show_results ($user_input, $nbr_lignes=0, $page=0, $id = 0) {
 	}  else {
 		$requete = "SELECT COUNT(1) FROM bulletins , notices where bulletin_notice=notice_id and (bulletin_numero like '%".str_replace("*","%",$user_input)."%' or tit1 like '%".str_replace("*","%",$user_input)."%' ) and bulletin_id!='".$no_display."' ";		
 	}	
-	$res = pmb_mysql_query($requete, $dbh);
+	$res = pmb_mysql_query($requete);
 	$nbr_lignes = @pmb_mysql_result($res, 0, 0);
 
 	if(!$page) $page=1;
@@ -39,7 +39,7 @@ function show_results ($user_input, $nbr_lignes=0, $page=0, $id = 0) {
 		// on lance la vraie requête
 		if($user_input=="") $requete = "SELECT  tit1, mention_date, date_date,bulletin_titre,bulletin_id , if(bulletin_titre is not null and bulletin_titre!='',concat(bulletin_titre,' - ',bulletin_numero),bulletin_numero) as bulletin_numero FROM bulletins, notices where bulletin_notice=notice_id and bulletin_id!=".$no_display." ORDER BY tit1, date_date LIMIT $debut,$nb_per_page ";
 		else $requete = "SELECT tit1, mention_date,bulletin_titre,bulletin_id, if(bulletin_titre is not null and bulletin_titre!='',concat(bulletin_titre,' - ',bulletin_numero),bulletin_numero) as bulletin_numero  FROM bulletins, notices where bulletin_notice=notice_id and (bulletin_numero like '%".str_replace("*","%",$user_input)."%' or tit1 like '%".str_replace("*","%",$user_input)."%' ) and bulletin_id!=".$no_display." ORDER BY tit1, date_date LIMIT $debut,$nb_per_page ";
-		$res = @pmb_mysql_query($requete, $dbh);
+		$res = @pmb_mysql_query($requete);
 		print "<table><tr>";
 		while(($bull=pmb_mysql_fetch_object($res))) {
 			$notice_entry = $bull->bulletin_titre."&nbsp;".$bull->mention_date;

@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facettes_external_search_compare.class.php,v 1.5 2017-11-07 15:40:02 ngantier Exp $
+// $Id: facettes_external_search_compare.class.php,v 1.6 2019-01-09 16:18:35 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -158,7 +158,10 @@ class facettes_external_search_compare extends facette_search_compare {
 	}
 	
 	public static function get_compare_checked_session() {
-		return $_SESSION['check_facettes_external_compare'];
+	    if (isset($_SESSION['check_facettes_external_compare'])) {
+	        return $_SESSION['check_facettes_external_compare'];
+	    }
+	    return null;
 	}
 	
 	public static function set_compare_checked_session($facettes_compare) {
@@ -170,7 +173,10 @@ class facettes_external_search_compare extends facette_search_compare {
 	}
 	
 	public static function get_groupby_checked_session() {
-		return $_SESSION['check_facettes_external_groupby'];
+	    if (isset($_SESSION['check_facettes_external_groupby'])) {
+	        return $_SESSION['check_facettes_external_groupby'];
+	    }
+		return null;
 	}
 	
 	public static function set_groupby_checked_session($facettes_groupby) {

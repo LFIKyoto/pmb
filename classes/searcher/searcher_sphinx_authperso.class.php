@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_sphinx_authperso.class.php,v 1.8 2018-09-20 10:00:02 arenou Exp $
+// $Id: searcher_sphinx_authperso.class.php,v 1.9 2019-05-27 12:55:59 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -29,12 +29,13 @@ class searcher_sphinx_authperso extends searcher_sphinx_authorities {
 	protected function get_search_indexes(){
 		global $lang, $id_authperso;
 		global $authperso_id;
+		global $sphinx_indexes_prefix;
 		//AR - C'est quand même pas super pratique...
 		if(!$id_authperso && $authperso_id){
 		    $id_authperso = $authperso_id;
 		}
 		if ($id_authperso) {
-			return $this->index_name.'_'.$id_authperso.'_'.$lang.','.$this->index_name.'_'.$id_authperso;
+		    return $sphinx_indexes_prefix.$this->index_name.'_'.$id_authperso.'_'.$lang.','.$sphinx_indexes_prefix.$this->index_name.'_'.$id_authperso;
 		}
 		// On cherche dans toutes les autorités persos
 		$indexes = '';

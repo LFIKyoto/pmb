@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc.class.php,v 1.4 2017-05-05 09:12:15 dgoron Exp $
+// $Id: serialcirc.class.php,v 1.5 2019-06-18 13:00:13 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -70,7 +70,7 @@ class serialcirc {
 	}
 	
 	public function get_serial_title(){
-		if(!$this->serial_title){
+	    if(!$this->serial_title && $this->num_abt){
 			$query="select tit1 from notices join abts_abts on num_notice = notice_id where abt_id = ".$this->num_abt;
 			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)){

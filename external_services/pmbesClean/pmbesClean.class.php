@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesClean.class.php,v 1.29 2018-10-03 10:22:52 mbertin Exp $
+// $Id: pmbesClean.class.php,v 1.30.6.1 2019-12-04 08:12:16 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -678,12 +678,12 @@ class pmbesClean extends external_services_api_class {
 			//ACTES
 			$result .= "<h3>".htmlentities($msg["nettoyage_reindex_act"], ENT_QUOTES, $charset)."</h3>";
 			
-			$query = pmb_mysql_query("SELECT actes.id_acte, actes.numero, entites.raison_sociale, actes.commentaires, actes.reference FROM actes, entites where num_fournisseur=id_entite");
+			$query = pmb_mysql_query("SELECT actes.id_acte, actes.numero, entites.raison_sociale, actes.commentaires, actes.reference, actes.nom_acte FROM actes, entites where num_fournisseur=id_entite");
 			if(pmb_mysql_num_rows($query)) {		
 				while($row = pmb_mysql_fetch_object($query)) {
 					// index acte
 					$req_update = "UPDATE actes ";
-					$req_update.= "SET index_acte = ' ".$row->numero." ".strip_empty_words($row->raison_sociale)." ".strip_empty_words($row->commentaires)." ".strip_empty_words($row->reference)." ' ";
+					$req_update.= "SET index_acte = ' ".$row->numero." ".strip_empty_words($row->raison_sociale)." ".strip_empty_words($row->commentaires)." ".strip_empty_words($row->reference)." ".strip_empty_words($row->nom_acte)." ' ";
 					$req_update.= "WHERE id_acte = ".$row->id_acte." ";
 					$update = pmb_mysql_query($req_update, $dbh);
 	
@@ -746,23 +746,25 @@ class pmbesClean extends external_services_api_class {
 		$result = '';
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$result .= "<h3>".htmlentities($msg["gen_phonetique"], ENT_QUOTES, $charset)."</h3>";
-
-			$notices = pmb_mysql_query("SELECT count(1) FROM words", $dbh);
-			$count = pmb_mysql_result($notices, 0, 0);
-			if ($count) {
-				while($row = pmb_mysql_fetch_object($query)){
-					$dmeta = new DoubleMetaPhone($row->word);
-					$stemming = new stemming($row->word);
-					$element_to_update = "";
-					if($dmeta->primary || $dmeta->secondary){
-						$element_to_update.="
+			$count = 0;
+			$res_notices = pmb_mysql_query("SELECT id_word, word FROM words", $dbh);
+			if($res_notices){
+				$count = pmb_mysql_num_rows($res_notices);
+				if($count){
+					while($row = pmb_mysql_fetch_object($res_notices)){
+						$dmeta = new DoubleMetaPhone($row->word);
+						$stemming = new stemming($row->word);
+						$element_to_update = "";
+						if($dmeta->primary || $dmeta->secondary){
+							$element_to_update.="
 						double_metaphone = '".$dmeta->primary." ".$dmeta->secondary."'";
-					}
-					if($element_to_update) $element_to_update.=",";
-					$element_to_update.="stem = '".$stemming->stem."'";
-					
-					if ($element_to_update){
-						pmb_mysql_query("update words set ".$element_to_update." where id_word = '".$row->id_word."'",$dbh);
+						}
+						if($element_to_update) $element_to_update.=",";
+						$element_to_update.="stem = '".$stemming->stem."'";
+							
+						if ($element_to_update){
+							pmb_mysql_query("update words set ".$element_to_update." where id_word = '".$row->id_word."'",$dbh);
+						}
 					}
 				}
 			}

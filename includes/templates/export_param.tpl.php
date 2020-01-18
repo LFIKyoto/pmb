@@ -3,9 +3,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export_param.tpl.php,v 1.5 2016-12-13 10:54:34 jpermanne Exp $
+// $Id: export_param.tpl.php,v 1.7 2019-05-27 09:24:47 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $form_entete_param, $form_param, $pmb_map_activate, $msg, $current_module;
 
 $form_entete_param="
 <form class='form-$current_module'  name=\"export_param_form\" action=\"!!action!!\" method=\"post\">
@@ -95,8 +97,17 @@ $form_param ="
 			</div>
 		</blockquote>
 	</blockquote>
-</div>
+</div>";
 
+if ($pmb_map_activate) {
+    $form_param.="
+    <div class='row'>
+    	<input type=\"checkbox\" id=\"map\" name=\"map\" value='1' !!checked_13!! /> 
+    	<label for=\"map\">" . $msg['export_map'] . "</label>
+    </div>";
+}
+
+$form_param.="
 <script type='text/javascript' >
 
 	function param_display(){

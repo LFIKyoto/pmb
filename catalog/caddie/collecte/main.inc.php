@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.8 2016-03-13 11:39:09 Alexandre Exp $
+// $Id: main.inc.php,v 1.9 2019-06-05 09:04:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $moyen, $catalog_layout, $msg;
 
 switch ($moyen) {
 	case 'import':

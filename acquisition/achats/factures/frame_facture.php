@@ -2,7 +2,9 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frame_facture.php,v 1.30 2016-06-16 12:01:18 jpermanne Exp $
+// $Id: frame_facture.php,v 1.34 2019-07-23 09:30:38 btafforeau Exp $
+
+global $action, $retour_liste;
 
 //Liste les lignes d'une facture
 $base_path="../../..";                            
@@ -21,6 +23,7 @@ require_once("$class_path/rubriques.class.php");
 require_once("$class_path/tva_achats.class.php");
 require_once("$class_path/actes.class.php");
 require_once("$class_path/lignes_actes.class.php");
+require_once("$class_path/lignes_actes_statuts.class.php");
 require_once("$class_path/liens_actes.class.php");
 require_once("$include_path/isbn.inc.php");
 require_once("$include_path/misc.inc.php");
@@ -228,7 +231,9 @@ function show_lig_from_cde() {
 			$nb_lig++;
 			$frame = str_replace('<!-- lignes -->', $frame_row.'<!-- lignes -->', $frame);						
 			$frame = str_replace('<!-- select_typ -->', $select_typ[0], $frame);
-			$frame = str_replace('<!-- select_bud -->', select_rub($id_cde, $row_cde->num_rubrique), $frame);		
+			$frame = str_replace('<!-- select_bud -->', select_rub($id_cde, $row_cde->num_rubrique), $frame);
+			$frame = str_replace('<!-- select_lgstat -->', lgstat::getLabelFromId($row_cde->statut), $frame);
+			$frame = str_replace('!!id_lgstat!!', $row_cde->statut, $frame);
 			$frame = str_replace('!!no!!', $nb_lig, $frame);
 			$frame = str_replace('!!id_lig!!', $row_cde->id_ligne, $frame);
 			$frame = str_replace('!!id_prod!!', $row_cde->num_produit, $frame);
@@ -310,7 +315,9 @@ function show_lig_fac() {
 			$nb_lig++;
 			$frame = str_replace('<!-- lignes -->', $frame_row_fa_arc.'<!-- lignes -->', $frame);
 			$frame = str_replace('<!-- select_typ -->', $select_typ[1], $frame);
-			$frame = str_replace('<!-- select_bud -->', $select_rub[1], $frame);		
+			$frame = str_replace('<!-- select_bud -->', $select_rub[1], $frame);
+			$frame = str_replace('<!-- select_lgstat -->', lgstat::getLabelFromId($row_fac->statut), $frame);
+			$frame = str_replace('!!id_lgstat!!', $row_fac->statut, $frame);
 			$frame = str_replace('!!no!!', $nb_lig, $frame);
 			$frame = str_replace('!!code!!', htmlentities($row_fac->code, ENT_QUOTES, $charset), $frame);
 			$frame = str_replace('!!lib!!', htmlentities($row_fac->libelle, ENT_QUOTES, $charset), $frame);	
@@ -393,6 +400,8 @@ function show_lig_fac() {
 					$frame = str_replace('<!-- lignes -->', $frame_row.'<!-- lignes -->', $frame);						
 					$frame = str_replace('<!-- select_typ -->', $select_typ[0], $frame);
 					$frame = str_replace('<!-- select_bud -->', select_rub($id_cde, $row_cde->num_rubrique), $frame);	
+					$frame = str_replace('<!-- select_lgstat -->', lgstat::getLabelFromId($row_cde->statut), $frame);
+					$frame = str_replace('!!id_lgstat!!', $row_cde->statut, $frame);
 					$frame = str_replace('!!no!!', $nb_lig, $frame);
 					$frame = str_replace('!!id_lig!!', $row_cde->id_ligne, $frame);
 					$frame = str_replace('!!id_prod!!', $row_cde->num_produit, $frame);
@@ -428,7 +437,9 @@ function show_lig_fac() {
 			$nb_lig++;
 			$frame = str_replace('<!-- lignes -->', $frame_row_fa.'<!-- lignes -->', $frame);
 			$frame = str_replace('<!-- select_typ -->', $select_typ[1], $frame);
-			$frame = str_replace('<!-- select_bud -->', $select_rub[1], $frame);		
+			$frame = str_replace('<!-- select_bud -->', $select_rub[1], $frame);
+			$frame = str_replace('<!-- select_lgstat -->', lgstat::getLabelFromId($row_fac->statut), $frame);
+			$frame = str_replace('!!id_lgstat!!', $row_fac->statut, $frame);
 			$frame = str_replace('!!no!!', $nb_lig, $frame);
 			$frame = str_replace('!!id_lig!!', $row_fac->lig_ref, $frame);
 			$frame = str_replace('!!id_prod!!', $row_fac->num_produit, $frame);
@@ -504,7 +515,7 @@ function show_lig_bak() {
 	global $frame_modif, $frame_row, $frame_row_fa_header, $frame_row_fa, $select_typ, $select_rub, $bt_sup_lig, $no_bt_sup_lig;
 	global $id_bibli, $id_fou, $id_cde, $id_fac;
 	global $max_lig, $max_lig_fac;
-	global $id_lig, $id_prod, $code, $lib, $prix, $typ, $tva, $rem , $lib_typ, $rub, $lib_rub, $sol, $fac;
+	global $id_lig, $id_prod, $code, $lib, $prix, $typ, $tva, $rem , $lib_typ, $rub, $lib_rub, $id_lgstat, $sol, $fac;
 	global $error, $error_msg;
 	global $acquisition_gestion_tva;
 
@@ -529,6 +540,7 @@ function show_lig_bak() {
 		$lig_afac[$i]['lib_typ']= stripslashes($lib_typ[$i]);
 		$lig_afac[$i]['rub']= $rub[$i];
 		$lig_afac[$i]['lib_rub']= stripslashes($lib_rub[$i]);
+		$lig_afac[$i]['id_lgstat']= $id_lgstat[$i];
 		$lig_afac[$i]['sol']= $sol[$i];
 		$lig_afac[$i]['fac']= $fac[$i];
 
@@ -548,6 +560,7 @@ function show_lig_bak() {
 		$lig_dfac[$i]['lib_typ']= stripslashes($lib_typ[$i]);
 		$lig_dfac[$i]['rub']= $rub[$i];
 		$lig_dfac[$i]['lib_rub']= stripslashes($lib_rub[$i]);
+		$lig_dfac[$i]['id_lgstat']= $id_lgstat[$i];
 		$lig_dfac[$i]['fac']= $fac[$i];
 		
 	}
@@ -561,20 +574,22 @@ function show_lig_bak() {
 		$frame = str_replace('<!-- lignes -->', $frame_row.'<!-- lignes -->', $frame);
 		$frame = str_replace('<!-- select_typ -->', $select_typ[0], $frame);
 		$frame = str_replace('<!-- select_bud -->', $select_rub[0], $frame);
+		$frame = str_replace('<!-- select_lgstat -->', lgstat::getLabelFromId($value['id_lgstat']), $frame);
+		$frame = str_replace('!!id_lgstat!!', $value['id_lgstat'], $frame);
 		$frame = str_replace('!!no!!', $index, $frame);
-		$frame = str_replace('!!id_lig!!', $lig_afac[$key]['id_lig'], $frame);
-		$frame = str_replace('!!id_prod!!', $lig_afac[$key]['id_prod'], $frame);
-		$frame = str_replace('!!code!!', $lig_afac[$key]['code'], $frame);
-		$frame = str_replace('!!lib!!', $lig_afac[$key]['lib'], $frame);
-		$frame = str_replace('!!prix!!', $lig_afac[$key]['prix'], $frame);
-		$frame = str_replace('!!typ!!', $lig_afac[$key]['typ'], $frame);
-		$frame = str_replace('!!tva!!', $lig_afac[$key]['tva'], $frame);
-		$frame = str_replace('!!rem!!', $lig_afac[$key]['rem'], $frame);
-		$frame = str_replace('!!lib_typ!!', $lig_afac[$key]['lib_typ'], $frame);
-		$frame = str_replace('!!id_rub!!', $lig_afac[$key]['rub'], $frame);
-		$frame = str_replace('!!lib_rub!!', $lig_afac[$key]['lib_rub'], $frame);
-		$frame = str_replace('!!sol!!', $lig_afac[$key]['sol'], $frame);
-		$frame = str_replace('!!fac!!', $lig_afac[$key]['fac'], $frame);		
+		$frame = str_replace('!!id_lig!!', $value['id_lig'], $frame);
+		$frame = str_replace('!!id_prod!!', $value['id_prod'], $frame);
+		$frame = str_replace('!!code!!', $value['code'], $frame);
+		$frame = str_replace('!!lib!!', $value['lib'], $frame);
+		$frame = str_replace('!!prix!!', $value['prix'], $frame);
+		$frame = str_replace('!!typ!!', $value['typ'], $frame);
+		$frame = str_replace('!!tva!!', $value['tva'], $frame);
+		$frame = str_replace('!!rem!!', $value['rem'], $frame);
+		$frame = str_replace('!!lib_typ!!', $value['lib_typ'], $frame);
+		$frame = str_replace('!!id_rub!!', $value['rub'], $frame);
+		$frame = str_replace('!!lib_rub!!', $value['lib_rub'], $frame);
+		$frame = str_replace('!!sol!!', $value['sol'], $frame);
+		$frame = str_replace('!!fac!!', $value['fac'], $frame);		
 		$index++;			
 		
 	}
@@ -591,31 +606,33 @@ function show_lig_bak() {
 			$frame = str_replace('<!-- lignes -->', $frame_row_fa.'<!-- lignes -->', $frame);
 			$frame = str_replace('<!-- select_typ -->', $select_typ[1], $frame);
 			$frame = str_replace('<!-- select_bud -->', $select_rub[1], $frame);
+			$frame = str_replace('<!-- select_lgstat -->', lgstat::getLabelFromId($value['id_lgstat']), $frame);
+			$frame = str_replace('!!id_lgstat!!', $value['id_lgstat'], $frame);
 			$frame = str_replace('!!no!!', $index, $frame);
-			$frame = str_replace('!!id_lig!!', $lig_dfac[$key]['id_lig'], $frame);
-			$frame = str_replace('!!id_prod!!', $lig_dfac[$key]['id_prod'], $frame);
-			$frame = str_replace('!!code!!', $lig_dfac[$key]['code'], $frame);
-			$frame = str_replace('!!lib!!', $lig_dfac[$key]['lib'], $frame);
-			$frame = str_replace('!!prix!!', $lig_dfac[$key]['prix'], $frame);
-			$frame = str_replace('!!typ!!', $lig_dfac[$key]['typ'], $frame);
-			$frame = str_replace('!!rem!!', $lig_dfac[$key]['rem'], $frame);
-			$frame = str_replace('!!lib_typ!!', $lig_dfac[$key]['lib_typ'], $frame);
-			$frame = str_replace('!!id_rub!!', $lig_dfac[$key]['rub'], $frame);
-			$frame = str_replace('!!lib_rub!!', $lig_dfac[$key]['lib_rub'], $frame);
+			$frame = str_replace('!!id_lig!!', $value['id_lig'], $frame);
+			$frame = str_replace('!!id_prod!!', $value['id_prod'], $frame);
+			$frame = str_replace('!!code!!', $value['code'], $frame);
+			$frame = str_replace('!!lib!!', $value['lib'], $frame);
+			$frame = str_replace('!!prix!!', $value['prix'], $frame);
+			$frame = str_replace('!!typ!!', $value['typ'], $frame);
+			$frame = str_replace('!!rem!!', $value['rem'], $frame);
+			$frame = str_replace('!!lib_typ!!', $value['lib_typ'], $frame);
+			$frame = str_replace('!!id_rub!!', $value['rub'], $frame);
+			$frame = str_replace('!!lib_rub!!', $value['lib_rub'], $frame);
 			$frame = str_replace('!!sol!!', '', $frame);
-			$frame = str_replace('!!fac!!', $lig_dfac[$key]['fac'], $frame);		
+			$frame = str_replace('!!fac!!', $value['fac'], $frame);		
 			$index++;
 
 
 			//calcul des montants ht, ttc, tva			
 			if ($acquisition_gestion_tva) {
-				$lig_ht = $lig_dfac[$key]['fac'] * $lig_dfac[$key]['prix'] * (1-($lig_dfac[$key]['rem']/100)) ;
+				$lig_ht = $value['fac'] * $value['prix'] * (1-($value['rem']/100)) ;
 				$tot_ht = $tot_ht + $lig_ht;
-				$tot_tva = $tot_tva + ($lig_ht*($lig_dfac[$key]['tva']/100) );
+				$tot_tva = $tot_tva + ($lig_ht*($value['tva']/100) );
 				$tot_ttc = $tot_ht + $tot_tva;						
-				$frame = str_replace('!!tva!!', $lig_dfac[$key]['tva'], $frame);
+				$frame = str_replace('!!tva!!', $value['tva'], $frame);
 			} else {
-				$lig_ttc = $lig_dfac[$key]['fac'] * $lig_dfac[$key]['prix'] * (1-($lig_dfac[$key]['rem']/100)) ;
+				$lig_ttc = $value['fac'] * $value['prix'] * (1-($value['rem']/100)) ;
 				$tot_ttc = $tot_ttc + $lig_ttc;
 				$frame = str_replace('!!tva!!', '', $frame);											
 			}		
@@ -683,7 +700,7 @@ function search_lig_fac() {
 	global $frame_modif, $frame_row, $frame_row_fa_header, $frame_row_fa, $select_typ, $select_rub, $bt_sup_lig, $no_bt_sup_lig;
 	global $id_bibli, $id_cde, $id_fac;
 	global $max_lig, $max_lig_fac;
-	global $id_lig, $id_prod, $code, $lib, $prix, $typ, $tva, $rem, $lib_typ, $rub, $lib_rub, $sol, $fac;
+	global $id_lig, $id_prod, $code, $lib, $prix, $typ, $tva, $rem, $lib_typ, $rub, $lib_rub, $id_lgstat, $sol, $fac;
 	global $focus, $barcode;
 	global $error, $error_msg;
 	global $warning, $warning_msg;
@@ -710,6 +727,7 @@ function search_lig_fac() {
 		$lig_afac[$i]['lib_typ']= stripslashes($lib_typ[$i]);
 		$lig_afac[$i]['rub']= $rub[$i];
 		$lig_afac[$i]['lib_rub']= stripslashes($lib_rub[$i]);
+		$lig_afac[$i]['id_lgstat']= $id_lgstat[$i];
 		$lig_afac[$i]['sol']= $sol[$i];
 		$lig_afac[$i]['fac']= $fac[$i];
 
@@ -729,6 +747,7 @@ function search_lig_fac() {
 		$lig_dfac[$i]['lib_typ']= stripslashes($lib_typ[$i]);
 		$lig_dfac[$i]['rub']= $rub[$i];
 		$lig_dfac[$i]['lib_rub']= stripslashes($lib_rub[$i]);
+		$lig_dfac[$i]['id_lgstat']= $id_lgstat[$i];
 		$lig_dfac[$i]['fac']= $fac[$i];
 			
 	}
@@ -736,24 +755,15 @@ function search_lig_fac() {
 	//recherche du code saisi
 	$trouve = 0;
 	foreach($lig_afac as $key=>$value) {
-		
-		if($lig_afac[$key]['code'] == $barcode) {	//Code trouvé
-
+		if($value['code'] == $barcode) {	//Code trouvé
 			$trouve = $key;
-
-				if( ($lig_afac[$key]['fac'] < $lig_afac[$key]['sol']) ) {	
-				
+				if( ($value['fac'] < $value['sol']) ) {	
 					//La qté saisie est inférieure à la qté restant à recevoir >> Sortie
 					break;
-					
 				//Sinon, si la quantité saisie est égale à la quantité restant à recevoir >> On recherche plus avant 
-									
 			}
-			
 		}	
-				
 	}
-
 
 	$index = 1;	
 	$max_lig = count($lig_afac);
@@ -768,20 +778,22 @@ function search_lig_fac() {
 		$frame = str_replace('<!-- lignes -->', $frame_row.'<!-- lignes -->', $frame);
 		$frame = str_replace('<!-- select_typ -->', $select_typ[0], $frame);
 		$frame = str_replace('<!-- select_bud -->', $select_rub[0], $frame);
+		$frame = str_replace('<!-- select_lgstat -->', lgstat::getLabelFromId($value['id_lgstat']), $frame);
+		$frame = str_replace('!!id_lgstat!!', $value['id_lgstat'], $frame);
 		$frame = str_replace('!!no!!', $index, $frame);
-		$frame = str_replace('!!id_lig!!', $lig_afac[$key]['id_lig'], $frame);
-		$frame = str_replace('!!id_prod!!', $lig_afac[$key]['id_prod'], $frame);
-		$frame = str_replace('!!code!!', $lig_afac[$key]['code'], $frame);
-		$frame = str_replace('!!lib!!', $lig_afac[$key]['lib'], $frame);
-		$frame = str_replace('!!prix!!', $lig_afac[$key]['prix'], $frame);
-		$frame = str_replace('!!typ!!', $lig_afac[$key]['typ'], $frame);
-		$frame = str_replace('!!tva!!', $lig_afac[$key]['tva'], $frame);
-		$frame = str_replace('!!rem!!', $lig_afac[$key]['rem'], $frame);
-		$frame = str_replace('!!lib_typ!!', $lig_afac[$key]['lib_typ'], $frame);
-		$frame = str_replace('!!id_rub!!', $lig_afac[$key]['rub'], $frame);
-		$frame = str_replace('!!lib_rub!!', $lig_afac[$key]['lib_rub'], $frame);
-		$frame = str_replace('!!sol!!', $lig_afac[$key]['sol'], $frame);
-		$frame = str_replace('!!fac!!', $lig_afac[$key]['fac'], $frame);		
+		$frame = str_replace('!!id_lig!!', $value['id_lig'], $frame);
+		$frame = str_replace('!!id_prod!!', $value['id_prod'], $frame);
+		$frame = str_replace('!!code!!', $value['code'], $frame);
+		$frame = str_replace('!!lib!!', $value['lib'], $frame);
+		$frame = str_replace('!!prix!!', $value['prix'], $frame);
+		$frame = str_replace('!!typ!!', $value['typ'], $frame);
+		$frame = str_replace('!!tva!!', $value['tva'], $frame);
+		$frame = str_replace('!!rem!!', $value['rem'], $frame);
+		$frame = str_replace('!!lib_typ!!', $value['lib_typ'], $frame);
+		$frame = str_replace('!!id_rub!!', $value['rub'], $frame);
+		$frame = str_replace('!!lib_rub!!', $value['lib_rub'], $frame);
+		$frame = str_replace('!!sol!!', $value['sol'], $frame);
+		$frame = str_replace('!!fac!!', $value['fac'], $frame);		
 		$index++;			
 		
 	}
@@ -798,31 +810,33 @@ function search_lig_fac() {
 			$frame = str_replace('<!-- lignes -->', $frame_row_fa.'<!-- lignes -->', $frame);
 			$frame = str_replace('<!-- select_typ -->', $select_typ[1], $frame);
 			$frame = str_replace('<!-- select_bud -->', $select_rub[1], $frame);
+			$frame = str_replace('<!-- select_lgstat -->', lgstat::getLabelFromId($value['id_lgstat']), $frame);
+			$frame = str_replace('!!id_lgstat!!', $value['id_lgstat'], $frame);
 			$frame = str_replace('!!no!!', $index, $frame);
-			$frame = str_replace('!!id_lig!!', $lig_dfac[$key]['id_lig'], $frame);
-			$frame = str_replace('!!id_prod!!', $lig_dfac[$key]['id_prod'], $frame);
-			$frame = str_replace('!!code!!', $lig_dfac[$key]['code'], $frame);
-			$frame = str_replace('!!lib!!', $lig_dfac[$key]['lib'], $frame);
-			$frame = str_replace('!!prix!!', $lig_dfac[$key]['prix'], $frame);
-			$frame = str_replace('!!typ!!', $lig_dfac[$key]['typ'], $frame);
-			$frame = str_replace('!!rem!!', $lig_dfac[$key]['rem'], $frame);
-			$frame = str_replace('!!lib_typ!!', $lig_dfac[$key]['lib_typ'], $frame);
-			$frame = str_replace('!!id_rub!!', $lig_dfac[$key]['rub'], $frame);
-			$frame = str_replace('!!lib_rub!!', $lig_dfac[$key]['lib_rub'], $frame);
+			$frame = str_replace('!!id_lig!!', $value['id_lig'], $frame);
+			$frame = str_replace('!!id_prod!!', $value['id_prod'], $frame);
+			$frame = str_replace('!!code!!', $value['code'], $frame);
+			$frame = str_replace('!!lib!!', $value['lib'], $frame);
+			$frame = str_replace('!!prix!!', $value['prix'], $frame);
+			$frame = str_replace('!!typ!!', $value['typ'], $frame);
+			$frame = str_replace('!!rem!!', $value['rem'], $frame);
+			$frame = str_replace('!!lib_typ!!', $value['lib_typ'], $frame);
+			$frame = str_replace('!!id_rub!!', $value['rub'], $frame);
+			$frame = str_replace('!!lib_rub!!', $value['lib_rub'], $frame);
 			$frame = str_replace('!!sol!!', '', $frame);
-			$frame = str_replace('!!fac!!', $lig_dfac[$key]['fac'], $frame);		
+			$frame = str_replace('!!fac!!', $value['fac'], $frame);		
 			$index++;
 
 
 			//calcul des montants ht, ttc, tva			
 			if ($acquisition_gestion_tva) {
-				$lig_ht = $lig_dfac[$key]['fac'] * $lig_dfac[$key]['prix'] * (1-($lig_dfac[$key]['rem']/100)) ;
+				$lig_ht = $value['fac'] * $value['prix'] * (1-($value['rem']/100)) ;
 				$tot_ht = $tot_ht + $lig_ht;
-				$tot_tva = $tot_tva + ($lig_ht*($lig_dfac[$key]['tva']/100) );
+				$tot_tva = $tot_tva + ($lig_ht*($value['tva']/100) );
 				$tot_ttc = $tot_ht + $tot_tva;						
-				$frame = str_replace('!!tva!!', $lig_dfac[$key]['tva'], $frame);
+				$frame = str_replace('!!tva!!', $value['tva'], $frame);
 			} else {
-				$lig_ttc = $lig_dfac[$key]['fac'] * $lig_dfac[$key]['prix'] * (1-($lig_dfac[$key]['rem']/100)) ;
+				$lig_ttc = $value['fac'] * $value['prix'] * (1-($value['rem']/100)) ;
 				$tot_ttc = $tot_ttc + $lig_ttc;
 				$frame = str_replace('!!tva!!', '', $frame);											
 			}		
@@ -864,7 +878,7 @@ function sup_lig_fac() {
 	global $frame_modif, $frame_row, $frame_row_fa_header, $frame_row_fa, $select_typ, $select_rub, $bt_sup_lig, $no_bt_sup_lig;
 	global $id_bibli, $id_cde, $id_fac;
 	global $max_lig, $max_lig_fac;
-	global $chk, $id_lig, $id_prod, $code, $lib, $prix, $typ, $tva, $rem, $lib_typ, $rub, $lib_rub, $sol, $fac;
+	global $chk, $id_lig, $id_prod, $code, $lib, $prix, $typ, $tva, $rem, $lib_typ, $rub, $lib_rub, $id_lgstat, $sol, $fac;
 	global $acquisition_gestion_tva;
 	
 	$tot_ht = 0;
@@ -891,6 +905,7 @@ function sup_lig_fac() {
 		$lig_afac[$i]['lib_typ']= stripslashes($lib_typ[$i]);
 		$lig_afac[$i]['rub']= $rub[$i];
 		$lig_afac[$i]['lib_rub']= stripslashes($lib_rub[$i]);
+		$lig_afac[$i]['id_lgstat']= $id_lgstat[$i];
 		$lig_afac[$i]['sol']= $sol[$i];
 		$lig_afac[$i]['fac']= $fac[$i];
 		
@@ -924,6 +939,7 @@ function sup_lig_fac() {
 				$lig_afac[$i]['lib_typ']= stripslashes($lib_typ[$i]);
 				$lig_afac[$i]['rub']= $rub[$i];
 				$lig_afac[$i]['lib_rub']= stripslashes($lib_rub[$i]);
+				$lig_afac[$i]['id_lgstat']= $id_lgstat[$i];
 				$lig_afac[$i]['sol']= $fac[$i];
 				$lig_afac[$i]['fac']= '0';
 				
@@ -942,6 +958,7 @@ function sup_lig_fac() {
 			$lig_dfac[$i]['lib_typ']= stripslashes($lib_typ[$i]);
 			$lig_dfac[$i]['rub']= $rub[$i];
 			$lig_dfac[$i]['lib_rub']= stripslashes($lib_rub[$i]);
+			$lig_dfac[$i]['id_lgstat']= $id_lgstat[$i];
 			$lig_dfac[$i]['sol']= $sol[$i];
 			$lig_dfac[$i]['fac']= $fac[$i];
 		
@@ -958,20 +975,22 @@ function sup_lig_fac() {
 		$frame = str_replace('<!-- lignes -->', $frame_row.'<!-- lignes -->', $frame);
 		$frame = str_replace('<!-- select_typ -->', $select_typ[0], $frame);
 		$frame = str_replace('<!-- select_bud -->', $select_rub[0], $frame);
+		$frame = str_replace('<!-- select_lgstat -->', lgstat::getLabelFromId($value['id_lgstat']), $frame);
+		$frame = str_replace('!!id_lgstat!!', $value['id_lgstat'], $frame);
 		$frame = str_replace('!!no!!', $index, $frame);
-		$frame = str_replace('!!id_lig!!', $lig_afac[$key]['id_lig'], $frame);
-		$frame = str_replace('!!id_prod!!', $lig_afac[$key]['id_prod'], $frame);
-		$frame = str_replace('!!code!!', $lig_afac[$key]['code'], $frame);
-		$frame = str_replace('!!lib!!', $lig_afac[$key]['lib'], $frame);
-		$frame = str_replace('!!prix!!', $lig_afac[$key]['prix'], $frame);
-		$frame = str_replace('!!typ!!', $lig_afac[$key]['typ'], $frame);
-		$frame = str_replace('!!tva!!', $lig_afac[$key]['tva'], $frame);
-		$frame = str_replace('!!rem!!', $lig_afac[$key]['rem'], $frame);
-		$frame = str_replace('!!lib_typ!!', $lig_afac[$key]['lib_typ'], $frame);
-		$frame = str_replace('!!id_rub!!', $lig_afac[$key]['rub'], $frame);
-		$frame = str_replace('!!lib_rub!!', $lig_afac[$key]['lib_rub'], $frame);
-		$frame = str_replace('!!sol!!', $lig_afac[$key]['sol'], $frame);
-		$frame = str_replace('!!fac!!', $lig_afac[$key]['fac'], $frame);		
+		$frame = str_replace('!!id_lig!!', $value['id_lig'], $frame);
+		$frame = str_replace('!!id_prod!!', $value['id_prod'], $frame);
+		$frame = str_replace('!!code!!', $value['code'], $frame);
+		$frame = str_replace('!!lib!!', $value['lib'], $frame);
+		$frame = str_replace('!!prix!!', $value['prix'], $frame);
+		$frame = str_replace('!!typ!!', $value['typ'], $frame);
+		$frame = str_replace('!!tva!!', $value['tva'], $frame);
+		$frame = str_replace('!!rem!!', $value['rem'], $frame);
+		$frame = str_replace('!!lib_typ!!', $value['lib_typ'], $frame);
+		$frame = str_replace('!!id_rub!!', $value['rub'], $frame);
+		$frame = str_replace('!!lib_rub!!', $value['lib_rub'], $frame);
+		$frame = str_replace('!!sol!!', $value['sol'], $frame);
+		$frame = str_replace('!!fac!!', $value['fac'], $frame);		
 		$index++;
 	}
 	$frame = str_replace('!!max_lig!!', $max_lig, $frame);
@@ -987,31 +1006,33 @@ function sup_lig_fac() {
 			$frame = str_replace('<!-- lignes -->', $frame_row_fa.'<!-- lignes -->', $frame);
 			$frame = str_replace('<!-- select_typ -->', $select_typ[1], $frame);
 			$frame = str_replace('<!-- select_bud -->', $select_rub[1], $frame);
+			$frame = str_replace('<!-- select_lgstat -->', lgstat::getLabelFromId($value['id_lgstat']), $frame);
+			$frame = str_replace('!!id_lgstat!!', $value['id_lgstat'], $frame);
 			$frame = str_replace('!!no!!', $index, $frame);
-			$frame = str_replace('!!id_lig!!', $lig_dfac[$key]['id_lig'], $frame);
-			$frame = str_replace('!!id_prod!!', $lig_dfac[$key]['id_prod'], $frame);
-			$frame = str_replace('!!code!!', $lig_dfac[$key]['code'], $frame);
-			$frame = str_replace('!!lib!!', $lig_dfac[$key]['lib'], $frame);
-			$frame = str_replace('!!prix!!', $lig_dfac[$key]['prix'], $frame);
-			$frame = str_replace('!!typ!!', $lig_dfac[$key]['typ'], $frame);
-			$frame = str_replace('!!rem!!', $lig_dfac[$key]['rem'], $frame);
-			$frame = str_replace('!!lib_typ!!', $lig_dfac[$key]['lib_typ'], $frame);
-			$frame = str_replace('!!id_rub!!', $lig_dfac[$key]['rub'], $frame);
-			$frame = str_replace('!!lib_rub!!', $lig_dfac[$key]['lib_rub'], $frame);
+			$frame = str_replace('!!id_lig!!', $value['id_lig'], $frame);
+			$frame = str_replace('!!id_prod!!', $value['id_prod'], $frame);
+			$frame = str_replace('!!code!!', $value['code'], $frame);
+			$frame = str_replace('!!lib!!', $value['lib'], $frame);
+			$frame = str_replace('!!prix!!', $value['prix'], $frame);
+			$frame = str_replace('!!typ!!', $value['typ'], $frame);
+			$frame = str_replace('!!rem!!', $value['rem'], $frame);
+			$frame = str_replace('!!lib_typ!!', $value['lib_typ'], $frame);
+			$frame = str_replace('!!id_rub!!', $value['rub'], $frame);
+			$frame = str_replace('!!lib_rub!!', $value['lib_rub'], $frame);
 			$frame = str_replace('!!sol!!', '', $frame);
-			$frame = str_replace('!!fac!!', $lig_dfac[$key]['fac'], $frame);		
+			$frame = str_replace('!!fac!!', $value['fac'], $frame);		
 			$index++;
 
 
 			//calcul des montants ht, ttc, tva			
 			if ($acquisition_gestion_tva) {
-				$lig_ht = $lig_dfac[$key]['fac'] * $lig_dfac[$key]['prix'] * (1-($lig_dfac[$key]['rem']/100)) ;
+				$lig_ht = $value['fac'] * $value['prix'] * (1-($value['rem']/100)) ;
 				$tot_ht = $tot_ht + $lig_ht;
-				$tot_tva = $tot_tva + ($lig_ht*($lig_dfac[$key]['tva']/100) );
+				$tot_tva = $tot_tva + ($lig_ht*($value['tva']/100) );
 				$tot_ttc = $tot_ht + $tot_tva;						
-				$frame = str_replace('!!tva!!', $lig_dfac[$key]['tva'], $frame);
+				$frame = str_replace('!!tva!!', $value['tva'], $frame);
 			} else {
-				$lig_ttc = $lig_dfac[$key]['fac'] * $lig_dfac[$key]['prix'] * (1-($lig_dfac[$key]['rem']/100)) ;
+				$lig_ttc = $value['fac'] * $value['prix'] * (1-($value['rem']/100)) ;
 				$tot_ttc = $tot_ttc + $lig_ttc;
 				$frame = str_replace('!!tva!!', '', $frame);											
 			}		
@@ -1145,7 +1166,7 @@ function update_fac($statut=0) {
 	//Création des lignes de facture
 	foreach ($tab_fac as $key=>$value) {
 
-		$lig_cde = new lignes_actes($tab_fac[$key]['id_lig']);
+		$lig_cde = new lignes_actes($value['id_lig']);
 		
 		$lig_fac = new lignes_actes();	
 		$lig_fac->num_acte = $factu->id_acte;
@@ -1155,11 +1176,11 @@ function update_fac($statut=0) {
 		$lig_fac->libelle = addslashes($lig_cde->libelle);
 		$lig_fac->num_acquisition = $lig_cde->num_acquisition; 				
 		$lig_fac->num_type = $lig_cde->num_type;
-		$lig_fac->prix = $tab_fac[$key]['prix'];
-		$lig_fac->tva = $tab_fac[$key]['tva'];
-		$lig_fac->remise = $tab_fac[$key]['rem'];
-		$lig_fac->num_rubrique = $tab_fac[$key]['rub'];
-		$lig_fac->nb = $tab_fac[$key]['fac'];
+		$lig_fac->prix = $value['prix'];
+		$lig_fac->tva = $value['tva'];
+		$lig_fac->remise = $value['rem'];
+		$lig_fac->num_rubrique = $value['rub'];
+		$lig_fac->nb = $value['fac'];
 		$lig_fac->date_cre = today();
 		$lig_fac->save();		
 	}
@@ -1196,13 +1217,16 @@ function update_fac($statut=0) {
 		if ($paye) $cde->statut = ($cde->statut | STA_ACT_PAY);		
 			
 	} else {
-		
-		//Sinon, la commande repasse en statut en cours
-		$cde->statut = ($cde->statut & ~(STA_ACT_FAC | STA_ACT_PAY));
+		//Commande soldé / facturé ?
+		if($cde->statut == (STA_ACT_REC | STA_ACT_FAC)) {
+			//On la passe en soldé / payé
+			$cde->statut = ($cde->statut | STA_ACT_PAY);
+		} else {
+			//Sinon, la commande repasse en statut en cours
+			$cde->statut = ($cde->statut & ~(STA_ACT_FAC | STA_ACT_PAY));
+		}
 	}
-		$cde->update_statut();
-
-	
+	$cde->update_statut();
 }  
 
 

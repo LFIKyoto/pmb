@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_type.tpl.php,v 1.1 2014-03-24 15:46:24 arenou Exp $
+// $Id: demandes_type.tpl.php,v 1.2 2019-05-27 13:47:15 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $demandes_type_form, $current_module, $msg, $charset;
 
 $demandes_type_form = "
 <form class='form-".$current_module."' id='simple_list_form' name='simple_list_form' method='post' action=\"!!list_simple_action!!\">

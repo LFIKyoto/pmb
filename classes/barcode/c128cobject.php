@@ -36,9 +36,9 @@ Contact author at: barcode@mribti.com
     
   class C128CObject extends BarcodeObject {
    var $mCharSet, $mChars;
-   function C128CObject($Width, $Height, $Style, $Value)
+   function __construct($Width, $Height, $Style, $Value)
    {
-     $this->BarcodeObject($Width, $Height, $Style);
+     parent::__construct($Width, $Height, $Style);
 	 $this->mValue   = $Value;
          $this->mChars   = array
           (

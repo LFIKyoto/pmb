@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: series.tpl.php,v 1.38 2018-01-24 10:54:46 vtouchard Exp $
+// $Id: series.tpl.php,v 1.43 2019-08-05 12:19:38 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 global $serie_form;
 global $serie_replace;
-global $pmb_autorites_verif_js;
+global $pmb_autorites_verif_js, $base_path, $msg, $current_module, $pmb_form_authorities_editables, $PMBuserid;
 // $serie_form : form saisie titre de série
 $serie_form = jscript_unload_question();
 $serie_form.= $pmb_autorites_verif_js!= "" ? "<script type='text/javascript' src='$base_path/javascript/$pmb_autorites_verif_js'></script>":"";
@@ -23,9 +23,12 @@ $serie_form.= "
 	});
 </script>
 <script type='text/javascript'>
-<!--
-	function test_form(form)
-	{
+	function test_form(form) {
+		if (typeof check_form == 'function') {
+			if (!check_form()) {
+				return false;
+			}
+		}
 	";
 
 if ($pmb_autorites_verif_js != "") {
@@ -52,7 +55,6 @@ function confirm_delete() {
 		} else
             document.forms['saisie_serie'].elements['serie_nom'].focus();
     }
--->
 </script>
 <script type='text/javascript'>
 	document.title='!!document_title!!';
@@ -88,7 +90,7 @@ function confirm_delete() {
 				<label class='etiquette' for='form_nom'>$msg[233]</label>
 			</div>
 			<div class='row'>
-				<input type='text' class='saisie-80em' name='serie_nom' value=\"!!serie_nom!!\" />
+				<input type='text' class='saisie-80em' name='serie_nom' value=\"!!serie_nom!!\" data-pmb-deb-rech='1'/>
 			</div>
 		</div>
 		!!concept_form!!
@@ -100,8 +102,10 @@ function confirm_delete() {
 <div class='row'>
 	<div class='left'>
 		<input type='button' class='bouton' value='$msg[76]' id='btcancel' onClick=\"unload_off();document.location='!!cancel_action!!';\" />
-		<input type='button' value='$msg[77]' class='bouton' id='btsubmit' onClick=\"if (test_form(this.form)) this.form.submit();\" />
-		!!remplace!!
+		<input type='button' value='$msg[77]' class='bouton' id='btsubmit' onClick=\"document.getElementById('save_and_continue').value=0; if (test_form(this.form)) this.form.submit();\" />
+		<input type='hidden' name='save_and_continue' id='save_and_continue' value='' />
+        <input type='button' id='update_continue' class='bouton' value='" . $msg['save_and_continue'] . "' onClick=\"document.getElementById('save_and_continue').value=1;if (test_form(this.form)) this.form.submit();\" />
+        !!remplace!!
 		!!voir_notices!!
 		!!audit_bt!!
 		<input type='hidden' name='page' value='!!page!!' />
@@ -130,7 +134,7 @@ $serie_replace = "
 			<label class='etiquette' for='par'>$msg[160]</label>
 		</div>
 		<div class='row'>
-			<input type='text' class='saisie-80emr' id='serie_libelle' name='serie_libelle' value=\"\" completion=\"series\" autfield=\"n_serie_id\" autexclude=\"!!id!!\"
+			<input type='text' class='saisie-80emr' id='serie_libelle' name='serie_libelle' value=\"\" completion=\"serie\" autfield=\"n_serie_id\" autexclude=\"!!id!!\"
 	    	onkeypress=\"if (window.event) { e=window.event; } else e=event; if (e.keyCode==9) { openPopUp('./select.php?what=serie&caller=serie_replace&param1=n_serie_id&param2=serie_libelle&no_display=!!id!!', 'selector'); }\" />
 	
 			<input class='bouton' type='button' onclick=\"openPopUp('./select.php?what=serie&caller=serie_replace&param1=n_serie_id&param2=serie_libelle&no_display=!!id!!', 'selector')\" title='$msg[157]' value='$msg[parcourir]' />

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution_area_form.class.php,v 1.9 2018-09-06 10:12:16 apetithomme Exp $
+// $Id: contribution_area_form.class.php,v 1.11 2019-06-04 10:09:48 ngantier Exp $
 if (stristr($_SERVER ['REQUEST_URI'], ".class.php"))
 	die("no access");
 
@@ -23,6 +23,7 @@ class contribution_area_form {
 	protected $uri = "" ;
 	protected $availableProperties = array();
 	protected $name="";
+	protected $comment="";
 	protected $parameters;
 	protected $unserialized_parameters;
 	protected $classname = ""; 
@@ -75,6 +76,7 @@ class contribution_area_form {
 				$this->parameters = $params->form_parameters;
 				$this->unserialized_parameters = json_decode($this->parameters);
 				$this->name = $params->form_title;
+				$this->comment = $params->form_comment;
 				$this->type = $params->form_type;
 			}
 		}
@@ -129,12 +131,11 @@ class contribution_area_form {
 				$this->active_properties[$uri] = $this->unserialized_parameters->$key;			
 
 				$tab_default_value = $this->unserialized_parameters->$key->default_value;				
-				
 				//on uniformise toutes les valeurs sous forme de tableau
 				$this->active_properties[$uri]->default_value = array();
 				if (is_array($tab_default_value)) {
 					for ($j = 0; $j < count($tab_default_value); $j++) {
-						if (!is_array($tab_default_value[$j]->value)) {
+					    if (isset($tab_default_value[$j]->value) && !is_array($tab_default_value[$j]->value)) {
 							$tab_default_value[$j]->value = array($tab_default_value[$j]->value);
 						}
 					}	
@@ -215,6 +216,10 @@ class contribution_area_form {
 	
 	public function get_name() {
 		return $this->name;
+	}
+	
+	public function get_comment() {
+	    return $this->comment;
 	}
 	
 	public function get_type() {

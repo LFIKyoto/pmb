@@ -8,7 +8,7 @@ if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 global $charset;
 global $segment_search_perso_list_form;
-global $segment_search_perso_list_line_form;
+global $segment_search_perso_list_line_form, $msg;
 
 $segment_search_perso_list_form = "
 

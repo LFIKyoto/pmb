@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_article_save.inc.php,v 1.2 2013-07-12 07:48:01 apetithomme Exp $
+// $Id: cms_article_save.inc.php,v 1.2.18.1 2019-10-25 06:52:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -14,3 +14,4 @@ $article->get_from_form();
 $article->save();
 
 print cms_editorial_tree::get_listing();
+print cms_editorial_tree::set_tree_selected_item($article->get_id(), 'article');

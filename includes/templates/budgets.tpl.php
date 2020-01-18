@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: budgets.tpl.php,v 1.19 2017-11-30 16:11:43 wlair Exp $
+// $Id: budgets.tpl.php,v 1.21 2019-08-01 13:52:57 dbellamy Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $search_form, $current_module, $msg, $charset, $acquisition_gestion_tva, $en_tete_view_bud_form, $view_bud_form, $view_lig_rub_form, $budg_form, $mnt_form, $pmb_gestion_devise;
+global $sel_typ_form, $rub_form, $mnt_rub_form, $ptab, $lig_rub, $lig_rub_img, $lig_indent, $bt_add_lig;
 
 //Template de choix du budget
 $search_form = "
@@ -117,7 +120,6 @@ $search_form = "
 
 		<!-- tableau rubriques budgetaires -->
 
-		</table>
 		<div class='row'>
 			<a href=\"javascript:expandAllImb()\"><img src='".get_url_icon('expand_all.gif')."' id='expandall' /></a>
 			<a href=\"javascript:collapseAllImb()\"><img src='".get_url_icon('collapse_all.gif')."' id='collapseall' /></a>
@@ -165,7 +167,6 @@ $search_form = "
 		}
 
 		</script>	
-		</div>
 	</div>
 </div>
 <form name='print_bud' method='post' action='./print_acquisition.php?categ=ach&sub=bud&action=print_budget&id_bibli=!!id_bibli!!&id_bud=!!id_bud!!' target='_blank'>

@@ -2,12 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr.inc.php,v 1.21 2017-11-29 16:13:10 ngantier Exp $
+// $Id: empr.inc.php,v 1.23.6.1 2019-11-15 15:26:43 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $include_path, $class_path, $item, $object_type, $msg, $caddie, $empr_location_id, $empr_codestat_filter, $empr_categ_filter, $action, $idemprcaddie, $sub_action;
+global $empr_sort_rows, $empr_show_rows, $empr_filter_rows, $clause, $filtered_query, $charset, $selected_objects, $pmb_relance_adhesion, $empr_statut_edit;
+
 include_once("$include_path/empr_cart.inc.php");
 include_once("$class_path/empr_caddie.class.php");
+require_once ($class_path."/list/readers/list_readers_edition_ui.class.php");
+require_once ($class_path."/list/readers/list_readers_circ_ui.class.php");
 
 if ($item) {
 	switch ($object_type) {
@@ -31,6 +36,10 @@ if ($item) {
 }
 
 if (!$object_type) $object_type="EMPR";
+if(!isset($caddie)) $caddie = array();
+if(!isset($empr_location_id)) $empr_location_id = '';
+if(!isset($empr_codestat_filter)) $empr_codestat_filter = '';
+if(!isset($empr_categ_filter)) $empr_categ_filter = '';
 switch ($action) {
 	case 'add_item':
 		if($idemprcaddie)$caddie[0]=$idemprcaddie;
@@ -81,7 +90,7 @@ switch ($action) {
 				$requete = "SELECT id_empr FROM empr ".stripslashes($clause);
 				$filter->original_query=$requete;
 				if($idemprcaddie)$caddie[0]=$idemprcaddie;
-				if ($caddie) {
+				if (is_array($caddie) && count($caddie)) {
 					//on stocke les quantités avant
 					foreach($caddie  as $idemprcaddie) {
 						$myCart = new empr_caddie($idemprcaddie);
@@ -112,11 +121,11 @@ switch ($action) {
 				} // fin if !$filster->error
 			}else{
 				$requete = "SELECT id_empr FROM empr ".stripslashes($clause);
-				$res = pmb_mysql_query($requete,$dbh);
+				$res = pmb_mysql_query($requete);
 				if ($res) {
 					if (pmb_mysql_num_rows($res) > 0) {
 						if($idemprcaddie)$caddie[0]=$idemprcaddie;
-						if ($caddie) {
+						if (is_array($caddie) && count($caddie)) {
 							foreach($caddie  as $idemprcaddie) {
 								$myCart = new empr_caddie($idemprcaddie);
 								while ($r=pmb_mysql_fetch_object($res)) {
@@ -142,149 +151,69 @@ switch ($action) {
 		break;
 	case 'add_empr_limite':
 		if ($sub_action=='add' && count($caddie)) {
-			// restriction localisation le cas échéant
-			if ($pmb_lecteurs_localises) {
-				if ($empr_location_id=="") $empr_location_id = $deflt2docs_location ;
-				if ($empr_location_id!=0) $restrict_localisation = " AND empr_location='$empr_location_id' ";
-				else $restrict_localisation = "";
+			if(!empty($selected_objects)) {
+				$readers_edition_ui_selected_objects = explode(',', $selected_objects);
 			}
-			if (($empr_statut_edit) && ($empr_statut_edit!=0)) {
-				$restrict_statut = " AND empr_statut='$empr_statut_edit' ";
-			} else {
-				$restrict_statut = "";
-			}
-			$restrict_categ = '';
-			if($empr_categ_filter) {
-				$restrict_categ = " AND empr_categ= '".$empr_categ_filter."' ";
-			}
-			$restrict_codestat = '';
-			if($empr_codestat_filter) {
-				$restrict_codestat = " AND empr_codestat= '".$empr_codestat_filter."' ";
-			}
-
-			$requete = "SELECT id_empr FROM empr where ((to_days(empr_date_expiration) - to_days(now()) ) <=  $pmb_relance_adhesion ) and empr_date_expiration >= now() $restrict_localisation $restrict_statut $restrict_categ $restrict_codestat ";
-
-			$res_rqt=pmb_mysql_query($requete);
-			foreach ( $caddie as $id_caddie => $coche) {
-       			if($coche){
-       				$myCart = new empr_caddie($id_caddie);
-					while ($r=pmb_mysql_fetch_object($res_rqt)) {
-						$myCart->add_item($r->id_empr);
-					} // fin while
-					pmb_mysql_data_seek($res_rqt,0);
-       			}
-			}
+			$list_readers_edition_ui = new list_readers_edition_ui(array('date_expiration_start' => date('Y-m-d'), 'date_expiration_end' =>'', 'date_expiration_limit' => '((to_days(empr_date_expiration) - to_days(now()) ) <=  '.$pmb_relance_adhesion.' )', 'change_categ' => ''));
+			$list_readers_edition_ui->run_action_add_caddie();
 			print "<script type='text/javascript'>window.close();</script>"; 
 		} else {
 			// function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = "add_item", $titre="", $restriction_panier="", $lien_edition=0, $lien_suppr=0, $lien_creation=1) {
-			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id&empr_statut_edit=$empr_statut_edit&empr_codestat_filter=$empr_codestat_filter&empr_categ_filter=$empr_categ_filter", "add_empr_limite",$msg["caddie_add_emprs"] , "", 0, 0, 0);
+			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id&empr_statut_edit=$empr_statut_edit&empr_codestat_filter=$empr_codestat_filter&empr_categ_filter=$empr_categ_filter&selected_objects=$selected_objects", "add_empr_limite",$msg["caddie_add_emprs"] , "", 0, 0, 0);
 		}
 		break;
 	case 'add_empr_depasse':
 		if ($sub_action=='add' && count($caddie)) {
-			// restriction localisation le cas échéant
-			if ($pmb_lecteurs_localises) {
-				if ($empr_location_id=="") $empr_location_id = $deflt2docs_location ;
-				if ($empr_location_id!=0) $restrict_localisation = " AND empr_location='$empr_location_id' ";
-				else $restrict_localisation = "";
-			}				
-			$restrict_categ = '';
-			if($empr_categ_filter) {
-				$restrict_categ = " AND empr_categ= '".$empr_categ_filter."' ";
+			if(!empty($selected_objects)) {
+				$readers_edition_ui_selected_objects = explode(',', $selected_objects);
 			}
-			$restrict_codestat = '';
-			if($empr_codestat_filter) {
-				$restrict_codestat = " AND empr_codestat= '".$empr_codestat_filter."' ";
-			}
-			
-			$requete = "SELECT id_empr FROM empr where empr_date_expiration < now() $restrict_localisation $restrict_categ $restrict_codestat ";
-			$res_rqt=pmb_mysql_query($requete);
-			foreach ( $caddie as $id_caddie => $coche) {
-       			if($coche){
-       				$myCart = new empr_caddie($id_caddie);
-					while ($r=pmb_mysql_fetch_object($res_rqt)) {
-						$myCart->add_item($r->id_empr);
-					} // fin while
-					pmb_mysql_data_seek($res_rqt,0);
-       			}
-			}
-			//$myCart->compte_items();
+			$list_readers_edition_ui = new list_readers_edition_ui(array('date_expiration_start' => '', 'date_expiration_end' => date('Y-m-d'), 'date_expiration_limit' => '', 'change_categ' => ''));
+			$list_readers_edition_ui->run_action_add_caddie();
 			print "<script type='text/javascript'>window.close();</script>"; 
 		} else {
 			// function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = "add_item", $titre="", $restriction_panier="", $lien_edition=0, $lien_suppr=0, $lien_creation=1) {
-			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id&empr_codestat_filter=$empr_codestat_filter&empr_categ_filter=$empr_categ_filter", "add_empr_depasse",$msg["caddie_add_emprs"] , "", 0, 0, 0);
+			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id&empr_codestat_filter=$empr_codestat_filter&empr_categ_filter=$empr_categ_filter&selected_objects=$selected_objects", "add_empr_depasse",$msg["caddie_add_emprs"] , "", 0, 0, 0);
 		}
 		break;
 	case 'add_empr_encours':
 		if ($sub_action=='add' && count($caddie)) {
-			// restriction localisation le cas échéant
-			if ($pmb_lecteurs_localises) {
-				if ($empr_location_id=="") $empr_location_id = $deflt2docs_location ;
-				if ($empr_location_id!=0) $restrict_localisation = " AND empr_location='$empr_location_id' ";
-				else $restrict_localisation = "";
+			if(!empty($selected_objects)) {
+				$readers_edition_ui_selected_objects = explode(',', $selected_objects);
 			}
-							
-			$restrict_categ = '';
-			if($empr_categ_filter) {
-				$restrict_categ = " AND empr_categ= '".$empr_categ_filter."' ";
-			}
-			$restrict_codestat = '';
-			if($empr_codestat_filter) {
-				$restrict_codestat = " AND empr_codestat= '".$empr_codestat_filter."' ";
-			}
-
-			$requete = "SELECT id_empr FROM empr where empr_date_expiration >= now() $restrict_localisation $restrict_categ $restrict_codestat ";
-			$res_rqt=pmb_mysql_query($requete);
-			foreach ( $caddie as $id_caddie => $coche) {
-       			if($coche){
-       				$myCart = new empr_caddie($id_caddie);
-					while ($r=pmb_mysql_fetch_object($res_rqt)) {
-						$myCart->add_item($r->id_empr);
-					} // fin while
-					pmb_mysql_data_seek($res_rqt,0);
-       			}
-			}
+			$list_readers_edition_ui = new list_readers_edition_ui(array('date_expiration_start' => date('Y-m-d'), 'date_expiration_end' => '', 'date_expiration_limit' => '', 'change_categ' => ''));
+			$list_readers_edition_ui->run_action_add_caddie();
 			print "<script type='text/javascript'>window.close();</script>"; 
 		} else {
 			// function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = "add_item", $titre="", $restriction_panier="", $lien_edition=0, $lien_suppr=0, $lien_creation=1) {
-			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id&empr_codestat_filter=$empr_codestat_filter&empr_categ_filter=$empr_categ_filter", "add_empr_encours",$msg["caddie_add_emprs"] , "", 0, 0, 0);
+			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id&empr_codestat_filter=$empr_codestat_filter&empr_categ_filter=$empr_categ_filter&selected_objects=$selected_objects", "add_empr_encours",$msg["caddie_add_emprs"] , "", 0, 0, 0);
 		}
 		break;
 	case 'add_empr_categ_change':
 		if ($sub_action=='add' && count($caddie)) {
-			// restriction localisation le cas échéant
-			if ($pmb_lecteurs_localises) {
-				if ($empr_location_id=="") $empr_location_id = $deflt2docs_location ;
-				if ($empr_location_id!=0) $restrict_localisation = " AND empr_location='$empr_location_id' ";
-				else $restrict_localisation = "";
-			}			
-			$restrict_categ = '';
-			if($empr_categ_filter) {
-				$restrict_categ = " AND empr_categ= '".$empr_categ_filter."' ";
+			if(!empty($selected_objects)) {
+				$readers_edition_ui_selected_objects = explode(',', $selected_objects);
 			}
-			$restrict_codestat = '';
-			if($empr_codestat_filter) {
-				$restrict_codestat = " AND empr_codestat= '".$empr_codestat_filter."' ";
-			}
-
-			$requete = "select id_empr from empr left join empr_categ on empr_categ = id_categ_empr ";
-			$requete .=" where ((((age_min<> 0) || (age_max <> 0)) && (age_max >= age_min)) && (((DATE_FORMAT( curdate() , '%Y' )-empr_year) < age_min) || ((DATE_FORMAT( curdate() , '%Y' )-empr_year) > age_max))) $restrict_localisation $restrict_categ $restrict_codestat ";
-			$res_rqt=pmb_mysql_query($requete);
-			foreach ( $caddie as $id_caddie => $coche) {
-       			if($coche){
-       				$myCart = new empr_caddie($id_caddie);
-					while ($r=pmb_mysql_fetch_object($res_rqt)) {
-						$myCart->add_item($r->id_empr);
-					} // fin while
-					pmb_mysql_data_seek($res_rqt,0);
-       			}
-			}
+			$list_readers_edition_ui = new list_readers_edition_ui(array('date_expiration_start' => '', 'date_expiration_end' => '', 'date_expiration_limit' => '', 'change_categ' => '((((age_min<> 0) || (age_max <> 0)) && (age_max >= age_min)) && (((DATE_FORMAT( curdate() , "%Y" )-empr_year) < age_min) || ((DATE_FORMAT( curdate() , "%Y" )-empr_year) > age_max)))'));
+			$list_readers_edition_ui->run_action_add_caddie();
 			print "<script type='text/javascript'>window.close();</script>"; 
 		} else {
 			// function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = "add_item", $titre="", $restriction_panier="", $lien_edition=0, $lien_suppr=0, $lien_creation=1) {
-			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id&empr_codestat_filter=$empr_codestat_filter&empr_categ_filter=$empr_categ_filter", "add_empr_categ_change",$msg["caddie_add_emprs"] , "", 0, 0, 0);
+			aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id&empr_codestat_filter=$empr_codestat_filter&empr_categ_filter=$empr_categ_filter&selected_objects=$selected_objects", "add_empr_categ_change",$msg["caddie_add_emprs"] , "", 0, 0, 0);
 		}
 		break;
+	case 'add_empr':
+	    if ($sub_action=='add' && count($caddie)) {
+	        if(!empty($selected_objects)) {
+	            $readers_circ_ui_selected_objects = explode(',', $selected_objects);
+	        }
+	        $list_readers_circ_ui = new list_readers_circ_ui();
+	        $message = $list_readers_circ_ui->run_action_add_caddie();
+	        print "<script type='text/javascript'>alert(\"$message\");window.close();</script>";
+	    } else {
+	        // function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = "add_item", $titre="", $restriction_panier="", $lien_edition=0, $lien_suppr=0, $lien_creation=1) {
+	        aff_paniers_empr(0, "./cart.php?object_type=$object_type&sub_action=add&empr_location_id=$empr_location_id&empr_codestat_filter=$empr_codestat_filter&empr_categ_filter=$empr_categ_filter&selected_objects=$selected_objects", "add_empr",$msg["caddie_add_emprs"] , "", 0, 0, 0);
+	    }
+	    break;
 	default:
 //		print "<h1>".$msg["fonct_no_accessible"]."</h1>";
 		if ($object_type == "GROUP")

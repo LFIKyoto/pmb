@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: perio_a2z.class.php,v 1.77 2018-12-28 15:27:22 mbertin Exp $
+// $Id: perio_a2z.class.php,v 1.81 2019-05-29 12:45:32 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -65,7 +65,7 @@ class perio_a2z {
 			$abt_actif = 1;
 		}
 		
-		$bull_id+=0;
+		$bull_id = intval($bull_id);
 		if($max_per_onglet){
 			$this->max_per_onglet=$max_per_onglet;
 		}
@@ -423,9 +423,10 @@ class perio_a2z {
 			$listeId="";
 			$title_tmp=array();
 			foreach($this->titles as $title){
-				if($listeId) $listeId.=",";
-				$listeId.=$title["id"];
-				$title_tmp[$title["id"]]=$title;
+				if ($listeId) $listeId.= ",";
+				// présence id notice externe es_...
+				$listeId.= "'" . $title["id"] . "'";
+				$title_tmp[$title["id"]] = $title;
 			}
 			
 			$aq=new analyse_query(stripslashes($datas."*"));
@@ -464,7 +465,8 @@ class perio_a2z {
 		
 		$myArray = explode("_",$onglet_sel);
 		$onglet_sel = $myArray[0];
-		$ongletSub_sel = $myArray[1];
+		$ongletSub_sel = 0;
+		if(!empty($myArray[1])) $ongletSub_sel = $myArray[1];
 	
 		if(!$this->onglets_contens){
 			if($flag_ajax)$form=$a2z_tpl;
@@ -489,6 +491,8 @@ class perio_a2z {
 		else $form=$avis_tpl_form_script."<div id='perio_a2z'>\n".$a2z_tpl."</div>";
 		$form_list="";
 		$form_sublist="";
+		$perio_id_list = '';
+		$perio_list = '';
 		foreach($this->onglets_contens as $onglet_num => $onglet){
 			$line=$onglet_a2z;
 			$line = str_replace('!!onglet_num!!',$onglet_num, $line);
@@ -612,22 +616,20 @@ class perio_a2z {
 	public function get_filtre_form(){
 		global $msg, $filtre_select;
 		
-		$sources_list=$this->get_external_sources_list();
-		if(!count($sources_list)) return "";
-		
-		$filtre_select+=0;
-		$selected=array();
+		if(!count($this->get_external_sources_list())) return "";		
+		$filtre_select = intval($filtre_select);
+		$selected = array();
+		$selected[0] = '';
+		$selected[1] = '';
+		$selected[2] = '';
 		$selected[$filtre_select]= " selected='selected' ";
-		$sel_categ.= "</select>";
-		$form=$msg["perio_a2z_filtre"]."
+		return $msg["perio_a2z_filtre"]."
 			<select class='saisie-25em' id='filtre_select' name='filtre_select' onchange=\"memo_onglet=new Array(); reload_all(); \">
 				<option value='0' $selected[0] >".$msg["perio_a2z_filtre_all"]."</option>
 				<option value='1' $selected[1] >".$msg["perio_a2z_fonds_propre"]."</option>
 				<option value='2' $selected[2] >".$msg["perio_a2z_fonds_externe"]."</option>
 			</select>
-		";
-		
-		return $form;
+		";		
 	}	
 	
 	public function get_onglet($onglet_sel='1_1'){
@@ -636,10 +638,12 @@ class perio_a2z {
 		global $filtre_select;
 		$myArray = explode("_",$onglet_sel);
 		$onglet_sel = $myArray[0];
-		$ongletSub_sel = $myArray[1];
+		$ongletSub_sel = 0;
+		if(!empty($myArray[1])) $ongletSub_sel = $myArray[1];
 		
 		$form=$a2z_tpl_ajax;
 		$form_list="";
+		$line = '';
 		if(count($this->onglets_sub_contens[$onglet_sel])){
 			foreach($this->onglets_sub_contens[$onglet_sel] as $onglet_num => $onglet){
 				if($onglet_num==$ongletSub_sel){
@@ -887,13 +891,17 @@ class perio_a2z {
 			$fin_value = str_replace("-","",$bull_date_end);
 			$date_deb_value = ($deb_value ? formatdate($deb_value) : '...');
 			$date_fin_value = ($fin_value ? formatdate($fin_value) : '...');
-			$date_debut = "<input type='text' style='width: 10em;' name='bull_date_start' id='bull_date_start' 
+			$date_debut = "<div id='inputs_bull_date_start'>
+			    <input type='text' style='width: 10em;' name='bull_date_start' id='bull_date_start' 
 					data-dojo-type='dijit/form/DateTextBox' required='false' value='".$bull_date_start."' />
 				<input type='button' class='bouton' name='del' value='X' onclick=\"empty_dojo_calendar_by_id('bull_date_start');\" />
+				</div>
 			";
-			$date_fin = "<input type='text' style='width: 10em;' name='bull_date_end' id='bull_date_end' 
+			$date_fin = "<div id='inputs_bull_date_end'>
+			    <input type='text' style='width: 10em;' name='bull_date_end' id='bull_date_end' 
 					data-dojo-type='dijit/form/DateTextBox' required='false' value='".$bull_date_end."' />
 				<input type='button' class='bouton' name='del' value='X' onclick=\"empty_dojo_calendar_by_id('bull_date_end');\" />
+				</div>
 			";
 			$bulletin_retard=$this->get_bulletin_retard($id);			
 			$tableau = "		

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: record_datas.class.php,v 1.98 2018-12-07 15:10:23 dgoron Exp $
+// $Id: record_datas.class.php,v 1.112.2.5 2019-11-28 10:52:27 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -24,6 +24,7 @@ require_once($class_path."/exemplaires.class.php");
 require_once($base_path."/admin/connecteurs/in/cairn/cairn.class.php");
 require_once($base_path."/admin/connecteurs/in/odilotk/odilotk.class.php");
 require_once($class_path."/notice.class.php");
+require_once($class_path."/emprunteur.class.php");
 
 global $tdoc;
 if (empty($tdoc)) $tdoc = new marc_list('doctype');
@@ -378,6 +379,12 @@ class record_datas {
 	private $availability;
 	
 	/**
+	 * Paramètres du PNB
+	 * @var array
+	 */
+	private $pnb_datas;
+	
+	/**
 	 * Paramètres de réservation
 	 * @var array
 	 */
@@ -490,6 +497,18 @@ class record_datas {
 	 * @var array
 	 */
 	private $source;
+	
+	/**
+	 * Lien de contribution pour un exemplaire de la notice
+	 * @var string
+	 */
+	private $expl_contribution_link;
+	
+	/**
+	 * Tableau d'oeuvres associees
+	 * @var array
+	 */
+	private $works_data;
 	
 	public function __construct($id) {
 		global $to_print;
@@ -727,7 +746,10 @@ class record_datas {
 			// Filtre ceux qui ne sont pas visibles à l'OPAC ou qui n'ont pas de valeur
 			if(isset($ppersos['FIELDS']) && is_array($ppersos['FIELDS']) && count($ppersos['FIELDS'])){
 				foreach ($ppersos['FIELDS'] as $pperso) {
-					if ($pperso['OPAC_SHOW'] && $pperso['AFF']) {
+				    if ($pperso['OPAC_SHOW'] && $pperso['AFF']) {
+				        if ($pperso["TYPE"] !== 'html') {
+				            $pperso['AFF'] = nl2br($pperso["AFF"]);
+				        }
 						$this->p_perso[$pperso['NAME']] = $pperso;
 					}
 				}
@@ -801,7 +823,7 @@ class record_datas {
 	 );
 	 */
 	public function get_responsabilites() {
-		global $fonction_auteur;
+	    global $fonction_auteur, $pmb_authors_qualification;
 
 		if (!count($this->responsabilites)) {
 			$this->responsabilites = array(
@@ -809,7 +831,7 @@ class record_datas {
 					'auteurs' => array()
 			);
 				
-			$query = "SELECT author_id, responsability_fonction, responsability_type, author_type,author_name, author_rejete, author_type, author_date, author_see, author_web, author_isni ";
+			$query = "SELECT id_responsability, author_id, responsability_fonction, responsability_type, author_type,author_name, author_rejete, author_type, author_date, author_see, author_web, author_isni ";
 			$query.= "FROM responsability, authors ";
 			$query.= "WHERE responsability_notice='".$this->id."' AND responsability_author=author_id ";
 			$query.= "ORDER BY responsability_type, responsability_ordre " ;
@@ -833,7 +855,22 @@ class record_datas {
 
 				//$authority = new authority(0, $notice->author_id, AUT_TABLE_AUTHORS);
 				$authority = authorities_collection::get_authority('authority', 0, ['num_object' => $notice->author_id, 'type_object' => AUT_TABLE_AUTHORS]);
-
+				
+				$qualification = '';
+				if ($pmb_authors_qualification) {
+				    if ($notice->responsability_type == 0) {
+				        $vedette_type = TYPE_NOTICE_RESPONSABILITY_PRINCIPAL;
+				    } elseif ($notice->responsability_type == 1) {
+				        $vedette_type = TYPE_NOTICE_RESPONSABILITY_AUTRE;
+				    } else {
+				        $vedette_type = TYPE_NOTICE_RESPONSABILITY_SECONDAIRE;				        
+				    }
+				    $qualif_id = vedette_composee::get_vedette_id_from_object($notice->id_responsability, $vedette_type);
+				    if($qualif_id){
+				        $qualif = new vedette_composee($qualif_id);
+				        $qualification = $qualif->get_label();
+				    }
+				}
 				$this->responsabilites['auteurs'][] = array(
 						'id' => $notice->author_id,
 						'fonction' => $notice->responsability_fonction,
@@ -843,6 +880,7 @@ class record_datas {
 						'date' => $notice->author_date,
 						'type' => $notice->author_type,
 						'fonction_aff' => ($notice->responsability_fonction ? $fonction_auteur[$notice->responsability_fonction] : ''),
+				        'qualification' => $qualification,
 						'auteur_isbd' => $auteur_isbd,
 						'auteur_titre' => $auteur_titre,
 						'info_bulle' => $info_bulle,
@@ -996,7 +1034,8 @@ class record_datas {
 	public function get_categories() {
 		if (!isset($this->categories)) {
 			global $opac_categories_affichage_ordre, $opac_categories_show_only_last;
-
+			global $opac_categories_categ_path_sep;
+			
 			$this->categories = array();
 			
 			// Tableau qui va nous servir à trier alphabétiquement les catégories
@@ -1015,7 +1054,7 @@ class record_datas {
 						$parent_id = $object->parent;
 						while ($parent_id && ($parent_id != 1) && (!in_array($parent_id, array($object->thes->num_noeud_racine, $object->thes->num_noeud_nonclasses, $object->thes->num_noeud_orphelins)))) {
 							$parent = authorities_collection::get_authority('category', $parent_id);
-							$format_label = $parent->libelle.':'.$format_label;
+							$format_label = $parent->libelle.($opac_categories_categ_path_sep ? $opac_categories_categ_path_sep : ':').$format_label;
 							$parent_id = $parent->parent;
 						}
 					}
@@ -1054,6 +1093,21 @@ class record_datas {
 			$this->titre_uniforme = new tu_notice($this->id);
 		}
 		return $this->titre_uniforme;
+	}
+	
+	/**
+	 * Retourne un tableau d'instances de titres uniformes
+	 * @return array
+	 */
+	public function get_works_data() {
+		if (empty($this->works_data)) {
+			$this->works_data = array();
+			$tu_notice = $this->get_titre_uniforme();
+			foreach ($tu_notice->ntu_data as $work) {
+				$this->works_data[] = new titre_uniforme($work->num_tu);
+			}
+		}
+		return $this->works_data;
 	}
 	
 	/**
@@ -1804,8 +1858,10 @@ class record_datas {
 			if (isset($expls_datas['expls']) && count($expls_datas['expls'])) {
 				foreach ($expls_datas['expls'] as $expl) {
 					if ($expl['pret_flag']) { // Pretable
-						if ($expl['flag_resa'] && !$next_return) { // Réservé
-							$availability = "reserved";
+						if ($expl['flag_resa']) { // Réservé
+							if(!$next_return) {
+								$availability = "reserved";
+							}
 						} else if ($expl['pret_retour']) { // Sorti
 							if (!$next_return || ($next_return > $expl['pret_retour'])) {
 								$next_return = $expl['pret_retour'];
@@ -2003,7 +2059,7 @@ class record_datas {
 	public function get_picture_url() {
 		if (!$this->picture_url && ($this->get_code() || $this->get_thumbnail_url())) {
 			if ($this->get_parameter_value('show_book_pics')=='1' && ($this->get_parameter_value('book_pics_url') || $this->get_thumbnail_url())) {
-				$this->picture_url=getimage_url($this->get_code(), $this->get_thumbnail_url());
+				$this->picture_url = getimage_url($this->get_code(), $this->get_thumbnail_url(), false, $this->get_id());
 			}
 		}
 		if (!$this->picture_url) {
@@ -2031,6 +2087,21 @@ class record_datas {
 		return $this->picture_title;
 	}
 	
+	public function get_pnb_datas() {
+	    $this->pnb_datas = array(
+	        'flag_pnb_visible' => false,
+	        'href' => "#",
+	        'onclick' => "",	        
+	    );
+	    $record_datas = record_display::get_record_datas($this->id);
+	    if ($record_datas->is_numeric()) {
+	        if ($record_datas->get_availability() && $_SESSION["user_code"]) {
+	            $this->pnb_datas['flag_pnb_visible'] = true;
+	            $this->pnb_datas['onclick'] ="pnb_post_loan_info(" . $this->id . ");return false;";
+	        }
+	    }
+	    return $this->pnb_datas;
+	}
 	/**
 	 * Retourne les informations de réservation
 	 * @return array $this->resas_datas = array('nb_resas', 'href', 'onclick', 'flag_max_resa', 'flag_resa_visible')
@@ -2344,7 +2415,7 @@ class record_datas {
 	public function check_accessibility_explnum($explnum_id=0) {
 		global $opac_show_links_invisible_docnums;
 		
-		$explnum_id +=0;
+		$explnum_id = intval($explnum_id);
 		
 		//vérification de la visibilité si non connecté
 		if(!$_SESSION['id_empr_session'] && $opac_show_links_invisible_docnums){
@@ -2383,6 +2454,8 @@ class record_datas {
 			global $opac_show_links_invisible_docnums;
 			global $gestion_acces_active,$gestion_acces_empr_notice,$gestion_acces_empr_docnum;
 
+			$allowed_mimetype  =array();
+			
 			$this->explnums_datas = array(
 					'nb_explnums' => 0,
 					'explnums' => array(),
@@ -2395,9 +2468,14 @@ class record_datas {
 									}
 								</script>'
 			);
-		
+			
+			//Ne pas lancer la requête SQL suivante si l'identifiant de la notice n'est pas connu
+			if(!$this->id) {
+				return $this->explnums_datas;
+			}
+			
 			global $_mimetypes_bymimetype_, $_mimetypes_byext_ ;
-			if (!count($_mimetypes_bymimetype_)) {
+			if (!is_array($_mimetypes_bymimetype_) || !count($_mimetypes_bymimetype_)) {
 				create_tableau_mimetype();
 			}
 			
@@ -2556,6 +2634,8 @@ class record_datas {
 								$explnum_datas['access_datas']['href'] = $this->get_parameter_value('url_base').'doc_num.php?explnum_id='.$expl->explnum_id;
 							}
 						}
+						
+						$explnum_datas['p_perso'] = explnum::get_p_perso($explnum_datas['id']);
 		
 						if ($_mimetypes_byext_[$expl->explnum_extfichier]["label"]) $explnum_datas['mimetype_label'] = $_mimetypes_byext_[$expl->explnum_extfichier]["label"] ;
 						elseif ($_mimetypes_bymimetype_[$expl->explnum_mimetype]["label"]) $explnum_datas['mimetype_label'] = $_mimetypes_bymimetype_[$expl->explnum_mimetype]["label"] ;
@@ -2750,6 +2830,21 @@ class record_datas {
 		return formatdate($this->notice->update_date);
 	}
 	
+	public function get_contributor() {
+		$contributor = new stdClass();
+		$query = "SELECT id_empr 
+			FROM empr
+			JOIN audit ON user_id = id_empr
+			JOIN notices ON object_id = notice_id AND type_obj=1 AND type_modif=1 AND type_user=1
+			WHERE notice_id = ".$this->id;
+		$result = pmb_mysql_query($query);
+		if(pmb_mysql_num_rows($result)) {
+			$id_empr = pmb_mysql_result($result, 0, 'id_empr');
+			$contributor = new emprunteur($id_empr);
+		}
+		return $contributor;
+	}
+	
 	public function get_coins() {
 		$coins = array();
 		switch ($this->get_niveau_biblio()){
@@ -2775,7 +2870,7 @@ class record_datas {
 				$coins['rft.atitle'] = $this->get_tit1();
 				$coins['rft.jtitle'] = $parent['title'];
 				if ($parent['numero']) {
-					$coins['rft.volume'] = $parent['numero'];
+				    $coins['rft.issue'] = $parent['numero'];
 				}
 		
 				if($parent['date']){
@@ -2876,9 +2971,84 @@ class record_datas {
 		return $coins;
 	}
 	
+	public function get_locations() {
+	    $locations = array();
+	    
+	    //Localisations des exemplaires
+	    $query = "SELECT distinct location_libelle FROM exemplaires JOIN docs_location ON docs_location.idlocation = exemplaires.expl_location WHERE expl_notice = '".$this->id."'";
+	    $query .= " AND docs_location.location_visible_opac=1";
+	    $result = pmb_mysql_query($query);
+	    while ($row = pmb_mysql_fetch_object($result)) {
+	        $locations[] = array(
+	            'label' => $row->location_libelle
+	        );
+	    }
+	    //Localisations des documents numériques
+	    $query = "SELECT distinct location_libelle FROM explnum JOIN explnum_location ON explnum_location.num_explnum = explnum.explnum_id JOIN docs_location ON docs_location.idlocation = explnum_location.num_location WHERE explnum_notice = '".$this->id."'";
+	    $query .= " AND docs_location.location_visible_opac=1";
+	    $result = pmb_mysql_query($query);
+	    while ($row = pmb_mysql_fetch_object($result)) {
+	        $locations[] = array(
+	            'label' => $row->location_libelle
+	        );
+	    }
+	    return $locations;
+	}
+	
+	public function get_lenders() {
+	    $lenders = array();
+	    
+	    //Localisations des exemplaires
+	    $query = "SELECT distinct lender_libelle FROM exemplaires JOIN lenders ON lenders.idlender = exemplaires.expl_owner WHERE expl_notice = '".$this->id."'";
+	    $result = pmb_mysql_query($query);
+	    while ($row = pmb_mysql_fetch_object($result)) {
+	        $lenders[] = array(
+	            'label' => $row->lender_libelle
+	        );
+	    }
+	    //Localisations des documents numériques
+	    $query = "SELECT distinct lender_libelle FROM explnum JOIN explnum_lenders ON explnum_lenders.explnum_lender_num_explnum = explnum.explnum_id JOIN lenders ON lenders.idlender = explnum_lenders.explnum_lender_num_lender WHERE explnum_notice = '".$this->id."'";
+	    $result = pmb_mysql_query($query);
+	    while ($row = pmb_mysql_fetch_object($result)) {
+	        $lenders[] = array(
+	            'label' => $row->location_libelle
+	        );
+	    }
+	    return $lenders;
+	}
+	
 	protected function get_parameter_value($name) {
 		$parameter_name = 'opac_'.$name;
-		global $$parameter_name;
-		return $$parameter_name;
+		global ${$parameter_name};
+		return ${$parameter_name};
+	}
+	
+	/**
+	 * Renvoie le lien pour contribuer sur un exemplaire de la notice
+	 * @return string
+	 */
+	public function get_expl_contribution_link() {
+		if (isset($this->expl_contribution_link)) {
+			return $this->expl_contribution_link;
+		}
+		$this->expl_contribution_link = '';
+		global $opac_contribution_area_activate, $allow_contribution;
+		if (!$opac_contribution_area_activate || !$allow_contribution) {
+			return $this->expl_contribution_link;
+		}
+		$shorturl_type_contribution = new shorturl_type_contribution();
+		$this->expl_contribution_link = $shorturl_type_contribution->get_shorturl('contribute', array(
+				'sub' => 'expl',
+				'default_fields' => array(
+						'http://www.pmbservices.fr/ontology#has_record' => array(
+								array(
+										'display_label' => $this->get_tit1(),
+										'value' => $this->id,
+										'type' => 'http://www.pmbservices.fr/ontology#record'
+								)
+						)
+				)
+		));
+		return $this->expl_contribution_link;
 	}
 }

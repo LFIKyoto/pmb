@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // ? 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr_exldap.inc.php,v 1.10 2017-11-21 12:01:00 dgoron Exp $
+// $Id: empr_exldap.inc.php,v 1.12 2019-08-01 13:16:35 btafforeau Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
@@ -10,54 +10,54 @@ require_once("$include_path/ldap_param.inc.php");
 require_once("$include_path/templates/ldap_users.tpl.php");
 require_once ("$class_path/emprunteur.class.php");
 
-function find_exldap_users(){
-	global $dbh,$charset,$ldap_encoding_utf8;
-	$ret="";
-	$fields = explode(",",LDAP_FIELDS);
-	$conn = ldap_connect( LDAP_SERVER, LDAP_PORT);
+function find_exldap_users() {
+	global $charset, $ldap_encoding_utf8;
+	$ret = "";
+	$fields = explode(",", LDAP_FIELDS);
+	$conn = ldap_connect(LDAP_SERVER, LDAP_PORT);
 	ldap_set_option($conn, LDAP_OPT_PROTOCOL_VERSION, LDAP_PROTO);
 	$b = ldap_bind($conn);
 
-	$clause = "WHERE empr_ldap = 1" ;
+	$clause = "WHERE empr_ldap = 1";
 
 	$req = "SELECT COUNT(1) FROM empr $clause ";
-	$res = pmb_mysql_query($req, $dbh);
+	$res = pmb_mysql_query($req);
 	$nbr_lignes = @pmb_mysql_result($res, 0, 0);
-	if ($nbr_lignes > 0) {
+	if (!empty($nbr_lignes)) {
 		$req = "SELECT * FROM empr $clause ORDER BY empr_cb, empr_prenom, empr_nom ";
-		$res = @pmb_mysql_query($req, $dbh);
-		while(($empr=pmb_mysql_fetch_object($res))) {
+		$res = @pmb_mysql_query($req);
+		while ($empr = pmb_mysql_fetch_object($res)) {
 			$filter = "(uid=$empr->empr_cb)";
 			//Gestion encodage
-			if(($ldap_encoding_utf8) && ($charset != "utf-8")){
-				$filter=utf8_encode($filter);
-			}elseif((!$ldap_encoding_utf8) && ($charset == "utf-8")){
-				$filter=utf8_decode($filter);
+			if (!empty($ldap_encoding_utf8) && $charset != "utf-8") {
+				$filter = utf8_encode($filter);
+			} elseif (empty($ldap_encoding_utf8) && $charset == "utf-8") {
+				$filter = utf8_decode($filter);
 			}
-			$r = ldap_search($conn, LDAP_BASEDN,$filter,$fields,0,0);
+			$r = ldap_search($conn, LDAP_BASEDN, $filter, $fields, 0, 0);
 			$info = ldap_get_entries($conn, $r);
 			# if empr n'existe pas dans ldap...
-			$uid=$info[0][uid][0];
-			if(($ldap_encoding_utf8) && ($charset != "utf-8")){
-				$uid=utf8_decode($uid);
-			}elseif((!$ldap_encoding_utf8) && ($charset == "utf-8")){
-				$uid=utf8_encode($uid);
+			$uid = $info[0]['uid'][0];
+			if (!empty($ldap_encoding_utf8) && $charset != "utf-8") {
+				$uid = utf8_decode($uid);
+			} elseif (empty($ldap_encoding_utf8) && $charset == "utf-8") {
+				$uid = utf8_encode($uid);
 			}
-			if (!$uid){
+			if (empty($uid)) {
 				# cherche prêts
-				$req = "SELECT COUNT(1) FROM pret,empr WHERE pret.pret_idempr = ".$empr->id_empr;
-				$rpr = pmb_mysql_query($req, $dbh);
+				$req = "SELECT COUNT(1) FROM pret,empr WHERE pret.pret_idempr = $empr->id_empr";
+				$rpr = pmb_mysql_query($req);
 				$npr = pmb_mysql_result($rpr, 0, 0);
 				# s'il n'y a pas des prêts...
-				if (!$npr){
-					$ret .= $empr->id_empr.'|'.$empr->empr_cb.'|'.$empr->empr_nom.'|'.$empr->empr_prenom.';' ;
-					}
+				if (empty($npr)) {
+					$ret .= "$empr->id_empr|$empr->empr_cb|$empr->empr_nom|$empr->empr_prenom;";
 				}
 			}
 		}
-	ldap_close($conn);
-	$fp=fopen("./temp/exldap_users.txt","w");
-    fwrite($fp,$ret);
+	}
+	ldap_unbind($conn);
+	$fp = fopen("./temp/exldap_users.txt", "w");
+    fwrite($fp, $ret);
     fclose($fp);
 	return $ret;
 }
@@ -151,7 +151,7 @@ function erase_exldap_users($uu){
 }
 
 //------------------- main -------------------
-$op=$_POST[btsubmit];
+$op=$_POST['btsubmit'];
 switch($action)
 {
 	case 'exldapDEL':
@@ -171,7 +171,7 @@ switch($action)
 				show_exldap_users($uu,$pag,$npp);
 				break;
 
-			case $msg[exldap_elimina]:
+			case $msg['exldap_elimina']:
 				$uu=$_POST['uu'];
 				erase_exldap_users($uu);
 				$uu=find_exldap_users();
@@ -180,7 +180,7 @@ switch($action)
 				show_exldap_users($uu,$pag,$npp);
 				break;
 				
-			case $msg[exldap_conserva]:
+			case $msg['exldap_conserva']:
 				$xx=$_POST['usrdel'];
 				$uu=$_POST['uu'];
 				$pag=$_POST['pag'];
@@ -191,7 +191,7 @@ switch($action)
 				}
 				show_exldap_users($uu,$pag,$npp);
 				break;
-			case $msg[exldap_normale]:
+			case $msg['exldap_normale']:
 				$xx=$_POST['usrdel'];
 				$uu=$_POST['uu'];
 				$pag=$_POST['pag'];

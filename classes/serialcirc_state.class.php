@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_state.class.php,v 1.8 2017-11-07 15:20:00 ngantier Exp $
+// $Id: serialcirc_state.class.php,v 1.10 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -102,7 +102,7 @@ class serialcirc_state {
 		}
 	}
 
-	function fetch_data($page = 0, $nb_per_page = 0) {
+	public function fetch_data($page = 0, $nb_per_page = 0) {
 		global $dbh;
 		
 		$this->serialcirc_diffs = array();
@@ -273,7 +273,7 @@ class serialcirc_state {
 		
 		$this->fetch_data();
 		
-		$worksheet = new spreadsheet();
+		$worksheet = new spreadsheetPMB();
 		
 		$worksheet->write(0, 0, $msg["1150"].' : '.$msg['serial_circ_state_edit']);
 

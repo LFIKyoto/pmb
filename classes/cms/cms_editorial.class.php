@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial.class.php,v 1.85 2018-11-26 14:32:02 dgoron Exp $
+// $Id: cms_editorial.class.php,v 1.88.2.2 2019-10-25 06:52:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -153,6 +153,8 @@ class cms_editorial extends cms_root {
 	}
 	
 	public function delete($force_delete=0){
+	    global $thesaurus_concepts_active;
+	    
 		$result = true;
 		if(!$force_delete){
 			$result = $this->is_deletable();
@@ -207,6 +209,7 @@ class cms_editorial extends cms_root {
 		global $msg;
 		global $lang;
 		global $base_path;
+		global $cms_editorial_form_editables;
 		global $pmb_editorial_dojo_editor,$pmb_javascript_office_editor;
 		global $pmb_type_audit;
 		
@@ -270,33 +273,50 @@ class cms_editorial extends cms_root {
 		}
 		
 		//chargement en AJAX
+		$activated_tinymce = 0;
 		if ($this->id) {
 			if (!$pmb_editorial_dojo_editor && $pmb_javascript_office_editor) {
 				$form.=$pmb_javascript_office_editor;
 				global $base_path;
 				$form.="<script type='text/javascript' src='".$base_path."/javascript/tinyMCE_interface.js'></script>";
 				if (strpos($pmb_javascript_office_editor,'cms_editorial_form_resume')) {
-					$form.= "<script type='text/javascript'>
-						if(typeof(tinyMCE)!= 'undefined') {
-								setTimeout(function(){
-									tinyMCE_execCommand('mceAddControl', true, 'cms_editorial_form_resume');
-								},1);
-							}
-						</script>";
+				    if(!$cms_editorial_form_editables) {
+    				    $form.= "<script type='text/javascript'>
+    						if(typeof(tinyMCE)!= 'undefined') {
+    								setTimeout(function(){
+    									tinyMCE_execCommand('mceAddControl', true, 'cms_editorial_form_resume');
+    								},1);
+    							}
+    						</script>";
+				    }
+					$activated_tinymce = 1;
 				}
 				if($this->opt_elements['contenu']==true){
-					if (strpos($pmb_javascript_office_editor,'cms_editorial_form_contenu')) {
-						$form.= "<script type='text/javascript'>
+				    if (strpos($pmb_javascript_office_editor,'cms_editorial_form_contenu')) {
+				        if(!$cms_editorial_form_editables) {
+				            $form.= "<script type='text/javascript'>
 							if(typeof(tinyMCE)!= 'undefined') {
 									setTimeout(function(){
 										tinyMCE_execCommand('mceAddControl', true, 'cms_editorial_form_contenu');
 									},1);
 								}
 							</script>";
+				        }
+						$activated_tinymce = 1;
 					}
 				}
 			}
-		}		
+		} else {
+			if (strpos($pmb_javascript_office_editor,'cms_editorial_form_resume')) {
+				$activated_tinymce = 1;
+			}
+			if($this->opt_elements['contenu']==true){
+				if (strpos($pmb_javascript_office_editor,'cms_editorial_form_contenu')) {
+					$activated_tinymce = 1;
+				}
+			}
+		}
+		$form = str_replace("!!activated_tinymce!!", $activated_tinymce,$form);
 		return $form;
 	}
 	
@@ -325,6 +345,7 @@ class cms_editorial extends cms_root {
 								cms_".$this->type."_duplicate(0);
 							}
 						} else {
+                            document.forms['$name'].cms_editorial_form_duplicate.value = 0;
 							return false;
 						}
 					} else {
@@ -395,19 +416,48 @@ class cms_editorial extends cms_root {
 				}
 			}
 
-			function cms_".$this->type."_duplicated(){
-					dijit.byId('editorial_tree_container').refresh();
-					dijit.byId('content_infos').destroyDescendants();
+			function cms_".$this->type."_duplicated(response){
+				var data = [];
+				if(response) {
+					data = JSON.parse(response);
+				}
+                dijit.byId('editorial_tree_container').refresh();
+                dijit.byId('content_infos').destroyDescendants();
+                setTimeout(function(){ 
+                    if(dijit.byId('section_tree')) {
+                        if(data.type == 'article') {
+                            dijit.byId('section_tree').set('selectedItem', 'article_'+data.id);
+                        } else {
+                            dijit.byId('section_tree').set('selectedItem', data.id);
+                        }
+						setTimeout(function(){
+                        	if(dijit.byId('section_tree').get('selectedItem')) {
+                            	cms_load_content_infos(dijit.byId('section_tree').get('selectedItem'));
+                        	}
+                    	}, 1000);
+                    }
+				}, 1000);
 			}
 
 			function cms_".$this->type."_saved(response){
-				dijit.byId('editorial_tree_container').refresh();
+				var data = [];
+				if(response) {
+					data = JSON.parse(response);
+				}
+                dijit.byId('editorial_tree_container').refresh();
 				dijit.byId('content_infos').refresh();
 				dijit.byId('content_infos').domNode.scrollIntoView();
 				setTimeout(function(){ 
 					if(document.getElementById('cms_editorial_content_saved')) {
 						document.getElementById('cms_editorial_content_saved').innerHTML='<span class=\'erreur\'>".$msg["cms_editorial_content_saved"]."</span>';
 					}
+                    if(dijit.byId('section_tree')) {
+                        if(data.type == 'article') {
+                            dijit.byId('section_tree').set('selectedItem', 'article_'+data.id);
+                        } else {
+                            dijit.byId('section_tree').set('selectedItem', data.id);
+                        }
+                    }
 				}, 1000);
 				setTimeout(function(){ 
 					if(document.getElementById('cms_editorial_content_saved')) {
@@ -1044,7 +1094,11 @@ class cms_editorial extends cms_root {
 		$main_fields[] = array(
 			'var' => "last_update_date",
 			'desc' => $msg['cms_module_common_datasource_desc_last_update_date']
-		);	
+		);
+		$main_fields[] = array(
+		    'var' => "last_update_sql_date",
+		    'desc' => $msg['cms_module_common_datasource_desc_last_update_sql_date']
+		);
 		
 		$main_fields[] = array(
 			'var' => "permalink",

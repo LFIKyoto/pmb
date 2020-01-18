@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export_csv.php,v 1.4 2005-08-24 10:31:30 touraine37 Exp $
+// $Id: export_csv.php,v 1.5 2019-06-10 08:57:12 btafforeau Exp $
 
 header('Content-Type: text/x-csv; charset=utf-8');
 //header('Content-Type: text/html")');
@@ -21,20 +21,20 @@ $avail_lang = $languages->table;
 
 $nb_lang = 0;
 $messages_list=array();
-while(list($cle, $valeur) = each($avail_lang)) {
+foreach ($avail_lang as $cle => $valeur) {
 	// Dans un tableau des codages, la valeur de codage est stockée
 	$codage[$nb_lang]=$valeur;
 	$lang_name[$nb_lang]=$cle;
 	$obj_lang = new XMLlist("../$cle.xml", 0);
 	$obj_lang->analyser();
 	$lang = $obj_lang->table;
-	while (list($key,$val) = each($lang)) {
+	foreach ($lang as $key => $val) {
 		$messages_list[$key][$nb_lang]=$val;
 	}
 	$nb_lang++;
 }
 
-while (list($cle,$valeur)=each($messages_list)) {
+foreach ($messages_list as $cle => $valeur) {
 	echo $cle.";";
 	// La première langue est supposée en utf-8 alors que la suivante est en iso
 	//$valeur[0]=utf8_encode($valeur[0]); 

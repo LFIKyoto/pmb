@@ -34,7 +34,7 @@ class iso2709 {
 	//Champs propres au type de données
 	public $statut;					//Statut marc de la notice
 	public $application_codes;			//Codes propres au type de données
-	var	$supplementary;				//Codes supplémentaires propres au type de données
+	public $supplementary;				//Codes supplémentaires propres au type de données
 	
 	//Champs décodés
 	public $guide_infos=array();		//Tableaux des codes propres au type de données
@@ -50,7 +50,7 @@ class iso2709 {
 		Vérification de la cohérence du format de la notice :
 			-Vérifie les longueurs, la place des zones, que le répertoire correspond à la zone de données
 	*/
-	function general_check() {
+	public function general_check() {
 		//Vérifications sommaires
 		//La taille de la notice est-elle correcte ?
 		if ($this->total_lenght!=strlen($this->notice)) {
@@ -98,30 +98,30 @@ class iso2709 {
 	}
 	
 	
-	function get_guide_infos() {
+	public function get_guide_infos() {
 		//A surcharger
 	}
 	
-	function create_guide_infos() {
+	public function create_guide_infos() {
 		//A surcharger
 	}
 	
-	function check_guide_infos() {
+	public function check_guide_infos() {
 		//A surcharger
 	}
 	
-	function default_guide_infos() {
+	public function default_guide_infos() {
 		//A surcharger
 	}
 	
-	function default_statut() {
+	public function default_statut() {
 		//A surcharger
 	}
 	
 	/*
 		Lecture du guide et extractions des différentes zones de la notice (guide, directory, data)
 	*/
-	function read_guide() {
+	public function read_guide() {
 		
 		//Extraction du guide
 		$this->guide=substr($this->notice,0,24);
@@ -164,7 +164,7 @@ class iso2709 {
 	/*
 		Tables de conversion ISO 646 & 5426 / ISO 8859-15
 	*/
-	function iso_tables() {
+	public function iso_tables() {
 		global $ISO5426,$ISO5426_dia,$ISO8859_15,$ISO8859_15_dia;
 		//Tableaux de correspondance de ISO646/5426 vers ISO8859-15
 			$ISO5426_dia=array(
@@ -236,7 +236,7 @@ class iso2709 {
 	/*
 		Conversion d'une chaine ISO 8859-15 en ISO 646/5426
 	*/
-	function ISO_646_5426_encode($string) {
+	public function ISO_646_5426_encode($string) {
 		global $ISO5426,$ISO5426_dia,$ISO8859_15,$ISO8859_15_dia;
 		if (!$ISO5426) {
 			$this->iso_tables();
@@ -258,7 +258,7 @@ class iso2709 {
 	
 	//	Conversion d'une chaine ISO 646 / 5426 an ISO 8859-15
 
-	function ISO_646_5426_decode($string) {
+	public function ISO_646_5426_decode($string) {
 		global $ISO5426,$ISO5426_dia,$ISO8859_15,$ISO8859_15_dia;
 		if (!$ISO5426) {
 			$this->iso_tables();
@@ -292,7 +292,7 @@ class iso2709 {
 		return $string_r;
 	}
 	
-	function ISO_decode($chaine) {
+	public function ISO_decode($chaine) {
 		global $charset;
 		$encodage_fic_source=$_SESSION["encodage_fic_source"];
 		//On a forcé l'encodage au moment de l'import ou de la convertion
@@ -300,7 +300,7 @@ class iso2709 {
 			if($charset !=='utf-8'){//Le charset de PMB est en iso-8859
 				return $chaine ;
 			}else{
-				return utf8_encode($chaine);
+				return pmb_utf8_encode($chaine);
 			}
 		}elseif($encodage_fic_source == "iso5426"){
 			if(is_object($this)) {
@@ -311,10 +311,10 @@ class iso2709 {
 			if($charset !=='utf-8'){//Le charset de PMB est en iso-8859
 				return $chaine ;
 			}else{
-				return utf8_encode($chaine);
+				return pmb_utf8_encode($chaine);
 			}
 			
-		}elseif($encodage_fic_source == "utf8"){
+		}elseif(($encodage_fic_source == "utf8") || (is_object($this) && ($this->is_utf8===TRUE))){
 			//On regarde si il y a les NSBB NSBE
 			if(preg_match("/^".chr(0xc2).chr(0x98)."(.*?)".chr(0xc2).chr(0x9c)."(.*)$/s",$chaine,$matches)){
 				if((count($matches) == 3) && trim($matches[1]) && trim($matches[2])){
@@ -323,50 +323,42 @@ class iso2709 {
 			}
 			
 			if($charset !=='utf-8'){//Le charset de PMB est en iso-8859
-				return utf8_decode($chaine) ;
-			}else{
-				return $chaine;
+				$chaine=pmb_utf8_decode($chaine);
 			}
-		}
-		
-		if (is_object($this) && ($this->is_utf8===TRUE)) {	//Cas notices USMARC et UNIMARC encodees en UTF8
-			//On regarde si il y a les NSBB NSBE
-			if(preg_match("/^".chr(0xc2).chr(0x98)."(.*?)".chr(0xc2).chr(0x9c)."(.*)$/s",$chaine,$matches)){
-				if((count($matches) == 3) && trim($matches[1]) && trim($matches[2])){
-					$chaine=$matches[1].$matches[2];
-				}
-			}
-			if ($charset !=='utf-8') $chaine = utf8_decode($chaine);
+			
 			return $chaine;
-		} 
+		}
 
 		if(is_object($this)) {
 			$chaine=$this->ISO_646_5426_decode($chaine);
 		} else {
-			$chaine=i_2709::ISO_646_5426_decode($chaine);
+			$chaine=iso2709::ISO_646_5426_decode($chaine);
 		}
-		if ($charset == 'utf-8')
-			$chaine = utf8_encode($chaine);
+		
+		if ($charset == 'utf-8'){
+			$chaine = pmb_utf8_encode($chaine);
+		}
+		
 		return $chaine;
 	}
 	
-	function ISO_encode($chaine) {
+	public function ISO_encode($chaine) {
 		global $charset;
 		if (!$chaine) return $chaine;
 		if(is_object($this) && ($this->is_utf8===TRUE)){
 			return $chaine;
 		}
 		if ($charset == 'utf-8' && is_object($this) && ($this->is_utf8===false))
-			$chaine = utf8_decode($chaine);
+			$chaine = pmb_utf8_decode($chaine);
 		else if ($charset != 'utf-8' && is_object($this) && ($this->is_utf8===true))
-			$chaine = utf8_encode($chaine);
+			$chaine = pmb_utf8_encode($chaine);
 		if(is_object($this)) $chaine=$this->ISO_646_5426_encode($chaine);
-		else $chaine=i_2709::ISO_646_5426_encode($chaine);
+		else $chaine=iso2709::ISO_646_5426_encode($chaine);
 		return $chaine;
 	}	
 	
 	//	Extraction des champs dans le tableau fields
-	function read_fields() {
+	public function read_fields() {
 		$encodage_fic_source=$_SESSION["encodage_fic_source"];
 		if($encodage_fic_source == "utf8"){//On choisi de forcer l'encodage des notices lues
 			$this->is_utf8=TRUE;
@@ -404,7 +396,7 @@ class iso2709 {
 	
 	//	Génération au format iso2709 de la notice à partir du tableau fields, de statut, de guide_infos
 	
-	function gen_iso2709() {
+	public function gen_iso2709() {
 		//Longueur maximum d'une zone
 		$max_zone_lenght=str_repeat("9",$this->zone_lenght)*1;
 		//Position maximum dans la zone de données
@@ -420,7 +412,7 @@ class iso2709 {
 			$this->directory_table=array();
 			$n=0;
 			reset($this->fields);
-			while (list($key,$val)=each($this->fields)) {
+			foreach ($this->fields as $key => $val) {
 				if (strlen($key)!=3) {
 					$this->error=true;
 					$this->error_message="Un label n'a pas la bonne taille (3 caractères)";
@@ -444,7 +436,7 @@ class iso2709 {
 							$this->error_message="Un indicateur n'a pas la bonne taille !";
 							return false;
 						}
-						while (list($key_s,$val_s)=each($val[$i])) {
+						foreach ($val[$i] as $key_s => $val_s) {
 							if ($key_s!="IND") {
 								for ($j=0;$j<count($val_s); $j++) {
 									if (strlen($key_s)!=$this->subfield_code_lenght-1) {
@@ -501,19 +493,19 @@ class iso2709 {
 	/*
 		Sortie format texte de la notice
 	*/
-	function get_txt() {
+	public function get_txt() {
 		$txt_notice="";
 		$txt_notice.="rs ".(trim($this->statut)?$this->statut:"*")."\n";
 		reset($this->guide_infos);
-		while (list($key,$val)=each($this->guide_infos)) {
+		foreach ($this->guide_infos as $key => $val) {
 			$txt_notice.=$key." ".(trim($val)?$val:"*")."\n";
 		}
 		reset($this->fields);
-		while (list($key,$val)=each($this->fields)) {
+		foreach ($this->fields as $key => $val) {
 			for ($i=0; $i<count($val); $i++) {
 				$txt_notice.=$key." ";
 				reset($val[$i]);
-				while (list($key_s,$val_s)=each($val[$i])) {
+				foreach ($val[$i] as $key_s => $val_s) {
 					if ($key_s=="IND") $txt_notice.="(".str_pad($val_s,$this->ind_lenght," ").") "; else {
 						if ($key_s=="value") { $txt_notice.=$val_s; break; }
 						for ($j=0; $j<count($val_s); $j++) {
@@ -531,18 +523,18 @@ class iso2709 {
 	/*
 		Sortie d'un tableau structuré pour du XML
 	*/
-	function get_xml_table() {
+	public function get_xml_table() {
 		$xml_table=array();
 		$xml_table["rs"][0]["value"]=$this->statut;
 		reset($this->guide_infos);
-		while (list($key,$val)=each($this->guide_infos)) {
+		foreach ($this->guide_infos as $key => $val) {
 			$xml_table[$key][0]["value"]=$val;
 		}
 		reset($this->fields);
-		while (list($key,$val)=each($this->fields)) {
+		foreach ($this->fields as $key => $val) {
 			for ($i=0; $i<count($val); $i++) {
 				reset($val[$i]);
-				while (list($key_s,$val_s)=each($val[$i])) {
+				foreach ($val[$i] as $key_s => $val_s) {
 					if (!is_array($val_s)) 
 						$xml_table[$key][$i][$key_s]=$val_s;
 					else
@@ -559,20 +551,20 @@ class iso2709 {
 		Sortie d'un tableau structuré pour du XML, avec les codes champs et sous champs en indicateurs
 		au lieu de tags
 	*/
-	function get_translated_xml_table() {
+	public function get_translated_xml_table() {
 		$xml_table=array();
 		$xml_table["RS"][0]["value"]=$this->statut;
 		reset($this->guide_infos);
-		while (list($key,$val)=each($this->guide_infos)) {
+		foreach ($this->guide_infos as $key => $val) {
 			$xml_table[strtoupper($key)][0]["value"]=$val;
 		}
 		reset($this->fields);
 		$nf=0;
-		while (list($key,$val)=each($this->fields)) {
+		foreach ($this->fields as $key => $val) {
 			for ($i=0; $i<count($val); $i++) {
 				reset($val[$i]);
 				$xml_table["F"][$nf]["C"]=$key;
-				while (list($key_s,$val_s)=each($val[$i])) {
+				foreach ($val[$i] as $key_s => $val_s) {
 					if (!is_array($val_s)) {
 						$xml_table["F"][$nf][$key_s]=$val_s;
 					} else {
@@ -593,21 +585,21 @@ class iso2709 {
 		Cette fonction n'est jamais utilisée Matthieu 17/04/20013
     	Si ça devait être le cas voir la gestion de l'encodage
 	*/
-	function get_xml($header = true) {
+	public function get_xml($header = true) {
 		$xml="  <rs>".htmlspecialchars(trim($this->statut)?$this->statut:"*")."</rs>\n";
 		reset($this->guide_infos);
-		while (list($key,$val)=each($this->guide_infos)) {
+		foreach ($this->guide_infos as $key => $val) {
 			$xml.="  <".$key.">".htmlspecialchars(trim($val)?$val:"*")."</$key>\n";
 		}
 		reset($this->fields);
-		while (list($key,$val)=each($this->fields)) {
+		foreach ($this->fields as $key => $val) {
 			for ($i=0; $i<count($val); $i++) {
 				$xml.="  <_".$key;
 				reset($val[$i]);
 				$att="";
 				$value="";
 				$cr="\n";
-				while (list($key_s,$val_s)=each($val[$i])) {
+				foreach ($val[$i] as $key_s => $val_s) {
 					if (!is_array($val_s)) {
 						if ($key_s!="value") 
 							$att.=" ".strtolower($key_s)."='".htmlspecialchars($val_s)."'";
@@ -634,7 +626,7 @@ class iso2709 {
 		return $to_return;
 	}
 	
-	function create_from_translated_xml_table($xml_table) {
+	public function create_from_translated_xml_table($xml_table) {
 		//Réinitialisation des variables de la classe
 		$this->fields=array();
 		$this->statut=$this->default_statut();
@@ -644,7 +636,7 @@ class iso2709 {
 		
 		$xml_table=$xml_table["NOTICE"][0];
 		
-		while (list($key,$val)=each($xml_table)) {
+		foreach ($xml_table as $key => $val) {
 			if ($key!="F") {
 				//Si c'est un tag connu pour le guide
 				if (isset($this->guide_infos[strtolower($key)])) {
@@ -668,7 +660,7 @@ class iso2709 {
 						if ($f["IND"]) $f_t["IND"]=$f["IND"]; else $f_t["IND"]="  ";
 						reset($f);
 						//Pour tous les sous tags
-						while (list($key_s,$val_s)=each($f)) {
+						foreach ($f as $key_s => $val_s) {
 							//Si c'est un sous champs (s)
 							if ((is_array($val_s))&&($key_s=="S")) {
 								//Pour chaque sous champ (normalement, un seul !!)
@@ -687,7 +679,7 @@ class iso2709 {
 		return $this->gen_iso2709();
 	}
 	
-	function create_from_translated_xml($xml) {
+	public function create_from_translated_xml($xml) {
 		$p=new private_parser($xml);
 		if (!$p->error)
 			return $this->create_from_translated_xml_table($p->table);
@@ -698,14 +690,14 @@ class iso2709 {
 		}
 	}
 	
-	function create_from_xml_table($xml_table) {
+	public function create_from_xml_table($xml_table) {
 		//Réinitialisation des variables de la classe
 		$this->fields=array();
 		$this->statut=$this->default_statut();
 		$this->guide_infos=$this->default_guide_infos();
 		
 		reset($xml_table);
-		while (list($key,$val)=each($xml_table)) {
+		foreach ($xml_table as $key => $val) {
 			//Si c'est un tag connu pour le guide
 			if (isset($this->guide_infos[$key])) {
 				if ($val[0]["value"]=="*") $val[0]["value"]=" ";
@@ -729,7 +721,7 @@ class iso2709 {
 							$f_t["IND"]=$f["ind"];
 							reset($f);
 							//Pour tous les sous tags
-							while (list($key_s,$val_s)=each($f)) {
+							foreach ($f as $key_s => $val_s) {
 								//Si c'est un sous champ
 								if (is_array($val_s)) {
 									//Pour chaque sous champ 
@@ -753,7 +745,7 @@ class iso2709 {
 		return $this->gen_iso2709();
 	}
 	
-	function create_from_xml($xml) {
+	public function create_from_xml($xml) {
 		$p=new private_parser($xml, false);
 		if (!$p->error)
 			return $this->create_from_xml_table($p->table);
@@ -770,21 +762,21 @@ class iso2709 {
 		Cette fonction n'est jamais utilisée Matthieu 17/04/20013
     	Si ça devait être le cas voir la gestion de l'encodage
 	*/
-	function get_translated_xml($gen_xmlheader=1) {
+	public function get_translated_xml($gen_xmlheader=1) {
 		$xml="  <rs>".htmlspecialchars(trim($this->statut)?$this->statut:"*")."</rs>\n";
 		reset($this->guide_infos);
-		while (list($key,$val)=each($this->guide_infos)) {
+		foreach ($this->guide_infos as $key => $val) {
 			$xml.="  <".$key.">".htmlspecialchars(trim($val)?$val:"*")."</$key>\n";
 		}
 		reset($this->fields);
-		while (list($key,$val)=each($this->fields)) {
+		foreach ($this->fields as $key => $val) {
 			for ($i=0; $i<count($val); $i++) {
 				reset($val[$i]);
 				$xml.="  <f c='".$key."'";
 				$att="";
 				$value="";
 				$cr="\n";
-				while (list($key_s,$val_s)=each($val[$i])) {
+				foreach ($val[$i] as $key_s => $val_s) {
 					if (!is_array($val_s)) {
 						if ($key_s!="value") 
 							$att.=" ".$key_s."='".htmlspecialchars($val_s)."'";
@@ -805,21 +797,21 @@ class iso2709 {
 		return "<notice>\n".$xml."</notice>\n";
 	}
 	
-	function field_exist($field) {
+	public function field_exist($field) {
 		if ($this->fields[$field]) return true; else return false;
 	}
 	
-	function get_list_of_fields() {
+	public function get_list_of_fields() {
 		$dir_table=array();
 		for ($i=0; $i<count($this->directory_table); $i++) {
 			$dir_table[$i]=$this->directory_table[$i]["LABEL"];
 		}
 	}
 	
-	function get_list_of_subfields() {
+	public function get_list_of_subfields() {
 	}
 	
-	function iso2709($notice="",$type="UNI") {
+	public function __construct($notice="",$type="UNI") {
 		if ($notice) {
 			//Si il y a une notice, on l'analyse
 			switch ($type) {
@@ -858,40 +850,39 @@ class private_parser {
 	public $error_message;
 	
 	// Lecture récursive de la structure et stockage des paramètres
-	function recursive(&$indice, $niveau, &$param, &$tag_count, &$vals) {
+	public function recursive(&$indice, $niveau, &$param, &$tag_count, &$vals) {
 		if ($indice > count($vals))
 			exit;
 		while ($indice < count($vals)) {
-			list ($key, $val) = each($vals);
+		    $val = $vals[$indice];
 			$indice ++;
-			if (!isset($tag_count[$val[tag]]))
-				$tag_count[$val[tag]] = 0;
+			if (!isset($tag_count[$val['tag']]))
+				$tag_count[$val['tag']] = 0;
 			else {
-				$tag_count[$val[tag]]++;
+				$tag_count[$val['tag']]++;
 			}
-			if (isset($val[attributes])) {
-				$attributs = $val[attributes];
-				for ($k = 0; $k < count($attributs); $k ++) {
-					list ($key_att, $val_att) = each($attributs);
-					$param[$val[tag]][$tag_count[$val[tag]]][$key_att] = $val_att;
+			if (isset($val['attributes'])) {
+				$attributs = $val['attributes'];
+				foreach ($attributs as $key_att => $val_att) {
+					$param[$val['tag']][$tag_count[$val['tag']]][$key_att] = $val_att;
 				}
 			}
-			if ($val[type] == "open") {
+			if ($val['type'] == "open") {
 				$tag_count_next = array();
-				$this->recursive($indice, $niveau +1, $param[$val[tag]][$tag_count[$val[tag]]], $tag_count_next, $vals);
+				$this->recursive($indice, $niveau +1, $param[$val['tag']][$tag_count[$val['tag']]], $tag_count_next, $vals);
 			}
-			if ($val[type] == "close") {
+			if ($val['type'] == "close") {
 				if ($niveau > 2)
 					break;
 			}
-			if ($val[type] == "complete") {
-				$param[$val[tag]][$tag_count[$val[tag]]][value] = $val[value];
+			if ($val['type'] == "complete") {
+				$param[$val['tag']][$tag_count[$val['tag']]]['value'] = $val['value'];
 			}
 		}
 	}
 	
 	
-	function private_parser($xml,$ucase=true,$rootelement="") {
+	public function __construct($xml,$ucase=true,$rootelement="") {
 		global $charset;
 		$vals = array();
 		$index = array();
@@ -920,7 +911,9 @@ class private_parser {
 						return false;
 					}
 				}
-				list($rootelement,$this->table)=each($param);
+				$rootelement = key($param);
+				$this->table = current($param);
+				next($param);
 				$this->table=$this->table[0];
 				return true;
 			}
@@ -947,7 +940,7 @@ define("AUT_CONTENT_FORM",0x49);
 
 class iso2709_authorities extends iso2709 {
 	
-	function default_guide_infos() {
+	public function default_guide_infos() {
 		$guide_infos=array(
 			"nt"=>"x",
 			"et"=>"a",
@@ -956,11 +949,11 @@ class iso2709_authorities extends iso2709 {
 		return $guide_infos;
 	}
 	
-	function default_statut() {
+	public function default_statut() {
 		return "n";
 	}
 	
-	function get_guide_infos() {
+	public function get_guide_infos() {
 		$guide_infos=array();
 
 		$this->guide_infos["nt"]=substr($this->application_codes,0,1);
@@ -968,7 +961,7 @@ class iso2709_authorities extends iso2709 {
 		$this->guide_infos["el"]=substr($this->supplementary,0,1);
 	}
 	
-	function create_guide_infos() {
+	public function create_guide_infos() {
 		if ($this->check_guide_infos()) {
 			//Création de la zone application codes et supplementary
 			$this->application_codes= $this->guide_infos["nt"]."  ".$this->guide_infos["et"];
@@ -977,7 +970,7 @@ class iso2709_authorities extends iso2709 {
 		} else return false;
 	}
 	
-	function check_guide_infos() {
+	public function check_guide_infos() {
 		$rs=array("c","d","n");
 		$nt=array("w","x","y","z");
 		$et=array("a","b","c","d","e","f","g","h","i","j","k","l");
@@ -1015,7 +1008,7 @@ class iso2709_authorities extends iso2709 {
 
 class iso2709_notices extends iso2709 {
 	
-	function default_guide_infos() {
+	public function default_guide_infos() {
 		$guide_infos=array(
 			"dt"=>"a",
 			"bl"=>"m",
@@ -1026,11 +1019,11 @@ class iso2709_notices extends iso2709 {
 		return $guide_infos;
 	}
 	
-	function default_statut() {
+	public function default_statut() {
 		return "n";
 	}
 	
-	function get_guide_infos() {
+	public function get_guide_infos() {
 		$guide_infos=array();
 
 		$this->guide_infos["dt"]=substr($this->application_codes,0,1);
@@ -1040,7 +1033,7 @@ class iso2709_notices extends iso2709 {
 		$this->guide_infos["ru"]=substr($this->supplementary,1,1);
 	}
 	
-	function create_guide_infos() {
+	public function create_guide_infos() {
 		if ($this->check_guide_infos()) {
 			//Création de la zone application codes et supplementary
 			$this->application_codes= $this->guide_infos["dt"].$this->guide_infos["bl"].$this->guide_infos["hl"]." ";
@@ -1049,7 +1042,7 @@ class iso2709_notices extends iso2709 {
 		} else return false;
 	}
 	
-	function check_guide_infos() {
+	public function check_guide_infos() {
 		$rs=array(" ","c","d","n","o","p");
 		$dt=array("a","b","c","d","e","f","g","h","i","j","k","l","m","r");
 		$bl=array("a","m","s","c");

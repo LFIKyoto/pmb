@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: analyse_query.class.php,v 1.107 2018-11-29 09:04:17 dgoron Exp $
+// $Id: analyse_query.class.php,v 1.112.2.1 2019-11-27 10:49:08 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -107,7 +107,7 @@ class analyse_query {
     			//Le terme est une sub : on nettoie le tableau de termes de la sub
     			$tree_array[$key]->sub = $this->nettoyage_etoile($tree_array[$key]->sub,true);
     			//Si la sub est vide, on l'efface
-    			if(!count($tree_array[$key]->sub)){
+    			if(!count($value->sub)){
     				unset($tree_array[$key]);
     			}
     		}
@@ -343,9 +343,9 @@ class analyse_query {
  	}
 	
 	//Affichage sous forme RPN du résultat de l'analyse
-	public function show_analyse_rpn($tree="") {
+	public function show_analyse_rpn($tree = array()) {
 		//Si tree vide alors on prend l'arbre de la classe
-		if ($tree=="") $tree=$this->tree;
+		if (empty($tree)) $tree = $this->tree;
 		$r="";
 		//Pour chaque branche ou feuille de l'arbre
 		for ($i=0; $i<count($tree); $i++) {
@@ -366,8 +366,8 @@ class analyse_query {
 	}
 
 	//Affichage sous forme mathématique logique du résultat de l'analyse
-	public function show_analyse($tree="") {
-		if ($tree=="") $tree=$this->tree;
+	public function show_analyse($tree = array()) {
+		if (empty($tree)) $tree = $this->tree;
 		$r="";
 		for ($i=0; $i<count($tree); $i++) {
 			if ($tree[$i]->operator) $r.=$tree[$i]->operator." ";
@@ -506,8 +506,8 @@ class analyse_query {
 			if($tree[$i]->sub){
 				$elem_query = $this->get_query_r_mot_with_table_tempo_all($tree[$i]->sub,$field_id,$table_mot,$field_mot,$table_term,$field_term,$restrict,$neg_restrict,$all_fields);
 			}else{
-				if($tree[$i]->word !=  "*") {
-					if($tree[$i]->literal == 0){
+				if($tree[$i]->word !==  "*") {
+				    if($tree[$i]->literal == 0){
 						// on commence...
 						$qw = "select distinct id_word from words where ".(count($lang_restrict)>0 ? $this->get_field_restrict($lang_restrict,$neg_restrict)." and ": "");
 						
@@ -647,7 +647,6 @@ class analyse_query {
 		$is_multi=false;
 		$return = "";
 		$field_restrict = "";
-		
 		foreach($restrict as $field => $infos){
 		    if(isset($infos['values'])){
 		        if ($return != "") $return.=" ".$infos['op']." ";
@@ -684,8 +683,6 @@ class analyse_query {
 		        $return.= ' '.$this->get_field_restrict($infos['sub'],$neg);
 		    }
 		}
-		
-		
 		if($neg){
 			$return = "not (".$return.")";
 		}else{
@@ -1025,7 +1022,7 @@ class analyse_query {
 		//Si je n'ai pas de notice alors je mets 0 pour que les requetes in fonctionnent et ne retourne rien
 		if(!trim($objects_ids))$objects_ids=0;
 		
-		if(count($terms)){
+		if(is_array($terms) && count($terms)){
 			foreach($terms as $term){
 				if(!$term->literal){
 					if(!in_array($term,$words)) {
@@ -1250,12 +1247,12 @@ class analyse_query {
 					$query.=' ('.$this->build_sphinx_query($tree[$i]->sub).')';
 				}else{
 					if($tree[$i]->literal){
-						$query.= '"'.$tree[$i]->word.'"';
+						$query.= '"'.encoding_normalize::utf8_normalize($tree[$i]->word).'"';
 					}else{
 						if($tree[$i]->start_with == 1){
 							$query.='^';
 						}
-						$query.= $tree[$i]->word;
+						$query.= encoding_normalize::utf8_normalize($tree[$i]->word);
 					}
 				}
 			}
@@ -1270,7 +1267,7 @@ class analyse_query_explnum extends analyse_query {
 
 	
 	//Adaptation de la recherche pour les documents numeriques
-	function get_query_r_mot_with_table_tempo_all($tree,$field_id,$table_mot,$field_mot,$table_term,$field_term,$restrict,$neg_restrict=false,$all_fields=false) {
+    public function get_query_r_mot_with_table_tempo_all($tree,$field_id,$table_mot,$field_mot,$table_term,$field_term,$restrict,$neg_restrict=false,$all_fields=false) {
 		// Variable globale permettant de choisir si l'on utilise ou non la troncature à droite du terme recherché
 		global $empty_word;
 		global $dbh,$charset;
@@ -1449,18 +1446,18 @@ class analyse_query_explnum extends analyse_query {
 				$t[$k]['md5'] = md5(microtime(true));
 				if($first==$last) {
 					$qt = "create temporary table frag_searcher_".$t[$k]['md5']." (num_obj int,position int, unique using btree(num_obj,position)) engine=memory
-							(select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where fragment like ('".addslashes($t_frag[$k])."%'))
+							(select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where fragment like ('".addslashes($frag)."%'))
 							union
-							(select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where rfragment like reverse('%".addslashes($t_frag[$k])."'))";
-				} else if($k==$first) {
+							(select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where rfragment like reverse('%".addslashes($frag)."'))";
+				} elseif ($k==$first) {
 					$qt = "create temporary table frag_searcher_".$t[$k]['md5']." (num_obj int, position int, unique using btree(num_obj,position)) engine=memory
-							select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where rfragment like reverse('%".addslashes($t_frag[$k])."')";
-				} else if($k==$last) {
+							select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where rfragment like reverse('%".addslashes($frag)."')";
+				} elseif ($k==$last) {
 					$qt = "create temporary table frag_searcher_".$t[$k]['md5']." (num_obj int, position int,unique using btree(num_obj,position)) engine=memory
-							select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where fragment like ('".addslashes($t_frag[$k])."%') and concat(num_obj,',',position) in (select concat(num_obj,',',position) from frag_searcher_".$t[$k-1]['md5'].")";
+							select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where fragment like ('".addslashes($frag)."%') and concat(num_obj,',',position) in (select concat(num_obj,',',position) from frag_searcher_".$t[$k-1]['md5'].")";
 				} else {
 					$qt = "create temporary table frag_searcher_".$t[$k]['md5']." (num_obj int, position int,unique using btree(num_obj,position)) engine=memory
-							select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where fragment = '".addslashes($t_frag[$k])."' and concat(num_obj,',',position) in (select concat(num_obj,',',position) from frag_searcher_".$t[$k-1]['md5'].")";
+							select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where fragment = '".addslashes($frag)."' and concat(num_obj,',',position) in (select concat(num_obj,',',position) from frag_searcher_".$t[$k-1]['md5'].")";
 				}
 				//?? $t[$k]['qf'] = $qf;
 				$t[$k]['qt'] = $qt;
@@ -1490,18 +1487,18 @@ class analyse_query_explnum extends analyse_query {
 				$t[$k]['md5'] = md5(microtime(true));
 				if($first==$last) {
 					$qt = "create temporary table frag_searcher_".$t[$k]['md5']." (num_obj int,position int, unique using btree(num_obj,position)) engine=memory
-							(select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where fragment like ('".addslashes($t_frag[$k])."%'))
+							(select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where fragment like ('".addslashes($frag)."%'))
 							union
-							(select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where rfragment like reverse('%".addslashes($t_frag[$k])."'))";
+							(select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where rfragment like reverse('%".addslashes($frag)."'))";
 				} else if($k==$first) {
 					$qt = "create temporary table frag_searcher_".$t[$k]['md5']." (num_obj int, position int, unique using btree(num_obj,position)) engine=memory
-							select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where rfragment like reverse('%".addslashes($t_frag[$k])."')";
+							select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where rfragment like reverse('%".addslashes($frag)."')";
 				} else if($k==$last) {
 					$qt = "create temporary table frag_searcher_".$t[$k]['md5']." (num_obj int, position int,unique using btree(num_obj,position)) engine=memory
-							select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where fragment like ('".addslashes($t_frag[$k])."%') and concat(num_obj,',',position) in (select concat(num_obj,',',position) from frag_searcher_".$t[$k-1]['md5'].")";
+							select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where fragment like ('".addslashes($frag)."%') and concat(num_obj,',',position) in (select concat(num_obj,',',position) from frag_searcher_".$t[$k-1]['md5'].")";
 				} else {
 					$qt = "create temporary table frag_searcher_".$t[$k]['md5']." (num_obj int, position int,unique using btree(num_obj,position)) engine=memory
-							select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where fragment = '".addslashes($t_frag[$k])."' and concat(num_obj,',',position) in (select concat(num_obj,',',position) from frag_searcher_".$t[$k-1]['md5'].")";
+							select num_obj,position*1+1 as position from fragments join explnum_fields_global_index_w_fragments on num_fragment=id_fragment where fragment = '".addslashes($frag)."' and concat(num_obj,',',position) in (select concat(num_obj,',',position) from frag_searcher_".$t[$k-1]['md5'].")";
 				}
 				$t[$k]['qf'] = $qf;
 					

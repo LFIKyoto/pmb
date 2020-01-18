@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dico_empty_words.tpl.php,v 1.4 2009-05-16 11:19:54 dbellamy Exp $
+// $Id: dico_empty_words.tpl.php,v 1.5 2019-05-27 14:10:48 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $autorites_list_empty_word, $msg, $current_module, $autorites_add_empty_word;
 
 //$autorites_list_empty_word : template form recherche et liste de mots vides
 $autorites_list_empty_word="

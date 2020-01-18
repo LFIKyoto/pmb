@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_contribution_item.class.php,v 1.10 2018-11-07 16:22:44 apetithomme Exp $
+// $Id: onto_contribution_item.class.php,v 1.14 2019-08-01 13:16:35 btafforeau Exp $
 if (stristr ( $_SERVER ['REQUEST_URI'], ".class.php" ))
 	die ( "no access" );
 
@@ -182,6 +182,9 @@ class onto_contribution_item extends onto_common_item {
 		global $msg, $charset, $ontology_tpl, $area_id, $sub_form, $form_id, $sub, $scenario, $pmb_id, $contributor;
 		global $ontology_contribution_tpl;
 		// lors de la première instance de notre contribution, on renseigne les champs avec les valeurs par défaut
+		
+		$this->merge_datatypes();
+		
 		$temp_datatype_tab = $this->order_datatypes ();
 		
 		$end_form = '';
@@ -232,7 +235,7 @@ class onto_contribution_item extends onto_common_item {
 		 * ***********************************
 		 */
 		
-		if (sizeof($properties)) {
+		if (!empty($properties)) {
 			$index = 0;
 			foreach ( $properties as $uri_property ) {
 				
@@ -307,14 +310,17 @@ class onto_contribution_item extends onto_common_item {
 					}
 					
 					// on modifie la propiété avec le paramétrage du formulaire
-					if ($property->pmb_extended ['label']) {
+					if (!empty($property->pmb_extended ['label'])) {
 						$property->label = $property->pmb_extended ['label'];
 					}
 					
-					if ($property->pmb_extended ['default_value']) {
+					if (!empty($property->pmb_extended ['default_value'])) {
 						$property->default_value = array ();
 						foreach ($property->pmb_extended ['default_value'] as $key => $value ) {
-							$property->default_value[] = $value["value"];
+							//$property->default_value[] = $value["value"];
+							if($value && is_array($value)){
+							    $property->default_value[] = $value['value'];
+							}
 						}
 					}
 					
@@ -335,8 +341,8 @@ class onto_contribution_item extends onto_common_item {
 					}
 					
 					// propriété cachée
-					if (!empty($property->pmb_extended['hidden'])) {						
-						$movable_div = str_replace('!!datatype_ui_form!!', $datatype_ui_class_name::get_hidden_fields( $property, $property_data, onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name)), $movable_div);
+					if (!empty($property->pmb_extended['hidden'])) {
+					    $movable_div = str_replace('!!datatype_ui_form!!', $datatype_ui_class_name::get_hidden_fields($this->uri, $property, $this->onto_class->get_restriction($property->uri), $property_data, onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name)), $movable_div);
 					} else {
 						$movable_div = str_replace('!!datatype_ui_form!!', $datatype_ui_class_name::get_form($this->uri, $property, $this->onto_class->get_restriction($property->uri), $property_data, onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name), $flag), $movable_div);
 					}
@@ -468,5 +474,51 @@ class onto_contribution_item extends onto_common_item {
 		$assertions[] = new onto_assertion($this->uri, "http://www.pmbservices.fr/ontology#last_edit", time(), "", array('type'=>"literal"));
 	
 		return $assertions;
+	}
+	
+	private function merge_datatypes() {
+	    $datatypes = $this->datatypes;
+	    $this->datatypes = [];
+	    $this->set_assertions($this->get_assertions_from_active_properties());
+	    foreach ($datatypes as $uri => $values) {
+            $this->datatypes[$uri] = $values;    
+	    }
+	}
+	
+	public function get_label($uri_property){
+	    global $lang;
+	    
+	    if (!is_array($uri_property)) {
+	        return parent::get_label($uri_property);
+	    }
+	    $values = [];
+	    foreach ($uri_property as $uri) {
+	        $values = array_merge($values, $this->datatypes[$uri]);
+	    }
+	    $label = "";
+	    $default_label = "";
+	    if(count($values) == 1){
+	        $label = $values[0]->get_value();
+	    }else if(count($values) > 1){
+	        foreach($values as $value){
+	            if ($label) {
+	                $label .= ", ";
+	            }
+	            if ($default_label) {
+	                $default_label .= ", ";
+	            }
+	            if($value->offsetget_value_property("lang") == ""){
+	                $default_label .= $value->get_value();
+	            }
+	            if(!$default_label){
+	                $default_label .= $value->get_value();
+	            }
+	            if($value->offsetget_value_property("lang") == substr($lang,0,2)){
+	                $label .= $value->get_value();
+	            }
+	        }
+	        if(!$label) $label = $default_label;
+	    }
+	    return $label;
 	}
 } // end of onto_common_item

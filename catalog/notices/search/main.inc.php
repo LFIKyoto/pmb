@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.15 2017-06-02 14:46:13 dgoron Exp $
+// $Id: main.inc.php,v 1.17 2019-06-07 08:05:38 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $authperso_list_name, $include_path, $class_path, $authperso, $info_authpersos, $tpl_authperso, $menu_search_tpl, $charset, $tpl_elt;
+global $selected, $mode, $menu_search, $id, $layout_end;
 
 // page de switch recherche notice
 

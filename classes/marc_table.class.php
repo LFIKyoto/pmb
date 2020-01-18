@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: marc_table.class.php,v 1.46 2017-07-19 12:06:18 dgoron Exp $
+// $Id: marc_table.class.php,v 1.48 2019-07-11 14:17:15 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -163,7 +163,15 @@ class marc_list {
 				$this->table = $parser->table;
 				$this->attributes = $parser->getAttributes();
 				$this->inverse_of = $parser->inverse_of;
-				break;
+				break;				
+			case 'aut_link':
+			    $parser = new XMLlist_links("$include_path/marc_tables/$lang/aut_link.xml");
+			    $parser->setAttributesToParse(array(array('name' => 'AUT_LINK', 'default_value' => 'yes'), array('name' => 'GROUP', 'default_value' => '')));
+			    $parser->analyser();
+			    $this->table = $parser->table;
+			    $this->attributes = $parser->getAttributes();
+			    $this->inverse_of = $parser->inverse_of;
+			    break;
 			case 'rent_account_type':
 				$parser = new XMLlist("$include_path/marc_tables/$lang/rent_account_type.xml");
 				$parser->analyser();
@@ -283,7 +291,7 @@ class marc_select {
 	
 	public function first_item_at_last() {
 		$item = array_shift($this->table);
-		array_push($this->table, $item);
+		$this->table[] = $item;
 	}
 }
 

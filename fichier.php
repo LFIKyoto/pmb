@@ -2,13 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fichier.php,v 1.7 2018-07-24 14:16:37 dgoron Exp $
+// $Id: fichier.php,v 1.8 2019-02-04 08:31:10 dgoron Exp $
 
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
 $base_auth = "FICHES_AUTH";  
-$base_title = "\$msg[onglet_fichier]";  
+$base_title = "\$msg[onglet_fichier]";
+$base_use_dojo = 1;
 $prefix = "gestfic0";
 
 if ((isset($_POST["dest"])) && ($_POST["dest"]=="TABLEAU")) {

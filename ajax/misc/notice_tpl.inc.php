@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_tpl.inc.php,v 1.1 2017-03-16 12:11:17 jpermanne Exp $
+// $Id: notice_tpl.inc.php,v 1.2 2019-05-29 12:03:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $id_notice_tpl, $action;
 
 require_once($class_path."/notice_tpl.class.php");
 

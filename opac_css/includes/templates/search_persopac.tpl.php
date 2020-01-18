@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_persopac.tpl.php,v 1.3 2018-01-25 10:13:28 dgoron Exp $
+// $Id: search_persopac.tpl.php,v 1.4 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -12,6 +12,7 @@ if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 global $tpl_search_persopac_liste_tableau;
 global $tpl_search_persopac_liste_tableau_ligne;
+global $msg;
 
 $tpl_search_persopac_liste_tableau = "
 

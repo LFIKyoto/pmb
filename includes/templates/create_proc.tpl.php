@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: create_proc.tpl.php,v 1.3 2009-05-16 11:19:55 dbellamy Exp $
+// $Id: create_proc.tpl.php,v 1.4 2019-05-27 14:39:02 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $create_proc_form, $current_module, $msg;
 
 $create_proc_form="
 <form class='form-$current_module' name='search_form' action='!!url!!' method='post'>

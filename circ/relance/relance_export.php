@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: relance_export.php,v 1.6 2017-11-23 09:02:32 ngantier Exp $
+// $Id: relance_export.php,v 1.8 2019-07-31 07:44:49 dgoron Exp $
 
 //Affichage des recouvrements pour un lecteur, format Excel HTML
 
@@ -60,8 +60,13 @@ $export_relance_tpl="<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><
 </body>
 </html>";
 
+$relance_liste = "";
 $req ="select id_empr  from empr, pret, exemplaires, empr_categ where 1 ";
-$req.= "and pret_retour<CURDATE() and pret_idempr=id_empr and pret_idexpl=expl_id and id_categ_empr=empr_categ group by id_empr";
+$req.= "and pret_retour<CURDATE() and pret_idempr=id_empr and pret_idexpl=expl_id and id_categ_empr=empr_categ ";
+if(isset($empr_export) && is_array($empr_export)) {
+    $req.= "and id_empr in (".implode(",",$empr_export).") ";
+}
+$req.= "group by id_empr";
 $res=pmb_mysql_query($req);
 while ($r=pmb_mysql_fetch_object($res)) {
 	$relance_liste.=get_relance($r->id_empr);
@@ -73,6 +78,7 @@ function get_relance($id_empr){
 	global $dbh,$charset, $msg, $pmb_gestion_financiere, $pmb_gestion_amende;
 	global $pmb_lecteurs_localises;
 
+	$info = "";
 	// liste des relances
 	if (($pmb_gestion_financiere)&&($pmb_gestion_amende)) {
 		$amende=new amende($id_empr);

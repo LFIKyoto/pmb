@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: record_display.class.php,v 1.32 2018-12-28 16:34:30 dgoron Exp $
+// $Id: record_display.class.php,v 1.41.2.3 2019-11-28 10:52:27 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -381,12 +381,12 @@ class record_display {
 						} else $path_table=array();
 						// ceci remet le tableau dans l'ordre général->particulier
 						$path_table = array_reverse($path_table);
-						if(sizeof($path_table)) {
+						if (!empty($path_table)) {
 							$temp_table = array();
-							while(list($xi, $l) = each($path_table)) {
+							foreach ($path_table as $xi => $l) {
 								$temp_table[] = $l['libelle'];
 							}
-							$parent_libelle = join(':', $temp_table);
+							$parent_libelle = implode(':', $temp_table);
 							$catalog_form = $parent_libelle.':'.$libelle_categ;
 						} else {
 							$catalog_form = $libelle_categ;
@@ -412,7 +412,7 @@ class record_display {
 		}
 		
 		$tmpcateg_aff = '';
-		while (list($nom_thesaurus, $val_lib)=each($categ_repetables)) {
+		foreach ($categ_repetables as $nom_thesaurus => $val_lib) {
 			//c'est un tri par libellé qui est demandé
 			if ($thesaurus_categories_affichage_ordre==0){
 				$tmp=array();
@@ -452,10 +452,10 @@ class record_display {
 			$anti_loop[]=$this->notice_id;
 			//Notices horizontales liées
 			if($this->notice_relations->get_nb_pairs()) {
-				$display .= $this->notice_relations->get_display_links('pairs', $this->print_mode, $this->show_explnum, $this->show_statut, $this->show_opac_hidden_fields, $anti_loop);
+				$display .= $this->notice_relations->get_display_links('pairs', $this->print_mode, $this->show_explnum, 1, $this->show_opac_hidden_fields, $anti_loop);
 			}
 			if(count($this->childs) && !$this->print_mode) {
-				$display .= $this->notice_relations->get_display_links('childs', $this->print_mode, $this->show_explnum, $this->show_statut, $this->show_opac_hidden_fields, $anti_loop);
+				$display .= $this->notice_relations->get_display_links('childs', $this->print_mode, $this->show_explnum, 1, $this->show_opac_hidden_fields, $anti_loop);
 			}
 		}
 		return $display;
@@ -497,6 +497,7 @@ class record_display {
 		global $pmb_expl_display_location_without_expl;
 		global $pmb_html_allow_expl_cote;
 		global $pmb_transferts_actif, $pmb_pret_groupement;
+		global $pmb_expl_order;
 		// params :
 		// $no_notice= id de la notice
 		// $link_expl= lien associé à l'exemplaire avec !!expl_id!! et !!expl_cb!! à mettre à jour
@@ -560,7 +561,9 @@ class record_display {
 			$requete .= " left join lenders on exemplaires.expl_owner=lenders.idlender ";
 			$requete .= " left join docs_type on exemplaires.expl_typdoc=docs_type.idtyp_doc  ";
 			$requete .= " WHERE $where_expl_notice_expl_bulletin $where_expl_localises ";
-			if(in_array("surloc_libelle", $colonnesarray)){
+			if($pmb_expl_order) {
+			    $requete .= " order by ".$pmb_expl_order;
+			}elseif(in_array("surloc_libelle", $colonnesarray)){
 				$requete .= " order by surloc_libelle,location_libelle, section_libelle, expl_cote, expl_cb ";
 			}else{
 				$requete .= " order by location_libelle, section_libelle, expl_cote, expl_cb ";
@@ -637,233 +640,237 @@ class record_display {
 								global $empr_show_caddie;
 								if ($empr_show_caddie && (SESSrights & CIRCULATION_AUTH)) {
 									$img_ajout_empr_caddie="<img src='".get_url_icon('basket_empr.gif')."' class='align_middle' alt='basket' title=\"${msg[400]}\" onClick=\"openPopUp('".$base_path."/cart.php?object_type=EMPR&item=".$expl->pret_idempr."', 'cart')\">&nbsp;";
-						} else $img_ajout_empr_caddie="";
-						switch ($this->print_mode) {
-							case '2':
-								$situation .= "<br />$res_empr_obj->empr_prenom $res_empr_obj->empr_nom";
-								break;
-							default :
-								$situation .= "<br />$img_ajout_empr_caddie<a href='".$base_path."/circ.php?categ=pret&form_cb=".rawurlencode($res_empr_obj->empr_cb)."'>$res_empr_obj->empr_prenom $res_empr_obj->empr_nom</a>";
-								break;
+								} else $img_ajout_empr_caddie="";
+								switch ($this->print_mode) {
+									case '2':
+										$situation .= "<br />$res_empr_obj->empr_prenom $res_empr_obj->empr_nom";
+										break;
+									default :
+										$situation .= "<br />$img_ajout_empr_caddie<a href='".$base_path."/circ.php?categ=pret&form_cb=".rawurlencode($res_empr_obj->empr_cb)."'>$res_empr_obj->empr_prenom $res_empr_obj->empr_nom</a>";
+										break;
+								}
+							} else {
+								// tester si réservé
+								$result_resa = pmb_mysql_query("select 1 from resa where resa_cb='".addslashes($expl->expl_cb)."' ", $dbh) or die ("<br />".pmb_mysql_error()."<br />".$requete);
+								$reserve = pmb_mysql_num_rows($result_resa);
+			
+								// tester à ranger
+								$result_aranger = pmb_mysql_query(" select 1 from resa_ranger where resa_cb='".addslashes($expl->expl_cb)."' ", $dbh) or die ("<br />".pmb_mysql_error()."<br />".$requete);
+								$aranger = pmb_mysql_num_rows($result_aranger);
+			
+								if ($reserve) $situation = "<strong>".$msg['expl_reserve']."</strong>"; // exemplaire réservé
+								elseif($expl->expl_retloc) $situation = $msg['resa_menu_a_traiter'];  // exemplaire à traiter
+								elseif ($aranger) $situation = "<strong>".$msg['resa_menu_a_ranger']."</strong>"; // exemplaire à ranger
+								elseif ($expl->pret_flag) $situation = "<strong>${msg[359]}</strong>"; // exemplaire disponible
+								else $situation = "";
+							}
+	
+							$aff_column .= htmlentities($colencours,ENT_QUOTES, $charset);
+							if ($situation) $aff_column .= "<br />$situation";
+						} else if ($colonnesarray[$i]=="groupexpl_name") {
+							$id_column = "id='groupexpl_name_".$expl->expl_cb."'";
+							$colencours = groupexpls::get_group_name_expl($expl->expl_cb);
+							$aff_column = htmlentities($colencours,ENT_QUOTES, $charset);
+						} else if ($colonnesarray[$i]=="nb_prets") {
+							$colencours = exemplaire::get_nb_prets_from_id($expl->expl_id);
+							$aff_column = ($colencours ? htmlentities($colencours,ENT_QUOTES, $charset) : '');
+						} else {
+							$aff_column = htmlentities($colencours,ENT_QUOTES, $charset);
+						}
+						if ($i == 0 && $id_column ==""){
+							$expl_liste .= "<td ".$expl_rowspan." id='expl_".$expl->expl_id."'>".$aff_column."</td>";
+						} else {
+							$expl_liste .= "<td ".$expl_rowspan." ".$id_column.">".$aff_column."</td>";
+						}
+					}
+					if ($this->print_mode) {
+						$expl_liste .= "<td>&nbsp;</td>";
+					} else {
+	
+						if(SESSrights & CATALOGAGE_AUTH){
+							//le panier d'exemplaire
+							$cart_click = "onClick=\"openPopUp('".$base_path."/cart.php?object_type=EXPL&item=".$expl->expl_id."', 'cart')\"";
+							$cart_over_out = "onMouseOver=\"show_div_access_carts(event,".$expl->expl_id.",'EXPL',1);\" onMouseOut=\"set_flag_info_div(false);\"";
+							$cart_link = "<a href='#' $cart_click $cart_over_out><img src='".get_url_icon('basket_small_20x20.gif')."' class='center' alt='basket' title=\"${msg[400]}\"></a>";
+							//l'icon pour le drag&drop de panier
+							$drag_link = "<span onMouseOver='if(init_drag) init_drag();' id='EXPL_drag_" . $expl->expl_id . "'  dragicon='".get_url_icon('icone_drag_notice.png')."' dragtext=\"".htmlentities ( $expl->expl_cb,ENT_QUOTES, $charset)."\" draggable=\"yes\" dragtype=\"notice\" callback_before=\"show_carts\" callback_after=\"\" style=\"padding-left:7px\"><img src=\"".get_url_icon('notice_drag.png')."\"/></span>";
+						}else{
+							$cart_click = "";
+							$cart_link = "";
+							$drag_link = "";
+						}
+		
+						//l'impression de la fiche exemplaire
+						$fiche_click = "onClick=\"openPopUp('".$base_path."/pdf.php?pdfdoc=fiche_catalographique&expl_id=".$expl->expl_id."', 'Fiche', 500, 400, -2, -2, 'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes')\"";
+						$fiche_link = "<a href='#' $fiche_click><img src='".get_url_icon('print.gif')."' class='center' alt='".$msg ['print_fiche_catalographique']."' title='".$msg ['print_fiche_catalographique']."'></a>";
+				
+						global $pmb_transferts_actif;
+				
+						//si les transferts sont activés
+						if ($pmb_transferts_actif) {
+							//si l'exemplaire n'est pas transferable on a une image vide
+							$transfer_link = "<img src='".get_url_icon('spacer.gif')."' class='center' height=20 width=20>";
+				
+							$dispo_pour_transfert = transfert::est_transferable ( $expl->expl_id );
+							if (SESSrights & TRANSFERTS_AUTH && $dispo_pour_transfert) {
+								//l'icon de demande de transfert
+								$transfer_link = "<a href=\"#\" onClick=\"openPopUp('".$base_path."/catalog/transferts/transferts_popup.php?expl=".$expl->expl_id."', 'cart', 600, 450, -2, -2, 'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes');\"><img src='".get_url_icon('peb_in.png')."' class='center' border=0 alt=\"".$msg ["transferts_alt_libelle_icon"]."\" title=\"".$msg ["transferts_alt_libelle_icon"]."\"></a>";
+								$expl_list_id_transfer[] = $expl->expl_id;
+							}
+						} else {
+							$transfer_link = "";
+						}
+		
+						//on met tout dans la colonne
+						$expl_liste .= "<td>".((isset($fiche_link) && $fiche_link) ? $fiche_link." " : "").((isset($cart_link) && $cart_link) ? $cart_link." " : "").((isset($transfer_link) && $transfer_link) ? $transfer_link." " : "").((isset($drag_link) && $drag_link) ? $drag_link : "")."</td>";
+					}
+					if ($pmb_pret_groupement || $pmb_transferts_actif) {
+						$expl_liste .= "<td class='center'><input type='checkbox' id='checkbox_expl[".$expl->expl_id."]' name='checkbox_expl[".$expl->expl_id."]' /></td>";
+					}
+					$expl_liste .= "</tr>";
+					if (($expl->expl_note || $expl->expl_comment) && $pmb_expl_list_display_comments) {
+						$notcom=array();
+						$expl_liste .= "<tr><td colspan='".$total_columns."'>";
+						if ($expl->expl_note && ($pmb_expl_list_display_comments & 1)) $notcom[] .= "<span class='erreur'>$expl->expl_note</span>";
+						if ($expl->expl_comment && ($pmb_expl_list_display_comments & 2)) $notcom[] .= "<span class='expl_list_comment'>".nl2br($expl->expl_comment)."</span>";
+						$expl_liste .= implode("<br />",$notcom);
+						$expl_liste .= "</tr>";
+					}
+				} // fin while
+			} // fin il y a des expl visibles
+	
+			if ($expl_liste) {
+				$entry = "";
+				if($pmb_pret_groupement || $pmb_transferts_actif) {
+					if ($pmb_pret_groupement) $on_click_groupexpl = "if(check_if_checked(document.getElementById('".$prefix."_expl_list_id').value,'groupexpl')) openPopUp('./select.php?what=groupexpl&caller=form_".$prefix."_expl&expl_list_id='+get_expl_checked(document.getElementById('".$prefix."_expl_list_id').value), 'selector')";
+					if ($pmb_transferts_actif) $on_click_transferts = "if(check_if_checked(document.getElementById('".$prefix."_expl_list_id_transfer').value,'transfer')) openPopUp('./catalog/transferts/transferts_popup.php?expl='+get_expl_checked(document.getElementById('".$prefix."_expl_list_id_transfer').value), 'selector')";
+					$entry .= "
+								<script type='text/javascript' src='./javascript/expl_list.js'></script>
+								<script type='text/javascript'>
+			 						var msg_select_all = '".$msg["notice_expl_check_all"]."';
+			 						var msg_unselect_all = '".$msg["notice_expl_uncheck_all"]."';
+			 						var msg_have_select_expl = '".$msg["notice_expl_have_select_expl"]."';
+			 						var msg_have_select_transfer_expl = '".$msg["notice_expl_have_select_transfer_expl"]."';
+			 						var msg_have_same_loc_expl = '".$msg["notice_expl_have_same_loc_expl"]."';
+			 					</script>
+			 					<table style='border:0px' class='expl-list'>
+									<tr>
+										<th colspan='".count($colonnesarray)."'>
+											".$msg["notice_for_expl_checked"]."
+											".($pmb_pret_groupement ? "<input class='bouton' type='button' value=\"".$msg["notice_for_expl_checked_groupexpl"]."\" onClick=\"".$on_click_groupexpl."\" />&nbsp;&nbsp;" : "")."
+											".($pmb_transferts_actif ? "<input class='bouton' type='button' value=\"".$msg["notice_for_expl_checked_transfert"]."\" onClick=\"".$on_click_transferts."\" />" : "")."
+										</th>
+									</tr>
+								</table>";
+				}
+				// On ne propose pas le tri en impression ainsi qu'avec les commentaires (on ne sait pas encore faire)
+				if ($this->print_mode || $pmb_expl_list_display_comments) {
+					$entry .= "<table style='border:0px' class='expl-list'>";
+				} else {
+					$entry .= "<table style='border:0px' class='expl-list sortable'>";
+				}
+				$entry .= "<tr>";
+				for ($i=0; $i<count($colonnesarray); $i++) {
+					if (substr($colonnesarray[$i],0,1)=="#") {
+						//champs personnalisés
+						if (!$cp->no_special_fields) {
+							$id=substr($colonnesarray[$i],1);
+							$entry.="<th>".htmlentities($cp->t_fields[$id]['TITRE'],ENT_QUOTES,$charset)."</th>";
 						}
 					} else {
-						// tester si réservé
-						$result_resa = pmb_mysql_query("select 1 from resa where resa_cb='".addslashes($expl->expl_cb)."' ", $dbh) or die ("<br />".pmb_mysql_error()."<br />".$requete);
-						$reserve = pmb_mysql_num_rows($result_resa);
-	
-						// tester à ranger
-						$result_aranger = pmb_mysql_query(" select 1 from resa_ranger where resa_cb='".addslashes($expl->expl_cb)."' ", $dbh) or die ("<br />".pmb_mysql_error()."<br />".$requete);
-						$aranger = pmb_mysql_num_rows($result_aranger);
-	
-						if ($reserve) $situation = "<strong>".$msg['expl_reserve']."</strong>"; // exemplaire réservé
-						elseif($expl->expl_retloc) $situation = $msg['resa_menu_a_traiter'];  // exemplaire à traiter
-						elseif ($aranger) $situation = "<strong>".$msg['resa_menu_a_ranger']."</strong>"; // exemplaire à ranger
-						elseif ($expl->pret_flag) $situation = "<strong>${msg[359]}</strong>"; // exemplaire disponible
-						else $situation = "";
+						eval ("\$colencours=\$msg['expl_header_".$colonnesarray[$i]."'];");
+						$entry.="<th>".htmlentities($colencours,ENT_QUOTES, $charset)."</th>";
+					}
 				}
-	
-				$aff_column .= htmlentities($colencours,ENT_QUOTES, $charset);
-				if ($situation) $aff_column .= "<br />$situation";
-			} else if ($colonnesarray[$i]=="groupexpl_name") {
-				$id_column = "id='groupexpl_name_".$expl->expl_cb."'";
-				$colencours = groupexpls::get_group_name_expl($expl->expl_cb);
-				$aff_column = htmlentities($colencours,ENT_QUOTES, $charset);
-			} else
-				$aff_column = htmlentities($colencours,ENT_QUOTES, $charset);
-				if ($i == 0 && $id_column ==""){
-					$expl_liste .= "<td ".$expl_rowspan." id='expl_".$expl->expl_id."'>".$aff_column."</td>";
-				} else {
-					$expl_liste .= "<td ".$expl_rowspan." ".$id_column.">".$aff_column."</td>";
+				$entry.="<th>&nbsp;</th>";
+				if($pmb_pret_groupement || $pmb_transferts_actif) {
+					if(!is_array($expl_list_id_transfer)) {
+						$expl_list_id_transfer = array();
+					}
+					$entry.="<th class='center'>
+									<input type='checkbox' onclick=\"check_all_expl(this,document.getElementById('".$prefix."_expl_list_id').value)\" title='".$msg["notice_expl_check_all"]."' id='".$prefix."_select_all' name='".$prefix."_select_all' />
+									<input type='hidden' id='".$prefix."_expl_list_id' name='".$prefix."_expl_list_id' value='".implode(",", $expl_list_id)."' />
+									<input type='hidden' id='".$prefix."_expl_list_id_transfer' name='".$prefix."_expl_list_id_transfer' value='".implode(",", $expl_list_id_transfer)."' />
+								</th>";
 				}
-		}
-		if ($this->print_mode)
-			$expl_liste .= "<td>&nbsp;</td>";
-			else {
+				$entry .="</tr>$expl_liste</table>";
+			} else $entry = "";
 	
-				if(SESSrights & CATALOGAGE_AUTH){
-					//le panier d'exemplaire
-					$cart_click = "onClick=\"openPopUp('".$base_path."/cart.php?object_type=EXPL&item=".$expl->expl_id."', 'cart')\"";
-					$cart_over_out = "onMouseOver=\"show_div_access_carts(event,".$expl->expl_id.",'EXPL',1);\" onMouseOut=\"set_flag_info_div(false);\"";
-					$cart_link = "<a href='#' $cart_click $cart_over_out><img src='".get_url_icon('basket_small_20x20.gif')."' class='center' alt='basket' title=\"${msg[400]}\"></a>";
-					//l'icon pour le drag&drop de panier
-					$drag_link = "<span onMouseOver='if(init_drag) init_drag();' id='EXPL_drag_" . $expl->expl_id . "'  dragicon='".get_url_icon('icone_drag_notice.png')."' dragtext=\"".htmlentities ( $expl->expl_cb,ENT_QUOTES, $charset)."\" draggable=\"yes\" dragtype=\"notice\" callback_before=\"show_carts\" callback_after=\"\" style=\"padding-left:7px\"><img src=\"".get_url_icon('notice_drag.png')."\"/></span>";
-				}else{
-					$cart_click = "";
-					$cart_link = "";
-					$drag_link = "";
-				}
-		
-				//l'impression de la fiche exemplaire
-				$fiche_click = "onClick=\"openPopUp('".$base_path."/pdf.php?pdfdoc=fiche_catalographique&expl_id=".$expl->expl_id."', 'Fiche', 500, 400, -2, -2, 'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes')\"";
-				$fiche_link = "<a href='#' $fiche_click><img src='".get_url_icon('print.gif')."' class='center' alt='".$msg ['print_fiche_catalographique']."' title='".$msg ['print_fiche_catalographique']."'></a>";
-		
-				global $pmb_transferts_actif;
-		
-				//si les transferts sont activés
-				if ($pmb_transferts_actif) {
-					//si l'exemplaire n'est pas transferable on a une image vide
-					$transfer_link = "<img src='".get_url_icon('spacer.gif')."' class='center' height=20 width=20>";
-		
-					$dispo_pour_transfert = transfert::est_transferable ( $expl->expl_id );
-					if (SESSrights & TRANSFERTS_AUTH && $dispo_pour_transfert) {
-						//l'icon de demande de transfert
-						$transfer_link = "<a href=\"#\" onClick=\"openPopUp('".$base_path."/catalog/transferts/transferts_popup.php?expl=".$expl->expl_id."', 'cart', 600, 450, -2, -2, 'toolbar=no, dependent=yes, resizable=yes, scrollbars=yes');\"><img src='".get_url_icon('peb_in.png')."' class='center' border=0 alt=\"".$msg ["transferts_alt_libelle_icon"]."\" title=\"".$msg ["transferts_alt_libelle_icon"]."\"></a>";
-						$expl_list_id_transfer[] = $expl->expl_id;
+			if($pmb_expl_display_location_without_expl){
+				if ($pmb_sur_location_activate) {
+					$array_surloc = array();
+					$requete = "SELECT * FROM sur_location ORDER BY surloc_libelle";
+					$result = pmb_mysql_query($requete, $dbh) or die ("<br />".pmb_mysql_error()."<br />".$requete);
+					$nb_surloc = pmb_mysql_num_rows($result);
+					if ($nb_surloc) {
+						while($surloc = pmb_mysql_fetch_object($result)) {
+							$array_surloc[]=array("id"=>$surloc->surloc_id, "libelle"=>$surloc->surloc_libelle, "locations"=>array());
+						}
+					}
+					if (count($array_surloc)) {
+						foreach ($array_surloc as $key=>$surloc) {
+							$requete = "SELECT idlocation, location_libelle from docs_location where surloc_num=".$surloc["id"]." AND
+							idlocation not in (SELECT expl_location from exemplaires WHERE expl_notice=$no_notice) order by location_libelle";
+			
+							$result = pmb_mysql_query($requete, $dbh) or die ("<br />".pmb_mysql_error()."<br />".$requete);
+							$nb_loc = pmb_mysql_num_rows($result);
+							if ($nb_loc) {
+								while($loc = pmb_mysql_fetch_object($result)) {
+									$array_surloc[$key]["locations"][] = array("id"=>$loc->idlocation, "libelle"=>$loc->location_libelle);
+								}
+							} else {
+								unset($array_surloc[$key]);
+							}
+						}
+					}
+					//Au moins une surloc à afficher
+					if (count($array_surloc)) {
+						$tr_surloc="";
+						foreach ($array_surloc as $key => $surloc) {
+							$tr_surloc.="<tr><td>";
+							$tr_loc="";
+							foreach ($surloc["locations"] as $keyloc => $loc) {
+								$tr_loc.="<tr><td>".$loc["libelle"]."</td></tr>";
+							}
+							$tpl_surloc= "
+							<table style='border:0px' class='expl-list'>
+							$tr_loc
+							</table>";
+							$tr_surloc.=gen_plus('surlocation_without_expl'.$key.'_'.$no_notice,$surloc["libelle"],$tpl_surloc,0);
+							$tr_surloc.="</td></tr>";
+						}
+						$tpl = "
+						<table style='border:0px' class='expl-list'>
+						$tr_surloc
+						</table>";
+						$entry.=gen_plus('location_without_expl'.$no_notice,$msg['expl_surlocation_without_expl'],$tpl,0);
 					}
 				} else {
-					$transfer_link = "";
-				}
-		
-				//on met tout dans la colonne
-				$expl_liste .= "<td>".((isset($fiche_link) && $fiche_link) ? $fiche_link." " : "").((isset($cart_link) && $cart_link) ? $cart_link." " : "").((isset($transfer_link) && $transfer_link) ? $transfer_link." " : "").((isset($drag_link) && $drag_link) ? $drag_link : "")."</td>";
-			}
-			if ($pmb_pret_groupement || $pmb_transferts_actif) {
-				$expl_liste .= "<td class='center'><input type='checkbox' id='checkbox_expl[".$expl->expl_id."]' name='checkbox_expl[".$expl->expl_id."]' /></td>";
-			}
-			$expl_liste .= "</tr>";
-			if (($expl->expl_note || $expl->expl_comment) && $pmb_expl_list_display_comments) {
-				$notcom=array();
-				$expl_liste .= "<tr><td colspan='".$total_columns."'>";
-				if ($expl->expl_note && ($pmb_expl_list_display_comments & 1)) $notcom[] .= "<span class='erreur'>$expl->expl_note</span>";
-				if ($expl->expl_comment && ($pmb_expl_list_display_comments & 2)) $notcom[] .= nl2br($expl->expl_comment);
-				$expl_liste .= implode("<br />",$notcom);
-				$expl_liste .= "</tr>";
-			}
-	
-		} // fin while
-	} // fin il y a des expl visibles
-	
-	if ($expl_liste) {
-		$entry = "";
-		if($pmb_pret_groupement || $pmb_transferts_actif) {
-			if ($pmb_pret_groupement) $on_click_groupexpl = "if(check_if_checked(document.getElementById('".$prefix."_expl_list_id').value,'groupexpl')) openPopUp('./select.php?what=groupexpl&caller=form_".$prefix."_expl&expl_list_id='+get_expl_checked(document.getElementById('".$prefix."_expl_list_id').value), 'selector')";
-			if ($pmb_transferts_actif) $on_click_transferts = "if(check_if_checked(document.getElementById('".$prefix."_expl_list_id_transfer').value,'transfer')) openPopUp('./catalog/transferts/transferts_popup.php?expl='+get_expl_checked(document.getElementById('".$prefix."_expl_list_id_transfer').value), 'selector')";
-			$entry .= "
-						<script type='text/javascript' src='./javascript/expl_list.js'></script>
-						<script type='text/javascript'>
-	 						var msg_select_all = '".$msg["notice_expl_check_all"]."';
-	 						var msg_unselect_all = '".$msg["notice_expl_uncheck_all"]."';
-	 						var msg_have_select_expl = '".$msg["notice_expl_have_select_expl"]."';
-	 						var msg_have_select_transfer_expl = '".$msg["notice_expl_have_select_transfer_expl"]."';
-	 						var msg_have_same_loc_expl = '".$msg["notice_expl_have_same_loc_expl"]."';
-	 					</script>
-	 					<table style='border:0px' class='expl-list'>
-							<tr>
-								<th colspan='".count($colonnesarray)."'>
-									".$msg["notice_for_expl_checked"]."
-									".($pmb_pret_groupement ? "<input class='bouton' type='button' value=\"".$msg["notice_for_expl_checked_groupexpl"]."\" onClick=\"".$on_click_groupexpl."\" />&nbsp;&nbsp;" : "")."
-									".($pmb_transferts_actif ? "<input class='bouton' type='button' value=\"".$msg["notice_for_expl_checked_transfert"]."\" onClick=\"".$on_click_transferts."\" />" : "")."
-								</th>
-							</tr>
-						</table>";
-		}
-		if ($this->print_mode) {
-			$entry .= "<table style='border:0px' class='expl-list'>";
-		} else {
-			$entry .= "<table style='border:0px' class='expl-list sortable'>";
-		}
-		$entry .= "<tr>";
-		for ($i=0; $i<count($colonnesarray); $i++) {
-			if (substr($colonnesarray[$i],0,1)=="#") {
-				//champs personnalisés
-				if (!$cp->no_special_fields) {
-					$id=substr($colonnesarray[$i],1);
-					$entry.="<th>".htmlentities($cp->t_fields[$id]['TITRE'],ENT_QUOTES,$charset)."</th>";
-				}
-			} else {
-				eval ("\$colencours=\$msg['expl_header_".$colonnesarray[$i]."'];");
-				$entry.="<th>".htmlentities($colencours,ENT_QUOTES, $charset)."</th>";
-			}
-		}
-		$entry.="<th>&nbsp;</th>";
-		if($pmb_pret_groupement || $pmb_transferts_actif) {
-			if(!is_array($expl_list_id_transfer)) {
-				$expl_list_id_transfer = array();
-			}
-			$entry.="<th class='center'>
-							<input type='checkbox' onclick=\"check_all_expl(this,document.getElementById('".$prefix."_expl_list_id').value)\" title='".$msg["notice_expl_check_all"]."' id='".$prefix."_select_all' name='".$prefix."_select_all' />
-							<input type='hidden' id='".$prefix."_expl_list_id' name='".$prefix."_expl_list_id' value='".implode(",", $expl_list_id)."' />
-							<input type='hidden' id='".$prefix."_expl_list_id_transfer' name='".$prefix."_expl_list_id_transfer' value='".implode(",", $expl_list_id_transfer)."' />
-						</th>";
-		}
-		$entry .="</tr>$expl_liste</table>";
-	} else $entry = "";
-	
-	if($pmb_expl_display_location_without_expl){
-		if ($pmb_sur_location_activate) {
-			$array_surloc = array();
-			$requete = "SELECT * FROM sur_location ORDER BY surloc_libelle";
-			$result = pmb_mysql_query($requete, $dbh) or die ("<br />".pmb_mysql_error()."<br />".$requete);
-			$nb_surloc = pmb_mysql_num_rows($result);
-			if ($nb_surloc) {
-				while($surloc = pmb_mysql_fetch_object($result)) {
-					$array_surloc[]=array("id"=>$surloc->surloc_id, "libelle"=>$surloc->surloc_libelle, "locations"=>array());
-				}
-			}
-			if (count($array_surloc)) {
-				foreach ($array_surloc as $key=>$surloc) {
-					$requete = "SELECT idlocation, location_libelle from docs_location where surloc_num=".$surloc["id"]." AND
+					$requete = "SELECT location_libelle from docs_location where
 					idlocation not in (SELECT expl_location from exemplaires WHERE expl_notice=$no_notice) order by location_libelle";
-	
+			
 					$result = pmb_mysql_query($requete, $dbh) or die ("<br />".pmb_mysql_error()."<br />".$requete);
 					$nb_loc = pmb_mysql_num_rows($result);
 					if ($nb_loc) {
+						$items="";
 						while($loc = pmb_mysql_fetch_object($result)) {
-							$array_surloc[$key]["locations"][] = array("id"=>$loc->idlocation, "libelle"=>$loc->location_libelle);
+							$items.="<tr><td>".$loc->location_libelle."</td></tr>";
 						}
-					} else {
-						unset($array_surloc[$key]);
+			
+						$tpl = "
+						<table style='border:0px' class='expl-list'>
+						$items
+						</table>";
+						$tpl=gen_plus('location_without_expl'.$no_notice,$msg['expl_location_without_expl'],$tpl,0);
+						$entry.=$tpl;
 					}
 				}
 			}
-			//Au moins une surloc à afficher
-			if (count($array_surloc)) {
-				$tr_surloc="";
-				foreach ($array_surloc as $key => $surloc) {
-					$tr_surloc.="<tr><td>";
-					$tr_loc="";
-					foreach ($surloc["locations"] as $keyloc => $loc) {
-						$tr_loc.="<tr><td>".$loc["libelle"]."</td></tr>";
-					}
-					$tpl_surloc= "
-					<table style='border:0px' class='expl-list'>
-					$tr_loc
-					</table>";
-					$tr_surloc.=gen_plus('surlocation_without_expl'.$key.'_'.$no_notice,$surloc["libelle"],$tpl_surloc,0);
-					$tr_surloc.="</td></tr>";
-				}
-				$tpl = "
-				<table style='border:0px' class='expl-list'>
-				$tr_surloc
-				</table>";
-				$entry.=gen_plus('location_without_expl'.$no_notice,$msg['expl_surlocation_without_expl'],$tpl,0);
-			}
+			$this->nb_expl=$nbr_expl;
+			return $entry;
 		} else {
-			$requete = "SELECT location_libelle from docs_location where
-			idlocation not in (SELECT expl_location from exemplaires WHERE expl_notice=$no_notice) order by location_libelle";
-	
-			$result = pmb_mysql_query($requete, $dbh) or die ("<br />".pmb_mysql_error()."<br />".$requete);
-			$nb_loc = pmb_mysql_num_rows($result);
-			if ($nb_loc) {
-				$items="";
-				while($loc = pmb_mysql_fetch_object($result)) {
-					$items.="<tr><td>".$loc->location_libelle."</td></tr>";
-				}
-	
-				$tpl = "
-				<table style='border:0px' class='expl-list'>
-				$items
-				</table>";
-				$tpl=gen_plus('location_without_expl'.$no_notice,$msg['expl_location_without_expl'],$tpl,0);
-				$entry.=$tpl;
-			}
+			return "";
 		}
-	}
-	$this->nb_expl=$nbr_expl;
-	return $entry;
-	} else {
-		return "";
-	}
 	}
 	
 	public function show_orders_pnb($notice_id) {
@@ -1122,7 +1129,7 @@ class record_display {
 		$expl_list_header_deb.="<th class='expl_header_statut'>".$msg['statut']."</th>";
 		$expl_liste="";
 		
-		if(count($expls_datas['expls'])) {
+		if(is_array($expls_datas['expls']) && count($expls_datas['expls'])) {
 			foreach ($expls_datas['expls'] as $expl) {
 				$expl_liste .= "<tr>";
 		
@@ -1259,11 +1266,24 @@ class record_display {
 			$header_perso_aff="";
 			
 			if(count($expls_datas['expls'])) {
+				$customization_expl_columns = array();
+				$special = static::get_special($notice_id);
+				if(!empty($special)) {
+					$customization_expl_columns = $special->get_customization_expl_columns();
+				}
 				foreach ($expls_datas['expls'] as $expl) {
 					$expl_liste .= "<tr class='item_expl !!class_statut!!'>";
 			
 					foreach ($expls_datas['colonnesarray'] as $colonne) {
-						if (($colonne == "location_libelle") && $expl['num_infopage']) {
+						if(isset($customization_expl_columns[$colonne])) {
+							$expl_liste .="<td class='".htmlentities($msg['expl_header_'.$colonne],ENT_QUOTES, $charset)."'>";
+							if(isset($customization_expl_columns[$colonne]['htmlentities']) && $customization_expl_columns[$colonne]['htmlentities'] == false) {
+								$expl_liste .=strip_tags($expl[$colonne], $customization_expl_columns[$colonne]['keep_tags']);
+							} else {
+								$expl_liste .=htmlentities($expl[$colonne],ENT_QUOTES, $charset);
+							}
+							$expl_liste .="</td>";
+						} elseif (($colonne == "location_libelle") && $expl['num_infopage']) {
 							if ($expl['surloc_id'] != "0") {
 								$param_surloc="&surloc=".$expl['surloc_id'];
 							} else {
@@ -1481,9 +1501,9 @@ class record_display {
 
 	/**
 	 * Ajoute l'image
-	 * @param unknown $notice_id Identifiant de la notice
-	 * @param unknown $entree Contenu avant l'ajout
-	 * @param unknown $depliable 
+	 * @param int $notice_id Identifiant de la notice
+	 * @param string $entree Contenu avant l'ajout
+	 * @param int $depliable 
 	 */
 	static public function do_image($notice_id, &$entree,$depliable) {
 		global $charset;
@@ -1600,8 +1620,11 @@ class record_display {
 	
 	static public function get_lang_list($tableau) {
 		$langues = "";
-		for ($i = 0 ; $i < sizeof($tableau) ; $i++) {
-			if ($langues) $langues.=" ";
+		$nb_langues = count($tableau);
+		for ($i = 0 ; $i < $nb_langues; $i++) {
+		    if (!empty($langues)) {
+		        $langues .= " ";
+		    }
 			$langues .= $tableau[$i]["langue"]." (<i>".$tableau[$i]["lang_code"]."</i>)";
 		}
 		return $langues;
@@ -1689,13 +1712,11 @@ class record_display {
 	
 	/**
 	 * Retourne l'affichage étendu d'une notice
-	 * @param unknown $notice_id Identifiant de la notice
+	 * @param int $notice_id Identifiant de la notice
 	 * @param string $django_directory Répertoire Django à utiliser
 	 * @return string Code html d'affichage de la notice
 	 */
 	static public function get_display_extended($notice_id, $django_directory = "") {
-		global $include_path;
-		
 		$record_datas = static::get_record_datas($notice_id);
 		
 		$template = static::get_template("record_extended_display", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
@@ -1710,8 +1731,6 @@ class record_display {
 	 * @return string Code html d'affichage de la notice
 	 */
 	static public function get_display_in_result($notice_id, $django_directory = "") {
-		global $include_path;
-		
 		$record_datas = static::get_record_datas($notice_id);
 		
 		$template = static::get_template("record_in_result_display", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
@@ -1727,8 +1746,6 @@ class record_display {
 	 * @return string Code html d'affichage de la notice
 	 */
 	static public function get_display_for_printer_short($notice_id, $django_directory = "", $parameters = '') {
-		global $include_path;
-	
 		$record_datas = static::get_record_datas($notice_id);
 		$record_datas->set_external_parameters($parameters);
 		$template = static::get_template("record_for_printer_short", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
@@ -1744,8 +1761,6 @@ class record_display {
 	 * @return string Code html d'affichage de la notice
 	 */
 	static public function get_display_for_printer_extended($notice_id, $django_directory = "", $parameters = '') {
-		global $include_path;
-	
 		$record_datas = static::get_record_datas($notice_id);
 		$record_datas->set_external_parameters($parameters);
 		$template = static::get_template("record_for_printer_extended", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
@@ -1761,8 +1776,6 @@ class record_display {
 	 * @return string Code html d'affichage de la notice
 	 */
 	static public function get_display_for_pdf_short($notice_id, $django_directory = "", $parameters = '') {
-		global $include_path;
-	
 		$record_datas = static::get_record_datas($notice_id);
 		$record_datas->set_external_parameters($parameters);
 		$template = static::get_template("record_for_pdf_short", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
@@ -1778,13 +1791,41 @@ class record_display {
 	 * @return string Code html d'affichage de la notice
 	 */
 	static public function get_display_for_pdf_extended($notice_id, $django_directory = "", $parameters = '') {
-		global $include_path;
-	
 		$record_datas = static::get_record_datas($notice_id);
 		$record_datas->set_external_parameters($parameters);
 		$template = static::get_template("record_for_pdf_extended", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
 	
 		return static::render($notice_id, $template);
+	}
+	
+	/**
+	 * Retourne l'affichage du titre de la notice sur un flux RSS
+	 * @param int $notice_id Identifiant de la notice
+	 * @param string $django_directory Répertoire Django à utiliser
+	 * @param array $parameters Permet un affichage dynamique en fonction de champs de formulaire par exemple
+	 * @return string Code html d'affichage de la notice
+	 */
+	static public function get_display_for_rss_title($notice_id, $django_directory = "", $parameters = '') {
+	    $record_datas = static::get_record_datas($notice_id);
+	    $record_datas->set_external_parameters($parameters);
+	    $template = static::get_template("record_for_rss_title", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
+	    
+	    return static::render($notice_id, $template);
+	}
+	
+	/**
+	 * Retourne l'affichage de la description d'une notice sur un flux RSS
+	 * @param int $notice_id Identifiant de la notice
+	 * @param string $django_directory Répertoire Django à utiliser
+	 * @param array $parameters Permet un affichage dynamique en fonction de champs de formulaire par exemple
+	 * @return string Code html d'affichage de la notice
+	 */
+	static public function get_display_for_rss_description($notice_id, $django_directory = "", $parameters = '') {
+	    $record_datas = static::get_record_datas($notice_id);
+	    $record_datas->set_external_parameters($parameters);
+	    $template = static::get_template("record_for_rss_description", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
+	    
+	    return static::render($notice_id, $template);
 	}
 	
 	/**
@@ -2409,8 +2450,66 @@ class record_display {
 				</div>';
 	}
 	
+	public static function get_locations_list($notice_id, $property) {
+	    $record_datas = static::get_record_datas($notice_id);
+	    
+	    $data = $record_datas->get_locations();
+	    $return_data = [];
+	    foreach ($data as $infos) {
+	        if (!empty($infos[$property])) {
+	            $return_data[] = $infos[$property];
+	        }
+	    }
+	    $return_data = array_unique($return_data);
+	    return $return_data;
+	}
+	
+	public static function get_lenders_list($notice_id, $property) {
+	    $record_datas = static::get_record_datas($notice_id);
+	    
+	    $data = $record_datas->get_lenders();
+	    $return_data = [];
+	    foreach ($data as $infos) {
+	        if (!empty($infos[$property])) {
+	            $return_data[] = $infos[$property];
+	        }
+	    }
+	    $return_data = array_unique($return_data);
+	    return $return_data;
+	}
+	
 	static public function get_display_caddies_list($notice_id) {
 		return caddie_controller::get_display_list_from_item('display', 'NOTI', $notice_id);
+	}
+	
+	static public function get_directories_options($selected = '') {
+	    if (!$selected) {
+	        $selected = static::get_parameter_value('notices_format_django_directory');
+	    }
+	    if (!$selected) {
+	        $selected = 'common';
+	    }
+	    $dirs = array_filter(glob('./includes/templates/record/*'), 'is_dir');
+	    $tpl = "";
+	    foreach($dirs as $dir){
+	        if(basename($dir) != "CVS"){
+	            $tpl.= "<option ".(basename($dir) == basename($selected) ? "selected='selected'" : "")." value='".basename($dir)."'>
+				".basename($dir)."</option>";
+	        }
+	    }
+	    return $tpl;
+	}
+	
+	static public function get_directories() {
+	    $directories = array();
+// 	    $dirs = array_filter(glob('./includes/templates/record/*'), 'is_dir');
+	    $dirs = array_filter(glob('./opac_css/includes/templates/record/*'), 'is_dir');
+	    foreach($dirs as $dir){
+	        if(basename($dir) != "CVS"){
+	            $directories[basename($dir)] = "[Django] ".basename($dir);
+	        }
+	    }
+	    return $directories;
 	}
 	
 	static protected function get_parameter_value($name) {

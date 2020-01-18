@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: TreeContainer.js,v 1.9 2018-04-10 12:29:29 vtouchard Exp $
+// $Id: TreeContainer.js,v 1.10 2019-03-29 16:16:25 tsamson Exp $
 
 
 define([
@@ -40,11 +40,30 @@ define([
 					}
 			);
 			
+			this.expandAllButton = new Button(
+					{
+						label : "+",
+						onClick: lang.hitch(this, function(){
+							topic.publish('TreeContainer', 'expandAll', {});
+						})
+					}
+			);
+			
+			this.collapseAllButton = new Button(
+					{
+						label : "-",
+						onClick: lang.hitch(this, function(){
+							topic.publish('TreeContainer', 'collapseAll', {});
+						})
+					}
+			);
+			
 			this.leftContentPane.addChild(this.addDatanode);
 			this.leftContentPane.addChild(this.addFrame);
+			this.leftContentPane.addChild(this.collapseAllButton);
+			this.leftContentPane.addChild(this.expandAllButton);
 			this.leftContentPane.addChild(this.tree);
 			this.addChild(this.leftContentPane);
-			
 			var formContainer = new FormContainer({region:'center', splitter:true, numPage : this.data.num_page});
 			this.addChild(formContainer);
 		},

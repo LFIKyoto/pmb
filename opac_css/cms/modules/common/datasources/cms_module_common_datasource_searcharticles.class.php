@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_searcharticles.class.php,v 1.10 2017-01-18 16:29:04 apetithomme Exp $
+// $Id: cms_module_common_datasource_searcharticles.class.php,v 1.10.8.1 2019-10-24 08:04:40 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -29,7 +29,8 @@ class cms_module_common_datasource_searcharticles extends cms_module_common_data
 		return array (
 			"pert",
 			"id_article",
-			"article_title"
+			"article_title",
+		    "rand()"
 		);
 	}
 	

@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bulletin_display.inc.php,v 1.88 2018-11-21 10:48:33 dgoron Exp $
+// $Id: bulletin_display.inc.php,v 1.92 2019-06-18 12:39:29 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // error_reporting (E_ALL);             
 // largeur du tableau notice en pixels
-$libelle = $msg[270];
+//$libelle = $msg[270];
 $largeur = 500;		
 
 require_once($base_path.'/includes/explnum.inc.php');
@@ -22,6 +22,8 @@ require_once($include_path."/templates/notice_display.tpl.php");
 require_once($class_path."/collstate.class.php");
 require_once($class_path."/notice_relations_collection.class.php");
 require_once($class_path."/filter_results.class.php");
+
+if(!isset($popup_resa)) $popup_resa = 0;
 
 function get_articles_from_bulletin($id) {
 	$articles = array();
@@ -52,7 +54,7 @@ if ($gestion_acces_active==1 && ($gestion_acces_empr_docnum || $gestion_acces_em
 		$dom_3= $ac->setDomain(3);
 	}
 }
-$id+=0;
+$id = intval($id);
 $requete = "SELECT bulletin_id, bulletin_numero, bulletin_notice, mention_date, date_date, bulletin_titre, bulletin_cb, date_format(date_date, '".$msg["format_date_sql"]."') as aff_date_date,num_notice FROM bulletins WHERE bulletin_id='$id'";
 
 $resdep = @pmb_mysql_query($requete, $dbh);
@@ -174,7 +176,7 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 				}else{
 					//on cherches des documents numériques
 					if($gestion_acces_active==1 && $gestion_acces_empr_docnum == 1){
-						$join = $dom_3->getJoin($_SESSION['id_empr_session'], 16, explnum_id);
+						$join = $dom_3->getJoin($_SESSION['id_empr_session'], 16, 'explnum_id');
 					}else{
 						$join = " join explnum_statut on explnum_docnum_statut = id_explnum_statut and (".($_SESSION['id_empr_session'] ? "explnum_visible_opac = 1": "explnum_visible_opac = 1 and explnum_visible_opac_abon = 0").") ";
 					}
@@ -370,7 +372,7 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 						
 					if (!$opac_notices_format_django_directory) $opac_notices_format_django_directory = "common";
 						
-					if (!$record_css_already_included) {
+					if (empty($record_css_already_included)) {
 						if (file_exists($include_path."/templates/record/".$opac_notices_format_django_directory."/styles/style.css")) {
 							$retour_aff .= "<link type='text/css' href='./includes/templates/record/".$opac_notices_format_django_directory."/styles/style.css' rel='stylesheet'></link>";
 						}
@@ -378,7 +380,7 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 					}
 
 					// On récupère le libellé de Bulletinq
-					if(!count($biblio_doc)) {
+					if(!isset($biblio_doc) || !is_array($biblio_doc) || !count($biblio_doc)) {
 						$biblio_doc = new marc_list('nivbiblio');
 						$biblio_doc = $biblio_doc->table;
 					}
@@ -387,8 +389,10 @@ while(($obj=pmb_mysql_fetch_array($resdep))) {
 					// on va chercher les infos de dépouillements
 					$obj['articles'] = array();
 					$articles = get_articles_from_bulletin($id);
-					foreach ($articles as $article) {
-						$obj['articles'][] = record_display::get_display_in_result($article);
+					if(is_array($articles) && count($articles)){
+						foreach ($articles as $article) {
+							$obj['articles'][] = record_display::get_display_in_result($article);
+						}
 					}
 					// on va cherche les infos de résa
 					$resas_datas = array(

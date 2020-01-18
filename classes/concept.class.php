@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: concept.class.php,v 1.28 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: concept.class.php,v 1.30 2019-08-28 08:14:10 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -164,7 +164,7 @@ class concept {
 		
 		// On insert le nouveau label
 		$query = "insert into <pmb> {
-				<".$this->get_uri()."> <http://www.w3.org/2004/02/skos/core#prefLabel> '".$label."'
+				<".$this->get_uri()."> <http://www.w3.org/2004/02/skos/core#prefLabel> '".addslashes($label)."'
 				}";
 		
 		$this->display_label = $label;
@@ -182,18 +182,26 @@ class concept {
 	}
 	
 	public function get_scheme() {
-		global $dbh, $lang;
+		global $lang;
 		
 		if (!$this->scheme) {
+		    $schemes = array();
 			$query = "select value, lang from skos_fields_global_index where id_item = ".$this->id." and code_champ = 4 and code_ss_champ = 1";
-			$result = pmb_mysql_query($query, $dbh);
+			$result = pmb_mysql_query($query);
 			if ($result && pmb_mysql_num_rows($result)) {
 				while ($row = pmb_mysql_fetch_object($result)) {
-					$this->scheme = $row->value;
-					if ($row->lang == substr($lang,0,2)) {
-						break;
-					}
+				    if (pmb_mysql_num_rows($result) > 1) {
+				        $schemes[] = $row->value;
+				    } else {
+    					$this->scheme = $row->value;
+    					if ($row->lang == substr($lang,0,2)) {
+    						break;
+    					}
+				    }
 				}
+			}
+			if (!empty($schemes)) {
+			    $this->scheme = implode(' / ', $schemes);
 			}
 		}
 		return $this->scheme;

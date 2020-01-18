@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_merge_properties_ui.class.php,v 1.5 2017-03-22 17:08:57 tsamson Exp $
+// $Id: onto_common_datatype_merge_properties_ui.class.php,v 1.8 2019-08-14 08:02:58 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -91,7 +91,7 @@ class onto_common_datatype_merge_properties_ui extends onto_common_datatype_ui {
 		
 		$form = $ontology_tpl['form_row_merge_properties'];
 				
-		$form = str_replace("!!onto_row_label!!",htmlentities($property->label ,ENT_QUOTES,$charset) , $form);
+		$form = str_replace("!!onto_row_label!!",htmlentities($property->get_label() ,ENT_QUOTES,$charset) , $form);
 		
 		$linked_forms = array();		
 		$item_linked_forms = $item->get_contribution_area_form()->get_linked_forms(); 
@@ -178,7 +178,7 @@ class onto_common_datatype_merge_properties_ui extends onto_common_datatype_ui {
 	
 		$display='<div id="'.$instance_name.'_'.$property->pmb_name.'">';
 		$display.='<p>';
-		$display.=$property->label.' : ';
+		$display.=$property->get_label().' : ';
 		foreach($datas as $data){
 			$display.=$data->get_formated_value();
 		}
@@ -205,7 +205,7 @@ class onto_common_datatype_merge_properties_ui extends onto_common_datatype_ui {
 				}
 				$valid_js.= parent::get_validation_js($item_uri, $properties[$i], $restrictions, $datas, $instance_name, $flag);
 				
-				if ($i < (count($properties)-1) && $valid_js[count($valid_js)-1] != ",") {
+				if ($i < (count($properties)-1) && substr($valid_js, 0, 1) != ",") {
 					$valid_js.= ",";
 				}
 			}			

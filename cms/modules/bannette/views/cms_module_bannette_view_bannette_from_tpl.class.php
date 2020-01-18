@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_bannette_view_bannette_from_tpl.class.php,v 1.4 2018-06-19 13:43:38 dgoron Exp $
+// $Id: cms_module_bannette_view_bannette_from_tpl.class.php,v 1.5 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -64,7 +64,7 @@ class cms_module_bannette_view_bannette_from_tpl extends cms_module_common_view_
 		global $cms_module_bannette_view_django_template_record_content;
 		global $cms_module_bannette_view_django_template_bannette_content;
 		
-		$this->parameters['nb_notices'] = $cms_module_bannette_view_bannette_nb_notices+0;
+		$this->parameters['nb_notices'] = (int) $cms_module_bannette_view_bannette_nb_notices;
 		$this->parameters['used_record_template'] = $cms_module_bannette_view_django_template_record_content;
 		$this->parameters['used_bannette_template'] = $cms_module_bannette_view_django_template_bannette_content;
 		return parent::save_form();

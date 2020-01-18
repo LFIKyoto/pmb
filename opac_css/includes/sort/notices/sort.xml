@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<!-- $Id: sort.xml,v 1.24 2018-05-22 10:06:56 dgoron Exp $ -->
-<sort reference="notices" referencekey="notice_id">
-	
+<!-- $Id: sort.xml,v 1.26 2019-04-08 14:46:05 apetithomme Exp $ -->
+<sort reference="notices" referencekey="notice_id" ppersoprefix="notices">
 	<field name="title" type="text" typefield="select" id="1">
 		<table>
 			<tablefield>index_sew</tablefield>
@@ -255,7 +254,7 @@
 		<table name="authors">
 			<tablefield nullvalue=' '>group_concat(index_author SEPARATOR " ")</tablefield>
 			<tablekey>author_id</tablekey>
-			<groupby>notice_id</groupby>
+			<groupby>notice_id</groupby>	
 			<link type="nn">
 				<table>responsability</table>
 				<referencefield>responsability_notice and responsability_type = 1</referencefield>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_contribution_controler.class.php,v 1.12 2018-09-24 13:39:22 tsamson Exp $
+// $Id: onto_contribution_controler.class.php,v 1.16 2019-06-04 14:58:14 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -51,7 +51,7 @@ class onto_contribution_controler extends onto_common_controler {
 		global $class_path;
 		global $pmb_contribution_ws_url, $pmb_contribution_ws_username, $pmb_contribution_ws_password;
 		
-		$return = '';
+		$return = array();
 		if ($this->params->action == "save_push") {
 			$return = $this->proceed_save(false);
 		}
@@ -108,7 +108,7 @@ class onto_contribution_controler extends onto_common_controler {
 			$ui_class_name=self::resolve_ui_class_name($this->params->sub,$this->handler->get_onto_name());
 			$ui_class_name::display_errors($this,$result);
 		}else {
-			$display_label = $this->item->get_label($this->handler->get_display_label($this->handler->get_class_uri($this->params->sub)));
+			$display_label = $this->item->get_label($this->handler->get_display_labels($this->handler->get_class_uri($this->params->sub)));
 			return array("uri" => $this->item->get_uri(), "displayLabel" => $display_label, "id" => $this->item->get_id());
 		}
 	}
@@ -125,6 +125,9 @@ class onto_contribution_controler extends onto_common_controler {
 	}
 	
 	protected function init_item() {
+	    if (!intval($this->params->id)) {
+	        $this->params->id = onto_common_uri::get_id($this->params->id);
+	    }
 	    switch ($this->params->action) {
 	        case 'edit_entity':
 	            $this->params->item_uri = 'http://www.pmbservices.fr/ontology/'.$this->params->type.'#'.$this->params->id;

@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_ui.class.php,v 1.57 2018-12-28 16:33:06 dgoron Exp $
+// $Id: list_ui.class.php,v 1.75.2.7 2019-12-04 08:20:26 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
+global $include_path, $class_path;
 require_once($include_path."/templates/list/list_ui.tpl.php");
+require_once($class_path."/spreadsheetPMB.class.php");
 require_once($class_path."/list/list_model.class.php");
 require_once($class_path."/parametres_perso.class.php");
 require_once($class_path."/user.class.php");
@@ -23,6 +25,11 @@ class list_ui {
 	 * Liste des objets
 	 */
 	protected $objects;
+	
+	/**
+	 * Liste des objets groupés
+	 */
+	protected $grouped_objects;
 	
 	/**
 	 * Tri appliqué
@@ -46,6 +53,17 @@ class list_ui {
 	protected $applied_group;
 	
 	/**
+	 * Libellés du groupement appliqué
+	 */
+	protected $applied_group_labels;
+	
+	/**
+	 * Affiche-t-on le bloc aller à ?
+	 * @var boolean
+	 */
+	protected $is_displayed_go_directly_to_block;
+	
+	/**
 	 * Affiche-t-on le bloc d'options ?
 	 * @var boolean
 	 */
@@ -56,6 +74,21 @@ class list_ui {
 	 * @var boolean
 	 */
 	protected $is_displayed_datasets_block;
+	
+	/**
+	 * Filtres disponibles
+	 */
+	protected $available_filters;
+	
+	/**
+	 * Colonnes disponibles triées
+	 */
+	protected $sorted_available_columns;
+	
+	/**
+	 * Filtres sélectionés
+	 */
+	protected $selected_filters;
 	
 	/**
 	 * Colonnes disponibles
@@ -71,6 +104,11 @@ class list_ui {
 	 * Instances de parametres_perso
 	 */
 	protected $custom_parameters_instance;
+	
+	/**
+	 * Champs personnalisés filtrables
+	 */
+	protected $custom_fields_available_filters;
 	
 	/**
 	 * Champs personnalisés disponibles
@@ -121,6 +159,7 @@ class list_ui {
 	/**
 	 * Signature des tableaux initialisés
 	 */
+	protected $sign_selected_filters;
 	protected $sign_filters;
 	protected $sign_applied_group;
 	protected $sign_selected_columns;
@@ -132,6 +171,8 @@ class list_ui {
 			$this->objects_type = str_replace('list_', '', get_class($this));
 		}
 		$this->init_session_values();
+		$this->init_available_filters();
+		$this->init_selected_filters();
 		$this->init_filters($filters);
 		$this->init_applied_group();
 		$this->init_available_columns();
@@ -142,7 +183,9 @@ class list_ui {
 		$this->fetch_data();
 		$this->_sort();
 		$this->_limit();
-		$this->init_columns();
+		if(empty($this->dataset_id)) {
+		    $this->init_columns();
+		}
 	}
 	
 	public function set_dataset_id($dataset_id) {
@@ -150,8 +193,6 @@ class list_ui {
 	}
 	
 	protected function set_data_from_database($property='all') {
-		global $PMBuserid;
-		
 		$this->get_datasets();
 		if(!$this->dataset_id) {
 			$this->dataset_id = $this->get_dataset_default_selected();
@@ -165,44 +206,56 @@ class list_ui {
 					switch($property) {
 						case 'selected_columns':
 							if(!empty($row->list_selected_columns)) {
-								$this->selected_columns = (array) json_decode($row->list_selected_columns);
+							    $this->selected_columns = encoding_normalize::json_decode($row->list_selected_columns, true);
+								$this->columns = array();
+								$this->init_columns();
 							}
 							break;
 						case 'filters':
 							if(!empty($row->list_filters)) {
-								$this->filters = (array) json_decode($row->list_filters);
+							    $this->filters = encoding_normalize::json_decode($row->list_filters, true);
 							}
 							break;
 						case 'applied_group':
 							if(!empty($row->list_applied_group)) {
-								$this->applied_group = (array) json_decode($row->list_applied_group);
+							    $this->applied_group = encoding_normalize::json_decode($row->list_applied_group, true);
 							}
 							break;
 						case 'applied_sort':
 							if(!empty($row->list_applied_sort)) {
-								$this->applied_sort = (array) json_decode($row->list_applied_sort);
+							    $this->applied_sort = encoding_normalize::json_decode($row->list_applied_sort, true);
 							}
 							break;
 						case 'pager':
 							if(!empty($row->list_pager)) {
-								$this->pager = (array) json_decode($row->list_pager);
+							    $this->pager = encoding_normalize::json_decode($row->list_pager, true);
+							}
+							break;
+						case 'selected_filters':
+							if(!empty($row->list_selected_filters)) {
+							    $this->selected_filters = encoding_normalize::json_decode($row->list_selected_filters, true);
 							}
 							break;
 						default:
 							if(!empty($row->list_selected_columns)) {
-								$this->selected_columns = (array) json_decode($row->list_selected_columns);
+							    $this->selected_columns = encoding_normalize::json_decode($row->list_selected_columns, true);
+								$this->columns = array();
+								$this->init_columns();
 							}
 							if(!empty($row->list_filters)) {
-								$this->filters = (array) json_decode($row->list_filters);
+							    $this->filters = encoding_normalize::json_decode($row->list_filters, true);
 							}
 							if(!empty($row->list_applied_group)) {
-								$this->applied_group = (array) json_decode($row->list_applied_group);
+							    $this->applied_group = encoding_normalize::json_decode($row->list_applied_group, true);
 							}
 							if(!empty($row->list_applied_sort)) {
-								$this->applied_sort = (array) json_decode($row->list_applied_sort);
+							    $this->applied_sort = encoding_normalize::json_decode($row->list_applied_sort, true);
 							}
 							if(!empty($row->list_pager)) {
-								$this->pager = (array) json_decode($row->list_pager);
+							    $this->pager = encoding_normalize::json_decode($row->list_pager, true);
+							}
+							if(!empty($row->list_selected_filters)) {
+							    $this->selected_filters = encoding_normalize::json_decode($row->list_selected_filters, true);
 							}
 							break;
 					}
@@ -220,15 +273,20 @@ class list_ui {
 		$this->objects[] = new stdClass();
 	}
 	
+	protected function _get_query() {
+	    $query = $this->_get_query_base();
+	    $query .= $this->_get_query_filters();
+	    $query .= $this->_get_query_order();
+	    if($this->applied_sort_type == "SQL"){
+	        $this->pager['nb_results'] = pmb_mysql_num_rows(pmb_mysql_query($query));
+	        $query .= $this->_get_query_pager();
+	    }
+	    return $query;
+	}
+	
 	protected function fetch_data() {
 		$this->objects = array();
-		$query = $this->_get_query_base();
-		$query .= $this->_get_query_filters();
-		$query .= $this->_get_query_order();
-		if($this->applied_sort_type == "SQL"){
-			$this->pager['nb_results'] = pmb_mysql_num_rows(pmb_mysql_query($query));
-			$query .= $this->_get_query_pager();
-		}
+		$query = $this->_get_query();
 		$result = pmb_mysql_query($query);
 		if (pmb_mysql_num_rows($result)) {
 			while($row = pmb_mysql_fetch_object($result)) {
@@ -253,7 +311,38 @@ class list_ui {
 			$this->unset_session_values('selected_columns');
 			$this->unset_session_values('applied_sort');
 			$this->unset_session_values('pager');
+			$this->unset_session_values('selected_filters');
 		}
+	}
+	
+	/**
+	 * Initialisation des filtres disponibles
+	 */
+	protected function init_available_filters() {
+		$this->available_filters = array();
+	}
+	
+	/**
+	 * Initialisation des filtres appliqués par défaut
+	 */
+	protected function init_default_selected_filters() {
+		$this->selected_filters = array();
+	}
+	
+	/**
+	 * Initialisation des filtres sélectionnées
+	 */
+	protected function init_selected_filters() {
+		$this->init_default_selected_filters();
+		$this->set_data_from_database('selected_filters');
+		$this->sign_selected_filters = $this->get_sign($this->selected_filters);
+		if(isset($_SESSION['list_'.$this->objects_type.'_selected_filters']) && is_array($_SESSION['list_'.$this->objects_type.'_selected_filters'])) {
+			$this->selected_filters = array();
+			foreach($_SESSION['list_'.$this->objects_type.'_selected_filters'] as $property=>$label) {
+				$this->add_selected_filter($property);
+			}
+		}
+		$this->set_selected_filters_from_form();
 	}
 	
 	/**
@@ -286,9 +375,9 @@ class list_ui {
 		}
 		$this->set_data_from_database('applied_group');
 		$this->sign_applied_group = $this->get_sign(array_merge_recursive($this->applied_group, $applied_group));
-		foreach ($this->applied_group as $key => $val){
-			if(isset($_SESSION['list_'.$this->objects_type.'_applied_group'][$key])) {
-				$this->applied_group[$key] = $_SESSION['list_'.$this->objects_type.'_applied_group'][$key];
+		if(isset($_SESSION['list_'.$this->objects_type.'_applied_group'])) {
+			foreach ($_SESSION['list_'.$this->objects_type.'_applied_group'] as $key => $val){
+				$this->applied_group[$key] = $val;
 			}
 		}
 		if(count($applied_group)){
@@ -296,7 +385,11 @@ class list_ui {
 				$this->applied_group[$key]=$val;
 			}
 		}
-		$this->set_applied_group_from_form();
+		$initialization = $this->objects_type.'_initialization';
+		global ${$initialization};
+		if(empty(${$initialization}) || ${$initialization} != 'reset') {
+			$this->set_applied_group_from_form();
+		}
 	}
 	
 	/**
@@ -328,7 +421,8 @@ class list_ui {
 	protected function init_default_pager() {
 		$this->pager = array(
 				'page' => 1,
-				'nb_per_page' => 15,
+				'nb_per_page' => 20,
+                'nb_per_page_on_group' => false,
 				'nb_results' => 0,
 				'nb_page' => 1
 		);
@@ -344,6 +438,9 @@ class list_ui {
 		if(isset($_SESSION['list_'.$this->objects_type.'_pager']['nb_per_page'])) {
 			$this->pager['nb_per_page'] = $_SESSION['list_'.$this->objects_type.'_pager']['nb_per_page'];
 		}
+		if(isset($_SESSION['list_'.$this->objects_type.'_pager']['nb_per_page_on_group'])) {
+		    $this->pager['nb_per_page_on_group'] = $_SESSION['list_'.$this->objects_type.'_pager']['nb_per_page_on_group'];
+		}
 		if(isset($_SESSION['list_'.$this->objects_type.'_pager']['page'])) {
 			$this->pager['page'] = $_SESSION['list_'.$this->objects_type.'_pager']['page'];
 		}
@@ -352,6 +449,16 @@ class list_ui {
 				$this->pager[$key]=$val;
 			}
 		}
+	}
+	
+	/**
+	 * Ajout d'un tri
+	 */
+	protected function add_applied_sort($by, $asc_desc='asc') {
+	    if(empty($this->applied_sort)) {
+	        $this->applied_sort = array();
+	    }
+	    array_push($this->applied_sort, array('by' => $by, 'asc_desc' => $asc_desc));
 	}
 	
 	/**
@@ -371,20 +478,28 @@ class list_ui {
 		$this->init_default_applied_sort();
 		$this->set_data_from_database('applied_sort');
 		$this->sign_applied_sort = $this->get_sign(array_merge_recursive($this->applied_sort, $applied_sort));
-		if(isset($_SESSION['list_'.$this->objects_type.'_applied_sort']['by'])) {
-			$this->applied_sort['by'] = $_SESSION['list_'.$this->objects_type.'_applied_sort']['by'];
-			if(isset($_SESSION['list_'.$this->objects_type.'_applied_sort']['asc_desc'])) {
-				$this->applied_sort['asc_desc'] = $_SESSION['list_'.$this->objects_type.'_applied_sort']['asc_desc'];
+		if(isset($_SESSION['list_'.$this->objects_type.'_applied_sort'][0]['by'])) {
+		    $this->applied_sort[0]['by'] = $_SESSION['list_'.$this->objects_type.'_applied_sort'][0]['by'];
+			if(isset($_SESSION['list_'.$this->objects_type.'_applied_sort'][0]['asc_desc'])) {
+			    $this->applied_sort[0]['asc_desc'] = $_SESSION['list_'.$this->objects_type.'_applied_sort'][0]['asc_desc'];
 			} else {
-				$this->applied_sort['asc_desc'] = 'asc';
+			    $this->applied_sort[0]['asc_desc'] = 'asc';
 			}
 		}
 		if(count($applied_sort)){
 			foreach ($applied_sort as $key => $val){
-				$this->applied_sort[$key]=$val;
+			    if(is_array($val)) {
+			        $this->applied_sort[$key] = $val;
+			    } else {
+			        $this->applied_sort[0][$key]=$val;
+			    }
 			}
 		}
-		$this->set_applied_sort_from_form();
+		$initialization = $this->objects_type.'_initialization';
+		global ${$initialization};
+		if(empty(${$initialization}) || ${$initialization} != 'reset') {
+			$this->set_applied_sort_from_form();
+		}
 	}
 	
 	/**
@@ -399,6 +514,56 @@ class list_ui {
 			$this->unset_global_values('applied_sort');
 			$this->unset_global_values('pager');
 		}
+	}
+	
+	protected function get_label_available_filter($property, $group_label='main_fields') {
+		if(isset($this->available_filters[$group_label][$property])) {
+			return $this->available_filters[$group_label][$property];
+		}
+		return '';
+	}
+	
+	protected function add_selected_filter($property, $label='') {
+		if(!empty($this->available_filters['custom_fields'][$property])) {
+			$this->selected_filters[$property] = ($label ? $label : $this->get_label_available_filter($property, 'custom_fields'));
+		} else {
+			$this->selected_filters[$property] = ($label ? $label : $this->get_label_available_filter($property));
+		}
+	}
+	
+	protected function add_empty_selected_filter() {
+		global $empty_selected_filter;
+		
+		//Pas propre mais ça fait le job
+		if($empty_selected_filter) {
+			$empty_selected_filter++;
+		} else {
+			$empty_selected_filter = 1;
+		}
+		$this->selected_filters['empty_'.$empty_selected_filter] = '';
+	}
+	
+	/**
+	 * Filtres provenant du formulaire
+	 */
+	public function set_selected_filters_from_form() {
+// 		$selected_filters = $this->objects_type.'_selected_filters';
+// 		global ${$selected_filters};
+// 		if(isset(${$selected_filters})) {
+// 			$this->selected_filters = array();
+// 			foreach (${$selected_filters} as $filter) {
+// 				$this->add_selected_filter($filter);
+// 			}
+// 		}
+		//A-t-on demandé l'ajout d'un filtre ?
+		$add_filter = $this->objects_type.'_add_filter';
+		global ${$add_filter};
+		if(isset(${$add_filter})) {
+			$this->add_selected_filter(${$add_filter});
+		}
+		
+		//Sauvegarde des filtres en session
+		$this->set_selected_filters_in_session();
 	}
 	
 	/**
@@ -416,7 +581,12 @@ class list_ui {
 		$applied_group = $this->objects_type.'_applied_group';
 		global ${$applied_group};
 		if(isset(${$applied_group})) {
-			$this->applied_group[0] = ${$applied_group};
+			$this->applied_group = array();
+			foreach (${$applied_group} as $name) {
+				if($name) {
+					$this->applied_group[] = $name;
+				}
+			}
 		}
 		//Sauvegarde du groupement en session
 		$this->set_applied_group_in_session();
@@ -460,7 +630,10 @@ class list_ui {
 	
 	protected function get_form_title() {
 		global $msg, $charset;
-		return htmlentities($msg[$this->objects_type.'_form_title'], ENT_QUOTES, $charset);
+		if(isset($msg[$this->objects_type.'_form_title'])) {
+		    return htmlentities($msg[$this->objects_type.'_form_title'], ENT_QUOTES, $charset);
+		}
+		return '';
 	}
 	
 	protected function get_form_name() {
@@ -469,7 +642,7 @@ class list_ui {
 	
 	/**
 	 * Retourne l'instance de parametres_perso
-	 * @param unknown $type
+	 * @param string $type
 	 */
 	protected function get_custom_parameters_instance($type) {
 		if(!isset($this->custom_parameters_instance[$type])) {
@@ -486,8 +659,24 @@ class list_ui {
 	}
 	
 	/**
-	 * Liste des champs personnalisés
-	 * @param unknown $type
+	 * Liste des filtres disponibles sur les champs personnalisés
+	 * @param string $type
+	 */
+	protected function add_custom_fields_available_filters($type, $property_id) {
+	    foreach ($this->get_custom_parameters_instance($type)->t_fields as $field) {
+	        if(!empty($field["FILTER"])) {
+    	        $this->available_filters['custom_fields'][$field['NAME']] = $field['TITRE'];
+    	        $this->custom_fields_available_filters[$field['NAME']] = array(
+    	            'type' => $type,
+    	            'property_id' => $property_id
+    	        );
+	        }
+	    }
+	}
+	
+	/**
+	 * Liste des colonnes disponibles sur les champs personnalisés
+	 * @param string $type
 	 */
 	protected function add_custom_fields_available_columns($type, $property_id) {
 		foreach ($this->get_custom_parameters_instance($type)->t_fields as $field) {
@@ -501,11 +690,9 @@ class list_ui {
 	
 	protected function get_available_columns_selector() {
 		$selector = "<select id='".$this->objects_type."_available_columns' name='".$this->objects_type."_available_columns[]' multiple='yes' size='5' class='list_ui_options_columns ".$this->objects_type."_options_columns'>";
-		foreach ($this->available_columns as $group=>$columns) {
-			foreach ($columns as $property=>$label) {
-				if(empty($this->selected_columns[$property])) {
-					$selector .= "<option value='".$property."'>".$this->_get_label_cell_header($label)."</option>";
-				}
+		foreach ($this->get_sorted_available_columns() as $property=>$label) {
+			if(empty($this->selected_columns[$property])) {
+				$selector .= "<option value='".$property."'>".$this->_get_label_cell_header($label)."</option>";
 			}
 		}
 		$selector .= "</select>";
@@ -521,16 +708,49 @@ class list_ui {
 		return $selector;
 	}
 	
-	protected function get_applied_group_selector() {
-		$selector = "<select id='".$this->objects_type."_applied_group' name='".$this->objects_type."_applied_group' class='list_ui_options_applied_group ".$this->objects_type."_options_applied_group'>";
+	protected function get_applied_group_selector($indice, $applied_group='') {
+		$selector = "<select id='".$this->objects_type."_applied_group_".$indice."' name='".$this->objects_type."_applied_group[".$indice."]' class='list_ui_options_applied_group ".$this->objects_type."_options_applied_group'>";
 		$selector .= "<option value=''></option>";
-		foreach ($this->available_columns as $group=>$columns) {
-			foreach ($columns as $property=>$label) {
-				$selector .= "<option value='".$property."' ".(isset($this->applied_group[0]) && $this->applied_group[0] == $property ? "selected='selected'" : "").">".$this->_get_label_cell_header($label)."</option>";
-			}
+		foreach ($this->get_sorted_available_columns() as $property=>$label) {
+			$selector .= "<option value='".$property."' ".($applied_group == $property ? "selected='selected'" : "").">".$this->_get_label_cell_header($label)."</option>";
 		}
 		$selector .= "</select>";
 		return $selector;
+	}
+	
+	protected function get_applied_group_selectors() {
+		global $msg, $charset;
+		
+		$selectors = '';
+		if(empty($this->applied_group)) {
+		    $this->applied_group = array(0 => '');
+		}
+		foreach ($this->applied_group as $indice=>$applied_group) {
+			if($indice) {
+				$selectors .= $this->get_display_add_applied_group($indice, $applied_group);
+			} else {
+				$selectors .= $this->get_applied_group_selector($indice, $applied_group);
+				$selectors .= "&nbsp;<input type='button' class='bouton_small' id='".$this->objects_type."_options_applied_group_more' name='".$this->objects_type."_options_applied_group_more' value='+' />";
+			}
+		}
+		$selectors .= "<div id='".$this->objects_type."_options_applied_group_more_content' data-applied-group-number='".count($this->applied_group)."'>
+			</div>";
+		return $selectors;
+	}
+	
+	public function get_display_add_applied_group($indice, $applied_group='') {
+		global $msg, $charset;
+		
+		$display = "
+		<div id='".$this->objects_type."_options_applied_group_".$indice."'>
+			<span class='list_ui_options_group_label_text'>
+				<label>".htmlentities($msg['list_ui_options_group_by_then'], ENT_QUOTES, $charset)."</label>
+			</span>";
+		$display .= $this->get_applied_group_selector($indice, $applied_group);
+		$display .= "
+			&nbsp;<input type='button' class='bouton_small ".$this->objects_type."_options_applied_group_delete' id='".$this->objects_type."_options_applied_group_delete_".$indice."' name='".$this->objects_type."_options_applied_group_delete_".$indice."' value='X' />
+		</div>";
+		return $display;
 	}
 	
 	/**
@@ -543,7 +763,7 @@ class list_ui {
 		$options_content_form = str_replace('!!objects_type!!', $this->objects_type, $options_content_form);
 		$options_content_form = str_replace('!!available_columns!!', $this->get_available_columns_selector(), $options_content_form);
 		$options_content_form = str_replace('!!selected_columns!!', $this->get_selected_columns_selector(), $options_content_form);
-		$options_content_form = str_replace('!!applied_group_selector!!', $this->get_applied_group_selector(), $options_content_form);
+		$options_content_form = str_replace('!!applied_group_selectors!!', $this->get_applied_group_selectors(), $options_content_form);
 		return $options_content_form;
 	}
 	
@@ -591,8 +811,22 @@ class list_ui {
 		return $datasets_content_form;
 	}
 	
-	protected function get_multiple_selector($query, $name='', $message_all='') {
+	protected function get_simple_selector($query, $name='', $message_all='') {
 		global $msg, $charset;
+	
+		$selector = "<select name='".$this->objects_type."_".$name."'>";
+		$result = pmb_mysql_query($query);
+		$selector .= "<option value='' ".(empty($this->filters[$name]) ? "selected='selected'" : "").">".htmlentities($message_all, ENT_QUOTES, $charset)."</option>";
+		while ($row = pmb_mysql_fetch_object($result)) {
+			$selector .= "<option value='".htmlentities($row->id, ENT_QUOTES, $charset)."' ".($row->id == $this->filters[$name] ? "selected='selected'" : "").">";
+			$selector .= $row->label."</option>";
+		}
+		$selector .= "</select>";
+		return $selector;
+	}
+	
+	protected function get_multiple_selector($query, $name='', $message_all='') {
+		global $charset;
 		
 		$selector = "<select name='".$this->objects_type."_".$name."[]' multiple='3'>";
 		$result = pmb_mysql_query($query);
@@ -605,23 +839,96 @@ class list_ui {
 		return $selector;
 	}
 	
+	protected function get_search_filter_interval_date($name) {
+		return "<input type='text' name='".$this->objects_type."_".$name."_start' id='".$this->objects_type."_".$name."_start' value='".$this->filters[$name."_start"]."'  data-dojo-type='dijit/form/DateTextBox' required='false' />
+			 - <input type='text' name='".$this->objects_type."_".$name."_end' id='".$this->objects_type."_".$name."_end' value='".$this->filters[$name."_end"]."'  data-dojo-type='dijit/form/DateTextBox' required='false' />";
+	}
+	
+	/**
+	 * Affichage d'un filtre du formulaire de recherche
+	 */
+	protected function get_search_filter_form($property, $label) {
+		global $msg, $charset;
+		
+		$method_name = "get_search_filter_".$property;
+		$search_filter_form = "
+				<div class='colonne3'>
+					<div class='row'>
+						<label class='etiquette'>".($label && substr($label, 0, 6) != 'empty_' ? htmlentities($msg[$label], ENT_QUOTES, $charset) : '')."</label>
+					</div>
+					<div class='row'>
+						".(method_exists($this, $method_name) ? call_user_func(array($this, $method_name)) : '')."
+					</div>
+				</div>
+			";
+		return $search_filter_form;
+	}
+	
 	/**
 	 * Affichage des filtres du formulaire de recherche
 	 */
 	public function get_search_filters_form() {
-		return '';	
+		$search_filters_form = "<div class='row'>";
+		$col = 1;
+		foreach ($this->selected_filters as $property=>$label) {
+			if($col === 0) {
+				$search_filters_form .= "
+					</div>
+					<div class='row'>";
+				$col++;
+			}
+			$search_filters_form .= $this->get_search_filter_form($property, $label);
+			if($col === 3) {
+				$col = 0;
+			} else {
+				$col++;
+			}
+		}
+		$search_filters_form .= "</div>";
+		return $search_filters_form;	
 	}
 	
-	protected function get_search_order_options() {
+	protected function get_search_add_filter_options() {
 		global $msg;
 	
-		$options = '';
-		foreach ($this->available_columns as $group=>$columns) {
-			foreach ($columns as $property=>$label) {
-				$options .= "<option value='".$property."' ".($property == $this->applied_sort['by'] ? "selected='selected'" : "").">".$this->_get_label_cell_header($label)."</option>";
+		$options = "<option value=''></option>";
+		foreach ($this->available_filters as $group=>$filters) {
+			foreach ($filters as $property=>$label) {
+				$options .= "<option value='".$property."' ".(array_key_exists($property, $this->selected_filters) ? "disabled='disabled'" : "").">".$this->_get_label_cell_header($label)."</option>";
 			}
 		}
 		return $options;
+	}
+	
+	/**
+	 * Affichage du sélecteur de filtres du formulaire de recherche
+	 */
+	protected function get_search_add_filter_form() {
+		global $list_ui_search_add_filter_form_tpl;
+		
+		$search_add_filter_form = $list_ui_search_add_filter_form_tpl;
+		$search_add_filter_form = str_replace('!!add_filter_options!!', $this->get_search_add_filter_options(), $search_add_filter_form);
+		$search_add_filter_form = str_replace('!!objects_type!!', $this->objects_type, $search_add_filter_form);
+		return $search_add_filter_form;
+	}
+	
+	protected function get_search_order_options($indice=0) {
+	    $options = '';
+		foreach ($this->get_sorted_available_columns() as $property=>$label) {
+		    $options .= "<option value='".$property."' ".($property == $this->applied_sort[$indice]['by'] ? "selected='selected'" : "").">".$this->_get_label_cell_header($label)."</option>";
+		}
+		return $options;
+	}
+	
+	protected function get_search_order_selector($indice=0) {
+	    global $msg;
+	    
+	    $selector = "<select id='".$this->objects_type."_applied_sort_by_".$indice."' name='".$this->objects_type."_applied_sort[".$indice."][by]' class='list_ui_applied_sort ".$this->objects_type."_applied_sort'>";
+	    $selector .= $this->get_search_order_options($indice);
+	    $selector .= "</select>";
+	    $selector .= "<input type='radio' id='".$this->objects_type."_applied_sort_asc_".$indice."' name='".$this->objects_type."_applied_sort[".$indice."][asc_desc]' value='asc' ".(empty($this->applied_sort[0]['asc_desc']) || 'asc' == $this->applied_sort[0]['asc_desc'] ? "checked='checked'" : "")." /><label for='".$this->objects_type."_applied_sort_asc_".$indice."'>".$msg["list_applied_sort_asc"]."</label>";
+	    $selector .= "<input type='radio' id='".$this->objects_type."_applied_sort_desc_".$indice."' name='".$this->objects_type."_applied_sort[".$indice."][asc_desc]' value='desc' ".('desc' == $this->applied_sort[$indice]['asc_desc'] ? "checked='checked'" : "")." /><label for='".$this->objects_type."_applied_sort_desc_".$indice."'>".$msg["list_applied_sort_desc"]."</label>";
+	    return $selector;
 	}
 	
 	/**
@@ -631,11 +938,45 @@ class list_ui {
 		global $list_ui_search_order_form_tpl;
 		
 		$search_order_form = $list_ui_search_order_form_tpl;
-		$search_order_form = str_replace('!!order_options!!', $this->get_search_order_options(), $search_order_form);
-		$search_order_form = str_replace('!!applied_sort_asc!!', ('asc' == $this->applied_sort['asc_desc'] ? "checked='checked'" : ""), $search_order_form);
-		$search_order_form = str_replace('!!applied_sort_desc!!', ('desc' == $this->applied_sort['asc_desc'] ? "checked='checked'" : ""), $search_order_form);
-		$search_order_form = str_replace('!!objects_type!!', $this->objects_type, $search_order_form);
+		$selectors = '';
+		if(empty($this->applied_sort)) {
+		    $this->applied_sort = array(0 => array('by' => '', 'asc_desc' => ''));
+		}
+		foreach ($this->applied_sort as $indice=>$applied_sort) {
+		    if($indice) {
+		        $selectors .= $this->get_search_order_add_applied_sort($indice, $applied_sort);
+		    } else {
+		        $selectors .= $this->get_search_order_selector($indice);
+		        //DG 22/11/2019 - A activer plus tard
+		        //$selectors .= "&nbsp;<input type='button' class='bouton_small' id='".$this->objects_type."_applied_sort_more' name='".$this->objects_type."_applied_sort_more' value='+' />";
+		    }
+		}
+		$selectors .= "<div id='".$this->objects_type."_applied_sort_more_content' data-applied-sort-number='".count($this->applied_sort)."'>
+			</div>";
+		$search_order_form = str_replace('!!applied_sort_selectors!!', $selectors, $search_order_form);
 		return $search_order_form;
+	}
+	
+	public function get_search_order_add_applied_sort($indice, $applied_sort = array()) {
+	    global $msg, $charset;
+	    
+	    $display = "
+		<div id='".$this->objects_type."_applied_sort_".$indice."'>
+			<span class='list_ui_applied_sort_label_text'>
+				<label>".htmlentities($msg['list_ui_sort_by_then'], ENT_QUOTES, $charset)."</label>
+			</span>";
+	    if(empty($this->applied_sort[$indice])) {
+	        if(!empty($applied_sort)) {
+	            $this->add_applied_sort($applied_sort['by'], $applied_sort['asc_desc']);
+	        } else {
+	            $this->add_applied_sort('');
+	        }
+	    }
+	    $display .= $this->get_search_order_selector($indice);
+	    $display .= "
+			&nbsp;<input type='button' class='bouton_small ".$this->objects_type."_applied_sort_delete' id='".$this->objects_type."_applied_sort_delete_".$indice."' name='".$this->objects_type."_applied_sort_delete_".$indice."' value='X' />
+		</div>";
+	    return $display;
 	}
 	
 	/**
@@ -651,6 +992,10 @@ class list_ui {
 	protected function get_search_content_form() {
 		$search_content_form = $this->get_search_filters_form();
 		$search_content_form .= "<div class='row'><br />&nbsp;</div>";
+		if(count($this->available_filters)) {
+			$search_content_form .= $this->get_search_add_filter_form();
+			$search_content_form .= "<div class='row'><br />&nbsp;</div>";
+		}
 		$search_content_form .= $this->get_search_order_form();
 		return $search_content_form;
 	}
@@ -673,6 +1018,7 @@ class list_ui {
 		$search_form = str_replace('!!page!!', $this->pager['page'], $search_form);
 		$search_form = str_replace('!!nb_per_page!!', $this->pager['nb_per_page'], $search_form);
 		$search_form = str_replace('!!pager!!', json_encode($this->pager), $search_form);
+		$search_form = str_replace('!!selected_filters!!', json_encode($this->selected_filters), $search_form);
 		$search_form = str_replace('!!messages!!', $this->get_messages(), $search_form);
 		$search_form = str_replace('!!objects_type!!', $this->objects_type, $search_form);
 		$search_form = str_replace('!!export_icons!!', $this->get_export_icons(), $search_form);
@@ -723,6 +1069,7 @@ class list_ui {
 		$search_hidden_form = str_replace('!!page!!', $this->pager['page'], $search_hidden_form);
 		$search_hidden_form = str_replace('!!nb_per_page!!', $this->pager['nb_per_page'], $search_hidden_form);
 		$search_hidden_form = str_replace('!!pager!!', json_encode($this->pager), $search_hidden_form);
+		$search_hidden_form = str_replace('!!selected_filters!!', json_encode($this->selected_filters), $search_hidden_form);
 		$search_hidden_form = str_replace('!!objects_type!!', $this->objects_type, $search_hidden_form);
 		return $search_hidden_form;
 	}
@@ -776,7 +1123,7 @@ class list_ui {
 	 * @param $b
 	 */
 	protected function _compare_objects($a, $b) {
-		$sort_by = $this->applied_sort['by'];
+	    $sort_by = $this->applied_sort[0]['by'];
 		if (is_object($a) && isset($a->{$sort_by})) {
 			return strcmp($a->{$sort_by}, $b->{$sort_by});
 		} elseif(method_exists($a, 'get_'.$sort_by)) {
@@ -788,8 +1135,10 @@ class list_ui {
 			$field_id = $custom_instance->get_field_id_from_name($sort_by);
 			
 			$custom_instance->get_values($a->{$this->custom_fields_available_columns[$sort_by]['property_id']});
+			if (!isset($custom_instance->values[$field_id])) $custom_instance->values[$field_id] = array(0 => '');
 			$content_a = $custom_instance->get_formatted_output($custom_instance->values[$field_id], $field_id);
 			$custom_instance->get_values($b->{$this->custom_fields_available_columns[$sort_by]['property_id']});
+			if (!isset($custom_instance->values[$field_id])) $custom_instance->values[$field_id] = array(0 => '');
 			$content_b = $custom_instance->get_formatted_output($custom_instance->values[$field_id], $field_id);
 			return strcmp($content_a, $content_b);
 		}
@@ -800,8 +1149,8 @@ class list_ui {
 	 */
 	protected function _sort() {
 		if(!isset($this->applied_sort_type) || $this->applied_sort_type == 'OBJECTS') {
-			if($this->applied_sort['by']) {
-				if($this->applied_sort['asc_desc'] == 'desc') {
+		    if($this->applied_sort[0]['by']) {
+		        if($this->applied_sort[0]['asc_desc'] == 'desc') {
 					usort($this->objects, array($this, "_compare_objects"));
 					$this->objects= array_reverse($this->objects);
 				} else {
@@ -825,10 +1174,25 @@ class list_ui {
 				case 'TABLEAU':
 					break;
 				default:
-					$this->objects = array_slice(
-							$this->objects,
-							($this->pager['page']-1)*$this->pager['nb_per_page'],
-							$this->pager['nb_per_page']);
+				    if($this->pager['nb_per_page_on_group'] === true) {
+				        $this->get_grouped_objects();
+				        $this->pager['nb_results'] = count($this->grouped_objects);
+				        $this->grouped_objects = array_slice(
+				            $this->grouped_objects,
+				            ($this->pager['page']-1)*$this->pager['nb_per_page'],
+				            $this->pager['nb_per_page']);
+				        $this->objects = array();
+				        foreach ($this->grouped_objects as $grouped) {
+				            foreach ($grouped as $object) {
+				                $this->objects[] = $object;
+				            }
+				        }
+				    } elseif($this->pager['nb_per_page']) {
+				        $this->objects = array_slice(
+				            $this->objects,
+				            ($this->pager['page']-1)*$this->pager['nb_per_page'],
+				            $this->pager['nb_per_page']);
+				    }
 					break;
 			}
 		}
@@ -855,6 +1219,10 @@ class list_ui {
 		$this->add_selected_column($property, $label);
 	}
 	
+	protected function get_display_html_content_selection() {
+		return "<div class='center'><input type='checkbox' id='".$this->objects_type."_selection_!!id!!' name='".$this->objects_type."_selection[!!id!!]' class='".$this->objects_type."_selection' value='!!id!!'></div>";
+	}
+	
 	protected function add_column_selection() {
 		global $msg, $charset;
 		
@@ -866,7 +1234,7 @@ class list_ui {
 							&nbsp;
 							<i class='fa fa-minus-square' onclick='".$this->objects_type."_unselection_all(document.".$this->get_form_name().");' style='cursor:pointer;' title='".htmlentities($msg['tout_decocher_checkbox'], ENT_QUOTES, $charset)."'></i>
 						</div>",
-				'html' => "<div class='center'><input type='checkbox' id='".$this->objects_type."_selection_!!id!!' name='".$this->objects_type."_selection[!!id!!]' class='".$this->objects_type."_selection' value='!!id!!'></div>"
+				'html' => $this->get_display_html_content_selection()
 		);
 	}
 	
@@ -936,13 +1304,13 @@ class list_ui {
 	 */
 	protected function _get_cell_header($name, $label = '') {
 		global $msg, $charset;
-		$data_sorted = ($this->applied_sort['asc_desc'] ? $this->applied_sort['asc_desc'] : 'asc');
+		$data_sorted = ($this->applied_sort[0]['asc_desc'] ? $this->applied_sort[0]['asc_desc'] : 'asc');
 		$icon_sorted = ($data_sorted == 'asc' ? '<i class="fa fa-sort-desc"></i>' : '<i class="fa fa-sort-asc"></i>');
 		if($name) {
 			return "
-			<th onclick=\"".$this->objects_type."_sort_by('".$name."', this.getAttribute('data-sorted'));\" data-sorted='".($this->applied_sort['by'] == $name ? $data_sorted : '')."' style='cursor:pointer;' title='".htmlentities($msg['sort_by'], ENT_QUOTES, $charset).' '.$this->_get_label_cell_header($label)."'>
+			<th onclick=\"".$this->objects_type."_sort_by('".$name."', this.getAttribute('data-sorted'));\" data-sorted='".($this->applied_sort[0]['by'] == $name ? $data_sorted : '')."' style='cursor:pointer;' title='".htmlentities($msg['sort_by'], ENT_QUOTES, $charset).' '.$this->_get_label_cell_header($label)."'>
 					".$this->_get_label_cell_header($label)."
-					".($this->applied_sort['by'] == $name ? $icon_sorted : '<i class="fa fa-sort"></i>')."
+					".($this->applied_sort[0]['by'] == $name ? $icon_sorted : '<i class="fa fa-sort"></i>')."
 			</th>";
 		} else {
 			return "<th>".$this->_get_label_cell_header($label)."</th>";
@@ -974,37 +1342,94 @@ class list_ui {
 		}
 	}
 	
-	protected function get_grouped_objects() {
+	protected function get_grouped_label($object, $property) {
 		global $msg;
 		
-		$grouped_objects = array();
-		$property = $this->applied_group[0];
-		$not_found = false;
-		foreach ($this->objects as $object) {
-			if (is_object($object) && !empty($object->{$property})) {
-				$grouped_objects[$object->{$property}][] = $object;
-			} elseif(method_exists($object, 'get_'.$property)) {
-				$grouped_objects[call_user_func_array(array($object, "get_".$property), array())][] = $object;
-			} elseif(isset($this->custom_fields_available_columns[$property])) {
-				$custom_instance = $this->get_custom_parameters_instance($this->custom_fields_available_columns[$property]['type']);
-				$custom_instance->get_values($object->{$this->custom_fields_available_columns[$property]['property_id']});
-				$field_id = $custom_instance->get_field_id_from_name($property);
-				if(isset($custom_instance->values[$field_id]) && count($custom_instance->values[$field_id])) {
-					$grouped_objects[$custom_instance->get_formatted_output($custom_instance->values[$field_id], $field_id)][] = $object;
-				} else {
-					$grouped_objects[$msg['list_ui_objects_not_grouped']][] = $object;
-				}
+		$grouped_label = '';
+		if (is_object($object) && !empty($object->{$property})) {
+			$grouped_label = $object->{$property};
+		} elseif(method_exists($object, 'get_'.$property)) {
+			$grouped_label = call_user_func_array(array($object, "get_".$property), array());
+		} elseif(isset($this->custom_fields_available_columns[$property])) {
+			$custom_instance = $this->get_custom_parameters_instance($this->custom_fields_available_columns[$property]['type']);
+			$custom_instance->get_values($object->{$this->custom_fields_available_columns[$property]['property_id']});
+			$field_id = $custom_instance->get_field_id_from_name($property);
+			if(isset($custom_instance->values[$field_id]) && count($custom_instance->values[$field_id])) {
+				$grouped_label = $custom_instance->get_formatted_output($custom_instance->values[$field_id], $field_id);
 			} else {
-				$grouped_objects[$msg['list_ui_objects_not_grouped']][] = $object;
+				$grouped_label = $msg['list_ui_objects_not_grouped'];
 			}
+		} else {
+			$grouped_label = $msg['list_ui_objects_not_grouped'];
 		}
-		uksort($grouped_objects, array($this, "_sort_grouped_objects"));
-		return $grouped_objects;
+		return $grouped_label;
+	}
+	
+	protected function add_group_labels($label) {
+	    if(array_key_exists($label, $this->applied_group_labels) === false) {
+	        $this->applied_group_labels[$label] = array(
+	            'page' => (count($this->applied_group_labels)+1 / $this->pager['nb_per_page'])
+	        );
+	    }
+	}
+	
+	protected function get_grouped_objects() {
+	    if(!isset($this->grouped_objects)) {
+    	    $grouped_objects = array();
+    	    $this->applied_group_labels = array();
+    		$property = $this->applied_group[0];
+    		$not_found = false;
+    		foreach ($this->objects as $object) {
+    			switch(count($this->applied_group)) {
+    			    case 3:
+    					$grouped_label_1 = $this->get_grouped_label($object, $this->applied_group[1]);
+    					$grouped_label_2 = $this->get_grouped_label($object, $this->applied_group[2]);
+    					$grouped_objects[$this->get_grouped_label($object, $property)][$grouped_label_1][$grouped_label_2][] = $object;
+    					break;
+    				case 2:
+    					$grouped_label = $this->get_grouped_label($object, $this->applied_group[1]);
+    					$grouped_objects[$this->get_grouped_label($object, $property)][$grouped_label][] = $object;
+    					break;
+    				case 1:
+    				default:
+    				    $grouped_label = $this->get_grouped_label($object, $property);
+    				    if(is_array($grouped_label)) {
+//     				        $grouped_objects[implode(' / ', $grouped_label)][] = $object;
+    				        foreach ($grouped_label as $label) {
+    				            $grouped_objects[$label][] = $object;
+    				            $this->add_group_labels($label);
+    				        }
+    				    } else {
+    				        $grouped_objects[$grouped_label][] = $object;
+    				        $this->add_group_labels($label);
+    				    }
+    					break;
+    			}
+    		}
+    		uksort($grouped_objects, array($this, "_sort_grouped_objects"));
+    		$this->grouped_objects = $grouped_objects;
+	    }
+	    return $this->grouped_objects;
+	}
+	
+	/**
+	 * Contenu d'une colonne utilisée pour le groupement
+	 * @param string $property
+	 * @param string $value
+	 */
+	protected function get_cell_group_label($group_label, $indice=0) {
+		$content = '';
+		switch($this->applied_group[$indice]) {
+			default :
+				$content .= $group_label;
+				break;
+		}
+		return $content;
 	}
 	
 	/**
 	 * Contenu d'une colonne
-	 * @param unknown $object
+	 * @param object $object
 	 * @param string $property
 	 */
 	protected function get_cell_content($object, $property) {
@@ -1017,7 +1442,12 @@ class list_ui {
 					$content .= call_user_func_array(array($object, "get_".$property), array());
 				} elseif(isset($this->custom_fields_available_columns[$property])) {
 					$custom_instance = $this->get_custom_parameters_instance($this->custom_fields_available_columns[$property]['type']);
-					$custom_instance->get_values($object->{$this->custom_fields_available_columns[$property]['property_id']});
+					$property_id = $this->custom_fields_available_columns[$property]['property_id'];
+					if(method_exists($object, 'get_'.$property_id)) {
+					    $custom_instance->get_values(call_user_func_array(array($object, "get_".$property_id), array()));
+					} else {
+					    $custom_instance->get_values($object->{$property_id});
+					}
 					$field_id = $custom_instance->get_field_id_from_name($property);
 					if(isset($custom_instance->values[$field_id]) && count($custom_instance->values[$field_id])) {
 						$content .= $custom_instance->get_formatted_output($custom_instance->values[$field_id], $field_id);
@@ -1044,7 +1474,7 @@ class list_ui {
 	
 	/**
 	 * Affichage d'une colonne
-	 * @param unknown $object
+	 * @param object $object
 	 * @param string $property
 	 */
 	protected function get_display_cell($object, $property) {
@@ -1069,24 +1499,43 @@ class list_ui {
 		return $display;
 	}
 	
+	protected function get_display_group_header_list($group_label, $level=1) {
+	    $display = "
+		<tr>
+			<td class='list_ui_content_list_group list_ui_content_list_group_level_".$level." ".$this->objects_type."_content_list_group ".$this->objects_type."_content_list_group_level_".$level."' colspan='".count($this->columns)."'>
+				".$this->get_cell_group_label($group_label, ($level-1))."
+			</td>
+		</tr>";
+	    return $display;
+	}
+	
+	/**
+	 * Liste des objets par groupe
+	 */
+	protected function get_display_group_content_list($grouped_objects, $level=1) {
+		$display = '';
+		foreach($grouped_objects as $group_label=>$objects) {
+		    $display .= $this->get_display_group_header_list($group_label, $level);
+			foreach ($objects as $i=>$object) {
+				$int_i = intval($i);
+				if($i !== 0 && $int_i !== $i) {
+					$display .= $this->get_display_group_content_list($objects, ($level+1));
+				} else {
+					$display .= $this->get_display_content_object_list($object, $i);
+				}
+			}
+		}
+		return $display;
+	}
+	
 	/**
 	 * Liste des objets
 	 */
 	public function get_display_content_list() {
 		$display = '';
 		if(isset($this->applied_group[0]) && $this->applied_group[0]) {
-			$grouped_objects = $this->get_grouped_objects();
-			foreach($grouped_objects as $group_label=>$objects) {
-				$display .= "
-					<tr>
-						<td class='list_ui_content_list_group ".$this->objects_type."_content_list_group' colspan='".count($this->columns)."'>
-							".$group_label."
-						</th>
-					</tr>";
-				foreach ($objects as $i=>$object) {
-					$display .= $this->get_display_content_object_list($object, $i);
-				}
-			}
+		    $grouped_objects = $this->get_grouped_objects();
+			$display .= $this->get_display_group_content_list($grouped_objects);
 		} else {
 			foreach ($this->objects as $i=>$object) {
 				$display .= $this->get_display_content_object_list($object, $i);
@@ -1095,13 +1544,31 @@ class list_ui {
 		return $display;
 	}
 	
+	public function get_error_message_empty_list() {
+	    return '';
+	}
+	
+	/**
+	 * Message indiquant que la liste est vide
+	 */
+	public function get_display_empty_content_list() {
+	    $display = "";
+	    $error_message = $this->get_error_message_empty_list();
+	    if($error_message) {
+	        $display .= "
+			<tr>
+				<td class='list_ui_empty_list ".$this->objects_type."_empty_list' colspan='".count($this->columns)."'>
+					".$error_message."
+				</td>
+			</tr>";
+	    }
+	    return $display;
+	}
+	
 	/**
 	 * Affiche la recherche + la liste
 	 */
 	public function get_display_list() {
-		global $msg, $charset;
-		global $base_path;
-	
 		$display = $this->get_title();
 		
 		// Affichage du formulaire de recherche
@@ -1118,8 +1585,13 @@ class list_ui {
 		$display .= $this->get_display_header_list();
 		if(count($this->objects)) {
 			$display .= $this->get_display_content_list();
+		} else {
+		    $display .= $this->get_display_empty_content_list();
 		}
 		$display .= "</table>";
+		if(!empty($this->is_displayed_go_directly_to_block) && !empty($this->applied_group[0])) {
+		    $display .= $this->get_display_go_directly_to_action();
+		}
 		if(count($this->get_selection_actions())) {
 			$display .= $this->get_display_selection_actions();
 		}
@@ -1136,19 +1608,41 @@ class list_ui {
 		return $display;
 	}
 	
+	protected function get_display_go_directly_to_action() {
+	    global $msg, $charset;
+	    
+	    $display = '';
+	    if(!empty($this->applied_group_labels)) {
+    	    $display .= "<div id='list_ui_go_directly_to_action' class='list_ui_go_directly_to_action ".$this->objects_type."_go_directly_to_action'>
+    			<span class='list_ui_go_directly_to_action_label ".$this->objects_type."_go_directly_to_action_label'>
+    				<label>".htmlentities($msg['edit_go_directly_to'], ENT_QUOTES, $charset)." : </label>
+    			</span>
+                <span class='list_ui_go_directly_to_action_content ".$this->objects_type."_go_directly_to_action_content'>
+                    <select id='".$this->objects_type."_go_directly_to' name='".$this->objects_type."_go_directly_to' onchange=\"document.".$this->objects_type."_search_form.".$this->objects_type."_page.value=this.selectedOptions[0].getAttribute('data-page');document.forms['".$this->objects_type."_search_form'].submit();\">
+                        <option value='' data-page='1'></option>";
+	        foreach ($this->applied_group_labels as $label=>$group) {
+	            $display .= "<option value='".htmlentities($label, ENT_QUOTES, $charset)."' data-page='".$group['page']."'>".htmlentities($label, ENT_QUOTES, $charset)."</option>";
+	        }
+            $display .= "</select>
+                </span>
+    		</div>";
+	   }
+	    return $display;
+	}
+	
 	protected static function set_selected_objects_from_form() {
-		$objects_type = str_replace('list_', '', get_called_class());
+	    $objects_type = str_replace('list_', '', static::class);
 		$selected_objects = $objects_type."_selected_objects";
 		global ${$selected_objects};
 		if(is_array(${$selected_objects}) && count(${$selected_objects})) {
-			$_SESSION['list_'.$objects_type.'_selected_objects'] = $$selected_objects;
+		    $_SESSION['list_'.$objects_type.'_selected_objects'] = ${$selected_objects};
 		}
 	}
 	
 	protected static function get_selected_objects() {
 		static::set_selected_objects_from_form();
 		$selected_objects = array();
-		$objects_type = str_replace('list_', '', get_called_class());
+		$objects_type = str_replace('list_', '', static::class);
 		if(isset($_SESSION['list_'.$objects_type.'_selected_objects']) && is_array($_SESSION['list_'.$objects_type.'_selected_objects'])) {
 			$selected_objects = $_SESSION['list_'.$objects_type.'_selected_objects'];
 			//Destruction de la variable de session pour ne pas exécuter l'action plusieurs fois
@@ -1177,6 +1671,14 @@ class list_ui {
 		return 'icon';
 	}
 	
+	protected function get_display_selection_action_attributes($attributes) {
+	    $display = '';
+	    foreach ($attributes as $key=>$attribute) {
+	        $display .= " data-attribute-".$key."='".$attribute."'";
+	    }
+	    return $display;
+	}
+	
 	protected function get_display_selection_action($action) {
 		global $charset;
 		
@@ -1195,15 +1697,66 @@ class list_ui {
 					".htmlentities($action['label'], ENT_QUOTES, $charset)."
 				</a>";
 				break;
+			case 'icon-dialog':
+			    $display .= "
+				<span id='".$this->objects_type."_selection_action_".$action['name']."_link' ".(!empty($action['attributes']) ? $this->get_display_selection_action_attributes($action['attributes']) : '')." style='cursor:pointer;'> 
+					<img src='".get_url_icon($action['icon'])."' title='".htmlentities($action['label'], ENT_QUOTES, $charset)."' alt='".htmlentities($action['label'], ENT_QUOTES, $charset)."' />
+					".htmlentities($action['label'], ENT_QUOTES, $charset)."
+				</span>";
+			    break;
 		}
 		$display .= "
 		</span>";
 		return $display;
 	}
 	
-	protected function add_events_on_selection_actions() {
-		global $msg, $charset;
+	protected function get_name_selected_objects() {
+		return $this->objects_type."_selected_objects";
+	}
+	
+	protected function add_event_on_selection_action($action=array()) {
+		global $msg;
 		
+		$display = "
+			on(dom.byId('".$this->objects_type."_selection_action_".$action['name']."_link'), 'click', function() {
+				var selection = new Array();
+				query('.".$this->objects_type."_selection:checked').forEach(function(node) {
+					selection.push(node.value);
+				});
+				if(selection.length) {
+					var confirm_msg = '".(isset($action['link']['confirm']) ? addslashes($action['link']['confirm']) : '')."';
+					if(!confirm_msg || confirm(confirm_msg)) {
+						".(isset($action['link']['href']) && $action['link']['href'] ? "
+							var selected_objects_form = domConstruct.create('form', {
+								action : '".$action['link']['href']."',
+								name : '".$this->objects_type."_selected_objects_form',
+								id : '".$this->objects_type."_selected_objects_form',
+								method : 'POST'
+							});
+							selection.forEach(function(selected_option) {
+								var selected_objects_hidden = domConstruct.create('input', {
+									type : 'hidden',
+									name : '".$this->get_name_selected_objects()."[]',
+									value : selected_option
+								});
+								domConstruct.place(selected_objects_hidden, selected_objects_form);
+							});
+							domConstruct.place(selected_objects_form, dom.byId('list_ui_selection_actions'));
+							dom.byId('".$this->objects_type."_selected_objects_form').submit();
+							"
+							: "")."
+						".(isset($action['link']['openPopUp']) && $action['link']['openPopUp'] ? "openPopUp('".$action['link']['openPopUp']."&selected_objects='+selection.join(','), '".$action['link']['openPopUpTitle']."'); return false;" : "")."
+						".(isset($action['link']['onClick']) && $action['link']['onClick'] ? $action['link']['onClick']."(selection); return false;" : "")."
+					}
+				} else {
+					alert('".addslashes($msg['list_ui_no_selected'])."');
+				}
+			});		
+		";
+		return $display;
+	}
+	
+	protected function add_events_on_selection_actions() {
 		$display = "<script type='text/javascript'>
 		require([
 				'dojo/on',
@@ -1212,41 +1765,7 @@ class list_ui {
 				'dojo/dom-construct',
 		], function(on, dom, query, domConstruct){";
 		foreach($this->get_selection_actions() as $action) {
-			$display .= "
-				on(dom.byId('".$this->objects_type."_selection_action_".$action['name']."_link'), 'click', function() {
-					var selection = new Array();
-					query('.".$this->objects_type."_selection:checked').forEach(function(node) {
-						selection.push(node.value);
-					});
-					if(selection.length) {
-						var confirm_msg = '".(isset($action['link']['confirm']) ? addslashes($action['link']['confirm']) : '')."';
-						if(!confirm_msg || confirm(confirm_msg)) {
-							".(isset($action['link']['href']) && $action['link']['href'] ? "
-								var selected_objects_form = domConstruct.create('form', {
-									action : '".$action['link']['href']."',
-									name : '".$this->objects_type."_selected_objects_form',
-									id : '".$this->objects_type."_selected_objects_form',
-									method : 'POST'
-								});
-								selection.forEach(function(selected_option) {
-									var selected_objects_hidden = domConstruct.create('input', {
-										type : 'hidden',
-										name : '".$this->objects_type."_selected_objects[]',
-										value : selected_option
-									});
-									domConstruct.place(selected_objects_hidden, selected_objects_form);
-								});
-								domConstruct.place(selected_objects_form, dom.byId('list_ui_selection_actions'));
-								dom.byId('".$this->objects_type."_selected_objects_form').submit();
-								"
-								: "")."
-							".(isset($action['link']['openPopUp']) && $action['link']['openPopUp'] ? "openPopUp('".$action['link']['openPopUp']."&selected_objects='+selection.join(','), '".$action['link']['openPopUpTitle']."'); return false;" : "")."
-							".(isset($action['link']['onClick']) && $action['link']['onClick'] ? $action['link']['onClick']."(selection); return false;" : "")."
-						}
-					} else {
-						alert('".addslashes($msg['list_ui_no_selected'])."');
-					}
-				});";
+			$display .= $this->add_event_on_selection_action($action);
 		}
 		$display .= "});
 		</script>";
@@ -1326,7 +1845,7 @@ class list_ui {
 	protected function pager() {
 		global $msg;
 		
-		if (!$this->pager['nb_results']) return;
+		if (!$this->pager['nb_results'] || !$this->pager['nb_per_page']) return;
 		
 		$this->pager['nb_page']=ceil($this->pager['nb_results']/$this->pager['nb_per_page']);
 		$suivante = $this->pager['page']+1;
@@ -1467,13 +1986,12 @@ class list_ui {
 	}
 	
 	public function get_display_spreadsheet_list() {
-		$this->spreadsheet = new spreadsheet();
+	    $this->spreadsheet = new spreadsheetPMB();
 		$this->get_display_spreadsheet_title();
 		$this->get_display_spreadsheet_header_list();
 		if(count($this->objects)) {
 			$this->get_display_spreadsheet_content_list();
 		}
-// 		$worksheet->set_column(0, $j, 18);
 		$this->spreadsheet->download('edition.xls');
 	}
 	
@@ -1562,6 +2080,16 @@ class list_ui {
 	}
 	
 	/**
+	 * Sauvegarde des filtres sélectionnées en session
+	 */
+	public function set_selected_filters_in_session() {
+		$_SESSION['list_'.$this->objects_type.'_selected_filters'] = array();
+		foreach ($this->selected_filters as $property=>$label) {
+			$_SESSION['list_'.$this->objects_type.'_selected_filters'][$property] = $label;
+		}
+	}
+	
+	/**
 	 * Sauvegarde des filtres en session
 	 */
 	public function set_filter_in_session() {
@@ -1592,8 +2120,8 @@ class list_ui {
 	 */
 	public function set_applied_sort_in_session() {
 		$_SESSION['list_'.$this->objects_type.'_applied_sort'] = array();
-		foreach ($this->applied_sort as $name=>$applied_sort) {
-			$_SESSION['list_'.$this->objects_type.'_applied_sort'][$name] = $applied_sort;
+		foreach ($this->applied_sort as $applied_sort) {
+		    $_SESSION['list_'.$this->objects_type.'_applied_sort'][] = $applied_sort;
 		}
 	}
 	
@@ -1635,6 +2163,10 @@ class list_ui {
 		return $this->pager;
 	}
 	
+	public function get_selected_filters() {
+		return $this->selected_filters;
+	}
+	
 	public function get_messages() {
 		return $this->messages;
 	}
@@ -1669,6 +2201,7 @@ class list_ui {
 			|| (isset($_SESSION['list_'.$this->objects_type.'_selected_columns']) && $this->get_sign($_SESSION['list_'.$this->objects_type.'_selected_columns']) != $this->sign_selected_columns)
 			|| (isset($_SESSION['list_'.$this->objects_type.'_applied_sort']) && $this->get_sign($_SESSION['list_'.$this->objects_type.'_applied_sort']) != $this->sign_applied_sort)
 			|| (isset($_SESSION['list_'.$this->objects_type.'_pager']) && $this->get_sign($_SESSION['list_'.$this->objects_type.'_pager']['nb_per_page']) != $this->sign_pager)
+			|| (isset($_SESSION['list_'.$this->objects_type.'_selected_filters']) && $this->get_sign($_SESSION['list_'.$this->objects_type.'_selected_filters']) != $this->sign_selected_filters)
 				) {
 					return true;
 				}
@@ -1683,21 +2216,56 @@ class list_ui {
 	
 	protected function unset_global_values($property){
 		if(is_array($this->{$property})) {
-			foreach ($this->{$property} as $key=>$value) {
-				$from_form = $this->objects_type.'_'.$key;
-				global ${$from_form};
-				if(isset(${$from_form})) {
-					unset($GLOBALS[$from_form]);
-				}
-		
-				//Pour gérer les autres cas
-				$from_form = $key;
-				global ${$from_form};
-				if(isset(${$from_form})) {
-					unset($GLOBALS[$from_form]);
-				}
+			switch ($property) {
+				case 'applied_group':
+				case 'applied_sort':
+					$from_form = $this->objects_type.'_'.$property;
+					global ${$from_form};
+					if(isset(${$from_form})) {
+						unset(${$from_form});
+						unset($GLOBALS[$from_form]);
+					}
+					break;
+				default:
+					foreach ($this->{$property} as $key=>$value) {
+						$from_form = $this->objects_type.'_'.$key;
+						global ${$from_form};
+						if(isset(${$from_form})) {
+							unset($GLOBALS[$from_form]);
+						}
+						
+						//Pour gérer les autres cas
+						$from_form = $key;
+						global ${$from_form};
+						if(isset(${$from_form})) {
+							unset($GLOBALS[$from_form]);
+						}
+					}
+					break;
 			}
 		}
+	}
+	
+	protected function _compare_diacrit($a, $b) {
+		if ($a == $b) {
+			return 0;
+		}
+		return (strtolower(convert_diacrit($a)) < strtolower(convert_diacrit($b))) ? -1 : 1;
+	}
+	
+	protected function get_sorted_available_columns() {
+		if(!isset($this->sorted_available_columns)) {
+			$this->sorted_available_columns = array();
+			if(count($this->available_columns)) {
+				foreach ($this->available_columns as $group_columns) {
+					foreach ($group_columns as $property=>$label) {
+						$this->sorted_available_columns[$property] = $label;
+					}
+				}
+				uasort($this->sorted_available_columns, array($this, '_compare_diacrit'));
+			}
+		}
+		return $this->sorted_available_columns;
 	}
 	
 	public function get_datasets() {
@@ -1708,16 +2276,16 @@ class list_ui {
 			$this->datasets['my'] = array();
 			$this->datasets['shared'] = array();
 			$this->datasets['default_selected'] = 0;
-			$query = "SELECT id_list, list_num_user, list_default_selected FROM lists WHERE list_objects_type = '".$this->objects_type."'";
+			$query = "SELECT id_list, list_num_user, list_default_selected, list_autorisations FROM lists WHERE list_objects_type = '".$this->objects_type."'";
 			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)) {
 				while($row = pmb_mysql_fetch_object($result)) {
 					if($row->list_num_user == $PMBuserid) {
 						$this->datasets['my'][] = $row->id_list;
 						if($row->list_default_selected) {
-							$this->datasets['default_selected'] = $row->list_default_selected;
+						    $this->datasets['default_selected'] = $row->id_list;
 						}
-					} elseif(in_array($PMBuserid, explode(',', $row->list_autorisations))) {
+					} elseif(in_array($PMBuserid, explode(' ', $row->list_autorisations))) {
 						$this->datasets['shared'][] = $row->id_list;
 					}
 				}
@@ -1742,6 +2310,9 @@ class list_ui {
 			$this->applied_group = $list_model->get_applied_group();
 			$this->applied_sort = $list_model->get_applied_sort();
 			$this->pager = $list_model->get_pager();
+			if(count($list_model->get_selected_filters())) {
+				$this->selected_filters = $list_model->get_selected_filters();
+			}
 		} else {
 			$selected_columns = $this->objects_type.'_json_selected_columns';
 			global ${$selected_columns};
@@ -1762,6 +2333,10 @@ class list_ui {
 			$pager = $this->objects_type.'_pager';
 			global ${$pager};
 			$this->pager = encoding_normalize::json_decode(stripslashes(${$pager}), true);
+			
+			$selected_filters = $this->objects_type.'_selected_filters';
+			global ${$selected_filters};
+			$this->selected_filters = encoding_normalize::json_decode(stripslashes(${$selected_filters}), true);
 		}
 		
 		
@@ -1807,7 +2382,7 @@ class list_ui {
 	}
 	
 	public static function get_instance($filters=array(), $pager=array(), $applied_sort=array()) {
-		$called_class = get_called_class();
+	    $called_class = static::class;
 		return new $called_class($filters, $pager, $applied_sort);
 	}
 }

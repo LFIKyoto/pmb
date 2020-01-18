@@ -1,7 +1,7 @@
 //+-------------------------------------------------+
 //� 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 //+-------------------------------------------------+
-//$Id: tablist_ajax.js,v 1.10 2017-11-30 12:50:43 dgoron Exp $
+//$Id: tablist_ajax.js,v 1.11 2019-05-29 10:59:42 ccraig Exp $
 
 var expand_state=new Array();
 
@@ -176,7 +176,9 @@ function expandAll_ajax_callback_block(text,el) {
 	}
 	if(document.getElementsByName('surligne')) {
 		var surligne = document.getElementsByName('surligne');
-		if (surligne[0].value == 1) rechercher(1);
+		if (surligne[0].value == 1) {
+			rechercher(1);
+		}
 	}
 	ReinitializeAddThis();
 }

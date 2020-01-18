@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_agenda.class.php,v 1.7 2017-11-21 13:38:21 dgoron Exp $
+// $Id: cms_module_agenda.class.php,v 1.8 2019-07-05 13:37:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -125,7 +125,7 @@ class cms_module_agenda extends cms_module_common_module {
 		return $form;
 	}
 	
-	function save_manage_form(){
+	public function save_manage_form(){
 		global $calendar;
 		global $calendar_delete;
 		global $cms_module_agenda_calendar_name;

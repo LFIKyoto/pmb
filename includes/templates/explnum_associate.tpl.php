@@ -2,10 +2,18 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_associate.tpl.php,v 1.4 2017-11-21 12:00:59 dgoron Exp $
+// $Id: explnum_associate.tpl.php,v 1.5 2019-05-27 14:05:40 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $explnum_associate_tpl, $msg;
+global $explnum_associate_background_svg, $explnum_associate_background_svg_posX, $explnum_associate_background_svg_posY, $explnum_associate_background_svg_width, $explnum_associate_background_svg_height;
+global $explnum_associate_timescale_svg, $explnum_associate_timescale_svg_posX, $explnum_associate_timescale_svg_posY, $explnum_associate_timescale_svg_width, $explnum_associate_timescale_svg_height;
+global $explnum_associate_speakers_svg, $explnum_associate_speakers_svg_posX, $explnum_associate_speakers_svg_posY, $explnum_associate_speakers_svg_width, $explnum_associate_speakers_svg_height;
+global $explnum_associate_segments_svg, $explnum_associate_segments_svg_posX, $explnum_associate_segments_svg_posY, $explnum_associate_segments_svg_width, $explnum_associate_segments_svg_height;
+global $explnum_associate_cursor_svg, $explnum_associate_cursor_svg_posX, $explnum_associate_cursor_svg_posY, $explnum_associate_cursor_svg_width, $explnum_associate_cursor_svg_height;
+global $explnum_associate_left_cursor_svg, $explnum_associate_left_cursor_svg_posX, $explnum_associate_left_cursor_svg_posY, $explnum_associate_left_cursor_svg_width, $explnum_associate_left_cursor_svg_height;
+global $explnum_associate_right_cursor_svg, $explnum_associate_right_cursor_svg_posX, $explnum_associate_right_cursor_svg_posY, $explnum_associate_right_cursor_svg_width, $explnum_associate_right_cursor_svg_height;
 
 $explnum_associate_tpl = "
 	<script type='text/javascript' src='./javascript/ajax.js'></script>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_transferts_edition_ui.class.php,v 1.1 2018-12-27 10:05:22 dgoron Exp $
+// $Id: list_transferts_edition_ui.class.php,v 1.1.6.1 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,10 +10,6 @@ require_once($class_path.'/list/transferts/list_transferts_ui.class.php');
 require_once($include_path.'/templates/list/transferts/list_transferts_edition_ui.tpl.php');
 
 class list_transferts_edition_ui extends list_transferts_ui {
-		
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	/**
 	 * Initialisation des colonnes disponibles
@@ -112,9 +108,9 @@ class list_transferts_edition_ui extends list_transferts_ui {
 		global $transferts_edition_ui_select_order;
 		
 		if($transferts_edition_ui_select_order) {
-			$this->applied_sort = array('by' => '', 'asc_desc' => '');
-			unset($_SESSION['list_'.$this->objects_type.'_applied_sort']['by']);
-			unset($_SESSION['list_'.$this->objects_type.'_applied_sort']['asc_desc']);
+			$this->applied_sort = array(array('by' => '', 'asc_desc' => ''));
+			unset($_SESSION['list_'.$this->objects_type.'_applied_sort'][0]['by']);
+			unset($_SESSION['list_'.$this->objects_type.'_applied_sort'][0]['asc_desc']);
 		} else {
 			parent::init_applied_sort($applied_sort);
 		}
@@ -222,8 +218,8 @@ class list_transferts_edition_ui extends list_transferts_ui {
 		$tmpListe='';
 // 		if(count($this->applied_sort)) {
 // 			foreach($this->columns as $column) {
-// 				if($column['property'] == $this->applied_sort['by']) {
-// 					$tmpListe.='<option value="'.$this->applied_sort['by'].'">'.$this->_get_label_cell_header($column['label']).'</option>';
+// 				if($column['property'] == $this->applied_sort[0]['by']) {
+// 					$tmpListe.='<option value="'.$this->applied_sort[0]['by'].'">'.$this->_get_label_cell_header($column['label']).'</option>';
 // 				}
 // 			}
 // 		}

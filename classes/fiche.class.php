@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fiche.class.php,v 1.19 2018-07-24 14:16:37 dgoron Exp $
+// $Id: fiche.class.php,v 1.21 2019-08-26 15:09:21 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($include_path."/templates/fiche.tpl.php");
 require_once($class_path."/parametres_perso.class.php");
-require_once ($class_path."/spreadsheet.class.php");
+require_once ($class_path."/spreadsheetPMB.class.php");
 
 class fiche{
 
@@ -27,7 +27,6 @@ class fiche{
 	 * Formulaire d'édition d'une fiche
 	 */
 	public function show_edit_form(){
-
 		global $form_edit_fiche,$msg, $charset, $act,$base_path;
 		global $perso_word,$page,$nb_per_page,$i_search;
 
@@ -36,9 +35,8 @@ class fiche{
 		} else {
 			$perso_ = $this->p_perso->show_editable_fields($this->id_fiche);	
 		}
-		
+		$perso = "";
 		if (!$this->p_perso->no_special_fields) {
-			$perso="";
 			$perso.=$perso_['CHECK_SCRIPTS']; 
 			for ($i=0; $i<count($perso_['FIELDS']); $i++) {
 				$p=$perso_['FIELDS'][$i];
@@ -72,16 +70,18 @@ class fiche{
 		$form_edit_fiche=str_replace('!!visibility_suiv!!',"style='display:none'",$form_edit_fiche);
 		$form_edit_fiche=str_replace('!!action_prec!!','',$form_edit_fiche);
 		$form_edit_fiche=str_replace('!!action_suiv!!','',$form_edit_fiche);
- 		$form_edit_fiche=str_replace('<!-- focus -->',"<script type='text/javascript'>ajax_parse_dom();document.getElementById('".$perso_['FIELDS'][0]['NAME']."').focus();</script>",$form_edit_fiche);
+		if (isset($perso_['FIELDS'][0]['NAME'])) {
+		    $form_edit_fiche = str_replace('<!-- focus -->', "<script type='text/javascript'>ajax_parse_dom();document.getElementById('".$perso_['FIELDS'][0]['NAME']."').focus();</script>", $form_edit_fiche);
+		} else {
+		    $form_edit_fiche = str_replace('<!-- focus -->', "<script type='text/javascript'>ajax_parse_dom();</script>", $form_edit_fiche);
+		}
 		return $form_edit_fiche;
-
 	}
 
 	/*
 	 * Affiche le formulaire de consultation d'une fiche
 	 */
 	public function show_fiche_form(){
-
 		global $form_edit_fiche,$msg,$charset;
 		global $perso_word,$page;
 		global $nb_per_page,$i_search;
@@ -90,7 +90,8 @@ class fiche{
 
 		$values = $this->get_values($this->id_fiche);
 		$this->get_info_navigation();
-
+		
+		$display = '';
 		foreach($values as $key=>$val){
 			$display .= "<div class='row'>
 				<div class='colonne3'>
@@ -263,7 +264,7 @@ class fiche{
 	 */
 	public function show_search_list($action='',$url_base='',$page=1){
 		global $form_search, $fichier_menu_display, $perso_word, $prefix;
-		global $dbh, $msg,$charset;
+		global $msg, $charset;
 		global $nb_per_page_search,$nb_per_page;
 		global $dest;
 		$search_word = str_replace('*','%',$perso_word);
@@ -274,21 +275,22 @@ class fiche{
 		if(!$page) $page=1;
 		$debut =($page-1)*$nb_per_page;
 		$requete = "SELECT count(1) FROM fiche where infos_global like '%".$search_word."%' or index_infos_global like '%".$perso_word."%'";
-		$res = pmb_mysql_query($requete, $dbh);
+		$res = pmb_mysql_query($requete);
 		$nbr_lignes = pmb_mysql_result($res, 0, 0);
 
 		$req = "select id_fiche from fiche where infos_global like '%".$search_word."%' or index_infos_global like '%".$perso_word."%' ";
 		if(!isset($dest) || !$dest){
 			$req .= " LIMIT ".$debut.",".$nb_per_page." ";
 		}
-		$res = pmb_mysql_query($req,$dbh);
-
+		$res = pmb_mysql_query($req);
+		$result = array();
+		
 		while($fic = pmb_mysql_fetch_object($res)){
 			$result[$fic->id_fiche] = $this->get_values($fic->id_fiche,1);
 		}
 		$form_search = str_replace("!!nb_per_page!!",$nb_per_page,$form_search);
 		$form_search = str_replace("!!perso_word!!",htmlentities(stripslashes($perso_word),ENT_QUOTES,$charset),$form_search);
-		if(!$result){
+		if (empty($result)) {
 			$form_search = str_replace("!!message_result!!",sprintf($msg['fichier_no_result_found'],$perso_word),$form_search);
 			print $form_search;
 		} else {
@@ -385,7 +387,7 @@ class fiche{
 	public function print_results_tableau($liste_result){
 		global $dbh, $charset;
 		
-		$worksheet = new spreadsheet();
+		$worksheet = new spreadsheetPMB();
 		$bold = array(
 				'font'  => array(
 						'bold'  => true

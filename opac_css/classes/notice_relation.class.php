@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_relation.class.php,v 1.11 2018-11-06 16:18:42 dgoron Exp $
+// $Id: notice_relation.class.php,v 1.12 2019-05-29 09:43:01 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -393,11 +393,15 @@ class notice_relation {
 			$linked_notice->genere_simple(1, $notice->premier);
 			$display_link .= $linked_notice->result;
 		}
+		$notice_header_doclink = '';
+		if (isset($linked_notice->notice_header_doclink)) {
+		    $notice_header_doclink = $linked_notice->notice_header_doclink;
+		}
 		return array(
 				'display' => $display_link,
 				'header_only' => $header_only,
 				'linked_notice' => $this->linked_notice,
-				'header_doclink' => $linked_notice->notice_header_doclink
+		        'header_doclink' => $notice_header_doclink
 		);
 	}
 	

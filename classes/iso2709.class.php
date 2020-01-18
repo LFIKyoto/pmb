@@ -21,7 +21,7 @@
 // ATTENTION, cette classe a été sérieusement débogguée par rapport à l'original. Les corrections ont été réalisées par PMB Services.
 // © PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: iso2709.class.php,v 1.54 2018-12-20 11:00:19 mbertin Exp $
+// $Id: iso2709.class.php,v 1.58 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -185,7 +185,7 @@ class iso2709_record {
 		// récupération des champs
 		$m = substr($this->full_record, $this->inner_guide["ba"], strlen($this->full_record) - $this->inner_guide["ba"]);
 		if($m) {
-			while(list($cle, $valeur)=each($this->inner_directory)) {
+		    foreach ($this->inner_directory as $cle => $valeur) {
 				$this->inner_data[$cle] = array(
 								'label' => $this->inner_directory[$cle]["label"],
 								'content' => substr($this->full_record, $this->inner_guide["ba"] + $valeur["adress"], $valeur["length"])
@@ -226,7 +226,7 @@ class iso2709_record {
 			return $result;
 		}
 	
-		for($i = 0; $i < sizeof($this->inner_data); $i++) {
+		for($i = 0; $i < count($this->inner_data); $i++) {
 			if(preg_match('/'.func_get_arg(0).'/', $this->inner_data[$i]["label"])) {
 				switch(func_num_args()) {
 					case 1:	// pas d'indication de sous-champ : on retourne le contenu entier
@@ -278,7 +278,7 @@ class iso2709_record {
 	public function get_subfield_array($field,$subfield="") {
 		$result=array();
 		$res_inter=array();
-		for($i = 0; $i < sizeof($this->inner_data); $i++) {
+		for($i = 0; $i < count($this->inner_data); $i++) {
 			if ($this->inner_data[$i]["label"]==$field) {
 				$content = substr($this -> inner_data[$i]["content"], 0, strlen($this -> inner_data[$i]["content"]) - 1);
 				$sub_fields = explode(chr(31), $content);
@@ -309,7 +309,7 @@ class iso2709_record {
 	//à toutes les valeurs trouvées pour le sous champ $subfield
 	public function get_subfield_array_array($field,$subfield="") {
 		$result_field=array();
-		for($i = 0; $i < sizeof($this->inner_data); $i++) {
+		for($i = 0; $i < count($this->inner_data); $i++) {
 			if ($this->inner_data[$i]["label"]==$field) {
 				$result=array();
 				$res_inter=array();
@@ -338,7 +338,7 @@ class iso2709_record {
 	
 	public function get_all_fields($field) {
 		$result_fields=array();
-		for($i = 0; $i < sizeof($this->inner_data); $i++) {
+		for($i = 0; $i < count($this->inner_data); $i++) {
 			if(preg_match('/'.$field.'/', $this->inner_data[$i]["label"])) {
 				$content = substr($this -> inner_data[$i]["content"], 0, strlen($this -> inner_data[$i]["content"]) - 1);
 				$sub_fields = explode(chr(0x1F), $content);
@@ -400,7 +400,7 @@ class iso2709_record {
 					// le param est un tableau
 					$field = func_get_arg(2);
 					$content = '';
-					for($i=0;$i < sizeof($field); $i++) {
+					for($i=0;$i < count($field); $i++) {
 						if(preg_match('/^[a-zA-Z0-9]$/', $field[$i][0]) && $field[$i][1]) {
 							$content.= $this->subfield_begin.$field[$i][0].$field[$i][1];
 						}
@@ -426,14 +426,14 @@ class iso2709_record {
 				break;
 			}
 	
-		if(is_array($content) && sizeof($content)) {
+		if(!empty($content)) {
 			$content = $this->ISO_encode($content).$this->field_end; 
 	
 			// ajout des éventuels indicateurs
 			if(strlen($ind) == $this->inner_guide["il"]) $content = $ind.$content;
 	
 			// mise à jour des inner_data
-			$index = sizeof($this->inner_data);
+			$index = count($this->inner_data);
 			$this->inner_data[$index]["label"] = $label;
 			$this->inner_data[$index]["content"] = $content;		
 	
@@ -471,7 +471,7 @@ class iso2709_record {
 			return FALSE;
 		}
 	
-		for($i=0; $i < sizeof($this->inner_data); $i++) {
+		for($i=0; $i < count($this->inner_data); $i++) {
 			if(preg_match('/'.$label.'/', $this->inner_data[$i]["label"])) {
 				$this->inner_data[$i]["label"] ='';		
 				$this->inner_data[$i]["content"] ='';
@@ -490,7 +490,7 @@ class iso2709_record {
 			
 		// supprime les lignes vides d'inner_data et gestion de l'encodage
 		$ch_100_trouve=false;
-		for($i=0; $i < sizeof($this->inner_data); $i++){
+		for($i=0; $i < count($this->inner_data); $i++){
 			if(empty($this->inner_data[$i]["label"]) || empty($this->inner_data[$i]["content"])) {
 				array_splice($this->inner_data, $i, 1);
 				$i--; 
@@ -539,7 +539,7 @@ class iso2709_record {
 	
 		// reconstitution inner_directory
 		$this->inner_directory = array();
-		for($i = 0; $i < sizeof($this->inner_data); $i++){
+		for($i = 0; $i < count($this->inner_data); $i++){
 			
 			if(strlen($this->inner_data[$i]["content"]) > 9999){
 				//Si le champs est trop long on le découpe et on créer un warning
@@ -558,13 +558,13 @@ class iso2709_record {
 			} 
 	
 		// mise à jour des offset et du répertoire 'réel'
-		for($i = 1; $i < sizeof($this->inner_data); $i++){
+		for($i = 1; $i < count($this->inner_data); $i++){
 			$this->inner_directory[$i]["adress"] = $this->inner_directory[$i - 1]["length"] + $this->inner_directory[$i - 1]["adress"];
 		}
 	
 		// mise à jour du répertoire
 		$this->directory = ''; 
-		for($i=0; $i < sizeof($this->inner_directory) ; $i++) {
+		for($i=0; $i < count($this->inner_directory) ; $i++) {
 			$this->directory .= sprintf('%03d', $this->inner_directory[$i]["label"]);
 			$this->directory .= sprintf('%0'.$this->inner_guide["dm1"].'d', $this->inner_directory[$i]["length"]);
 			$this->directory .= sprintf('%0'.$this->inner_guide["dm2"].'d', $this->inner_directory[$i]["adress"]);
@@ -572,7 +572,7 @@ class iso2709_record {
 	
 		// mise à jour du contenu
 		$this->data = $this->field_end;
-		for($i=0; $i < sizeof($this->inner_data) ; $i++) {
+		for($i=0; $i < count($this->inner_data) ; $i++) {
 			$this->data .= $this->inner_data[$i]["content"];
 		}
 		$this->data .= $this->record_end;
@@ -609,10 +609,10 @@ class iso2709_record {
 	// 		affichage d'un rapport des erreurs
 	// ---------------------------------------------------
 	public function show_errors() {
-		if(sizeof($this->errors)) {
+		if(count($this->errors)) {
 			print '<table border=\'1\'>';
 			print '<tr><th colspan=\'2\'>iso2709_record : erreurs</th></tr>';
-			for($i=0; $i < sizeof($this->errors); $i++) {
+			for($i=0; $i < count($this->errors); $i++) {
 				print '<tr><td>';
 				print $i+1;
 				print '</td><td>'.$this->errors[$i].'</td></tr>';
@@ -640,7 +640,7 @@ class iso2709_record {
 	
 		// test des fin de champs
 		// on retourne false si un champ ne finit pas par l'IS3
-		while(list($cle, $valeur) = each($this->inner_data)) {
+		foreach ($this->inner_data as $cle => $valeur) {
 			if(!preg_match("/".$this->rgx_field_end."$/", $valeur["content"])) {
 				$txt_error = '[error : format] notice '.$txt.'perdue : Le champ '.$cle.' ne finit pas par le caractère de fin de champ';
 				$this->errors[] = ($charset=='utf-8'?utf8_encode($txt_error):$txt_error);
@@ -648,13 +648,13 @@ class iso2709_record {
 		}
 	
 		// les tableaux internes sont vides
-		if(!sizeof($this->inner_data)) {
+		if(!count($this->inner_data)) {
 			$txt_error = '[error : internal] notice '.$txt.'perdue : Cet enregistrement est vide';
 			$this->errors[] = ($charset=='utf-8'?utf8_encode($txt_error):$txt_error);
 		}
 	
 		// les inner_data et le inner_directory ne sont pas synchronisés
-		if(sizeof($this->inner_data) != sizeof($this->inner_directory)) {
+		if(count($this->inner_data) != count($this->inner_directory)) {
 			$txt_error = '[error : internal] notice '.$txt.'perdue : Les tableaux internes ne sont pas synchronisés';
 			$this->errors[] = ($charset=='utf-8'?utf8_encode($txt_error):$txt_error);
 		}
@@ -664,7 +664,7 @@ class iso2709_record {
 			$this->errors[] = ($charset=='utf-8'?utf8_encode($txt_error):$txt_error);
 		}	
 			
-		if(sizeof($this->errors)) return FALSE;
+		if(count($this->errors)) return FALSE;
 		
 		return TRUE;
 	}
@@ -863,11 +863,7 @@ class iso2709_record {
 			if($charset !=='utf-8'){//Le charset de PMB est en iso-8859
 				return $chaine ;
 			}else{
-				if(function_exists("mb_convert_encoding") && ((strpos($chaine,chr(0x92)) !== false) || (strpos($chaine,chr(0x93)) !== false) || (strpos($chaine,chr(0x9c)) !== false) || (strpos($chaine,chr(0x8c)) !== false))){//Pour les caractères windows
-					$chaine = mb_convert_encoding($chaine,"UTF-8","Windows-1252");
-				}else{
-					$chaine = utf8_encode($chaine);
-				}
+				$chaine = pmb_utf8_encode($chaine);
 				return $chaine;
 			}
 		}elseif($encodage_fic_source == "iso5426"){
@@ -879,17 +875,13 @@ class iso2709_record {
 			if($charset !=='utf-8'){//Le charset de PMB est en iso-8859
 				return $chaine ;
 			}else{
-				if(function_exists("mb_convert_encoding") && ((strpos($chaine,chr(0x92)) !== false) || (strpos($chaine,chr(0x93)) !== false) || (strpos($chaine,chr(0x9c)) !== false) || (strpos($chaine,chr(0x8c)) !== false))){//Pour les caractères windows
-					$chaine = mb_convert_encoding($chaine,"UTF-8","Windows-1252");
-				}else{
-					$chaine = utf8_encode($chaine);
-				}
+				$chaine = pmb_utf8_encode($chaine);
 				return $chaine;
 			}
 			
 		}elseif($encodage_fic_source == "utf8"){
 			if($charset !=='utf-8'){//Le charset de PMB est en iso-8859
-				return utf8_decode($chaine) ;
+				return pmb_utf8_decode($chaine) ;
 			}else{
 				return $chaine;
 			}
@@ -902,11 +894,7 @@ class iso2709_record {
 				$chaine=str_replace(array(chr(0xC2).chr(0x98),chr(0xC2).chr(0x9C)),"", $chaine);//Caractères "Début du non-classement" et "Fin du non-classement" supprimés
 			}
 			if ($charset !=='utf-8'){
-				if(function_exists("mb_convert_encoding")){
-					$chaine = mb_convert_encoding($chaine,"Windows-1252","UTF-8");
-				}else{
-					$chaine = utf8_decode($chaine);
-				}
+				$chaine = pmb_utf8_decode($chaine);
 			}
 			return $chaine;
 		}
@@ -917,11 +905,7 @@ class iso2709_record {
 			$chaine=iso2709_record::ISO_646_5426_decode($chaine);
 		}
 		if ($charset == 'utf-8'){
-			if(function_exists("mb_convert_encoding") && ((strpos($chaine,chr(0x92)) !== false) || (strpos($chaine,chr(0x93)) !== false) || (strpos($chaine,chr(0x9c)) !== false) || (strpos($chaine,chr(0x8c)) !== false))){//Pour les caractères windows
-				$chaine = mb_convert_encoding($chaine,"UTF-8","Windows-1252");
-			}else{
-				$chaine = utf8_encode($chaine);
-			}
+			$chaine = pmb_utf8_encode($chaine);
 		}
 		return $chaine;
 	}

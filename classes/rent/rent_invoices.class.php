@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_invoices.class.php,v 1.27 2017-12-11 09:21:03 dgoron Exp $
+// $Id: rent_invoices.class.php,v 1.27.6.1 2019-11-22 14:55:58 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,10 +16,6 @@ require_once($class_path."/marc_table.class.php");
 require_once($include_path."/templates/rent/rent_invoices.tpl.php");
 
 class rent_invoices extends rent_root {
-		
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	protected function fetch_data() {
 		
@@ -203,8 +199,8 @@ class rent_invoices extends rent_root {
 	
 	/**
 	 * Fonction de callback
-	 * @param invoice $a
-	 * @param invoice $b
+	 * @param rent_invoices $a
+	 * @param rent_invoices $b
 	 */
 	protected function _compare_objects($a, $b) {
 		global $sort_by;
@@ -278,17 +274,17 @@ class rent_invoices extends rent_root {
 	
 	/**
 	 * Construction dynamique des cellules du header 
-	 * @param unknown $name
+	 * @param string $name
 	 */
 	protected function _get_cell_header($name) {
 		global $msg, $charset;
 		
-		$data_sorted = ($this->applied_sort['asc_desc'] ? $this->applied_sort['asc_desc'] : 'asc');
+		$data_sorted = ($this->applied_sort[0]['asc_desc'] ? $this->applied_sort[0]['asc_desc'] : 'asc');
 		$icon_sorted = ($data_sorted == 'asc' ? '<i class="fa fa-sort-desc"></i>' : '<i class="fa fa-sort-asc"></i>');
 		return "
-		<th onclick=\"invoices_sort_by('".$name."', this.getAttribute('data-sorted'));\" data-sorted='".($this->applied_sort['by'] == $name ? $data_sorted : '')."'>
+		<th onclick=\"invoices_sort_by('".$name."', this.getAttribute('data-sorted'));\" data-sorted='".($this->applied_sort[0]['by'] == $name ? $data_sorted : '')."'>
 				".htmlentities($msg['acquisition_invoice_'.$name],ENT_QUOTES,$charset)."
-				".($this->applied_sort['by'] == $name ? $icon_sorted : '<i class="fa fa-sort"></i>')."
+				".($this->applied_sort[0]['by'] == $name ? $icon_sorted : '<i class="fa fa-sort"></i>')."
 		</th>";
 	}
 	

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestion_source.tpl.php,v 1.1 2009-07-31 14:37:09 kantin Exp $
+// $Id: suggestion_source.tpl.php,v 1.3 2019-05-27 14:29:39 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $src_form, $current_module, $charset, $msg;
 
 $src_form = "
 <form class='form-".$current_module."' id='srcform' name='srcform' method='post' action=\"./admin.php?categ=acquisition&sub=src&id_src=!!id!!\">

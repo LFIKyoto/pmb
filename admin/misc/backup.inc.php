@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: backup.inc.php,v 1.13 2017-10-27 13:37:34 ngantier Exp $
+// $Id: backup.inc.php,v 1.15 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -40,7 +40,7 @@ if(!empty($file)) {
 		$i++;
 	}
 	
-	while(list($cle, $valeur)=each($table)) {
+	foreach ($table as $cle => $valeur) {
 	
 		$requete = "SHOW CREATE TABLE $valeur";
 		$result = pmb_mysql_query($requete, $dbh);
@@ -57,8 +57,8 @@ if(!empty($file)) {
 		$result = pmb_mysql_query($requete, $dbh);
 		$nbr_lignes = pmb_mysql_num_rows($result);
 	
-		$field_set = "";
-		$field = "";
+		$field_set = array();
+		$field = array();
 	
 		for($i = 0; $i < $nbr_lignes; $i++) {
 			$row = pmb_mysql_fetch_row($result);

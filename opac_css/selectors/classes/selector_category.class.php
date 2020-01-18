@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: selector_category.class.php,v 1.11 2018-11-27 14:51:21 ngantier Exp $
+// $Id: selector_category.class.php,v 1.12 2019-07-05 12:36:24 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -394,7 +394,11 @@ class selector_category extends selector_authorities {
                 if(!$this->user_input && $premier){
                     if(sizeof($tcateg->path_table) && $id_thes !=-1) {
                         for($i=0; $i < sizeof($tcateg->path_table) - 1; $i++){
-                            $browser_header ? $browser_header .= '&gt;' : $browser_header = '';
+                            if ($browser_header) {
+                                $browser_header .= '&gt;';
+                            } else {
+                                $browser_header = '';
+                            }
                             $browser_header .= "<a href='";
                             $browser_header .= static::get_base_url();
                             $browser_header .= "&parent=".$tcateg->path_table[$i]['id'];
@@ -404,7 +408,11 @@ class selector_category extends selector_authorities {
                             $browser_header .= $tcateg->path_table[$i]['libelle'];
                             $browser_header .= "</a>";
                         }
-                        $browser_header ? $browser_header .= '&gt;<strong>' : $browser_header = '<strong>';
+                        if ($browser_header) {
+                            $browser_header .= '&gt;<strong>';
+                        } else {
+                            $browser_header = '<strong>';
+                        }
                         $browser_header .= $tcateg->path_table[sizeof($tcateg->path_table) - 1]['libelle'];
                         $browser_header .= '</strong>';
                         $bouton_ajouter=str_replace("!!id_aj!!",$tcateg->path_table[sizeof($tcateg->path_table) - 1]['id'],$bouton_ajouter);

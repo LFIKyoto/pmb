@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sur_location.class.php,v 1.7 2017-07-28 08:33:08 ngantier Exp $
+// $Id: sur_location.class.php,v 1.10 2019-06-07 12:35:52 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,10 +14,29 @@ require_once($class_path."/map/map_edition_controler.class.php");
 
 
 class sur_location {
+    public $libelle;
+    public $pic;
+    public $visible_opac;
+    public $name;
+    public $adr1;
+    public $adr2;
+    public $cp;
+    public $town;
+    public $state;
+    public $country;
+    public $phone;
+    public $email;
+    public $website;
+    public $logo;
+    public $comment;
+    public $num_infopage;
+    public $css_style;
+    public $docs_location_data;
+    
 	// constructeur
 	public function __construct($id=0) {	
 		// si id, allez chercher les infos dans la base
-		$this->id = $id + 0;
+	    $this->id = intval($id);
 		$this->fetch_data();
 	}
 	    
@@ -63,7 +82,7 @@ class sur_location {
 		
 	public static function get_info_surloc_from_location($id_docs_location=0){	
 		global $dbh;
-		$id_docs_location += 0;
+		$id_docs_location = intval($id_docs_location);
 		if($id_docs_location){
 			$requete = "SELECT * FROM docs_location where idlocation='$id_docs_location'";
 			$res = pmb_mysql_query($requete, $dbh) or die(pmb_mysql_error()."<br />$requete");
@@ -261,7 +280,7 @@ class sur_location {
 		$tpl = str_replace('!!loc_commentaire!!', htmlentities($this->comment,ENT_QUOTES, $charset), $tpl);
 	
 		$requete = "SELECT id_infopage, title_infopage FROM infopages where valid_infopage=1 ORDER BY title_infopage ";
-		$infopages = gen_liste ($requete, "id_infopage", "title_infopage", "form_num_infopage", "", $this->num_infopage, 0, $msg[location_no_infopage], 0,$msg[location_no_infopage], 0) ;
+		$infopages = gen_liste ($requete, "id_infopage", "title_infopage", "form_num_infopage", "", $this->num_infopage, 0, $msg['location_no_infopage'], 0,$msg['location_no_infopage'], 0) ;
 		$tpl = str_replace('!!loc_infopage!!', $infopages, $tpl);	
 		$tpl = str_replace('!!css_style!!', $this->css_style, $tpl);
 			

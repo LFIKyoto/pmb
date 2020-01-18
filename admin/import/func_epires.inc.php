@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_epires.inc.php,v 1.20 2018-01-09 08:54:31 jpermanne Exp $
+// $Id: func_epires.inc.php,v 1.22 2019-08-01 13:16:34 btafforeau Exp $
 
 // DEBUT paramétrage propre à la base de données d'importation :
 global $class_path; //Nécessaire pour certaines inclusions
@@ -284,50 +284,10 @@ function import_new_notice_suite() {
 	}
 
 	//Organisme
-	if ($info_900[0]) {
-		$no_champ = trouve_champ_perso("op");
-		if ($no_champ>0) {
-			$requete="SELECT max(notices_custom_list_value*1) FROM notices_custom_lists WHERE notices_custom_champ=".$no_champ;
-			$resultat=pmb_mysql_query($requete);
-			$max=@pmb_mysql_result($resultat,0,0);
-			$n=$max+1;
-			$requete="SELECT notices_custom_list_value FROM notices_custom_lists WHERE notices_custom_list_lib='".addslashes($info_900[0])."' AND notices_custom_champ=".$no_champ;
-			$resultat=pmb_mysql_query($requete);
-			if (pmb_mysql_num_rows($resultat)) {
-				$value=pmb_mysql_result($resultat,0,0);
-			} else {
-				$requete="INSERT INTO notices_custom_lists (notices_custom_champ,notices_custom_list_value,notices_custom_list_lib) VALUES($no_champ,$n,'".addslashes($info_900[0])."')";
-				pmb_mysql_query($requete);
-				$value=$n;
-				$n++;
-			}
-			$requete="INSERT INTO notices_custom_values (notices_custom_champ,notices_custom_origine,notices_custom_integer) VALUES($no_champ,$notice_id,$value)";
-			pmb_mysql_query($requete);
-		}
-	}
+	import_records::insert_list_integer_value_custom_field_from_name('op', $notice_id, $info_900[0]);
 
 	//Genre
-	if ($info_901[0]) {
-		$no_champ = trouve_champ_perso("gen");
-		if ($no_champ>0) {
-			$requete="SELECT max(notices_custom_list_value*1) FROM notices_custom_lists WHERE notices_custom_champ=".$no_champ;
-			$resultat=pmb_mysql_query($requete);
-			$max=@pmb_mysql_result($resultat,0,0);
-			$n=$max+1;
-			$requete="SELECT notices_custom_list_value FROM notices_custom_lists WHERE notices_custom_list_lib='".addslashes($info_901[0])."' AND notices_custom_champ=".$no_champ;
-			$resultat=pmb_mysql_query($requete);
-			if (pmb_mysql_num_rows($resultat)) {
-				$value=pmb_mysql_result($resultat,0,0);
-			} else {
-				$requete="INSERT INTO notices_custom_lists (notices_custom_champ,notices_custom_list_value,notices_custom_list_lib) VALUES($no_champ,$n,'".addslashes($info_901[0])."')";
-				pmb_mysql_query($requete);
-				$value=$n;
-				$n++;
-			}
-			$requete="INSERT INTO notices_custom_values (notices_custom_champ,notices_custom_origine,notices_custom_integer) VALUES($no_champ,$notice_id,$value)";
-			pmb_mysql_query($requete);
-		}
-	}
+	import_records::insert_list_integer_value_custom_field_from_name('gen', $notice_id, $info_901[0]);
 
 	//Type de texte
 	if (count($info_904)) {
@@ -468,8 +428,9 @@ function traite_exemplaires () {
 	// lu en 010$d de la notice
 	$price = $prix[0];
 
+	$nb_infos_995 = count($info_995);
 	// la zone 995 est répétable
-	for ($nb_expl = 0; $nb_expl < sizeof ($info_995); $nb_expl++) {
+	for ($nb_expl = 0; $nb_expl < $nb_infos_995; $nb_expl++) {
 		/* RAZ expl */
 		$expl = array();
 
@@ -573,47 +534,5 @@ function traite_exemplaires () {
 
 // fonction spécifique d'export de la zone 995
 function export_traite_exemplaires ($ex=array()) {
-	global $msg, $dbh ;
-
-	$subfields["a"] = $ex -> lender_libelle;
-	$subfields["c"] = $ex -> lender_libelle;
-	$subfields["f"] = $ex -> expl_cb;
-	$subfields["k"] = $ex -> expl_cote;
-	$subfields["u"] = $ex -> expl_note;
-
-	if ($ex->statusdoc_codage_import) $subfields["o"] = $ex -> statusdoc_codage_import;
-	if ($ex -> tdoc_codage_import) $subfields["r"] = $ex -> tdoc_codage_import;
-		else $subfields["r"] = "uu";
-	if ($ex -> sdoc_codage_import) $subfields["q"] = $ex -> sdoc_codage_import;
-		else $subfields["q"] = "u";
-
-	global $export996 ;
-	$export996['f'] = $ex -> expl_cb ;
-	$export996['k'] = $ex -> expl_cote ;
-	$export996['u'] = $ex -> expl_note ;
-
-	$export996['m'] = substr($ex -> expl_date_depot, 0, 4).substr($ex -> expl_date_depot, 5, 2).substr($ex -> expl_date_depot, 8, 2) ;
-	$export996['n'] = substr($ex -> expl_date_retour, 0, 4).substr($ex -> expl_date_retour, 5, 2).substr($ex -> expl_date_retour, 8, 2) ;
-
-	$export996['a'] = $ex -> lender_libelle;
-	$export996['b'] = $ex -> expl_owner;
-
-	$export996['v'] = $ex -> location_libelle;
-	$export996['w'] = $ex -> ldoc_codage_import;
-
-	$export996['x'] = $ex -> section_libelle;
-	$export996['y'] = $ex -> sdoc_codage_import;
-
-	$export996['e'] = $ex -> tdoc_libelle;
-	$export996['r'] = $ex -> tdoc_codage_import;
-
-	$export996['1'] = $ex -> statut_libelle;
-	$export996['2'] = $ex -> statusdoc_codage_import;
-	$export996['3'] = $ex -> pret_flag;
-
-	global $export_traitement_exemplaires ;
-	$export996['0'] = $export_traitement_exemplaires ;
-
-	return 	$subfields ;
-
+	return import_expl::export_traite_exemplaires($ex);
 }

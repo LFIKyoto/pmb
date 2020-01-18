@@ -1,4 +1,4 @@
-<!-- $Id: gabarit.html,v 1.27 2017-12-27 09:39:43 dgoron Exp $ -->
+<!-- $Id: gabarit.html,v 1.30 2019-08-28 08:14:10 btafforeau Exp $ -->
 
 <style type="text/css">
 .aut_display_table {
@@ -55,8 +55,9 @@
 					<div id="authority_display_table" class="aut_display_table">
 						{% block aut_see %}
 							{% block details %}
+							{% endblock %}							
+							{% block map %}
 							{% endblock %}
-							
 							{% block aut_linked %}
 								{% if aut_link.display %}
 									<div class="aut_linked aut_display_row">
@@ -79,7 +80,7 @@
 												</div>
 												<div class="aut_display_cell">
 										{% endif %}
-													<a href="./autorites.php?categ=see&sub=concept&id={{ concept.id }}">{{ concept.display_label }}</a><br/>
+													<a href="./autorites.php?categ=see&sub=concept&id={{ concept.id }}">{{ concept.isbd }}</a><br/>
 										{% if loop.last %}
 												</div>	
 											</div>
@@ -179,7 +180,7 @@
 {% endfor %}
 	
 {% block aut_list %}
-	{% if authority.authority_list_ui.elements_list %}
+	{% if authority.authority_list_ui.nb_results %}
 		{% if authority.authority_list_ui.expandable %}
 			<a href="#" onclick="expandAll_ajax(0, document.getElementById('elements_list_container')); return false;"><img style="border:0px" id="expandall" src="{{ img.expand_all.gif }}"></a>
 			<a href="#" onclick="collapseAll(document.getElementById('elements_list_container')); return false;"><img style="border:0px" id="collapseall" src="{{ img.collapse_all.gif }}"></a>

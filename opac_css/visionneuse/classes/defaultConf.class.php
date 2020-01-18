@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: defaultConf.class.php,v 1.5 2017-07-03 09:07:10 dgoron Exp $
+// $Id: defaultConf.class.php,v 1.6 2019-05-09 10:35:37 ngantier Exp $
 
 require_once("$visionneuse_path/classes/XMLClass.class.php");
 
@@ -39,8 +39,8 @@ class defaultConf extends XMLClass{
  		global $charset;
 		
 		if (!($fp = @fopen($this->file , "r"))) {
-			die("impossible d'ouvrir le fichier $this->file");
-			}
+		    die(htmlentities("impossible d'ouvrir le fichier $this->file", ENT_QUOTES, $charset));
+		}
 		$data = fread ($fp,filesize($this->file));
 
  		$rx = "/<?xml.*encoding=[\'\"](.*?)[\'\"].*?>/m";

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_common_view.class.php,v 1.4 2017-04-19 09:04:31 tsamson Exp $
+// $Id: frbr_entity_common_view.class.php,v 1.5 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,7 +10,7 @@ class frbr_entity_common_view extends frbr_entity_root{
 	protected $num_cadre;
 	
 	public function __construct($id=0){
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 		parent::__construct();
 	}
 	
@@ -22,8 +22,8 @@ class frbr_entity_common_view extends frbr_entity_root{
 			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)){
 				$row = pmb_mysql_fetch_object($result);
-				$this->id = $row->id_cadre_content+0;
-				$this->num_cadre = $row->cadre_content_num_cadre+0;
+				$this->id = (int) $row->id_cadre_content;
+				$this->num_cadre = (int) $row->cadre_content_num_cadre;
 				$this->json_decode($row->cadre_content_data);
 			}	
 		}
@@ -58,7 +58,7 @@ class frbr_entity_common_view extends frbr_entity_root{
 	}
 	
 	public function set_num_cadre($id){
-		$this->num_cadre = $id+0;
+	    $this->num_cadre = (int) $id;
 	}
 	
 	/*

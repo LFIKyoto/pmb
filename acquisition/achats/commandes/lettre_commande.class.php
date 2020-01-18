@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lettre_commande.class.php,v 1.13 2018-08-07 12:42:34 dgoron Exp $
+// $Id: lettre_commande.class.php,v 1.17 2019-08-09 10:49:04 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+global $class_path, $base_path;
 
 require_once("$class_path/pdf/accounting/lettre_accounting_PDF.class.php");
 require_once("$class_path/paiements.class.php");
@@ -49,10 +51,8 @@ class lettreCommande_PDF extends lettre_accounting_PDF {
 	public $p_header = false;
 	public $filename='commande.pdf';
 	
-	protected function get_parameter_value($name) {
-		$parameter_name = 'acquisition_pdfcde_'.$name;
-		global $$parameter_name;
-		return $$parameter_name;
+	protected static function get_parameter_prefix() {
+	    return 'acquisition_pdfcde';
 	}
 	
 	protected function _init_pos_num() {
@@ -70,6 +70,8 @@ class lettreCommande_PDF extends lettre_accounting_PDF {
 	
 	protected function _init_pos_tot() {
 		$pos_tot = explode(',', $this->get_parameter_value('pos_tot'));
+		//Insertion de la valeur 0 pour la position Y inexistante dans le paramétrage
+		array_splice($pos_tot, 1, 0, array('0'));
 		$this->_init_position('tot', $pos_tot);
 	}
 	

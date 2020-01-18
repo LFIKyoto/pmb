@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature.inc.php,v 1.10 2017-07-12 15:15:02 tsamson Exp $
+// $Id: nomenclature.inc.php,v 1.11 2019-05-29 12:03:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $sub, $class_path, $id, $action, $id_parent, $record_child_data, $record_formation_id, $formation_hash;
 
 switch($sub){
 	case 'record_child':		

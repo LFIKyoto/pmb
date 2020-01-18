@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: start_export.php,v 1.25 2018-07-25 06:19:18 dgoron Exp $
+// $Id: start_export.php,v 1.27 2019-08-01 13:16:35 btafforeau Exp $
 
 //Exécution de l'export
 $base_path = "../..";
@@ -74,7 +74,7 @@ if ($first != 1) {
 	if(file_exists($base_path."/admin/convert/imports/".$param_path."/".$param_path.".class.php")) {
 		require_once($base_path."/admin/convert/imports/".$param_path."/".$param_path.".class.php");
 	} else {
-		require_once("imports/".$param_path."/export.inc.php");
+		if ($specialexport) require_once("imports/".$param_path."/export.inc.php");
 	}
 
 	//En fonction du type de fichier de sortie, inclusion du script de gestion des sorties
@@ -95,7 +95,7 @@ if ($first != 1) {
 	if(file_exists($base_path."/admin/convert/imports/".$param_path."/".$param_path.".class.php")) {
 		require_once($base_path."/admin/convert/imports/".$param_path."/".$param_path.".class.php");
 	} else {
-		require_once("imports/".$param_path."/export.inc.php");
+		if ($specialexport) require_once("imports/".$param_path."/export.inc.php");
 	}
 }
 
@@ -230,14 +230,15 @@ while (list ($id) = pmb_mysql_fetch_row($resultat)) {
 		$requete = "insert into import_marc (no_notice, notice, origine) values($no_notice,'".addslashes($e_notice)."', '$origine')";
 		pmb_mysql_query($requete);
 		$no_notice++;
-		$z ++;
+		$z++;
 	} else {
-		for($i=0; $i<sizeof($e_notice);$i++) {
+	    $nb_notices = count($e_notice);
+	    for ($i = 0; $i < $nb_notices; $i++) {
 			$requete = "insert into import_marc (no_notice, notice, origine) values($no_notice,'".addslashes($e_notice[$i])."', '$origine')";
 			pmb_mysql_query($requete);
 			$no_notice++;
 		}
-		$z ++;
+		$z++;
 	}
 }
 

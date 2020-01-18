@@ -1,12 +1,13 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_controler.js,v 1.74 2017-09-05 08:37:29 vtouchard Exp $
+// $Id: map_controler.js,v 1.79.2.2 2019-09-20 13:27:10 ngantier Exp $
 
 const TYPE_RECORD = 11;
 const TYPE_LOCATION = 15;
+const MAX_POLYGON_POINTS = 10;
 
-define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/Standby", "dojo/dom-construct", "dojo/dom-style", "dojo/query", "dojo/request", "dojo/on", "dojo/_base/lang", "dojo/json", "dojox/geo/openlayers/widget/Map", "apps/map/dialog_notice"], function(declare, Dialog, dom, standby, domConstruct, domStyle, query, request, on, lang ,json, Map, DialogNotice){
+define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/Standby", "dojo/dom-construct", "dojo/dom-style", "dojo/query", "dojo/request", "dojo/on", "dojo/_base/lang", "dojo/json", "dojox/geo/openlayers/widget/Map", "apps/map/dialog_notice", "dojo/Deferred"], function(declare, Dialog, dom, standby, domConstruct, domStyle, query, request, on, lang ,json, Map, DialogNotice, Deferred){
     /*
      *Classe map_controler. C'est la classe qui va contenir l'objet openLayer associ� � une carte
      */
@@ -36,6 +37,8 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
         editionStates: null,
         id_img_plus:"",
         hashIds: null,
+        temporaryFeature: null,
+        temporaryData: null,
         //Les param�tres du constructeur sont un noeud dom auquel sera rattach� la carte OpenLayers & un objet json repr�sentant les donn�es de l'emprises
         constructor: function () {
             //Conversion de degree decimaux en metre (la projection 4326 d�finie la terre en tant qu'une elipse alors que la 900913 la d�finie en tant qu'une sph�re)
@@ -426,6 +429,14 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
                 field.setAttribute("name", this.hiddenField + "[]");
                 field.setAttribute("id", f.id);
                 this.domNode.parentNode.appendChild(field);
+            }
+            if (feature['attributes']) {
+            	if (feature['attributes']['data-display_address']) {
+                	field.setAttribute("data-display_address", feature['attributes']['data-display_address']);
+                }
+            	if (feature['attributes']['data-address']) {
+                	field.setAttribute("data-address", JSON.stringify(feature['attributes']['data-address']));
+                }
             }
             field.value = this.formatWKT.write(feature);
         },
@@ -1018,18 +1029,26 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
                 }
                 switch (e.feature.geometry.CLASS_NAME) {
                     case "OpenLayers.Geometry.Polygon":
+                    	var nbPoints = e.feature.geometry.components[0].components.length - 1;
                         domConstruct.place("<div id='ptsDetails' featureid='" + e.feature.id + "' class='ptsDetails'><h2>" + pmbDojo.messages.getMessage("carto", "carto_polygon_form_label") + "</h2>" +
-                                "<p>" + pmbDojo.messages.getMessage("carto", "carto_polygon_nb_pt").replace('%s', parseInt(e.feature.geometry.components[0].components.length - 1)) + ".</p>" +
-                                "<input type='button' class='bouton' id='ptsEdit' value='" + pmbDojo.messages.getMessage("carto", "carto_show_points_label") + "'/>" +
+                                "<p>" + pmbDojo.messages.getMessage("carto", "carto_polygon_nb_pt").replace('%s', parseInt(nbPoints)) + ".</p>" + 
+                        		((nbPoints > MAX_POLYGON_POINTS) ? '' : 
+                    			"<input type='button' class='bouton' id='ptsEdit' value='" + pmbDojo.messages.getMessage("carto", "carto_show_points_label") + "'/>") +
                                 "</div>", dom.byId('map_manual_edition'), "after");
-                        on(dom.byId('ptsEdit'), 'click', callbackCreatePtForm);
+                        if (nbPoints <= MAX_POLYGON_POINTS) {
+                        	on(dom.byId('ptsEdit'), 'click', callbackCreatePtForm);
+                        }
                         break;
                     case "OpenLayers.Geometry.LineString":
+                    	var nbPoints = e.feature.geometry.components.length;
                         domConstruct.place("<div id='ptsDetails' featureid='" + e.feature.id + "' class='ptsDetails'><h2>" + pmbDojo.messages.getMessage("carto", "carto_path_form_label") + "</h2>" +
-                                "<p>" + pmbDojo.messages.getMessage("carto", "carto_path_nb_pt").replace('%s', e.feature.geometry.components.length) + ".</p>" +
-                                "<input type='button' class='bouton' id='ptsEdit' value='" + pmbDojo.messages.getMessage("carto", "carto_show_points_label") + "'/>" +
+                                "<p>" + pmbDojo.messages.getMessage("carto", "carto_path_nb_pt").replace('%s', nbPoints) + ".</p>" +
+                                ((nbPoints > MAX_POLYGON_POINTS) ? '' : 
+                    			"<input type='button' class='bouton' id='ptsEdit' value='" + pmbDojo.messages.getMessage("carto", "carto_show_points_label") + "'/>") +
                                 "</div>", dom.byId('map_manual_edition'), "after");
-                        on(dom.byId('ptsEdit'), 'click', callbackCreatePtForm);
+                        if (nbPoints <= MAX_POLYGON_POINTS) {
+                        	on(dom.byId('ptsEdit'), 'click', callbackCreatePtForm);
+                        }                        
                         break;
                     case "OpenLayers.Geometry.Point":
                         domConstruct.place("<div id='ptsDetails' featureid='" + e.feature.id + "' class='ptsDetails'><h2>" + pmbDojo.messages.getMessage("carto", "carto_point_form_label") + "</h2>" +
@@ -1058,17 +1077,46 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
             //End le false drag uniquement � la fin pour �viter de redraw toutes les sketchs features 
             if (dom.byId('typeForm').value == "edition") {
                 var arrayObjCoords = [];
-                if (this.editedFeature.geometry.CLASS_NAME == "OpenLayers.Geometry.Point") {
+                if (this.editedFeature.geometry.CLASS_NAME == "OpenLayers.Geometry.Point" || this.editedFeature.geometry.CLASS_NAME == "OpenLayers.Geometry.Polygon") {
                     var newLat = dom.byId("pt_1_lat").value;
                     var newLon = dom.byId("pt_1_lon").value;
-                    if (!this.checkPt(newLat, newLon, 1)) {
-                        return false;
-                    }
-                    var newPt = new OpenLayers.LonLat(newLon, newLat);
-                    newPt = newPt.transform(this.projFrom, this.projTo);
-                    this.editedFeature.move(newPt);
-                    this.setHiddenField(this.editedFeature);
-                    this.saveCurrentState();
+                    var newAddress = dom.byId("pt_1_search_address").value;
+                    var newCity = dom.byId("pt_1_search_city").value;
+                	var newPostcode = dom.byId("pt_1_search_postcode").value;
+                    var isRadioAddressChecked = dom.byId("address").checked;
+                    
+                	if (isRadioAddressChecked) {
+                		if (newAddress || newCity || newPostcode) {
+                			var deferredPoint = new Deferred();
+                			this.searchByAddress('', deferredPoint);
+                			deferredPoint.then(lang.hitch(this, function(data) {
+                        		if (data) {
+                        			var newPt = new OpenLayers.LonLat(data.lon, data.lat);
+                        			newPt = newPt.transform(this.projFrom, this.projTo);
+                                    if (!this.checkPt(data.lat, data.lon, 1)) {
+                                        return false;
+                                    }
+                        			this.editedFeature.move(newPt);
+                        			this.map.olMap.panTo(newPt);
+                        			this.editedFeature['attributes']['data-display_address'] = data.display_name;
+                        			this.editedFeature['attributes']['data-address'] = data.address;
+                        			this.setHiddenField(this.editedFeature);
+                                    this.saveCurrentState();
+                                    this.removeTemporaryFeature();
+                        		}
+                        	}));
+                		}
+                	} else {
+                		var newPt = new OpenLayers.LonLat(newLon, newLat);
+	                	newPt = newPt.transform(this.projFrom, this.projTo);
+	                    if (!this.checkPt(newLat, newLon, 1)) {
+	                        return false;
+	                    }
+	                    this.editedFeature.move(newPt);
+	                    this.map.olMap.panTo(newPt);
+	                    this.setHiddenField(this.editedFeature);
+	                    this.saveCurrentState();
+                	}
                 } else {
                     var arrayPtSketch = [];
                     var arrayNewPt = [];
@@ -1143,27 +1191,31 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
                 this.map_controls.edition.unselectFeature(this.editionFeature);
             } else {
                 var typeForm;
-                if (this.map_controls.point.active != null)
-                    typeForm = "formulairePoint"
-                else
-                if (this.map_controls.ligne.active != null)
-                    typeForm = "formulaireLigne"
-                else
-                    typeForm = "formulairePoly"
+                if (this.map_controls.point.active) {
+                	typeForm = "formulairePoint";
+                } else if (this.map_controls.ligne.active) {
+                	typeForm = "formulaireLigne";
+                } else {
+                	typeForm = "formulairePoly";
+                }	
                 switch (typeForm) {
                     case 'formulairePoint':
-                        if (!this.checkPt(dom.byId('pt_1_lon').value, dom.byId('pt_1_lat').value, 1)) {
-                            return false;
-                        }
-                        var lonLat = new OpenLayers.LonLat(dom.byId('pt_1_lon').value, dom.byId('pt_1_lat').value);
-                        lonLat = lonLat.transform(this.projFrom, this.projTo);
-                        var pt = this.map.olMap.layers[0].getViewPortPxFromLonLat(lonLat);
-                        this.map_controls['point'].handler.createFeature(pt);
-                        this.map_controls['point'].handler.finalize();
-                        this.map_controls.point.deactivate();
-                        if (dom.byId('formManuel') != null)
-                            domConstruct.destroy('formManuel');
-                        this.map_controls.edition.activate();
+                		var deferredPoint = new Deferred();
+                    	var address = dom.byId("pt_1_search_address");
+                    	var city = dom.byId("pt_1_search_city");
+                    	var postcode = dom.byId("pt_1_search_postcode");
+                    	if ((address.value || city.value || postcode.value) && dom.byId("address").checked) {
+                    		this.searchByAddress('', deferredPoint);
+                    	} else {
+                    		deferredPoint.reject();
+                    	}
+                    	deferredPoint.then(lang.hitch(this, function(data) {
+                    		if (data) {
+                    			dom.byId('pt_1_lon').value = data.lon;
+                    			dom.byId('pt_1_lat').value = data.lat;
+                    		}
+                    		this.drawPoint(data);
+                    	}), lang.hitch(this, this.drawPoint));
                         break;
                     case 'formulaireLigne':
                         var divPt = ptsEdited;
@@ -1200,37 +1252,64 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
                         }
                         break;
                     case 'formulairePoly' :
-                        var divPt = query('div[edited="true"]');
-                        var nbPtEdited = divPt.length;
-                        if (nbPtEdited >= 3) {
-                            for (var i = 0; i < nbPtEdited; i++) {
-                                if (!this.checkPt(query('input', divPt[i])[0].value, query('input', divPt[i])[1].value, query('input', divPt[i])[0].id.split('_')[1])) {
-                                    return false;
+                    	var deferredPoly = new Deferred();
+                    	var address = dom.byId("pt_1_search_address");
+                    	var city = dom.byId("pt_1_search_city");
+                    	var postcode = dom.byId("pt_1_search_postcode");
+                    	
+                    	if ((address.value || city.value || postcode.value) && dom.byId("address").checked) {
+                    		this.searchByAddress('', deferredPoly);
+                    		data = temporaryData;
+                    		if (data) {
+                    			var feature = this.formatWKT.read(data.geotext);
+                                if (feature != undefined) {
+                                    var newPoly = feature.geometry.transform(this.projFrom, this.projTo);
+                                    this.map.olMap.getLayersByName(this.dataLayers[0].name + "_0")[0].addFeatures([feature]);
+                        			this.map.olMap.zoomToExtent(feature.geometry.bounds);
+                        			feature['attributes']['data-display_address'] = data.display_name;
+                        			feature['attributes']['data-address'] = data.address;
+                                    this.setHiddenField(feature);
+                                    this.map_controls.polygone.deactivate();
+                                    this.map_controls.edition.activate();
+                                    this.removeTemporaryFeature();
+                                    //Create feature associated
                                 }
+                    		}
+                        
+                    	} else {
+                    		deferredPoly.cancel();
+                    		var divPt = query('div[edited="true"]');
+                            var nbPtEdited = divPt.length;
+                            if (nbPtEdited >= 3) {
+                                for (var i = 0; i < nbPtEdited; i++) {
+                                    if (!this.checkPt(query('input', divPt[i])[0].value, query('input', divPt[i])[1].value, query('input', divPt[i])[0].id.split('_')[1])) {
+                                        return false;
+                                    }
+                                }
+                                var firstLonLat = new OpenLayers.LonLat(query('input', divPt[0])[0].value, query('input', divPt[0])[1].value);
+                                firstLonLat = firstLonLat.transform(this.projFrom, this.projTo);
+                                var pt = this.map.olMap.layers[0].getViewPortPxFromLonLat(firstLonLat);
+                                var nbPts = query('.pt_lon');
+                                this.map_controls['polygone'].handler.createFeature(pt);
+                                for (var i = 1; i < nbPtEdited; i++) {
+                                    var lonTemp = query('input', divPt[i])[0].value;
+                                    var latTemp = query('input', divPt[i])[1].value;
+                                    var lonLatTempo = new OpenLayers.LonLat(lonTemp, latTemp);
+                                    lonLatTempo = lonLatTempo.transform(this.projFrom, this.projTo);
+                                    var lonLatPx = this.map.olMap.layers[0].getViewPortPxFromLonLat(lonLatTempo);
+                                    this.map_controls['polygone'].handler.addPoint(lonLatPx);
+                                }
+                                this.map_controls['polygone'].handler.addPoint(pt);
+                                this.map_controls['polygone'].handler.finishGeometry();
+                                this.map_controls.polygone.deactivate();
+                                if (dom.byId('formManuel') != null)
+                                    domConstruct.destroy('formManuel');
+                                this.map_controls.edition.activate();
                             }
-                            var firstLonLat = new OpenLayers.LonLat(query('input', divPt[0])[0].value, query('input', divPt[0])[1].value);
-                            firstLonLat = firstLonLat.transform(this.projFrom, this.projTo);
-                            var pt = this.map.olMap.layers[0].getViewPortPxFromLonLat(firstLonLat);
-                            var nbPts = query('.pt_lon');
-                            this.map_controls['polygone'].handler.createFeature(pt);
-                            for (var i = 1; i < nbPtEdited; i++) {
-                                var lonTemp = query('input', divPt[i])[0].value;
-                                var latTemp = query('input', divPt[i])[1].value;
-                                var lonLatTempo = new OpenLayers.LonLat(lonTemp, latTemp);
-                                lonLatTempo = lonLatTempo.transform(this.projFrom, this.projTo);
-                                var lonLatPx = this.map.olMap.layers[0].getViewPortPxFromLonLat(lonLatTempo);
-                                this.map_controls['polygone'].handler.addPoint(lonLatPx);
+                            else {
+                                alert(pmbDojo.messages.getMessage("carto", "carto_warning_not_enough_points"));
                             }
-                            this.map_controls['polygone'].handler.addPoint(pt);
-                            this.map_controls['polygone'].handler.finishGeometry();
-                            this.map_controls.polygone.deactivate();
-                            if (dom.byId('formManuel') != null)
-                                domConstruct.destroy('formManuel');
-                            this.map_controls.edition.activate();
-                        }
-                        else {
-                            alert(pmbDojo.messages.getMessage("carto", "carto_warning_not_enough_points"));
-                        }
+                    	}
                         break;
                     default:
                         break;
@@ -1238,6 +1317,64 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
             }
 
         },
+        
+        drawPoint : function(data) {
+        	if (!this.checkPt(dom.byId('pt_1_lon').value, dom.byId('pt_1_lat').value, 1)) {
+                return false;
+            }
+            var lonLat = new OpenLayers.LonLat(dom.byId('pt_1_lon').value, dom.byId('pt_1_lat').value);
+            lonLat = lonLat.transform(this.projFrom, this.projTo);
+            var pt = this.map.olMap.layers[0].getViewPortPxFromLonLat(lonLat);
+            this.map_controls['point'].handler.createFeature(pt);
+            this.map_controls['point'].handler.finalize();
+            if (data) {
+            	this.featureSelected['attributes']['data-display_address'] = data.display_name;
+    			this.featureSelected['attributes']['data-address'] = data.address;
+            	this.setHiddenField(this.featureSelected);
+            } else {
+            	this.setHiddenField(this.featureSelected);
+            }
+            this.map_controls.point.deactivate();
+            if (dom.byId('formManuel') != null) {
+                domConstruct.destroy('formManuel');
+            }
+            this.map_controls.edition.activate();
+        },
+        
+        drawPolygon : function() {
+        	var divPt = query('div[edited="true"]');
+            var nbPtEdited = divPt.length;
+            if (nbPtEdited >= 3) {
+                for (var i = 0; i < nbPtEdited; i++) {
+                    if (!this.checkPt(query('input', divPt[i])[0].value, query('input', divPt[i])[1].value, query('input', divPt[i])[0].id.split('_')[1])) {
+                        return false;
+                    }
+                }
+                var firstLonLat = new OpenLayers.LonLat(query('input', divPt[0])[0].value, query('input', divPt[0])[1].value);
+                firstLonLat = firstLonLat.transform(this.projFrom, this.projTo);
+                var pt = this.map.olMap.layers[0].getViewPortPxFromLonLat(firstLonLat);
+                var nbPts = query('.pt_lon');
+                this.map_controls['polygone'].handler.createFeature(pt);
+                for (var i = 1; i < nbPtEdited; i++) {
+                    var lonTemp = query('input', divPt[i])[0].value;
+                    var latTemp = query('input', divPt[i])[1].value;
+                    var lonLatTempo = new OpenLayers.LonLat(lonTemp, latTemp);
+                    lonLatTempo = lonLatTempo.transform(this.projFrom, this.projTo);
+                    var lonLatPx = this.map.olMap.layers[0].getViewPortPxFromLonLat(lonLatTempo);
+                    this.map_controls['polygone'].handler.addPoint(lonLatPx);
+                }
+                this.map_controls['polygone'].handler.addPoint(pt);
+                this.map_controls['polygone'].handler.finishGeometry();
+                this.map_controls.polygone.deactivate();
+                if (dom.byId('formManuel') != null)
+                    domConstruct.destroy('formManuel');
+                this.map_controls.edition.activate();
+            }
+            else {
+                alert(pmbDojo.messages.getMessage("carto", "carto_warning_not_enough_points"));
+            }
+        },
+        
         /* Callback appel� lors d'une modification dans un input de type degr�s decimal
          * Report de la modification dans le formulaire de saisie en degr�s sexagesimaux
          */
@@ -1256,21 +1393,20 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
          * Report de la modification dans le formulaire de saisie en degr�s d�cimaux
          */
         onChangeInputSex: function (e) {
-
             var ligneModifie = e.target.parentNode;
             var inputs = ligneModifie.querySelectorAll('input');
-
-            var type = e.target.id.split('_')[2];
             var numPt = e.target.id.split('_')[1];
-
-            var deg = dom.byId('pt_' + numPt + '_' + type + '_deg').value;
-            var min = dom.byId('pt_' + numPt + '_' + type + '_min').value;
-            var sec = dom.byId('pt_' + numPt + '_' + type + '_sec').value;
-
-            var type = e.target.id.split('_')[2];
-            var numPt = e.target.id.split('_')[1];
-            dom.byId('pt_' + numPt + '_' + type).value = this.toDecimal(deg, min, sec);
-            dom.byId('pt_' + numPt + '_' + type).parentNode.setAttribute('edited', 'true');
+            var typePt = e.target.id.split('_')[2];
+            var deg = dom.byId('pt_' + numPt + '_' + typePt + '_deg').value;
+            var min = dom.byId('pt_' + numPt + '_' + typePt + '_min').value;
+            var sec = dom.byId('pt_' + numPt + '_' + typePt + '_sec').value;
+            dom.byId('pt_' + numPt + '_' + typePt).value = this.toDecimal(deg, min, sec);
+            dom.byId('pt_' + numPt + '_' + typePt).parentNode.setAttribute('edited', 'true');
+        },
+        onEnterValidForm: function(e) {
+        	if (e.key === "Enter") {
+        		this.listerAdresses();
+        	}
         },
         highlightPoint: function (e) {
             var divPoint = e.target;
@@ -1305,8 +1441,8 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
             var styleOver = {pointRadius: 6, fillColor: "#0000ff", strokeColor: "#0000ff", strokeWidth: 1, fillOpacity: 0.4};
             var styleDefault = {pointRadius: 6, fillColor: "#ee9900", strokeColor: "#ee9900", strokeWidth: 1, fillOpacity: 0.4};
             var arrayPtSketch = [];
-            for (var i = 0; i < this.editedFeature.layer.features.length; i++) {
-                if (this.editedFeature.layer != null) {
+            if (this.editedFeature.layer != null) {
+            	for (var i = 0; i < this.editedFeature.layer.features.length; i++) {
                     if (this.editedFeature.layer.features[i]._index == undefined && this.editedFeature.layer.features[i]._sketch != undefined && this.editedFeature.layer.features[i]._sketch == true) {
                         arrayPtSketch.push(this.editedFeature.layer.features[i]);
                     }
@@ -1654,6 +1790,9 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
                     this.selectFeatureEdition(e);
                 }
                 this.setHiddenField(arguments[0].feature);
+                var clone = e.feature.clone();
+                var ptGoodCoords = clone.geometry.transform(this.projTo, this.projFrom);
+                this.fillAddressDataHiddenField(ptGoodCoords);
                 this.saveCurrentState();
             });
             layer.events.register("featureselected", this, function (e) {
@@ -1663,6 +1802,11 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
                 this.featureSelected = null;
             });
             layer.events.register("featureadded", this, function (e) {
+            	var clone = e.feature.clone();
+                var ptGoodCoords = clone.geometry.transform(this.projTo, this.projFrom);
+                if (dom.byId('searchResultList').style.display == "none") {
+                	this.fillAddressDataHiddenField(ptGoodCoords);
+                }
                 this.saveCurrentState();
             });
             layer.events.register("featureremoved", this, function (e) {
@@ -1916,27 +2060,74 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
                 if (dom.byId('degDec').getAttribute('checked') != null) {
                     dom.byId('degDec').removeAttribute('checked');
                 }
+                if (dom.byId('address')) {
+	                if (dom.byId('address').getAttribute('checked') != null) {
+	                	dom.byId('address').removeAttribute('checked');
+	                }
+                }
+                if (dom.byId('searchResultList').style.display == 'block') {
+                	dom.byId('searchResultList').style.display = 'none';
+                }
+                if (dom.byId('valideModif').style.display == 'none') {
+                	dom.byId('valideModif').style.display = 'inline-block';
+                }
                 for (var i = 0; i < query('div[typechamps="degreeDec"]').length; i++) {
                     query('div[typechamps="degreeDec"]')[i].style.display = 'none';
                 }
                 for (var i = 0; i < query('div[typechamps="degreeSexa"]').length; i++) {
                     query('div[typechamps="degreeSexa"]')[i].style.display = 'inline';
                 }
+                for (var i = 0; i < query('div[typechamps="address"]').length; i++) {
+                	query('div[typechamps="address"]')[i].style.display = 'none';
+                }
 
-            }
-            else {
+            } else if (e.target.id == "address") {
+            	dom.byId('valideModif').style.display = 'none';
+                if (dom.byId('degSex').getAttribute('checked') != null) {
+                    dom.byId('degSex').removeAttribute('checked');
+                }
+            	if (dom.byId('degDec').getAttribute('checked') != null) {
+            		dom.byId('degDec').removeAttribute('checked');
+            	}
+            	if (dom.byId('address').getAttribute('checked') == null) {
+            		dom.byId('address').setAttribute('checked', 'true');
+            	}
+            	for (var i = 0; i < query('div[typechamps="degreeDec"]').length; i++) {
+            		query('div[typechamps="degreeDec"]')[i].style.display = 'none';
+            	}
+            	for (var i = 0; i < query('div[typechamps="degreeSexa"]').length; i++) {
+            		query('div[typechamps="degreeSexa"]')[i].style.display = 'none';
+            	}
+                for (var i = 0; i < query('div[typechamps="address"]').length; i++) {
+                	query('div[typechamps="address"]')[i].style.display = 'inline-block';
+                }
+            	
+            } else {
                 if (dom.byId('degDec').getAttribute('checked') == null) {
                     dom.byId('degDec').setAttribute('checked', 'true');
                 }
                 if (dom.byId('degSex').getAttribute('checked') != null) {
                     dom.byId('degSex').removeAttribute('checked');
                 }
-
+                if (dom.byId('address')) {
+	                if (dom.byId('address').getAttribute('checked') != null) {
+	                	dom.byId('address').removeAttribute('checked');
+	                }
+                }
+                if (dom.byId('searchResultList').style.display == 'block') {
+                	dom.byId('searchResultList').style.display = 'none';
+                }
+                if (dom.byId('valideModif').style.display == 'none') {
+                	dom.byId('valideModif').style.display = 'inline-block';
+                }
                 for (var i = 0; i < query('div[typechamps="degreeDec"]').length; i++) {
                     query('div[typechamps="degreeDec"]')[i].style.display = 'inline';
                 }
                 for (var i = 0; i < query('div[typechamps="degreeSexa"]').length; i++) {
                     query('div[typechamps="degreeSexa"]')[i].style.display = 'none';
+                }
+                for (var i = 0; i < query('div[typechamps="address"]').length; i++) {
+                	query('div[typechamps="address"]')[i].style.display = 'none';
                 }
             }
         },
@@ -1951,7 +2142,9 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
             var callbackOnChangeInputLonLat = lang.hitch(this, this.onChangeInputLonLat);
             var callbackOnChangeInputSex = lang.hitch(this, this.onChangeInputSex);
             var callbackSwitch = lang.hitch(this, this.switchTypeCoords);
+            var callbackOnEnterValidForm = lang.hitch(this, this.onEnterValidForm);
             var callbackValidModif = lang.hitch(this, this.validateModification);
+            var callbackListerAdresse = lang.hitch(this, this.listerAdresses);
             var callbackValidatePt = lang.hitch(this, this.validatePt);
             var callbackClickAddPt = lang.hitch(this, this.addPtForm);
             var lignePt = "";
@@ -2002,7 +2195,56 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
             //Create Form
             var buttonSup = "";
             var buttonAdd = "";
+            var address = "";
+            var city = "";
+    		var postcode = "";
 
+            if (mode == "edition") {
+            	var ptEdited = dom.byId(this.featureSelected.id);
+            	if (ptEdited != null) {
+            		jsonDataDisplay = JSON.parse(ptEdited.getAttribute("data-address"));
+            	}
+            	if (jsonDataDisplay != null) {
+            		if (jsonDataDisplay.parking) {
+            			address = jsonDataDisplay.parking;
+            		} else if (jsonDataDisplay.locality) {
+            			address = jsonDataDisplay.locality;
+            		} else if (jsonDataDisplay.road) {
+        				if (jsonDataDisplay.house_number) {
+        					address += jsonDataDisplay.house_number + " ";
+        				}
+        				address += jsonDataDisplay.road;
+        			} else if (jsonDataDisplay.footway) {
+        				address = jsonDataDisplay.footway;
+        			} else if (jsonDataDisplay.neighbourhood) {
+        				address = jsonDataDisplay.neighbourhood;
+        			} else if (jsonDataDisplay.suburb) {
+        				address = jsonDataDisplay.suburb;
+        			}
+            		
+            		if (jsonDataDisplay.village) {
+            			city = jsonDataDisplay.village;
+        			} else if (jsonDataDisplay.city) {
+        				city = jsonDataDisplay.city;
+        			} else if (jsonDataDisplay.hamlet) {
+        				city = jsonDataDisplay.hamlet;
+        			} else if (jsonDataDisplay.town) {
+        				city = jsonDataDisplay.town;
+        			} else if (jsonDataDisplay.county) {
+        				city = jsonDataDisplay.county;
+        			} else if (jsonDataDisplay.state) {
+        				city = jsonDataDisplay.state;
+        			}
+            		
+            		if (jsonDataDisplay.postcode) postcode = jsonDataDisplay.postcode;
+            	}
+            	if ((address == "") && (city == "") && (postcode == "")) {
+            		if (ptEdited.getAttribute("data-display_address")) {
+            			address = ptEdited.getAttribute("data-display_address");
+            		}
+            	}
+            }
+            
             for (var i = 0; i < nbPt; i++) {
                 if (arrayPtSketch[i] != undefined) {
                     var lon = (arrayPtSketch[i].x).toFixed(4);
@@ -2027,34 +2269,70 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
                 if (mode == "edition" && feature.geometry.CLASS_NAME != "OpenLayers.Geometry.Point") {
                     buttonSup = "<input type='button' class='bouton' value='x' id='del_" + parseInt(i + 1) + "'/>";
                 }
-                lignePt += "<div id='pt_" + parseInt(i + 1) + "'><label>Point " + parseInt(i + 1) + " :</label><br/>" +
+                lignePt += "<div id='pt_" + parseInt(i + 1) + "'>" +
                         "<div typeChamps='degreeSexa' style='display:inline;' id='pt_" + parseInt(i + 1) + "_sexa'>" +
+                        "<label>Point " + parseInt(i + 1) + " :</label><br/>" +
                         "<label>" + pmbDojo.messages.getMessage("carto", "carto_lon_abbr") + "</label><input style='width:30px' id='pt_" + parseInt(i + 1) + "_lon_deg' value='" + degSexLon[0] + "'/><label>\xB0</label><input style='width:30px' id='pt_" + parseInt(i + 1) + "_lon_min' value='" + degSexLon[1] + "'/><label>'</label><input style='width:30px' id='pt_" + parseInt(i + 1) + "_lon_sec' value='" + degSexLon[2] + "'/><label>\"</label>" +
                         "&nbsp;&nbsp;" +
                         "<label>" + pmbDojo.messages.getMessage("carto", "carto_lat_abbr") + "</label><input style='width:30px' id='pt_" + parseInt(i + 1) + "_lat_deg' value='" + degSexLat[0] + "'/><label>\xB0</label><input style='width:30px' id='pt_" + parseInt(i + 1) + "_lat_min' value='" + degSexLat[1] + "'/><label>'</label><input style='width:30px' id='pt_" + parseInt(i + 1) + "_lat_sec' value='" + degSexLat[2] + "'/><label>\"</label>" +
+                        buttonAdd +
+                        buttonSup +
                         "</div>" +
                         "<div typeChamps='degreeDec' style='display:none;' id='pt_" + parseInt(i + 1) + "_dec'>" +
+                        "<label>Point " + parseInt(i + 1) + " :</label><br/>" +
                         "<label>" + pmbDojo.messages.getMessage("carto", "carto_lon_abbr") + "</label><input id='pt_" + parseInt(i + 1) + "_lon' value='" + lon + "'/><label>" + pmbDojo.messages.getMessage("carto", "carto_lat_abbr") + "</label><input id='pt_" + parseInt(i + 1) + "_lat' value='" + lat + "'/>" +
-                        "</div>" +
                         buttonAdd +
                         buttonSup +
                         "</div>";
+                if (!i && shape != 'OpenLayers.Geometry.LineString') {
+                	lignePt +="<div typeChamps='address' style='display:none;' id='pt_" + parseInt(i + 1) + "_address'>" +
+                			"<div style='display:inline-block'><label>" + pmbDojo.messages.getMessage("carto", "carto_address") + " : </label>" +
+                			"<input id='pt_" + parseInt(i + 1) + "_search_address' value='"+address+"'/></div><br/>" +
+                			"<div style='display:inline-block'><label>" + pmbDojo.messages.getMessage("carto", "carto_city") + " : </label>" +
+                			"<input id='pt_" + parseInt(i + 1) + "_search_city' value='"+city+"'/></div><br/>" +
+                			"<div style='display:inline-block'><label>" + pmbDojo.messages.getMessage("carto", "carto_postcode") + " : </label>" +
+                			"<input id='pt_" + parseInt(i + 1) + "_search_postcode' value='"+postcode+"'/></div><br/>" +
+                			"<input type='button' class='bouton' value='" + pmbDojo.messages.getMessage("carto", "carto_research_label") + "' id='rechercherAdresse' name='rechercheAdresse'/>"
+                			"</div>";
+                }
+                lignePt += "</div>";
                 //TODO button add sur dernier pt ajoute entre le 1er et le dernier
             }
-            domConstruct.place("<div id='ptsDetails'>" + header + pmbDojo.messages.getMessage("carto", "carto_sexagesimal_degrees") + ": <input type='radio' checked='true' name='choixTypeCoords' id='degSex'/><br/>" +
-                    pmbDojo.messages.getMessage("carto", "carto_decimal_degrees") + ": <input type='radio' name='choixTypeCoords' id='degDec'/><br/><input type='hidden' value='" + mode + "' id='typeForm'/> <div id='listePt' style='overflow-y:scroll; height:300px;'>" + lignePt + "</div><input type='button' class='bouton' value='" + pmbDojo.messages.getMessage("carto", "carto_validate_label") + "' id='valideModif' name='validModif'/></div>", divAppend, place);
-
+            var html = "<div id='ptsDetails'>" + header +            		
+            		pmbDojo.messages.getMessage("carto", "carto_sexagesimal_degrees") + 
+            		": <input type='radio' checked='true' name='choixTypeCoords' id='degSex'/>" +
+            		"<br/>" +
+                    pmbDojo.messages.getMessage("carto", "carto_decimal_degrees") + ": " +
+            		"<input type='radio' name='choixTypeCoords' id='degDec'/>" +
+            		"<br/>";
+    		if (shape != 'OpenLayers.Geometry.LineString') {
+    			html += pmbDojo.messages.getMessage("carto", "carto_address") + " " + 
+        				": <input type='radio' name='choixTypeCoords' id='address'/>" +
+    					"<br/>";
+    		}
+    		html += "<input type='hidden' value='" + mode + "' id='typeForm'/> " +
+            		"<div id='listePt'>" + lignePt + "</div>" +
+            		"<div id='searchResultList' style='display:none;'></div>" +
+    				"<input type='button' class='bouton' value='" + pmbDojo.messages.getMessage("carto", "carto_validate_label") + "' id='valideModif' name='validModif'/>" +
+					"</div>";
+            
+            domConstruct.place(html, divAppend, place);
+            
             if (dom.byId('ptsEdit') != null)
                 domStyle.set(dom.byId('ptsEdit'), 'display', 'none');
-
-
+            
+            if (shape != 'OpenLayers.Geometry.LineString') on(dom.byId('pt_1_search_address'), 'keydown', callbackOnEnterValidForm);
+            if (shape != 'OpenLayers.Geometry.LineString') on(dom.byId('pt_1_search_city'), 'keydown', callbackOnEnterValidForm);
+            if (shape != 'OpenLayers.Geometry.LineString') on(dom.byId('pt_1_search_postcode'), 'keydown', callbackOnEnterValidForm);
+            if (shape != 'OpenLayers.Geometry.LineString') on(dom.byId('rechercherAdresse'), 'click', callbackListerAdresse);
             on(dom.byId('valideModif'), 'click', callbackValidModif);
 
 
             //Put evt:	
             for (var i = 0; i < nbPt; i++) {
-                if (dom.byId("add_" + parseInt(i + 1) + "_" + parseInt(i + 2)) != null)
-                    on(dom.byId("add_" + parseInt(i + 1) + "_" + parseInt(i + 2)), 'click', callbackClickAddPt);
+                if (dom.byId("add_" + parseInt(i + 1) + "_" + parseInt(i + 2)) != null) {
+                	on(dom.byId("add_" + parseInt(i + 1) + "_" + parseInt(i + 2)), 'click', callbackClickAddPt);
+                }
                 on(dom.byId("pt_" + parseInt(i + 1) + "_lon"), 'change', callbackOnChangeInputLonLat);
                 on(dom.byId("pt_" + parseInt(i + 1) + "_lat"), 'change', callbackOnChangeInputLonLat);
                 on(dom.byId("pt_" + parseInt(i + 1) + "_lon_deg"), 'change', callbackOnChangeInputSex);
@@ -2081,6 +2359,10 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
             }
             on(dom.byId('degSex'), 'click', callbackSwitch);
             on(dom.byId('degDec'), 'click', callbackSwitch);
+
+            if (dom.byId('address')) {
+            	on(dom.byId('address'), 'click', callbackSwitch);
+            }
         },
         /*
          * Function d'ajout de point sur une feature
@@ -2092,16 +2374,35 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
             var callbackOnChangeInputLonLat = lang.hitch(this, this.onChangeInputLonLat);
             var callbackOnChangeInputSex = lang.hitch(this, this.onChangeInputSex);
 
-            var lignePt = "<div class='newPt' id='pt_newPt" + nbNewPt + "_" + pt1 + "'><label>" + pmbDojo.messages.getMessage("carto", "carto_label_new_point") + "</label><br/>" +
-                    "<div typeChamps='degreeSexa' id='pt_newPt" + nbNewPt + "_sexa'>" +
-                    "<label>" + pmbDojo.messages.getMessage("carto", "carto_lon_abbr") + "</label><input style='width:30px' id='pt_newPt" + nbNewPt + "_lon_deg' value=''/><label>\xB0</label><input style='width:30px' id='pt_newPt" + nbNewPt + "_lon_min' value=''/><label>'</label><input style='width:30px' id='pt_newPt" + nbNewPt + "_lon_sec' value=''/><label>\"</label>" +
-                    "&nbsp;&nbsp;" +
-                    "<label>" + pmbDojo.messages.getMessage("carto", "carto_lat_abbr") + "</label><input style='width:30px' id='pt_newPt" + nbNewPt + "_lat_deg' value=''/><label>\xB0</label><input style='width:30px' id='pt_newPt" + nbNewPt + "_lat_min' value=''/><label>'</label><input style='width:30px' id='pt_newPt" + nbNewPt + "_lat_sec' value=''/><label>\"</label>" +
-                    "</div>" +
-                    "<div typeChamps='degreeDec' style='display:none;' id='pt_newPt" + nbNewPt + "_dec'>" +
-                    "<label>" + pmbDojo.messages.getMessage("carto", "carto_lon_abbr") + "</label><input id='pt_newPt" + nbNewPt + "_lon' value=''/><label>" + pmbDojo.messages.getMessage("carto", "carto_lat_abbr") + "</label><input id='pt_newPt" + nbNewPt + "_lat' value=''/>" +
-                    "</div>" +
-                    "</div>";
+            var lignePt = "<div class='newPt' id='pt_newPt" + nbNewPt + "_" + pt1 + "'>" +
+                    		"<div typeChamps='degreeSexa' id='pt_newPt" + nbNewPt + "_sexa'>" +
+                    			"<label>" + pmbDojo.messages.getMessage("carto", "carto_label_new_point") + "</label>" +
+            					"<br/>" +
+                    			"<label>" + pmbDojo.messages.getMessage("carto", "carto_lon_abbr") + "</label>" +
+            					"<input style='width:30px' id='pt_newPt" + nbNewPt + "_lon_deg' value=''/>" +
+            					"<label>\xB0</label>" +
+            					"<input style='width:30px' id='pt_newPt" + nbNewPt + "_lon_min' value=''/>" +
+    							"<label>'</label>" +
+    							"<input style='width:30px' id='pt_newPt" + nbNewPt + "_lon_sec' value=''/>" +
+								"<label>\"</label>" +
+								"&nbsp;&nbsp;" +
+								"<label>" + pmbDojo.messages.getMessage("carto", "carto_lat_abbr") + "</label>" +
+								"<input style='width:30px' id='pt_newPt" + nbNewPt + "_lat_deg' value=''/>" +
+								"<label>\xB0</label>" +
+								"<input style='width:30px' id='pt_newPt" + nbNewPt + "_lat_min' value=''/>" +
+								"<label>'</label>" +
+								"<input style='width:30px' id='pt_newPt" + nbNewPt + "_lat_sec' value=''/>" +
+								"<label>\"</label>" +
+							"</div>" +
+							"<div typeChamps='degreeDec' style='display:none;' id='pt_newPt" + nbNewPt + "_dec'>" +
+								"<label>" + pmbDojo.messages.getMessage("carto", "carto_label_new_point") + "</label>" +
+								"<br/>" +
+								"<label>" + pmbDojo.messages.getMessage("carto", "carto_lon_abbr") + "</label>" +
+								"<input id='pt_newPt" + nbNewPt + "_lon' value=''/>" +
+								"<label>" + pmbDojo.messages.getMessage("carto", "carto_lat_abbr") + "</label>" +
+								"<input id='pt_newPt" + nbNewPt + "_lat' value=''/>" +
+							"</div>" +
+						"</div>";
             domConstruct.place(lignePt, dom.byId('pt_' + pt1), 'after');
             on(dom.byId("pt_newPt" + nbNewPt + "_lon"), 'change', callbackOnChangeInputLonLat);
             on(dom.byId("pt_newPt" + nbNewPt + "_lat"), 'change', callbackOnChangeInputLonLat);
@@ -2155,7 +2456,7 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
                             this.setHiddenField(featureGlobale);
                             this.map_controls.edition.unselectFeature(featureGlobale);
                             this.map_controls.edition.selectFeature(featureGlobale);
-                            if (this.mode == 'edition') {
+                            if (this.mode == 'edition' && this.featureSelected.geometry.components[0].components.length <= MAX_POLYGON_POINTS) {
                                 this.createFormFromFeature();
                             }
                             this.saveCurrentState();
@@ -2169,7 +2470,7 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
                             this.setHiddenField(featureGlobale);
                             this.map_controls.edition.unselectFeature(featureGlobale);
                             this.map_controls.edition.selectFeature(featureGlobale);
-                            if (this.mode == 'edition') {
+                            if (this.mode == 'edition' && this.featureSelected.geometry.components.length <= MAX_POLYGON_POINTS) {
                                 this.createFormFromFeature();
                             }
                             this.saveCurrentState();
@@ -2438,6 +2739,13 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
             }
             return false;
         },
+
+
+        /*
+         * Déselectionne tous les contrôles de carte possibles (features, menu..)
+         * 
+         * @param void
+         */
         deactivateAllControls: function () {
             for (var key in this.map_controls) {
                 if (typeof this.map_controls[key].unselectAll == "function") {
@@ -2452,6 +2760,13 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
                 this.map_controls[key].deactivate();
             }
         },
+
+
+        /*
+         * Permet la sauvegarde de l'emplacement actuel d'un point et gère l'affichage des boutons d'annulation des modifications
+         * 
+         * @param void
+         */
         saveCurrentState: function () {
             if (this.mode == "edition") {
                 var featureObj = new Array();
@@ -2467,15 +2782,22 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
                 this.editionStates.push({"features": featureObj, "control": this.getCurrentActivatedControl(), "selectedFeature": selectedFeature});
                 if (!dom.byId('cancelEdit') && this.editionStates.length > 2) {
                     domConstruct.place("<input type='button' class='bouton' id='cancelEdit' value='" + pmbDojo.messages.getMessage("carto", "carto_label_cancel_modifications") + "'/>", dom.byId('map_manual_edition'), "before");
-                    on(dom.byId('cancelEdit'), 'click', lang.hitch(this, this.loadLastState, true));
+                    on(dom.byId('cancelEdit'), 'click', lang.hitch(this, this.loadState, true));
                 }
                 if (!dom.byId('cancelLastEdit') && this.editionStates.length > 1) {
                     domConstruct.place("<input type='button' class='bouton' id='cancelLastEdit' value='" + pmbDojo.messages.getMessage("carto", "carto_label_cancel_last_modification") + "'/>", dom.byId('map_manual_edition'), "before");
-                    on(dom.byId('cancelLastEdit'), 'click', lang.hitch(this, this.loadLastState));
+                    on(dom.byId('cancelLastEdit'), 'click', lang.hitch(this, this.loadState, false));
                 }
             }
         },
-        loadLastState: function (first) {
+
+
+        /*
+         * Permet de revenir à un emplacement de point précédent
+         * 
+         * @param first (Boolean) : Si true alors on annule toutes les modifications, si false on annule la dernière modification
+         */
+        loadState: function (first) {
             var first = first != undefined && typeof first == "boolean" && first != false ? first : false;
             this.deactivateAllControls();
             if (this.editedFeature && this.editedFeature.layer && this.editedFeature.layer.events.listeners.featureover != null) {
@@ -2530,11 +2852,200 @@ define(["dojo/_base/declare", "apps/pmb/PMBDialog", "dojo/dom", "dojox/widget/St
             }
 
         },
+
+
+        /*
+         * Empeche l'utilisateur de créer un point en dehors du cadre de la map
+         * 
+         * @param e (Event) : Evenement associé à l'appel de cette fonction
+         */
         cancelDraw: function (e) {
             var currentCtrl = this.getCurrentActivatedControl();
             if (currentCtrl && currentCtrl.CLASS_NAME == "OpenLayers.Control.DrawFeature") {
                 currentCtrl.cancel();
             }
+        },
+
+
+        /*
+         * Effectue une recherche sur nominatim en fonction des champs Adresse et affiche les résultats de la recherche dans une liste
+         * 
+         * @param query (String) : Contenu de la recherche à envoyer à Nominatim
+         * @param deferred (Object) : Instance de la classe Deffered de dojo
+         */
+        searchByAddress : function(query, deferred, indice) {
+        	this.showPatience();
+        	var self = this;
+        	selectAddress = dom.byId("searchResultList");
+        	if (selectAddress.style.display != "none") {
+        		query = document.querySelector(".searchResult.selected").firstChild.innerHTML;
+        		query = encodeURI(query);
+        		request("https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&polygon_text=1&accept-language=fr-FR&q=" + query, {
+					handleAs: 'json',
+				}).then(function(data) {
+					if (!indice) {
+						indice = 0;
+					}
+					if (data[indice]) {
+						deferred.resolve(data[indice]);
+					}
+					this.temporaryData = data[indice];
+					deferred.reject();
+					self.hidePatience();
+				}, function(err) {
+					deferred.reject();
+				});
+        	}
+        },
+
+
+        /*
+         * Effectue une recherche sur nominatim en fonction des champs Adresse et affiche les résultats de la recherche dans une liste
+         * 
+         * @param query
+         */
+        listerAdresses: function(query) {
+        	var callbackClickAddress = lang.hitch(this, this.highlightAddress);
+        	addressSearched = dom.byId('pt_1_search_address').value;
+        	citySearched = dom.byId('pt_1_search_city').value;
+        	postcodeSearched = dom.byId('pt_1_search_postcode').value;
+        	uri = "https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&polygon_text=1&accept-language=fr-FR";
+        	
+        	if (addressSearched != "") {
+    			uri += "&q=" + addressSearched + " " + citySearched + " " + postcodeSearched;
+        	} else {
+        		if (citySearched != "") {
+        			uri += "&city=" + citySearched;
+        		}
+        		if (postcodeSearched != "") {
+        			uri += "&postalcode=" + postcodeSearched;
+        		}
+        	}
+        	
+        	if (uri) {
+        		query = encodeURI(uri);
+        		request(query, {
+					handleAs: 'json',
+				}).then(function(data) {
+					selectAddress = dom.byId("searchResultList");
+					selectAddress.style.display = "block";
+					while (selectAddress.hasChildNodes()) {  
+						selectAddress.removeChild(selectAddress.firstChild);
+					}
+					for (var i = 0; i < data.length; i++) {
+						newSearch = document.createElement('div');
+						newSearch.setAttribute('id', 'searchResult' + i);
+						newSearch.setAttribute('class', 'searchResult');
+						selectAddress.appendChild(newSearch);
+						
+						newAddress = document.createElement('span');
+						newAddress.setAttribute('name', 'resultAddress');
+						newAddress.innerHTML = data[i].display_name;
+						newSearch.appendChild(newAddress);
+						
+						on(dom.byId('searchResult' + i), 'click', callbackClickAddress);
+					}
+					
+					if (data.length == 0) {
+						selectAddress.style.display = "none";
+						if (dom.byId("pt_1").lastChild.nodeName == "H2") {
+							dom.byId("pt_1").removeChild(dom.byId("pt_1").lastChild);
+						}
+						noResult = document.createElement("h2");
+						noResult.innerHTML = pmbDojo.messages.getMessage("carto", "carto_research_no_result");
+						dom.byId("pt_1").appendChild(noResult);
+					} else {
+						if (dom.byId("pt_1").lastChild.nodeName == "H2") {
+							dom.byId("pt_1").removeChild(dom.byId("pt_1").lastChild);
+						}
+					}
+				});
+        	}
+        },
+
+
+        /*
+         * Permet de prévisualiser le point ou le polygone avant placement définitif lors d'une recherche par adresse
+         * 
+         * @param e (Event) : Evenement associé à l'appel de cette fonction
+         */
+        highlightAddress: function(e) {
+        	for (var i = 0; i < dom.byId("searchResultList").childElementCount; i++) {
+        		if (dom.byId("searchResult" + i).getAttribute("class") ==  "searchResult selected") {
+        			dom.byId("searchResult" + i).setAttribute("class", "searchResult");
+        		}
+        	}
+        	if (e.target.tagName == "SPAN") {
+        		selectedAddress = e.target.parentElement;
+        	} else {
+        		selectedAddress = e.target;
+        	}
+        	selectedAddress.setAttribute("class", "searchResult selected");
+
+        	var deferred = new Deferred();
+        	var address = e.target.firstChild.innerHTML;
+        	indice = selectedAddress.id.substring(12);
+        	this.searchByAddress(address, deferred, indice);
+        	if (!this.map_controls.point.active) {
+        		deferred.then(lang.hitch(this, function(data) {
+	        		if (data) {
+	        			var feature = this.formatWKT.read(data.geotext);
+	                    if (feature != undefined) {
+	                        var newPoly = feature.geometry.transform(this.projFrom, this.projTo);
+	                        this.map.olMap.getLayersByName(this.dataLayers[0].name + "_0")[0].addFeatures([feature]);
+	                        if (this.temporaryFeature != null) {
+	                        	this.map.olMap.getLayersByName(this.dataLayers[0].name + "_0")[0].removeFeatures([this.temporaryFeature]);
+	                        }
+	            			this.map.olMap.zoomToExtent(newPoly.bounds);
+	                        this.map_controls.polygone.deactivate();
+	                        this.temporaryFeature = feature;
+	                    }
+	        		}
+        		}));
+        	}
+    		dom.byId("valideModif").style.display = "inline-block";
+        },
+
+
+        /*
+         * Supprime la feature temporaire créée pendant la prévisualisation lors de la recherche par adresse
+         * 
+         * @param void
+         */
+        removeTemporaryFeature: function() {
+        	if (this.temporaryFeature != null) {
+        		this.map.olMap.getLayersByName(this.dataLayers[0].name + "_0")[0].removeFeatures([this.temporaryFeature]);
+        	}
+        },
+
+
+        /*
+         * Récupère une adresse sur Nominatim à partir de coordoonnées x et y, et remplit les champs d'adresse et les champs cachés
+         * 
+         * @param goodCoords (Array) : Tableau associatif contenant les coordonnées x et y d'un point
+         */
+        fillAddressDataHiddenField: function(goodCoords) {
+        	if (goodCoords['x'] === undefined && goodCoords['y'] === undefined) {
+        		return;
+        	}
+        	var lonlat = new OpenLayers.LonLat(goodCoords['x'], goodCoords['y']);
+        	lon = lonlat['lon'];
+        	lat = lonlat['lat'];
+        	var deferred = new Deferred();
+        	request("https://nominatim.openstreetmap.org/reverse?format=json&lat="+lat+"&lon="+lon).then(function(data) {
+				if (data) {
+					deferred.resolve(data);
+				}
+				deferred.reject();
+			});
+        	deferred.then(lang.hitch(this, function(data) {
+        		if (data) {
+        			data = JSON.parse(data);
+					this.editedFeature['attributes']['data-address'] = data['address'];
+					this.editedFeature['attributes']['data-display_address'] = data['display_name'];
+					this.setHiddenField(this.editedFeature);
+        		}
+        	}));
         },
     }); 
  });

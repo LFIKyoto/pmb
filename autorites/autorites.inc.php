@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: autorites.inc.php,v 1.24 2017-10-04 13:39:46 ngantier Exp $
+// $Id: autorites.inc.php,v 1.25 2019-06-03 07:04:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $database_window_title, $msg, $user_input, $pmb_javascript_office_editor, $base_path, $categ, $plugin, $sub, $file;
 
 echo window_title($database_window_title.$msg[132].$msg[1003].$msg[1001]);
 

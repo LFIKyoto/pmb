@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: module.tpl.php,v 1.3 2018-11-21 21:11:00 dgoron Exp $
+// $Id: module.tpl.php,v 1.4 2019-05-27 09:44:29 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $module_layout, $current_module, $module_sub_tabs, $module_layout_end;
 
 //    ----------------------------------
 // $admin_layout : layout page module

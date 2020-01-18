@@ -1,6 +1,6 @@
 {% extends 'gabarit.html' %}
 
-<!-- $Id: titre_uniforme.html,v 1.2 2018-04-09 09:07:16 dgoron Exp $ -->
+<!-- $Id: titre_uniforme.html,v 1.5 2019-06-19 09:15:57 ngantier Exp $ -->
 
 {% block isbd %}
 	{{ element.get_isbd_simple }}
@@ -15,8 +15,7 @@
 				</div>
 				<div class="aut_display_cell">
 		{% else %}/{% endif %}	
-		<a href='./index.php?lvl=author_see&id={{author.id}}'>{{ author.objet.display }}</a>{% for attribute in author.attributes %}{% if attribute.fonction_label %}, {{ attribute.fonction_label }}{% endif %}{% endfor %}
-		{% if author.qualif_label %}({{ author.qualif_label }}){% endif %}
+		<a href='./index.php?lvl=author_see&id={{author.id}}'>{{ author.objet.display }}</a>{% for attribute in author.attributes %}{% if attribute.fonction_label %}, {{ attribute.fonction_label }}{% endif %}{% if attribute.qualif_label %} ({{ attribute.qualif_label }}){% endif %}{% endfor %}
 		{% if loop.last %}
 				</div>
 			</div>
@@ -30,8 +29,7 @@
 				</div>
 				<div class="aut_display_cell">
 		{% else %}/{% endif %}
-		<a href='./index.php?lvl=author_see&id={{performer.id}}'>{{ performer.objet.display }}</a>{% for attribute in performer.attributes %}{% if attribute.fonction_label %}, {{ attribute.fonction_label }}{% endif %}{% endfor %}
-		{% if performer.qualif_label %}({{ performer.qualif_label }}){% endif %}
+		<a href='./index.php?lvl=author_see&id={{performer.id}}'>{{ performer.objet.display }}</a>{% for attribute in performer.attributes %}{% if attribute.fonction_label %}, {{ attribute.fonction_label }}{% endif %}{% if attribute.qualif_label %} ({{ attribute.qualif_label }}){% endif %}{% endfor %}
 		{% if loop.last %}
 				</div>
 			</div>
@@ -58,7 +56,7 @@
 		</div>
 	{% endif %}
 	
-	{% if element.oeuvre_expressions_list_ui.elements_list %}
+	{% if element.oeuvre_expressions_list_ui.nb_results %}
 		<div class="aut_display_row">
 			<div class="aut_display_cell">
 				<b>{{ msg.aut_oeuvre_form_oeuvre_expression }} :</b>
@@ -227,7 +225,7 @@
 			{% if loop.first %}
 				<div class="aut_display_row">
 					<div class="aut_display_cell">
-						<b>{{ msg.aut_titre_uniforme_form_subdivision_forme }} :</b>
+						<b>{{ msg.aut_oeuvre_form_subdivision }} :</b>
 					</div>
 					<div class="aut_display_cell">
 			{% else %}; {% endif %}
@@ -251,7 +249,7 @@
 	{% if element.comment %}
 		<div class="aut_display_row">
 			<div class="aut_display_cell">
-				<b>{{msg.707}} :</b>
+				<b>{{msg.aut_oeuvre_form_comment}} :</b>
 			</div>
 			<div class="aut_display_cell">
 				{{ element.comment | nl2br }}

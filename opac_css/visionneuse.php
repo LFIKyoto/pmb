@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: visionneuse.php,v 1.42 2018-07-04 09:50:33 dgoron Exp $
+// $Id: visionneuse.php,v 1.43 2019-06-18 12:31:37 ngantier Exp $
 $base_path = ".";
 $include_path ="$base_path/includes";
 $class_path ="$base_path/classes";
@@ -48,7 +48,7 @@ if($opac_parse_html || $cms_active){
 	ob_start();
 }
 
-$explnum_id+=0;
+$explnum_id = intval($explnum_id);
 
 //Pour les epubs
 if (isset($_SERVER["PATH_INFO"])) {

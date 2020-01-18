@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesSearch.class.php,v 1.32 2018-11-26 14:32:02 dgoron Exp $
+// $Id: pmbesSearch.class.php,v 1.37 2019-08-28 06:57:41 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -40,7 +40,7 @@ class pmbesSearch extends external_services_api_class {
 	
 	public function noticeids_to_recordformats($noticesids, $record_format, $recordcharset='iso-8859-1', $includeLinks=true, $includeItems=false) {
 		$converter = new external_services_converter_notices(1, 600);
-		$converter->set_params(array("include_links" => $includeLinks, "include_items" => $includeItems, "include_authorite_ids" => true));
+		$converter->set_params(array("map" => true, "include_links" => $includeLinks, "include_items" => $includeItems, "include_authorite_ids" => true));
 		return $converter->convert_batch($noticesids, $record_format, $recordcharset);
 	}
 
@@ -117,6 +117,7 @@ class pmbesSearch extends external_services_api_class {
 		}
 		if ($searchId) {
 			global $search;
+			$search=array();
 			$search[0]="f_".$searchId;
 			$field="field_0_".$search[0];
 			global ${$field};
@@ -131,7 +132,7 @@ class pmbesSearch extends external_services_api_class {
 
 	}
 	
-	public function simpleSearchLocalise($searchType=0,$searchTerm="",$PMBUserId=-1, $OPACEmprId=-1,$location,$section=0) {
+	public function simpleSearchLocalise($searchType=0,$searchTerm="",$PMBUserId=-1, $OPACEmprId=-1,$location=0,$section=0) {
 		global $dbh;
 		
 		global $charset;
@@ -177,6 +178,7 @@ class pmbesSearch extends external_services_api_class {
 		}
 		if ($searchId) {
 			global $search;
+			$search=array();
 			$search[0]="f_".$searchId;
 			$field="field_0_".$search[0];
 			global ${$field};
@@ -373,7 +375,7 @@ class pmbesSearch extends external_services_api_class {
 					  		} else $existrestrict=false;
 		 		  			} else $existrestrict=false;
 		
-		   				while (list($key,$val)=each($options->table)) {
+		 		  		foreach ($options->table as $key => $val) {
 		   					if ($existrestrict && array_search($key,$restrictqueryarray)!==false) {
 								$aresult["values"][] = array(
 									"value_id" => $key,
@@ -785,8 +787,8 @@ class pmbesSearch extends external_services_api_class {
 			}
 			if(is_array($notice_ids) && count($notice_ids)) {
 				foreach ($fields as $field) {
-					$code_champ = $field['code_champ']+0;
-					$code_ss_champ = $field['code_ss_champ']+0;
+				    $code_champ = (int) $field['code_champ'];
+				    $code_ss_champ = (int) $field['code_ss_champ'];
 					if($code_champ) {
 						$query = "select count(distinct id_notice) as nb_records, value from notices_fields_global_index where code_champ = '".$code_champ."'";
 						if($code_ss_champ) {
@@ -833,8 +835,8 @@ class pmbesSearch extends external_services_api_class {
 		$notice_ids = $search_cache->get_results();
 		if(count($notice_ids) && is_array($filters) && count($filters)) {
 			foreach ($filters as $filter) {
-				$code_champ = $filter['code_champ']+0;
-				$code_ss_champ = $filter['code_ss_champ']+0;
+			    $code_champ = (int) $filter['code_champ'];
+			    $code_ss_champ = (int) $filter['code_ss_champ'];
 				if($code_champ) {
 					$query = "select distinct id_notice from notices_fields_global_index where code_champ = '".$code_champ."'";
 					if($code_ss_champ) {

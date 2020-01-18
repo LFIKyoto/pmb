@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: simple_search.inc.php,v 1.143 2018-11-30 09:23:39 dgoron Exp $
+// $Id: simple_search.inc.php,v 1.144 2019-01-11 09:03:16 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -55,14 +55,16 @@ function do_sources() {
 	foreach ($sources as $category_name=>$category) {
 		if (isset($paquets_de_source) && $paquets_de_source) $paquets_de_sources[] = $paquets_de_source;
 		$paquets_de_source = array();
-		$paquets_de_source["id"] = $srce->num_categ;
 		$paquets_de_source["name"] = $category_name;
 		$paquets_de_source["content"] = '';
-		$paquets_de_source["opac_expanded"] = $srce->opac_expanded ? true : false;
+		
 		 
 		// gen_plus_form("zsources".$count, $srce->categ_name ,"sdfsdfsdfsdf",true);
 		$count++;
 		foreach ($category as $srce) {
+		    $paquets_de_source["id"] = $srce->num_categ;
+		    $paquets_de_source["opac_expanded"] = $srce->opac_expanded ? true : false;
+		    
 			if(!isset($_SESSION["source_".$srce->source_id."_cancel"])) $_SESSION["source_".$srce->source_id."_cancel"] = 0;
 			$paquets_de_source["content"] .="<div style='width:30%; float:left'>
 				<input type='checkbox' ".($_SESSION["source_".$srce->source_id."_cancel"]==2 ? 'DISABLED' : "")." name='source[]' value='".$srce->source_id."' id='source_".$srce->source_id."_".$count."' onclick='change_source_checkbox(source_".$srce->source_id."_".$count.", ".$srce->source_id.");'";

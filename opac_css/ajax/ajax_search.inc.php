@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_search.inc.php,v 1.4 2018-04-09 09:07:33 dgoron Exp $
+// $Id: ajax_search.inc.php,v 1.5 2019-01-16 17:01:42 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+if(!isset($type)) $type = '';
 
 session_write_close();
 

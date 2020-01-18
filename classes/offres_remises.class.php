@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: offres_remises.class.php,v 1.10 2017-07-10 13:55:21 dgoron Exp $
+// $Id: offres_remises.class.php,v 1.11 2019-08-20 09:18:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -26,10 +26,10 @@ class offres_remises{
 	public function load(){
 		$q = "select * from offres_remises where num_fournisseur = '".$this->num_fournisseur."' and num_produit = '".$this->num_produit."' ";
 		$r = pmb_mysql_query($q);
-		$obj = pmb_mysql_fetch_object($r);
-		$this->remise = $obj->remise;
-		$this->condition_remise = $obj->condition_remise;
-
+		if ($obj = pmb_mysql_fetch_object($r)) {
+    		$this->remise = $obj->remise;
+    		$this->condition_remise = $obj->condition_remise;
+		}
 	}
 
 	// enregistre une offre de remise en base.

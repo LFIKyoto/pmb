@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Tree.js,v 1.4 2018-12-28 16:27:31 tsamson Exp $
+// $Id: Tree.js,v 1.6 2019-02-05 15:01:13 apetithomme Exp $
 
 define(['dojo/_base/declare',
         'dijit/Tree',
@@ -31,7 +31,7 @@ define(['dojo/_base/declare',
 		
 		dndCheckAcceptance: function(source, nodes) {
 			var item = source.tree.selectedItem;
-			if ((item.type == "property") || (item.type === 'environmentField')) return true;
+			if (this.isLeaf(item)) return true;
 			return false;
 		},
 
@@ -50,11 +50,18 @@ define(['dojo/_base/declare',
 		},
 		
 		onDblClick: function(item, node, evt) {
-			if ((item.type === 'property') || (item.type === 'environmentField')) topic.publish('dblClick', item, node, evt);
+			if (this.isLeaf(item) && !item.selection) topic.publish('dblClick', item, node, evt);
 		},
 		
 		getIconClass: function(item, opened){
-		    return ((item.type == "property") || (item.type === 'environmentField') ? "dijitLeaf" : (opened ? "dijitFolderOpened" : "dijitFolderClosed"));
+		    return (this.isLeaf(item) ? "dijitLeaf" : (opened ? "dijitFolderOpened" : "dijitFolderClosed"));
+		},
+		
+		/**
+		 * Dis si un item est une feuille de l'arbre
+		 */
+		isLeaf: function(item) {
+			return ((item.type == "property") || (item.type === 'environmentField') || (item.type === 'emprField'));
 		}
 	});
 });

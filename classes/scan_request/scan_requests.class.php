@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_requests.class.php,v 1.18 2018-09-07 13:53:24 dgoron Exp $
+// $Id: scan_requests.class.php,v 1.19 2019-06-21 15:26:01 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -328,5 +328,21 @@ class scan_requests {
 			return true;
 		}
 		return false;
+	}
+	
+	/**
+	 * Suppression des demandes associées
+	 * @param number $num_creator
+	 * @param number $type_creator (1 = User, 2 = Empr)
+	 */
+	public static function delete_from_creator($num_creator=0, $type_creator=2) {
+	    $num_creator = intval($num_creator);
+	    $type_creator = intval($type_creator);
+	    $query = "select id_scan_request from scan_requests where scan_request_num_creator = ".$num_creator." and scan_request_type_creator = ".$type_creator;
+	    $result = pmb_mysql_query($query);
+	    while($row = pmb_mysql_fetch_object($result)) {
+	        $scan_request = new scan_request($row->id_scan_request);
+	        $scan_request->delete(true);
+	    }
 	}
 }

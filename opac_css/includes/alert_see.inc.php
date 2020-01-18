@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: alert_see.inc.php,v 1.7 2018-04-19 13:27:05 dgoron Exp $
+// $Id: alert_see.inc.php,v 1.8 2019-01-16 16:57:14 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -28,6 +28,7 @@ global $op_0_s_4;
 $op_0_s_4="EQ";
 global $inter_0_s_4;
 $inter_0_s_4="";
+$search=array();
 $search[0]="s_4";
 
 if (isset($_SESSION['opac_view']) && $_SESSION['opac_view']) {

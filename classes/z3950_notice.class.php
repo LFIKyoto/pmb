@@ -3,7 +3,7 @@
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // | creator : Emmanuel PACAUD < emmanuel.pacaud@univ-poitiers.fr>            |
 // +-------------------------------------------------+
-// $Id: z3950_notice.class.php,v 1.211 2018-12-26 10:36:59 dgoron Exp $
+// $Id: z3950_notice.class.php,v 1.224 2019-08-29 10:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -41,7 +41,7 @@ require_once($class_path."/thumbnail.class.php");
 require_once($class_path."/indexation_stack.class.php");
 
 global $categ, $action, $notice_org;
-if ($categ == 'z3950' && $action == 'import' && $notice_org) {
+if ($categ == 'z3950' && in_array($action, array('import', 'integrer', 'integrerexpl')) && $notice_org) {
 	$requete="select z_marc,fichier_func from z_notices, z_bib where znotices_id='".$notice_org."' and znotices_bib_id=bib_id";
 	$resultat=pmb_mysql_query($requete);
 	$notice_org=@pmb_mysql_result($resultat,0,0);
@@ -66,8 +66,10 @@ if(!isset($z_bib_fichier_func) || !$z_bib_fichier_func) {
 class z3950_notice {
 	public $bibliographic_level;
 	public $hierarchic_level;
-
+	
+	public $source_id;
 	public $titles;
+	public $serie_id;
 	public $serie;
 	public $serie_200;
 	public $nbr_in_serie;
@@ -230,6 +232,7 @@ class z3950_notice {
 	
 	public $message_retour="";
 	public $notice="";
+	public $notice_type;
 	
 	public $bt_integr_value = '';
 	public $bt_undo_value = '';
@@ -241,6 +244,8 @@ class z3950_notice {
 	public $notice_is_new=0;
 	public $commentaire_gestion="";
 	public $indexation_lang="";
+	public $libelle_form="";
+	public $signature="";
 	protected static $long_maxi_code;
 	
 	public function __construct($type, $marc = NULL, $source_id=0) {
@@ -272,7 +277,7 @@ class z3950_notice {
 				
 	public static function substitute ($tag, $value, &$string) {
 		global $charset;
-		$string = str_replace ("!!$tag!!", htmlentities($value,ENT_QUOTES, $charset), $string);
+		$string = str_replace ("!!$tag!!", htmlentities(trim($value),ENT_QUOTES, $charset), $string);
 	}
 
 	public function insert_in_database ($addslashes = false) {
@@ -343,7 +348,9 @@ class z3950_notice {
 		} else { 
 			$subcollection_id = subcollection::import ($this->subcollection);
 		}
-		$serie_id = serie::import(stripslashes($this->serie));
+		if(!isset($this->serie_id) || !$this->serie_id) {
+		    $this->serie_id = serie::import(stripslashes($this->serie));
+		}
 
 		/* traitement de Dewey */
 		if (!isset($this->internal_index) || !$this->internal_index) {
@@ -387,7 +394,7 @@ class z3950_notice {
 			$this->link_format = addslashes($this->link_format);
 			$this->prix	 = addslashes($this->prix);
 			//les oubliés du premier tour
-			$serie_id = addslashes($serie_id);
+			$this->serie_id = addslashes($this->serie_id);
 			$this->bibliographic_level = addslashes($this->bibliographic_level);
 			$this->hierarchic_level = addslashes($this->hierarchic_level);
 			$date_parution_z3950 = addslashes($date_parution_z3950);
@@ -439,7 +446,7 @@ class z3950_notice {
 			'".$this->titles[1]."',
 			'".$this->titles[2]."',
 			'".$this->titles[3]."',
-			'".$serie_id."',
+			'".$this->serie_id."',
 			'".$this->nbr_in_serie."',
 			".$editor_ids[0]." ,
 			".$editor_ids[1]." ,
@@ -496,7 +503,8 @@ class z3950_notice {
 			$sql_result_del = pmb_mysql_query($rqt_del) or die ("Couldn't purge table responsability : ".$rqt_del);
 		}
 		$rqt_ins = "insert into responsability (responsability_author, responsability_notice, responsability_fonction, responsability_type, responsability_ordre ) VALUES ";
-		for ($i=0 ; $i<sizeof($this->aut_array) ; $i++ ){
+		$nb_auts = count($this->aut_array);
+		for ($i = 0; $i < $nb_auts; $i++) {
 			$aut['id']=clean_string($this->aut_array[$i]['id']);
 			$aut['name']=clean_string($this->aut_array[$i]['entree']);
 			$aut['rejete']=clean_string($this->aut_array[$i]['rejete']);
@@ -569,17 +577,19 @@ class z3950_notice {
 			$rqt_del = "delete from notices_categories where notcateg_notice='$notice_retour' ";
 			$res_del = @pmb_mysql_query($rqt_del, $dbh);
 			
-			$rqt_ins = "insert into notices_categories (notcateg_notice, num_noeud, ordre_categorie) VALUES ";
-			
-			$rqt_ins_values = array();
-			foreach ($this->categories as $i=>$category) {
-				$id_categ=$category['categ_id'];
-				if ($id_categ) {
-					$rqt_ins_values[] = " ('$notice_retour','$id_categ', $i) " ; 
-				}				
+			if (!empty($this->categories)) {
+				$rqt_ins = "insert into notices_categories (notcateg_notice, num_noeud, ordre_categorie) VALUES ";
+				
+				$rqt_ins_values = array();
+				foreach ($this->categories as $i=>$category) {
+					$id_categ=$category['categ_id'];
+					if ($id_categ) {
+						$rqt_ins_values[] = " ('$notice_retour','$id_categ', $i) " ; 
+					}				
+				}
+				$rqt_ins .= implode(",", $rqt_ins_values);
+				$res_ins = @pmb_mysql_query($rqt_ins, $dbh);
 			}
-			$rqt_ins .= implode(",", $rqt_ins_values);
-			$res_ins = @pmb_mysql_query($rqt_ins, $dbh);
 		}
 		
 		// traitement des concepts
@@ -924,7 +934,9 @@ class z3950_notice {
 		else {
 			$this->subcollection['coll_parent'] = $collection_id;
 			$subcollection_id = subcollection::import ($this->subcollection);
-			$serie_id = serie::import(stripslashes($this->serie));			
+			if(!isset($this->serie_id) || !$this->serie_id) {
+			    $this->serie_id = serie::import(stripslashes($this->serie));
+			}
 		}
 
 		/* traitement de Dewey */
@@ -948,7 +960,7 @@ class z3950_notice {
 			tit2                    ='".$this->titles[1]."',             
 			tit3                    ='".$this->titles[2]."',             
 			tit4                    ='".$this->titles[3]."',             
-			tparent_id              ='".$serie_id."',                    
+			tparent_id              ='".$this->serie_id."',                    
 			tnvol                   ='".$this->nbr_in_serie."',          
 			ed1_id                  =".$editor_ids[0]." ,                
 			ed2_id                  =".$editor_ids[1]." ,                
@@ -996,7 +1008,8 @@ class z3950_notice {
 			$sql_result_del = pmb_mysql_query($rqt_del) or die ("Couldn't purge table responsability : ".$rqt_del);
 			}
 		$rqt_ins = "insert into responsability (responsability_author, responsability_notice, responsability_fonction, responsability_type, responsability_ordre) VALUES ";
-		for ($i=0 ; $i<sizeof($this->aut_array) ; $i++ ){
+		$nb_auts = count($this->aut_array);
+		for ($i = 0; $i < $nb_auts; $i++) {
 			$aut['id'] = clean_string($this->aut_array[$i]['id']);
 			$aut['name'] = (isset($this->aut_array[$i]['entree']) ? clean_string($this->aut_array[$i]['entree']) : '');
 			$aut['rejete'] = (isset($this->aut_array[$i]['rejete']) ? clean_string($this->aut_array[$i]['rejete']) : '');
@@ -1139,10 +1152,27 @@ class z3950_notice {
 		$form_notice = str_replace('!!b_level!!', $this->bibliographic_level, $form_notice);
 		$form_notice = str_replace('!!h_level!!', $this->hierarchic_level, $form_notice);
 		for ($i = 0; $i < 4; $i++) {
-			z3950_notice::substitute ("title_$i", $this->titles[$i], $ptab[0]);
-			}
-		z3950_notice::substitute ("serie", $this->serie, $ptab[0]);
+		    z3950_notice::substitute ("title_$i", (isset($this->titles[$i]) ? $this->titles[$i] : ''), $ptab[0]);
+		}
+		//Titre de série
+		$index_int_sql = "SELECT serie_id, serie_name FROM series WHERE serie_name = '".addslashes($this->serie)."'";
+		$res = pmb_mysql_query($index_int_sql, $dbh);
+		$num_rows = pmb_mysql_num_rows($res);
+		if ($num_rows == 1) {
+		    $the_row = pmb_mysql_fetch_assoc($res);
+		    z3950_notice::substitute ("serie", $the_row["serie_name"], $ptab[0]);
+		    z3950_notice::substitute ("serie_id", $the_row["serie_id"], $ptab[0]);
+		    
+		    z3950_notice::substitute ("serie_type_use_existing", 'checked', $ptab[0]);
+		    z3950_notice::substitute ("serie_type_insert_new", '', $ptab[0]);
+		} else {
+		    z3950_notice::substitute ("serie", "", $ptab[0]);
+		    z3950_notice::substitute ("serie_id", "", $ptab[0]);
+		    z3950_notice::substitute ("serie_type_use_existing", '', $ptab[0]);
+		    z3950_notice::substitute ("serie_type_insert_new", 'checked', $ptab[0]);
+		}
 		z3950_notice::substitute ("nbr_in_serie", $this->nbr_in_serie, $ptab[0]);
+		z3950_notice::substitute ("serie_new_name", $this->serie, $ptab[0]);
 		$form_notice = str_replace('!!tab0!!', $ptab[0], $form_notice);
 		 
 		// mise à jour de l'onglet 1
@@ -1151,8 +1181,9 @@ class z3950_notice {
 		$nb_auteurs_secondaires = 0 ;//print "<pre>";print_r($this->aut_array);print "</pre>";
 		$auteurs_secondaires = '';
 		$autres_auteurs = '';
-		for ($as = 0 ; $as < sizeof($this->aut_array) ; $as++ ){
-			if ($this->aut_array[$as]["responsabilite"]===0) {
+		$nb_auts = count($this->aut_array);
+		for ($as = 0; $as < $nb_auts; $as++) {
+		    if (isset($this->aut_array[$as]["responsabilite"]) && $this->aut_array[$as]["responsabilite"]===0) {
 				$numrows = 0;
 				if ($this->aut_array[$as]["date"]) {
 					$sql_author_find = "SELECT author_id, author_name, author_rejete, author_date FROM authors WHERE author_name = '".addslashes($this->aut_array[$as]["entree"])."' AND author_rejete = '".addslashes($this->aut_array[$as]["rejete"])."' AND author_type = '".$this->aut_array[$as]["type_auteur"]."' AND author_date ='".addslashes($this->aut_array[$as]["date"])."'";
@@ -1179,21 +1210,21 @@ class z3950_notice {
 					z3950_notice::substitute ("f_author_name_0_existing", '', $ptab[1]);
 					z3950_notice::substitute ("f_aut0_existing_id", 0, $ptab[1]);					
 				}
-
-				z3950_notice::substitute ("author_name_0", $this->aut_array[$as]["entree"], $ptab[1]);
-				z3950_notice::substitute ("author_rejete_0", $this->aut_array[$as]["rejete"], $ptab[1]);
-				z3950_notice::substitute ("author_date_0", $this->aut_array[$as]["date"], $ptab[1]);
-				z3950_notice::substitute ("author_function_0", $this->aut_array[$as]["fonction"], $ptab[1]);
-				z3950_notice::substitute ("author_function_label_0", $fonction->table[$this->aut_array[$as]["fonction"]], $ptab[1]);
-				z3950_notice::substitute ("author_lieu_0", (!empty($this->aut_array[$as]["lieu"]) ? $this->aut_array[$as]["lieu"] : ''), $ptab[1]);
-				z3950_notice::substitute ("author_pays_0", (!empty($this->aut_array[$as]["pays"]) ? $this->aut_array[$as]["pays"] : ''), $ptab[1]);
-				z3950_notice::substitute ("author_comment_0", (!empty($this->aut_array[$as]["author_comment"]) ? $this->aut_array[$as]["author_comment"] : ''), $ptab[1]);
-				z3950_notice::substitute ("author_ville_0", (!empty($this->aut_array[$as]["ville"]) ? $this->aut_array[$as]["ville"] : ''), $ptab[1]);
-				z3950_notice::substitute ("author_subdivision_0", (!empty($this->aut_array[$as]["subdivision"]) ? $this->aut_array[$as]["subdivision"] : ''), $ptab[1]);
-				z3950_notice::substitute ("author_numero_0", (!empty($this->aut_array[$as]["numero"]) ? $this->aut_array[$as]["numero"] : ''), $ptab[1]);
-				z3950_notice::substitute ("author_web_0", (!empty($this->aut_array[$as]["web"]) ? $this->aut_array[$as]["web"] : ''), $ptab[1]);
-				z3950_notice::substitute ("authority_number_0", (!empty($this->aut_array[$as]["authority_number"]) ? $this->aut_array[$as]["authority_number"] : ''), $ptab[1]);
 				
+				z3950_notice::substitute ("author_name_0", (empty($this->aut_array[$as]["entree"]) ? '' : $this->aut_array[$as]["entree"]), $ptab[1]);
+				z3950_notice::substitute ("author_rejete_0", (empty($this->aut_array[$as]["rejete"]) ? '' : $this->aut_array[$as]["rejete"]), $ptab[1]);
+				z3950_notice::substitute ("author_date_0", (empty($this->aut_array[$as]["date"]) ? '' : $this->aut_array[$as]["date"]), $ptab[1]);
+				z3950_notice::substitute ("author_function_0", (empty($this->aut_array[$as]["fonction"]) ? '' : $this->aut_array[$as]["fonction"]), $ptab[1]);
+				z3950_notice::substitute ("author_function_label_0", (empty($this->aut_array[$as]["fonction"]) ? '' : $fonction->table[$this->aut_array[$as]["fonction"]]), $ptab[1]);
+				z3950_notice::substitute ("author_lieu_0", (empty($this->aut_array[$as]["lieu"]) ? '' : $this->aut_array[$as]["lieu"]), $ptab[1]);
+				z3950_notice::substitute ("author_pays_0", (empty($this->aut_array[$as]["pays"]) ? '' : $this->aut_array[$as]["pays"]), $ptab[1]);
+				z3950_notice::substitute ("author_comment_0", (empty($this->aut_array[$as]["author_comment"]) ? '' : $this->aut_array[$as]["author_comment"]), $ptab[1]);
+				z3950_notice::substitute ("author_ville_0", (empty($this->aut_array[$as]["ville"]) ? '' : $this->aut_array[$as]["ville"]), $ptab[1]);
+				z3950_notice::substitute ("author_subdivision_0", (empty($this->aut_array[$as]["subdivision"]) ? '' : $this->aut_array[$as]["subdivision"]), $ptab[1]);
+				z3950_notice::substitute ("author_numero_0", (empty($this->aut_array[$as]["numero"]) ? '' : $this->aut_array[$as]["numero"]), $ptab[1]);
+				z3950_notice::substitute ("author_web_0", (empty($this->aut_array[$as]["web"]) ? '' : $this->aut_array[$as]["web"]), $ptab[1]);
+				z3950_notice::substitute ("authority_number_0", (empty($this->aut_array[$as]["authority_number"]) ? '' : $this->aut_array[$as]["authority_number"]), $ptab[1]);
+						
 				for ($type = 70; $type <= 72; $type++) {
 					if ($this->aut_array[$as]["type_auteur"] == $type) 
 						$sel = " selected";
@@ -1205,8 +1236,8 @@ class z3950_notice {
 						z3950_notice::substitute ('display_0','', $ptab[1]);
 				}						
 					
-				}
-			if ($this->aut_array[$as]["responsabilite"]==1) {
+			}
+			if (isset($this->aut_array[$as]["responsabilite"]) && $this->aut_array[$as]["responsabilite"]==1) {
 				if ($this->aut_array[$as]["entree"] == "") continue; 
 				$ptab_aut_autres = str_replace('!!iaut!!', $nb_autres_auteurs, $ptab[11]) ;
 
@@ -1236,20 +1267,20 @@ class z3950_notice {
 					z3950_notice::substitute ("f_aut1", '', $ptab_aut_autres);
 					z3950_notice::substitute ("f_aut1_id", '', $ptab_aut_autres);
 				}
-
-				z3950_notice::substitute ("author_name_1", $this->aut_array[$as]["entree"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_rejete_1", $this->aut_array[$as]["rejete"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_date_1", $this->aut_array[$as]["date"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_function_1", $this->aut_array[$as]["fonction"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_function_label_1", $fonction->table[$this->aut_array[$as]["fonction"]], $ptab_aut_autres);
-				z3950_notice::substitute ("author_lieu_1", $this->aut_array[$as]["lieu"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_pays_1", $this->aut_array[$as]["pays"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_comment_1", $this->aut_array[$as]["author_comment"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_ville_1", $this->aut_array[$as]["ville"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_subdivision_1", $this->aut_array[$as]["subdivision"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_numero_1", $this->aut_array[$as]["numero"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_web_1", $this->aut_array[$as]["web"], $ptab_aut_autres);
-				z3950_notice::substitute ("authority_number_1", $this->aut_array[$as]["authority_number"], $ptab_aut_autres);
+				
+				z3950_notice::substitute ("author_name_1", (empty($this->aut_array[$as]["entree"]) ? '' : $this->aut_array[$as]["entree"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_rejete_1", (empty($this->aut_array[$as]["rejete"]) ? '' : $this->aut_array[$as]["rejete"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_date_1", (empty($this->aut_array[$as]["date"]) ? '' : $this->aut_array[$as]["date"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_function_1", (empty($this->aut_array[$as]["fonction"]) ? '' : $this->aut_array[$as]["fonction"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_function_label_1", (empty($this->aut_array[$as]["fonction"]) ? '' : $fonction->table[$this->aut_array[$as]["fonction"]]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_lieu_1", (empty($this->aut_array[$as]["lieu"]) ? '' : $this->aut_array[$as]["lieu"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_pays_1", (empty($this->aut_array[$as]["pays"]) ? '' : $this->aut_array[$as]["pays"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_comment_1", (empty($this->aut_array[$as]["author_comment"]) ? '' : $this->aut_array[$as]["author_comment"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_ville_1", (empty($this->aut_array[$as]["ville"]) ? '' : $this->aut_array[$as]["ville"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_subdivision_1", (empty($this->aut_array[$as]["subdivision"]) ? '' : $this->aut_array[$as]["subdivision"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_numero_1", (empty($this->aut_array[$as]["numero"]) ? '' : $this->aut_array[$as]["numero"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_web_1", (empty($this->aut_array[$as]["web"]) ? '' : $this->aut_array[$as]["web"]), $ptab_aut_autres);
+				z3950_notice::substitute ("authority_number_1", (empty($this->aut_array[$as]["authority_number"]) ? '' : $this->aut_array[$as]["authority_number"]), $ptab_aut_autres);
 				for ($type = 70; $type <= 72; $type++) {
 					if ($this->aut_array[$as]["type_auteur"] == $type) $sel = " selected";
 						else $sel = "";
@@ -1262,10 +1293,8 @@ class z3950_notice {
 					
 				$autres_auteurs .= $ptab_aut_autres ;
 				$nb_autres_auteurs++ ;
-				}
-				
-			
-			if ($this->aut_array[$as]["responsabilite"]==2) {
+			}			
+			if (isset($this->aut_array[$as]["responsabilite"]) && $this->aut_array[$as]["responsabilite"]==2) {
 				if ($this->aut_array[$as]["entree"] == "") continue; 
 				$ptab_aut_autres = str_replace('!!iaut!!', $nb_auteurs_secondaires, $ptab[12]) ;
 				
@@ -1296,19 +1325,19 @@ class z3950_notice {
 					z3950_notice::substitute ("f_aut2_id", 0, $ptab_aut_autres);
 				}
 				
-				z3950_notice::substitute ("author_name_2", $this->aut_array[$as]["entree"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_rejete_2", $this->aut_array[$as]["rejete"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_date_2", $this->aut_array[$as]["date"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_function_2", $this->aut_array[$as]["fonction"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_function_label_2", $fonction->table[$this->aut_array[$as]["fonction"]], $ptab_aut_autres);
-				z3950_notice::substitute ("author_lieu_2", $this->aut_array[$as]["lieu"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_pays_2", $this->aut_array[$as]["pays"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_comment_2", $this->aut_array[$as]["author_comment"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_ville_2", $this->aut_array[$as]["ville"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_subdivision_2", $this->aut_array[$as]["subdivision"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_numero_2", $this->aut_array[$as]["numero"], $ptab_aut_autres);
-				z3950_notice::substitute ("author_web_2", $this->aut_array[$as]["web"], $ptab_aut_autres);
-				z3950_notice::substitute ("authority_number_2", $this->aut_array[$as]["authority_number"], $ptab_aut_autres);
+				z3950_notice::substitute ("author_name_2", (empty($this->aut_array[$as]["entree"]) ? '' : $this->aut_array[$as]["entree"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_rejete_2", (empty($this->aut_array[$as]["rejete"]) ? '' : $this->aut_array[$as]["rejete"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_date_2", (empty($this->aut_array[$as]["date"]) ? '' : $this->aut_array[$as]["date"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_function_2", (empty($this->aut_array[$as]["fonction"]) ? '' : $this->aut_array[$as]["fonction"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_function_label_2", (empty($this->aut_array[$as]["fonction"]) ? '' : $fonction->table[$this->aut_array[$as]["fonction"]]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_lieu_2", (empty($this->aut_array[$as]["lieu"]) ? '' : $this->aut_array[$as]["lieu"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_pays_2", (empty($this->aut_array[$as]["pays"]) ? '' : $this->aut_array[$as]["pays"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_comment_2", (empty($this->aut_array[$as]["author_comment"]) ? '' : $this->aut_array[$as]["author_comment"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_ville_2", (empty($this->aut_array[$as]["ville"]) ? '' : $this->aut_array[$as]["ville"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_subdivision_2", (empty($this->aut_array[$as]["subdivision"]) ? '' : $this->aut_array[$as]["subdivision"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_numero_2", (empty($this->aut_array[$as]["numero"]) ? '' : $this->aut_array[$as]["numero"]), $ptab_aut_autres);
+				z3950_notice::substitute ("author_web_2", (empty($this->aut_array[$as]["web"]) ? '' : $this->aut_array[$as]["web"]), $ptab_aut_autres);
+				z3950_notice::substitute ("authority_number_2", (empty($this->aut_array[$as]["authority_number"]) ? '' : $this->aut_array[$as]["authority_number"]), $ptab_aut_autres);
 				for ($type = 70; $type <= 72; $type++) {
 					if ($this->aut_array[$as]["type_auteur"] == $type) 
 						$sel = " selected";
@@ -1447,8 +1476,7 @@ class z3950_notice {
 			}
 			z3950_notice::substitute ("f_ed11", $editor_display, $ptab[2]);
 			z3950_notice::substitute ("f_ed11_id", $existing_publisher_id2, $ptab[2]);
-		}
-		else {
+		} else {
 			z3950_notice::substitute ("f_ed11", '', $ptab[2]);
 			z3950_notice::substitute ("f_ed11_id", '', $ptab[2]);
 		}
@@ -1556,6 +1584,7 @@ class z3950_notice {
 		
 		$ptab[6] = str_replace("!!multiple_pclass_combo_box!!", $pclassement_combobox, $ptab[6]);
 
+		if (!isset($this->dewey[0])) $this->dewey[0]='';
 		$index_int_sql = "SELECT indexint_name, indexint_comment, indexint_id, name_pclass FROM indexint LEFT JOIN pclassement ON (pclassement.id_pclass = indexint.num_pclass) WHERE indexint_name = '".addslashes($this->dewey[0])."'";
 		$res = pmb_mysql_query($index_int_sql, $dbh);
 		$num_rows = pmb_mysql_num_rows($res);
@@ -1567,9 +1596,7 @@ class z3950_notice {
 			z3950_notice::substitute ("indexint_type_use_existing", 'checked', $ptab[6]);
 			z3950_notice::substitute ("indexint_type_insert_new", '', $ptab[6]);
 			z3950_notice::substitute ("multiple_index_int_propositions", '', $ptab[6]);
-		}
-		else if ($num_rows > 1) {
-			
+		} else if ($num_rows > 1) {			
 			$index_ints = array();
 			while($row = pmb_mysql_fetch_assoc($res)) {
 				$index_ints[] = array("id" => $row["indexint_id"], "name" => $row["indexint_name"], "comment" => $row["indexint_comment"], "pclass" => $row["name_pclass"]);
@@ -1612,7 +1639,7 @@ class z3950_notice {
 		// Gestion des titres uniformes
 		$value_tu = array();
 		$ntu_data = array();
-		$nb_tu=sizeof($this->tu_500);
+		$nb_tu = count($this->tu_500);
 		for ($i=0 ; $i<$nb_tu ; $i++ ) {
 			$value_tu[$i]['name'] = $this->tu_500[$i]['a'];
 			$ntu_data[$i] = new stdClass();
@@ -1669,37 +1696,43 @@ class z3950_notice {
 		// langues répétables
 		$lang_repetables = '';
 		$lang = new marc_list('lang');
-		if (sizeof($this->language_code)==0) $max_lang = 1 ;
-			else $max_lang = sizeof($this->language_code) ; 
+		if (empty($this->language_code)) {
+		    $max_lang = 1;
+		} else {
+		    $max_lang = count($this->language_code); 
+		}
 		for ($i = 0 ; $i < $max_lang ; $i++) {
 			if ($i) $ptab_lang = str_replace('!!ilang!!', $i, $ptab[701]) ;
 				else $ptab_lang = str_replace('!!ilang!!', $i, $ptab[70]) ;
-			if ( sizeof($this->language_code)==0 ) { 
+			if (empty($this->language_code)) { 
 				$ptab_lang = str_replace('!!lang_code!!', '', $ptab_lang);
 				$ptab_lang = str_replace('!!lang!!', '', $ptab_lang);		
-				} else {
-					$ptab_lang = str_replace('!!lang_code!!', $this->language_code[$i], $ptab_lang);
-					$ptab_lang = str_replace('!!lang!!',htmlentities($lang->table[$this->language_code[$i]],ENT_QUOTES, $charset), $ptab_lang);
-					}
-			$lang_repetables .= $ptab_lang ;
+			} else {
+				$ptab_lang = str_replace('!!lang_code!!', $this->language_code[$i], $ptab_lang);
+				$ptab_lang = str_replace('!!lang!!',htmlentities($lang->table[$this->language_code[$i]],ENT_QUOTES, $charset), $ptab_lang);
 			}
+			$lang_repetables .= $ptab_lang ;
+		}
 		$ptab[7] = str_replace('!!max_lang!!', $max_lang, $ptab[7]);
 		$ptab[7] = str_replace('!!langues_repetables!!', $lang_repetables, $ptab[7]);
 
 		// langues originales répétables
 		$langorg_repetables = '';
-		if (sizeof($this->original_language_code)==0) $max_langorg = 1 ;
-			else $max_langorg = sizeof($this->original_language_code) ; 
+		if (empty($this->original_language_code)) {
+		    $max_langorg = 1;
+		} else {
+		    $max_langorg = count($this->original_language_code); 
+		}
 		for ($i = 0 ; $i < $max_langorg ; $i++) {
 			if ($i) $ptab_lang = str_replace('!!ilangorg!!', $i, $ptab[711]) ;
-				else $ptab_lang = str_replace('!!ilangorg!!', $i, $ptab[71]) ;
-			if ( sizeof($this->original_language_code)==0 ) { 
+			else $ptab_lang = str_replace('!!ilangorg!!', $i, $ptab[71]) ;
+			if (empty($this->original_language_code)) { 
 				$ptab_lang = str_replace('!!langorg_code!!', '', $ptab_lang);
 				$ptab_lang = str_replace('!!langorg!!', '', $ptab_lang);		
-				} else {
-					$ptab_lang = str_replace('!!langorg_code!!', $this->original_language_code[$i], $ptab_lang);
-					$ptab_lang = str_replace('!!langorg!!',htmlentities($lang->table[$this->original_language_code[$i]],ENT_QUOTES, $charset), $ptab_lang);
-				}
+			} else {
+				$ptab_lang = str_replace('!!langorg_code!!', $this->original_language_code[$i], $ptab_lang);
+				$ptab_lang = str_replace('!!langorg!!',htmlentities($lang->table[$this->original_language_code[$i]],ENT_QUOTES, $charset), $ptab_lang);
+			}
 			$langorg_repetables .= $ptab_lang ;
 		}
 		$ptab[7] = str_replace('!!max_langorg!!', $max_langorg, $ptab[7]);
@@ -1735,11 +1768,11 @@ class z3950_notice {
 		}
 		
 		//Zone des perios et des bulletins pour les articles
-		$zone_article_form  = str_replace("!!perio_titre!!",$this->perio_titre[0],$zone_article_form );
-		$zone_article_form  = str_replace("!!perio_issn!!",$this->perio_issn[0],$zone_article_form );
-		$zone_article_form  = str_replace("!!bull_date!!",$this->bull_mention[0],$zone_article_form );
-		$zone_article_form  = str_replace("!!bull_titre!!",$this->bull_titre[0],$zone_article_form );
-		$zone_article_form  = str_replace("!!bull_num!!",$this->bull_num[0],$zone_article_form );
+		$zone_article_form  = str_replace("!!perio_titre!!",(isset($this->perio_titre[0]) ? $this->perio_titre[0] : ''),$zone_article_form );
+		$zone_article_form  = str_replace("!!perio_issn!!",(isset($this->perio_issn[0]) ? $this->perio_issn[0] : ''),$zone_article_form );
+		$zone_article_form  = str_replace("!!bull_date!!",(isset($this->bull_mention[0]) ? $this->bull_mention[0] : ''),$zone_article_form );
+		$zone_article_form  = str_replace("!!bull_titre!!",(isset($this->bull_titre[0]) ? $this->bull_titre[0] : ''),$zone_article_form );
+		$zone_article_form  = str_replace("!!bull_num!!",(isset($this->bull_num[0]) ? $this->bull_num[0] : ''),$zone_article_form );
 		
 		if($this->bull_date[0]) {
 			$date_date_formatee = formatdate_input($this->bull_date[0]);
@@ -1756,7 +1789,7 @@ class z3950_notice {
 		
 		//On cherche si le perio existe
 		$num_rows_perio = 0;
-		if($this->perio_titre[0] && $this->perio_issn[0]){
+		if (!empty($this->perio_titre[0]) && !empty($this->perio_issn[0])) {
 			$req="select notice_id, tit1 from notices where niveau_biblio='s' and niveau_hierar='1' 
 					and tit1='".addslashes($this->perio_titre[0])."'
 					and code='".addslashes($this->perio_issn[0])."' limit 1";
@@ -1764,7 +1797,7 @@ class z3950_notice {
 			$num_rows_perio = pmb_mysql_num_rows($res_perio);
 		}
 		if (!$num_rows_perio){
-			if($this->perio_titre[0]){
+			if (!empty($this->perio_titre[0])) {
 				$req="select notice_id, tit1 from notices where niveau_biblio='s' and niveau_hierar='1' 
 					and tit1='".addslashes($this->perio_titre[0])."'
 					limit 1";
@@ -1773,7 +1806,7 @@ class z3950_notice {
 			}
 		}
 		if (!$num_rows_perio){
-			if($this->perio_issn[0]){
+			if (!empty($this->perio_issn[0])) {
 				$req="select notice_id, tit1 from notices where niveau_biblio='s' and niveau_hierar='1' 
 						and code='".addslashes($this->perio_issn[0])."' limit 1";
 				$res_perio = pmb_mysql_query($req,$dbh);
@@ -1797,29 +1830,29 @@ class z3950_notice {
 
 		//On cherche si le bulletin existe
 		$num_rows_bull=0;
-		if($this->bull_num[0] && $idperio){
+		if (!empty($this->bull_num[0]) && !empty($idperio)) {
 			$req="select bulletin_id, bulletin_numero,date_date,mention_date from bulletins where bulletin_notice='".$idperio."' and  bulletin_numero like '%".addslashes($this->bull_num[0])."%' ";
 			$res_bull = pmb_mysql_query($req,$dbh);
 			$num_rows_bull = pmb_mysql_num_rows($res_bull);
 		}
-		if(!$num_rows_bull && $this->bull_date[0] && $idperio){
+		if (empty($num_rows_bull) && !empty($this->bull_date[0]) && !empty($idperio)) {
 			$req="select bulletin_id, bulletin_numero,date_date,mention_date from bulletins where bulletin_notice='".$idperio."' and date_date='".addslashes($this->bull_date[0])."' ";
 			$res_bull = pmb_mysql_query($req,$dbh);
 			$num_rows_bull = pmb_mysql_num_rows($res_bull);
-		}elseif(($num_rows_bull > 1) && $this->bull_date[0] && $idperio){
+		} elseif (($num_rows_bull > 1) && !empty($this->bull_date[0]) && !empty($idperio)) {
 			$req="select bulletin_id, bulletin_numero,date_date,mention_date from bulletins where bulletin_notice='".$idperio."' and date_date='".addslashes($this->bull_date[0])."' and  bulletin_numero like '%".addslashes($this->bull_num[0])."%' ";
 			$res_bull = pmb_mysql_query($req,$dbh);
 			$num_rows_bull = pmb_mysql_num_rows($res_bull);
 		}
-		if(!$num_rows_bull && $this->bull_mention[0] && $idperio){
+		if (empty($num_rows_bull) && !empty($this->bull_mention[0]) && !empty($idperio)) {
 			$req="select bulletin_id, bulletin_numero,date_date,mention_date from bulletins where bulletin_notice='".$idperio."' and mention_date='".addslashes($this->bull_mention[0])."' ";
 			$res_bull = pmb_mysql_query($req,$dbh);
 			$num_rows_bull = pmb_mysql_num_rows($res_bull);
-		}elseif(($num_rows_bull > 1) && $this->bull_mention[0] && $idperio){
-			if($this->bull_date[0]){
-				$req="select bulletin_id, bulletin_numero,date_date,mention_date from bulletins where bulletin_notice='".$idperio."' and date_date='".addslashes($this->bull_date[0])."' and mention_date='".addslashes($this->bull_mention[0])."' ";
-			}else{
-				$req="select bulletin_id, bulletin_numero,date_date,mention_date from bulletins where bulletin_notice='".$idperio."' and mention_date='".addslashes($this->bull_mention[0])."' and  bulletin_numero like '%".addslashes($this->bull_num[0])."%' ";
+		} elseif (($num_rows_bull > 1) && !empty($this->bull_mention[0]) && !empty($idperio)) {
+		    if (!empty($this->bull_date[0])) {
+				$req = "select bulletin_id, bulletin_numero,date_date,mention_date from bulletins where bulletin_notice='".$idperio."' and date_date='".addslashes($this->bull_date[0])."' and mention_date='".addslashes($this->bull_mention[0])."' ";
+			} else {
+				$req = "select bulletin_id, bulletin_numero,date_date,mention_date from bulletins where bulletin_notice='".$idperio."' and mention_date='".addslashes($this->bull_mention[0])."' and  bulletin_numero like '%".addslashes($this->bull_num[0])."%' ";
 			}
 			$res_bull = pmb_mysql_query($req,$dbh);
 			$num_rows_bull = pmb_mysql_num_rows($res_bull);
@@ -1852,8 +1885,10 @@ class z3950_notice {
 			$form_notice = str_replace('!!notice_entrepot!!', "<input type='hidden' name='item' value='$item' />", $form_notice);
 		} else $form_notice = str_replace('!!notice_entrepot!!', "", $form_notice);
 		
-		$form_notice = str_replace('!!orinot_nom!!', $this->origine_notice['nom'], $form_notice);
-		$form_notice = str_replace('!!orinot_pays!!', $this->origine_notice['pays'], $form_notice);
+		if (!empty($this->origine_notice)) {
+    		$form_notice = str_replace('!!orinot_nom!!', $this->origine_notice['nom'], $form_notice);
+    		$form_notice = str_replace('!!orinot_pays!!', $this->origine_notice['pays'], $form_notice);
+		}
 		//Traitement du 503 "titre de forme" pour le Musée des beaux arts de Nantes 
 		global $tableau_503;
 		$tableau_503 = array( 	"info_503" => $this->info_503,
@@ -2072,7 +2107,7 @@ class z3950_notice {
 		$combo = "<select name='indexation_lang' id='indexation_lang' class='saisie-20em' >";
 		if(!$user_lang) $combo .= "<option value='' selected>--</option>";
 		else $combo .= "<option value='' >--</option>";
-		while(list($cle, $value) = each($clang)) {
+		foreach ($clang as $cle => $value) {
 			// arabe seulement si on est en utf-8
 			if (($charset != 'utf-8' and $user_lang != 'ar') or ($charset == 'utf-8')) {
 				if(strcmp($cle, $user_lang) != 0) $combo .= "<option value='$cle'>$value ($cle)</option>";
@@ -2089,9 +2124,9 @@ class z3950_notice {
 			$res_statut=pmb_mysql_query($rqt_statut);
 			$stat = pmb_mysql_fetch_object($res_statut) ;
 			$select_statut = gen_liste_multiple ("select id_notice_statut, gestion_libelle from notice_statut order by 2", "id_notice_statut", "gestion_libelle", "id_notice_statut", "form_notice_statut", "", $stat->statut, "", "","","",0) ;
-			} else {
-				$select_statut = gen_liste_multiple ("select id_notice_statut, gestion_libelle from notice_statut order by 2", "id_notice_statut", "gestion_libelle", "id_notice_statut", "form_notice_statut", "", $deflt_integration_notice_statut, "", "","","",0) ;
-			}
+		} else {
+			$select_statut = gen_liste_multiple ("select id_notice_statut, gestion_libelle from notice_statut order by 2", "id_notice_statut", "gestion_libelle", "id_notice_statut", "form_notice_statut", "", $deflt_integration_notice_statut, "", "","","",0) ;
+		}
 		$ptab[10] = str_replace('!!notice_statut!!', $select_statut, $ptab[10]);
 		$ptab[10] = str_replace('!!commentaire_gestion!!', (!empty($this->commentaire_gestion) ? htmlentities($this->commentaire_gestion, ENT_QUOTES, $charset) : ''), $ptab[10]);
 		$ptab[10] = str_replace('!!thumbnail_url!!',htmlentities($this->thumbnail_url,ENT_QUOTES, $charset), $ptab[10]);
@@ -2191,7 +2226,7 @@ class z3950_notice {
 
 	// Traitement retour du formulaire
 	public function from_form () {
-		global $typdoc, $b_level, $h_level, $f_title_0, $f_title_1, $f_title_2, $f_title_3, $f_serie, $f_nbr_in_serie ;
+	    global $typdoc, $b_level, $h_level, $f_title_0, $f_title_1, $f_title_2, $f_title_3, $f_serie, $f_serie_id, $f_nbr_in_serie ;
 		global $f_editor_name_0, $f_editor_ville_0, $f_editor_name_1, $f_editor_ville_1, $f_collection_name, $f_collection_issn, $f_subcollection_name, $f_subcollection_issn,
 			$f_nbr_in_collection, $f_year, $f_mention_edition, $f_cb, $f_page_nbr, $f_illustration, $f_size, $f_prix, $f_accompagnement,
 			$f_general_note, $f_content_note, $f_abstract_note, 
@@ -2258,7 +2293,14 @@ class z3950_notice {
 		$this->titles[1] = clean_string ($f_title_1);
 		$this->titles[2] = clean_string ($f_title_2);
 		$this->titles[3] = clean_string ($f_title_3);
-		$this->serie = clean_string ($f_serie);
+		global $serie_type;
+		if ($serie_type == "use_existing") {
+		    $this->serie = clean_string (stripslashes($f_serie));
+		    $this->serie_id = $f_serie_id;
+		} else {
+		    global $f_serie_new;
+		    $this->serie = clean_string (stripslashes($f_serie_new));
+		}
 		$this->nbr_in_serie = clean_string ($f_nbr_in_serie);
 
 		$this->aut_array = array () ;
@@ -2286,11 +2328,11 @@ class z3950_notice {
 				'fonction' => $f_author_function_0,
 				'id' => 0,
 				'responsabilite' => 0,
-				'lieu' =>  $f_author_lieu_0,
-				'pays' => $f_author_pays_0,
-				'author_comment' => $f_author_comment_0,
-				'ville' => $f_author_ville_0,
-				'subdivision' => $f_author_subdivision_0,
+				'lieu' =>  stripslashes($f_author_lieu_0),
+				'pays' => stripslashes($f_author_pays_0),
+				'author_comment' => stripslashes($f_author_comment_0),
+				'ville' => stripslashes($f_author_ville_0),
+				'subdivision' => stripslashes($f_author_subdivision_0),
 				'numero' => $f_author_numero_0,
 				'web' => $f_author_web_0,
 				'authority_number' => $f_authority_number_0 );			
@@ -2336,11 +2378,11 @@ class z3950_notice {
 					'fonction' => ${$var_aut_function},
 					'id' => 0,
 					'responsabilite' => 1,
-					'lieu' => ${$var_aut_lieu},
-					'pays' => ${$var_aut_pays},
-					'author_comment' => ${$var_aut_comment},
-					'ville' => ${$var_aut_ville},
-					'subdivision' => ${$var_aut_subdivision},
+					'lieu' => stripslashes(${$var_aut_lieu}),
+					'pays' => stripslashes(${$var_aut_pays}),
+					'author_comment' => stripslashes(${$var_aut_comment}),
+					'ville' => stripslashes(${$var_aut_ville}),
+					'subdivision' => stripslashes(${$var_aut_subdivision}),
 					'numero' => ${$var_aut_numero},
 					'web' => ${$var_aut_web},
 					'authority_number' => ${$var_aut_number} );
@@ -2386,11 +2428,11 @@ class z3950_notice {
 					'fonction' => ${$var_aut_function},
 					'id' => 0,
 					'responsabilite' => 2,
-					'lieu' => ${$var_aut_lieu},
-					'pays' => ${$var_aut_pays},
-					'author_comment' => ${$var_aut_comment},
-					'ville' => ${$var_aut_ville},
-					'subdivision' => ${$var_aut_subdivision},
+					'lieu' => stripslashes(${$var_aut_lieu}),
+					'pays' => stripslashes(${$var_aut_pays}),
+					'author_comment' => stripslashes(${$var_aut_comment}),
+					'ville' => stripslashes(${$var_aut_ville}),
+					'subdivision' => stripslashes(${$var_aut_subdivision}),
 					'numero' => ${$var_aut_numero},
 					'web' => ${$var_aut_web},
 					'authority_number' => ${$var_aut_number} );			
@@ -2839,9 +2881,9 @@ class z3950_notice {
 		*/
 		$this->aut_array = array();
 		/* on compte tout de suite le nbre d'enreg dans les répétables */
-		$nb_repet_700=sizeof($aut_700);
-		$nb_repet_710=sizeof($aut_710);
-		$nb_repet_711=sizeof($aut_711);
+		$nb_repet_700 = count($aut_700);
+		$nb_repet_710 = count($aut_710);
+		$nb_repet_711 = count($aut_711);
 
 		/* renseignement de aut0 */
 		if ($aut_100[0]['a']!="") { /* auteur principal en 100 ? */
@@ -2917,10 +2959,10 @@ class z3950_notice {
 		/* Editors */
 		$this->year = preg_replace ("/[^0-9\[\]()]/", "", $editor[0]['c']);
 
-		$this->editors[0]['name'] = $this->clean_field ($editor[0][b]);
+		$this->editors[0]['name'] = $this->clean_field ($editor[0]['b']);
 		$this->editors[0]['ville'] = $this->clean_field ($editor[0]['a']);
 
-		$this->editors[1]['name'] = $this->clean_field ($editor[1][b]);
+		$this->editors[1]['name'] = $this->clean_field ($editor[1]['b']);
 		$this->editors[1]['ville'] = $this->clean_field ($editor[1]['a']);
 		
 		/* ici traitement des collections */
@@ -2961,8 +3003,8 @@ class z3950_notice {
 		$this->subcollection['issn']=clean_string($subcoll_issn);
 				
 		/* Series */
-		$this->serie = clean_string ($tit[0][p]);
-		$this->nbr_in_serie = clean_string ($tit[0][n]);
+		$this->serie = clean_string ($tit[0]['p']);
+		$this->nbr_in_serie = clean_string ($tit[0]['n']);
 		
 		/* traitement ressources */
 		$this->link_url = $ressource[0]["u"];
@@ -2972,7 +3014,7 @@ class z3950_notice {
 		$this->titles[0] = preg_replace('/-$| $|\||\($|\)$|\[$|\]$|\:$|\;$|\/$|\\$|\.+$/', '', trim($tit[0]['a']));
 		$this->titles[1] = preg_replace('/-$| $|\||\($|\)$|\[$|\]$|\:$|\;$|\/$\|\$|\.+$/', '', trim($tit_sup[0]['a']));
 		$this->titles[2] = preg_replace('/-$| $|\||\($|\)$|\[$|\]$|\:$|\;$|\/$\|\$|\.+$/', '', trim($tit_for[0]['a']));
-		$this->titles[3] = preg_replace('/-$| $|\||\($|\)$|\[$|\]$|\:$|\;$|\/$\|\$|\.+$/', '', trim($tit[0][b]));
+		$this->titles[3] = preg_replace('/-$| $|\||\($|\)$|\[$|\]$|\:$|\;$|\/$\|\$|\.+$/', '', trim($tit[0]['b']));
 
 		$this->general_note = "";
 		$this->content_note = "";
@@ -3009,19 +3051,19 @@ class z3950_notice {
 		}
 		if(function_exists("param_perso_prepare"))  param_perso_prepare($record);
 		$indicateur = array();
-		$isbn = '';
+		$isbn = array();
 		$cb = '';
-		$tit = '';
-		$editeur_lieu = '';
+		$tit = array();
+		$editeur_lieu = array();
 		$editeur_nom = '';
-		$editeur_date = '';
-		$editeur_date_machine = '';
-		$collection_225 = '';
+		$editeur_date = array();
+		$editeur_date_machine = array();
+		$collection_225 = array();
 		$general_note = '';
 		$content_note = '';
 		$abstract_note = '';
 		$EAN = '';
-		$collection_411 = '';
+		$collection_411 = array();
 		$bulletin_463 = '';
 		$perio530a = '';
 		$index_sujets = '';
@@ -3031,8 +3073,8 @@ class z3950_notice {
 		$aut_710 = array();
 		$aut_711 = array();
 		$aut_712 = array();
-		$origine_notice = '';
-		$ressource = '';
+		$origine_notice = array();
+		$ressource = array();
 		$info_995 = '';
 		for ($i=0;$i<count($record->inner_directory);$i++) {
 			$cle=$record->inner_directory[$i]['label'];
@@ -3074,6 +3116,7 @@ class z3950_notice {
 					$this->mention_edition = $subfield[0];
 					break;
 				case "210": /* publisher */
+				case "219":
 					$editeur_lieu=$record->get_subfield_array_array($cle, "a");
 					$editeur_nom=$record->get_subfield_array_array($cle, "c");
 					$editeur_date=$record->get_subfield_array($cle, "d");
@@ -3283,8 +3326,8 @@ class z3950_notice {
 					$this->exemplaires = $info_995;
 					break;
 				case "896": /* Thumbnail */
-					$this->thumbnail_url = $record->get_subfield($cle,"a");
-					$this->thumbnail_url = $this->thumbnail_url[0];
+					$thumbnail_url = $record->get_subfield($cle,"a");
+					$this->thumbnail_url = $thumbnail_url[0];
 					break;
 				//Documents numériques
 				case "897":
@@ -3318,10 +3361,10 @@ class z3950_notice {
 		*/
 		$this->aut_array = array();
 		/* on compte tout de suite le nbre d'enreg dans les répétables */
-		$nb_repet_701=sizeof($aut_701);
-		$nb_repet_711=sizeof($aut_711);
-		$nb_repet_702=sizeof($aut_702);
-		$nb_repet_712=sizeof($aut_712);
+		$nb_repet_701 = count($aut_701);
+		$nb_repet_711 = count($aut_711);
+		$nb_repet_702 = count($aut_702);
+		$nb_repet_712 = count($aut_712);
 
 		/* renseignement de aut0 */
 		if (isset($aut_700[0]['a']) && $aut_700[0]['a']!="") { /* auteur principal en 700 ? */
@@ -3374,7 +3417,7 @@ class z3950_notice {
 				"responsabilite" => 1,
 				"ordre" => ($i+1) ,
 				"authority_number" => $aut_701[$i][3]) ;
-			}
+		}
 		for ($i=0 ; $i < $nb_repet_711 ; $i++) {
 			if(substr($indicateur["711"][$i],0,1)=="1")	$type_auteur="72";
 			else $type_auteur="71";	
@@ -3412,7 +3455,7 @@ class z3950_notice {
 				"responsabilite" => 2,
 				"ordre" => ($i+1) ,
 				"authority_number" => $aut_702[$i][3]) ;
-			}
+		}
 		for ($i=0 ; $i < $nb_repet_712 ; $i++) {
 			if(substr($indicateur["712"][$i],0,1)=="1")	$type_auteur="72";
 			else $type_auteur="71";
@@ -3436,7 +3479,7 @@ class z3950_notice {
 				"pays" => $aut_712[$i]['m'],
 				"ordre" => ($i+1) ,
 				"authority_number" => $aut_712[$i][3]) ;
-			}
+		}
 		/*  Added for some italian z39.50 server 
 		Some adjustment to clean the values from symbol like << and others */
 		for ($i=0 ; $i < $nb_repet_701+$nb_repet_711+$nb_repet_702 +$nb_repet_712+1 ; $i++) {

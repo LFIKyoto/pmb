@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sort.tpl.php,v 1.14 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: sort.tpl.php,v 1.15 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -10,6 +10,7 @@ global $ligne_tableau_tris;
 global $show_tris_form;
 global $liste_criteres_tri;
 global $show_sel_form;
+global $msg;
 
 $ligne_tableau_tris = "
 <tr class='!!pair_impair!!' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='!!pair_impair!!'\" style='cursor: pointer'>

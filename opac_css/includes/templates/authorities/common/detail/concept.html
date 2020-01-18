@@ -1,6 +1,6 @@
 {% extends 'gabarit.html' %}
 
-<!-- $Id: concept.html,v 1.1 2018-04-05 10:39:42 dgoron Exp $ -->
+<!-- $Id: concept.html,v 1.2 2019-05-22 10:01:41 ngantier Exp $ -->
 
 {% block detail %}
 	<b>{{ msg.ontology_object_uri }} :</b> {{ element.uri }}<br />
@@ -16,6 +16,11 @@
 			<div class="aut_display_cell">
 				{{ element.note | nl2br }}
 			</div>
+		</div>
+	{% endif %}
+	{% if element.map.map %}
+		<div class="map_notice">
+			{{ element.map.map }}
 		</div>
 	{% endif %}
 {% endblock detail %}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: campaign_proxy.class.php,v 1.1 2018-03-01 16:49:42 dgoron Exp $
+// $Id: campaign_proxy.class.php,v 1.2 2019-02-20 14:18:55 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -24,7 +24,9 @@ class campaign_proxy {
 		$links = preg_match_all('/<a [^>]*href=[\'"]([^\'"]+)[\'"]/i', $html, $matches);
 		if(count($matches[1])) {
 			for($j=0; $j<count($matches[1]); $j++) {
-				$html = str_replace($matches[1][$j], static::get_builded_url($recipient_hash, $matches[1][$j], $id), $html);
+				if(substr($matches[1][$j], 0, 1) != '#') {
+					$html = str_replace($matches[1][$j], static::get_builded_url($recipient_hash, $matches[1][$j], $id), $html);
+				}
 			}
 		}
 		return $html;

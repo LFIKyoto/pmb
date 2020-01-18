@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa_func.inc.php,v 1.51 2018-11-20 15:44:09 dgoron Exp $
+// $Id: resa_func.inc.php,v 1.52.2.1 2019-11-27 08:55:46 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -227,15 +227,21 @@ function alert_mail_users_pmb($id_notice=0, $id_bulletin=0, $id_empr, $annul=0, 
 	$PMBuserprenom = '' ;
 	$PMBuseremail = $loc->email ;
 	if ($PMBuseremail) {
-		$query = "select distinct empr_prenom, empr_nom, empr_cb, empr_mail, empr_tel1, empr_tel2, empr_ville, location_libelle, nom, prenom, user_email, date_format(sysdate(), '".$msg["format_date_heure"]."') as aff_quand, deflt2docs_location  from empr, docs_location, users where id_empr='$id_empr' and empr_location=idlocation and user_email like('%@%') and user_alert_resamail=1";
+		$query = "select distinct empr_prenom, empr_nom, empr_cb, empr_mail, empr_tel1, empr_tel2, empr_cp, empr_ville, location_libelle, nom, prenom, user_email, date_format(sysdate(), '".$msg["format_date_heure"]."') as aff_quand, deflt2docs_location, deflt_docs_location  from empr, docs_location, users where id_empr='$id_empr' and empr_location=idlocation and user_email like('%@%') and user_alert_resamail=1";
 		$result = @pmb_mysql_query($query);
 		$headers  = "MIME-Version: 1.0\n";
 		$headers .= "Content-type: text/html; charset=".$charset."\n";
 		$output_final='';
 		while ($empr=@pmb_mysql_fetch_object($result)) {
 			if ($pmb_location_reservation && $pmb_resa_alert_localized) {
-				if ($loc->empr_location!=$empr->deflt2docs_location) {
+			    if ($pmb_resa_alert_localized==1 && $loc->empr_location!=$empr->deflt2docs_location) {
 					continue;
+			    }
+			    if ($pmb_resa_alert_localized==2 && $loc->empr_location!=$empr->deflt_docs_location) {
+				    continue;
+				}
+				if ($pmb_resa_alert_localized==3 && $loc->empr_location!=$empr->deflt2docs_location && $loc->empr_location!=$empr->deflt_docs_location) {
+				    continue;
 				}
 			}
 			if (!$output_final) {

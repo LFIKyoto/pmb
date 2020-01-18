@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entities_records_expl_controller.class.php,v 1.2 2017-12-21 16:18:09 dgoron Exp $
+// $Id: entities_records_expl_controller.class.php,v 1.3 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -50,6 +50,6 @@ class entities_records_expl_controller extends entities_records_controller {
 	}
 	
 	public function set_record_id($record_id=0) {
-		$this->record_id = $record_id+0;
+	    $this->record_id = (int) $record_id;
 	}
 }

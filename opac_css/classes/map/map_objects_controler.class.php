@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_objects_controler.class.php,v 1.8 2016-11-05 14:49:08 ngantier Exp $
+// $Id: map_objects_controler.class.php,v 1.12 2019-05-28 13:23:34 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/map/map_hold.class.php");
@@ -85,6 +85,20 @@ class map_objects_controler {
   					'ids' => $this->ids
   				);
   				break;			
+            case AUT_TABLE_CATEG :
+                $items = array(
+                    'layer' => "authority",
+                    'type' => AUT_TABLE_CATEG,
+                    'ids' => $this->ids
+                );
+                break;
+            case AUT_TABLE_CONCEPT :
+                $items = array(
+                    'layer' => "authority_concept",
+                    'type' => AUT_TABLE_CONCEPT,
+                    'ids' => $this->ids
+                );
+                break;
   		}
 	   	$this->objects[] = $items;
 	   	$this->fetch_datas();
@@ -135,15 +149,15 @@ class map_objects_controler {
   		$json_informations = $this->get_json_informations();
   		$map = "";
   		if($json_informations){
-  			$id=$this->ids[0];
+  		    $id = (!empty($this->ids[0]) ? $this->ids[0] : 0);
   			$map_hold = null;
 	  		$layer_params = json_decode($opac_map_base_layer_params,true);
 	  		$baselayer =  "baseLayerType: dojox.geo.openlayers.BaseLayerType.".$opac_map_base_layer_type;
-	  		if(count($layer_params)){
+	  		if(isset($layer_params) && is_array($layer_params) && count($layer_params)){
 	   			if($layer_params['name']) $baselayer.=",baseLayerName:\"".$layer_params['name']."\"";
 	  			if($layer_params['url']) $baselayer.=",baseLayerUrl:\"".$layer_params['url']."\"";
 	  			if($layer_params['options']) $baselayer.=",baseLayerOptions:".json_encode($layer_params['options']);
-	  		}	  			  		
+	  		}
 	  		$map = "
 	  		<div id='map_objet_".$this->id_dom."_" . $id . $suffix ."' data-dojo-type='".$this->get_map_controler_name()."' style='".$this->get_map_size()."' data-dojo-props='mode:\"visualization\",".$baselayer.", ".$json_informations.", id_img_plus:\"". $id_img_plus ."\"'></div>";
   		}
@@ -157,7 +171,6 @@ class map_objects_controler {
   	public function get_map_size() {
   		global $opac_map_size_notice_view;
   		global $opac_map_size_location_view;
-  		global $charset;
                 
   		switch($this->type){
   			case TYPE_SUR_LOCATION :
@@ -169,26 +182,13 @@ class map_objects_controler {
   				// no break
   			case AUT_TABLE_AUTHORS :
   				// no break
+            case AUT_TABLE_CONCEPT :
+                // no break
   			default:
   				$size=explode("*",$opac_map_size_notice_view);
   				break;
   		}
-  		if(count($size)!=2) {
-                    $map_size="width:100%; height:400px;";
-  		} else {
-                    if (is_numeric($size[0])) {
-                        $size[0] = $size[0] . "px";
-                    }
-                    if (is_numeric($size[1])) {
-                        $size[1] = $size[1] . "px";
-                    }
-                    $map_size= "width:".$size[0]."; height:".$size[1].";";
-  		}
-  		
-                if ($charset != "utf8") {
-                   $map_size = utf8_encode($map_size);
-                }
-  		return $map_size;
+  		return $this->format_size($size);
   	}
   	   	
   	public static function get_coord_initialFit($tab_coords) {
@@ -251,6 +251,28 @@ class map_objects_controler {
                 }
               //  print "<br>ooooo".$long_min." , ".$lat_min." , ".$long_max." , ".$lat_max;
   		return $long_min." , ".$lat_min." , ".$long_max." , ".$lat_max;
+  	}
+  	
+  	protected function format_size(array $size) {
+  	    global $charset;
+  	    
+  	    if(count($size)!=2) {
+  	        $map_size="width:100%; height:200px;";
+  	    } else {
+  	        $size = array_map("trim", $size);
+  	        if (is_numeric($size[0])) {
+  	            $size[0] = $size[0] . "px";
+  	        }
+  	        if (is_numeric($size[1])) {
+  	            $size[1] = $size[1] . "px";
+  	        }
+  	        $map_size= "width:".$size[0]."; height:".$size[1].";";
+  	    }
+  	    if ($charset != "utf8") {
+  	        $map_size = utf8_encode($map_size);
+  	    }
+  	    
+  	    return $map_size;
   	}
 
 } // end of map_objects_controler

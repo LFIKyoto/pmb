@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contact_form_parameters.class.php,v 1.4 2018-12-06 09:45:26 dgoron Exp $
+// $Id: contact_form_parameters.class.php,v 1.4.6.2 2019-11-07 16:10:43 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -38,10 +38,12 @@ class contact_form_parameters {
 					'firstname' => $this->_get_field('text', 1, 1),
 					'group' => $this->_get_field(),
 					'email' => $this->_get_field('email', 1, 1, 1),
-					'tel' => $this->_get_field()
+					'tel' => $this->_get_field(),
+				    'attachments' => $this->_get_field('file')
 				),
 				'recipients_mode' => 'by_persons',
-				'email_content' => $this->_get_email_content_template(),
+                'email_object_free_entry' => 0,
+                'email_content' => $this->_get_email_content_template(),
 				'confirm_email' => 1
 		);
 	}
@@ -65,6 +67,9 @@ class contact_form_parameters {
 				}
 				if($parameters['recipients_mode']) {
 					$this->parameters['recipients_mode'] = $parameters['recipients_mode'];
+				}
+				if($parameters['email_object_free_entry']) {
+				    $this->parameters['email_object_free_entry'] = $parameters['email_object_free_entry'];
 				}
 				if($parameters['email_content']) {
 					$this->parameters['email_content'] = $parameters['email_content'];
@@ -143,11 +148,19 @@ class contact_form_parameters {
 			<td><i>".htmlentities($msg['admin_opac_contact_form_parameter_tel'], ENT_QUOTES, $charset)."</i></td>
 			<td>".$this->_get_display_field('tel')."</td>	
 		</tr>
-		<tr class='odd'>
+        <tr class='odd'>
+			<td><i>".htmlentities($msg['admin_opac_contact_form_parameter_attachments'], ENT_QUOTES, $charset)."</i></td>
+			<td>".$this->_get_display_field('attachments')."</td>	
+		</tr>
+		<tr class='even'>
 			<td><i>".htmlentities($msg['admin_opac_contact_form_parameter_recipients_mode'], ENT_QUOTES, $charset)."</i></td>
 			<td>
 				".self::gen_recipients_mode_selector($this->parameters['recipients_mode'])."
 			</td>	
+		</tr>
+        <tr class='odd'>
+			<td><i>".htmlentities($msg['admin_opac_contact_form_parameter_email_object_free_entry'], ENT_QUOTES, $charset)."</i></td>
+			<td>".$this->_get_display_toggle('email_object_free_entry')."</td>
 		</tr>
 		<tr class='even'>
 			<td><i>".htmlentities($msg['admin_opac_contact_form_parameter_email_content'], ENT_QUOTES, $charset)."</i></td>
@@ -210,6 +223,7 @@ class contact_form_parameters {
 	public function set_properties_from_form() {
 		global $parameter_fields;
 		global $parameter_recipients_mode;
+		global $parameter_email_object_free_entry;
 		global $parameter_email_content;
 		global $parameter_confirm_email;
 		
@@ -228,6 +242,7 @@ class contact_form_parameters {
 			}
 		}
 		$this->parameters['recipients_mode'] = $parameter_recipients_mode;
+		$this->parameters['email_object_free_entry'] = ($parameter_email_object_free_entry ? 1 : 0);
 		if(trim($parameter_email_content)) {
 			$this->parameters['email_content'] = stripslashes($parameter_email_content);
 		} else {

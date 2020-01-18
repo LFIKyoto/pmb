@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax.js,v 1.34 2018-06-14 07:36:49 dgoron Exp $
+// $Id: ajax.js,v 1.35 2019-07-17 08:01:31 dgoron Exp $
 
 requete=new Array();
 line=new Array();
@@ -425,6 +425,7 @@ function ajax_get_info(id) {
 	var autfield = '' ;
 	var linkfield = '' ;
 	var listfield = '';
+	var att_id_filter = '' ;
 	var param1 = '';
 	var param2 = '';
 	
@@ -433,10 +434,11 @@ function ajax_get_info(id) {
 	requete[id].setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 	
 	if (document.getElementById(id).getAttribute("autexclude")) autexclude = document.getElementById(id).getAttribute("autexclude") ;
-	if (document.getElementById(id).getAttribute("linkfield")) linkfield = document.getElementById(document.getElementById(id).getAttribute("linkfield")).value ;
+	if (document.getElementById(id).getAttribute("linkfield") && document.getElementById(document.getElementById(id).getAttribute("linkfield"))) linkfield = document.getElementById(document.getElementById(id).getAttribute("linkfield")).value ;
 	if (document.getElementById(id).getAttribute("autfield")) autfield = document.getElementById(id).getAttribute("autfield") ;
 	if (document.getElementById(id).getAttribute("param1")) param1 = document.getElementById(id).getAttribute("param1") ;
 	if (document.getElementById(id).getAttribute("param2")) param2 = document.getElementById(id).getAttribute("param2") ;
+	if (att_id_filter=document.getElementById(id).getAttribute("att_id_filter"));
 	if (document.getElementById(id).getAttribute("listfield")){
 		var reg = new RegExp("[,]","g");
 		var tab = (document.getElementById(id).getAttribute("listfield")).split(reg);		
@@ -444,7 +446,7 @@ function ajax_get_info(id) {
 			listfield = listfield + "&"+tab[k]+"="+(document.getElementById(tab[k]).value);
 		}
 	}
-	requete[id].send("datas="+encode_URL(document.getElementById(id).value)+"&id="+encode_URL(id)+"&completion="+encode_URL(document.getElementById(id).getAttribute("completion"))+"&persofield="+encode_URL(document.getElementById(id).getAttribute("persofield"))+"&autfield="+encode_URL(autfield)+"&autexclude="+encode_URL(autexclude)+"&linkfield="+encode_URL(linkfield)+listfield+"&param1="+encode_URL(param1)+"&param2="+encode_URL(param2));
+	requete[id].send("datas="+encode_URL(document.getElementById(id).value)+"&id="+encode_URL(id)+"&completion="+encode_URL(document.getElementById(id).getAttribute("completion"))+"&persofield="+encode_URL(document.getElementById(id).getAttribute("persofield"))+"&autfield="+encode_URL(autfield)+"&autexclude="+encode_URL(autexclude)+"&linkfield="+encode_URL(linkfield)+listfield+"&att_id_filter="+encode_URL(att_id_filter)+"&param1="+encode_URL(param1)+"&param2="+encode_URL(param2));
 }
 
 function ajax_requete_wait(id) {

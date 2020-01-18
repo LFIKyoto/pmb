@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_caddie_ui.class.php,v 1.5 2018-12-28 16:33:31 dgoron Exp $
+// $Id: list_caddie_ui.class.php,v 1.7.6.5 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,10 +13,6 @@ class list_caddie_ui extends list_caddie_root_ui {
 	protected $instance_notice_tpl_gen;
 	
 	protected $flag_notice_id;
-	
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	protected function _get_query_caddie_content() {
 		$query = "SELECT caddie_content.object_id FROM caddie_content";
@@ -30,6 +26,8 @@ class list_caddie_ui extends list_caddie_root_ui {
 			case 'BULL' :
 				$query .= " left join bulletins on object_id=bulletin_id " ;
 				break;
+			default:
+			    break;
 		}
 		$query .= $this->_get_query_filters_caddie_content();
 		$query .= " AND caddie_id='".static::$id_caddie."'";
@@ -76,8 +74,23 @@ class list_caddie_ui extends list_caddie_root_ui {
 			case 'BULL':
 				$query = "select bulletins.bulletin_id as id, bulletins.* from bulletins where bulletin_id IN (".$this->_get_query_caddie_content().") ";
 				break;
+			default:
+			    break;
 		}
 		return $query;
+	}
+	
+	/**
+	 * Filtres provenant du formulaire
+	 */
+	public function set_filters_from_form() {
+	
+		$notice_tpl = $this->objects_type.'_notice_tpl';
+		global ${$notice_tpl};
+		if(isset(${$notice_tpl})) {
+			$this->filters['notice_tpl'] = ${$notice_tpl};
+		}
+		parent::set_filters_from_form();
 	}
 	
 	/**
@@ -87,8 +100,8 @@ class list_caddie_ui extends list_caddie_root_ui {
 		global $msg;
 	
 		$search_filters_form = parent::get_search_filters_form();
-		
-		$sel_notice_tpl=notice_tpl_gen::gen_tpl_select($this->objects_type."_notice_tpl",0,'',1,1);
+		if(!isset($this->filters['notice_tpl'])) $this->filters['notice_tpl'] = 0;
+		$sel_notice_tpl=notice_tpl_gen::gen_tpl_select($this->objects_type."_notice_tpl",$this->filters['notice_tpl'],'',1,1);
 		$suppl = "";
 		if($sel_notice_tpl) {
 			$sel_notice_tpl= "
@@ -219,6 +232,9 @@ class list_caddie_ui extends list_caddie_root_ui {
 						'num_notice'
 				);
 				break;
+			default:
+			    return array();
+			    break;
 		}
 	}
 	
@@ -229,7 +245,7 @@ class list_caddie_ui extends list_caddie_root_ui {
 						$this->get_describe_fields('notices', 'notices', 'notices'),
 						array('serie_name' => $this->get_describe_field('titrserie', 'notices', 'notices')),
 						array('collection_name' => $this->get_describe_field('coll', 'notices', 'notices')),
-						array('subcollection_name' => $this->get_describe_field('subcoll', 'notices', 'notices')),
+						array('sub_coll_name' => $this->get_describe_field('subcoll', 'notices', 'notices')),
 						array('publisher_name' => $this->get_describe_field('editeur', 'notices', 'notices')),
 						array('indexint_name' => $this->get_describe_field('indexint', 'notices', 'notices')),
 						array('statut_name' => $this->get_describe_field('statut', 'notices', 'notices'))
@@ -246,34 +262,30 @@ class list_caddie_ui extends list_caddie_root_ui {
 						array('bulletin_numero' => 'bulletin_numero', 'mention_date' => 'mention_date', 'date_date' => 'date_date', 'bulletin_titre' => 'bulletin_titre', 'bulletin_cb' => 'bulletin_cb')
 				);
 				break;
+			default:
+			    break;
 		}
 		
 	}
 	
 	protected function add_authors_available_columns() {
-		global $msg;
-		
 		return array(
-				'author_main' => $msg['244'],
-// 				'authors_others' => $msg['246'],
-				'authors_secondary' => $msg['247']
+				'author_main' => '244',
+// 				'authors_others' => '246',
+				'authors_secondary' => '247'
 		);
 	}
 	
 	protected function add_categories_available_columns() {
-		global $msg;
-	
 		return array(
-				'categories' => $msg['134']
+				'categories' => '134'
 		);
 	}
 	
 	protected function add_languages_available_columns() {
-		global $msg;
-		
 		return array(
-				'langues' => $msg['710'],
-				'languesorg' => $msg['711']
+				'langues' => '710',
+				'languesorg' => '711'
 		);
 	}
 	
@@ -295,17 +307,94 @@ class list_caddie_ui extends list_caddie_root_ui {
 				$this->available_columns['main_fields'] = array_merge($this->available_columns['main_fields'], $this->add_languages_available_columns());
 				$this->add_custom_fields_available_columns('expl', 'expl_id');
 				break;
+			default:
+			    break;
 		}
+	}
+	
+	/**
+	 * Tri SQL
+	 */
+	protected function _get_query_order() {
+	    if ($this->applied_sort[0]['by']) {
+	        $sort_by = $this->applied_sort[0]['by'];
+	        switch($sort_by) {
+	            case 'author_main':
+	            case 'authors_others':
+	            case 'authors_secondary':
+	            case 'categories':
+	            case 'langues':
+	            case 'languesorg':
+	            case 'typdoc':
+	            case 'statut_name':
+	            case 'publisher_name':
+	                $this->applied_sort_type = 'OBJECTS';
+	                return '';
+	            default :
+	                return parent::_get_query_order();
+	        }
+	    }
+	}
+	
+	/**
+	 * Fonction de callback
+	 * @param object $a
+	 * @param object $b
+	 */
+	protected function _compare_objects($a, $b) {
+	    if($this->applied_sort[0]['by']) {
+	        $sort_by = $this->applied_sort[0]['by'];
+	        switch($sort_by) {
+	            case 'author_main':
+	                $record_datas_a = record_display::get_record_datas($a->id);
+	                $record_datas_b = record_display::get_record_datas($b->id);
+	                return strcmp($record_datas_a->get_auteurs_principaux(), $record_datas_b->get_auteurs_principaux());
+	                break;
+	            case 'authors_others':
+	                //TODO
+	                break;
+	            case 'authors_secondary':
+	                $record_datas_a = record_display::get_record_datas($a->id);
+	                $record_datas_b = record_display::get_record_datas($b->id);
+	                return strcmp($record_datas_a->get_auteurs_secondaires(), $record_datas_b->get_auteurs_secondaires());
+	                break;
+	            case 'categories':
+	                $categories_a = strip_tags($this->get_cell_categories_content($a));
+	                $categories_b = strip_tags($this->get_cell_categories_content($b));
+	                return strcmp($categories_a, $categories_b);
+	                break;
+	            case 'langues':
+	            case 'languesorg':
+	                $record_datas_a = record_display::get_record_datas($a->id);
+	                $langues_a = $record_datas_a->get_langues();
+	                $record_datas_b = record_display::get_record_datas($b->id);
+	                $langues_b = $record_datas_b->get_langues();
+	                return strcmp(record_display::get_lang_list($langues_a[$sort_by]), record_display::get_lang_list($langues_b[$sort_by]));
+	                break;
+	            case 'typdoc':
+	                $marc_list_instance = marc_list_collection::get_instance('doctype');
+	                return strcmp($marc_list_instance->table[$a->{$sort_by}], $marc_list_instance->table[$b->{$sort_by}]);
+	                break;
+	            case 'statut_name':
+	                $record_datas_a = record_display::get_record_datas($a->id);
+	                $record_datas_b = record_display::get_record_datas($b->id);
+	                return strcmp($record_datas_a->get_statut_notice(), $record_datas_b->get_statut_notice());
+	                break;
+	            case 'publisher_name':
+	                //@TODO
+	                break;
+	            default :
+	                return parent::_compare_objects($a, $b);
+	                break;
+	        }
+	    }
 	}
 	
 	/**
 	 * Initialisation du tri par défaut appliqué
 	 */
 	protected function init_default_applied_sort() {
-		$this->applied_sort = array(
-				'by' => 'tit1',
-				'asc_desc' => 'asc'
-		);
+	    $this->add_applied_sort('tit1');
 	}
 	
 	protected function get_cell_categories_content($object) {
@@ -346,33 +435,102 @@ class list_caddie_ui extends list_caddie_root_ui {
 		return $content;
 	}
 	
+	protected function get_cell_group_label($group_label, $indice=0) {
+		$content = '';
+		switch($this->applied_group[$indice]) {
+			case 'typdoc':
+				$marc_list_instance = marc_list_collection::get_instance('doctype');
+				$content .= $marc_list_instance->table[$group_label];
+				break;
+			default :
+				$content .= parent::get_cell_group_label($group_label, $indice);
+				break;
+		}
+		return $content;
+	}
+	
+	protected function get_grouped_label($object, $property) {
+	    $grouped_label = '';
+	    switch($property) {
+	        case 'author_main':
+	            $record_datas = record_display::get_record_datas($object->id);
+	            $grouped_label = $record_datas->get_auteurs_principaux();
+	            break;
+	        case 'authors_others':
+	            //TODO
+	            break;
+	        case 'authors_secondary':
+	            $record_datas = record_display::get_record_datas($object->id);
+	            $grouped_label = $record_datas->get_auteurs_secondaires();
+	            break;
+	        case 'categories':
+	            $grouped_label = strip_tags($this->get_cell_categories_content($object));
+	            break;
+	        case 'langues':
+	        case 'languesorg':
+	            $record_datas = record_display::get_record_datas($object->id);
+	            $langues = $record_datas->get_langues();
+	            return record_display::get_lang_list($langues[$property]);
+	            break;
+	        case 'statut_name':
+	            $record_datas = record_display::get_record_datas($object->id);
+	            $grouped_label = $record_datas->get_statut_notice();
+	            break;
+	        case 'publisher_name':
+	            //@TODO
+	            break;
+	        default:
+	            $grouped_label = parent::get_grouped_label($object, $property);
+	            break;
+	    }
+	    return $grouped_label;
+	}
+	
 	protected function get_cell_content($object, $property) {
 		global $msg;
 	
-		$content = '';
 		switch($property) {
 			case 'author_main':
 				$record_datas = record_display::get_record_datas($object->id);
-				$content .= $record_datas->get_auteurs_principaux();
+				$content = $record_datas->get_auteurs_principaux();
 				break;
 			case 'authors_others':
 				//TODO
 				break;
 			case 'authors_secondary':
 				$record_datas = record_display::get_record_datas($object->id);
-				$content .= $record_datas->get_auteurs_secondaires();
+				$content = $record_datas->get_auteurs_secondaires();
 				break;
 			case 'categories':
-				$content .= $this->get_cell_categories_content($object);
+				$content = $this->get_cell_categories_content($object);
 				break;
 			case 'langues':
 			case 'languesorg':
 				$record_datas = record_display::get_record_datas($object->id);
 				$langues = $record_datas->get_langues();
-				$content .= record_display::get_lang_list($langues[$property]); 
+				$content = record_display::get_lang_list($langues[$property]); 
 				break;
+			case 'typdoc':
+				$marc_list_instance = marc_list_collection::get_instance('doctype');
+				$content = $marc_list_instance->table[$object->{$property}];
+				break;
+			case 'statut_name':
+			    $record_datas = record_display::get_record_datas($object->id);
+			    $content = $record_datas->get_statut_notice();
+			    break;
+			case 'publisher_name' :
+			    $publishers_name = array();
+			    $record_datas = record_display::get_record_datas($object->id);
+			    $publishers = $record_datas->get_publishers();
+			    if(count($publishers)) {
+			        foreach ($publishers as $publisher) {
+			            $publishers_name[] = $publisher->get_isbd();
+			        }
+			    }
+			    $content = implode(' / ',$publishers_name);
+			    break;
 			default :
-				$content .= parent::get_cell_content($object, $property);
+				$content = parent::get_cell_content($object, $property);
 				break;
 		}
 		return $content;

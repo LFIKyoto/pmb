@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannette.class.php,v 1.71 2018-10-05 13:44:55 dgoron Exp $
+// $Id: bannette.class.php,v 1.88.2.1 2019-10-30 07:41:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once ("$class_path/search.class.php") ; 
 require_once ("$class_path/equation.class.php") ; 
+require_once ($class_path."/record_display.class.php") ;
 require_once ($include_path."/mail.inc.php") ;
 require_once ($include_path."/export_notices.inc.php");
 require_once($class_path."/notice_tpl_gen.class.php");
@@ -36,7 +37,9 @@ class bannette {
 	public $entete_mail="";
 	public $bannette_tpl_num=0;
 	public $piedpage_mail="";
+	public $notice_display_type=0;
 	public $notice_tpl="";
+	public $django_directory="";
 	public $date_last_remplissage="";
 	public $date_last_envoi="";
 	public $aff_date_last_remplissage="";
@@ -66,11 +69,15 @@ class bannette {
 	public $archive_number=0;
 	public $group_type = 0;
 	public $statut_not_account=0;
+	public $associated_campaign=0;
+	public $num_sender=0;
 	public $field_type='';
 	public $field_id=0;
 	public $group_pperso_order=array();
 	public $document_generate=0;
+	public $document_notice_display_type=0;
 	public $document_notice_tpl=0;
+	public $document_django_directory=0;
 	public $document_insert_docnum=0;
 	public $document_group=0;
 	public $document_add_summary=0;
@@ -79,7 +86,7 @@ class bannette {
 	public $document_diffuse=""; //contenu html du document généré
 	protected $bannette_descriptors;
 	public $id_bannette_origine = 0; //Utilisé en duplication de bannette
-	public $bannette_aff_notice_number = true; //Afficher le nombre de notices envoyées dans le mail
+	public $bannette_aff_notice_number = 1; //Afficher le nombre de notices envoyées dans le mail
 	protected $bannette_equations;
 	protected static $lang_messages;
 	
@@ -87,6 +94,8 @@ class bannette {
 	protected $list;
 	protected $list_group;
 	protected $notice_group;
+	
+	protected $output_format;
 	
 	// ---------------------------------------------------------------
 	//		constructeur
@@ -111,12 +120,12 @@ class bannette {
 			$this->aff_date_last_envoi=formatdate($this->date_last_envoi);
 			$this->date_last_envoi_sql=today();
 		} else {
-			$requete = "SELECT id_bannette, num_classement, nom_bannette,comment_gestion,comment_public,statut_not_account, ";
+			$requete = "SELECT id_bannette, num_classement, nom_bannette,comment_gestion,comment_public,statut_not_account, associated_campaign, bannette_num_sender, ";
 			$requete .= "date_last_remplissage, date_format(date_last_remplissage, '".$msg["format_date_heure"]."') as aff_date_last_remplissage, ";
 			$requete .= "date_last_envoi,date_last_envoi as date_last_envoi_sql, date_format(date_last_envoi, '".$msg["format_date_heure"]."') as aff_date_last_envoi, ";
-			$requete .= "proprio_bannette,bannette_auto,periodicite,diffusion_email, nb_notices_diff, update_type, entete_mail, bannette_tpl_num, piedpage_mail, notice_tpl, num_panier, ";
+			$requete .= "proprio_bannette,bannette_auto,periodicite,diffusion_email, nb_notices_diff, update_type, entete_mail, bannette_tpl_num, piedpage_mail, notice_display_type, notice_tpl, django_directory, num_panier, ";
 			$requete .= "limite_type, limite_nombre, typeexport, prefixe_fichier, param_export, group_type, group_pperso, display_notice_in_every_group, archive_number, ";
-			$requete .= "document_generate, document_notice_tpl, document_insert_docnum, document_group, document_add_summary, bannette_opac_accueil, bannette_aff_notice_number ";
+			$requete .= "document_generate, document_notice_display_type, document_notice_tpl, document_django_directory, document_insert_docnum, document_group, document_add_summary, bannette_opac_accueil, bannette_aff_notice_number ";
 			$requete .= "FROM bannettes WHERE id_bannette='".$this->id_bannette."' " ;
 			$result = pmb_mysql_query($requete) or die ($requete."<br /> in bannette.class.php : ".pmb_mysql_error());
 			if(pmb_mysql_num_rows($result)) {
@@ -129,7 +138,9 @@ class bannette {
 				$this->bannette_tpl_num			= $temp->bannette_tpl_num ;
 				$this->entete_mail			= $temp->entete_mail ;
 				$this->piedpage_mail		= $temp->piedpage_mail ;
+				$this->notice_display_type	= $temp->notice_display_type ;
 				$this->notice_tpl			= $temp->notice_tpl ;
+				$this->django_directory     = $temp->django_directory;
 				$this->date_last_remplissage= $temp->date_last_remplissage ;
 				$this->date_last_envoi		= $temp->date_last_envoi ;	
 				$this->aff_date_last_remplissage	= $temp->aff_date_last_remplissage ;
@@ -150,9 +161,13 @@ class bannette {
 				$this->group_type 			= $temp->group_type;
 				$this->display_notice_in_every_group=$temp->display_notice_in_every_group;
 				$this->statut_not_account 	= $temp->statut_not_account ;
+				$this->associated_campaign 	= $temp->associated_campaign ;
+				$this->num_sender 			= $temp->bannette_num_sender ;
 				$this->archive_number 		= $temp->archive_number ;
 				$this->document_generate 	= $temp->document_generate ;
+				$this->document_notice_display_type	= $temp->document_notice_display_type;
 				$this->document_notice_tpl	= $temp->document_notice_tpl;
+				$this->document_django_directory = $temp->document_django_directory;
 				$this->document_insert_docnum= $temp->document_insert_docnum ;
 				$this->document_group 		= $temp->document_group ;
 				$this->document_add_summary = $temp->document_add_summary ;
@@ -162,17 +177,17 @@ class bannette {
 				$this->compte_elements();
 				$requete = "SELECt nom_classement FROM classements WHERE id_classement='".$this->num_classement."'" ;
 				$resultclass = pmb_mysql_query($requete) or die ($requete."<br /> in bannette.class.php : ".pmb_mysql_error());
-			 	if ($temp = pmb_mysql_fetch_object($resultclass)) $this->nom_classement = $temp->nom_classement ;
-			 	else $this->nom_classement = "" ;
-			 	
-			 	$rqt = "select * from bannette_empr_groupes where empr_groupe_num_bannette = '".$this->id_bannette."'";
-			 	$res = pmb_mysql_query($rqt);
-			 	if(pmb_mysql_num_rows($res)){
-			 		while($row = pmb_mysql_fetch_object($res)){
-			 			$this->groupe_lecteurs[] = $row->empr_groupe_num_groupe;
-			 		}
-			 	}
-			 	$rqt = "select * from bannette_empr_categs where empr_categ_num_bannette = '".$this->id_bannette."'";
+				if ($temp = pmb_mysql_fetch_object($resultclass)) $this->nom_classement = $temp->nom_classement ;
+				else $this->nom_classement = "" ;
+				
+				$rqt = "select * from bannette_empr_groupes where empr_groupe_num_bannette = '".$this->id_bannette."'";
+				$res = pmb_mysql_query($rqt);
+				if(pmb_mysql_num_rows($res)){
+					while($row = pmb_mysql_fetch_object($res)){
+						$this->groupe_lecteurs[] = $row->empr_groupe_num_groupe;
+					}
+				}
+				$rqt = "select * from bannette_empr_categs where empr_categ_num_bannette = '".$this->id_bannette."'";
 			 	$res = pmb_mysql_query($rqt);
 			 	if(pmb_mysql_num_rows($res)){
 			 		while($row = pmb_mysql_fetch_object($res)){
@@ -188,6 +203,22 @@ class bannette {
 	public function gen_facette_selection(){
 		$facette = new bannette_facettes($this->id_bannette);
 		return $facette->gen_facette_selection();
+	}
+	
+	protected function get_senders_selector() {
+		global $msg, $charset;
+		
+		$selector = "<select name='num_sender'>
+				<option value='0'>".htmlentities($msg['dsi_ban_senders_default'], ENT_QUOTES, $charset)."</option>";
+		$query = "SELECT userid, CONCAT(prenom, ' ', nom, ' (', user_email, ')') as name FROM users WHERE user_email <> ''";
+		$result = pmb_mysql_query($query);
+		if (pmb_mysql_num_rows($result)) {
+			while($row = pmb_mysql_fetch_object($result)) {
+				$selector .= "<option value='".$row->userid."' ".($this->num_sender == $row->userid ? "selected='selected'" : "").">".htmlentities($row->name, ENT_QUOTES, $charset)."</option>";
+			}
+		}
+		$selector .= "</select>";
+		return $selector;
 	}
 	
 	// ---------------------------------------------------------------
@@ -270,10 +301,19 @@ class bannette {
 		else $dsi_bannette_form = str_replace('!!diffusion_email!!', "", $dsi_bannette_form);
 		$dsi_bannette_form = str_replace('!!nb_notices_diff!!', htmlentities($this->nb_notices_diff,ENT_QUOTES, $charset), $dsi_bannette_form);
 	
+// 		$dsi_bannette_form = str_replace('!!notice_display_type_0!!', (!$this->notice_display_type ? "checked='checked'" : ""), $dsi_bannette_form);
 		$dsi_bannette_form = str_replace('!!notice_tpl!!', notice_tpl_gen::gen_tpl_select("notice_tpl",$this->notice_tpl), $dsi_bannette_form);
+// 		$dsi_bannette_form = str_replace('!!notice_display_type_1!!', ($this->notice_display_type ? "checked='checked'" : ""), $dsi_bannette_form);
+//		$dsi_bannette_form = str_replace('!!django_directory!!', record_display::get_directories_options($this->django_directory), $dsi_bannette_form);
 	
 		if ($this->statut_not_account) $dsi_bannette_form = str_replace('!!statut_not_account!!', "checked", $dsi_bannette_form);
 		else $dsi_bannette_form = str_replace('!!statut_not_account!!', "", $dsi_bannette_form);
+		if ($this->associated_campaign) $dsi_bannette_form = str_replace('!!associated_campaign!!', "checked", $dsi_bannette_form);
+		else $dsi_bannette_form = str_replace('!!associated_campaign!!', "", $dsi_bannette_form);
+		
+		// choix de l'expéditeur
+		$dsi_bannette_form = str_replace('!!senders!!', $this->get_senders_selector(), $dsi_bannette_form);
+		
 		// group_type, group_pperso, group_facettes
 		if($this->group_type){
 			$dsi_bannette_form = str_replace('!!checked_group_facette!!', " checked='checked' ", $dsi_bannette_form);
@@ -350,7 +390,10 @@ class bannette {
 		$dsi_bannette_form = str_replace('!!bannette_opac_accueil_check!!', ($this->bannette_opac_accueil ? "checked='checked'" : ""), $dsi_bannette_form);
 	
 		$dsi_bannette_form = str_replace('!!document_generate!!', ($this->document_generate ? "checked='checked'" : ""), $dsi_bannette_form);
+// 		$dsi_bannette_form = str_replace('!!document_notice_display_type_0!!', (!$this->document_notice_display_type ? "checked='checked'" : ""), $dsi_bannette_form);
 		$dsi_bannette_form = str_replace('!!document_notice_tpl!!', notice_tpl_gen::gen_tpl_select("document_notice_tpl",$this->document_notice_tpl), $dsi_bannette_form);
+// 		$dsi_bannette_form = str_replace('!!document_notice_display_type_1!!', ($this->document_notice_display_type ? "checked='checked'" : ""), $dsi_bannette_form);
+// 		$dsi_bannette_form = str_replace('!!document_django_directory!!', record_display::get_directories_options($this->document_django_directory), $dsi_bannette_form);
 		$dsi_bannette_form = str_replace('!!document_insert_docnum!!', ($this->document_insert_docnum ? "checked='checked'" : ""), $dsi_bannette_form);
 		$dsi_bannette_form = str_replace('!!document_group!!', ($this->document_group ? "checked='checked'" : ""), $dsi_bannette_form);
 		$dsi_bannette_form = str_replace('!!document_add_summary!!', ($this->document_add_summary ? "checked='checked'" : ""), $dsi_bannette_form);
@@ -368,22 +411,28 @@ class bannette {
 		$dsi_bannette_form = str_replace('!!form_param!!', $param->check_default_param(),  $dsi_bannette_form);
 	
 		//ajout champs emprunteur
-		$dsi_bannette_form = str_replace('!!info_empr!!', $dsi_bannette_form_selvars,  $dsi_bannette_form);
+		$comment_public_info_empr = str_replace('!!selector_name!!', 'comment_public_selvars_id',  $dsi_bannette_form_selvars);
+		$comment_public_info_empr = str_replace('!!dest_dom_node!!', 'comment_public',  $comment_public_info_empr);
+		$dsi_bannette_form = str_replace('!!comment_public_info_empr!!', $comment_public_info_empr,  $dsi_bannette_form);
+		
+		$info_empr = str_replace('!!selector_name!!', 'selvars_id',  $dsi_bannette_form_selvars);
+		$info_empr = str_replace('!!dest_dom_node!!', 'entete_mail',  $info_empr);
+		$dsi_bannette_form = str_replace('!!info_empr!!', $info_empr,  $dsi_bannette_form);
 	
 		print $dsi_bannette_form;
 	}
 	
 	public function set_properties_from_form() {
 		global $num_classement, $nom_bannette, $comment_gestion, $comment_public;
-		global $entete_mail, $piedpage_mail, $notice_tpl;
+		global $entete_mail, $piedpage_mail, $notice_display_type, $notice_tpl, $django_directory;
 		global $id_empr;
-		global $bannette_auto, $periodicite, $diffusion_email, $statut_not_account, $dsi_private_bannette_nb_notices;
+		global $bannette_auto, $periodicite, $diffusion_email, $statut_not_account, $associated_campaign, $num_sender, $dsi_private_bannette_nb_notices;
 		global $categorie_lecteurs, $groupe_lecteurs;
 		global $update_type, $date_last_envoi, $num_panier;
 		global $limite_type, $limite_nombre, $typeexport, $prefixe_fichier;
 		global $group_pperso, $display_notice_in_every_group, $archive_number, $group_type;
-		global $document_generate, $document_notice_tpl, $document_insert_docnum, $document_group, $document_add_summary;
-		global $bannette_opac_accueil,$bannette_tpl_num, $bannette_aff_notice_number;
+		global $document_generate, $document_notice_display_type, $document_notice_tpl, $document_django_directory, $document_insert_docnum, $document_group, $document_add_summary;
+		global $bannette_opac_accueil,$bannette_tpl_num, $dsi_private_bannette_tpl;
 		global $genere_lien, $mere, $fille, $notice_mere, $notice_fille, $art_link, $bull_link, $perio_link, $bulletinage, $notice_art, $notice_perio;
 		global $empr_nom, $empr_prenom;
 		global $dsi_private_bannette_notices_template;
@@ -400,6 +449,7 @@ class bannette {
 			if(trim($dsi_private_bannette_notices_template)){
 				$this->notice_tpl 		= trim($dsi_private_bannette_notices_template)+0;
 			}
+			$this->django_directory     = stripslashes($django_directory);
 		}
 		$this->comment_public		= stripslashes($nom_bannette);
 		$this->get_entete_mail();
@@ -424,9 +474,16 @@ class bannette {
 		        break;
 		}
 		if(isset($bannette_diffuse_checked) && $bannette_diffuse_checked) {
-			$this->date_last_envoi = date('Y-m-d H:i:s',strtotime("-".$this->periodicite." day",mktime(0,0,0,date('m'),date('d'),date('Y'))));	
+			$this->date_last_envoi = date('Y-m-d H:i:s',strtotime("-".$this->periodicite." day",mktime(0,0,0,date('m'),date('d'),date('Y'))));
+			$this->date_last_remplissage = $this->date_last_envoi;
 		} else {
-			$this->date_last_envoi		= $date_last_envoi;
+			if($date_last_envoi) {
+				$this->date_last_envoi		= $date_last_envoi;
+				$this->date_last_remplissage = $date_last_envoi;
+			} elseif(!$this->id_bannette) {
+				$this->date_last_envoi = date('Y-m-d H:i:s',strtotime("-".$this->periodicite." day",mktime(0,0,0,date('m'),date('d'),date('Y'))));
+				$this->date_last_remplissage = $this->date_last_envoi;
+			}
 		}
 		$this->num_panier			= $num_panier+0;
 // 		$this->limite_type 			= stripslashes($limite_type);
@@ -438,13 +495,18 @@ class bannette {
 		$this->archive_number		= $archive_number+0;
 		$this->group_type 			= $group_type+0;
 		$this->document_generate 	= $document_generate+0;
+		$this->document_notice_display_type	= intval($document_notice_display_type);
 		$this->document_notice_tpl 	= $document_notice_tpl+0;
+		$this->document_django_directory = stripslashes($document_django_directory);
 		$this->document_insert_docnum = $document_insert_docnum+0;
 		$this->document_group 		= $document_group+0;
 		$this->document_add_summary = $document_add_summary+0;
 		$this->bannette_opac_accueil= $bannette_opac_accueil+0;
-		$this->bannette_tpl_num 	= $bannette_tpl_num+0;
-		$this->bannette_aff_notice_number =	$bannette_aff_notice_number+0;
+		if($bannette_tpl_num) {
+			$this->bannette_tpl_num 	= $bannette_tpl_num+0;
+		} else {
+			$this->bannette_tpl_num 	= $dsi_private_bannette_tpl;
+		}
 		if(!$this->id_bannette) {
 			$this->param_export=array("genere_lien" => $genere_lien+0,
 					"mere" => $mere+0,
@@ -471,7 +533,7 @@ class bannette {
 			$req = "UPDATE bannettes set ";
 			$clause = " WHERE id_bannette='".$this->id_bannette."'";
 		} else {
-			$req = "insert into bannettes set date_last_remplissage=sysdate(), ";
+			$req = "insert into bannettes set ";
 			$clause = "";
 		}
 		$req.="num_classement='".$this->num_classement."',";
@@ -481,12 +543,16 @@ class bannette {
 		$req.="bannette_tpl_num='".$this->bannette_tpl_num."',";
 		$req.="entete_mail='".addslashes($this->entete_mail)."',";
 		$req.="piedpage_mail='".addslashes($this->piedpage_mail)."',";
+		$req.="notice_display_type='".$this->notice_display_type."',";
 		$req.="notice_tpl='".$this->notice_tpl."',";
+		$req.="django_directory='".addslashes($this->django_directory)."',";
 		$req.="proprio_bannette='".$this->proprio_bannette."',";
 		$req.="bannette_auto='".$this->bannette_auto."',";
 		$req.="periodicite='".$this->periodicite."',";
 		$req.="diffusion_email='".$this->diffusion_email."',";
 		$req.="statut_not_account='".$this->statut_not_account."',";
+		$req.="associated_campaign='".$this->associated_campaign."',";
+		$req.="bannette_num_sender='".$this->num_sender."',";
 		$req.="nb_notices_diff='".$this->nb_notices_diff."',";
 		$req.="update_type='".$this->update_type."',";
 		$req.="num_panier='".$this->num_panier."',";
@@ -500,14 +566,18 @@ class bannette {
 		$req.="archive_number='".$this->archive_number."',";
 		$req.="param_export='".addslashes(serialize($this->param_export))."',";
 		$req.="document_generate='".$this->document_generate."',";
+		$req.="document_notice_display_type='".$this->document_notice_display_type."',";
 		$req.="document_notice_tpl='".$this->document_notice_tpl."',";
+		$req.="document_django_directory='".addslashes($this->document_django_directory)."',";
 		$req.="document_insert_docnum='".$this->document_insert_docnum."',";
 		$req.="document_group='".$this->document_group."',";
 		$req.="document_add_summary='".$this->document_add_summary."',";
 		$req.="bannette_opac_accueil='".$this->bannette_opac_accueil."',";
 		$req.="bannette_aff_notice_number='".$this->bannette_aff_notice_number."',";
-		if (!$this->date_last_envoi) $req.="date_last_envoi=sysdate() ";
-		else $req.="date_last_envoi='".$this->date_last_envoi."' ";
+		if (!$this->date_last_envoi) $req.="date_last_envoi=sysdate(), ";
+		else $req.="date_last_envoi='".$this->date_last_envoi."', ";
+		if (!$this->date_last_remplissage) $req.="date_last_remplissage=sysdate() ";
+		else $req.="date_last_remplissage='".$this->date_last_remplissage."' ";
 		$req.=$clause ;
 		$res = pmb_mysql_query($req);
 		if (!$this->id_bannette) $this->id_bannette = pmb_mysql_insert_id() ;
@@ -741,7 +811,7 @@ class bannette {
 		return $query;
 	}
 	
-	protected function get_data_structure($notice_template_id=0, $grouped=false) {
+	protected function get_data_structure() {
 		$data = array();
 	
 		//Nb total sans limitation
@@ -750,20 +820,24 @@ class bannette {
 		$result = pmb_mysql_query($this->get_query_records());
 		$data['records']['length'] = pmb_mysql_num_rows($result);
 		if(pmb_mysql_num_rows($result)) {
+		    $bannette_facette = $this->get_instance_bannette_facette();
+		    if($this->get_notice_tpl()){
+		        $bannette_facette->noti_tpl_document = notice_tpl_gen::get_instance($this->get_notice_tpl());
+		    }
 			while (($row = pmb_mysql_fetch_object($result))) {
-				$bannette_facette = $this->get_instance_bannette_facette();
-				if($notice_template_id){
-					$bannette_facette->noti_tpl_document = notice_tpl_gen::get_instance($notice_template_id);
-				}
 				$data['records'][$row->num_notice]['render'] = $bannette_facette->build_notice($row->num_notice, $this->id_bannette);
 			}
 		}
-		$data['sommaires'] = $this->get_data_summary_structure($notice_template_id, $grouped);
+		if($this->add_summary()) {
+		    $data['sommaires'] = $this->get_data_summary_structure();
+		} else {
+			$data['sommaires'] = array();
+		}
 		return $data;
 	}
 	
-	public function get_display_bannette_tpl($notice_template_id=0, $grouped=false) {
-		$data=$this->get_data_structure($notice_template_id, $grouped);	//$this->data_document
+	public function get_display_bannette_tpl() {
+		$data=$this->get_data_structure();	//$this->data_document
 		$data['info']['header']=$this->get_display_header();
 		$data['info']['footer']=$this->get_display_footer();
 		$data['info']['opac_name']=$this->comment_public;
@@ -811,10 +885,11 @@ class bannette {
 		global $suite;
 	
 		$this->set_records_globals();
+		$this->set_output_format('document');
 		$this->build_lists(0);
 		$document = "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" />".$this->get_css_style()."</head><body>";
 		if($this->get_private_bannette_tpl()){
-			$document .= $this->get_display_bannette_tpl($this->document_notice_tpl, $this->document_group);
+			$document .= $this->get_display_bannette_tpl();
 		} else {
 			$document .= $this->get_display_header();
 			if (count($this->list) && $this->group_type==1) {
@@ -822,11 +897,11 @@ class bannette {
 				$document .= $facette->build_document($this->list,$this->document_notice_tpl,$this->document_add_summary,1);
 			} else {
 				$this->add_list_group_in_list();
-				if($this->document_group){
-					$document .= $this->get_display_summary($this->document_notice_tpl);
+				if($this->is_grouped()){
+					$document .= $this->get_display_summary();
 				} else {
 					if($this->list) {
-						$document .= $this->get_display_template($this->document_notice_tpl, $this->document_group);
+						$document .= $this->get_display_template();
 					}
 				}
 			}
@@ -883,16 +958,16 @@ class bannette {
 		$this->build_lists(1);
 		if (count($this->list) && $this->group_type==1) {
 			$facette = $this->get_instance_bannette_facette();
-			$display .= $facette->build_document($this->list,$this->notice_tpl,$this->document_add_summary,1);
+			$display .= $facette->build_document($this->list,$this->notice_tpl,1,0);
 		} else {
 			$this->add_list_group_in_list();
 			// il faut trier les regroupements par ordre alphabétique
 			if($this->group_pperso) {
-				$display .= $this->get_display_summary($this->notice_tpl);
+				$display .= $this->get_display_summary();
 			} else {
 				if ($this->list) {
 					// DSI classique par mail...
-					$display .= $this->get_display_template($this->notice_tpl);
+					$display .= $this->get_display_template();
 				}
 			}
 		}
@@ -909,6 +984,7 @@ class bannette {
 		global $charset;
 	
 		$this->set_records_globals();
+		$this->set_output_format('mail');
 		$this->build_lists(1);
 		$display = "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" />".$this->get_css_style()."</head><body>";
 		if($this->bannette_aff_notice_number){
@@ -916,7 +992,7 @@ class bannette {
 		}
 		if($this->get_private_bannette_tpl()){
 			if ($this->diffusion_email) {
-				$display .= $this->get_display_bannette_tpl($this->notice_tpl, $this->group_pperso);
+				$display .= $this->get_display_bannette_tpl();
 			}
 		} else {
 			$display .= $this->get_display_header();
@@ -929,82 +1005,91 @@ class bannette {
 		return $display;
 	}
 	
-	protected function get_formatted_mail($empr) {
+	protected function get_formatted_text($text, $empr) {
 		global $opac_url_base;
 		global $opac_connexion_phrase;
-	
-		$lang_messages = static::$lang_messages[$empr->empr_lang];
-		$texte = $this->get_display_mail();
-		$texte = str_replace ("!!nb_notice!!", $this->nb_notices, $texte);
-		$texte = str_replace("!!print_n_notices!!", sprintf($lang_messages["print_n_notices"],$this->nb_notices), $texte);
+		
+		$lang_messages = static::get_lang_messages($empr->empr_lang);
+		$formatted_text = $text;
+		$formatted_text = str_replace ("!!nb_notice!!", $this->nb_notices, $formatted_text);
+		$formatted_text = str_replace("!!print_n_notices!!", sprintf($lang_messages["print_n_notices"],$this->nb_notices), $formatted_text);
 		if (($this->nb_notices_diff >= $this->nb_notices) || (!$this->nb_notices_diff)) {
 			$nb_envoyees = $this->nb_notices ;
 		} else {
 			$nb_envoyees = $this->nb_notices_diff;
 		}
 		$msg_dsi_diff_n_notices = sprintf($lang_messages["dsi_diff_n_notices"],$nb_envoyees,$this->nb_notices);
-		$texte = str_replace("!!dsi_diff_n_notices!!", ($msg_dsi_diff_n_notices ? $msg_dsi_diff_n_notices.'<hr />' : ''), $texte);
+		$formatted_text = str_replace("!!dsi_diff_n_notices!!", ($msg_dsi_diff_n_notices ? $msg_dsi_diff_n_notices.'<hr />' : ''), $formatted_text);
 			
 		$dates = time();
 		$code=md5($opac_connexion_phrase.$empr->empr_login.$dates);
-		$texte = str_replace('!!empr_connect!!',"<a href='".$opac_url_base."empr.php".static::get_url_connexion_auto('?')."'>".$lang_messages["selvars_empr_auth_opac"]."</a>",$texte);
-		$texte = str_replace('!!code!!',$code,$texte);
-		$texte = str_replace('!!login!!',$empr->empr_login,$texte);
-		$texte = str_replace('!!empr_login!!',$empr->empr_login,$texte);
-		$texte = str_replace('!!date_conex!!',$dates,$texte);
-		$texte = str_replace('!!empr_name!!',$empr->empr_nom,$texte);
-		$texte = str_replace('!!empr_first_name!!',$empr->empr_prenom,$texte);
-		$texte = str_replace('!!empr_sexe!!',$empr->empr_sexe,$texte);
-		$texte = str_replace('!!empr_cb!!',$empr->empr_cb,$texte);
-		$texte = str_replace('!!empr_mail!!',$empr->empr_mail,$texte);
-		if (strpos($texte,"!!empr_name_and_adress!!")) {
-			$texte=str_replace("!!empr_name_and_adress!!", nl2br($this->m_lecteur_adresse($empr)),$texte);
+		$formatted_text = str_replace('!!empr_connect!!',"<a href='".$opac_url_base."empr.php".static::get_url_connexion_auto('?')."'>".$lang_messages["selvars_empr_auth_opac"]."</a>",$formatted_text);
+		$formatted_text = str_replace('!!code!!',$code,$formatted_text);
+		$formatted_text = str_replace('!!login!!',$empr->empr_login,$formatted_text);
+	
+		$formatted_text = str_replace('!!date_conex!!',$dates,$formatted_text);
+	
+		$formatted_text = str_replace('!!empr_name!!',$empr->empr_nom,$formatted_text);
+		$formatted_text = str_replace('!!empr_first_name!!',$empr->empr_prenom,$formatted_text);
+		$formatted_text = str_replace('!!empr_sexe!!',$empr->empr_sexe,$formatted_text);
+		$formatted_text = str_replace('!!empr_cb!!',$empr->empr_cb,$formatted_text);
+		$formatted_text = str_replace('!!empr_login!!',$empr->empr_login,$formatted_text);
+		$formatted_text = str_replace('!!empr_mail!!',$empr->empr_mail,$formatted_text);
+		if (strpos($formatted_text,"!!empr_name_and_adress!!")) {
+			$formatted_text=str_replace("!!empr_name_and_adress!!", nl2br($this->m_lecteur_adresse($empr)),$formatted_text);
 		}
-		if (strpos($texte,"!!empr_all_information!!")) {
-			$texte=str_replace("!!empr_all_information!!", nl2br($this->m_lecteur_info($empr)),$texte);
+		if (strpos($formatted_text,"!!empr_all_information!!")) {
+			$formatted_text=str_replace("!!empr_all_information!!", nl2br($this->m_lecteur_info($empr)),$formatted_text);
 		}
-		$texte = str_replace('!!empr_statut_id!!',$empr->idstatut,$texte);
-		$texte = str_replace('!!empr_statut_lib!!',$empr->statut_libelle,$texte);
-		$texte = str_replace('!!empr_categ_id!!',$empr->id_categ_empr,$texte);
-		$texte = str_replace('!!empr_categ_lib!!',$empr->libelle_categ,$texte);
-		$texte = str_replace('!!empr_codestat_id!!',$empr->id_codestat,$texte);
-		$texte = str_replace('!!empr_codestat_lib!!',$empr->libelle_codestat,$texte);
-		$texte = str_replace('!!empr_langopac_code!!',$empr->empr_lang,$texte);
+		$formatted_text = str_replace('!!empr_statut_id!!',$empr->idstatut,$formatted_text);
+		$formatted_text = str_replace('!!empr_statut_lib!!',$empr->statut_libelle,$formatted_text);
+		$formatted_text = str_replace('!!empr_categ_id!!',$empr->id_categ_empr,$formatted_text);
+		$formatted_text = str_replace('!!empr_categ_lib!!',$empr->libelle_categ,$formatted_text);
+		$formatted_text = str_replace('!!empr_codestat_id!!',$empr->id_codestat,$formatted_text);
+		$formatted_text = str_replace('!!empr_codestat_lib!!',$empr->libelle_codestat,$formatted_text);
+		$formatted_text = str_replace('!!empr_langopac_code!!',$empr->empr_lang,$formatted_text);
 		$langues = marc_list_collection::get_instance('languages');
-		$texte = str_replace('!!empr_langopac_lib!!',$langues->table[$empr->empr_lang],$texte);
+		$formatted_text = str_replace('!!empr_langopac_lib!!',$langues->table[$empr->empr_lang],$formatted_text);
 	
 		if ($empr->empr_location) {
 			$empr_dest_loc = pmb_mysql_query("SELECT * FROM docs_location WHERE idlocation=".$empr->empr_location);
 			$empr_loc = pmb_mysql_fetch_object($empr_dest_loc);
-			$texte = str_replace('!!loc_name!!',$empr_loc->name,$texte);
-			$texte = str_replace('!!loc_adr1!!',$empr_loc->adr1,$texte);
-			$texte = str_replace('!!loc_adr2!!',$empr_loc->adr2,$texte);
-			$texte = str_replace('!!loc_cp!!',$empr_loc->cp,$texte);
-			$texte = str_replace('!!loc_town!!',$empr_loc->town,$texte);
-			$texte = str_replace('!!loc_phone!!',$empr_loc->phone,$texte);
-			$texte = str_replace('!!loc_email!!',$empr_loc->email,$texte);
-			$texte = str_replace('!!loc_website!!',$empr_loc->website,$texte);
+			$formatted_text = str_replace('!!loc_name!!',$empr_loc->name,$formatted_text);
+			$formatted_text = str_replace('!!loc_adr1!!',$empr_loc->adr1,$formatted_text);
+			$formatted_text = str_replace('!!loc_adr2!!',$empr_loc->adr2,$formatted_text);
+			$formatted_text = str_replace('!!loc_cp!!',$empr_loc->cp,$formatted_text);
+			$formatted_text = str_replace('!!loc_town!!',$empr_loc->town,$formatted_text);
+			$formatted_text = str_replace('!!loc_phone!!',$empr_loc->phone,$formatted_text);
+			$formatted_text = str_replace('!!loc_email!!',$empr_loc->email,$formatted_text);
+			$formatted_text = str_replace('!!loc_website!!',$empr_loc->website,$formatted_text);
 		} else {
-			$texte = str_replace('!!loc_name!!','',$texte);
-			$texte = str_replace('!!loc_adr1!!','',$texte);
-			$texte = str_replace('!!loc_adr2!!','',$texte);
-			$texte = str_replace('!!loc_cp!!','',$texte);
-			$texte = str_replace('!!loc_town!!','',$texte);
-			$texte = str_replace('!!loc_phone!!','',$texte);
-			$texte = str_replace('!!loc_email!!','',$texte);
-			$texte = str_replace('!!loc_website!!','',$texte);
+			$formatted_text = str_replace('!!loc_name!!','',$formatted_text);
+			$formatted_text = str_replace('!!loc_adr1!!','',$formatted_text);
+			$formatted_text = str_replace('!!loc_adr2!!','',$formatted_text);
+			$formatted_text = str_replace('!!loc_cp!!','',$formatted_text);
+			$formatted_text = str_replace('!!loc_town!!','',$formatted_text);
+			$formatted_text = str_replace('!!loc_phone!!','',$formatted_text);
+			$formatted_text = str_replace('!!loc_email!!','',$formatted_text);
+			$formatted_text = str_replace('!!loc_website!!','',$formatted_text);
 		}
-		return $texte;
+		return $formatted_text;
+	}
+	
+	protected function get_formatted_mail($empr) {
+		$text = $this->get_display_mail();
+		$formatted_mail = $this->get_formatted_text($text, $empr);
+		return $formatted_mail;
 	}
 	
 	public function get_display_export() {
 		global $charset;
 	
 		$this->set_records_globals();
+		$this->set_output_format('export');
 		$this->build_lists(0);
 		$display = "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" />".$this->get_css_style()."</head><body>";
 		if($this->get_private_bannette_tpl()){
-			$display .= $this->get_display_bannette_tpl($this->notice_tpl, $this->group_pperso);
+			$display .= $this->get_display_bannette_tpl();
 		} else {
 			$display .= $this->get_display_header().$this->get_display_content().$this->get_display_footer();
 		}
@@ -1050,7 +1135,7 @@ class bannette {
 					if (!$opac_notices_format_django_directory) $opac_notices_format_django_directory = "common";
 					if (!$record_css_already_included) {
 						if (file_exists($include_path."/templates/record/".$opac_notices_format_django_directory."/styles/style.css")) {
-							$retour_aff .= "<link type='text/css' href='./includes/templates/record/".$opac_notices_format_django_directory."/styles/style.css' rel='stylesheet'></link>";
+							$display .= "<link type='text/css' href='./includes/templates/record/".$opac_notices_format_django_directory."/styles/style.css' rel='stylesheet'></link>";
 						}
 						$record_css_already_included = true;
 					}
@@ -1122,7 +1207,7 @@ class bannette {
 		if($this->proprio_bannette) {
 			$recherche = get_bannette_human_query($this->id_bannette);
 			if ($recherche) {
-				$diffusion .= "<a id=\"bannette_human_query_link".$this->id_bannette."\" href=\"#\" onclick=\"javascript:document.getElementById('bannette_human_query".$this->id_bannette."').style.display='';document.getElementById('bannette_human_query_link".$this->id_bannette."').style.display='none';\">".$msg['bannette_human_query_show']."</a>";
+				$diffusion .= "<a id=\"bannette_human_query_link".$this->id_bannette."\" onclick=\"javascript:document.getElementById('bannette_human_query".$this->id_bannette."').style.display='';document.getElementById('bannette_human_query_link".$this->id_bannette."').style.display='none';\">".$msg['bannette_human_query_show']."</a>";
 				$diffusion .= "<div id='bannette_human_query".$this->id_bannette."' class='bannette_human_query' style='display:none'>";
 				$diffusion .= $recherche;
 				$diffusion .= "</div>";
@@ -1140,9 +1225,11 @@ class bannette {
 		reset ($notices) ;
 		$limit=0;
 		if ($limite_notices) $diffusion .= "<div id='etagere-notice-list_".$this->id_bannette."'>";
-		while ((list($idnotice, $niveau_biblio)= each($notices)) && ($limit<$limite_notices)) {
-			$limit++;
-			$diffusion .= $this->get_record_display($idnotice);
+		foreach ($notices as $idnotice => $niveau_biblio) {
+		    if ($limit<$limite_notices) {
+		        $limit++;
+		        $diffusion .= $this->get_record_display($idnotice);
+		    }
 		}
 		if ($limite_notices&&($limite_notices<count($notices))){
 			if ($link_to_bannette) $diffusion .= "<a href=\"".str_replace("!!id_bannette!!",$this->id_bannette,$link_to_bannette)."\"><span class='banette-suite'>".$msg['banette_suite']."</span></a>";
@@ -1212,7 +1299,7 @@ class bannette {
 				$emaildest = $empr->empr_mail;
 				if ($emaildest) {
 					$docs_location = new docs_location($empr->empr_location);
-					$res_envoi=mailpmb($empr->empr_prenom." ".$empr->empr_nom, $emaildest,$this->comment_public, $this->get_formatted_mail($empr), $docs_location->libelle, $docs_location->email, $headers, "", "", 0, $pieces_jointes);
+					$res_envoi=mailpmb($empr->empr_prenom." ".$empr->empr_nom, $emaildest,$this->get_formatted_text($this->comment_public, $empr), $this->get_formatted_mail($empr), $docs_location->libelle, $docs_location->email, $headers, "", "", 0, $pieces_jointes);
 				}
 			}
 			/* A commenter pour tests */ 
@@ -1277,8 +1364,8 @@ class bannette {
 			// début de liste
 			$return_affichage .= $begin_result_liste;
 			//Affichage du lien impression et panier
-				
-			while(list($cle, $object) = each($liste)) {
+			
+			foreach ($liste as $cle => $object) {
 	
 				// affichage de la liste des notices sous la forme 'expandable'
 				$requete = "SELECT * FROM notices WHERE notice_id='".$object['num_notice']."' ";
@@ -1389,12 +1476,13 @@ class bannette {
 		return $docs_loc;
 	}
 	
-	protected function get_display_template($template_id=0) {
+	protected function get_display_template() {
 		$already_printed=array();
 	
 		$display_template = "";
+		$template_id = $this->get_notice_tpl();
 		foreach($this->list as $num_notice) {
-			$tpl_notice=$this->get_tpl_notice($template_id, $num_notice);
+			$tpl_notice=$this->get_tpl_notice($num_notice);
 			if(!in_array($num_notice, $already_printed)){
 				if (!$template_id) {
 					$display_template .= $tpl_notice."<hr />\r\n";
@@ -1407,13 +1495,21 @@ class bannette {
 		return $display_template;
 	}
 	
-	protected function get_tpl_notice($template_id=0, $num_notice) {
-		if($template_id) {
-			$notice_tpl_gen = notice_tpl_gen::get_instance($template_id);
-			$tpl_notice=$notice_tpl_gen->build_notice($num_notice, $this->get_location(), false, $this->id_bannette);
-		} else {
-			$tpl_notice="";
-		}
+	protected function get_tpl_notice($num_notice) {
+	    $tpl_notice="";
+	    switch ($this->get_notice_display_type()) {
+	        case 1:
+	            //Affichage Django
+	            $tpl_notice .= record_display::get_display_in_result($num_notice, $this->get_django_directory());
+	            break;
+	        default:
+	            $template_id = $this->get_notice_tpl();
+	            if($template_id) {
+	                $notice_tpl_gen = notice_tpl_gen::get_instance($template_id);
+	                $tpl_notice .= $notice_tpl_gen->build_notice($num_notice, $deflt2docs_location, false, $this->id_bannette);
+	            }
+	            break;
+	    }
 		if(!$tpl_notice) {
 			$n=pmb_mysql_fetch_object(pmb_mysql_query("select * from notices where notice_id=".$num_notice));
 			global $use_opac_url_base; $use_opac_url_base=1;
@@ -1425,7 +1521,8 @@ class bannette {
 		return $tpl_notice;
 	}
 	
-	protected function get_tri_tpl($template_id=0) {
+	protected function get_tri_tpl() {
+	    $template_id = $this->get_notice_tpl();
 		if(!isset($this->tri_tpl[$template_id])) {
 			$this->tri_tpl[$template_id] = array();
 			$already_printed=array();
@@ -1434,7 +1531,7 @@ class bannette {
 				foreach($this->list_group as $group) {
 					foreach($group as $notice) {
 						$num_notice = $notice->num_notice;
-						$tpl_notice = $this->get_tpl_notice($template_id, $num_notice);
+						$tpl_notice = $this->get_tpl_notice($num_notice);
 						if($this->notice_group[$num_notice]) {
 							foreach($this->notice_group[$num_notice] as $id=>$cpDisplay){
 									
@@ -1456,7 +1553,7 @@ class bannette {
 				}
 			} else {
 			foreach($this->list as $num_notice) {
-				$tpl_notice = $this->get_tpl_notice($template_id, $num_notice);
+				$tpl_notice = $this->get_tpl_notice($num_notice);
 				if($this->notice_group[$num_notice]) {
 					foreach($this->notice_group[$num_notice] as $id=>$cpDisplay){
 							
@@ -1480,16 +1577,16 @@ class bannette {
 		return $this->tri_tpl[$template_id];
 	}
 	
-	protected function get_data_summary_structure($template_id=0, $grouped=false) {
+	protected function get_data_summary_structure() {
 		$data = array();
 		$already_printed=array();
 	
 		if (count($this->list) && $this->group_type==1) {
 			$facette = $this->get_instance_bannette_facette();
-			$data = $facette->build_document_data($this->list,$template_id);
+			$data = $facette->build_document_data($this->list,$this->get_notice_tpl());
 		} else {
-			if($grouped) {
-				$tri_tpl = $this->get_tri_tpl($template_id);
+		    if($this->is_grouped()) {
+				$tri_tpl = $this->get_tri_tpl();
 				$this->pmb_ksort($tri_tpl);
 				foreach ($tri_tpl as $titre => $liste) {
 					$index++;
@@ -1503,7 +1600,7 @@ class bannette {
 				}
 			} else {
 				foreach($this->list as $num_notice) {
-					$tpl_notice = $this->get_tpl_notice($template_id, $num_notice);
+					$tpl_notice = $this->get_tpl_notice($num_notice);
 					if(!in_array($num_notice, $already_printed)){
 						$already_printed[]=$num_notice;
 						$data[0]['records'][]['render']=$tpl_notice;
@@ -1514,7 +1611,7 @@ class bannette {
 		return $data;
 	}
 	
-	protected function get_display_summary($template_id=0) {
+	protected function get_display_summary() {
 		global $group_separator;
 		global $notice_separator;
 	
@@ -1522,14 +1619,15 @@ class bannette {
 	
 		$index=0;
 		$summary="";
-		$tri_tpl = $this->get_tri_tpl($template_id);
+		$template_id = $this->get_notice_tpl();
+		$tri_tpl = $this->get_tri_tpl();
 		$this->pmb_ksort($tri_tpl);
 		foreach ($tri_tpl as $titre => $liste) {
 			if($group_separator)$display.=$group_separator;
 			else $display.= "<div class='hr_group'><hr /></div>";
 			$index++;
-			$display.= "<a name='[".$index."]'></a><h1>".$index." - ".$titre."</h1>";
-			$summary.="<a href='#[".$index."]' class='summary_elt'>".$index." - ".$titre."</a><br />";
+			$display.= "<a name='[".$index."]'></a><h1><span class='summary_elt_index'>".$index." - </span>".$titre."</h1>";
+			$summary.="<a href='#[".$index."]' class='summary_elt'><span class='summary_elt_index'>".$index." - </span>".$titre."</a><br />";
 	
 			$nb=0;
 			foreach ($liste as $val) {
@@ -1561,32 +1659,31 @@ class bannette {
 			while (($temp = pmb_mysql_fetch_object($result))) {
 				// Si un champ perso est donné comme critère de regroupement
 				if($this->group_pperso && $this->group_type!=1) {
-					$this->p_perso->get_values($temp->num_notice);
+				    $this->p_perso->get_out_values($temp->num_notice);
 					$values = $this->p_perso->values;
 					$trouve = false;
-					foreach ( $values as $field_id => $vals ) {
-						if ($this->group_pperso==$field_id) {
-	
-							foreach($vals as $cpVal){
-								$this->notice_group[$temp->num_notice][] = $this->p_perso->get_formatted_output(array($cpVal),$field_id);
-								if (!$cpVal) {
-									$cpVal = "_no_value_";
-								}
-								$this->list_group[$cpVal][] = $temp;
-								$trouve = true;
-							}
-	
-							$this->field_type = $this->p_perso->t_fields[$field_id]["TYPE"];
-							$this->field_id = $field_id;
-						}
+					foreach ( $values as $field) {
+					    if ($this->group_pperso==$field['id']) {
+					        foreach($field['values'] as $cpVal){
+					            $this->notice_group[$temp->num_notice][] = $this->p_perso->get_formatted_output(array($cpVal['value']),$field['id']);
+					            if (!$cpVal['value']) {
+					                $cpVal['value'] = "_no_value_";
+					            }
+					            $this->list_group[$cpVal['value']][] = $temp;
+					            $trouve = true;
+					        }
+					        
+					        $this->field_type = $this->p_perso->t_fields[$field['id']]["TYPE"];
+					        $this->field_id = $field['id'];
+					    }
 					}
 					if (!$trouve) {
-						$this->list_group["_no_value_"][] = $temp;
-						if ($field_id) {
-							$this->notice_group[$temp->num_notice][] = $this->p_perso->get_formatted_output(array(),$field_id);
-						} else {
-							$this->notice_group[$temp->num_notice][] = "";
-						}
+					    $this->list_group["_no_value_"][] = $temp;
+					    if ($field['id']) {
+					        $this->notice_group[$temp->num_notice][] = $this->p_perso->get_formatted_output(array(),$field['id']);
+					    } else {
+					        $this->notice_group[$temp->num_notice][] = "";
+					    }
 					}
 				} else {
 					$this->list[] = $temp->num_notice;
@@ -1720,8 +1817,10 @@ class bannette {
 		$requete = "SELECT if(date_last_remplissage>date_last_envoi,1,0) as alert_diff ";
 		$requete .= "FROM bannettes WHERE id_bannette='".$this->id_bannette."' " ;
 		$result = pmb_mysql_query($requete);
-		$temp = pmb_mysql_fetch_object($result);
-		$this->alert_diff = $temp->alert_diff ; 
+		$res = pmb_mysql_fetch_object($result);
+		if (!empty($res)) {
+		    $this->alert_diff = $res->alert_diff;
+		}
 	}
 	
 	public function m_lecteur_adresse($empr) {
@@ -1804,7 +1903,9 @@ class bannette {
 		} else {
 			$use_dsi_diff_mode=1;
 		}
-		return new bannette_facettes($this->id_bannette);
+		$bannette_facettes = new bannette_facettes($this->id_bannette);
+		$bannette_facettes->noti_django_directory = $this->django_directory;
+		return $bannette_facettes;
 	}
 	
 	public function set_records_globals() {
@@ -1825,6 +1926,100 @@ class bannette {
 		$query = "select count(*) as subscribed from bannette_abon where num_bannette = '".$this->id_bannette."' and num_empr='".$id_empr."' ";
 		$result = pmb_mysql_query($query);
 		return pmb_mysql_result($result, 0, 'subscribed');
+	}
+	
+	public function is_grouped() {
+	    $is_grouped = false;
+	    switch ($this->output_format) {
+	        case 'document':
+	            if($this->group_type != 1 && !$this->group_pperso) {
+	                $is_grouped = false;
+	            } else {
+	                $is_grouped = $this->document_group;
+	            }
+	            break;
+	        case 'export':
+	        case 'mail':
+	        default:
+	            $is_grouped = $this->group_pperso;
+	            break;
+	            
+	    }
+	    return $is_grouped;
+	}
+	
+	public function add_summary() {
+	    $add_summary = true;
+	    switch ($this->output_format) {
+	        case 'document':
+	            $add_summary=$this->document_add_summary;
+	            break;
+	        case 'export':
+	        case 'mail':
+	        default:
+	            $add_summary = true;
+	            break;
+	            
+	    }
+	    return $add_summary;
+	}
+	
+	public function get_notice_tpl() {
+	    $notice_template_id = 0;
+	    switch ($this->output_format) {
+	        case 'document':
+	            $notice_template_id = $this->document_notice_tpl;
+	            break;
+	        case 'export':
+	        case 'mail':
+	        default:
+	            $notice_template_id = $this->notice_tpl;
+	            break;
+	            
+	    }
+	    return $notice_template_id;
+	}
+	
+	public function get_output_format() {
+	    return $this->output_format;
+	}
+	
+	public function set_output_format($output_format='mail') {
+	    $this->output_format = $output_format;
+	}
+	
+	public function get_notice_display_type() {
+	    $notice_display_type = 0;
+	    switch ($this->output_format) {
+	        case 'document':
+	            $notice_display_type = $this->document_notice_display_type;
+	            break;
+	        case 'export':
+	        case 'mail':
+	        default:
+	            $notice_display_type = $this->notice_display_type;
+	            break;
+	    }
+	    return $notice_display_type;
+	}
+	
+	public function get_django_directory() {
+	    $django_directory = 'common';
+	    switch ($this->output_format) {
+	        case 'document':
+	            if($this->document_django_directory) {
+	                $django_directory = $this->document_django_directory;
+	            }
+	            break;
+	        case 'export':
+	        case 'mail':
+	        default:
+	            if($this->django_directory) {
+	                $django_directory = $this->django_directory;
+	            }
+	            break;
+	    }
+	    return $django_directory;
 	}
 	
 	// ---------------------------------------------------------------
@@ -1883,7 +2078,7 @@ class bannette {
 		if (count($liste) && $this->group_type==1) {
 			$notice_ids=array();
 			foreach($liste as $r) $notice_ids[]=$r->num_notice;
-			$facette = new bannette_facettes($this->id_bannette);
+			$facette = $this->get_instance_bannette_facette();
 			$this->data_document['sommaires']=$facette->build_document_data($notice_ids,$this->document_notice_tpl);
 			return;
 		}
@@ -1903,11 +2098,13 @@ class bannette {
 		$tri_tpl=array();
 		if ($liste) {
 			$already_printed=array();
-	
 			foreach($liste as $r) {
 					$tpl="";
 					if($this->notice_tpl) {
 						$tpl=$noti_tpl->build_notice($r->num_notice,$this->get_location());
+					}
+					if($this->django_directory) {
+					    $tpl=record_display::get_display_in_result($r->num_notice, $this->django_directory);
 					}
 					if(!$tpl) {
 						if (!$opac_notice_affichage_class) $opac_notice_affichage_class="notice_affichage";
@@ -1917,13 +2114,13 @@ class bannette {
 					}
 					if($this->group_pperso) {
 						if($notice_group[$r->num_notice]) {
-							foreach($notice_group[$r->num_notice] as $id=>$cpDisplay){
+							foreach($notice_group[$r->num_notice] as $cpDisplay){
 					
 								if($this->display_notice_in_every_group){
 									$already_printed=array();
 								}
 					
-								if(!$tri_tpl[$notice_group[$r->num_notice][$id]] || !in_array($tpl, $tri_tpl[$notice_group[$r->num_notice][$id]])){
+								if(!$tri_tpl[$cpDisplay] || !in_array($tpl, $tri_tpl[$cpDisplay])){
 									if(!in_array($r->num_notice, $already_printed)){
 										$tri_tpl[$notice_group[$r->num_notice][$id]][]= $tpl;
 										$already_printed[]=$r->num_notice;
@@ -2044,6 +2241,10 @@ class bannette {
 		return $form;
 	}
 	
+	public function set_bannette_equations() {
+		$this->bannette_equations = new bannette_equations($this->id_bannette);
+	}
+	
 	public static function has_rights($id_bannette) {
 		global $id_empr;
 		
@@ -2061,5 +2262,16 @@ class bannette {
 			return $prefix."code=!!code!!&emprlogin=!!login!!&date_conex=!!date_conex!!";
 		}
 		return "";
+	}
+	
+	protected static function get_lang_messages($lang) {
+		global $include_path;
+	
+		if (!isset(static::$lang_messages[$lang])) {
+			$messages = new XMLlist($include_path."/messages/".$lang.".xml", 0);
+			$messages->analyser();
+			static::$lang_messages[$lang] = $messages->table;
+		}
+		return static::$lang_messages[$lang];
 	}
 } # fin de définition de la classe bannette

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: epubData.class.php,v 1.6 2017-06-30 14:08:17 dgoron Exp $
+// $Id: epubData.class.php,v 1.7 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -99,7 +99,7 @@ class epub_Data {
 				}
 			}
 			//on va chercher les metas
-			$xmlMeta = $xml->children(OPF, false)->metadata->children(DC, false);
+			$xmlMeta = $xml->children('OPF', false)->metadata->children('DC', false);
 			foreach ($xmlMeta as $k=>$v) {
 				$key = $this->decodeCharset($k);
 				switch($key){
@@ -107,14 +107,14 @@ class epub_Data {
 					case "contributor":
 					case "date" :	
 						$aut = array();
-						foreach($v->attributes(OPF,false) as $k_attr => $v_attr){
+						foreach($v->attributes('OPF',false) as $k_attr => $v_attr){
 							$aut[strtolower($this->decodeCharset($k_attr))]=$this->decodeCharset($v_attr);
 						}
 						$aut['value'] = $this->decodeCharset($v);
 						$this->metas[$this->decodeCharset($k)][]=$aut;
 						break;
 					case "identifier":
-						$attrs = $v->attributes(OPF,false);
+						$attrs = $v->attributes('OPF',false);
 						foreach($attrs as $k_attr => $v_attr){
 							$this->metas[$this->decodeCharset($k)][strtolower($this->decodeCharset($v_attr))]=$this->decodeCharset($v);
 						}
@@ -129,7 +129,7 @@ class epub_Data {
 				}
 			}
 			//on regarde si on a une mage de couverture...
-			$metastag = $xml->children(OPF, false)->metadata->children(OPF,false);
+			$metastag = $xml->children('OPF', false)->metadata->children('OPF',false);
 			$this->cover_item ="";
 			foreach ($metastag as $k=>$v) {
 				$key = $this->decodeCharset($k);

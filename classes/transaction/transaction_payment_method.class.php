@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: transaction_payment_method.class.php,v 1.1 2018-12-19 13:59:19 ngantier Exp $
+// $Id: transaction_payment_method.class.php,v 1.2 2019-06-07 12:23:10 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,8 +15,8 @@ class transaction_payment_method {
 	
 	public function __construct($id = 0) {
 	    
-		$this->id = $id+0;		
-		$this->fetch_data();		
+	    $this->id = intval($id);
+	    $this->fetch_data();		
 	}
 	
 	protected function fetch_data() {

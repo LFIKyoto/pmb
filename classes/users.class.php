@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: users.class.php,v 1.3 2018-07-26 15:00:33 dgoron Exp $
+// $Id: users.class.php,v 1.4 2019-04-09 06:51:50 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,7 +13,8 @@ class users {
 	protected static function get_form_autorisations_user($user, $selected=false) {
 		return "
 		<span class='usercheckbox'>
-			<input type='checkbox' name='autorisations[]' id='auto_".$user['id']."' value='".$user['id']."' ".($selected ? "checked='checked'" : "")." class='checkbox' ".($user['id'] == 1 ? "readonly" : "")." />
+			<input type='checkbox' name='autorisations[]' id='auto_".$user['id']."' value='".$user['id']."' ".($user['id'] == 1 || $selected ? "checked='checked'" : "")." class='checkbox' ".($user['id'] == 1 ? "disabled" : "")." />
+			".($user['id'] == 1 ? "<input type='hidden' name='autorisations[]' id='auto_".$user['id']."' value='".$user['id']."' />" : "")."
 			<label for='auto_".$user['id']."' class='normlabel'>&nbsp;".$user['name']."</label>
 		</span>";
 	}

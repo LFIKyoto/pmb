@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_common.tpl.php,v 1.14 2018-12-17 23:09:30 ccraig Exp $
+// $Id: vedette_common.tpl.php,v 1.15 2019-04-10 12:54:08 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -178,27 +178,29 @@ $vedette_tpl['grammar_body'] = '
     	!!caller!!_!!property_name!!_!!vedette_composee_order!!_tab_vedette_elements = !!tab_vedette_elements!!;
     	!!caller!!_!!property_name!!_!!vedette_composee_order!!_separator = "!!vedette_separator!!";
     </script>
-    <!-- zone aperçu -->
-	<div><label class="etiquette" for="!!caller!!_!!property_name!!_!!vedette_composee_order!!_vedette_composee_apercu">'.$msg['vedette_composee_apercu'].' : </label>
-		<input type="text" class="saisie-80em vedette_composee_apercu" id="!!caller!!_!!property_name!!_!!vedette_composee_order!!_vedette_composee_apercu" value="!!vedette_composee_apercu!!" readonly="readonly" name="!!caller!!_!!property_name!![!!vedette_composee_order!!][value]"/>
-	</div>
-	<input type="hidden" name="!!caller!!_!!property_name!![!!vedette_composee_order!!][type]" id="!!caller!!_!!property_name!!_!!vedette_composee_order!!_type" value="!!vedette_composee_type!!"/>
-	<input type="hidden" name="!!caller!!_!!property_name!![!!vedette_composee_order!!][id]" id="!!caller!!_!!property_name!!_!!vedette_composee_order!!_id" value="!!vedette_composee_id!!"/>
-	<input type="hidden" name="!!caller!!_!!property_name!![!!vedette_composee_order!!][grammar]" id="!!caller!!_!!property_name!!_!!vedette_composee_order!!_grammar" value="!!vedette_composee_grammar!!"/>
-	<div class="row">&nbsp;</div>
-	
-	<!-- zone liste champs -->
-	<div id="!!caller!!_!!property_name!!_!!vedette_composee_order!!_vedette_composee_available_fields" class="vedette_composee_available_fields">
-			!!vedette_composee_available_fields!!
-		<div id="!!caller!!_!!property_name!!_!!vedette_composee_order!!_vedette_composee_delete_element" recept="yes" recepttype="vedette_composee_delete_element" highlight="vedette_element_highlight" downlight="vedette_element_downlight"><img src="'.get_url_icon('suppr_all.gif').'"/></div>
-	</div>
-	
-	<!-- zone subdivision -->
-	<div id="!!caller!!_!!property_name!!_!!vedette_composee_order!!_vedette_composee_subdivisions" class="vedette_composee_subdivisions">
-		!!vedette_composee_subdivisions!!
-	</div>
-	
-	<div class="row">&nbsp;</div>
+    <div class="grammar_content">
+        <!-- zone aperçu -->
+    	<div><label class="etiquette" for="!!caller!!_!!property_name!!_!!vedette_composee_order!!_vedette_composee_apercu">'.$msg['vedette_composee_apercu'].' : </label>
+    		<input type="text" class="saisie-80em vedette_composee_apercu" id="!!caller!!_!!property_name!!_!!vedette_composee_order!!_vedette_composee_apercu" value="!!vedette_composee_apercu!!" readonly="readonly" name="!!caller!!_!!property_name!![!!vedette_composee_order!!][value]"/>
+    	</div>
+    	<input type="hidden" name="!!caller!!_!!property_name!![!!vedette_composee_order!!][type]" id="!!caller!!_!!property_name!!_!!vedette_composee_order!!_type" value="!!vedette_composee_type!!"/>
+    	<input type="hidden" name="!!caller!!_!!property_name!![!!vedette_composee_order!!][id]" id="!!caller!!_!!property_name!!_!!vedette_composee_order!!_id" value="!!vedette_composee_id!!"/>
+    	<input type="hidden" name="!!caller!!_!!property_name!![!!vedette_composee_order!!][grammar]" id="!!caller!!_!!property_name!!_!!vedette_composee_order!!_grammar" value="!!vedette_composee_grammar!!"/>
+    	<div class="row">&nbsp;</div>
+    	
+    	<!-- zone liste champs -->
+    	<div id="!!caller!!_!!property_name!!_!!vedette_composee_order!!_vedette_composee_available_fields" class="vedette_composee_available_fields">
+    			!!vedette_composee_available_fields!!
+    		<div id="!!caller!!_!!property_name!!_!!vedette_composee_order!!_vedette_composee_delete_element" recept="yes" recepttype="vedette_composee_delete_element" highlight="vedette_element_highlight" downlight="vedette_element_downlight"><img src="'.get_url_icon('suppr_all.gif').'"/></div>
+    	</div>
+    	
+    	<!-- zone subdivision -->
+    	<div id="!!caller!!_!!property_name!!_!!vedette_composee_order!!_vedette_composee_subdivisions" class="vedette_composee_subdivisions">
+    		!!vedette_composee_subdivisions!!
+    	</div>
+    	
+    	<div class="row">&nbsp;</div>
+    </div>
 ';
 
 $vedette_tpl['vedette_composee_available_field']='

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_cataloging_category.class.php,v 1.2 2018-01-17 15:01:13 dgoron Exp $
+// $Id: frbr_cataloging_category.class.php,v 1.3 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -53,7 +53,7 @@ class frbr_cataloging_category{
 	 * @access public
 	 */
 	public function __construct($id=0) {
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 		$this->fetch_data();
 	
 	}
@@ -79,7 +79,7 @@ class frbr_cataloging_category{
 		global $category_parent;
 		global $category_title;
 		
-		$this->parent = $category_parent+0;
+		$this->parent = (int) $category_parent;
 		$this->title = stripslashes($category_title);
 	}
 	

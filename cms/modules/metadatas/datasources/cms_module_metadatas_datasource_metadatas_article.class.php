@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_metadatas_datasource_metadatas_article.class.php,v 1.1 2014-12-18 10:20:10 dgoron Exp $
+// $Id: cms_module_metadatas_datasource_metadatas_article.class.php,v 1.1.14.1 2019-09-17 09:59:20 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -35,13 +35,12 @@ class cms_module_metadatas_datasource_metadatas_article extends cms_module_metad
 			if($article_ids[0]){
 				$group_metadatas = parent::get_group_metadatas();
 				
-				$datas = array();
 				$article = new cms_article($article_ids[0]);
 				$datas = $article->format_datas();
-				$datas["details"] = $datas;
+				$datas->details = $datas;
 				$datas = array_merge($datas,parent::get_datas());
-				$datas['link'] = $this->get_constructed_link("article",$article_ids[0]);
-				$datas['logo_url'] = $datas["logo"]["big"];
+				$datas->link = $this->get_constructed_link("article",$article_ids[0]);
+				$datas->logo_url = $datas->logo["big"];
 				foreach ($group_metadatas as $i=>$metadatas) {
 					if (is_array($metadatas["metadatas"])) {
 						foreach ($metadatas["metadatas"] as $key=>$value) {

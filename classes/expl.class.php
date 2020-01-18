@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl.class.php,v 1.104 2018-12-20 11:00:19 mbertin Exp $
+// $Id: expl.class.php,v 1.111.2.2 2019-12-04 15:25:41 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,6 +14,7 @@ require_once($class_path."/serialcirc.class.php");
 require_once($class_path."/index_concept.class.php");
 require_once($base_path."/catalog/expl/prix_expl.inc.php");
 require_once($base_path.'/admin/convert/export.class.php');
+require_once($class_path."/import/import_expl.class.php");
 
 if(!isset($pmb_numero_exemplaire_auto)) $pmb_numero_exemplaire_auto = '';
 if ($pmb_numero_exemplaire_auto) {
@@ -68,13 +69,14 @@ class exemplaire {
 	public $expl_comment='';
 	public $nbparts = 1;
 	public $expl_retloc = 0;
+	public $expl_pnb_flag = 0;
 	
 	public $ajax_cote_fields = '';
 	public $explr_acces_autorise="MODIF" ; // sera égal à INVIS, MODIF ou UNMOD en fonction des droits de l'utilisateur sur la localisation
 	public $error = false;
 	public static $digital_ids = array();
 	/**
-	 * @var id de l'exemplaire dont le fantome est issus
+	 * @var integer de l'exemplaire dont le fantome est issus
 	 */
 	public $ref_num = 0;
 	
@@ -138,6 +140,7 @@ class exemplaire {
 				$this->nbparts		= $item->expl_nbparts;
 				$this->expl_retloc	= $item->expl_retloc;
 				$this->ref_num = $item->expl_ref_num;
+				$this->expl_pnb_flag = $item->expl_pnb_flag;
 				
 				if($pmb_sur_location_activate){
 					$sur_loc= sur_location::get_info_surloc_from_location($item->expl_location);
@@ -228,12 +231,7 @@ class exemplaire {
 		$this->note = stripslashes($f_ex_note);
 		$this->expl_comment = stripslashes($f_ex_comment);
 		$this->prix = stripslashes($f_ex_prix);
-		$this->owner_id = $f_ex_owner+0;
-		if($this->expl_id) {
-			$this->create_date = date("Y-m-d H:i:s");
-		} else {
-			$this->update_date = date("Y-m-d H:i:s");
-		}
+		$this->owner_id = $f_ex_owner+0;		
 		$this->type_antivol = $type_antivol+0;
 		$this->nbparts = $f_ex_nbparts+0;
 	}
@@ -245,7 +243,7 @@ class exemplaire {
 		
 		$this->error=false;
 
-		if ( 	(trim($this->cb)!=='')
+		if ((trim($this->cb)!=='')
 				&& ($this->id_notice || $this->id_bulletin) 
 				&& ($this->typdoc_id)
 				&& (trim($this->cote)!=='')
@@ -283,6 +281,8 @@ class exemplaire {
 			if($this->expl_id){
 				$audit=new audit();
 				$audit->get_old_infos("SELECT expl_statut, expl_location, transfert_location_origine, transfert_statut_origine, transfert_section_origine, expl_owner FROM exemplaires WHERE expl_cb='".$this->cb."' ");
+			} else {
+			    $q.= "create_date = '" . date("Y-m-d H:i:s") . "', ";
 			}
 			
 			$q.= "expl_typdoc = '".$this->typdoc_id."', ";
@@ -298,12 +298,12 @@ class exemplaire {
 			$q.= "expl_owner = '".$this->owner_id."', ";
 			$q.= "expl_lastempr = '".$this->lastempr."', ";
 			$q.= "last_loan_date = '".$this->last_loan_date."', ";
-			$q.= "create_date = '".$this->create_date."', ";
 			$q.= "type_antivol = '".$this->type_antivol."', ";
 			$q.= "expl_comment = '".addslashes($this->expl_comment)."', ";
 			$q.= "expl_nbparts = '".$this->nbparts."', ";
 			$q.= "expl_retloc = '".$this->expl_retloc."', ";
-			$q.= "expl_ref_num= '".$this->ref_num."' ";
+			$q.= "expl_ref_num= '".$this->ref_num."', ";
+			$q.= "expl_pnb_flag= '".$this->expl_pnb_flag."' ";
 			
 			if ($this->expl_id) {
 				$q.= "where expl_id='".$this->expl_id."' ";
@@ -729,7 +729,7 @@ class exemplaire {
 	//		import() : import d'un exemplaire 
 	// ---------------------------------------------------------------
 	// fonction d'import d'exemplaire (membre de la classe 'exemplaire');
-	public function import($data) {                          
+	public static function import($data) {                          
 		global $msg;                              
 	                                                  
 		// cette méthode prend en entrée un tableau constitué des informations exemplaires suivantes :
@@ -746,7 +746,8 @@ class exemplaire {
 		//	$data['modif']                    
 		//	$data['note']                     
 		//	$data['prix']                     
-		//	$data['expl_owner']               
+		//	$data['expl_owner']
+		//	$data['expl_pnb_flag']    
 		//	$data['cote_mandatory'] cote obligatoire = 1, non obligatoire = 0
 		//	$data['quoi_faire'] que faire de cet exemplaire :
 		//		0 : supprimer, 1 ou vide : Mettre à jour ou ajouter, 2 : ajouter si possible, sinon rien.
@@ -754,11 +755,11 @@ class exemplaire {
 		global $dbh;                              
 	                                                  
 		// check sur le type de  la variable passée en paramètre
-		if(!sizeof($data) || !is_array($data)) {  
+		if (!is_array($data) || empty($data)) {  
 			// si ce n'est pas un tableau ou un tableau vide, on retourne 0
-			$sql_log = pmb_mysql_query("insert into error_log (error_origin, error_text) values ('expl_".addslashes(SESSid).".class', '".$msg[544]."') ") ;
+			$sql_log = pmb_mysql_query("insert into error_log (error_origin, error_text) values ('expl_".addslashes(SESSid).".class', '$msg[544]') ") ;
 			return 0;                         
-			}                                 
+		}                                 
 	                                                  
 		if ($data['quoi_faire']=="") $data['quoi_faire']="2" ;
 		if ((string)$data['quoi_faire']=="0") {
@@ -861,6 +862,10 @@ class exemplaire {
 			$sql_a_faire = "insert into exemplaires SET " ;
 			$sql_a_faire_suite = "" ;
 			}
+			
+		if (empty($data['expl_pnb_flag'])) {
+		    $data['expl_pnb_flag'] = 0;
+		} 
 		
 		$query  = $sql_a_faire ;
 		$query .= "expl_cb='".$key0."', ";        
@@ -882,6 +887,7 @@ class exemplaire {
 		$query .= "transfert_location_origine = ".$data['location'].", ";
 		$query .= "transfert_statut_origine=".$data['statut'].", ";
 		$query .= "transfert_section_origine=".$data['section'].", ";
+		$query .= "expl_pnb_flag='".$data['expl_pnb_flag']."', ";
 		//$query .= "type_antivol=".$data['type_antivol'].", ";
 		if($data['creation']){
 			$query .= "create_date='".$data['creation']."'"; 
@@ -892,17 +898,23 @@ class exemplaire {
 		$query .= $sql_a_faire_suite ;    
 		$result = @pmb_mysql_query($query, $dbh);     
 		if(!$result) die("can't INSERT into exemplaires ".$query);
-	                                                  
+	     
 		if ($exe->expl_id="") {
 			audit::insert_creation(AUDIT_EXPL,pmb_mysql_insert_id($dbh));
-			return pmb_mysql_insert_id($dbh);
+			$exe->expl_id = pmb_mysql_insert_id($dbh);
 		} else {
 			$sql_id = pmb_mysql_query("select expl_id from exemplaires where expl_cb='".addslashes($data['cb'])."' ") ;
 			$exe  = pmb_mysql_fetch_object($sql_id);  
 			audit::insert_modif(AUDIT_EXPL,$exe->expl_id); 
-			return $exe->expl_id;
-		}       
-	   
+		}     
+		
+		// Imports > Exemplaires UNIMARC
+		global $import_explajtEXPL, $import_expl_caddie_EXPL;
+		if(!empty($import_explajtEXPL) && !empty($import_expl_caddie_EXPL)) {
+			import_expl::add_object_caddie($exe->expl_id, 'EXPL', $import_expl_caddie_EXPL);
+		}
+		
+		return $exe->expl_id;
 	} /* fin méthode import */                
 	
 	// Suppression
@@ -1152,6 +1164,165 @@ class exemplaire {
 			}
 		}
 		return;
+	}
+	
+	// Donne l'id de la notice par son identifiant d'expl
+	public static function get_expl_notice_from_id($expl_id=0) {
+		$expl_id += 0;
+		$query = "select expl_notice, expl_bulletin from exemplaires where expl_id = ".$expl_id;
+		$result = pmb_mysql_query($query);
+		$row = pmb_mysql_fetch_object($result);
+		if($row->expl_notice) {
+			return $row->expl_notice;
+		} else {
+			$query = "select num_notice from bulletins where bulletin_id = ".$row->expl_bulletin;
+			$result = pmb_mysql_query($query);
+			return pmb_mysql_result($result, 0, 'num_notice');				
+		}
+	}
+	
+	// Donne l'id du bulletin par son identifiant d'expl
+	public static function get_expl_bulletin_from_id($expl_id=0) {
+		$expl_id += 0;
+		$query = "select expl_bulletin from exemplaires where expl_id = ".$expl_id;
+		$result = pmb_mysql_query($query);
+		return pmb_mysql_result($result, 0, 'expl_bulletin');
+	}
+	
+	public static function get_nb_prets_from_id($expl_id=0) {
+		$nb_prets = 0;
+		$expl_id += 0;
+		$query = "select count(arc_expl_id) as nb_prets from pret_archive where arc_expl_id = ".$expl_id;
+		$result = pmb_mysql_query($query);
+		if(pmb_mysql_num_rows($result)){
+			$row = pmb_mysql_fetch_object($result);
+			$nb_prets = $row->nb_prets ;
+		}
+		return $nb_prets;
+	}
+	
+	public static function self_renew($expl_cb, $is_self_renew_asked = 0) {
+	    global $opac_pret_prolongation, $opac_pret_duree_prolongation,$pmb_pret_restriction_prolongation,$pmb_pret_nombre_prolongation,$dbh,$msg;
+	    global $selfservice_pret_prolonge_non_msg, $charset;
+	    
+	    $ret = array();
+	    $struct = array();
+	    $titre=$expl_cb;
+	    $error_message="";
+	    $due_date=date("Ymd    His",time());
+	    $ok=1;
+	    $is_self_renew = 0;
+	    $ret["status"]="";
+	    $ret["cb"] = $expl_cb;
+	    if($opac_pret_prolongation){
+	        $prolongation=true;
+	        $requete="select expl_id, id_empr, expl_bulletin,expl_notice, type_antivol, empr_cb, expl_location from exemplaires join pret on (expl_id=pret_idexpl) join empr on (pret_idempr=id_empr) where expl_cb='".addslashes($expl_cb)."'";
+	        $resultat=pmb_mysql_query($requete);
+	        if (!$resultat) {
+	            $error_message=$msg["54"];
+	        } else {
+	            $expl=pmb_mysql_fetch_object($resultat);
+	            $expl_id=$expl->expl_id;
+	            $id_empr=$expl->id_empr;
+	            
+	            //on recupere les informations du pret
+	            $query = "select cpt_prolongation, retour_initial, pret_date, pret_retour from pret where pret_idexpl=".$expl_id." limit 1";
+	            $result = pmb_mysql_query($query, $dbh);
+	            $data = pmb_mysql_fetch_array($result);
+	            $cpt_prolongation = $data['cpt_prolongation'];
+	            $retour_initial =  $data['retour_initial'];
+	            $cpt_prolongation++;
+	            $duree_prolongation=$opac_pret_duree_prolongation;
+	            $today=exemplaire::sql_value_("SELECT CURRENT_DATE()");
+	            if ($pmb_pret_restriction_prolongation==0) {
+	                // Aucune limitation des prolongations
+	                $prolongation=true;
+	                $duree_prolongation=$opac_pret_duree_prolongation;
+	            } else if ($pmb_pret_restriction_prolongation>0) {
+	                $pret_nombre_prolongation=$pmb_pret_nombre_prolongation;
+	                if(($pmb_pret_restriction_prolongation==1) && ($cpt_prolongation>$pret_nombre_prolongation)) {
+	                    // Limitation simple de la prolongation
+	                    $prolongation=FALSE;
+	                } else if($pmb_pret_restriction_prolongation==2) {
+	                    // Limitation du pret par les quotas
+	                    //Initialisation des quotas pour nombre de prolongations
+	                    $qt = new quota("PROLONG_NMBR_QUOTA");
+	                    //Tableau de passage des paramètres
+	                    $struct["READER"] = $id_empr;
+	                    $struct["EXPL"] = $expl_id;
+	                    $struct["NOTI"] = exemplaire::get_expl_notice_from_id($expl_id);
+	                    $struct["BULL"] = exemplaire::get_expl_bulletin_from_id($expl_id);
+	                    $pret_nombre_prolongation=$qt->get_quota_value($struct);
+	                    
+	                    if($cpt_prolongation>$pret_nombre_prolongation) $prolongation=FALSE;
+	                    
+	                    //Initialisation des quotas la durée de prolongations
+	                    $qt = new quota("PROLONG_TIME_QUOTA");
+	                    $struct["READER"] = $id_empr;
+	                    $struct["EXPL"] = $expl_id;
+	                    $struct["NOTI"] = exemplaire::get_expl_notice_from_id($expl_id);
+	                    $struct["BULL"] = exemplaire::get_expl_bulletin_from_id($expl_id);
+	                    $duree_prolongation=$qt->get_quota_value($struct);
+	                } // fin if gestion par quotas
+	            }
+	            $date_prolongation=exemplaire::sql_value_("SELECT DATE_ADD('$retour_initial', INTERVAL $duree_prolongation DAY)");
+	            $diff=exemplaire::sql_value_("SELECT DATEDIFF('$retour_initial','$today')");
+	            if($diff<-$duree_prolongation || $diff>$duree_prolongation) {
+	                $prolongation=FALSE;
+	            }
+	            // Recherche de la nouvelle date de retour
+	            $req_date_calendrier = "select date_ouverture from ouvertures where ouvert=1 and num_location='" . $expl->expl_location . "' order by date_ouverture asc";
+	            $res_date_calendrier = pmb_mysql_query($req_date_calendrier);
+	            while(($date_calendrier = pmb_mysql_fetch_object($res_date_calendrier))){
+	                $ecart = exemplaire::sql_value_("SELECT DATEDIFF('$date_calendrier->date_ouverture','$date_prolongation')");
+	                if($ecart >= 0 ){
+	                    $date_prolongation = $date_calendrier->date_ouverture;
+	                    break;
+	                }
+	            }
+	            if($data['pret_retour'] == $date_prolongation) {
+	                $prolongation=false;
+	            }
+	            if($prolongation==true)	{
+	                $is_self_renew = true;
+	                $due_date=exemplaire::sql_value_("select date_format('".$date_prolongation."', '".$msg["format_date"]."')");
+	                if (empty($is_self_renew_asked)) {
+    	                // Memorisation de la nouvelle date de prolongation
+    	                $query = "update pret set cpt_prolongation='".$cpt_prolongation."', pret_retour='".$date_prolongation."' where pret_idexpl=".$expl_id;
+    	                $result = pmb_mysql_query($query, $dbh);	                
+	                    $error_message = $msg['prolongation_ok'];
+	                    // Memorisation de la nouvelle date de prolongation dans la table d'archive
+	                    $res_arc=pmb_mysql_query("select pret_arc_id from pret where pret_idexpl=".$expl_id."",$dbh);
+	                    if($res_arc && pmb_mysql_num_rows($res_arc)){
+	                        $query = "update pret_archive set arc_cpt_prolongation='".$cpt_prolongation."', arc_fin='".$date_prolongation."' where arc_id = ".pmb_mysql_result($res_arc,0,0);
+	                        pmb_mysql_query($query,$dbh);
+	                    }
+	                }
+	            } else {
+	                $ok=0;
+	                $error_message="Prolongation impossible";
+	            }
+	        }	        
+	    } else{
+	        $error_message="$selfservice_pret_prolonge_non_msg";	
+	    }
+	    if ($charset!= "utf-8") $error_message = utf8_encode($error_message);
+	    
+	    $ret["status"]=$ok;
+	    $ret["message"]=$error_message;
+	    $ret["is_self_renew"] = $is_self_renew;
+	    $ret["transaction_date"]=date("Ymd    His",time());
+	    if($charset != "utf-8")$ret["title"]=utf8_encode($titre);
+	    else $ret["title"]=$titre;
+	    $ret["due_date"]=$due_date;
+	    return $ret;
+	}
+	
+	private static function sql_value_($rqt) {
+	    if(($result=pmb_mysql_query($rqt))) {
+	        if(($row = pmb_mysql_fetch_row($result)))	return $row[0];
+	    }
+	    return '';
 	}
 } # fin de la classe exemplaire                   
                                                   

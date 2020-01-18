@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_account.tpl.php,v 1.23 2017-12-06 09:41:50 dgoron Exp $
+// $Id: rent_account.tpl.php,v 1.24 2019-05-27 09:50:54 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 require_once($class_path.'/form_mapper/form_mapper.class.php');
+
+global $rent_account_form_tpl, $base_path, $current_module, $pmb_use_uniform_title, $msg, $charset;
 
 $rent_account_form_tpl = "
 <script src='javascript/pricing_systems.js'></script>

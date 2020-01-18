@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_segment.tpl.php,v 1.8 2018-10-04 13:24:12 vtouchard Exp $
+// $Id: search_segment.tpl.php,v 1.9 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $msg, $charset, $base_path;
 global $search_segment_form;
 global $search_segment_parent_universe;
 global $search_segment_rebound_form;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_bannettes_ui.class.php,v 1.3 2018-12-28 09:16:20 dgoron Exp $
+// $Id: list_bannettes_ui.class.php,v 1.7.4.2 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,13 +11,9 @@ require_once($include_path.'/templates/list/bannettes/list_bannettes_ui.tpl.php'
 require_once($base_path."/dsi/func_common.inc.php");
 
 class list_bannettes_ui extends list_ui {
-		
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	protected function _get_query_base() {
-		$query = 'select id_bannette, proprio_bannette, comment_public FROM bannettes ';
+		$query = 'select id_bannette, nom_bannette, proprio_bannette, comment_public FROM bannettes ';
 		return $query;
 	}
 	
@@ -26,9 +22,9 @@ class list_bannettes_ui extends list_ui {
 	}
 	
 	protected function _get_query_order() {
-		if ($this->applied_sort['by']) {
+	    if ($this->applied_sort[0]['by']) {
 			$order = '';
-			$sort_by = $this->applied_sort['by'];
+			$sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				case 'label':
 				case 'name':
@@ -43,18 +39,18 @@ class list_bannettes_ui extends list_ui {
 			}
 			if($order) {
 				$this->applied_sort_type = 'SQL';
-				if($this->applied_sort['asc_desc'] == 'desc' && strpos($order, ',')) {
+				if($this->applied_sort[0]['asc_desc'] == 'desc' && strpos($order, ',')) {
 					$cols = explode(',', $order);
 					$query_order = " order by ";
 					foreach ($cols as $i=>$col) {
 						if($i) {
 							$query_order .= ","; 
 						}
-						$query_order .= " ".$col." ".$this->applied_sort['asc_desc'];
+						$query_order .= " ".$col." ".$this->applied_sort[0]['asc_desc'];
 					}
 					return $query_order;
 				} else {
-					return " order by ".$order." ".$this->applied_sort['asc_desc'];
+				    return " order by ".$order." ".$this->applied_sort[0]['asc_desc'];
 				}
 			} else {
 				return "";
@@ -66,10 +62,7 @@ class list_bannettes_ui extends list_ui {
 	 * Initialisation du tri par défaut appliqué
 	 */
 	protected function init_default_applied_sort() {
-		$this->applied_sort = array(
-				'by' => 'name',
-				'asc_desc' => 'asc'
-		);
+	    $this->add_applied_sort('name');
 	}
 	
 	/**
@@ -98,6 +91,20 @@ class list_bannettes_ui extends list_ui {
 	}
 	
 	/**
+	 * Initialisation des filtres disponibles
+	 */
+	protected function init_available_filters() {
+		$this->available_filters =
+		array('main_fields' =>
+				array(
+						'name' => 'dsi_ban_search_nom',
+						'id_classement' => 'dsi_classement',
+				)
+		);
+		$this->available_filters['custom_fields'] = array();
+	}
+	
+	/**
 	 * Initialisation des filtres de recherche
 	 */
 	public function init_filters($filters=array()) {
@@ -105,11 +112,18 @@ class list_bannettes_ui extends list_ui {
 				'auto' => '',
 				'id_classement' => '',
 				'name' => '',
-				'proprio_bannette' => ''
+				'proprio_bannette' => '',
+				'type' => '',
+		        'num_empr' => ''
 		);
 		parent::init_filters($filters);
 	}
-		
+	
+	protected function init_default_selected_filters() {
+		$this->add_selected_filter('name');
+		$this->add_selected_filter('id_classement');
+	}
+	
 	/**
 	 * Filtres provenant du formulaire
 	 */
@@ -124,24 +138,36 @@ class list_bannettes_ui extends list_ui {
 		if(isset($id_classement)) {
 			$this->filters['id_classement'] = $id_classement;
 		}
+		$type = $this->objects_type.'_type';
+		global ${$type};
+		if(isset(${$type})) {
+			$this->filters['type'] = ${$type};
+		}
 		parent::set_filters_from_form();
 	}
 		
 	public function get_export_icons() {
 		return "";
 	}
+	
+	protected function get_search_filter_name() {
+		global $msg;
 		
-	/**
-	 * Affichage des filtres du formulaire de recherche
-	 */
-	public function get_search_filters_form() {
-		global $list_bannettes_ui_search_filters_form_tpl;
+		return "<input class='saisie-20em' id='".$this->objects_type."_name' type='text' name='".$this->objects_type."_name' value=\"".$this->filters['name']."\" title='$msg[3000]' />";
+	}
+	
+	protected function get_search_filter_id_classement() {
+		return gen_liste_classement("BAN", $this->filters['id_classement'], "this.form.submit();");
+	}
+	
+	protected function get_search_filter_type() {
+		global $msg, $charset;
 		
-		$search_filters_form = $list_bannettes_ui_search_filters_form_tpl;
-		$search_filters_form = str_replace("!!name!!", $this->filters['name'], $search_filters_form);
-		$search_filters_form = str_replace("!!classement!!", gen_liste_classement("BAN", $this->filters['id_classement'], "this.form.submit();")  , $search_filters_form);
-		$search_filters_form = str_replace('!!objects_type!!', $this->objects_type, $search_filters_form);
-		return $search_filters_form;
+		return "<select name='".$this->objects_type."_type'>
+					<option value='0' ".(!$this->filters['type'] ? "selected='selected'" : "").">".htmlentities($msg['dsi_all_types'], ENT_QUOTES, $charset)."</option>
+					<option value='1' ".($this->filters['type'] == 1 ? "selected='selected'" : "").">".htmlentities($msg['dsi_menu_ban_pro'], ENT_QUOTES, $charset)."</option>
+					<option value='2' ".($this->filters['type'] == 2 ? "selected='selected'" : "").">".htmlentities($msg['dsi_menu_ban_abo'], ENT_QUOTES, $charset)."</option>
+				</select>";
 	}
 	
 	/**
@@ -204,6 +230,16 @@ class list_bannettes_ui extends list_ui {
 		if($this->filters['proprio_bannette'] !== '') {
 			$filters [] = 'proprio_bannette = "'.$this->filters['proprio_bannette'].'"';
 		}
+		if($this->filters['type']) {
+			switch ($this->filters['type']) {
+				case 1:
+					$filters [] = 'proprio_bannette = 0';
+					break;
+				case 2:
+					$filters [] = 'proprio_bannette != 0';
+					break;
+			}
+		}
 		if(count($filters)) {
 			$filter_query .= ' where '.implode(' and ', $filters);		
 		}
@@ -233,6 +269,8 @@ class list_bannettes_ui extends list_ui {
 	}
 
 	protected static function get_equations($id_bannette) {
+	    global $msg;
+	    
 		$requete = "select id_equation, num_classement, nom_equation, comment_equation, proprio_equation, num_bannette from equations, bannette_equation where num_equation=id_equation and proprio_equation=0 and num_bannette='".$id_bannette."' order by nom_equation " ;
 		$resequ = pmb_mysql_query($requete);
 		$equ_trouvees =  pmb_mysql_num_rows($resequ) ;
@@ -250,12 +288,12 @@ class list_bannettes_ui extends list_ui {
 	
 	/**
 	 * Fonction de callback
-	 * @param account $a
-	 * @param account $b
+	 * @param object $a
+	 * @param object $b
 	 */
 	protected function _compare_objects($a, $b) {
-		if($this->applied_sort['by']) {
-			$sort_by = $this->applied_sort['by'];
+		if($this->applied_sort[0]['by']) {
+		    $sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				case 'equations' :
 					return strcmp(strip_tags(static::get_equations($a->id_bannette)), strip_tags(static::get_equations($b->id_bannette)));

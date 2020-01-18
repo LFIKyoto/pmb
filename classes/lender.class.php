@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lender.class.php,v 1.13 2017-01-03 11:14:01 dgoron Exp $
+// $Id: lender.class.php,v 1.14.2.1 2019-10-09 13:00:17 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -107,6 +107,7 @@ class lender {
 			$gen_liste_str.="<option value=\"$liste_vide_code\">$liste_vide_info</option>\n" ;
 		} else {
 			$i=0;
+			$gen_liste_str.="<option value='-1' ".(!count($liste_id) ? "selected='selected'" : "").">".htmlentities($msg['lenders_all'], ENT_QUOTES, $charset)."</option>";
 			while ($i<$nb_liste) {
 				$id=pmb_mysql_result($resultat_liste,$i,$champ_code);
 				$gen_liste_str.="<option value=\"".$id."\" " ;
@@ -130,7 +131,7 @@ class lender {
 		global $dbh;
 	
 		// check sur le type de la variable passée en paramètre
-		if(!sizeof($data) || !is_array($data)) {
+		if (!is_array($data) || empty($data)) {
 			// si ce n'est pas un tableau ou un tableau vide, on retourne 0
 			return 0;
 		}

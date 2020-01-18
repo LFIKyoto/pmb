@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: faq_question.tpl.php,v 1.5 2017-09-28 09:23:36 dgoron Exp $
+// $Id: faq_question.tpl.php,v 1.6 2019-05-27 15:09:40 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $faq_question_form, $current_module, $msg, $javascript_path, $faq_question_first_desc, $faq_question_other_desc;
 
 $faq_question_form ="
 <form method='post' class='form-$current_module' name='faq_question_form' action='!!action!!&action=save'>

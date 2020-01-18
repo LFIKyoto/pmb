@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_typepage_opac.class.php,v 1.18 2018-06-22 10:00:09 ngantier Exp $
+// $Id: cms_module_common_datasource_typepage_opac.class.php,v 1.20 2019-07-19 08:02:14 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -417,6 +417,11 @@ class cms_module_common_datasource_typepage_opac {
 			}
 		}
 		
+		//appel AJAX - Consultation d'un document du portfolio
+		if(strpos($url,'ajax.php') && strpos($url,'cms') && strpos($url,'document') && strpos($url,'render')) {
+		    return '2003';
+		}
+		
 		//appel AJAX - Log url externe
 		if(strpos($url,'ajax.php') && strpos($url,'log')) {
 			return '3001';
@@ -829,7 +834,7 @@ class cms_module_common_datasource_typepage_opac {
 	public static function get_label($type){
 		global $lang, $include_path;
 		global $dbh;
-		if (!count(self::$liste_libelle_type)) {
+		if (!is_countable(self::$liste_libelle_type) || !count(self::$liste_libelle_type)) {
 			if(file_exists($include_path."/interpreter/statopac/$lang.xml")){
 				$liste_libelle = new XMLlist($include_path."/interpreter/statopac/$lang.xml");
 			} else {

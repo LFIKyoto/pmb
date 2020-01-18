@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: periodicite.inc.php,v 1.9 2018-10-12 11:59:35 dgoron Exp $
+// $Id: periodicite.inc.php,v 1.10 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,7 +17,7 @@ function test_form(form) {
 		return false;
 	}
 	if((isNaN(form.duree.value)) || (form.duree.value == 0)) {
-		alert("<?php echo $msg[abonnements_duree_erreur_saisie] ?>");
+		alert("<?php echo $msg['abonnements_duree_erreur_saisie'] ?>");
 		return false;
 	}
 	return true;
@@ -94,7 +94,7 @@ switch($action) {
 				}
 			}
 		} else {
-			error_message(	$msg[retard_rapport_seuil], $msg[retard_rapport_seuil], 1, 'admin.php?categ=abonnements&sub=periodicite&action=');		
+			error_message(	$msg['retard_rapport_seuil'], $msg['retard_rapport_seuil'], 1, 'admin.php?categ=abonnements&sub=periodicite&action=');		
 		}
 		break;
 	case 'add':

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_filter.class.php,v 1.8 2017-07-28 10:28:16 dgoron Exp $
+// $Id: cms_module_common_filter.class.php,v 1.9.4.1 2019-11-06 14:07:01 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,7 +11,7 @@ class cms_module_common_filter extends cms_module_root{
 	protected $selectors=array();
 		
 	public function __construct($id=0){
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 		parent::__construct();
 	}
 	
@@ -28,7 +28,7 @@ class cms_module_common_filter extends cms_module_root{
 	}
 	
 	public function set_cadre_parent($id){
-		$this->cadre_parent = $id+0;
+	    $this->cadre_parent = (int) $id;
 	}
 	
 	/*
@@ -41,9 +41,9 @@ class cms_module_common_filter extends cms_module_root{
 			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)){
 				$row = pmb_mysql_fetch_object($result);
-				$this->id = $row->id_cadre_content+0;
+				$this->id = (int) $row->id_cadre_content;
 				$this->hash = $row->cadre_content_hash;
-				$this->cadre_parent = $row->cadre_content_num_cadre+0;
+				$this->cadre_parent = (int) $row->cadre_content_num_cadre;
 				$this->unserialize($row->cadre_content_data);
 			}
 			$this->selectors = $this->parameters['selectors'];
@@ -184,17 +184,21 @@ class cms_module_common_filter extends cms_module_root{
 			pmb_mysql_query($query);
 			//sélecteur
 			$selector_by_id = $selector_from_id = 0;
-			for($i=0 ; $i<count($this->selectors['by']) ; $i++){
-				if($this->parameters['selector']['by'] == $this->selectors['by'][$i]['name']){
-					$selector_by_id = $this->selectors['by'][$i]['id'];
-					break;
-				}
+			if (!empty($this->selectors['by'])){
+    			for($i=0 ; $i<count($this->selectors['by']) ; $i++){
+    				if($this->parameters['selector']['by'] == $this->selectors['by'][$i]['name']){
+    					$selector_by_id = $this->selectors['by'][$i]['id'];
+    					break;
+    				}
+    			}
 			}
-			for($i=0 ; $i<count($this->selectors['from']) ; $i++){
-				if($this->parameters['selector']['from'] == $this->selectors['from'][$i]['name']){
-					$selector_from_id = $this->selectors['from'][$i]['id'];
-					break;
-				}
+			if (!empty($this->selectors['from'])){
+    			for($i=0 ; $i<count($this->selectors['from']) ; $i++){
+    				if($this->parameters['selector']['from'] == $this->selectors['from'][$i]['name']){
+    					$selector_from_id = $this->selectors['from'][$i]['id'];
+    					break;
+    				}
+    			}
 			}
 			if($this->parameters['selector']['by'] && $this->parameters['selector']['from']){
 				$selector_from = new $this->parameters['selector']['from']($selector_from_id);

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id: search_fields.xml,v 1.124 2018-12-14 13:46:28 ngantier Exp $ -->
+<!-- $Id: search_fields.xml,v 1.133 2019-09-03 14:42:29 ngantier Exp $ -->
 <pmbfields>
 	<!-- Zone fixedFields :
 		Liste des champs de recherche possibles de la base de données
@@ -61,21 +61,21 @@
 			<query for="BOOLEAN" wordSearch="yes" >
 				<class type="records" mode="title"></class>
 			</query>
-			<query for="STARTWITH" regDiacrit="yes" Keep_EmptyWord="yes">
+			<query for="STARTWITH">
 				<main><![CDATA[select distinct uni.notice_id from (
 				select distinct ntu_num_notice as notice_id from  notices_titres_uniformes, titres_uniformes where '!!oeuvre_query!!' and tu_name like '!!p!!%' and ntu_num_tu=tu_id 
 				UNION
 				select distinct notice_id from notices where (tit1 like '!!p!!%')
 				)as uni join notices n on uni.notice_id=n.notice_id order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="ENDWITH" regDiacrit="yes" Keep_EmptyWord="yes">
+			<query for="ENDWITH">
 				<main><![CDATA[select distinct uni.notice_id from (
 				select distinct ntu_num_notice as notice_id from  notices_titres_uniformes, titres_uniformes where '!!oeuvre_query!!' and tu_name like '%!!p!!' and ntu_num_tu=tu_id 
 				UNION
 				select distinct notice_id from notices where (tit1 like '%!!p!!') 
 				)as uni join notices n on uni.notice_id=n.notice_id order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="EXACT" regDiacrit="yes" Keep_EmptyWord="yes">
+			<query for="EXACT">
 				<main><![CDATA[select distinct uni.notice_id from (
 				select distinct ntu_num_notice as notice_id from  notices_titres_uniformes, titres_uniformes where '!!oeuvre_query!!' and tu_name like '!!p!!' and ntu_num_tu=tu_id 
 				UNION
@@ -103,7 +103,7 @@
 					<value visibility="no">0</value>
 				</var>
 				<default type="var">opac_indexation_docnum_allfields</default>
-				<input type="checkbox" default_on="ck_affiche" class="search_all_docnum">
+				<input type="checkbox" default_on="is_num" class="search_all_docnum">
 					<value>1</value>
 					<comments>
 						<label value="1">msg:40</label>
@@ -818,7 +818,22 @@
 			<var name="thesaurus_concepts_active" visibility="yes">
 				<value visibility="no">0</value>
 			</var>
-			<input type="authoritie" ajax="concepts" selector="ontology" p1="p1" p2="p2"/>
+			<input type="authoritie" ajax="onto" selector="ontology" p1="param1" p2="param2" />
+			<variable name="id_scheme" type="input" comment="Schéma">
+				<default type="var">deflt_concept_scheme</default>
+				<input type="query_list">
+					<query allChoice="yes" titleAllChoice="msg:thes_all">select 0 as id, 'Sans schéma' as lib union SELECT id_item as id, value as lib FROM skos_fields_global_index WHERE code_champ=100 group by 1 order by 2</query>
+				</input>
+			</variable>
+			<variable name= "operator_between_multiple_authorities" type="input" comment="msg:operator_between_multiple_authorities">
+				<default type="value">or</default>
+				<input type="radio">
+					<options>
+						<label value="or">msg:operator_between_multiple_authorities_or</label>
+						<label value="and">msg:operator_between_multiple_authorities_and</label>
+					</options>
+				</input>
+			</variable>
 			<query for="BOOLEAN" wordSearch="yes">
 				<class type="records" mode="concept"></class>
 			</query>
@@ -868,6 +883,30 @@
 			<query for="AUTHORITY">
 				<main><![CDATA[ SELECT DISTINCT num_object AS notice_id FROM index_concept WHERE type_object = 1 AND num_concept = !!p!! 
 				UNION SELECT DISTINCT num_object AS notice_id FROM index_concept JOIN skos_fields_global_index ON authority_num = num_concept WHERE type_object = 1 AND code_champ IN (5,6) AND id_item = !!p!!]]></main>
+			</query>
+		</field>		     
+		<field title="msg:map_emprise" id="1004">
+			<var name="pmb_map_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type="map"/>
+			<query for="CONTAINS">
+				<main>select distinct num_object as notice_id from index_concept left join map_emprises on map_emprise_type = 10 and contains(geomfromtext('!!p!!'),map_emprise_data) = 1 where type_object = 1 and map_emprise_obj_num = num_concept</main>
+			</query>
+			<query for="AERASUP">
+				<main>select distinct num_object as notice_id from index_concept left join map_emprises on map_emprise_type = 10 and Area((map_emprise_data)) &gt; Area(geomfromtext('!!p!!')) where type_object = 1 and map_emprise_obj_num = num_concept</main>
+			</query>
+			<query for="AERAINF">
+				<main>select distinct num_object as notice_id from index_concept left join map_emprises on map_emprise_type = 10 and Area((map_emprise_data)) &lt; Area(geomfromtext('!!p!!')) where type_object = 1 and map_emprise_obj_num = num_concept</main>
+			</query>
+			<query for="INTERSECTS">
+				<main>select distinct num_object as notice_id from index_concept left join map_emprises on map_emprise_type = 10 and intersects(geomfromtext('!!p!!'),map_emprise_data) = 1 where type_object = 1 and map_emprise_obj_num = num_concept</main>
+			</query>
+			<query for="ISEMPTY">
+				<main>select distinct num_object as notice_id from index_concept where type_object = 1 and num_concept not in (select distinct map_emprise_obj_num from map_emprises where map_emprise_type=10)</main>
+			</query>
+			<query for="ISNOTEMPTY">
+				<main>select distinct num_object as notice_id from index_concept where type_object = 1 and num_concept in (select distinct map_emprise_obj_num from map_emprises where map_emprise_type=10)</main>
 			</query>
 		</field>
 		<field title="msg:search_autopostage_multicritere" id="54">
@@ -1344,7 +1383,7 @@
   					select notice_id from (
 					(select notice_id from bulletins join notices on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero like '%!!p!!%')
 					union (select num_notice as notice_id from bulletins where num_notice <> 0 and bulletin_numero like '%!!p!!%')
-					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero like '%!!p!!%') and analysis_bulletin=bulletin_id)
+					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s') and bulletin_numero like '%!!p!!%' and analysis_bulletin=bulletin_id)
 					) as sub) order by index_serie, tnvol, index_sew
 				]]></main>
 			</query>
@@ -1353,7 +1392,7 @@
   					select notice_id from (
 					(select notice_id from bulletins join notices on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero like '')
 					union (select num_notice as notice_id from bulletins where num_notice <> 0 and bulletin_numero like '')
-					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero like '') and analysis_bulletin=bulletin_id)
+					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s') and bulletin_numero like '' and analysis_bulletin=bulletin_id)
 					) as sub) order by index_serie, tnvol, index_sew
 				]]></main>
 			</query>
@@ -1362,7 +1401,7 @@
   					select notice_id from (
 					(select notice_id from bulletins join notices on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero not like '')
 					union (select num_notice as notice_id from bulletins where num_notice <> 0 and bulletin_numero not like '')
-					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero not like '') and analysis_bulletin=bulletin_id)
+					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s') and bulletin_numero not like '' and analysis_bulletin=bulletin_id)
 					) as sub) order by index_serie, tnvol, index_sew
 				]]></main>
 			</query>
@@ -1386,6 +1425,249 @@
 				<main><![CDATA[select distinct notice_id from notices join collections_state on (notice_id=id_serial) join docs_location on (location_id=idlocation and surloc_num=!!p!!)]]></main>
 			</query>
 		</field>
+		<field title="msg:nomenclature_search_types" id="80" separator="msg:nomenclature_search">
+			<var name="pmb_nomenclature_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type="query_list">
+				<query>select id_type, type_name from nomenclature_types order by type_order</query>
+			</input>
+			<query for="EQ">
+				<main><![CDATA[SELECT notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and notice_nomenclature_num_type='!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+		</field>	
+		<field title="msg:nomenclature_search_formation_label" id="81">	
+			<var name="pmb_nomenclature_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type='text'/>
+			<query for="STARTWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and notice_nomenclature_label like '!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ENDWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and notice_nomenclature_label like '%!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="EXACT" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and notice_nomenclature_label like '!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="CONTAINS" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and notice_nomenclature_label like '%!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISEMPTY" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and (notice_nomenclature_label like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISNOTEMPTY" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and (notice_nomenclature_label not like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+		</field>	
+		<field title="msg:nomenclature_search_workshop_label" id="82">	
+			<var name="pmb_nomenclature_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type='text'/>
+			<query for="STARTWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, nomenclature_workshops, notices where workshop_num_nomenclature= id_notice_nomenclature and notice_id=notice_nomenclature_num_notice and workshop_label like '!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ENDWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, nomenclature_workshops, notices where workshop_num_nomenclature= id_notice_nomenclature and notice_id=notice_nomenclature_num_notice and workshop_label like '%!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="EXACT" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, nomenclature_workshops, notices where workshop_num_nomenclature= id_notice_nomenclature and notice_id=notice_nomenclature_num_notice and workshop_label like '!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="CONTAINS" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, nomenclature_workshops, notices where workshop_num_nomenclature= id_notice_nomenclature and notice_id=notice_nomenclature_num_notice and workshop_label like '%!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISEMPTY" regDiacrit="yes">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, nomenclature_workshops, notices where workshop_num_nomenclature= id_notice_nomenclature and notice_id=notice_nomenclature_num_notice and (workshop_label like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISNOTEMPTY" regDiacrit="yes">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, nomenclature_workshops, notices where workshop_num_nomenclature= id_notice_nomenclature and notice_id=notice_nomenclature_num_notice and (workshop_label not like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+		</field>		
+		<field title="msg:nomenclature_search_nomenclature_notes" id="84">	
+			<var name="pmb_nomenclature_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type='text'/>
+			<query for="STARTWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and notice_nomenclature_notes like '!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ENDWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and notice_nomenclature_notes like '%!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="EXACT" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and notice_nomenclature_notes like '!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="CONTAINS" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and notice_nomenclature_notes like '%!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISEMPTY" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and (notice_nomenclature_notes like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISNOTEMPTY" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and (notice_nomenclature_notes not like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+		</field>			
+		<field title="msg:nomenclature_search_nomenclature_abbreviation" id="83">
+			<var name="pmb_nomenclature_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>	
+			<input type='text'/>
+			<query for="STARTWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and notice_nomenclature_abbreviation like '!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ENDWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and notice_nomenclature_abbreviation like '%!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="EXACT" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and notice_nomenclature_abbreviation like '!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="CONTAINS" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and notice_nomenclature_abbreviation like '%!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISEMPTY" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and (notice_nomenclature_abbreviation like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISNOTEMPTY" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and (notice_nomenclature_abbreviation not like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+		</field>		
+		<field title="msg:nomenclature_search_nomenclature_abbreviation_bois" id="85">	
+			<var name="pmb_nomenclature_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type='text'/>
+			<query for="STARTWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',1) like '!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ENDWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',1) like '%!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="EXACT" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',1) like '!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="CONTAINS" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',1) like '%!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISEMPTY" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and (SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',1) like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISNOTEMPTY" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and (SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',1) not like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+		</field>		
+		<field title="msg:nomenclature_search_nomenclature_abbreviation_cuivres" id="86">	
+			<var name="pmb_nomenclature_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type='text'/>
+			<query for="STARTWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',2),'-',-1) like '!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ENDWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',2),'-',-1) like '%!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="EXACT" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',2),'-',-1) like '!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="CONTAINS" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',2),'-',-1) like '%!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISEMPTY" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and (SUBSTRING_INDEX(SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',2),'-',-1) like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISNOTEMPTY" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and (SUBSTRING_INDEX(SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',2),'-',-1) not like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+		</field>		
+		<field title="msg:nomenclature_search_nomenclature_abbreviation_percussions" id="87">	
+			<var name="pmb_nomenclature_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type='text'/>
+			<query for="STARTWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',3),'-',-1) like '!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ENDWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',3),'-',-1) like '%!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="EXACT" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',3),'-',-1) like '!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="CONTAINS" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',3),'-',-1) like '%!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISEMPTY" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and (SUBSTRING_INDEX(SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',3),'-',-1) like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISNOTEMPTY" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and (SUBSTRING_INDEX(SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',3),'-',-1) not like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+		</field>		
+		<field title="msg:nomenclature_search_nomenclature_abbreviation_cordes" id="88">	
+			<var name="pmb_nomenclature_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type='text'/>
+			<query for="STARTWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',-1) like '!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ENDWITH" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',-1) like '%!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="EXACT" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',-1) like '!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="CONTAINS" regDiacrit="no">
+				<main><![CDATA[SELECT distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',-1) like '%!!p!!%' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISEMPTY" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and (SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',-1) like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="ISNOTEMPTY" regDiacrit="yes">
+				<main><![CDATA[select distinct notice_id from nomenclature_notices_nomenclatures, notices where notice_id=notice_nomenclature_num_notice and (SUBSTRING_INDEX(notice_nomenclature_abbreviation,'-',-1) not like '') order by index_serie, tnvol, index_sew]]></main>
+			</query>
+		</field>
+		<field title="msg:nomenclature_search_instruments_no_standard" id="89" >
+			<var name="pmb_nomenclature_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type="query_list">
+				<query>select id_instrument, instrument_code from nomenclature_instruments where instrument_standard=0  order by instrument_code, instrument_name</query>
+			</input>
+			<query for="EQ">
+				<main><![CDATA[SELECT notice_id from nomenclature_notices_nomenclatures, notices, nomenclature_exotic_instruments where notice_id=notice_nomenclature_num_notice and id_notice_nomenclature=exotic_instrument_num_nomenclature and exotic_instrument_num_instrument='!!p!!' order by index_serie, tnvol, index_sew]]></main>
+			</query>
+		</field>
+		<field title="msg:nomenclature_search_instruments_workshop" id="90" >
+			<var name="pmb_nomenclature_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type="authoritie" ajax="instruments" selector="instruments" param1="workshop" p1="param1" p2="param2"/>
+			<query for="EQ" regDiacrit="yes">
+				<main><![CDATA[	SELECT notice_id 
+								FROM nomenclature_notices_nomenclatures, notices, nomenclature_workshops,nomenclature_workshops_instruments 
+								WHERE notice_id=notice_nomenclature_num_notice 
+								AND id_notice_nomenclature=workshop_num_nomenclature 
+								AND id_workshop=workshop_instrument_num_workshop 
+								AND workshop_instrument_num_instrument='!!p!!' 
+								ORDER BY index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="NOTEQ" regDiacrit="yes">
+				<main><![CDATA[	SELECT notice_id 
+								FROM nomenclature_notices_nomenclatures
+								JOIN notices ON notice_id=notice_nomenclature_num_notice 
+								JOIN nomenclature_workshops ON id_notice_nomenclature=workshop_num_nomenclature 
+								WHERE notice_id NOT IN (
+									SELECT notice_id 
+									FROM nomenclature_notices_nomenclatures 
+									JOIN notices ON notice_id=notice_nomenclature_num_notice 
+									JOIN nomenclature_workshops ON id_notice_nomenclature=workshop_num_nomenclature 
+									JOIN nomenclature_workshops_instruments ON id_workshop=workshop_instrument_num_workshop   
+									WHERE workshop_instrument_num_instrument = !!p!! )
+								ORDER BY index_serie, tnvol, index_sew]]></main>
+			</query>
+		</field>		
 	</fixedFields>
 	
 	<authpersoFields>
@@ -1561,6 +1843,24 @@
 				</query>
 				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notices_custom_origine as notice_id from notices_custom_values where notices_custom_champ=!!field!! and notices_custom_date>='!!p!!']]></main>
+				</query>
+				<query for="LESS_THAN_DAYS">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY) order by index_serie, tnvol, index_sew]]></main>
+				</query>
+				<query for="MORE_THAN_DAYS">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY) order by index_serie, tnvol, index_sew]]></main>
+				</query>
+				<query for="THIS_WEEK">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and WEEK(notices_custom_date,1) = WEEK(NOW()) and YEAR(notices_custom_date) = YEAR(NOW()) order by index_serie, tnvol, index_sew]]></main>
+				</query>
+				<query for="THIS_MONTH">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and MONTH(notices_custom_date) = MONTH(NOW()) and YEAR(notices_custom_date) = YEAR(NOW()) order by index_serie, tnvol, index_sew]]></main>
+				</query>
+				<query for="LAST_MONTH">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(notices_custom_date, '%Y%m')) = 1 order by index_serie, tnvol, index_sew]]></main>
+				</query>
+				<query for="THIS_YEAR">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and YEAR(notices_custom_date) = YEAR(NOW()) order by index_serie, tnvol, index_sew]]></main>
 				</query>
 				<query for="ISEMPTY">
 					<main><![CDATA[select distinct notice_id from notices left join notices_custom_values on notices_custom_origine=notice_id and notices_custom_champ=!!field!! where (notices_custom_date='' or notices_custom_date='0000-00-00' or notices_custom_date is null)]]></main>
@@ -1997,6 +2297,7 @@
 		<operator name="ENDWITH">msg:finit_par_query</operator>
 		<operator name="EXACT">msg:exactement_comme_query</operator>
 		<operator name="EQ">msg:eq_query</operator>
+		<operator name="NOTEQ">msg:noteq_query</operator>
 		<operator name="GT">msg:gt_query</operator>
 		<operator name="LT">msg:lt_query</operator>
 		<operator name="GTEQ">msg:gteq_query</operator>
@@ -2009,5 +2310,12 @@
 		<operator name="INTERSECTS">msg:map_multisearch_intersects</operator>
 		<operator name="BETWEEN">msg:search_between_query</operator>
 		<operator name="NEAR">msg:parperso_option_duration_type0</operator>
+		<operator name="LESS_THAN_DAYS">msg:less_than_days_query</operator>
+		<operator name="MORE_THAN_DAYS">msg:more_than_days_query</operator>
+		<operator name="THIS_WEEK" emptyAllowed="yes">msg:this_week_query</operator>
+		<operator name="LAST_WEEK" emptyAllowed="yes">msg:last_week_query</operator>
+		<operator name="THIS_MONTH" emptyAllowed="yes">msg:this_month_query</operator>
+		<operator name="LAST_MONTH" emptyAllowed="yes">msg:last_month_query</operator>
+		<operator name="THIS_YEAR" emptyAllowed="yes">msg:this_year_query</operator>
 	</operators>
 </pmbfields>

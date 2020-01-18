@@ -2,7 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: do_resa.php,v 1.78 2018-04-25 10:36:19 dgoron Exp $
+// $Id: do_resa.php,v 1.81 2019-06-21 08:10:45 btafforeau Exp $
+
+global $erreur_session, $lvl, $opac_show_suggest, $empty_pwd, $ext_auth, $opac_parse_html, $cms_active, $opac_resa_popup, $popup_header, $msg;
+global $opac_show_homeontop, $home_on_top, $std_header, $opac_biblio_main_header, $opac_notice_enrichment, $popup_resa, $allow_sugg, $allow_book;
+global $opac_resa, $opac_resa_planning, $id_notice, $pmb_logs_activate, $id_bulletin, $time_expired, $login, $opac_duration_session_auth;
+global $popup_footer, $opac_show_liensbas, $liens_bas, $footer, $opac_show_bandeau_2, $opac_show_bandeaugauche, $opac_facette_in_bandeau_2;
+global $lvl1, $facette, $home_on_left, $adresse, $loginform, $empr_prenom, $empr_nom, $opac_quick_access, $opac_quick_access_logout;
+global $opac_accessibility, $accessibility, $meteo;
 
 $base_path='.';
 
@@ -115,7 +122,7 @@ if ($log_ok) {
 			}
 			break;
 		case 'resa_cart':
-			if($pmb_logs_activate) {
+		    if(!empty($id_notice) && $pmb_logs_activate) {
 				notice::recup_notice_infos($id_notice);
 			}
 			if ($allow_book && $opac_resa){
@@ -127,7 +134,11 @@ if ($log_ok) {
 		default:
 		case 'resa':
 			if($pmb_logs_activate) {
-				notice::recup_notice_infos($id_notice);
+			    if (!empty($id_bulletin)) {
+			        
+			    } elseif (!empty($id_notice)) {
+				    notice::recup_notice_infos($id_notice);
+			    }
 			}
 			if ($allow_book && $opac_resa) {
 				include($base_path.'/includes/resa.inc.php');
@@ -249,4 +260,4 @@ if($opac_parse_html || $cms_active){
 	print $htmltoparse;
 }
 /* Fermeture de la connexion */
-pmb_mysql_close($dbh);
+pmb_mysql_close();

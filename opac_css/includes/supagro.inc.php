@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: supagro.inc.php,v 1.8 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: supagro.inc.php,v 1.8.14.1 2019-10-15 09:59:04 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -116,8 +116,8 @@ function search_other_function_human_query($n) {
 }
 
 function search_other_function_post_values() {
-	global $supagro_loc_sel,$supagro_rev_res;
-	return "<input type=\"hidden\" name=\"supagro_loc_sel\" value=\"$supagro_loc_sel\"><input type=\"hidden\" name=\"supagro_rev_res\" value=\"$supagro_rev_res\">\n";
+	global $supagro_loc_sel,$supagro_rev_res, $charset;
+	return "<input type=\"hidden\" name=\"supagro_loc_sel\" value=\"".htmlentities($supagro_loc_sel, ENT_QUOTES, $charset)."\"><input type=\"hidden\" name=\"supagro_rev_res\" value=\"".htmlentities($supagro_rev_res, ENT_QUOTES, $charset)."\">\n";
 }
 
 ?>

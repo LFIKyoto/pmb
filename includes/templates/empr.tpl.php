@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr.tpl.php,v 1.193 2018-09-19 14:18:22 dgoron Exp $
+// $Id: empr.tpl.php,v 1.197.6.3 2019-11-07 15:27:01 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $group_id, $force_finance, $short_loan, $empr_list_tmpl, $empr_search_cle_tmpl, $msg, $script0, $pmb_rfid_activate, $script1, $script2, $empr_cb_tmpl, $pmb_rfid_serveur_url, $empr_cb_tmpl, $login_empr_pret_tmpl, $current_module, $empr_cb_tmpl_create, $rfid_port, $pmb_rfid_pret_mode, $empr_pret_allowed, $pmb_short_loan_management, $short_loan, $deflt_short_loan_activate, $pmb_printer_name, $pdfcartelecteur_printer_card_handler, $base_path, $empr_tmpl_consultation, $ldap_accessible, $ldap_accessible, $empr_birthdate_optional, $groupID, $PMBuserid, $pmb_form_editables, $pmb_opac_view_activate, $empr_edit_tmpl, $empr_tmpl_fiche_affichage, $empr_autre_compte_tmpl, $empr_comptes_tmpl, $empr_retard_tpl, $empr_pnb_loans_tmpl;
 
 if(!isset($group_id)) $group_id = 0;
 if(!isset($force_finance)) $force_finance = 0;
@@ -370,7 +372,7 @@ if($pmb_printer_name || $pdfcartelecteur_printer_card_handler==2) {
 			raspberry_ip = temp[1];
 
 			//On interroge le raspberry pour connaitre le type d'imprimante (et savoir si elle est bien sur ce raspberry)
-			if (req.request('http://' + raspberry_ip + '/getPrinter?idPrinter=' + printer_id)) {
+			if (req.request('https://' + raspberry_ip + '/getPrinter?idPrinter=' + printer_id)) {
 				alert ( req.get_text() );
 			} else {
 				printer_type = req.get_text();
@@ -394,8 +396,8 @@ if($pmb_printer_name || $pdfcartelecteur_printer_card_handler==2) {
 
 			//On envoie l'impression
 			var xhr = new XMLHttpRequest();
-			xhr.open('POST', 'http://' + raspberry_ip + '/print?', true);
-			xhr.setRequestHeader('Content-type', 'text/plain');
+			xhr.open('POST', 'https://' + raspberry_ip + '/print?', true);
+			xhr.setRequestHeader('Content-type', 'text/plain;charset=utf-8');
 			xhr.send(JSON.stringify({idPrinter:printer_id,xml:tpl}));
 						
          	return;
@@ -516,6 +518,14 @@ $printer_ticket_script
 			if (document.forms['prolong'+id].elements['cbox_prol']) document.forms['prolong'+id].elements['cbox_prol'].click();
 		}
 	}
+	
+	function see_all_loan(form) {
+		if(confirm(pmbDojo.messages.getMessage('empr', 'loan_see_all'))) {
+			document.location = '!!link_see_all_loan!!';
+		} else {
+			check_allcb(form);
+		}
+	}
 </script>
 <script type='text/javascript' src='./javascript/tablist.js'></script>
 <div id=\"el!!id!!Parent\" class=\"notice-parent\">
@@ -546,15 +556,9 @@ $printer_ticket_script
 		</div>
 	</div>
 	<div class='colonne3'>
-		<div class='row'>
-			<strong>$msg[74] : </strong>!!prof!!
-		</div>
-		<div class='row'>
-			<strong>$msg[75] : </strong>!!date!!
-		</div>
-		<div class='row'>
-			<strong>$msg[125] : </strong>!!sexe!!
-		</div>
+		!!prof!!
+        !!date!!
+        !!sexe!!
 	</div>
 	<div class='colonne_suite'></div>
 
@@ -596,6 +600,9 @@ $printer_ticket_script
 	<div class='row'>
 		!!empr_pwd!!
 	</div>
+    <div class='row'>
+		<strong>".$msg['empr_validated_subscription']." : </strong>!!empr_validated_subscription!!
+	</div>
 </div>
 </div>
 <div class='row'></div>
@@ -615,7 +622,7 @@ $empr_tmpl .= "
 	<div class='erreur'>!!empr_categ_age_change!!</div>
 </div>
 <div class='row'>
-	<div class='erreur'>!!empr_msg!!</div>
+	<div>!!empr_msg!!</div>
 </div>
 !!comptes!!
 !!relance!!
@@ -935,15 +942,9 @@ $empr_tmpl_consultation = "
 			</div>
 		</div>
 		<div class='colonne3'>
-			<div class='row'>
-				<strong>$msg[74] : </strong>!!prof!!
-			</div>
-			<div class='row'>
-				<strong>$msg[75] : </strong>!!date!!
-			</div>
-			<div class='row'>
-				<strong>$msg[125] : </strong>!!sexe!!
-			</div>
+			!!prof!!
+			!!date!!
+			!!sexe!!
 		</div>
 		<div class='colonne_suite'>
 		</div>
@@ -986,6 +987,9 @@ $empr_tmpl_consultation = "
 			<div class='row'>
 				!!empr_pwd!!
 			</div>
+            <div class='row'>
+        		<strong>".$msg['empr_validated_subscription']." : </strong>!!empr_validated_subscription!!
+        	</div>
 		</div>
 	</div>
 	<div id=bloc_suite class='row'>

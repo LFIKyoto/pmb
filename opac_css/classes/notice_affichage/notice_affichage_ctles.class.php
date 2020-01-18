@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_affichage_ctles.class.php,v 1.35 2018-11-27 13:17:37 dgoron Exp $
+// $Id: notice_affichage_ctles.class.php,v 1.36 2019-06-06 09:56:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -399,7 +399,7 @@ class notice_affichage_ctles extends notice_affichage {
 	
 		//Si c'est un depouillement, ajout du titre et bulletin
 		if($this->notice->niveau_biblio == 'a' && $this->notice->niveau_hierar == 2 && $this->parent_title)  {
-			$aff_perio_title="<span class='header_perio'><i>".$msg[in_serial]." ".$this->parent_title.", ".$this->parent_numero." (".($this->parent_date?$this->parent_date:"[".$this->parent_aff_date_date."]").")</i></span>";
+			$aff_perio_title="<span class='header_perio'><i>".$msg['in_serial']." ".$this->parent_title.", ".$this->parent_numero." (".($this->parent_date?$this->parent_date:"[".$this->parent_aff_date_date."]").")</i></span>";
 		}
 	
 		//Si c'est une notice de bulletin ajout du titre et bulletin

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution_area_forms.tpl.php,v 1.7 2018-09-21 12:14:57 apetithomme Exp $
+// $Id: contribution_area_forms.tpl.php,v 1.8 2019-05-27 10:33:57 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $contribution_area_entity_line, $msg, $contribution_area_form_line, $contribution_area_form_table;
 
 $contribution_area_entity_line = '
 		<div id="!!entity_id!!" class="notice-parent contribution_forms">

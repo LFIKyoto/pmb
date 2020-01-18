@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannette_tpl.tpl.php,v 1.7 2018-01-05 15:32:18 dgoron Exp $
+// $Id: bannette_tpl.tpl.php,v 1.8 2019-05-27 14:47:21 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $bannette_tpl_content_form;
+global $bannette_tpl_content_form, $msg;
 
 $bannette_tpl_content_form = "
 <script type='text/javascript'>

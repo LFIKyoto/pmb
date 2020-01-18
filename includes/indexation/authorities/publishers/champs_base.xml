@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: champs_base.xml,v 1.10 2018-05-25 11:54:55 dgoron Exp $ -->
+$Id: champs_base.xml,v 1.11 2019-04-19 12:23:44 ngantier Exp $ -->
 
 <indexation>
 
@@ -100,13 +100,13 @@ $Id: champs_base.xml,v 1.10 2018-05-25 11:54:55 dgoron Exp $ -->
 			<tablefield name="713" id="03" pond="100">author_date</tablefield>
 			<tablefield name="147" id="04" pond="100">author_web</tablefield>
 			<tablefield name="707" id="05" pond="100">author_comment</tablefield>
-			<tablefield id="07" marctype="relationtype_aut" pond="100">aut_link.aut_link_type</tablefield>
+			<tablefield id="07" marctype="aut_link" pond="100">aut_link.aut_link_type</tablefield>
 			<tablekey>author_id</tablekey>
 			<idkey>author_id</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 3 or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 and aut_link_reciproc = 1)</referencefield>
-				<externalfield>aut_link_to_num=authors.author_id and aut_link_to = 1 or (aut_link_reciproc = 1 and aut_link_from = 1 and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 3 or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 )</referencefield>
+				<externalfield>aut_link_to_num=authors.author_id and aut_link_to = 1 or (aut_link_from = 1 and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>
@@ -115,14 +115,14 @@ $Id: champs_base.xml,v 1.10 2018-05-25 11:54:55 dgoron Exp $ -->
 	<field name="aut_link" external="yes" id="3902" datatype="aut_link">
 		<table name="categories">
 			<tablefield id="01" name="lib_categ" pond="110">libelle_categorie</tablefield>
-			<tablefield id="03" marctype="relationtype_aut" pond="100">aut_link.aut_link_type</tablefield>
+			<tablefield id="03" marctype="aut_link" pond="100">aut_link.aut_link_type</tablefield>
 			<language alias="lang">categories.langue</language>
 			<tablekey>num_noeud</tablekey>
 			<idkey>num_noeud</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 3 or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 and aut_link_reciproc = 1)</referencefield>
-				<externalfield>aut_link_to_num=categories.num_noeud and aut_link_to = 2 or (aut_link_reciproc = 1 and aut_link_from = 2 and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 3 or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 )</referencefield>
+				<externalfield>aut_link_to_num=categories.num_noeud and aut_link_to = 2 or (aut_link_from = 2 and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>
@@ -138,13 +138,13 @@ $Id: champs_base.xml,v 1.10 2018-05-25 11:54:55 dgoron Exp $ -->
 			<tablefield name="146" id="06" pond="100">ed_pays</tablefield>
 			<tablefield name="editeur_web" id="07" pond="100">ed_web</tablefield>
 			<tablefield name="707" id="08" pond="100">ed_comment</tablefield>
-			<tablefield id="10" marctype="relationtype_aut" pond="100">aut_link.aut_link_type</tablefield>
+			<tablefield id="10" marctype="aut_link" pond="100">aut_link.aut_link_type</tablefield>
 			<tablekey>ed_id</tablekey>
 			<idkey>ed_id</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 3 and aut_link_from_num != !!object_id!! or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 and aut_link_reciproc = 1 and aut_link_to_num != !!object_id!!)</referencefield>
-				<externalfield>aut_link_to_num=publisher_link.ed_id and aut_link_to = 3 and aut_link_to_num != !!object_id!! or (aut_link_reciproc = 1 and aut_link_from = 3 and aut_link_from_num != !!object_id!! and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 3 and aut_link_from_num != !!object_id!! or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 and aut_link_to_num != !!object_id!!)</referencefield>
+				<externalfield>aut_link_to_num=publisher_link.ed_id and aut_link_to = 3 and aut_link_to_num != !!object_id!! or (aut_link_from = 3 and aut_link_from_num != !!object_id!! and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>
@@ -154,13 +154,13 @@ $Id: champs_base.xml,v 1.10 2018-05-25 11:54:55 dgoron Exp $ -->
 		<table name="collections">
 			<tablefield id="01" name="lib_coll" pond="100">collection_name</tablefield>
 			<tablefield id="03" name="issn_coll" pond="100">collection_issn</tablefield>
-			<tablefield id="04" marctype="relationtype_aut" pond="100">aut_link.aut_link_type</tablefield>
+			<tablefield id="04" marctype="aut_link" pond="100">aut_link.aut_link_type</tablefield>
 			<tablekey>collection_id</tablekey>
 			<idkey>collection_id</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 3 or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 and aut_link_reciproc = 1)</referencefield>
-				<externalfield>aut_link_to_num=collections.collection_id and aut_link_to = 4 or (aut_link_reciproc = 1 and aut_link_from = 4 and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 3 or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 )</referencefield>
+				<externalfield>aut_link_to_num=collections.collection_id and aut_link_to = 4 or (aut_link_from = 4 and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>
@@ -170,13 +170,13 @@ $Id: champs_base.xml,v 1.10 2018-05-25 11:54:55 dgoron Exp $ -->
 		<table name="sub_collections">
 			<tablefield id="01" name="intit_sub_col" pond="75">sub_coll_name</tablefield>
 			<tablefield id="03" name="intit_sub_col_issn" pond="75">sub_coll_issn</tablefield>
-			<tablefield id="04" marctype="relationtype_aut" pond="100">aut_link.aut_link_type</tablefield>
+			<tablefield id="04" marctype="aut_link" pond="100">aut_link.aut_link_type</tablefield>
 			<tablekey>sub_coll_id</tablekey>
 			<idkey>sub_coll_id</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 3 or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 and aut_link_reciproc = 1)</referencefield>
-				<externalfield>aut_link_to_num=sub_collections.sub_coll_id and aut_link_to = 5 or (aut_link_reciproc = 1 and aut_link_from = 5 and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 3 or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 )</referencefield>
+				<externalfield>aut_link_to_num=sub_collections.sub_coll_id and aut_link_to = 5 or (aut_link_from = 5 and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>
@@ -185,13 +185,13 @@ $Id: champs_base.xml,v 1.10 2018-05-25 11:54:55 dgoron Exp $ -->
 	<field name="aut_link" external="yes" id="3906" datatype="aut_link">
 		<table name="series">
 			<tablefield id="01" name="lib_serie" pond="100">serie_name</tablefield>
-			<tablefield id="03" marctype="relationtype_aut" pond="100">aut_link.aut_link_type</tablefield>
+			<tablefield id="03" marctype="aut_link" pond="100">aut_link.aut_link_type</tablefield>
 			<tablekey>serie_id</tablekey>
 			<idkey>serie_id</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 3 or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 and aut_link_reciproc = 1)</referencefield>
-				<externalfield>aut_link_to_num=series.serie_id and aut_link_to = 6 or (aut_link_reciproc = 1 and aut_link_from = 6 and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 3 or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 )</referencefield>
+				<externalfield>aut_link_to_num=series.serie_id and aut_link_to = 6 or (aut_link_from = 6 and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>
@@ -212,13 +212,13 @@ $Id: champs_base.xml,v 1.10 2018-05-25 11:54:55 dgoron Exp $ -->
 			<tablefield name="aut_oeuvre_form_contexte" id="16" pond="100">tu_contexte</tablefield>
 			<tablefield name="aut_oeuvre_form_coordonnees" id="17" pond="100">tu_coordonnees</tablefield>
 			<tablefield name="aut_oeuvre_form_equinoxe" id="18" pond="100">tu_equinoxe</tablefield>
-			<tablefield id="19" marctype="relationtype_aut" pond="100">aut_link.aut_link_type</tablefield>
+			<tablefield id="19" marctype="aut_link" pond="100">aut_link.aut_link_type</tablefield>
 			<tablekey>tu_id</tablekey>
 			<idkey>tu_id</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 3 or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 and aut_link_reciproc = 1)</referencefield>
-				<externalfield>aut_link_to_num=titres_uniformes.tu_id and aut_link_to = 7 or (aut_link_reciproc = 1 and aut_link_from = 7 and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 3 or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 )</referencefield>
+				<externalfield>aut_link_to_num=titres_uniformes.tu_id and aut_link_to = 7 or (aut_link_from = 7 and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>
@@ -228,13 +228,13 @@ $Id: champs_base.xml,v 1.10 2018-05-25 11:54:55 dgoron Exp $ -->
 		<table name="indexint">
 			<tablefield name="indexint_nom" id="01" pond="100">indexint_name</tablefield>
 			<tablefield name="indexint_comment" id="02" pond="100">indexint_comment</tablefield>
-			<tablefield id="04" marctype="relationtype_aut" pond="100">aut_link.aut_link_type</tablefield>
+			<tablefield id="04" marctype="aut_link" pond="100">aut_link.aut_link_type</tablefield>
 			<tablekey>indexint_id</tablekey>
 			<idkey>indexint_id</idkey>
 			<link type="nn">
 				<table>aut_link</table>
-				<referencefield>aut_link_from_num and aut_link_from = 3 or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 and aut_link_reciproc = 1)</referencefield>
-				<externalfield>aut_link_to_num=indexint.indexint_id and aut_link_to = 8 or (aut_link_reciproc = 1 and aut_link_from = 8 and aut_link_from_num</externalfield>
+				<referencefield>aut_link_from_num and aut_link_from = 3 or (publishers.ed_id = aut_link_to_num and aut_link_to = 3 )</referencefield>
+				<externalfield>aut_link_to_num=indexint.indexint_id and aut_link_to = 8 or (aut_link_from = 8 and aut_link_from_num</externalfield>
 				<linkrestrict>)</linkrestrict>
 			</link>
 		</table>

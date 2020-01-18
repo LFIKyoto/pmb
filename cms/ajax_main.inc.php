@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_main.inc.php,v 1.31 2018-09-20 09:45:59 vtouchard Exp $
+// $Id: ajax_main.inc.php,v 1.31.6.1 2019-10-25 06:52:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -66,12 +66,14 @@ switch($categ){
 		$section = new cms_section();
 		$section->get_from_form();
 		$section->save();
+		print json_encode(array('type' => 'section', 'id' => $section->get_id()));
 		break;
 	case "save_article" :
 		//header('Content-type: text/html;charset=iso-8859-1');
 		$article = new cms_article();
 		$article->get_from_form();
 		$article->save();
+		print json_encode(array('type' => 'article', 'id' => $article->get_id()));
 		break;
 	case "delete_section" :
 		$section = new cms_section($id);
@@ -105,11 +107,13 @@ switch($categ){
 		break;
 	case "duplicate_section" :
 		$section = new cms_section($id);
-		$section->duplicate($recursive);
+		$duplicated = $section->duplicate($recursive);
+		print json_encode(array('type' => 'section', 'id' => $duplicated));
 		break;
 	case "duplicate_article" :
 		$article = new cms_article($id);
-		$article->duplicate();
+		$duplicated = $article->duplicate();
+		print json_encode(array('type' => 'article', 'id' => $duplicated));
 		break;
 	case "edit_logo" :
 		$logo = new cms_logo($id,$quoi);

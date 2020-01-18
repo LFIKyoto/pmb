@@ -2,12 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: make_sug.inc.php,v 1.13 2010-01-07 16:10:41 kantin Exp $
+// $Id: make_sug.inc.php,v 1.14 2019-05-31 08:02:48 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 //URL de retour du form de création/modification de suggestion
 $back_url = "./circ.php?";
+
+if (!isset($id_sug)) $id_sug = '';
 
 // page de switch création suggestion
 require_once($base_path.'/acquisition/suggestions/func_suggestions.inc.php');

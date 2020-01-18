@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.17 2017-01-26 15:36:34 dgoron Exp $
+// $Id: main.inc.php,v 1.19 2019-06-07 08:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $id_thes, $no_rec_history, $class_path, $page, $id_thes, $link, $link_expl, $link_explnum, $link_serial, $link_analysis, $link_bulletin;
+global $link_explnum_serial, $link_explnum_analysis, $link_explnum_bulletin, $browser_url, $rec_history, $msg, $sh;
 
 if(!isset($id_thes)) $id_thes = 0;
 if(!isset($no_rec_history)) $no_rec_history = '';
@@ -13,6 +16,7 @@ if(!isset($no_rec_history)) $no_rec_history = '';
 require_once($class_path."/searcher.class.php");
 require_once("$class_path/thesaurus.class.php");
 
+if (!isset($page)) $page = 0;
 //recuperation du thesaurus session 
 if(!$id_thes) {
 $id_thes = thesaurus::getSessionThesaurusId();

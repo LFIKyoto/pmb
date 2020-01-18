@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesOPACAnonymous.class.php,v 1.20 2017-06-22 08:49:22 dgoron Exp $
+// $Id: pmbesOPACAnonymous.class.php,v 1.22 2019-08-28 06:48:51 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -30,7 +30,7 @@ class pmbesOPACAnonymous extends external_services_api_class{
 		return $this->proxy_parent->pmbesSearch_simpleSearch($searchType, $searchTerm, -1, 0);
 	}
 	
-	public function simpleSearchLocalise($searchType=0,$searchTerm="",$PMBUserId=-1, $OPACEmprId=-1,$location,$section=0) {
+	public function simpleSearchLocalise($searchType=0,$searchTerm="",$PMBUserId=-1, $OPACEmprId=-1,$location=0,$section=0) {
 		return $this->proxy_parent->pmbesSearch_simpleSearchLocalise($searchType, $searchTerm, -1, 0,$location,$section=0);
 	}
 	public function get_sort_types() {
@@ -66,7 +66,7 @@ class pmbesOPACAnonymous extends external_services_api_class{
 	}
 	
 	public function advancedSearchExternal($search_description, $source_ids) {
-		array_walk($source_ids, create_function('&$a', '$a+=0;')); //Soyons sûr de ne stocker que des entiers dans le tableau.
+	    array_walk($source_ids, function(&$a) {$a = intval($a);}); //Soyons sûr de ne stocker que des entiers dans le tableau.
 		$source_ids = array_unique($source_ids);
 		if (!$source_ids)
 			return FALSE;

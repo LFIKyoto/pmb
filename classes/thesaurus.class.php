@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: thesaurus.class.php,v 1.29 2018-10-18 06:45:49 dgoron Exp $
+// $Id: thesaurus.class.php,v 1.30 2019-07-17 14:07:57 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -386,26 +386,50 @@ class thesaurus {
 	
 	//retourne du selecteur de thesaurus
 	public static function getSelector($selected, $base_url='') {
-		global $msg, $charset;
-		global $thesaurus_mode_pmb;
-		
-		$liste_thesaurus = static::getThesaurusList();
-		$selector = '';
-		
-		if ($thesaurus_mode_pmb != 0) {	 //la liste des thesaurus n'est pas affichée en mode monothesaurus
-			$selector = "<select class='saisie-30em' id='id_thes' name='id_thes' ";
-			$selector.= "onchange = \"document.location = '".$base_url."&id_thes='+document.getElementById('id_thes').value; \">" ;
-			foreach($liste_thesaurus as $id_thesaurus=>$libelle_thesaurus) {
-				$selector.= "<option value='".$id_thesaurus."' "; ;
-				if ($id_thesaurus == $selected) $selector.= " selected";
-				$selector.= ">".htmlentities($libelle_thesaurus,ENT_QUOTES,$charset)."</option>";
-			}
-			$selector.= "<option value=-1 ";
-			if ($selected == -1) $selector.= "selected ";
-			$selector.= ">".htmlentities($msg['thes_all'],ENT_QUOTES,$charset)."</option>";
-			$selector.= "</select>&nbsp;";
-		}
-		return $selector;
+	    global $msg, $charset;
+	    global $thesaurus_mode_pmb;
+	    
+	    $liste_thesaurus = static::getThesaurusList();
+	    $selector = '';
+	    
+	    if ($thesaurus_mode_pmb != 0) {	 //la liste des thesaurus n'est pas affichée en mode monothesaurus
+	        $selector = "<select class='saisie-30em' id='id_thes' name='id_thes' ";
+	        $selector.= "onchange = \"document.location = '".$base_url."&id_thes='+document.getElementById('id_thes').value; \">" ;
+	        foreach($liste_thesaurus as $id_thesaurus=>$libelle_thesaurus) {
+	            $selector.= "<option value='".$id_thesaurus."' "; ;
+	            if ($id_thesaurus == $selected) $selector.= " selected";
+	            $selector.= ">".htmlentities($libelle_thesaurus,ENT_QUOTES,$charset)."</option>";
+	        }
+	        $selector.= "<option value=-1 ";
+	        if ($selected == -1) $selector.= "selected ";
+	        $selector.= ">".htmlentities($msg['thes_all'],ENT_QUOTES,$charset)."</option>";
+	        $selector.= "</select>&nbsp;";
+	    }
+	    return $selector;
+	}
+	
+	//selecteur de thesaurus dans le formulaire d'une catégorie
+	public static function getSelectorCategoryForm($selected, $base_url='', $on_create=true) {
+	    global $msg, $charset;
+	    global $thesaurus_mode_pmb;
+	    
+	    $liste_thesaurus = static::getThesaurusList();
+	    $selector = '';
+	    
+	    if ($thesaurus_mode_pmb != 0) {	 //la liste des thesaurus n'est pas affichée en mode monothesaurus
+	        $selector = "<select class='saisie-30em' id='id_thes' name='id_thes' ";
+	        if(!$on_create) {
+	            $selector .= "disabled='disabled' style='background-color:#ccc' ";
+	        }
+	        $selector.= "onchange = \"if(confirm(pmbDojo.messages.getMessage('grid', 'category_change_thesaurus_confirm'))) {unload_off();document.location = '".$base_url."&id_thes='+document.getElementById('id_thes').value;} \" backbone='yes'>" ;
+	        foreach($liste_thesaurus as $id_thesaurus=>$libelle_thesaurus) {
+	            $selector.= "<option value='".$id_thesaurus."' "; ;
+	            if ($id_thesaurus == $selected) $selector.= " selected";
+	            $selector.= ">".htmlentities($libelle_thesaurus,ENT_QUOTES,$charset)."</option>";
+	        }
+	        $selector.= "</select>&nbsp;";
+	    }
+	    return $selector;
 	}
 }
 ?>

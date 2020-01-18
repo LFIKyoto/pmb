@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: liste_lecture.class.php,v 1.1 2016-03-31 08:55:44 dgoron Exp $
+// $Id: liste_lecture.class.php,v 1.2 2019-04-03 13:34:40 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,6 +12,7 @@ class liste_lecture {
 	public $num_empr=0;
 	public $display='';
 	public $notices=array();
+	public $notices_create_date = array();
 	public $action='';
 	public $nom_liste='';
 	public $description='';
@@ -25,26 +26,49 @@ class liste_lecture {
 	 * Constructeur 
 	 */
 	public function __construct($id_liste=0, $act=''){
-		$this->id_liste = $id_liste;
+		$this->id_liste = $id_liste+0;
 		$this->action = $act;
-		if($this->id_liste){
-			$req = "select * from opac_liste_lecture where id_liste='".$this->id_liste."' ";
-			$res = pmb_mysql_query($req);
-			if(pmb_mysql_num_rows($res)){
-				$liste = pmb_mysql_fetch_object($res);
-				$this->nom_liste = $liste->nom_liste;
-				$this->description=$liste->description;
-				$this->public=$liste->public;
-				$this->num_empr=$liste->num_empr; 
-				$this->readonly=$liste->read_only;
-				$this->confidential=$liste->confidential;
-				$this->tag=$liste->tag;
-				if($liste->notices_associees) 
-					$this->notices = explode(",",$liste->notices_associees);
-				else $this->notices = array();
-			}
-		}
+		$this->fetch_data();
 		$this->proceed();
+	}
+	
+	protected function fetch_data() {
+	    $this->nom_liste = '';
+	    $this->description='';
+	    $this->public=0;
+	    $this->num_owner = 0;
+	    $this->readonly=0;
+	    $this->notices = array();
+	    $this->notices_create_date = array();
+	    $this->confidential=0;
+	    $this->tag='';
+	    $this->subscribed = 0;
+	    if ($this->id_liste) {
+	        $req = "select * from opac_liste_lecture where id_liste='".$this->id_liste."' ";
+	        $res = pmb_mysql_query($req);
+	        if(pmb_mysql_num_rows($res)){
+	            $liste = pmb_mysql_fetch_object($res);
+	            $this->nom_liste = $liste->nom_liste;
+	            $this->description=$liste->description;
+	            $this->public=$liste->public;
+	            $this->num_owner = $liste->num_empr;
+	            $this->readonly=$liste->read_only;
+	            $this->confidential=$liste->confidential;
+	            $this->tag=$liste->tag;
+	            $this->subscribed = $liste->subscribed;
+	            
+	            $this->notices = array();
+	            $this->notices_create_date = array();
+	            $query = "select * from opac_liste_lecture_notices where opac_liste_lecture_num=" . $this->id_liste;
+	            $result = pmb_mysql_query($query);
+	            if (pmb_mysql_num_rows($result)) {
+	                while ($row = pmb_mysql_fetch_object($result)) {
+	                    $this->notices[] = $row->opac_liste_lecture_notice_num;
+	                    $this->notices_create_date[$row->opac_liste_lecture_notice_num] = $row->opac_liste_lecture_create_date;
+	                }
+	            }
+	        } 
+	    } 
 	}
 	
 	protected function proceed(){

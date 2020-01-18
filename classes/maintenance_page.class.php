@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: maintenance_page.class.php,v 1.5 2018-03-16 09:14:50 apetithomme Exp $
+// $Id: maintenance_page.class.php,v 1.6.2.1 2019-10-09 09:57:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -110,6 +110,7 @@ class maintenance_page {
 			global $maintenance_page_default_content, $msg;
 			$this->content['body'] = $maintenance_page_default_content;
 			$this->content['title'] = $msg['admin_opac_maintenance'];
+			$this->content['style'] = '';			
 		}
 	}
 	
@@ -126,10 +127,30 @@ class maintenance_page {
 	</style>
 </head>
 <body>
-	'.$this->content['body'].'
+	'.htmlspecialchars($this->content['body'], ENT_QUOTES, $charset).'
 </body>
 </html>';
 		
 		return $html;
+	}
+	
+	public function activate() {
+	    $this->active = true;
+	    if (!file_exists($this->active_filename)) {
+	        touch($this->active_filename);
+	    }
+	    file_put_contents($this->content_filename, $this->build_page());
+	}
+	
+	public function disable() {
+	    $this->active = false;
+	    if (file_exists($this->active_filename)) {
+	        unlink($this->active_filename);
+	    }
+	    file_put_contents($this->content_filename, $this->build_page());
+	}
+	
+	public function set_content($content) {
+	    $this->content = $content;
 	}
 }

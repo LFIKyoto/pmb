@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_item.class.php,v 1.52 2018-10-01 13:57:28 dgoron Exp $
+// $Id: docwatch_item.class.php,v 1.54.2.2 2019-11-28 14:39:12 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,6 +10,7 @@ require_once($class_path."/notice.class.php");
 require_once($class_path."/notice_doublon.class.php");
 require_once($class_path."/docwatch/docwatch_watch.class.php");
 require_once($class_path."/editor.class.php");
+require_once($class_path."/cms/cms_concept.class.php");
 
 /**
  * class docwatch_item
@@ -161,6 +162,11 @@ class docwatch_item{
 	protected $descriptors_isbd;
 	
 	/**
+	 * Format ISBD des concepts
+	 */
+	protected $concepts_isbd;
+	
+	/**
 	 * Format ISBD des tags
 	 */
 	protected $tags_isbd;
@@ -275,12 +281,12 @@ class docwatch_item{
 		$this->descriptors = $descriptors;
 	}
 	
-	public function get_concept(){
-		return $this->concept;
+	public function get_concepts(){
+		return $this->concepts;
 	}
 	
-	public function set_concept($concept){
-		$this->concept = $concept;
+	public function set_concepts($concepts){
+		$this->concepts = $concepts;
 	}
 	
 	public function get_tags(){
@@ -352,6 +358,10 @@ class docwatch_item{
 		return $this->descriptors_isbd;
 	}
 	
+	public function get_concepts_isbd() {
+	    return $this->concepts_isbd;
+	}
+	
 	public function get_tags_isbd() {
 	  	return $this->tags_isbd;
 	}
@@ -421,6 +431,14 @@ class docwatch_item{
 				pmb_mysql_query($query, $dbh);
 			}
 			
+			if(count($this->concepts)) {
+			    $index_concept = new index_concept($num_notice, TYPE_NOTICE);
+			    foreach ($this->concepts as $concept){
+			        $index_concept->add_concept(new concept($concept['id']));
+			    }
+			    $index_concept->save(false);
+			}
+			
 			if ($create_lang){
 				$query = "insert into notices_langues set num_notice=".$num_notice.", code_langue='".addslashes($create_lang)."';";
 				pmb_mysql_query($query, $dbh);
@@ -487,7 +505,13 @@ class docwatch_item{
 			$section->resume = $this->summary;
 			$section->start_date = $this->publication_date;
 			$section->publication_state = $section_status; 
-			$section->set_descriptors($this->descriptors);
+			$descriptors = array();
+			if(count($this->descriptors)) {
+			    foreach($this->descriptors as $descriptor){
+			        $descriptors[] = $descriptor['id'];
+			    }
+			}
+			$section->set_descriptors($descriptors);
 			$section->num_parent = $section_num_parent;
 			$section->num_type = $section_type;
 			if ($this->url) {
@@ -538,7 +562,13 @@ class docwatch_item{
 			$article->contenu = $this->content;
 			$article->start_date = $this->publication_date;
 			$article->publication_state = $article_status;
-			$article->set_descriptors($this->descriptors);
+			$descriptors = array();
+			if(count($this->descriptors)) {
+			    foreach($this->descriptors as $descriptor){
+			        $descriptors[] = $descriptor['id'];
+			    }
+			}
+			$article->set_descriptors($descriptors);
 			if ($this->url) {
 				$article->resume.= "<br /><a href='".$this->url."'>".$this->url."</a>";
 			}
@@ -717,7 +747,7 @@ class docwatch_item{
 		$this->url = "";
 		$this->logo_url = "";
 		$this->descriptors = array();
-		$this->concepts = "";
+		$this->concepts = array();
 		$this->tags = array();
 		$this->status = 0;
 		$this->interesting = 0;
@@ -779,6 +809,20 @@ class docwatch_item{
 						$this->descriptors_isbd.= $row->libelle_categorie;
 					}
 				}
+				$this->concepts = array();
+				$query = "select num_concept from index_concept where index_concept.num_object ='".$this->id."' and type_object = '".TYPE_DOCWATCH."'";
+				$result = pmb_mysql_query($query);
+				if (pmb_mysql_num_rows($result)) {
+				    while($row=pmb_mysql_fetch_object($result)){
+				        $label = index_concept::get_concept_label_from_id($row->num_concept);
+				        $this->concepts[] = array(
+				            "id" => $row->num_concept,
+				            "label" => $label
+				        );
+				        if($this->concepts_isbd)$this->concepts_isbd.="; ";
+				        $this->concepts_isbd.= $label;
+				    }
+				}
 				$query = "select datasource_title from docwatch_datasources where id_datasource ='".$this->source_id."'";
 				$result = pmb_mysql_query($query, $dbh);
 				if (pmb_mysql_num_rows($result)) {
@@ -792,11 +836,12 @@ class docwatch_item{
 							"title" => $msg['dsi_docwatch_datasource_deleted']
 					);
 				}
-				$query = "select watch_title,watch_last_date, watch_desc, watch_logo_url from docwatch_watches where id_watch ='".$this->num_watch."'";
+				$query = "select id_watch,watch_title,watch_last_date, watch_desc, watch_logo_url from docwatch_watches where id_watch ='".$this->num_watch."'";
 				$result = pmb_mysql_query($query, $dbh);
 				if (pmb_mysql_num_rows($result)) {
 					if($row=pmb_mysql_fetch_object($result)){
 						$this->watch = array(
+						    "id" => $row->id_watch,
 							"title" => $row->watch_title,
 							"last_date" => $row->watch_last_date,
 							"desc" => $row->watch_desc,
@@ -942,7 +987,7 @@ class docwatch_item{
 	}
 	
 	public function get_index_wew() {
-		return ' '.strip_tags($this->title).' '.strip_tags($this->content).' ';
+	    return ' '.strip_tags($this->title).' '.strip_tags($this->summary).' '.strip_tags($this->content).' ';
 	}
 	
 	public function get_index_sew() {
@@ -1070,6 +1115,11 @@ class docwatch_item{
 								),
 						)
 				),
+    		    array(
+        		        'var' => "concepts",
+        		        'desc' => $msg['cms_module_item_datasource_desc_concepts'],
+        		        'children' => self::prefix_var_tree(cms_concept::get_format_data_structure(), "concepts[i]")
+    		    ),
 				array(
 						'var' => "tags",
 						'desc' => $msg['cms_module_item_datasource_desc_tags'],

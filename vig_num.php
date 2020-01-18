@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vig_num.php,v 1.13 2018-06-14 09:07:19 mbertin Exp $
+// $Id: vig_num.php,v 1.14 2019-06-13 15:26:51 btafforeau Exp $
 
 // définition du minimum nécéssaire 
 $base_path     = ".";                            
@@ -16,7 +16,7 @@ require_once ("$base_path/includes/init.inc.php");
 session_write_close();//Fermeture de la session dès que possible
 require_once("$class_path/curl.class.php");
 
-$explnum_id = $explnum_id+0;
+$explnum_id = (int) $explnum_id;
 $resultat = pmb_mysql_query("SELECT explnum_id, explnum_mimetype, explnum_vignette FROM explnum WHERE explnum_id = '$explnum_id' ", $dbh);
 $nb_res = pmb_mysql_num_rows($resultat) ;
 

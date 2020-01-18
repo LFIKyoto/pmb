@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_sectionslist_view_carousel_responsive.class.php,v 1.3 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: cms_module_sectionslist_view_carousel_responsive.class.php,v 1.3.6.1 2019-09-17 09:59:20 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -50,7 +50,7 @@ class cms_module_sectionslist_view_carousel_responsive extends cms_module_common
 		for($i=0 ; $i<count($ids) ; $i++){
 			$section = cms_provider::get_instance("section",$ids[$i]) ;
 			$infos = $section->format_datas(false,false);
-			$infos['link']=$this->get_constructed_link("section",$infos['id']);
+			$infos->link=$this->get_constructed_link("section",$infos->id);
 			$datas[]= $infos;
 		}
 		return parent::render(array('records' => $datas));

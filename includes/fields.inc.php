@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fields.inc.php,v 1.32 2018-12-20 11:00:19 mbertin Exp $
+// $Id: fields.inc.php,v 1.33.4.2 2019-09-17 08:41:11 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -48,7 +48,7 @@ function aff_selector($field,&$check_scripts) {
 			break;	
 	}
 
-	$ret.="<input class='bouton' value='...' onclick=\"window.open('./select.php?what=".$what."&dyn=&caller=".$form_name."&param1=".$hidden_name."&param2=".$text_name."&p1=".$hidden_name."&p2=".$text_name."&mode=un&deb_rech='+".pmb_escape()."(''), 'select_author0', 'scrollbars=yes, toolbar=no, dependent=yes, width=400, height=400, resizable=yes')\" type='button'>";
+	$ret.="<input class='bouton' value='...' onclick=\"openPopUp('./select.php?what=".$what."&dyn=&caller=".$form_name."&param1=".$hidden_name."&param2=".$text_name."&p1=".$hidden_name."&p2=".$text_name."&deb_rech='+".pmb_escape()."(''), 'selector')\" type='button'>";
 	$ret.="<input name='".$hidden_name."' id='".$hidden_name."' value='".$hidden_value."' type='hidden'>";
 	
 	if ($field['MANDATORY']=="yes") $check_scripts.="if (document.".$form_name.".".$field['NAME'].".value==\"\") return cancel_submit(\"".sprintf($msg["parperso_field_is_needed"],$field['ALIAS'][0]['value'])."\");\n";
@@ -168,7 +168,7 @@ function val_file_box($field) {
 			if ($field ['OPTIONS'][0]['DATA_TYPE'][0]['value']=="1") $data_type="varchar(255)"; else $data_type="integer";
 			$requete="create temporary table ".$field['OPTIONS'][0]['TEMP_TABLE_NAME'][0]['value']." (val $data_type, INDEX (val)) ENGINE=MyISAM ";
 			@pmb_mysql_query($requete);
-			while (list($key,$value)=each($val)) {
+			foreach ($val as $key => $value) {
 				$requete="insert into ".$field['OPTIONS'][0]['TEMP_TABLE_NAME'][0]['value']." values('".addslashes($value)."')";
 				pmb_mysql_query($requete);
 			}

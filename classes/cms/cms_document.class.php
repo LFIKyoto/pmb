@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_document.class.php,v 1.20 2018-01-05 16:26:06 dgoron Exp $
+// $Id: cms_document.class.php,v 1.21 2019-07-05 13:25:15 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -332,7 +332,7 @@ class cms_document extends storage_document {
 		return $form;
 	}
 	
-	function save_form($caller="collection"){
+	public function save_form($caller="collection"){
 		global $msg, $charset;
 		global $cms_document_title, $cms_document_description, $cms_document_url, $cms_document_vign;
 		global $cms_document_mime_vign;
@@ -408,7 +408,7 @@ class cms_document extends storage_document {
 		}
 	}
 	
-	function delete(){
+	public function delete(){
 		global $msg;
 	
 		//vérification d'utilisation

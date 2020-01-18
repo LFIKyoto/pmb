@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_rss.class.php,v 1.12 2016-10-04 11:19:02 dgoron Exp $
+// $Id: cms_module_common_datasource_rss.class.php,v 1.13 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -33,8 +33,8 @@ class cms_module_common_datasource_rss extends cms_module_common_datasource{
 		global $cms_module_common_datasource_rss_limit,$cms_module_common_datasource_rss_timeout;
 
 		$this->parameters= array();
-		$this->parameters['nb_max_elements'] = $cms_module_common_datasource_rss_limit+0;
-		$this->parameters['timeout'] = $cms_module_common_datasource_rss_timeout+0;
+		$this->parameters['nb_max_elements'] = (int) $cms_module_common_datasource_rss_limit;
+		$this->parameters['timeout'] = (int) $cms_module_common_datasource_rss_timeout;
 		return parent::save_form();
 	}
 

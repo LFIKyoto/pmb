@@ -2,7 +2,9 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: edit.php,v 1.2 2018-08-06 10:46:34 dgoron Exp $
+// $Id: edit.php,v 1.3 2019-06-03 07:04:57 btafforeau Exp $
+
+global $class_path, $fichier_temp_nom, $mode, $dest, $idcaddie;
 
 // définition du minimum nécessaire 
 $base_path="../../..";                            
@@ -29,4 +31,4 @@ switch($dest) {
 		break;
 }
 	
-pmb_mysql_close($dbh);
+pmb_mysql_close();

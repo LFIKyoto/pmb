@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: stat_opac.tpl.php,v 1.10 2017-04-26 06:40:49 jpermanne Exp $
+// $Id: stat_opac.tpl.php,v 1.11 2019-05-27 12:35:59 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $stat_opac_view_form, $msg, $stat_view_addview_form, $stat_view_addcol_form, $stat_view_request_form, $stat_view_import_req_form, $current_module;
 
 $stat_opac_view_form ="
 	<form class='form_view' id='view' name='view' method='post' action='./admin.php?categ=opac&sub=stat&section=view_gestion' >	

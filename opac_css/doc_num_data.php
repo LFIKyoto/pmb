@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: doc_num_data.php,v 1.44 2018-07-04 09:50:33 dgoron Exp $
+// $Id: doc_num_data.php,v 1.45 2019-06-20 09:46:37 ngantier Exp $
 
 $base_path=".";
 require_once($base_path."/includes/init.inc.php");
@@ -75,7 +75,7 @@ if ($gestion_acces_active==1 && $gestion_acces_empr_notice==1) {
 	$rights= $dom_2->getRights($_SESSION['id_empr_session'],$id_for_rigths);
 } else {
 	$dom_2=null;
-	$rights='';
+	$rights = 0;
 }
 
 //Accessibilité des documents numériques aux abonnés en opac

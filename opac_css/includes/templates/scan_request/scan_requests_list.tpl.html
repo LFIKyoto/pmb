@@ -1,4 +1,4 @@
-<!-- $Id: scan_requests_list.tpl.html,v 1.4 2017-11-17 15:11:41 ngantier Exp $ -->
+<!-- $Id: scan_requests_list.tpl.html,v 1.6.2.1 2019-11-27 08:55:21 dgoron Exp $ -->
 {% for scan_request in scan_requests.scan_requests %}
 	{% if loop.first %}
 		<table class='scan_requests_list'>
@@ -34,8 +34,18 @@
 					<div class='colonne25'>
 						{{ msg.scan_request_desc }} :
 					</div>
-					<div class='colonne'>
+					<div class='colonne_suite'>
 						{{ scan_request.desc | nl2br }}
+					</div>
+				</div>
+			{% endif %}
+			{% if scan_request.nb_scanned_pages %}
+				<div class='row scan_request_content_nb_scanned_pages'>
+					<div class='colonne25'>
+						{{ msg.scan_request_nb_scanned_pages }} :
+					</div>
+					<div class='colonne_suite'>
+						{{ scan_request.nb_scanned_pages }}
 					</div>
 				</div>
 			{% endif %}
@@ -64,6 +74,20 @@
 					</div>
 					<div class='colonne'>
 						{{ scan_request.comment | nl2br }}
+					</div>
+				</div>
+			{% endif %}
+			{% if scan_request.linked_records %}
+				<div class='row scan_request_content_comment'>
+					<div class='colonne25'>
+						{{ msg.scan_request_linked_records }} :
+					</div>
+					<div class='colonne' style='width: 75%;'>
+						<span>
+						{% for record in scan_request.linked_records %}
+							{{ record.display }}
+						{% endfor %}
+						</span>
 					</div>
 				</div>
 			{% endif %}

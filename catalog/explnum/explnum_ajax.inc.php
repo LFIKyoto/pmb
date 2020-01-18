@@ -2,9 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_ajax.inc.php,v 1.18 2018-11-21 13:34:02 dgoron Exp $
+// $Id: explnum_ajax.inc.php,v 1.22 2019-06-05 09:04:42 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $include_path, $quoifaire, $id, $id_repertoire, $explnum_id, $speaker_id, $author_id, $segment_id, $start, $end, $segments_ids;
+global $selectorIndex, $protocol, $base_path, $uploadDir, $fnc, $bul_id, $msg, $acces_m, $gestion_acces_active, $gestion_acces_user_notice;
+global $PMBuserid, $charset, $deletion_link, $f_notice, $f_explnum_id, $nberrors, $conservervignette, $f_statut_chk, $book_lender_id, $retour;
+global $forcage, $save_status, $f_bulletin, $f_nom, $f_url, $f_explnum_statut, $f_url_vignette;
 
 require_once($class_path.'/explnum_associate_svg.class.php');
 require_once($class_path.'/explnum_licence/explnum_licence.class.php');
@@ -56,6 +61,10 @@ switch($quoifaire){
         $id+=0;
         print explnum_licence::get_explnum_licence_as_pdf($id);
         break;
+    case 'get_licence_quotation':
+        $id+=0;
+        print explnum_licence::get_explnum_licence_quotation($id);
+        break;
     case 'upload_docnum':
         $protocol = $_SERVER["SERVER_PROTOCOL"];
         $uploadDir = $base_path."/temp/";
@@ -71,7 +80,7 @@ switch($quoifaire){
                             array(
                                 'response' => show_explnum_per_notice($explnum->explnum_notice, $explnum->explnum_bulletin, $link_expl),
                                 'title' => '<b>'.$msg['explnum_docs_associes'].'</b> ('.show_explnum_per_notice($explnum->explnum_notice, $explnum->explnum_bulletin, $explnum->get_display_link(),array(),true).')',
-                                'bull_display' => $bul_id ? get_analysis($bul_id) : ''
+                                'bull_display' => (isset($bul_id) && $bul_id ? get_analysis($bul_id) : '')
                             )
                             );
                         /**
@@ -253,6 +262,7 @@ switch($quoifaire){
             $book_lender_id = array();
         }
         $explnum = new explnum($id);
+        $explnum->set_p_perso($p_perso);
         if(!isset($retour)) $retour = '';
         if(!isset($forcage)) $forcage = '';
         $save_status = $explnum->mise_a_jour($f_notice, $f_bulletin, $f_nom, $f_url, $retour, $conservervignette, $f_statut_chk, $f_explnum_statut, $book_lender_id, $forcage, $f_url_vignette);
@@ -266,16 +276,15 @@ switch($quoifaire){
                 )
                 );
         }
-        $p_perso->rec_fields_perso($explnum->explnum_id);
         break;
 }
 
 function existing_file($id,$id_repertoire){
-    global $dbh,$fichier,$charset;
+    global $fichier,$charset;
     
     if(!$id){
         $rqt = "select repertoire_path, explnum_path, repertoire_utf8, explnum_nomfichier as nom, explnum_extfichier as ext from explnum join upload_repertoire on explnum_repertoire=repertoire_id  where explnum_repertoire='$id_repertoire' and explnum_nomfichier ='$fichier'";
-        $res = pmb_mysql_query($rqt,$dbh);
+        $res = pmb_mysql_query($rqt);
         
         if(pmb_mysql_num_rows($res)){
             $expl = pmb_mysql_fetch_object($res);
@@ -314,57 +323,49 @@ function get_associate_js($explnum_id) {
 }
 
 function update_associate_author($speaker_id, $author_id) {
-    global $dbh;
     $query = 'update explnum_speakers set explnum_speaker_author = '.$author_id.' where explnum_speaker_id = '.$speaker_id;
-    pmb_mysql_query($query, $dbh);
+    pmb_mysql_query($query);
 }
 
 function update_associate_speaker($segment_id, $speaker_id) {
-    global $dbh;
     $query = 'update explnum_segments set explnum_segment_speaker_num = '.$speaker_id.' where explnum_segment_id = '.$segment_id;
-    pmb_mysql_query($query, $dbh);
+    pmb_mysql_query($query);
 }
 
 function add_new_speaker($explnum_id) {
-    global $dbh;
     $query = 'insert into explnum_speakers (explnum_speaker_explnum_num, explnum_speaker_speaker_num) values ('.$explnum_id.', "PMB")';
-    pmb_mysql_query($query, $dbh);
+    pmb_mysql_query($query);
 }
 
 function delete_associate_speaker($speaker_id) {
-    global $dbh;
     $query = 'delete from explnum_speakers where explnum_speaker_id = '.$speaker_id;
-    pmb_mysql_query($query, $dbh);
+    pmb_mysql_query($query);
 }
 
 function add_new_segment($explnum_id, $speaker_id, $start, $end) {
-    global $dbh;
     if (!$speaker_id) {
         $query = 'insert into explnum_speakers (explnum_speaker_explnum_num, explnum_speaker_speaker_num) values ('.$explnum_id.', "PMB")';
-        pmb_mysql_query($query, $dbh);
+        pmb_mysql_query($query);
         $speaker_id = pmb_mysql_insert_id();
     }
     $duration = $end - $start;
     $query = 'insert into explnum_segments (explnum_segment_explnum_num, explnum_segment_speaker_num, explnum_segment_start, explnum_segment_duration, explnum_segment_end) value ('.$explnum_id.', '.$speaker_id.', '.$start.', '.$duration.', '.$end.')';
-    pmb_mysql_query($query, $dbh);
+    pmb_mysql_query($query);
 }
 
 function delete_segments($segments_ids) {
-    global $dbh;
     $query = 'delete from explnum_segments where explnum_segment_id in ('.$segments_ids.')';
-    pmb_mysql_query($query, $dbh);
+    pmb_mysql_query($query);
 }
 
-function update_segment_time($segment_id, $start, $end) {
-    global $dbh;
-    
+function update_segment_time($segment_id, $start, $end) { 
     $query = 'update explnum_segments set ';
     
     if ($start) {
         $query .= 'explnum_segment_start = '.$start.', ';
     } else {
         $select = 'select explnum_segment_start from explnum_segments where explnum_segment_id = '.$segment_id;
-        $result = pmb_mysql_query($select, $dbh);
+        $result = pmb_mysql_query($select);
         if ($result && pmb_mysql_num_rows($result)) {
             if ($row = pmb_mysql_fetch_object($result)) {
                 $start = $row->explnum_segment_start;
@@ -376,7 +377,7 @@ function update_segment_time($segment_id, $start, $end) {
         $query .= 'explnum_segment_end = '.$end.', ';
     } else {
         $select = 'select explnum_segment_end from explnum_segments where explnum_segment_id = '.$segment_id;
-        $result = pmb_mysql_query($select, $dbh);
+        $result = pmb_mysql_query($select);
         if ($result && pmb_mysql_num_rows($result)) {
             if ($row = pmb_mysql_fetch_object($result)) {
                 $end = $row->explnum_segment_end;
@@ -387,7 +388,7 @@ function update_segment_time($segment_id, $start, $end) {
     $duration = $end - $start;
     
     $query .= 'explnum_segment_duration = '.$duration.' where explnum_segment_id = '.$segment_id;
-    pmb_mysql_query($query, $dbh);
+    pmb_mysql_query($query);
 }
 
 ?>

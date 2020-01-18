@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: custom_label_no_script.inc.php,v 1.16 2018-08-10 09:20:56 dgoron Exp $
+// $Id: custom_label_no_script.inc.php,v 1.19.2.4 2019-11-27 08:56:15 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $label_fmt, $label_con, $msg, $charset, $pmb_pdf_fontfixed;
 
 $label_fmt['s0']['label_name'] 				= "Standard - 38.1x21.2mm - Avery J8651";
 $label_fmt['s0']['page_format'] 				= "A4";
@@ -31,6 +33,8 @@ $label_con['s0']['font_style'][0]	 	= "B";
 $label_con['s0']['font_color'][0]	 	= "000000";
 $label_con['s0']['align'][0] 			= "C";
 $label_con['s0']['rotation'][0]			= "0";
+$label_con['s0']['border_size'][0]		= "0";
+$label_con['s0']['character_line_break'][0]	= "";
 
 $label_con['s0']['content_type'][1] 	= "image";
 $label_con['s0']['comment'][1] 		= htmlentities($msg['image'], ENT_QUOTES, $charset);
@@ -68,6 +72,8 @@ $label_con['s1']['font_style'][0]	 	= "B";
 $label_con['s1']['font_color'][0]	 	= "000000";
 $label_con['s1']['align'][0] 			= "C";
 $label_con['s1']['rotation'][0]		= "90";
+$label_con['s1']['border_size'][0]		= "0";
+$label_con['s1']['character_line_break'][0]	= "";
 
 $label_con['s1']['content_type'][1] 	= "image";
 $label_con['s1']['comment'][1] 		= htmlentities($msg['image'], ENT_QUOTES, $charset);
@@ -103,6 +109,8 @@ $label_con['s2']['font_style'][0]	 	= "B";
 $label_con['s2']['font_color'][0]	 	= "000000";
 $label_con['s2']['align'][0] 			= "C";
 $label_con['s2']['rotation'][0]		= "0";
+$label_con['s2']['border_size'][0]		= "0";
+$label_con['s2']['character_line_break'][0]	= "";
 
 $label_con['s2']['content_type'][1] 	= "image";
 $label_con['s2']['comment'][1] 		= htmlentities($msg['image'], ENT_QUOTES, $charset);
@@ -383,8 +391,7 @@ function display_cote_content($label_id, $step) {
 	$r.= "<div class='row'>
 			<div class='left'>".htmlentities($msg['font'], ENT_QUOTES, $charset)."</div>
 			<div class='right'>
-				<input type='hidden' id='content_value[".$step."][font]' name='content_value[".$step."][font]' value='".$label_con[$label_id]['font'][$step]."' />
-				".htmlentities($label_con[$label_id]['font'][$step], ENT_QUOTES, $charset)."
+				<input type='text' id='content_value[".$step."][font]' name='content_value[".$step."][font]' class='saisie-5em' style='text-align:right;' value='".$label_con[$label_id]['font'][$step]."' />
 			</div>
 		</div>";
 
@@ -461,6 +468,18 @@ function display_cote_content($label_id, $step) {
 			<div class='left'>".htmlentities($msg['rotation'], ENT_QUOTES, $charset)."</div>
 			<div class='right'>
 				<input type='text' id='content_value[".$step."][rotation]' name='content_value[".$step."][rotation]' class='saisie-5em' style='text-align:right;' value='".$label_con[$label_id]['rotation'][$step]."' />
+			</div>
+		</div>
+        <div class='row'>
+			<div class='left'>".htmlentities($msg['cote_border_size'].' ('.$label_fmt[$label_id]['unit'].')', ENT_QUOTES, $charset)."</div>
+			<div class='right'>
+				<input type='text' id='content_value[".$step."][border_size]' name='content_value[".$step."][border_size]' class='saisie-5em' style='text-align:right;' value='".$label_con[$label_id]['border_size'][$step]."' />
+			</div>
+		</div>
+        <div class='row'>
+			<div class='left'>".htmlentities($msg['cote_character_line_break'], ENT_QUOTES, $charset)."</div>
+			<div class='right'>
+				<input type='text' id='content_value[".$step."][character_line_break]' name='content_value[".$step."][character_line_break]' class='saisie-5em' style='text-align:right;' value='".$label_con[$label_id]['character_line_break'][$step]."' />
 			</div>
 		</div>";
 
@@ -592,6 +611,13 @@ function  verif_cote_content($label_id, $step) {
 		return false;
 	}";
 
+	$r.= "
+		var border_size = document.getElementById('content_value[".$step."][border_size]').value;
+		if ( (border_size=='') || (isNaN(border_size)) || (parseFloat(border_size) < 0) ) {
+			alert(\"".$msg['param_err_impr']."\");
+		return false;
+	}";
+	
 	return $r;
 }
 
@@ -642,6 +668,14 @@ function  verif_image_content($label_id, $step) {
 	return $r;
 }
 
+function get_border_print_cote(&$target, $content_value) {
+    $border = 0;
+    if(!empty($content_value['border_size'])) {
+        $target->SetLineWidth($content_value['border_size']);
+        $border = 1;
+    }
+    return $border;
+}
 
 function print_cote(&$target, $content_value, $content_src='') {
 
@@ -649,10 +683,14 @@ function print_cote(&$target, $content_value, $content_src='') {
 
 	$q = "select expl_cote from exemplaires where expl_id = '".$content_src."' ";
 	$r = pmb_mysql_query($q, $dbh);
-	$cote = "";
+	$str_cote = "";
 	if (pmb_mysql_num_rows($r)) {
 		$row_cote = pmb_mysql_fetch_row($r);
-		$tab_cote = explode(" ", rtrim(ltrim($row_cote[0])) );
+		if(!empty($content_value['character_line_break'])) {
+		    $tab_cote = explode($content_value['character_line_break'], rtrim(ltrim($row_cote[0])));
+		} else {
+		    $tab_cote = explode(" ", rtrim(ltrim($row_cote[0])));
+		}
 		$str_cote = implode("\n", $tab_cote);
 	}
 
@@ -675,7 +713,11 @@ function print_cote(&$target, $content_value, $content_src='') {
 	$target->Rotate($content_value['rotation'], $target->GetStickX()+$content_value['from_left'],$target->GetStickY()+$content_value['from_top'] ) ;
 	$target->MultiCell($content_value['width'], ($content_value['font_size']*25.4/72), $str_cote, 0,  $content_value['align']);
 	$target->Rotate(0);
-	//$target->Rect($target->GetStickX(), $target->GetStickY(), 38.1, 21.2 ); //Affiche un cadre autour de l'etiquette
+	$border = get_border_print_cote($target, $content_value);
+	if($border) {
+	    $target->Rect($target->GetStickX(), $target->GetStickY(), $content_value['width'], $content_value['height']); //Affiche un cadre autour de l'etiquette
+	    $target->SetLineWidth(0.2);
+	}	
 }
 
 

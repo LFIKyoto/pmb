@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: databnf.class.php,v 1.11 2017-11-07 15:39:09 ngantier Exp $
+// $Id: databnf.class.php,v 1.12 2019-07-30 09:46:54 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -463,7 +463,7 @@ class databnf extends connector {
 				try {
 					$html_to_return .= H2o::parseString($template)->render(array("result"=>$rows));
 				} catch (Exception $e) {
-					$html_to_return.=highlight_string(print_r($e,true),true);
+				    $html_to_return.= $this->msg["error_template"];
 				}
 			}
 		}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: editions_state_view_group.class.php,v 1.3 2017-07-12 15:14:59 tsamson Exp $
+// $Id: editions_state_view_group.class.php,v 1.4 2019-06-05 06:41:21 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -271,9 +271,9 @@ class editions_state_view_group extends editions_state_view {
 	}
 	
 	public function render_xls_file($name="state"){
-		global $msg,$charset;
+		global $msg;
 		
-		$worksheet = new spreadsheet();
+		$worksheet = new spreadsheetPMB();
 		
 		$show_fields_tabl=$this->my_param["group"]["show_fields"];
 		$group_fields_tabl=$this->my_param["group"]["group_fields"];

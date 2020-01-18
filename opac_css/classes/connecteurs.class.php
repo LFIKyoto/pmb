@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: connecteurs.class.php,v 1.26 2018-11-26 14:32:02 dgoron Exp $
+// $Id: connecteurs.class.php,v 1.27.6.1 2019-10-23 07:12:16 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -64,6 +64,7 @@ class connector {
 	public function get_messages($connector_path) {
 		global $lang;
 		
+		$file_name = '';
 		if (file_exists($connector_path."/messages/".$lang.".xml")) {
 			$file_name=$connector_path."/messages/".$lang.".xml";
 		} else if (file_exists($connector_path."/messages/fr_FR.xml")) {
@@ -424,11 +425,24 @@ class connector {
     }
     
     protected function insert_content_into_entrepot($source_id, $ref, $date_import, $ufield, $usubfield, $field_order, $subfield_order, $value, $recid, $search_id = '') {
-    	$query = "insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values(
+        $query = "insert into entrepot_source_".$source_id." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values(
 			'".addslashes($this->get_id())."',".$source_id.",'".addslashes($ref)."','".addslashes($date_import)."',
 			'".addslashes($ufield)."','".addslashes($usubfield)."',".$field_order.",".$subfield_order.",'".addslashes($value)."',
 			' ".addslashes(strip_empty_words($value))." ',$recid, '$search_id')";
     	pmb_mysql_query($query);
+    }
+    
+    protected function insert_content_into_entrepot_multiple($records) {
+        $query = "insert into entrepot_source_".$records[0]["source_id"]." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values";
+        for ($i=0; $i<count($records);$i++) {
+            $record=$records[$i];
+            if ($i>0) $query.=","; 
+            $query.="(
+                            '".addslashes($this->get_id())."',".$record["source_id"].",'".addslashes($record["ref"])."','".addslashes($record["date_import"])."',
+                            '".addslashes($record["ufield"])."','".addslashes($record["usubfield"])."',".$record["field_order"].",".$record["subfield_order"].",'".addslashes($record["value"])."',
+                            ' ".addslashes(strip_empty_words($record["value"]))." ',".$record["recid"].", '".$record["search_id"]."')";
+        }
+        pmb_mysql_query($query);
     }
     
 	protected function insert_origine_into_entrepot($source_id, $ref, $date_import, $recid, $search_id = '') {

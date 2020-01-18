@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: print_cart_tpl.tpl.php,v 1.2 2017-11-07 15:35:32 ngantier Exp $
+// $Id: print_cart_tpl.tpl.php,v 1.5 2019-05-27 12:35:59 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $cart_tpl_list_tpl, $cart_tpl_list_line_tpl, $cart_tpl_form_tpl, $charset, $msg, $pmb_javascript_office_editor, $current_module;
 
 $cart_tpl_list_tpl="	
 <h1>".htmlentities($msg["admin_print_cart_tpl_title"], ENT_QUOTES, $charset)."</h1>			
@@ -77,8 +79,8 @@ $cart_tpl_form_tpl="
 	
 	<div class='row'>	
 		<div class='left'>
-			<input type='button' class='bouton' value='".$msg['admin_print_cart_tpl_save']."' onclick=\"document.getElementById('action').value='save';if (test_form(this.form)) this.form.submit();\" />
 			<input type='button' class='bouton' value='".$msg['admin_print_cart_tpl_exit']."'  onclick=\"document.location='./admin.php?categ=mailtpl&sub=print_cart_tpl'\"  />
+			<input type='button' class='bouton' value='".$msg['admin_print_cart_tpl_save']."' onclick=\"document.getElementById('action').value='save';if (test_form(this.form)) this.form.submit();\" />
 			!!duplicate!!
 		</div>
 		<div class='right'>

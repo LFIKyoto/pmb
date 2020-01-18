@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : Marco VANINETTI                                                           |
 // +-------------------------------------------------+
-// $Id: z_progression_cache.php,v 1.42 2018-10-30 13:54:50 dgoron Exp $
+// $Id: z_progression_cache.php,v 1.43 2019-06-10 08:57:12 btafforeau Exp $
 
 // définition du minimum nécéssaire
 $base_path="../..";
@@ -278,7 +278,7 @@ showButRes();
 // Fase 3: Now get the results from the biblios
 // obviously if the query was ok and there weren't errors
 ///////////////////////////////////////////////////////////////////
-while (list($bib_id,$id)=each($map)){
+foreach ($map as $bib_id => $id) {
 		$error = yaz_error($id);
 		$error_info = yaz_addinfo($id);
 		if (!empty($error)) {

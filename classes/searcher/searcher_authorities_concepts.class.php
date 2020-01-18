@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_authorities_concepts.class.php,v 1.5 2017-06-29 15:52:09 apetithomme Exp $
+// $Id: searcher_authorities_concepts.class.php,v 1.6 2019-04-01 10:26:22 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -53,5 +53,39 @@ class searcher_authorities_concepts extends searcher_autorities {
 	
 	protected function _get_pert($return_query = false) {
 		return $this->get_pert_result($return_query);
+	}
+		
+	protected function get_full_results_query(){
+	    global $concept_scheme;
+	    
+	    if ($this->object_table) {
+	        return 'select id_authority from authorities join '.$this->object_table.' on authorities.num_object = '.$this->object_table_key;
+	    }
+	    $query = 'select id_authority from authorities';
+	    
+	    $filters = $this->_get_authorities_filters();
+	    $filters[] = 'type_object = '.AUT_TABLE_CONCEPT;
+	    $filters[] = 'num_object in ('.$query.')';
+	    if(!is_array($concept_scheme)){
+	        if($concept_scheme !== ''){
+	            $concept_scheme = explode(',',$concept_scheme);
+	        }else{
+	            $concept_scheme = [];
+	        }
+	    }
+	    $query = 'select id_authority  from authorities';
+	    if (count($concept_scheme)> 0 && $concept_scheme[0] == 0) {
+	        // On cherche dans les concepts sans schéma
+	        $query.= ' left join skos_fields_global_index on authorities.num_object = skos_fields_global_index.id_item and code_champ = 4 ';
+	        $filters[] = 'authority_num is null';
+	    } else if (count($concept_scheme) && ($concept_scheme[0] != -1)) {
+	        $query.= ' join skos_fields_global_index on authorities.num_object = skos_fields_global_index.id_item and code_champ = 4 ';
+	        $filters[] = 'authority_num in ('.implode(",",$concept_scheme).')';
+	    }
+	    
+	    if (count($filters)) {
+	        $query.= ' where '.implode(' and ', $filters);
+	    }
+	    return $query;
 	}
 }

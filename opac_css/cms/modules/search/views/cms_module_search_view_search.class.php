@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_search_view_search.class.php,v 1.40 2018-11-19 10:17:28 ngantier Exp $
+// $Id: cms_module_search_view_search.class.php,v 1.44.2.1 2019-09-11 09:08:27 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/h2o/h2o.php");
@@ -328,15 +328,15 @@ class cms_module_search_view_search extends cms_module_common_view{
 		}
 		
 		$html.=$authpersos->get_simple_seach_list_tpl_hiden();
-		if ($this->parameters['title']) {
+		if (isset($this->parameters['title']) && $this->parameters['title']) {
 			$html.="
-			<h4 class='searchbox_title'>".htmlentities($this->parameters['title'],ENT_QUOTES,$charset)."</h4>";
+			<h4 class='searchbox_title'>".htmlentities(get_msg_to_display($this->parameters['title']),ENT_QUOTES,$charset)."</h4>";
 		}
 		$html.="<span class='research_inputs'>";
 		if($opac_simple_search_suggestions){
 			$html.= "
 				<script type='text/javascript' src='$include_path/javascript/ajax.js'></script>
-				<input type='text' name='user_query' id='".$this->get_module_dom_id()."_user_query_lib' value='".($this->parameters['nofill'] == 1 ? '' :stripslashes(htmlentities($user_query,ENT_QUOTES,$charset)))."' expand_mode='1' completion='suggestions' disableCompletion='false' word_only='no' placeholder='".(isset($this->parameters['input_placeholder']) ? stripslashes(htmlentities($this->parameters['input_placeholder'],ENT_QUOTES,$charset)) : '')."'/>
+				<input type='text' name='user_query' id='".$this->get_module_dom_id()."_user_query_lib' value='".($this->parameters['nofill'] == 1 ? '' :stripslashes(htmlentities($user_query,ENT_QUOTES,$charset)))."' expand_mode='1' completion='suggestions' disableCompletion='false' word_only='no' placeholder='".(isset($this->parameters['input_placeholder']) ? stripslashes(htmlentities(get_msg_to_display($this->parameters['input_placeholder'],ENT_QUOTES,$charset))) : '')."'/>
 				<script type='text/javascript'>
 					function ".$this->get_module_dom_id()."_toggleCompletion(destValue){
 						if((destValue.indexOf('view_') == -1) && (destValue != '0')){
@@ -349,12 +349,12 @@ class cms_module_search_view_search extends cms_module_common_view{
 				</script>";
 		}else{
 			$html.="
-				<input type='text' name='user_query' value='".($this->parameters['nofill'] == 1 ? '' :stripslashes(htmlentities($user_query,ENT_QUOTES,$charset)))."' placeholder='".(isset($this->parameters['input_placeholder']) ? stripslashes(htmlentities($this->parameters['input_placeholder'],ENT_QUOTES,$charset)) : '')."'/>";
+				<input type='text' name='user_query' value='".(isset($this->parameters['nofill']) && $this->parameters['nofill'] == 1 ? '' :stripslashes(htmlentities($user_query,ENT_QUOTES,$charset)))."' placeholder='".(isset($this->parameters['input_placeholder']) ? stripslashes(htmlentities($this->parameters['input_placeholder'],ENT_QUOTES,$charset)) : '')."'/>";
 		}
 		
 		$html.="
 				<input class='bouton' type='submit' value='".$this->format_text($this->msg['cms_module_search_button_label'])."' />";
-		if ($this->parameters['help']) {
+		if (isset($this->parameters['help']) && $this->parameters['help']) {
 			$html.="
 				<input class='bouton' type='button' onclick='window.open(\"./help.php?whatis=simple_search\", \"search_help\", \"scrollbars=yes, toolbar=no, dependent=yes, width=400, height=400, resizable=yes\"); return false' value='".$this->format_text($this->msg['cms_module_search_help'])."'>";
 		}
@@ -372,14 +372,14 @@ class cms_module_search_view_search extends cms_module_common_view{
 				}
 				if($opac_simple_search_suggestions){
 					$html.="
-						<span class='search_radio_button' id='search_radio_button_".$i."'><input type='radio' name='dest' value='".$datas[$i]['page']."' universe='".($datas[$i]['universe']?$datas[$i]['universe']:"")."'".$checked." onClick='".$this->get_module_dom_id()."_toggleCompletion(this.value);' />&nbsp;".$this->format_text($datas[$i]['name'])."</span>";
+						<span class='search_radio_button' id='search_radio_button_".$i."'><input type='radio' name='dest' value='".$datas[$i]['page']."' universe='".(!empty($datas[$i]['universe'])?$datas[$i]['universe']:"")."'".$checked." onClick='".$this->get_module_dom_id()."_toggleCompletion(this.value);' />&nbsp;".$this->format_text($datas[$i]['name'])."</span>";
 				}else{
 					$html.="
-						<span class='search_radio_button' id='search_radio_button_".$i."'><input type='radio' name='dest' value='".$datas[$i]['page']."' universe='".($datas[$i]['universe']?$datas[$i]['universe']:"")."'".$checked."/>&nbsp;".$this->format_text($datas[$i]['name'])."</span>";
+						<span class='search_radio_button' id='search_radio_button_".$i."'><input type='radio' name='dest' value='".$datas[$i]['page']."' universe='".(!empty($datas[$i]['universe'])?$datas[$i]['universe']:"")."'".$checked."/>&nbsp;".$this->format_text($datas[$i]['name'])."</span>";
 				}
 			}
 		}
-		if ($this->parameters['link_search_advanced']) {
+		if (isset($this->parameters['link_search_advanced']) && $this->parameters['link_search_advanced']) {
 			$html.="
 				<p class='search_advanced_link'><a href='./index.php?search_type_asked=simple_search".(isset($this->parameters['link_to_opac_view']) && $this->parameters['link_to_opac_view'] ? '&opac_view='.$this->parameters['link_to_opac_view'] : '')."'>".$this->format_text($this->msg['cms_module_search_view_link_search_advanced_display'])."</a></p>";
 		}

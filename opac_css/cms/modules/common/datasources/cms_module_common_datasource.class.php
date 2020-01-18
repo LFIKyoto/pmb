@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource.class.php,v 1.42 2018-08-03 09:10:31 arenou Exp $
+// $Id: cms_module_common_datasource.class.php,v 1.43 2019-06-18 12:45:07 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -443,7 +443,7 @@ class cms_module_common_datasource extends cms_module_root{
 	
 	protected function get_sections_tree($id_parent = 0,$path="",&$paths){
 		global $dbh;
-		$id_parent+=0;
+		$id_parent = intval($id_parent);
 		$tree = array();
 		$nb_days_since_1970 = 719528;
 		$nb_days_today = round((time()/(3600*24)))+$nb_days_since_1970;

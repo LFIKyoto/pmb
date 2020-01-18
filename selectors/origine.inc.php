@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: origine.inc.php,v 1.18 2017-11-21 13:38:21 dgoron Exp $
+// $Id: origine.inc.php,v 1.20 2019-07-31 10:03:05 ngantier Exp $
 
 /*
  * caller	= nom du formulaire appelant
@@ -20,6 +20,7 @@ if(!isset($param5)) $param5 = '';
 if(!isset($param6)) $param6 = '';
 if(!isset($callback)) $callback = '';
 if(!isset($empr_loca)) $empr_loca = '';
+if(!isset($filtre)) $filtre = '';
 
 // la variable $caller, passée par l'URL, contient le nom du form appelant
 $base_url = "./select.php?what=origine&caller=$caller&sub=$sub&param1=$param1&param2=$param2&param3=$param3&param4=$param4&param5=$param5&param6=$param6&callback=$callback&filtre=$filtre";
@@ -175,7 +176,7 @@ function show_empr_results($dbh, $user_input, $nbr_lignes=0, $page=0) {
 		if(!$user_input) {
 			$requete = "SELECT id_empr, empr_nom, empr_prenom, empr_location FROM empr ".( $where_loc ? "WHERE ".$where_loc :"")." ORDER BY empr_nom, empr_prenom LIMIT $debut,$nb_per_page ";
 		} else {
-			$requete = "SELECT id_empr, empr_nom, empr_prenom FROM empr WHERE ( $where ) ".( $where_loc ? "AND ".$where_loc :"");
+			$requete = "SELECT id_empr, empr_nom, empr_prenom, empr_location FROM empr WHERE ( $where ) ".( $where_loc ? "AND ".$where_loc :"");
 			$requete .= "ORDER BY empr_nom, empr_prenom LIMIT $debut,$nb_per_page ";
 		}
 

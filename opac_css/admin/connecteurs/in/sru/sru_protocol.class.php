@@ -1,15 +1,15 @@
 <?php
 // +-------------------------------------------------+
-// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sru_protocol.class.php,v 1.5 2017-04-20 16:25:29 dgoron Exp $
+// $Id: sru_protocol.class.php,v 1.10 2019-07-11 13:01:58 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
 
 if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
-	if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "0");
+    if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "0");
 	require_once($include_path.'/xslt-php4-to-php5.inc.php');
 	}
 
@@ -87,8 +87,8 @@ class xml_dom_sru {
 		$this->tree=$this->last_elt[0];
 	}
 	
-	public function get_node($path,$node="") {
-		if ($node=="") $node=&$this->tree;
+	public function get_node($path, $node = array()) {
+		if (empty($node)) $node =& $this->tree;
 		$paths=explode("/",$path);
 		for ($i=0; $i<count($paths); $i++) {
 			if ($i==count($paths)-1) {
@@ -126,7 +126,7 @@ class xml_dom_sru {
 	
 	public function get_nodes($path,$node="") {
 		$n=0;
-		$nodes="";
+		$nodes=array();
 		while ($nod=$this->get_node($path."[$n]",$node)) {
 			$nodes[]=$nod;
 			$n++;
@@ -626,7 +626,7 @@ class sru_analyse_searchretrieve extends sru_analyse_request {
 		return $result;		
 	}
 	
-	public function parse_record($node, $dom, $charset, $schema_config="") {
+	public function parse_record($node, $dom, $charset, $schema_config = array()) {
 		global $xslt_base_path;
 		
 		$result = array();
@@ -897,7 +897,7 @@ class sru_request {
 	}
 	
 	public function analyse_response($charset='ISO-8859-1') {
-		$parameters = '';
+		$parameters = array();
 		foreach ($this->parameters as $name => $value)
 			$parameters[] .= $name.'='.urlencode($value);
 		$url = $this->base_url . '?operation='.$this->operation.'&'.implode('&', $parameters);

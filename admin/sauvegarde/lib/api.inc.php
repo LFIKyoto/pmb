@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: api.inc.php,v 1.18 2015-10-05 12:02:10 jpermanne Exp $
+// $Id: api.inc.php,v 1.19 2019-07-05 12:06:47 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -179,7 +179,11 @@ function table_dump($table_name,$fp) {
 						break;
 				}
 	
-				(string)$fields!="" ? $fields .= ', '.$fn : $fields .= $fn;
+				if ((string) $fields != "") {
+				    $fields .= ', ' . $fn;
+				} else {
+				    $fields .= $fn;
+				}
 				$fna[$b] = $fn;
 				$ina[$b] = $is_numeric;
 			}
@@ -192,9 +196,17 @@ function table_dump($table_name,$fp) {
 				for ($d=0;$d<$nf;$d++) {
 					$data=strval($row[$d]);
 					if ($ina[$d]==true) {
-						((string)$values!="")? $values.= ', '.floatval($data) : $values.= floatval($data);
+					    if ((string) $values != "") {
+					        $values .= ', '.floatval($data);
+					    } else {
+					        $values .= floatval($data);
+					    }
 					} else {
-						((string)$values!="")? $values.=", \"".pmb_mysql_real_escape_string($data)."\"" : $values.="\"".pmb_mysql_real_escape_string($data)."\"";
+					    if ((string) $values != "") {
+					        $values .=", \"".pmb_mysql_real_escape_string($data)."\"";
+					    } else {
+					        $values .="\"".pmb_mysql_real_escape_string($data)."\"";
+					    }
 					}
 				}
 				fwrite($fp,"insert into $table_name ($fields) values ($values);\r\n");

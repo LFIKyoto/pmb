@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: chklnk.class.php,v 1.5 2017-12-19 16:49:44 plmrozowski Exp $
+// $Id: chklnk.class.php,v 1.8 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -83,7 +83,7 @@ class chklnk {
     public static function init_curl_timeout() {
     	global $pmb_curl_timeout;
     	
-    	static::$curl_timeout = $pmb_curl_timeout+0;
+    	static::$curl_timeout = (int) $pmb_curl_timeout;
     }
     
     public static function init_curl() {
@@ -287,7 +287,7 @@ class chklnk {
     }
     
     public static function set_curl_timeout($curl_timeout) {
-    	static::$curl_timeout = $curl_timeout+0;
+        static::$curl_timeout = (int) $curl_timeout;
     }
     
     protected function get_checkbox_checking_input_form($property) {
@@ -390,15 +390,18 @@ class chklnk {
     		if (isset($this->caddie_instance) && $this->caddie_instance->get_idcaddie()) {
     			$this->caddie_instance->add_item($element->id,$this->caddie_type);
     		}
-    	} elseif ($response->headers['Status-Code']!='200') {
-    		if($response->headers['Status-Code']){
-    			$tmp=static::$curl->reponsecurl[$response->headers['Status-Code']];
-    		}else{
-    			$tmp=$msg["curl_no_status_code"];
-    		}
-    		$message .= $this->get_element_display($element, $response->headers['Status-Code']." -> ".$tmp);
-    		if (isset($this->caddie_instance) && $this->caddie_instance->get_idcaddie()) {
-    			$this->caddie_instance->add_item($element->id,$this->caddie_type);
+    	} else {
+    		$response_status = substr($response->headers['Status-Code'], 0, 1);
+    		if ($response_status != '2' && $response_status != '3') {
+	    		if($response->headers['Status-Code']){
+	    			$tmp=static::$curl->reponsecurl[$response->headers['Status-Code']];
+	    		}else{
+	    			$tmp=$msg["curl_no_status_code"];
+	    		}
+	    		$message .= $this->get_element_display($element, $response->headers['Status-Code']." -> ".$tmp);
+	    		if (isset($this->caddie_instance) && $this->caddie_instance->get_idcaddie()) {
+	    			$this->caddie_instance->add_item($element->id,$this->caddie_type);
+	    		}
     		}
     	}
     	return $message;
@@ -418,7 +421,7 @@ class chklnk {
     		</div>
     		<div class='row'>
     			<label class='etiquette' >".$this->get_title()."</label>
-    			".(isset($this->caddie_instance) ? "&nbsp;".(($this->caddie_instance->name != "") ? $msg[chklnk_caddie_destination]:'')."<a href=\"./catalog.php?categ=caddie&sub=gestion&quoi=panier&action=&object_type=".$this->caddie_type."&idcaddie=".$this->caddie_instance->get_idcaddie()."\">".$this->caddie_instance->name."</a>" : '')."
+    			".(isset($this->caddie_instance) ? "&nbsp;".(($this->caddie_instance->name != "") ? $msg['chklnk_caddie_destination']:'')."<a href=\"./catalog.php?categ=caddie&sub=gestion&quoi=panier&action=&object_type=".$this->caddie_type."&idcaddie=".$this->caddie_instance->get_idcaddie()."\">".$this->caddie_instance->name."</a>" : '')."
     		</div>
 			<div class='row'>";
     	

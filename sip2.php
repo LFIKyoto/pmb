@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sip2.php,v 1.7 2017-02-16 09:23:09 mbertin Exp $
+// $Id: sip2.php,v 1.8 2019-03-29 09:34:35 mbertin Exp $
 $time_log_start=microtime(true);
 // définition du minimum nécéssaire 
 $base_path=".";                            
@@ -28,7 +28,7 @@ $message_pair="";
 
 //Si il y a une erreur ?
 if ($trame->error) {
-	$info_debug_rfid.="Erreur trame reçue: ".$tramer->error_message."\n";
+	$info_debug_rfid.="Erreur trame reçue: ".$trame->error_message."\n";
 	print $trame->error_message;
 	//Si c'est une erreur on redemande le message
 	$message_pair=96;
@@ -76,7 +76,7 @@ if ($message_pair) {
 	    	print $tramer->error_message;
 	    	print "exit";
 	    } else {
-			if($rtim){
+			if($rtim || $rtrim){//erreur sur le nomage du paramètre 'rtim' la 1ere fois
 				$tramer->trame=rtrim($tramer->trame);
 			}
 			$info_debug_rfid.="Trame reponse: ".$tramer->trame."\n";

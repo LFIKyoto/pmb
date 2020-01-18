@@ -2,19 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_filter_fields.class.php,v 1.12 2018-09-19 10:23:46 tsamson Exp $
+// $Id: frbr_filter_fields.class.php,v 1.14 2019-07-24 15:05:43 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/frbr/frbr_fields.class.php");
 
 class frbr_filter_fields extends frbr_fields {
-    
+
     protected static $filtered_data = array();
-	
+
 	protected function get_field($i, $n, $field) {
 		global $charset;
-		
+
 		//Champ
 		$v=$this->get_global_value("field_".$i."_".$field);
 		if ($v=="") $v=array('');
@@ -24,7 +24,7 @@ class frbr_filter_fields extends frbr_fields {
 			</span>";
 		return $field;
 	}
-	
+
 	public function get_already_selected() {
 		global $msg, $charset;
 		global $add_field;
@@ -61,7 +61,7 @@ class frbr_filter_fields extends frbr_fields {
 				} elseif(array_key_exists($f[0],static::$pp)) {
 					$r.=htmlentities(static::$pp[$f[0]]->t_fields[$f[2]]["TITRE"],ENT_QUOTES,$charset);
 				}
-				
+
 				$r.="</span></td>";
 				//Recherche des operateurs possibles
 				$r.="<td>";//Colonne 4
@@ -84,10 +84,10 @@ class frbr_filter_fields extends frbr_fields {
 		$r.="</table>";
 		return $r;
 	}
-	
+
 	public function format_fields() {
 		global $fields;
-	
+
 		$to_format=array();
 		for ($i=0; $i<count($fields); $i++) {
 			$to_format[$i]["NAME"]=$fields[$i];
@@ -97,7 +97,7 @@ class frbr_filter_fields extends frbr_fields {
 		}
 		return $to_format;
 	}
-	
+
 	public function unformat_fields($to_unformat) {
 		global $fields;
 
@@ -109,20 +109,19 @@ class frbr_filter_fields extends frbr_fields {
 			$this->set_global_value("inter_".$i."_".$to_unformat[$i]["NAME"], $to_unformat[$i]["INTER"]);
 		}
 	}
-	
+
 	public function filter_datas($datas=array()) {
 		global $fields;
 		global $opac_multi_search_operator;
-		
 		$fields_key = implode('-',$fields);
-		
+
 		if (!isset(static::$filtered_data[$fields_key])) {
                 $main = "";
                 $last_table = "";
                 $prefixe="tempo_".str_replace([" ","."],"_",microtime());
-                
+
                 //Préoaration de la restriction
-                $restrict=""; 
+                $restrict="";
                 if (count($datas)) {
                     switch ($this->type) {
                         case "authorities":
@@ -135,17 +134,16 @@ class frbr_filter_fields extends frbr_fields {
                 }
     		for ($i=0; $i<count($fields); $i++) {
     			$f=explode("_",$fields[$i]);
-    			
+
     			$op = $this->get_global_value("op_".$i."_".$fields[$i]);
     			$field = $this->get_global_value("field_".$i."_".$fields[$i]);
     			$inter = $this->get_global_value("inter_".$i."_".$fields[$i]);
-    			
+
     			//Choix du moteur
     			$this->current_engine = 'MEMORY';
-    			
+
     			$last_main_table="";
-    // 			$prefixe="";
-    			
+
     			//Pour chaque valeur du champ
     			for ($j=0; $j<count($field); $j++) {
     				$operator = ($opac_multi_search_operator?$opac_multi_search_operator:"or");
@@ -155,16 +153,16 @@ class frbr_filter_fields extends frbr_fields {
     				}
     				switch ($op) {
     					case "BOOLEAN" :
-    						$main .= " and value like ' ".$field[$j]." '";
+    						$main .= " and value like ' ".addslashes($field[$j])." '";
     						break;
     					case "STARTWITH" :
-    						$main .= " and value like '".$field[$j]."%'";
+    					    $main .= " and value like '".addslashes($field[$j])."%'";
     						break;
     					case "ENDWITH" :
-    						$main .= " and value like '%".$field[$j]."'";
+    					    $main .= " and value like '%".addslashes($field[$j])."'";
     						break;
     					case "EXACT" :
-    						$main .= " and value like '".$field[$j]."'";
+    					    $main .= " and value like '".addslashes($field[$j])."'";
     						break;
     					case "ISEMPTY" :
     						$main .= " and ".$this->field_keyName." NOT IN (select ".$this->field_keyName." from ".$this->field_tableName." where code_champ = ".$f[1];
@@ -181,87 +179,52 @@ class frbr_filter_fields extends frbr_fields {
     						$main .= ")";
     						break;
     				}
-    				
+
                                 $main.=($restrict?" and ".$this->field_keyName." in (".$restrict.")":"");
-                                
+
     				if (count($field)>1) {
     					if($operator == "or"){
     						//Ou logique si plusieurs valeurs
-    						if ($prefixe) {
-    							$this->gen_temporary_table($prefixe."mf_".$j, $main);
-    						} else {
-    							$this->gen_temporary_table("mf_".$j, $main);
-    						}
-    				
+    						$this->gen_temporary_table($prefixe."mf_".$j, $main);
+
     						if ($last_main_table) {
-    							if ($prefixe) {
-    								$requete="insert ignore into ".$prefixe."mf_".$j." select ".$last_main_table.".* from ".$last_main_table;
-    							} else {
-    								$requete="insert ignore into mf_".$j." select ".$last_main_table.".* from ".$last_main_table;
-    							}
+    							$requete="insert ignore into ".$prefixe."mf_".$j." select ".$last_main_table.".* from ".$last_main_table;
     							pmb_mysql_query($requete);
     							pmb_mysql_query("drop table ".$last_main_table);
     						}
-    						if ($prefixe) {
-    							$last_main_table=$prefixe."mf_".$j;
-    						} else {
-    							$last_main_table="mf_".$j;
-    						}
+    						$last_main_table=$prefixe."mf_".$j;
+
     					} elseif($operator == "and"){
     						//ET logique si plusieurs valeurs
-    						if ($prefixe) {
-    							$this->gen_temporary_table($prefixe."mf_".$j, $main);
-    						} else {
-    							$this->gen_temporary_table("mf_".$j, $main);
-    						}
-    				
+    						$this->gen_temporary_table($prefixe."mf_".$j, $main);
+
     						if ($last_main_table) {
     							if($j>1){
     								$search_table=$last_main_table;
     							}else{
     								$search_table=$last_tables;
     							}
-    							if ($prefixe) {
-    								$requete="create temporary table ".$prefixe."and_result_".$j." ENGINE=".$this->current_engine." select ".$search_table.".* from ".$search_table." where exists ( select ".$prefixe."mf_".$j.".* from ".$prefixe."mf_".$j." where ".$search_table.".notice_id=".$prefixe."mf_".$j.".notice_id)";
-    							} else {
-    								$requete="create temporary table and_result_".$j." ENGINE=".$this->current_engine." select ".$search_table.".* from ".$search_table." where exists ( select mf_".$j.".* from mf_".$j." where ".$search_table.".notice_id=mf_".$j.".notice_id)";
-    							}
+    							$requete="create temporary table ".$prefixe."and_result_".$j." ENGINE=".$this->current_engine." select ".$search_table.".* from ".$search_table." where exists ( select ".$prefixe."mf_".$j.".* from ".$prefixe."mf_".$j." where ".$search_table.".notice_id=".$prefixe."mf_".$j.".notice_id)";
     							pmb_mysql_query($requete);
     							pmb_mysql_query("drop table ".$last_tables);
     						}
-    						if ($prefixe) {
-    							$last_tables=$prefixe."mf_".$j;
-    						} else {
-    							$last_tables="mf_".$j;
-    						}
-    						if ($prefixe) {
-    							$last_main_table = $prefixe."and_result_".$j;
-    						} else {
-    							$last_main_table = "and_result_".$j;
-    						}
+    						$last_tables=$prefixe."mf_".$j;
+    						$last_main_table = $prefixe."and_result_".$j;
     					}
     				}
     			}
     			if ($last_main_table){
     				$main="select * from ".$last_main_table;
     			}
-    			if ($prefixe) {
-    				$table=$prefixe."t_".$i."_".$fields[$i];
-    				$this->gen_temporary_table($table, $main, true);
-    			} else {
-    				$table="t_".$i."_".$fields[$i];
-    				$this->gen_temporary_table($table, $main, true);
-    			}
+				$table=$prefixe."t_".$i."_".$fields[$i];
+				$this->gen_temporary_table($table, $main, true);
+
     			if ($last_main_table) {
     				$requete="drop table ".$last_main_table;
     				pmb_mysql_query($requete);
     			}
-    			
-    			if ($prefixe) {
-    				$requete="create temporary table ".$prefixe."t".$i." ENGINE=".$this->current_engine." ";
-    			} else {
-    				$requete="create temporary table t".$i." ENGINE=".$this->current_engine." ";
-    			}
+
+				$requete="create temporary table ".$prefixe."t".$i." ENGINE=".$this->current_engine." ";
     			$isfirst_criteria=false;
     			switch ($inter) {
     				case "and":
@@ -287,58 +250,17 @@ class frbr_filter_fields extends frbr_fields {
     					} else {
     						$requete.="select * from ".$table;
     						pmb_mysql_query($requete);
-    						if ($prefixe) {
-    							$requete="alter table ".$prefixe."t".$i." add idiot int(1)";
-    							pmb_mysql_query($requete);
-    							$requete="alter table ".$prefixe."t".$i." add unique(".$this->field_keyName.")";
-    							pmb_mysql_query($requete);
-    							$requete="alter table ".$prefixe."t".$i." add pert decimal(16,1) default 1";
-    							pmb_mysql_query($requete);
-    						} else {
-    							$requete="alter table t".$i." add idiot int(1)";
-    							pmb_mysql_query($requete);
-    							$requete="alter table t".$i." add unique(".$this->field_keyName.")";
-    							pmb_mysql_query($requete);
-    							$requete="alter table t".$i." add pert decimal(16,1) default 1";
-    							pmb_mysql_query($requete);
-    						}
-    						if ($prefixe) {
-    							$requete="insert into ".$prefixe."t".$i." (".$this->field_keyName.",idiot,pert) select distinct ".$last_table.".".$this->field_keyName.",".$last_table.".idiot, ".$last_table.".pert AS pert from ".$last_table." left join ".$table." on ".$last_table.".".$this->field_keyName."=".$table.".".$this->field_keyName." where ".$table.".".$this->field_keyName." is null";
-    						} else {
-    							$requete="insert into t".$i." (".$this->field_keyName.",idiot,pert) select distinct ".$last_table.".".$this->field_keyName.",".$last_table.".idiot, ".$last_table.".pert AS pert from ".$last_table." left join ".$table." on ".$last_table.".".$this->field_keyName."=".$table.".".$this->field_keyName." where ".$table.".".$this->field_keyName." is null";
-    						}
+ 							$requete="insert into ".$prefixe."t".$i." (".$this->field_keyName.",idiot,pert) select distinct ".$last_table.".".$this->field_keyName.",".$last_table.".idiot, ".$last_table.".pert AS pert from ".$last_table." left join ".$table." on ".$last_table.".".$this->field_keyName."=".$table.".".$this->field_keyName." where ".$table.".".$this->field_keyName." is null";
     						pmb_mysql_query($requete);
     					}
     					break;
     				case "ex":
     					$requete.="select ".$last_table.".* from $last_table left join ".$table." on ".$table.".".$this->field_keyName."=".$last_table.".".$this->field_keyName." where ".$table.".".$this->field_keyName." is null";
     					pmb_mysql_query($requete);
-    					if ($prefixe) {
-    						$requete="alter table ".$prefixe."t".$i." add idiot int(1)";
-    						pmb_mysql_query($requete);
-    						$requete="alter table ".$prefixe."t".$i." add unique(".$this->field_keyName.")";
-    						pmb_mysql_query($requete);
-    						$requete="alter table ".$prefixe."t".$i." add pert decimal(16,1) default 1";
-    						pmb_mysql_query($requete);
-    					} else {
-    						$requete="alter table t".$i." add idiot int(1)";
-    						pmb_mysql_query($requete);
-    						$requete="alter table t".$i." add unique(".$this->field_keyName.")";
-    						pmb_mysql_query($requete);
-    						$requete="alter table ".$prefixe."t".$i." add pert decimal(16,1) default 1";
-    						pmb_mysql_query($requete);
-    					}
     					break;
     				default:
     					$isfirst_criteria=true;
     					$requete.="select * from ".$table;
-    					pmb_mysql_query($requete);
-    			
-    					$requete="alter table ".$prefixe."t".$i." add idiot int(1)";
-    					pmb_mysql_query($requete);
-    					$requete="alter table ".$prefixe."t".$i." add unique(".$this->field_keyName.")";
-    					pmb_mysql_query($requete);
-    					$requete="alter table ".$prefixe."t".$i." add pert decimal(16,1) default 1";
     					pmb_mysql_query($requete);
     					break;
     			}
@@ -349,11 +271,8 @@ class frbr_filter_fields extends frbr_fields {
     				if($table){
     					pmb_mysql_query("drop table if exists ".$table);
     				}
-    				if ($prefixe) {
-    					$last_table=$prefixe."t".$i;
-    				} else {
-    					$last_table="t".$i;
-    				}
+    				$last_table=$prefixe."t".$i;
+
     			} else {
     				if($last_table){
     					pmb_mysql_query("drop table if exists ".$last_table);
@@ -370,6 +289,14 @@ class frbr_filter_fields extends frbr_fields {
     					$ids[] = $row->num_object;
     				}
     				break;
+    			case 'skos' :
+    			    $query="select ".$last_table.".id_item from ".$last_table;
+    			    $result = pmb_mysql_query($query);
+    			    $ids = array();
+    			    while($row = pmb_mysql_fetch_object($result)) {
+    			        $ids[] = $row->id_item;
+    			    }
+    			    break;
     			default:
     				$query="select ".$last_table.".id_notice from ".$last_table;
     				$result = pmb_mysql_query($query);
@@ -383,7 +310,7 @@ class frbr_filter_fields extends frbr_fields {
 		$datas = array_intersect($datas, $ids);
 		return $datas;
 	}
-	
+
 	public static function get_operators() {
 		return array(
 				"BOOLEAN" => "msg:expr_bool_query",

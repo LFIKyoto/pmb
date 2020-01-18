@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: selector_ontology.class.php,v 1.32 2018-12-06 13:40:43 arenou Exp $
+// $Id: selector_ontology.class.php,v 1.36 2019-04-19 09:40:05 ccraig Exp $
   
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -18,6 +18,8 @@ require_once($class_path.'/rdf/arc2/ARC2.php');
 require_once($class_path.'/elements_list/elements_authorities_selectors_list_ui.class.php');
 require_once($class_path.'/skos/skos_datastore.class.php');
 require_once($class_path.'/skos/skos_onto.class.php');
+require_once($class_path.'/onto/common/onto_common_uri.class.php');
+require_once($class_path.'/vedette/vedette_schemes.class.php');
 
 class selector_ontology extends selector {
 	
@@ -50,7 +52,9 @@ class selector_ontology extends selector {
         $entity_form = '';
 		$autoloader = new autoloader();
 		$autoloader->add_register("onto_class",true);
-		
+		if(!is_array($concept_scheme)){
+		    $concept_scheme = explode(",",$concept_scheme);
+		}
 		global $base_url;
 		$base_url = $this->get_base_url();
 
@@ -83,7 +87,8 @@ class selector_ontology extends selector {
 				'selector_context' => 1,
 				'type' => '',
 				'callback' => '',
-				'return_concept_id' => false
+				'return_concept_id' => false,
+				'mode' => $mode
 		);
 		
 		if(!isset($element) || $element != 'concept'){
@@ -143,7 +148,7 @@ class selector_ontology extends selector {
 					)).'</textarea>';
 					break;
 				case 'authority_searcher':
-                    $entity_form = "<div id='att' style='z-Index:1000'></div>";
+                  //  $entity_form = "<div id='att'></div>";
 					//onglets de recherche autorites
 					$searcher_tabs = new searcher_tabs('authorities');
 					ob_start();	
@@ -194,12 +199,12 @@ class selector_ontology extends selector {
 		global $order, $grammar, $perso_id, $custom_prefixe, $perso_name;
 		global $att_id_filter;
 	
-		$params_url = parent::get_params_url();
+        $params_url = parent::get_params_url();
 		$params_url .= ($objs ? "&objs=".$objs : "");
 		$params_url .= ($element ? "&element=".$element : "");
 		$params_url .= ($unique_scheme ? "&unique_scheme=".$unique_scheme : "");
 		$params_url .= ($return_concept_id ? "&return_concept_id=".$return_concept_id : "");
-		$params_url .= ($concept_scheme ? "&concept_scheme=".$concept_scheme : "");
+		$params_url .= ($concept_scheme ? "&concept_scheme=".implode(",",$concept_scheme) : "");
 		$params_url .= ($order ? "&order=".$order : "");
 		$params_url .= ($grammar ? "&grammar=".$grammar : "");
 		$params_url .= ($perso_id ? "&perso_id=".$perso_id : "");
@@ -251,15 +256,16 @@ class selector_ontology extends selector {
 		global $concept_scheme;
 		$schemes = '';
 		if(isset($concept_scheme)){
-		    if(!is_array($concept_scheme)){
+		    if(!is_array($concept_scheme) && $concept_scheme != -1){
 		        $schemes = 'conceptSchemes:['.$concept_scheme.'],';
-		    }else{
-		        $schemes = 'conceptSchemes:[';
+		    }else {
 		        for($i=0 ; $i<count($concept_scheme) ; $i++){
-		            if($i>0)$schemes.= ',';
-		            $schemes.= $concept_scheme[$i];
+		            if($concept_scheme[$i] != "-1" && $concept_scheme[$i] != "-1"){
+		                if($schemes!= 0)$schemes.= ',';
+		                $schemes.= $concept_scheme[$i];
+		            }
 		        }
-		        $schemes.= '],';
+		        $schemes = 'conceptSchemes:['.$schemes.'],';
 		    }
 		}
 		$url_concept = static::get_base_url();
@@ -282,15 +288,16 @@ class selector_ontology extends selector {
 		global $concept_scheme;
 		$schemes = '';
 		if(isset($concept_scheme)){
-		    if(!is_array($concept_scheme)){
+		    if(!is_array($concept_scheme) && $concept_scheme != "-1"){
 		        $schemes = 'conceptSchemes:['.$concept_scheme.'],';
-		    }else{
-		        $schemes = 'conceptSchemes:[';
+		    }else {
 		        for($i=0 ; $i<count($concept_scheme) ; $i++){
-		            if($i>0)$schemes.= ',';
-		            $schemes.= $concept_scheme[$i];
-		        }
-		        $schemes.= '],';
+		            if($concept_scheme[$i] != "-1" && $concept_scheme[$i] != "-1"){
+		                if($schemes!= 0)$schemes.= ',';
+    		            $schemes.= $concept_scheme[$i];
+		            }
+		        } 
+		        $schemes = 'conceptSchemes:['.$schemes.'],';
 		    }
 		}
 		$url_concept = static::get_base_url();
@@ -327,6 +334,7 @@ class selector_ontology extends selector {
 		global $caller;
 		global $no_display, $bt_ajouter, $dyn, $callback, $infield;
 		global $max_field, $field_id, $field_name_id, $add_field;
+		global $authperso_id;
 		
 		$selector_url = $base_path."/select.php?what=".$this->get_what_from_type($entity_type)."&caller=".$caller."&mode=".$this->get_current_mode();
 		$selector_url .= static::get_params_url();
@@ -339,6 +347,7 @@ class selector_ontology extends selector {
 		if($field_id) 		$selector_url .= "&field_id=".$field_id;
 		if($field_name_id) 	$selector_url .= "&field_name_id=".$field_name_id;
 		if($add_field) 		$selector_url .= "&add_field=".$add_field;
+		if($authperso_id)   $selector_url .= "&authperso_id=".$authperso_id;
 		
 		foreach($_GET as $name => $value){
 			if(strpos($selector_url, $name) === false){
@@ -349,6 +358,7 @@ class selector_ontology extends selector {
 	}
 	
 	protected function get_composed_concept($element_id){
+		global $entity_type, $mode;
 		$authority = new authority($element_id);
 		$vedette = new vedette_composee(0, 'rameau');
 		$composed_concept = array();
@@ -363,7 +373,11 @@ class selector_ontology extends selector {
 				$vedette->add_element($vedette_elt, 'subdivision_tete', 0);
 				$vedette->update_label();
 				$vedette->save();
-				$composed_concept = array($this->create_concept_from_vedette($vedette));
+				if ($entity_type == 'authperso') {
+					$composed_concept = array($this->create_concept_from_vedette($vedette, vedette_schemes::get_scheme_by_entity($mode)));
+				} else {					
+					$composed_concept = array($this->create_concept_from_vedette($vedette, vedette_schemes::get_scheme_by_entity($authority->get_type_const())));
+				}
 			}
 		}
 		/**
@@ -374,7 +388,7 @@ class selector_ontology extends selector {
 		return $composed_concept;
 	}
 	
-	protected function create_concept_from_vedette($vedette){
+	protected function create_concept_from_vedette($vedette, $scheme_id = 0){
 		global $base_path;
 		global $opac_url_base;
 		$autoloader = new autoloader();
@@ -420,10 +434,16 @@ class selector_ontology extends selector {
 		$uri = onto_common_uri::get_new_uri("",$opac_url_base."concept#");
 		$num_concept = onto_common_uri::get_id($uri);
 	
+		$clause = "";
+		if ($scheme_id) {
+			$clause = "<".$uri."> skos:inScheme <".onto_common_uri::get_uri($scheme_id)."> .";
+		}
+		
 		$query = "insert into <pmb> {
 				 		<".$uri."> rdf:type skos:Concept .
 				 		<".$uri."> pmb:showInTop owl:Nothing .
-		 				<".$uri."> skos:prefLabel \"".addslashes($vedette->get_label())."\" .
+		 				<".$uri."> skos:prefLabel '".addslashes($vedette->get_label())."' .
+						".$clause."
 					}";
 		$handler->data_query($query);
 		$query = "insert into vedette_link set
@@ -485,6 +505,7 @@ class selector_ontology extends selector {
 			case 'concepts':
 				return 'ontology';
 			case 'authpersos':
+			case 'authperso':
 				return 'authperso';
 			default:
 				return 'ontology';

@@ -1,3 +1,8 @@
+// +-------------------------------------------------+
+// � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// +-------------------------------------------------+
+// $Id: Panel.js,v 1.13 2019-02-20 13:26:14 apetithomme Exp $
+
 define(['dojo/_base/declare', 
         'dijit/layout/ContentPane', 
         'dojo/request/xhr', 
@@ -48,6 +53,7 @@ define(['dojo/_base/declare',
 					domConstruct.create('br', {}, container);
 					var ComputedFieldsGenerated = domConstruct.create('textarea', {id: 'computed_fields_template', value: this.field.template}, container);
 					domConstruct.create('br', {}, container);
+					pmbDojo.aceManager.initEditor('computed_fields_template', 'javascript');
 					
 					var saveButton = domConstruct.create('input', {type: 'button',
 						"class": 'bouton',
@@ -112,6 +118,7 @@ define(['dojo/_base/declare',
 				}
 			}).then(function(data) {
 				this.modified = false;
+				topic.publish("dGrowl", pmbDojo.messages.getMessage('frbr', 'frbr_save_done'), {'sticky' : false, 'duration' : 5000, 'channel' : 'info'});
 			})
 			
 		},
@@ -133,12 +140,11 @@ define(['dojo/_base/declare',
 			
 			target.checkAcceptance = function(source, nodes) {
 				var item = source.tree.selectedItem;
-				if ((item.type == "property") || (item.type === 'environmentField')) return true;
+				if (source.tree.isLeaf(item)) return true;
 				return false;
 			}
 
 			target.onDndDrop = (source,nodes,copy,target) => {
-				
 				var item = source.tree.selectedItem;
 				var text = item.name;
 				var options = this.getOptions(field.id);
@@ -165,14 +171,9 @@ define(['dojo/_base/declare',
 		},
 		
 		addInTemplate: function(id) {
-			var alias = '{{ ' + dom.byId(id + '_alias').value + ' }}';
-			var template_area = dom.byId('computed_fields_template');
-			var curpos = template_area.selectionStart;
-			var before = template_area.value.substr(0, curpos);
-			var after = template_area.value.substr(curpos);
-			template_area.value = before + alias + after;
-			template_area.focus();
-			template_area.setSelectionRange(curpos + alias.length, curpos + alias.length);
+			var alias = dom.byId(id + '_alias').value + '.value';
+			pmbDojo.aceManager.getEditor('computed_fields_template').insert(alias);
+			pmbDojo.aceManager.getEditor('computed_fields_template').focus();
 		},
 		
 		getOptions: function(parentId) {

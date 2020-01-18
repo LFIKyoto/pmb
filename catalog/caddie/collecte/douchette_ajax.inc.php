@@ -2,15 +2,18 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: douchette_ajax.inc.php,v 1.3 2016-09-13 15:31:42 dgoron Exp $
+// $Id: douchette_ajax.inc.php,v 1.5 2019-07-31 07:16:57 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $idcaddie, $action, $form_cb_expl, $msg;
 
 $param = new stdClass();
 if($idcaddie) {
 	$myCart = new caddie($idcaddie);
 	switch ($action) {
 		case 'add_item':
+		    $form_cb_expl=trim($form_cb_expl);
 			$param = $myCart->get_item_info_from_expl_cb($form_cb_expl, 1);
 			$param->form_cb_expl=$form_cb_expl;
 			if ($param->expl_ajout_ok) $res_ajout = $myCart->add_item($param->expl_id,"EXPL");

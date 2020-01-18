@@ -2,24 +2,25 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: oai.class.php,v 1.36 2018-10-19 09:49:20 dgoron Exp $
+// $Id: oai.class.php,v 1.44 2019-08-23 13:27:25 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
 require_once($class_path."/connecteurs.class.php");
 require_once($base_path."/admin/connecteurs/in/oai/oai_protocol.class.php");
+require_once($class_path."/templates.class.php");
 
 if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
-	if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "0");
+    if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "0");
 	require_once($include_path.'/xslt-php4-to-php5.inc.php');
 }
 
 class oai extends connector {
 	//Variables internes pour la progression de la récupération des notices
-	public $current_set;			//Set en cours de synchronisation
+	public $current_set;		//Set en cours de synchronisation
 	public $total_sets;			//Nombre total de sets sélectionnés
-	public $metadata_prefix;		//Préfixe du format de données courant
+	public $metadata_prefix;	//Préfixe du format de données courant
 	public $n_recu;				//Nombre de notices reçues
 	public $xslt_transform;		//Feuille xslt transmise
 	public $sets_names;			//Nom des sets pour faire plus joli !!
@@ -38,56 +39,59 @@ class oai extends connector {
 	}
     
     public function source_get_property_form($source_id) {
-    	global $charset;
+        global $base_path, $charset, $clean_base_url, $sets, $formats, $xsl_transform, $url;
+        global $del_deleted, $clean_html;
     	
-    	$params=$this->get_source_params($source_id);
+    	$params = $this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
 			//Affichage du formulaire avec $params["PARAMETERS"]
-			$vars=unserialize($params["PARAMETERS"]);
-			foreach ($vars as $key=>$val) {
+			$vars = unserialize($params["PARAMETERS"]);
+			foreach ($vars as $key => $val) {
 				global ${$key};
-				${$key}=$val;
+				${$key} = $val;
 			}	
 		}
-		$form="<div class='row'>
-			<div class='colonne3'>
-				<label for='url'>".$this->msg["oai_url"]."</label>
-			</div>
-			<div class='colonne_suite'>
-				<input type='text' name='url' id='url' class='saisie-60em' value='".htmlentities($url,ENT_QUOTES,$charset)."'/>
-			</div>
-		</div>
+		$form = "
+	    <div class='row'>
+    		<div class='colonne3'>
+    			<label for='url'>".$this->msg["oai_url"]."</label>
+    		</div>
+    		<div class='colonne_suite'>
+    			<input type='text' name='url' id='url' class='saisie-60em' value='".htmlentities($url, ENT_QUOTES, $charset)."'/>
+    		</div>
+	    </div>
 		<div class='row'>
 			<div class='colonne3'>
 				<label for='clean_base_url'>".$this->msg["oai_clean_url"]."</label>
 			</div>
 			<div class='colonne_suite'>
-				<input type='checkbox' name='clean_base_url' id='clean_base_url' value='1' ".($clean_base_url?"checked":"")."/>
+				<input type='checkbox' name='clean_base_url' id='clean_base_url' value='1' ".($clean_base_url ? "checked" : "")."/>
 			</div>
 		</div>
 		<div class='row'>
 		";
-		if (!$url) 
-			$form.="<h3 style='text-align:center'>".$this->msg["rec_addr"]."</h3>";
-		else {
+		if (empty($url)) {
+			$form .= "<h3 style='text-align:center'>".$this->msg["rec_addr"]."</h3>";
+		} else {
 			//Intérogation du serveur
-			$oai_p=new oai20($url,$charset,$params["TIMEOUT"]);
+			$oai_p = new oai20($url, $charset, $params["TIMEOUT"]);
 			if ($oai_p->error) {
-				$form.="<h3 style='text-align:center'>".sprintf($this->msg["error_contact_server"],$oai_p->error_message)."</h3>";
+				$form .= "<h3 style='text-align:center'>".sprintf($this->msg["error_contact_server"], $oai_p->error_message)."</h3>";
 			} else {
-				$form.="<h3 style='text-align:center'>".$oai_p->repositoryName."</h3>";
-				if ($oai_p->description)
-					$form.="
+				$form .= "<h3 style='text-align:center'>".$oai_p->repositoryName."</h3>";
+				if (!empty($oai_p->description)) {
+				    $form .= "
 					<div class='row'>
 						<div class='colonne3'>
 							<label>".$this->msg["oai_desc"]."</label>
 						</div>
 						<div class='colonne_suite'>
-							".htmlentities($oai_p->description,ENT_QUOTES,$charset)."
+							".htmlentities($oai_p->description, ENT_QUOTES, $charset)."
 						</div>
 					</div>
 					";
-				$form.="
+				}
+				$form .= "
 				<div class='row'>
 					<div class='colonne3'>
 						<label>".$this->msg["oai_older_metatdatas"]."</label>
@@ -109,67 +113,89 @@ class oai extends connector {
 						<label>".$this->msg["oai_granularity"]."</label>
 					</div>
 					<div class='colonne_suite'>
-						".($oai_p->granularity=="YYYY-MM-DD"?$this->msg["oai_one_day"]:$this->msg["oai_minute"])."
+						".($oai_p->granularity=="YYYY-MM-DD" ? $this->msg["oai_one_day"] : $this->msg["oai_minute"])."
 					</div>
 				</div>";
+				
 				if ($oai_p->has_feature("SETS")) {
-					$form.="
-				<div class='row'>
-					<div class='colonne3'>
-						<label for='sets'>".$this->msg["oai_sets_to_sync"]."</label>
-					</div>
-					<div class='colonne_suite'>";
-					if (count($oai_p->sets)<80) $combien = count($oai_p->sets);
-					else $combien=80; 
-					$form.="<select id='sets' name='sets[]' class='saisie-80em' multiple='yes' size='".$combien."'>";
-					foreach ($oai_p->sets as $code=>$set) {
-						$form.="<option value='".htmlentities($code,ENT_QUOTES,$charset)."' alt='".htmlentities($set['name'],ENT_QUOTES,$charset)."' ".($set['description'] ? "title='".htmlentities($set['description'],ENT_QUOTES,$charset)."'" : "")." ".(@array_search($code,$sets)!==false?"selected":"").">".htmlentities($set['name'],ENT_QUOTES,$charset)."</option>\n";
+					$form .= "
+    				<div class='row'>
+    					<div class='colonne3'>
+    						<label for='sets'>".$this->msg["oai_sets_to_sync"]."</label>
+    					</div>
+    					<div class='colonne_suite'>";
+					
+					$elements = array();
+					foreach ($oai_p->sets as $code => $set) {
+						if (array_search($code, $sets) !== false) {
+							$elements[] = array('id' => $code, 'name' => $set['name'].($set['description'] ? " (".$set['description'].")" : ""));
+						}
 					}
-					$form.="	</select>
-					</div>
-				</div>";
+					$form .= "<script type='text/javascript' src='".$base_path."/javascript/ajax.js'></script>";
+					templates::init_completion_attributes(array(array('name' => 'att_id_filter', 'value' => $source_id)));
+					templates::init_selection_attributes(array(array('name' => 'source_id', 'value' => $source_id)));
+					$form .= oai::get_syncronised_sets_template($elements, 'source_form', 'sets', 'set_id', 'connectors', true);
+					$form .= "</div></div>";
 				}
-				$form.="
+				$form .= "
 				<div class='row'>
 					<div class='colonne3'>
 						<label for='formats'>".$this->msg["oai_preference_format"]."</label>
 					</div>
 					<div class='colonne_suite'>
 						<select name='formats' id='formats'>";
-					if (!is_array($formats))
-						$formats = array($formats);
-					for ($i=0; $i<count($oai_p->metadatas) ;$i++) {
-						$form.="<option value='".htmlentities($oai_p->metadatas[$i]["PREFIX"],ENT_QUOTES,$charset)."' alt='".htmlentities($oai_p->metadatas[$i]["PREFIX"],ENT_QUOTES,$charset)."' title='".htmlentities($oai_p->metadatas[$i]["PREFIX"],ENT_QUOTES,$charset)."' ".(@array_search($oai_p->metadatas[$i]["PREFIX"],$formats)!==false?"selected":"").">".htmlentities($oai_p->metadatas[$i]["PREFIX"],ENT_QUOTES,$charset)."</option>\n";
-					}
-					$form.="	</select> ".$this->msg["oai_xslt_file"]." <input type='file' name='xslt_file' />";
-					if ($xsl_transform) $form.="<br /><i>".sprintf($this->msg["oai_xslt_file_linked"],$xsl_transform["name"])."</i> : ".$this->msg["oai_del_xslt_file"]." <input type='checkbox' name='del_xsl_transform' value='1'/>";
-					$form.="						</div>
-				</div>";
-				if (($oai_p->deletedRecord=="persistent")||($oai_p->deletedRecord=="transient")) {
-					$form.="
+				if (!is_array($formats)) {
+					$formats = array($formats);
+				}
+				$nb_metadatas = count($oai_p->metadatas);
+				for ($i = 0; $i < $nb_metadatas; $i++) {
+					$form .= "<option value='".htmlentities($oai_p->metadatas[$i]["PREFIX"], ENT_QUOTES, $charset)."' alt='".htmlentities($oai_p->metadatas[$i]["PREFIX"], ENT_QUOTES, $charset)."' title='".htmlentities($oai_p->metadatas[$i]["PREFIX"], ENT_QUOTES, $charset)."' ".(@array_search($oai_p->metadatas[$i]["PREFIX"], $formats) !== false ? "selected" : "").">".htmlentities($oai_p->metadatas[$i]["PREFIX"], ENT_QUOTES, $charset)."</option>\n";
+				}
+				$form .= "</select>";
+				if (!empty($xsl_transform)) {
+				    $form .= "<br /><i>".sprintf($this->msg["oai_xslt_file_linked"], $xsl_transform["name"])."</i> :".$this->msg["oai_del_xslt_file"]." <input type='checkbox' name='del_xsl_transform' value='1'/>";
+				}
+				$form .= "</div></div>";
+				$form .= "
 				<div class='row'>
-					<div class='colonne3'>
-						<label>".sprintf($this->msg["oai_del_marked_elts"],($oai_p->deletedRecord=="persistent"?$this->msg["oai_del_marked_persistent"]:$this->msg["oai_del_marked_temp"])).")</label>
-					</div>
-					<div class='colonne_suite'>
-						<label for='del_yes'>".$this->msg["oai_yes"]."</label><input type='radio' name='del_deleted' id='del_yes' value='1' ".($del_deleted==1?"checked":"").">
-						<label for='del_no'>".$this->msg["oai_no"]."</label><input type='radio' name='del_deleted' id='del_no' value='0' ".($del_deleted==0?"checked":"").">
-					</div>
-				</div>";
+				    <div class='colonne3'>
+				        <label>".$this->msg['oai_xslt_file']."</label>
+		            </div>
+				    <div class='colonne_suite'>
+				            <input type='file' name='xslt_file' />
+		            </div>
+	            </div>";
+				if ($oai_p->deletedRecord == "persistent" || $oai_p->deletedRecord == "transient") {
+					$form .= "
+    				<div class='row'>
+    					<div class='colonne3'>
+    						<label>".sprintf($this->msg["oai_del_marked_elts"], ($oai_p->deletedRecord == "persistent" ? $this->msg["oai_del_marked_persistent"] : $this->msg["oai_del_marked_temp"]))."</label>
+    					</div>
+    					<div class='colonne_suite'>
+    						<label for='del_yes'>".$this->msg["oai_yes"]."</label><input type='radio' name='del_deleted' id='del_yes' value='1' ".($del_deleted == 1 ? "checked" : "").">
+    						<label for='del_no'>".$this->msg["oai_no"]."</label><input type='radio' name='del_deleted' id='del_no' value='0' ".($del_deleted == 0 ? "checked" : "").">
+    					</div>
+    				</div>";
 				}
 			}
 		}
 		$form.="
-	</div>
-	<div class='row'>
-		<div class='colonne3'>
-			<label for='clean_html'>".$this->msg["oai_clean_html"]."</label>
-		</div>
-		<div class='colonne_suite'>
-			<input type='checkbox' name='clean_html' id='clean_html' value='1' ".($clean_html?"checked":"")."/>
-		</div>
-	</div>
-	<div class='row'></div>
+    	</div>
+    	<div class='row'>
+    		<div class='colonne3'>
+    			<label for='clean_html'>".$this->msg["oai_clean_html"]."</label>
+    		</div>
+    		<div class='colonne_suite'>
+    			<input type='checkbox' name='clean_html' id='clean_html' value='1' ".($clean_html ? "checked" : "")."/>
+    		</div>
+    	</div>
+    	<div class='row'></div>
+    	<script type='text/javascript'>
+		    document.getElementsByClassName('form-admin')[0].addEventListener('keypress', function(e) {
+		    if (e.keyCode == 13) {
+			    e.preventDefault();
+            }});
+	    </script>
 ";
 		return $form;
     }
@@ -178,7 +204,7 @@ class oai extends connector {
     	global $url,$clean_base_url,$sets,$formats,$del_deleted,$del_xsl_transform,$clean_html;
     	$t["url"]=stripslashes($url);
     	$t["clean_base_url"]=$clean_base_url;
-    	$t["sets"]=$sets;
+    	$t["sets"]=templates::get_values_completion_field_from_form('sets');
     	$t["formats"]=$formats;
     	$t["del_deleted"]=$del_deleted;
     	$t["clean_html"]=$clean_html;
@@ -275,7 +301,7 @@ class oai extends connector {
 						}
 						
 						for ($i=0; $i<count($fs); $i++) {
-							$ufield=$fs[$i]["ATTRIBS"]["c"];
+							$ufield=(isset($fs[$i]["ATTRIBS"]["c"]) ? $fs[$i]["ATTRIBS"]["c"] : '');
 							$field_order=$i;
 							$ss=$rec_uni_dom->get_nodes("s",$fs[$i]);
 							if (is_array($ss)) {
@@ -330,12 +356,12 @@ class oai extends connector {
 	}
 	
 	public function form_pour_maj_entrepot($source_id,$sync_form="sync_form") {
-		global $charset;
+		global $msg, $charset;
 		global $form_from;
 		global $form_until;
 		global $form_radio;
 
-		$source_id=$source_id+0;
+		$source_id = (int) $source_id;
 		$params=$this->get_source_params($source_id);
 		$vars=unserialize($params["PARAMETERS"]);
 
@@ -358,15 +384,11 @@ class oai extends connector {
 				<input type='radio' name='form_radio' value='last_sync' ".($form_radio == "last_sync" ? "checked" :"")." />".$this->msg["oai_last_sync"]." <br /> 
 				<input type='radio' name='form_radio' value='date_sync' ".((($form_radio == "date_sync") || (!$form_radio))  ? "checked" :"")." />".$this->msg["oai_between_part1"]." <br />
 				<strong>
-					<input type='hidden' name='form_from' value='".($form_from ? $form_from : date("Y-m-d",$datefrom))."' />
-					<input type=\"text\" readonly size=\"10\" name=\"form_from_lib\" value=\"".(($form_from != '') ? formatdate($form_from) : formatdate(date("Y-m-d",$datefrom)))."\">
-					<input class='bouton' type='button' name='form_from_button' value='Selectionner' onClick=\"openPopUp('./select.php?what=calendrier&caller=$sync_form&date_caller=".date("Ymd",$datefrom)."&param1=form_from&param2=form_from_lib&auto_submit=NO&date_anterieure=YES', 'calendar')\"   /> (facultatif)
+					<input type=\"text\" size=\"10\" name=\"form_from\" value=\"".(($form_from != '') ? $form_from : date("Y-m-d",$datefrom))."\" data-dojo-type='dijit/form/DateTextBox' constraints=\"{datePattern:'".getDojoPattern($msg['format_date'])."'}\" required='false'> (facultatif)
 				</strong>
 				<br /> ".$this->msg["oai_between_part2"]." <br />
 				<strong>
-					<input type='hidden' name='form_until' value='".($form_until ? $form_until : $dateuntil)."'  />
-					<input type=\"text\" readonly size=\"10\" name=\"form_until_lib\" value=\"".(($form_until != '') ? formatdate($form_until) : "")."\">
-					<input class='bouton' type='button' name='form_until_button' value='Selectionner' onClick=\"openPopUp('./select.php?what=calendrier&caller=$sync_form&date_caller=$dateuntil&param1=form_until&param2=form_until_lib&auto_submit=NO&date_anterieure=YES', 'calendar')\"   /> (facultatif)
+					<input type=\"text\" size=\"10\" name=\"form_until\" value=\"".(($form_until != '') ? $form_until : "")."\" data-dojo-type='dijit/form/DateTextBox' constraints=\"{datePattern:'".getDojoPattern($msg['format_date'])."'}\" required='false'> (facultatif)
 				</strong>
 		<br /><br />
 ";
@@ -490,6 +512,39 @@ class oai extends connector {
 			$this->error_message=$oai20->error_message;
 		}
 		return $this->n_recu;
+	}
+	
+	public static function get_syncronised_sets_template($elements, $caller, $element_name, $element_id, $completion) {
+	    $display = '';
+	    $display .= templates::get_event_add_completion_field($element_name, $element_id, $completion);
+	    $display .= templates::get_button_selector($caller.'_'.$element_name.'_selector', $completion, $caller, '&param1='.$element_id.'&param2='.$element_name);
+	    $display .= templates::get_button_clear_values($element_name, $element_id);
+	    $display .= templates::get_button_add_completion_field($element_name, $element_id, $completion);
+	    
+	    if (!empty($elements)) {
+	        foreach ($elements as $i => $element) {
+	            $display .= "<div id='".$caller."_".$element_name."_".$i."'>";
+	            $display .= templates::get_input_completion($element_name, $element_id, $i, $element['id'], $element['name'], $completion);
+	            if (!isset($elements[$i+1])) {
+	                $display .= "<input id='button_add_$element_name' type='button' class='bouton' value='+' onclick='templates.add_completion_field(\"$element_name\", \"$element_id\", \"connectors\");'>";
+	            }
+	            $display .= "</div>";
+	        }
+	        $display .= templates::get_input_hidden('max_'.$element_name, count($elements));
+	    } else {
+	        $display .= "<div id='".$caller."_".$element_name."_0'>";
+	        $display .= templates::get_input_completion($element_name, $element_id, 0, '', '', $completion);
+ 	        $display .= "<input id='button_add_$element_name' type='button' class='bouton' value='+' onclick='templates.add_completion_field(\"$element_name\", \"$element_id\", \"connectors\");'>";
+	        $display .= "</div>";
+	        $display .= templates::get_input_hidden('max_'.$element_name, 1);
+	    }
+	    $display.= "<div id='add".$element_name."' data-completion-attributes='".encoding_normalize::json_encode(templates::get_completion_attributes())."'></div>";
+	    
+	    // Ré-initialisation des propriétés statiques
+	    templates::reset_completion_attributes();
+	    templates::reset_selection_attributes();
+	    
+	    return $display;
 	}
 }
 ?>

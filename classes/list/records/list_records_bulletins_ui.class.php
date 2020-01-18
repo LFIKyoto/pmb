@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_records_bulletins_ui.class.php,v 1.1 2018-12-28 13:15:31 dgoron Exp $
+// $Id: list_records_bulletins_ui.class.php,v 1.2.2.1 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,10 +10,6 @@ require_once($class_path."/list/records/list_records_ui.class.php");
 require_once($class_path."/serials.class.php");
 
 class list_records_bulletins_ui extends list_records_ui {
-		
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	protected function _get_query_base() {
 		$aq_members = $this->get_aq_members();
@@ -27,9 +23,9 @@ class list_records_bulletins_ui extends list_records_ui {
 	}
 	
 	protected function _get_query_order() {
-		if ($this->applied_sort['by']) {
+	    if ($this->applied_sort[0]['by']) {
 			$order = '';
-			$sort_by = $this->applied_sort['by'];
+			$sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				case 'pert':
 					$order .= 'pert, index_sew, date_date, bulletin_id';
@@ -40,18 +36,18 @@ class list_records_bulletins_ui extends list_records_ui {
 			}
 			if($order) {
 				$this->applied_sort_type = 'SQL';
-				if($this->applied_sort['asc_desc'] == 'desc' && strpos($order, ',')) {
+				if($this->applied_sort[0]['asc_desc'] == 'desc' && strpos($order, ',')) {
 					$cols = explode(',', $order);
 					$query_order = " order by ";
 					foreach ($cols as $i=>$col) {
 						if($i) {
 							$query_order .= ","; 
 						}
-						$query_order .= " ".$col." ".$this->applied_sort['asc_desc'];
+						$query_order .= " ".$col." ".$this->applied_sort[0]['asc_desc'];
 					}
 					return $query_order;
 				} else {
-					return " order by ".$order." ".$this->applied_sort['asc_desc'];
+				    return " order by ".$order." ".$this->applied_sort[0]['asc_desc'];
 				}
 			} else {
 				return "";
@@ -80,23 +76,23 @@ class list_records_bulletins_ui extends list_records_ui {
 	}
 	
 	protected function get_cell_content($object, $property) {
-		global $msg, $charset;
+		global $msg;
 		global $base_path;
 		
 		$content = '';
-		switch($property) {
+		switch ($property) {
 			case 'caddie':
 				// gestion des paniers de bulletins
-				$cart_click_bull = "onClick=\"openPopUp('./cart.php?object_type=BULL&item=".$object->bulletin_id."', 'cart')\"";
-				$content .= "<img src='".get_url_icon('basket_small_20x20.gif')."' class='align_middle' alt='basket' title='".$msg[400]."' ".$cart_click_bull.">";
+				$cart_click_bull = "onClick=\"openPopUp('./cart.php?object_type=BULL&item=$object->bulletin_id', 'cart')\"";
+				$content .= "<img src='".get_url_icon('basket_small_20x20.gif')."' class='align_middle' alt='basket' title='$msg[400]' $cart_click_bull>";
 				break;
 			case 'bulletin_numero':
-				$url =  $base_path."/catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=".$object->bulletin_id;
-				$content .= "<a href='".$url."'>".$object->bulletin_numero."</a>";
+				$url =  "$base_path/catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=$object->bulletin_id";
+				$content .= "<a href='$url'>$object->bulletin_numero</a>";
 				break;
 			case 'expl':
-				if (sizeof($object->expl)) {
-					$content .= sizeof($object->expl)." ".$msg['bulletin_nb_exemplaires'];
+				if (!empty($object->expl)) {
+					$content .= count($object->expl)." ".$msg['bulletin_nb_exemplaires'];
 				}
 				break;
 			default :

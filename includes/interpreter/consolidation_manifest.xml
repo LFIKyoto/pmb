@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: consolidation_manifest.xml,v 1.5 2018-08-06 11:59:02 plmrozowski Exp $ -->
+$Id: consolidation_manifest.xml,v 1.6 2019-05-11 09:29:41 dgoron Exp $ -->
 <manifest>
 	<name>Consolidation</name>
 	<description>msg:Notice_tpl_functions_description</description>
@@ -79,6 +79,14 @@ $Id: consolidation_manifest.xml,v 1.5 2018-08-06 11:59:02 plmrozowski Exp $ -->
 			</inputs>
 			<outputs>
 				<description>msg:top_level_domain_output_description</description>
+			</outputs>
+		</method>
+		<method name="#host_ip_info($param, $parser);" rights="" version="1.0" comment="msg:host_ip_info_description" language_independant="true">
+			<inputs>
+				<description>msg:host_ip_info_input_description</description>
+			</inputs>
+			<outputs>
+				<description>msg:host_ip_info_output_description</description>
 			</outputs>
 		</method>
 		<method name="#var_post($param, $parser);" rights="" version="1.0" comment="msg:var_post_description" language_independant="true">

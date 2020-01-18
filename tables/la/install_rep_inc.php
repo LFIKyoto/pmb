@@ -89,4 +89,3 @@ $msg_crea_control_version = "<h3>La version de la base de données est <font colo
 			Allez en Administration > Outils > Mise à jour de la base avant de travailler avec PMB.<br />
 			N'oubliez pas de faire des sauvegardes, vérifiez notamment que toutes les tables de données sont bien sauvegardées";
 ?>
-

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_handler.class.php,v 1.15 2018-12-28 16:19:06 tsamson Exp $
+// $Id: onto_handler.class.php,v 1.21.4.1 2019-11-25 12:52:58 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -102,6 +102,9 @@ class onto_handler {
 			<".$uri."> ?predicate ?object .
 			optional {
 				?object rdf:type ?type
+			}.
+			optional {
+				?object pmb:has_assertions ?has_assertions.
 			}
 		}";
 		$this->data_store->query($query);
@@ -139,6 +142,9 @@ class onto_handler {
 						}
 					}
 				}
+				if (!empty($assertion->has_assertions)) {
+				    $object_properties["assertions"] = $this->get_assertions($assertion->object);
+				}				
 			}
 			$assertions[] = new onto_assertion($uri, $assertion->predicate, $assertion->object, $type,$object_properties);
 		}
@@ -253,165 +259,37 @@ class onto_handler {
 	 * @access public
 	 */
 	public function save( $item ) {
-		global $opac_url_base, $area_id, $action;		
+		global $area_id;		
 		
 		if ($item->check_values()) {	
 			if(onto_common_uri::is_temp_uri($item->get_uri())){
 				$item->replace_temp_uri();
 			}
 			$assertions = $item->get_assertions();
-			$nb_assertions = count($assertions);
-			$i = 0;
-			
-			$subjects_deleted = array();
-			
-			file_put_contents("/home/tsamson/logs/test_query.txt",print_r($assertions, true)."\n", FILE_APPEND);
 			
 			// On peut y aller
-			$query = "insert into <pmb> {
-				";
-			foreach ($assertions as $assertion) {				
-				if (!in_array($assertion->get_subject(), $subjects_deleted)) {
-					$pmb_id = 0;
-					
-					//on stocke l'id de l'entité en base SQL s'il existe  
-					$query_pmb_id = '	select ?pmb_id where {
-						<'.$assertion->get_subject().'> pmb:identifier ?pmb_id
-					}';
-					$this->data_store->query($query_pmb_id);
-					if ($this->data_store->num_rows()) {
-						$pmb_id = $this->data_store->get_result()[0]->pmb_id;
-					}
-					
-					// On supprime tous les triplets correspondant à cette uri pour les mettre à jour par la suite
-					$query_delete = "delete {
-						<".$assertion->get_subject()."> ?prop ?obj
-						}";
-					$this->data_store->query($query_delete);
-
-					$subjects_deleted[] = $assertion->get_subject();
-					
-					//puis on commence par ré-insèrer l'id de l'entité en base SQL dans le store
-					if ($pmb_id) {
-						if (!$this->data_store->num_rows()) {
-							$query_insert = 'insert into <pmb> {
-									<'.$assertion->get_subject().'> pmb:identifier "'.$pmb_id.'" .
-								}';
-							$this->data_store->query($query_insert);
-						}
-					}					
-				}
+			$query = "insert into <pmb> {";
+			$query .= $this->build_triples($assertions, $item->get_uri());
+			$query .= ".\n <".addslashes($assertions[0]->get_subject())."> pmb:area ".$area_id;
+			
+			//on ne rentre qu'une seule, afin de ne pas écraser le display label
+			if($assertions[0]->get_object_properties()['type'] == "uri") {					
+			    $display_label = $item->get_label($this->get_display_label($assertions[0]->get_object()));
 				
-				if ($assertion->offset_get_object_property("type") == "literal"){
-					$object = "'".addslashes($assertion->get_object())."'";
-					$object_properties = $assertion->get_object_properties();
-					if (!empty($object_properties['lang'])) {
-						$object.="@".$object_properties['lang'];
-					}
-				}else{
-					
-					$object = "<".addslashes($assertion->get_object()).">";
-					
-					if ($assertion->offset_get_object_property("type") == "uri"){
-						
-						if ($assertion->get_object_type()) {
-							
-							if (is_numeric($assertion->get_object())) {
-								$query_bis = "	select ?uri where {
-													?uri pmb:identifier '".addslashes($assertion->get_object())."' .
-													?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <".addslashes($assertion->get_object_type()).">
-												}";
-								$this->data_store->query($query_bis);
-								if (!$this->data_store->num_rows()) {
-									
-									$uri = "<".addslashes(onto_common_uri::get_new_uri($this->get_class_pmb_name($assertion->get_object_type()),$opac_url_base.$this->get_class_pmb_name($assertion->get_object_type())."#")).">";
-									$object = $uri;
-									
-									$object .= " .\n";
-									//sujet
-									$object .= $uri;
-									//prédicat
-									$object .= ' pmb:identifier ';
-									//objet
-									$object .= '"'.addslashes($assertion->get_object()).'"';
-									
-									$object .= " .\n";
-									//sujet
-									$object .= $uri;
-									//prédicat
-									$object .= ' <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ';
-									//objet
-									$object .= '<'.addslashes($assertion->get_object_type()).'>';
-
-									if ($assertion->offset_get_object_property('display_label')) {
-										$object .= " .\n";
-										//sujet
-										$object .= $uri;
-										//prédicat
-										$object .= ' pmb:displayLabel ';
-										//objet
-										$object .= '"'.addslashes($assertion->offset_get_object_property('display_label')).'"';
-									}
-									var_dump($assertion->offset_get_object_property('object_assertions'));
-									if ($assertion->offset_get_object_property('object_assertions')) {									    
-									    foreach ($assertion->offset_get_object_property('object_assertions') as $object_assertion) {
-									        /* @var $object_assertion onto_assertion */
-									        $object .= " .\n";
-									        //sujet
-									        $object .= '<'.$object_assertion->get_subject().'>';
-									        //prédicat
-									        $object .= ' <'.$object_assertion->get_predicate().'> ';
-									        //objet
-									        if ($object_assertion->offset_get_object_property("type") == "uri") {
-									            $object .= ' <'.$object_assertion->get_object().'> ';									        
-									        } else {
-									            $object .= ' "'.addslashes($object_assertion->get_object()).'" ';
-									        }
-									    }
-									}
-								} else {
-									$object = "<".$this->data_store->get_result()[0]->uri.">";
-								}
-							}
-						}						
+				//si pas de display label, on va chercher celui du parent
+				if (!$display_label) {
+				    $sub_class_of = $this->ontology->get_sub_class_of($assertions[0]->get_object());
+					foreach ($sub_class_of as $parent_uri) {							
+						$display_label = $item->get_label($this->get_display_label($parent_uri));
+						if ($display_label) {
+							break;
+						}
 					}
 				}					
-				$query.= "<".addslashes($assertion->get_subject())."> <".addslashes($assertion->get_predicate())."> ".$object;
-								
-				if ($area_id && !$i) {
-					$query .= " .\n <".addslashes($assertion->get_subject())."> pmb:area ".$area_id;
-					
-				}
-
-				
-				
-				//on ne rentre qu'une seule, afin de ne pas écraser le display label
-				if($assertion->get_object_properties()['type'] == "uri" && !$i) {					
-					$display_label = $item->get_label($this->get_display_label($assertion->get_object()));
-					
-					//si pas de display label, on va chercher celui du parent
-					if (!$display_label) {
-						$sub_class_of = $this->ontology->get_sub_class_of($assertion->get_object());
-						foreach ($sub_class_of as $parent_uri) {							
-							$display_label = $item->get_label($this->get_display_label($parent_uri));
-							if ($display_label) {
-								break;
-							}
-						}
-					}					
-					$query .= " .\n <".addslashes($assertion->get_subject())."> pmb:displayLabel '".addslashes($display_label)."'";
-				}
-				
-				$i++;
-				if ($i < $nb_assertions) {
-					$query.=" .";
-				}
-				
-				$query.="\n";
+				$query .= " .\n <".addslashes($assertions[0]->get_subject())."> pmb:displayLabel '".addslashes($display_label)."'";
 			}
-			$query.="}";
 			
-			file_put_contents("/home/tsamson/logs/test_query.txt",print_r($query, true)."\n\n", FILE_APPEND);
+			$query.="}";
 			
 			$this->data_store->query($query);
 			if ($errs = $this->data_store->get_errors()) {
@@ -484,7 +362,7 @@ class onto_handler {
 					
 					if (count($is_object_of)) {
 						foreach ($is_object_of as $object) {
-							$index->maj(0,$assertion->subject);
+						    $index->maj(0,$object->subject);
 						}
 					}
 					
@@ -665,7 +543,9 @@ class onto_handler {
 				if(!isset($labels[$result->name]['label']['default'])){
 					$this->labels[$result->name]['label']['default'] = $result->label;
 				}
-				$this->labels[$result->name]['label'][$result->label_lang] = $result->label;
+				if (!empty($result->label_lang)) {
+				    $this->labels[$result->name]['label'][$result->label_lang] = $result->label;
+				}
 			}
 		}
 		return $this->labels;
@@ -808,7 +688,164 @@ class onto_handler {
 	}
 	
 	/**
+	 * recupere les uri des proprietes qui composent le display_label
+	 * @param uri $class_uri
+	 * @return NULL[]
+	 */
+	public function get_display_labels($class_uri){
+	    $query = "select ?displayLabel where {
+			<".$class_uri."> pmb:displayLabel ?displayLabel
+		}";
+	    $this->onto_store->query($query);
+	    $displayLabels = [$this->default_display_label];
+	    if($this->onto_store->num_rows()){
+	        $displayLabels = [];
+	        $results = $this->onto_store->get_result();
+	        foreach ($results as $result) {
+	            $displayLabels[] = $result->displayLabel;
+	        }
+	    }
+	    return $displayLabels;
+	}
+	/**
 	 * PARTIE ONTOLOGIE
 	 */
+	
+	private function build_triples($assertions, $main_uri) {
+	    global $opac_url_base;
+	    
+	    $nb_assertions = count($assertions);
+	    $i = 0;
+	    
+	    $subjects_deleted = array();
+	    
+	    // On peut y aller
+	    $query = "";
+	    foreach ($assertions as $assertion) {
+	        if (!in_array($assertion->get_subject(), $subjects_deleted)) {
+	            $pmb_id = 0;
+	            
+	            //on stocke l'id de l'entité en base SQL s'il existe
+	            $query_pmb_id = '	select ?pmb_id where {
+						<'.$assertion->get_subject().'> pmb:identifier ?pmb_id
+					}';
+	            $this->data_store->query($query_pmb_id);
+	            if ($this->data_store->num_rows()) {
+	                $pmb_id = $this->data_store->get_result()[0]->pmb_id;
+	            }
+	            
+	            // On supprime tous les triplets correspondant à cette uri pour les mettre à jour par la suite
+	            if ($assertion->get_subject() == $main_uri) {
+	                $query_delete = "delete {
+    						<".$assertion->get_subject()."> ?prop ?obj
+    						}";
+	                $this->data_store->query($query_delete);
+	                
+	                $subjects_deleted[] = $assertion->get_subject();
+	            } else {
+	                $query_delete = "delete {
+    						<".$assertion->get_subject()."> <".$assertion->get_predicate()."> <".$assertion->get_object().">
+    						}";
+	                $this->data_store->query($query_delete);
+	            }
+	            
+	            //puis on commence par ré-insèrer l'id de l'entité en base SQL dans le store
+	            if ($pmb_id) {
+	                if (!$this->data_store->num_rows()) {
+	                    $query_insert = 'insert into <pmb> {
+									<'.$assertion->get_subject().'> pmb:identifier "'.$pmb_id.'" .
+								}';
+	                    $this->data_store->query($query_insert);
+	                }
+	            }
+	        }
+	        
+	        if ($assertion->offset_get_object_property("type") == "literal"){
+	            $object = "'".addslashes($assertion->get_object())."'";
+	            $object_properties = $assertion->get_object_properties();
+	            if (!empty($object_properties['lang'])) {
+	                $object.="@".$object_properties['lang'];
+	            }
+	        }else{
+	            
+	            $object = "<".addslashes($assertion->get_object()).">";
+	            
+	            if ($assertion->offset_get_object_property("type") == "uri"){
+	                
+	                if ($assertion->get_object_type()) {
+	                    if (is_numeric($assertion->get_object())) {
+	                        $query_bis = "	select ?uri where {
+													?uri pmb:identifier '".addslashes($assertion->get_object())."' .
+													?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <".addslashes($assertion->get_object_type()).">
+												}";
+	                        $this->data_store->query($query_bis);
+	                        if (!$this->data_store->num_rows()) {
+	                            
+	                            $uri = "<".addslashes(onto_common_uri::get_new_uri($this->get_class_pmb_name($assertion->get_object_type()),$opac_url_base.$this->get_class_pmb_name($assertion->get_object_type())."#")).">";
+	                            $object = $uri;
+	                            
+	                            $object .= " .\n";
+	                            //sujet
+	                            $object .= $uri;
+	                            //prédicat
+	                            $object .= ' pmb:identifier ';
+	                            //objet
+	                            $object .= '"'.addslashes($assertion->get_object()).'"';
+	                            
+	                            $object .= " .\n";
+	                            //sujet
+	                            $object .= $uri;
+	                            //prédicat
+	                            $object .= ' <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ';
+	                            //objet
+	                            $object .= '<'.addslashes($assertion->get_object_type()).'>';
+	                            
+	                            if ($assertion->offset_get_object_property('display_label')) {
+	                                $object .= " .\n";
+	                                //sujet
+	                                $object .= $uri;
+	                                //prédicat
+	                                $object .= ' pmb:displayLabel ';
+	                                //objet
+	                                $object .= '"'.addslashes($assertion->offset_get_object_property('display_label')).'"';
+	                            }
+	                        } else {
+	                            $object = "<".$this->data_store->get_result()[0]->uri.">";
+	                        }
+	                    }
+	                    if ($assertion->offset_get_object_property('object_assertions')) {
+	                        
+	                        $object .= " .\n";
+	                        //sujet
+	                        $object .= '<'.addslashes($assertion->get_object()).'>';
+	                        //prédicat
+	                        $object .= ' pmb:has_assertions ';
+	                        //objet
+	                        $object .= '"1"';
+	                        
+	                        $object .= " .\n";
+	                        //sujet
+	                        $object .= '<'.addslashes($assertion->get_object()).'>';
+	                        //prédicat
+	                        $object .= ' <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ';
+	                        //objet
+	                        $object .= "<".addslashes($assertion->get_object_type())."> .\n";
+	                                                
+	                        $object .= $this->build_triples($assertion->offset_get_object_property('object_assertions'),$assertion->get_object());
+	                    }
+	                }
+	            }
+	        }
+	        $query.= " <".addslashes($assertion->get_subject())."> <".addslashes($assertion->get_predicate())."> ".$object;
+	            	        
+	        $i++;
+	        if ($i < $nb_assertions) {
+	            $query.=" .\n";
+	        }
+	        
+	        //$query.=" \n";
+	    }
+	    return $query;
+	}
 	
 } // end of onto_handler

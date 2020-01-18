@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.20 2018-04-23 13:31:15 ccraig Exp $
+// $Id: main.inc.php,v 1.21.6.1 2019-09-17 08:59:26 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -16,7 +16,7 @@ if(!isset($date)) $date = '';
 include "./admin/calendrier/calendrier_func.inc.php" ;
 require_once($class_path."/docs_location.class.php");
 
-if (($faire=="ouvrir" || $faire=="fermer") && $loc!="") {
+if (($faire=="ouvrir" || $faire=="fermer" || $faire=="initialization") && $loc!="") {
 	$date_deb = extraitdate($date_deb); 
 	$date_fin = extraitdate($date_fin);
 	if ($faire=="ouvrir") $ouverture=1 ;
@@ -33,21 +33,31 @@ if (($faire=="ouvrir" || $faire=="fermer") && $loc!="") {
 		$jour = "j".$res->jour ;
 		// OK : traitement
 		if (!empty(${$jour})) {
-			$rqt_date = "update ouvertures set ouvert=$ouverture, commentaire='$commentaire' where date_ouverture='$date_courante' and num_location=$loc ";
-			$resultatdate=pmb_mysql_query($rqt_date);
-			if (!pmb_mysql_affected_rows()) {
-				$rqt_date = "insert into ouvertures set ouvert=$ouverture, date_ouverture='$date_courante', commentaire='$commentaire', num_location=$loc ";
+			if($faire=="initialization") {
+				$rqt_date = "delete from ouvertures where date_ouverture='$date_courante' and num_location=$loc ";
 				$resultatdate=pmb_mysql_query($rqt_date);
-				if (!pmb_mysql_affected_rows()) die ("insert into ouvertures failes") ;	
-			}
-			if (isset($duplicate_loc) && is_array($duplicate_locs)) {
-				foreach ($duplicate_locs as $duplicate_loc) {
-					$rqt_date = "update ouvertures set ouvert=$ouverture, commentaire='$commentaire' where date_ouverture='$date_courante' and num_location=$duplicate_loc ";
+			} else {
+				$rqt_date = "update ouvertures set ouvert=$ouverture, commentaire='$commentaire' where date_ouverture='$date_courante' and num_location=$loc ";
+				$resultatdate=pmb_mysql_query($rqt_date);
+				if (!pmb_mysql_affected_rows()) {
+					$rqt_date = "insert into ouvertures set ouvert=$ouverture, date_ouverture='$date_courante', commentaire='$commentaire', num_location=$loc ";
 					$resultatdate=pmb_mysql_query($rqt_date);
-					if (!pmb_mysql_affected_rows()) {
-						$rqt_date = "insert into ouvertures set ouvert=$ouverture, date_ouverture='$date_courante', commentaire='$commentaire', num_location=$duplicate_loc ";
+					if (!pmb_mysql_affected_rows()) die ("insert into ouvertures failes") ;	
+				}
+			}
+			if (isset($duplicate_locs) && is_array($duplicate_locs)) {
+				foreach ($duplicate_locs as $duplicate_loc) {
+					if($faire=="initialization") {
+						$rqt_date = "delete from ouvertures where date_ouverture='$date_courante' and num_location=$duplicate_loc ";
 						$resultatdate=pmb_mysql_query($rqt_date);
-						if (!pmb_mysql_affected_rows()) die ("insert into ouvertures failes") ;	
+					} else {
+						$rqt_date = "update ouvertures set ouvert=$ouverture, commentaire='$commentaire' where date_ouverture='$date_courante' and num_location=$duplicate_loc ";
+						$resultatdate=pmb_mysql_query($rqt_date);
+						if (!pmb_mysql_affected_rows()) {
+							$rqt_date = "insert into ouvertures set ouvert=$ouverture, date_ouverture='$date_courante', commentaire='$commentaire', num_location=$duplicate_loc ";
+							$resultatdate=pmb_mysql_query($rqt_date);
+							if (!pmb_mysql_affected_rows()) die ("insert into ouvertures failes") ;
+						}
 					}
 				}
 			}

@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: thumbnail.tpl.php,v 1.5 2018-10-12 12:02:58 dgoron Exp $
+// $Id: thumbnail.tpl.php,v 1.6 2019-05-27 14:41:47 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $pmb_curl_timeout;
+global $pmb_curl_timeout, $js_function_chklnk_tpl, $pmb_url_base;
 
 $js_function_chklnk_tpl = "
 <script type='text/javascript'>

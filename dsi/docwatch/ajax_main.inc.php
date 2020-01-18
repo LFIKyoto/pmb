@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_main.inc.php,v 1.41 2018-08-21 15:38:44 plmrozowski Exp $
+// $Id: ajax_main.inc.php,v 1.43.6.1 2019-10-25 08:01:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -122,6 +122,20 @@ switch($sub) {
 				);
 				print encoding_normalize::json_encode($response);
 				break;
+			case "purge_items_mark_as_deleted":
+			    $docwatch_watch = new docwatch_watch($id);
+			    $result = $docwatch_watch->purge_items_mark_as_deleted();
+			    $response = "";
+			    if(!$result){
+			        $response = $docwatch_watch->get_error();
+			    }
+			    $response = array(
+			        'result' => $result,
+			        'elementId' => $docwatch_watch->get_id(),
+			        'response' => $response
+			    );
+			    print encoding_normalize::json_encode($response);
+			    break;
 			case "update_children" :
 				switch ($type) {
 					case "category":
@@ -413,6 +427,27 @@ switch($sub) {
 					print $selector->get_form();
 				}
 				break;
+			case "get_sub_selector_form" :
+				if(!isset($autoloader) || !is_object($autoloader)){
+					$autoloader = new autoloader();
+				}
+				$autoloader->add_register("docwatch",true);
+				if($id){
+					$query = "select id_selector,selector_type from docwatch_selectors where id_selector= '".($id*1)."'";
+					$result = pmb_mysql_query($query,$dbh);
+					if(pmb_mysql_num_rows($result)){
+						$row = pmb_mysql_fetch_object($result);
+						$selector = new $row->selector_type($row->id_selector);
+					}
+				}else{
+					if(class_exists($class)){
+						$selector = new $class();
+					}
+				}
+				if(isset($selector) && is_object($selector)){
+					print $selector->get_ajax_form();
+				}
+				break;
 			case "save_source" :
 				if(!isset($autoloader) || !is_object($autoloader)){
 					$autoloader = new autoloader();
@@ -436,6 +471,28 @@ switch($sub) {
 					print encoding_normalize::json_encode($response);
 				}
 				break;
+			case "duplicate_source" :
+				if(!isset($autoloader) || !is_object($autoloader)){
+					$autoloader = new autoloader();
+				}
+				$autoloader->add_register("docwatch",true);
+				if(class_exists($className)){
+					$docwatch_datasource = new $className($id_duplicated_datasource);
+					$docwatch_datasource->set_id(0);
+					$docwatch_datasource->set_title($title);
+					$docwatch_datasource->set_num_watch($num_watch);
+					$docwatch_datasource->change_parameter_selector_to_type();
+					$result = $docwatch_datasource->save();
+					if($docwatch_datasource->get_id()){
+						$response = $docwatch_datasource->get_normalized_datasource();
+					}
+					$response = array(
+							'result' => $result,
+							'elementId' => $docwatch_datasource->get_id(),
+							'response' => $response
+					);
+					print encoding_normalize::json_encode($response);
+				}
 			case "delete_source":
 				$docwatch_datasource= new docwatch_datasource($id);
 				$result = $docwatch_datasource->delete();
@@ -465,6 +522,9 @@ switch($sub) {
 						break;
 					case "docwatch_category_form_tpl" :
 						print docwatch_ui::get_category_form();
+						break;
+					case "docwatch_source_duplicate_form_tpl" :
+						print docwatch_ui::get_source_duplicate_form();
 						break;
 				}
 				break;

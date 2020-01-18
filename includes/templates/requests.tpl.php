@@ -2,10 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: requests.tpl.php,v 1.9 2017-11-22 11:07:34 dgoron Exp $
+// $Id: requests.tpl.php,v 1.10 2019-05-27 12:35:59 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $req_add_form, $current_module, $msg, $charset, $req_auth, $frame_req_add_form, $req_tab_header_select, $joi_tab_header_select, $joi_tab_line_select, $lim_tab_header_select;
+global $lim_tab_line_select, $req_tab_header_insert, $req_tab_header_update, $req_tab_header_delete, $joi_tab_header_insert, $joi_tab_header_update, $joi_tab_header_delete;
+global $lim_tab_header_delete, $lim_tab_line_delete;
 
 // $req_add_form : template creation requete
 $req_add_form = "

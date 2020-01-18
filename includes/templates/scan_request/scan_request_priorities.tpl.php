@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_request_priorities.tpl.php,v 1.1 2016-01-07 07:48:53 ngantier Exp $
+// $Id: scan_request_priorities.tpl.php,v 1.2 2019-05-27 10:26:24 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $scan_request_priority_form, $current_module, $msg;
 
 $scan_request_priority_form ="
 <form method='post' class='form-$current_module' name='scan_request_priority_form' action='!!action!!&action=save'>

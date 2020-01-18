@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_article.class.php,v 1.34 2018-06-21 12:26:12 apetithomme Exp $
+// $Id: cms_article.class.php,v 1.36.2.2 2019-10-25 07:00:47 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -146,6 +146,7 @@ class cms_article extends cms_editorial {
 		
 		$new_article->documents_linked = $this->get_documents();
 		$new_article->save_documents();
+		return $id;
 	}
 	
 	public function get_parent_selector(){
@@ -182,50 +183,8 @@ class cms_article extends cms_editorial {
 	}
 	
 	public function format_datas(){
-		global $thesaurus_concepts_active, $lang;
-		if($this->formated_datas === null){
-			$this->formated_datas = array();
-			$parent = cms_provider::get_instance("section",$this->num_parent) ;
-	 		$documents = array();
-	 		$this->get_documents();
-	 		foreach($this->documents_linked as $id_doc){
-	 			$document = new cms_document($id_doc); 
-	 			$documents[] = $document->format_datas();
-	 		}
-			$this->formated_datas = array(
-				'id' => $this->id,
-				'parent' => $parent->format_datas(false,false),
-				'title' => $this->title,
-				'resume' => $this->resume,
-				'logo' => $this->logo->format_datas(),
-				'publication_state' => $this->publication_state,
-				'start_date' => format_date($this->start_date),
-				'end_date' => format_date($this->end_date),
-				'descriptors' => $this->get_descriptors(),
-				'content' => $this->contenu,
-				'num_type' => $this->num_type,
-				'fields_type' => $this->get_fields_type(),
-				'type' => $this->type_content,
-				'create_date' => format_date($this->create_date),
-				'documents' => $documents,
-				'nb_documents' => count($documents),
-				'last_update_date' => format_date($this->last_update_date),
-				'permalink' => $this->get_permalink(),
-				'social_media_sharing' => $this->get_social_media_block()
-			);
-			if($thesaurus_concepts_active == 1){
-				$this->formated_datas['concepts'] = $this->index_concept->get_concepts();
-			}
-			if($this->get_avis_allowed()) {
-				$this->formated_datas['avis_display'] = $this->get_display_avis_detail();
-			}
-		}
-		
-		if ($lang != "fr_FR") {
-			$this->format_datas_lang($this->formated_datas, $lang);
-		}
-		
-		return $this->formated_datas;
+	    $cms_editorial_data = new cms_editorial_data($this->id, $this->type);
+	    return $cms_editorial_data;
 	}
 	
 	private function format_datas_lang(&$array, $lang) {

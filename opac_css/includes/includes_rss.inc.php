@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: includes_rss.inc.php,v 1.28 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: includes_rss.inc.php,v 1.29 2019-06-25 09:31:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -48,14 +48,15 @@ function genere_link_rss() {
 	global $opac_view_filter_class;
 	
 	$liens = '';
-	$rqt = "select id_rss_flux, nom_rss_flux, descr_rss_flux from rss_flux order by 2 ";
+	$rqt = "select id_rss_flux, nom_rss_flux, descr_rss_flux, metadata_rss_flux from rss_flux order by 2 ";
 	$res = pmb_mysql_query($rqt,$dbh);
 	while ($obj=pmb_mysql_fetch_object($res)) {
+	    if(!$obj->metadata_rss_flux) continue;
 		if($opac_view_filter_class){
 			if(!$opac_view_filter_class->is_selected("flux_rss", $obj->id_rss_flux))  continue; 
 		}
 		$liens .= "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"".htmlentities($obj->nom_rss_flux,ENT_QUOTES, $charset)."\" href=\"".$opac_url_base."rss.php?id=".$obj->id_rss_flux."\" />" ;
-		}
+	}
 	if ($liens) $logo_rss_si_rss = "<a href='index.php?lvl=rss_see&id=' title=\"".$msg['show_rss_dispo']."\"><img id=\"rss_logo\" alt='rss' src='".get_url_icon('rss.png', 1)."' style='vertical-align:middle;border:0px' /></a>" ;
 	return $liens ;
 }

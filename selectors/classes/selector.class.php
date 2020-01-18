@@ -2,10 +2,9 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: selector.class.php,v 1.21 2018-12-17 23:09:30 ccraig Exp $
+// $Id: selector.class.php,v 1.23 2019-06-11 08:53:57 btafforeau Exp $
   
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
-ini_set('xdebug.max_nesting_level', 200);
 
 class selector {
 	protected $user_input;
@@ -170,7 +169,7 @@ class selector {
 	
 	public function get_title() {
 		global $msg;
-		return $msg[get_called_class()];
+		return $msg[static::class];
 	}
 	
 	public function get_sel_header_template() {

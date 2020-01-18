@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: start_export.class.php,v 1.18 2018-07-25 06:19:18 dgoron Exp $
+// $Id: start_export.class.php,v 1.21 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -89,89 +89,101 @@ class start_export {
     public $param_export=array();
     
     public function __construct($id_notice,$type_export,$param_export) {
-    		global $i;
-    		global $param_path;
-    		global $specialexport;
-    		global $output_type;
-    		global $output_params;
-    		global $step;
-    		global $export_type;
-    		global $base_path;
-			global $class_path;
-			global $include_path;
-			global $msg;
+		global $i;
+		global $param_path;
+		global $specialexport;
+		global $output_type;
+		global $output_params;
+		global $step;
+		global $export_type;
+		global $base_path;
+		global $class_path;
+		global $include_path;
+		global $msg;
+		
+		$step = array();    		
+		$this->id_notice = (int) $id_notice;
+		if (!empty($this->id_notice)) {
+			$this->export_type = $type_export;
+			$export_type = $type_export;
+			$this->param_export = $param_export;
 			
-			$step=array();    		
-			$this->id_notice=$id_notice+0;
-    		if ($this->id_notice) {
-    			$this->export_type=$type_export;
-    			$export_type=$type_export;
-    			$this->param_export = $param_export;
-    			
-    			//Récupération du répertoire
-				$i = 0;
-				$param_path = "";
-				if (file_exists("$base_path/admin/convert/imports/catalog_subst.xml"))
-					$fic_catal = "$base_path/admin/convert/imports/catalog_subst.xml";
-				else
-					$fic_catal = "$base_path/admin/convert/imports/catalog.xml";
-				_parser_($fic_catal, array("ITEM" => "_item_start_export_"), "CATALOG");
+			//Récupération du répertoire
+			$i = 0;
+			$param_path = "";
+			if (file_exists("$base_path/admin/convert/imports/catalog_subst.xml")) {
+				$fic_catal = "$base_path/admin/convert/imports/catalog_subst.xml";
+			} else {
+				$fic_catal = "$base_path/admin/convert/imports/catalog.xml";
+			}
+			_parser_($fic_catal, array("ITEM" => "_item_start_export_"), "CATALOG");
 
-				//Lecture des paramètres
-				
-				_parser_("$base_path/admin/convert/imports/".$param_path."/params.xml", array("IMPORTNAME" => "_import_name_start_export_","STEP" => "_step_start_export_","OUTPUT" => "_output_start_export_","INPUT" => "_input_start_export_"), "PARAMS");
+			//Lecture des paramètres
+			
+			_parser_("$base_path/admin/convert/imports/$param_path/params.xml", array("IMPORTNAME" => "_import_name_start_export_", "STEP" => "_step_start_export_", "OUTPUT" => "_output_start_export_", "INPUT" => "_input_start_export_"), "PARAMS");
 
-				//Si l'export est spécial, on charge la fonction d'export
-				if ($specialexport) {
-		    		if(file_exists($base_path."/admin/convert/imports/".$param_path."/".$param_path.".class.php")) {
-						require_once($base_path."/admin/convert/imports/".$param_path."/".$param_path.".class.php");
-					} else {
-						require_once("imports/".$param_path."/export.inc.php");
-					}
-				}
-    			
-    			//En fonction du type de fichier de sortie, inclusion du script de gestion des sorties
-				$output_instance = start_export::get_instance_from_output_type($output_type);
-				
-				$e_notice=array();
-				if($_SESSION["param_export"]["notice_exporte"]) $notice_exporte = $_SESSION["param_export"]["notice_exporte"]; 
-				else $notice_exporte=array();
-				if($_SESSION["param_export"]["bulletin_exporte"]) $bulletin_exporte = $_SESSION["param_export"]["bulletin_exporte"]; 
-				else $bulletin_exporte=array();
-				if (!$specialexport) {
-					$param = new export_param(EXP_DSI_CONTEXT,$this->param_export);	
-					$e = new export(array($this->id_notice),$notice_exporte,$bulletin_exporte);
-					do{
-						$nn = $e -> get_next_notice("","","",0,$param->get_parametres($param->context));
-						if ($e->notice) $e_notice[]=$e->notice;
-					} while($nn);
-					$notice_exporte=$e->notice_exporte;
-					$_SESSION["param_export"]["notice_exporte"]=$notice_exporte;
-					//Pour les exemplaires de bulletin
-					do {
-						$nn=$e -> get_next_bulletin("","","",0,$param->get_parametres($param->context));
-						if ($e->notice) $e_notice[]=$e->notice;
-					} while ($nn);		
-					$bulletin_exporte=$e->bulletins_exporte;
-					$_SESSION["param_export"]["bulletin_exporte"]=$bulletin_exporte;
+			//Si l'export est spécial, on charge la fonction d'export
+			if (!empty($specialexport)) {
+	    		if (file_exists("$base_path/admin/convert/imports/$param_path/$param_path.class.php")) {
+					require_once "$base_path/admin/convert/imports/$param_path/$param_path.class.php";
 				} else {
-					if(class_exists($param_path) && method_exists($param_path, '_export_notice_')) {
-						$e_notice = $param_path::_export_notice_($this->id_notice);
-					} else {
-						$e_notice = _export_($this->id_notice);
-					}
+					require_once "imports/$param_path/export.inc.php";
 				}
-				
-				if(!is_array($e_notice)){
-					$this->prepared_notice=$e_notice;
-					$this->output_notice.=$this->transform();
+			}
+			
+			//En fonction du type de fichier de sortie, inclusion du script de gestion des sorties
+			$output_instance = start_export::get_instance_from_output_type($output_type);
+			
+			$e_notice = array();
+			if (!empty($_SESSION["param_export"]["notice_exporte"])) {
+			    $notice_exporte = $_SESSION["param_export"]["notice_exporte"]; 
+			} else {
+			    $notice_exporte = array();
+			}
+			if (!empty($_SESSION["param_export"]["bulletin_exporte"])) {
+			    $bulletin_exporte = $_SESSION["param_export"]["bulletin_exporte"]; 
+			} else {
+			    $bulletin_exporte = array();
+			}
+			if (empty($specialexport)) {
+				$param = new export_param(EXP_DSI_CONTEXT, $this->param_export);	
+				$e = new export(array($this->id_notice), $notice_exporte, $bulletin_exporte);
+				do{
+					$nn = $e->get_next_notice("", "", "", 0, $param->get_parametres($param->context));
+					if (!empty($e->notice)) {
+					    $e_notice[] = $e->notice;
+					}
+				} while (!empty($nn));
+				$notice_exporte = $e->notice_exporte;
+				$_SESSION["param_export"]["notice_exporte"] = $notice_exporte;
+				//Pour les exemplaires de bulletin
+				do {
+					$nn = $e->get_next_bulletin("", "", "", 0, $param->get_parametres($param->context));
+					if (!empty($e->notice)) {
+					    $e_notice[] = $e->notice;
+					}
+				} while ($nn);
+				$bulletin_exporte = $e->bulletins_exporte;
+				$_SESSION["param_export"]["bulletin_exporte"] = $bulletin_exporte;
+			} else {
+				if (class_exists($param_path) && method_exists($param_path, '_export_notice_')) {
+					$e_notice = $param_path::_export_notice_($this->id_notice);
 				} else {
-					for($i=0;$i<sizeof($e_notice);$i++){
-						$this->prepared_notice=$e_notice[$i];
-						$this->output_notice.=$this->transform();
-					}
+					$e_notice = _export_($this->id_notice);
 				}
-    		}
+			}
+			
+			if (!is_array($e_notice)) {
+				$this->prepared_notice = $e_notice;
+				$this->output_notice .= $this->transform();
+			} else {
+			    $nb_notices = count($e_notice);
+			    for ($i = 0; $i < $nb_notices; $i++) {
+					$this->prepared_notice = $e_notice[$i];
+					$this->output_notice .= $this->transform();
+				}
+			}
+		}
     }
     
     public static function get_exports() {
@@ -271,7 +283,7 @@ class start_export {
 						$r = texttoxml($notice, $s, $islast, $isfirst, $param_path);
 						break;
 					case "custom" :
-						eval("\$r=".$s['CALLBACK'][0][value]."(\$notice, \$s, \$islast, \$isfirst, \$param_path);");
+						eval("\$r=".$s['CALLBACK'][0]['value']."(\$notice, \$s, \$islast, \$isfirst, \$param_path);");
 						break;
 			}
 			if (!$r['VALID']) {

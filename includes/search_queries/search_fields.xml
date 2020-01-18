@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id: search_fields.xml,v 1.158 2018-12-14 13:46:28 ngantier Exp $ -->
+<!-- $Id: search_fields.xml,v 1.166.2.1 2019-11-27 10:08:20 dgoron Exp $ -->
 <pmbfields>
 
 	<!-- Zone fixedFields :
@@ -54,21 +54,21 @@
 			<query for="BOOLEAN" wordSearch="yes" >
 				<class type='records' mode='title'></class>
 			</query>
-			<query for="STARTWITH" regDiacrit="yes" Keep_EmptyWord="yes">
+			<query for="STARTWITH">
 				<main><![CDATA[select distinct uni.notice_id from (
 				select distinct ntu_num_notice as notice_id from  notices_titres_uniformes, titres_uniformes where '!!oeuvre_query!!' and tu_name like '!!p!!%' and ntu_num_tu=tu_id 
 				UNION
 				select distinct notice_id from notices where (tit1 like '!!p!!%')
 				)as uni join notices n on uni.notice_id=n.notice_id order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="ENDWITH" regDiacrit="yes" Keep_EmptyWord="yes">
+			<query for="ENDWITH">
 				<main><![CDATA[select distinct uni.notice_id from (
 				select distinct ntu_num_notice as notice_id from  notices_titres_uniformes, titres_uniformes where '!!oeuvre_query!!' and tu_name like '%!!p!!' and ntu_num_tu=tu_id 
 				UNION
 				select distinct notice_id from notices where (tit1 like '%!!p!!') 
 				)as uni join notices n on uni.notice_id=n.notice_id order by index_serie, tnvol, index_sew]]></main>
 			</query>
-			<query for="EXACT" regDiacrit="yes" Keep_EmptyWord="yes">
+			<query for="EXACT">
 				<main><![CDATA[select distinct uni.notice_id from (
 				select distinct ntu_num_notice as notice_id from  notices_titres_uniformes, titres_uniformes where '!!oeuvre_query!!' and tu_name like '!!p!!' and ntu_num_tu=tu_id 
 				UNION
@@ -981,6 +981,30 @@
 				<main><![CDATA[ SELECT DISTINCT num_object AS notice_id FROM index_concept WHERE type_object = 1 AND num_concept = !!p!! 
 				UNION SELECT DISTINCT num_object AS notice_id FROM index_concept JOIN skos_fields_global_index ON authority_num = num_concept WHERE type_object = 1 AND code_champ IN (5,6) AND id_item = !!p!!]]></main>
 			</query>
+		</field>		     
+		<field group="3" title="msg:map_emprise" id="1004">
+			<var name="pmb_map_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<input type="map"/>
+			<query for="CONTAINS">
+				<main>select distinct num_object as notice_id from index_concept left join map_emprises on map_emprise_type = 10 and contains(geomfromtext('!!p!!'),map_emprise_data) = 1 where type_object = 1 and map_emprise_obj_num = num_concept</main>
+			</query>
+			<query for="AERASUP">
+				<main>select distinct num_object as notice_id from index_concept left join map_emprises on map_emprise_type = 10 and Area((map_emprise_data)) &gt; Area(geomfromtext('!!p!!')) where type_object = 1 and map_emprise_obj_num = num_concept</main>
+			</query>
+			<query for="AERAINF">
+				<main>select distinct num_object as notice_id from index_concept left join map_emprises on map_emprise_type = 10 and Area((map_emprise_data)) &lt; Area(geomfromtext('!!p!!')) where type_object = 1 and map_emprise_obj_num = num_concept</main>
+			</query>
+			<query for="INTERSECTS">
+				<main>select distinct num_object as notice_id from index_concept left join map_emprises on map_emprise_type = 10 and intersects(geomfromtext('!!p!!'),map_emprise_data) = 1 where type_object = 1 and map_emprise_obj_num = num_concept</main>
+			</query>
+			<query for="ISEMPTY">
+				<main>select distinct num_object as notice_id from index_concept where type_object = 1 and num_concept not in (select distinct map_emprise_obj_num from map_emprises where map_emprise_type=10)</main>
+			</query>
+			<query for="ISNOTEMPTY">
+				<main>select distinct num_object as notice_id from index_concept where type_object = 1 and num_concept in (select distinct map_emprise_obj_num from map_emprises where map_emprise_type=10)</main>
+			</query>
 		</field>
 		<field group="3" title="msg:indexint_menu_title" id="12">
 			<input type="authoritie" ajax="indexint_mul" selector="indexint" p1="param1" p2="param2"/>
@@ -1164,6 +1188,24 @@
 			<query for="BETWEEN" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[SELECT distinct notice_id from notices where 
 				if('!!p!!', create_date>='!!p!!', 1) and if('!!p1!!', create_date<='!!p1!! 23:59:59', 1)]]></main>
+			</query>
+			<query for="LESS_THAN_DAYS">
+				<main><![CDATA[SELECT distinct notice_id from notices where create_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+			</query>
+			<query for="MORE_THAN_DAYS">
+				<main><![CDATA[SELECT distinct notice_id from notices where create_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+			</query>
+			<query for="THIS_WEEK">
+				<main><![CDATA[SELECT distinct notice_id from notices where WEEK(create_date,1) = WEEK(NOW()) AND YEAR(create_date) = YEAR(NOW())]]></main>
+			</query>
+			<query for="THIS_MONTH">
+				<main><![CDATA[SELECT distinct notice_id from notices where MONTH(create_date) = MONTH(NOW()) AND YEAR(create_date) = YEAR(NOW())]]></main>
+			</query>
+			<query for="LAST_MONTH">
+				<main><![CDATA[SELECT distinct notice_id from notices where PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(create_date, '%Y%m')) = 1]]></main>
+			</query>
+			<query for="THIS_YEAR">
+				<main><![CDATA[SELECT distinct notice_id from notices where YEAR(create_date) = YEAR(NOW())]]></main>
 			</query>		
 		</field>
 		<field group="5" title="msg:date_update_query" id="67">
@@ -1182,10 +1224,28 @@
 			</query>
 			<query for="GTEQ">
 				<main><![CDATA[SELECT distinct notice_id from notices where update_date>='!!p!!']]></main>
-			</query>		
+			</query>
 			<query for="BETWEEN" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[SELECT distinct notice_id from notices where 
 				if('!!p!!', update_date>='!!p!!', 1) and if('!!p1!!', update_date<='!!p1!! 23:59:59', 1)]]></main>
+			</query>
+			<query for="LESS_THAN_DAYS">
+				<main><![CDATA[SELECT distinct notice_id from notices where update_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+			</query>
+			<query for="MORE_THAN_DAYS">
+				<main><![CDATA[SELECT distinct notice_id from notices where update_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+			</query>
+			<query for="THIS_WEEK">
+				<main><![CDATA[SELECT distinct notice_id from notices where WEEK(update_date,1) = WEEK(NOW()) AND YEAR(update_date) = YEAR(NOW())]]></main>
+			</query>
+			<query for="THIS_MONTH">
+				<main><![CDATA[SELECT distinct notice_id from notices where MONTH(update_date) = MONTH(NOW()) AND YEAR(update_date) = YEAR(NOW())]]></main>
+			</query>
+			<query for="LAST_MONTH">
+				<main><![CDATA[SELECT distinct notice_id from notices where PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(update_date, '%Y%m')) = 1]]></main>
+			</query>
+			<query for="THIS_YEAR">
+				<main><![CDATA[SELECT distinct notice_id from notices where YEAR(update_date) = YEAR(NOW())]]></main>
 			</query>
 		</field>
 		<field group="5" title="msg:print_numeric_ex_title" id="44">
@@ -1343,6 +1403,12 @@
 			</input>
 			<query for="EQ">
 				<main><![CDATA[SELECT DISTINCT notice_id FROM notices JOIN audit ON object_id = notice_id AND type_obj=1 AND type_modif=1 AND type_user=1 WHERE user_id=!!p!! ORDER BY index_serie, tnvol, index_sew]]></main>
+			</query>
+		</field>
+		<field group="5" title="msg:search_extended_record_id" id="106">
+			<input type="text" />
+			<query for="EQ">
+				<main><![CDATA[SELECT DISTINCT notice_id FROM notices WHERE notice_id  IN (!!p!!) ORDER BY index_serie, tnvol, index_sew]]></main>
 			</query>
 		</field>
 		<field group="6" title="msg:map_echelle" id="74">
@@ -1642,14 +1708,194 @@
 			<var name="pmb_nomenclature_activate" visibility="yes">
 				<value visibility="no">0</value>
 			</var>
-			<input type="query_list">
-				<query>select id_instrument, instrument_code from nomenclature_instruments where instrument_standard=1  order by instrument_code, instrument_name</query>
+			<input type="authoritie" ajax="instruments" selector="instruments" param1="workshop" p1="param1" p2="param2"/>
+			<query for="EQ" regDiacrit="yes">
+				<main><![CDATA[	SELECT notice_id 
+								FROM nomenclature_notices_nomenclatures, notices, nomenclature_workshops,nomenclature_workshops_instruments 
+								WHERE notice_id=notice_nomenclature_num_notice 
+								AND id_notice_nomenclature=workshop_num_nomenclature 
+								AND id_workshop=workshop_instrument_num_workshop 
+								AND workshop_instrument_num_instrument='!!p!!' 
+								ORDER BY index_serie, tnvol, index_sew]]></main>
+			</query>
+			<query for="NOTEQ" regDiacrit="yes">
+				<main><![CDATA[	SELECT notice_id 
+								FROM nomenclature_notices_nomenclatures
+								JOIN notices ON notice_id=notice_nomenclature_num_notice 
+								JOIN nomenclature_workshops ON id_notice_nomenclature=workshop_num_nomenclature 
+								WHERE notice_id NOT IN (
+									SELECT notice_id 
+									FROM nomenclature_notices_nomenclatures 
+									JOIN notices ON notice_id=notice_nomenclature_num_notice 
+									JOIN nomenclature_workshops ON id_notice_nomenclature=workshop_num_nomenclature 
+									JOIN nomenclature_workshops_instruments ON id_workshop=workshop_instrument_num_workshop   
+									WHERE workshop_instrument_num_instrument = !!p!! )
+								ORDER BY index_serie, tnvol, index_sew]]></main>
+			</query>
+		</field>	
+		<field group="7" title="msg:nomenclature_search_by_number_of_instruments" id="108" >
+			<var name="pmb_nomenclature_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<variable name="number_instruments" type="input" comment="Nombre">
+				<default type="VALUE">0</default>
+				<input type="number" value="0"/>
+			</variable>
+			<input type="query_list" multiple="no" selector="instruments">
+				<query>select id_instrument, concat(instrument_code, ' - ', instrument_name) as label from nomenclature_instruments order by label</query>
 			</input>
 			<query for="EQ">
-				<main><![CDATA[SELECT notice_id from nomenclature_notices_nomenclatures, notices, nomenclature_workshops,nomenclature_workshops_instruments where notice_id=notice_nomenclature_num_notice and id_notice_nomenclature=workshop_num_nomenclature and id_workshop=workshop_instrument_num_workshop and workshop_instrument_num_instrument='!!p!!' order by index_serie, tnvol, index_sew]]></main>
+				<main><![CDATA[SELECT distinct effective.id_notice as notice_id
+					FROM `notices_fields_global_index` AS effective
+					JOIN `notices_fields_global_index` AS code_instrument 
+					ON code_instrument.id_notice = effective.id_notice 
+					JOIN `notices_fields_global_index` AS id_instrument
+					ON id_instrument.id_notice = code_instrument.id_notice
+					AND code_instrument.code_champ = effective.code_champ 
+					AND code_instrument.ordre = effective.ordre 
+					AND code_instrument.code_ss_champ = 1
+					AND id_instrument.code_ss_champ = 6
+					AND id_instrument.ordre = effective.ordre
+					WHERE effective.code_champ IN (131,132,133,134,135,136) and effective.code_ss_champ = 3 and effective.value = !!number_instruments!! and id_instrument.value = '!!p!!']]></main>
 			</query>
-		</field>		
-						
+			<query for="GT">
+				<main><![CDATA[SELECT distinct effective.id_notice as notice_id
+					FROM `notices_fields_global_index` AS effective
+					JOIN `notices_fields_global_index` AS code_instrument 
+					ON code_instrument.id_notice = effective.id_notice 
+					JOIN `notices_fields_global_index` AS id_instrument
+					ON id_instrument.id_notice = code_instrument.id_notice
+					AND code_instrument.code_champ = effective.code_champ 
+					AND code_instrument.ordre = effective.ordre 
+					AND code_instrument.code_ss_champ = 1
+					AND id_instrument.code_ss_champ = 6
+					AND id_instrument.ordre = effective.ordre
+					WHERE effective.code_champ IN (131,132,133,134,135,136) and effective.code_ss_champ = 3 and effective.value > !!number_instruments!! and id_instrument.value = '!!p!!']]></main>
+			</query>
+			<query for="GTEQ">
+				<main><![CDATA[SELECT distinct effective.id_notice as notice_id
+					FROM `notices_fields_global_index` AS effective
+					JOIN `notices_fields_global_index` AS code_instrument 
+					ON code_instrument.id_notice = effective.id_notice 
+					JOIN `notices_fields_global_index` AS id_instrument
+					ON id_instrument.id_notice = code_instrument.id_notice
+					AND code_instrument.code_champ = effective.code_champ 
+					AND code_instrument.ordre = effective.ordre 
+					AND code_instrument.code_ss_champ = 1
+					AND id_instrument.code_ss_champ = 6
+					AND id_instrument.ordre = effective.ordre
+					WHERE effective.code_champ IN (131,132,133,134,135,136) and effective.code_ss_champ = 3 and effective.value >= !!number_instruments!! and id_instrument.value = '!!p!!']]></main>
+			</query>
+			<query for="LT">
+				<main><![CDATA[SELECT distinct effective.id_notice as notice_id
+					FROM `notices_fields_global_index` AS effective
+					JOIN `notices_fields_global_index` AS code_instrument 
+					ON code_instrument.id_notice = effective.id_notice 
+					JOIN `notices_fields_global_index` AS id_instrument
+					ON id_instrument.id_notice = code_instrument.id_notice
+					AND code_instrument.code_champ = effective.code_champ 
+					AND code_instrument.ordre = effective.ordre 
+					AND code_instrument.code_ss_champ = 1
+					AND id_instrument.code_ss_champ = 6
+					AND id_instrument.ordre = effective.ordre
+					WHERE effective.code_champ IN (131,132,133,134,135,136) and effective.code_ss_champ = 3 and effective.value < !!number_instruments!! and id_instrument.value = '!!p!!']]></main>			</query>
+			<query for="LTEQ">
+				<main><![CDATA[SELECT distinct effective.id_notice as notice_id
+					FROM `notices_fields_global_index` AS effective
+					JOIN `notices_fields_global_index` AS code_instrument 
+					ON code_instrument.id_notice = effective.id_notice 
+					JOIN `notices_fields_global_index` AS id_instrument
+					ON id_instrument.id_notice = code_instrument.id_notice
+					AND code_instrument.code_champ = effective.code_champ 
+					AND code_instrument.ordre = effective.ordre 
+					AND code_instrument.code_ss_champ = 1
+					AND id_instrument.code_ss_champ = 6
+					AND id_instrument.ordre = effective.ordre
+					WHERE effective.code_champ IN (131,132,133,134,135,136) and effective.code_ss_champ = 3 and effective.value <= !!number_instruments!! and id_instrument.value = '!!p!!']]></main>			</query>
+		</field>
+		<field group="7" title="msg:nomenclature_search_by_number_of_voices" id="109" >
+			<var name="pmb_nomenclature_activate" visibility="yes">
+				<value visibility="no">0</value>
+			</var>
+			<variable name="number_voices" type="input" comment="Nombre">
+				<default type="VALUE">0</default>
+				<input type="number" value="0"/>
+			</variable>
+			<input type="query_list" multiple="no" selector="voices">
+				<query>SELECT id_voice, concat(voice_code, ' - ', voice_name) as label FROM nomenclature_voices order by label</query>
+			</input>
+			<query for="EQ">
+				<main><![CDATA[SELECT distinct effective.id_notice as notice_id
+					FROM `notices_fields_global_index` AS effective
+					JOIN `notices_fields_global_index` AS code_voix 
+					ON code_voix.id_notice = effective.id_notice 
+					JOIN `notices_fields_global_index` AS id_voix
+					ON id_voix.id_notice = code_voix.id_notice
+					AND code_voix.code_champ = effective.code_champ 
+					AND code_voix.ordre = effective.ordre 
+					AND code_voix.code_ss_champ = 1
+					AND id_voix.code_ss_champ = 5
+					AND id_voix.ordre = effective.ordre
+					WHERE effective.code_champ = 137 and effective.code_ss_champ = 3 and effective.value = !!number_voices!! and id_voix.value = '!!p!!']]></main>
+			</query>
+			<query for="GT">
+				<main><![CDATA[SELECT distinct effective.id_notice as notice_id
+					FROM `notices_fields_global_index` AS effective
+					JOIN `notices_fields_global_index` AS code_voix 
+					ON code_voix.id_notice = effective.id_notice 
+					JOIN `notices_fields_global_index` AS id_voix
+					ON id_voix.id_notice = code_voix.id_notice
+					AND code_voix.code_champ = effective.code_champ 
+					AND code_voix.ordre = effective.ordre 
+					AND code_voix.code_ss_champ = 1
+					AND id_voix.code_ss_champ = 5
+					AND id_voix.ordre = effective.ordre
+					WHERE effective.code_champ = 137 and effective.code_ss_champ = 3 and effective.value > !!number_voices!! and id_voix.value = '!!p!!']]></main>
+			</query>
+			<query for="GTEQ">
+				<main><![CDATA[SELECT distinct effective.id_notice as notice_id
+					FROM `notices_fields_global_index` AS effective
+					JOIN `notices_fields_global_index` AS code_voix 
+					ON code_voix.id_notice = effective.id_notice 
+					JOIN `notices_fields_global_index` AS id_voix
+					ON id_voix.id_notice = code_voix.id_notice
+					AND code_voix.code_champ = effective.code_champ 
+					AND code_voix.ordre = effective.ordre 
+					AND code_voix.code_ss_champ = 1
+					AND id_voix.code_ss_champ = 5
+					AND id_voix.ordre = effective.ordre
+					WHERE effective.code_champ = 137 and effective.code_ss_champ = 3 and effective.value >= !!number_voices!! and id_voix.value = '!!p!!']]></main>
+			</query>
+			<query for="LT">
+				<main><![CDATA[SELECT distinct effective.id_notice as notice_id
+					FROM `notices_fields_global_index` AS effective
+					JOIN `notices_fields_global_index` AS code_voix 
+					ON code_voix.id_notice = effective.id_notice 
+					JOIN `notices_fields_global_index` AS id_voix
+					ON id_voix.id_notice = code_voix.id_notice
+					AND code_voix.code_champ = effective.code_champ 
+					AND code_voix.ordre = effective.ordre 
+					AND code_voix.code_ss_champ = 1
+					AND id_voix.code_ss_champ = 5
+					AND id_voix.ordre = effective.ordre
+					WHERE effective.code_champ = 137 and effective.code_ss_champ = 3 and effective.value < !!number_voices!! and id_voix.value = '!!p!!']]></main>
+			</query>
+			<query for="LTEQ">
+				<main><![CDATA[SELECT distinct effective.id_notice as notice_id
+					FROM `notices_fields_global_index` AS effective
+					JOIN `notices_fields_global_index` AS code_voix 
+					ON code_voix.id_notice = effective.id_notice 
+					JOIN `notices_fields_global_index` AS id_voix
+					ON id_voix.id_notice = code_voix.id_notice
+					AND code_voix.code_champ = effective.code_champ 
+					AND code_voix.ordre = effective.ordre 
+					AND code_voix.code_ss_champ = 1
+					AND id_voix.code_ss_champ = 5
+					AND id_voix.ordre = effective.ordre
+					WHERE effective.code_champ = 137 and effective.code_ss_champ = 3 and effective.value <= !!number_voices!! and id_voix.value = '!!p!!']]></main>
+			</query>
+		</field>
+								
 		<field group="8" title="msg:recherche_relationtypeup" id="47">
 			<input type="marc_list">
 				<name>relationtypeup</name>
@@ -2511,7 +2757,7 @@
   					select notice_id from (
 					(select notice_id from bulletins join notices on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero like '%!!p!!%')
 					union (select num_notice as notice_id from bulletins where num_notice <> 0 and bulletin_numero like '%!!p!!%')
-					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero like '%!!p!!%') and analysis_bulletin=bulletin_id)
+					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s') and bulletin_numero like '%!!p!!%' and analysis_bulletin=bulletin_id)
 					) as sub) order by index_serie, tnvol, index_sew
 				]]></main>
 			</query>
@@ -2520,7 +2766,7 @@
   					select notice_id from (
 					(select notice_id from bulletins join notices on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero like '')
 					union (select num_notice as notice_id from bulletins where num_notice <> 0 and bulletin_numero like '')
-					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero like '') and analysis_bulletin=bulletin_id)
+					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s') and bulletin_numero like '' and analysis_bulletin=bulletin_id)
 					) as sub) order by index_serie, tnvol, index_sew
 				]]></main>
 			</query>
@@ -2529,7 +2775,7 @@
   					select notice_id from (
 					(select notice_id from bulletins join notices on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero not like '')
 					union (select num_notice as notice_id from bulletins where num_notice <> 0 and bulletin_numero not like '')
-					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s' and bulletin_numero not like '') and analysis_bulletin=bulletin_id)
+					union (select analysis_notice as notice_id from analysis, bulletins where bulletin_notice in (select notice_id from notices join bulletins on bulletin_notice = notice_id where niveau_biblio='s') and bulletin_numero not like '' and analysis_bulletin=bulletin_id)
 					) as sub) order by index_serie, tnvol, index_sew
 				]]></main>
 			</query>
@@ -2679,7 +2925,7 @@
 
 		<field group="12" title="msg:caddie_de_NOTI" id="25">
 			<input type="query_list">
-				<query>select idcaddie,name from caddie where type='NOTI' order by name</query>
+				<query use_global='PMBuserid'>select idcaddie,name from caddie where type='NOTI' and (autorisations like '!!PMBuserid!! %' or autorisations like '% !!PMBuserid!!' or autorisations like '% !!PMBuserid!! %' or autorisations like '!!PMBuserid!!' or autorisations_all=1) order by name</query>
 			</input>
 			<variable name="ck_affiche" type="input">
 				<default type="value">0</default>
@@ -2713,7 +2959,7 @@
 		</field>
 		<field group="12" title="msg:caddie_de_EXPL" id="26">
 			<input type="query_list">
-				<query>select idcaddie,name from caddie where type='EXPL' order by name</query>
+				<query use_global='PMBuserid'>select idcaddie,name from caddie where type='EXPL' and (autorisations like '!!PMBuserid!! %' or autorisations like '% !!PMBuserid!!' or autorisations like '% !!PMBuserid!! %' or autorisations like '!!PMBuserid!!' or autorisations_all=1) order by name</query>
 			</input>
 			<variable name="ck_affiche" type="input">
 				<default type="value">0</default>
@@ -2747,7 +2993,7 @@
 		</field>
 		<field group="12" title="msg:caddie_de_BULL" id="27">
 			<input type="query_list">
-				<query>select idcaddie,name from caddie where type='BULL' order by name</query>
+				<query use_global='PMBuserid'>select idcaddie,name from caddie where type='BULL' and (autorisations like '!!PMBuserid!! %' or autorisations like '% !!PMBuserid!!' or autorisations like '% !!PMBuserid!! %' or autorisations like '!!PMBuserid!!' or autorisations_all=1) order by name</query>
 			</input>
 			<variable name="ck_affiche" type="input">
 				<default type="value">0</default>
@@ -3798,6 +4044,24 @@
 				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date>='!!p!!' order by index_serie, tnvol, index_sew]]></main>
 				</query>
+				<query for="LESS_THAN_DAYS">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY) order by index_serie, tnvol, index_sew]]></main>
+				</query>
+				<query for="MORE_THAN_DAYS">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and notices_custom_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY) order by index_serie, tnvol, index_sew]]></main>
+				</query>
+				<query for="THIS_WEEK">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and WEEK(notices_custom_date,1) = WEEK(NOW()) and YEAR(notices_custom_date) = YEAR(NOW()) order by index_serie, tnvol, index_sew]]></main>
+				</query>
+				<query for="THIS_MONTH">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and MONTH(notices_custom_date) = MONTH(NOW()) and YEAR(notices_custom_date) = YEAR(NOW()) order by index_serie, tnvol, index_sew]]></main>
+				</query>
+				<query for="LAST_MONTH">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(notices_custom_date, '%Y%m')) = 1 order by index_serie, tnvol, index_sew]]></main>
+				</query>
+				<query for="THIS_YEAR">
+					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and YEAR(notices_custom_date) = YEAR(NOW()) order by index_serie, tnvol, index_sew]]></main>
+				</query>
 				<query for="ISEMPTY">
 					<main><![CDATA[select distinct notice_id from notices left join notices_custom_values on notices_custom_origine=notice_id and notices_custom_champ=!!field!! where (notices_custom_date='' or notices_custom_date='0000-00-00' or notices_custom_date is null) order by index_serie, tnvol, index_sew]]></main>
 				</query>
@@ -3807,7 +4071,7 @@
 				<query for="BETWEEN" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[select distinct notice_id from notices,notices_custom_values where notices_custom_champ=!!field!! and notices_custom_origine=notice_id and 
 					if('!!p!!', notices_custom_date >= '!!p!!', 1) and if('!!p1!!', notices_custom_date <= '!!p1!!', 1) order by index_serie, tnvol, index_sew]]></main>
-				</query>			
+				</query>
 			</field>
 		</fieldType>
 		<fieldType group="102" type="expl" prefix="e">
@@ -4530,6 +4794,7 @@
 		<field group="1001" type="last_import_isbn_doublons" title="msg:last_import_isbn_doublons" id="5" opacVisibility="no"/>
 		<field type="combine_extended_search" title="msg:combine_extended_search" id="11" opacVisibility="no"/>
 		<field type="map_circle" group="6" title="msg:search_extended_map_circle" id="104" />		
+		<field type="map_address" group="6" title="msg:search_extended_map_address" id="107" />
 	</specialFields>
 	
 	<operators>
@@ -4541,6 +4806,7 @@
 		<operator name="ENDWITH">msg:finit_par_query</operator>
 		<operator name="EXACT">msg:exactement_comme_query</operator>
 		<operator name="EQ">msg:eq_query</operator>
+		<operator name="NOTEQ">msg:noteq_query</operator>
 		<operator name="GT">msg:gt_query</operator>
 		<operator name="LT">msg:lt_query</operator>
 		<operator name="GTEQ">msg:gteq_query</operator>
@@ -4553,6 +4819,13 @@
 		<operator name="INTERSECTS">msg:map_multisearch_intersects</operator>
 		<operator name="BETWEEN">msg:search_between_query</operator>
 		<operator name="NEAR">msg:parperso_option_duration_type0</operator>
+		<operator name="LESS_THAN_DAYS">msg:less_than_days_query</operator>
+		<operator name="MORE_THAN_DAYS">msg:more_than_days_query</operator>
+		<operator name="THIS_WEEK" emptyAllowed="yes">msg:this_week_query</operator>
+		<operator name="LAST_WEEK" emptyAllowed="yes">msg:last_week_query</operator>
+		<operator name="THIS_MONTH" emptyAllowed="yes">msg:this_month_query</operator>
+		<operator name="LAST_MONTH" emptyAllowed="yes">msg:last_month_query</operator>
+		<operator name="THIS_YEAR" emptyAllowed="yes">msg:this_year_query</operator>
 	</operators>
 	
 	<!-- Les groupes sont associés aux champs (fields) et permettent d'amener une notion de classement -->

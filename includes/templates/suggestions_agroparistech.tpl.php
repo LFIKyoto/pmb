@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions_agroparistech.tpl.php,v 1.1 2012-04-25 10:29:39 mbertin Exp $
+// $Id: suggestions_agroparistech.tpl.php,v 1.2 2019-05-27 13:21:32 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $sug_list_form, $current_module, $charset, $msg, $acquisition_sugg_categ;
 
 //	------------------------------------------------------------------------------
 // $sug_list_form : template de liste pour les suggestions

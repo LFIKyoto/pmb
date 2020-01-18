@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ComputedFieldsStore.js,v 1.3 2018-12-28 16:27:31 tsamson Exp $
+// $Id: ComputedFieldsStore.js,v 1.10 2019-06-19 15:37:34 tsamson Exp $
 
 define([
 	'dojo/_base/declare',
@@ -13,15 +13,23 @@ define([
 	'dojo/topic',
 	'dojo/Deferred',
 	'dojo/dom',
-	'dojo/dom-attr'
-], function(declare, Memory, request, lang, on, query, topic, Deferred, dom, domAttr) {
+	'dojo/dom-attr',
+	'dojo/promise/all'
+], function(declare, Memory, request, lang, on, query, topic, Deferred, dom, domAttr, promiseAll) {
 	return declare(Memory, {
 		
 		fieldsToModify: null,
 		
+		entitiesAlreadyRetrieved: [],
+		
 		constructor: function() {
+			topic.subscribe("form/change", lang.hitch(this, function(fieldNum){
+				if (typeof this.fieldsToModify[fieldNum] != 'undefined') {
+					this.updateComputedFields(this.fieldsToModify[fieldNum]);
+				}
+			}));
 			this.deferred = new Deferred();
-			request.get('ajax.php?module=ajax&categ=contribution&sub=computed_fields&area_id='+this.areaId, {
+			request.get('ajax.php?module=ajax&categ=contribution&sub=computed_fields&what=get_fields&area_id='+this.areaId, {
 				handleAs: 'json',
 				sync: true
 			}).then(lang.hitch(this, function(data){
@@ -34,30 +42,27 @@ define([
 			this.fieldsToModify = [];
 			for (var field of this.data) {
 				for (var fieldUsed of field.fields_used) {
-					if (typeof this.fieldsToModify[fieldUsed.field_num] == "undefined") {
-						this.fieldsToModify[fieldUsed.field_num] = [];
+					var fieldNum = fieldUsed.field_num;
+					if (fieldUsed.field_num.indexOf("prop_") === 0) {
+						var hyphenPos = fieldUsed.field_num.indexOf("-");
+						fieldNum = fieldUsed.field_num.substr(5, hyphenPos-5);
 					}
-					this.fieldsToModify[fieldUsed.field_num].push(field.field_num);
+					if (typeof this.fieldsToModify[fieldNum] == "undefined") {
+						this.fieldsToModify[fieldNum] = [];
+					}
+					this.fieldsToModify[fieldNum].push(field.field_num);
 				}
 			}
 		},
 		
 		initFormFields: function(nodeId) {
-			for (var fieldNum in this.fieldsToModify) {
-				query('[data-pmb-uniqueid="'+fieldNum+'"]', nodeId).forEach(lang.hitch(this, function(node) {
-					var valueNode = dom.byId(node.id + '_0_value');
-					on(valueNode, 'change', lang.hitch(this, function() {
-						this.updateComputedFields(this.fieldsToModify[fieldNum]);
-					}));
-				}));
-			}
 			query('[data-pmb-uniqueid]', nodeId).forEach(lang.hitch(this, function(node){
 				this.computeField(domAttr.get(node, 'data-pmb-uniqueid'));
 			}));
 		},
 		
-		updateComputedFields: function(fields_num) {
-			for (var field_num of fields_num) {
+		updateComputedFields: function(fieldsNum) {
+			for (var field_num of fieldsNum) {
 				this.computeField(field_num);
 			}
 		},
@@ -67,24 +72,85 @@ define([
 			if (!field.length) {
 				return false;
 			}
-			var fieldContent = field[0].template;
-			for (fieldUsed of field[0].fields_used) {
-				var parentNode = query('[data-pmb-uniqueid="'+fieldUsed.field_num+'"]');
-				var value = '';
-				if (parentNode.length) {
-					value = dom.byId(parentNode[0].id + '_0_value').value;
+			var deferred = null;
+			var deferredList = [];
+			var aliases = [];
+			for (var fieldUsed of field[0].fields_used) {
+				deferred = new Deferred();
+				deferredList.push(deferred);
+				aliases.push(fieldUsed.alias);
+				if ((fieldUsed.field_num.indexOf("env_") === 0) || (fieldUsed.field_num.indexOf("empr_") === 0)) {
+					var data = fieldUsed.value;
+					data.uniqueId = fieldUsed.field_num;
+					deferred.resolve(data);
+				} else if (fieldUsed.field_num.indexOf("prop_") === 0) {
+					var hyphenPos = fieldUsed.field_num.indexOf("-");
+					var fieldName = fieldUsed.field_num.substr(5, hyphenPos-5);
+					var entityPropertyName = fieldUsed.field_num.substr(hyphenPos+1);
+					var hyphenPos2 = entityPropertyName.indexOf("-");
+					var entityName = entityPropertyName.substr(0, hyphenPos2);
+					var propertyName = entityPropertyName.substr(hyphenPos2+1);
+					var subDeferred = new Deferred();
+					topic.publish("form/getValues", fieldName, subDeferred);
+					var returnValues = {
+							uniqueId: fieldUsed.field_num,
+							value: '',
+							displayLabel: ''
+					}
+					subDeferred.then(lang.hitch(this, function(data) {
+						if (!data.value) {
+							deferred.resolve(returnValues);
+							return false;
+						}
+						if ((typeof this.entitiesAlreadyRetrieved[entityName] != 'undefined') && (typeof this.entitiesAlreadyRetrieved[entityName][data.value] != 'undefined')) {
+							if (this.entitiesAlreadyRetrieved[entityName][data.value][propertyName]) {
+								returnValues.value = this.entitiesAlreadyRetrieved[entityName][data.value][propertyName].value;
+								returnValues.displayLabel = this.entitiesAlreadyRetrieved[entityName][data.value][propertyName].display_label;
+							}
+							deferred.resolve(returnValues);
+							return true;
+						}
+						request('./ajax.php?module=ajax&categ=contribution&sub=computed_fields&what=get_entity_data&entity_id='+data.value+'&entity_type='+entityName, {
+							handleAs: 'json'
+						}).then(lang.hitch(this, function(result){
+							if (typeof this.entitiesAlreadyRetrieved[entityName] == 'undefined') {
+								this.entitiesAlreadyRetrieved[entityName] = [];
+							}
+							this.entitiesAlreadyRetrieved[entityName][data.value] = result;
+							if (result[propertyName]) {
+								returnValues.value = result[propertyName].value;
+								returnValues.displayLabel = result[propertyName].display_label;
+							}
+							deferred.resolve(returnValues);
+						}));
+					}));
+				} else {
+					topic.publish("form/getValues", fieldUsed.field_num, deferred);
+					setTimeout(function() {
+						if (!deferred.isResolved()) {
+							console.error(fieldUsed.field_num + " n'a pas renvoy&eacute; de r&eacute;ponse");
+							deferred.resolve(returnValues);
+						}
+					}, 3000);
 				}
-				if (!value && fieldUsed.value) {
-					value = fieldUsed.value;
+			}
+			
+			promiseAll(deferredList).then(function(results){
+				var fieldNode = query('[data-pmb-uniqueid="'+fieldNum+'"]');
+				if (!fieldNode.length) {
+					return false;
 				}
-				var fieldContent = fieldContent.replace('{{ ' + fieldUsed.alias + ' }}', value);
-			}
-			var fieldNode = query('[data-pmb-uniqueid="'+fieldNum+'"]');
-			if (!fieldNode.length) {
-				return false;
-			}
-			var fieldValueNode = dom.byId(fieldNode[0].id + '_0_value');
-			fieldValueNode.value = eval(fieldContent);
+				
+				var functionToExec = new Function(aliases.join(), field[0].template);
+				var fieldContent = functionToExec.apply(fieldNode[0], results);
+
+				var fieldValueNode = dom.byId(fieldNode[0].id + '_0_value');
+				var fieldValueTabNode = query('[name="'+fieldNode[0].id + '[0][value][]"]');
+				if (fieldValueTabNode) {
+					fieldValueTabNode[0].value = fieldContent; 
+				}
+				fieldValueNode.value = fieldContent;
+			});
 		}
 	});
 });

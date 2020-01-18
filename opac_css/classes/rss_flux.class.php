@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rss_flux.class.php,v 1.41 2018-04-27 13:21:51 dgoron Exp $
+// $Id: rss_flux.class.php,v 1.43.2.3 2019-11-15 09:49:53 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+global $class_path;
+require_once($class_path.'/sort.class.php');
 
 // definition de la classe de gestion des 'flux RSS'
 class rss_flux {
@@ -16,6 +19,7 @@ class rss_flux {
 	public $nom_rss_flux = ""; 
 	public $link_rss_flux = "" ;
 	public $descr_rss_flux = "" ;
+	public $metadata_rss_flux = 1;
 	public $lang_rss_flux = "" ;
 	public $copy_rss_flux = "" ;
 	public $editor_rss_flux = "" ;
@@ -28,7 +32,9 @@ class rss_flux {
 	public $format_flux = "";
 	public $contenu_du_flux = "" ; // le flux genere precedemment et mis en cache, vide si doit etre renouvele
 	public $export_court_flux = 0;
-	public $tpl_rss_flux = 0;
+	public $tpl_title_rss_flux = "0";
+	public $tpl_rss_flux = "0";
+	public $id_tri_rss_flux = 0;
 	
 	public $nb_paniers = 0;
 	public $nb_bannettes = 0;
@@ -48,14 +54,13 @@ class rss_flux {
 	//		getData() : recuperation infos
 	// ---------------------------------------------------------------
 	public function getData() {
-		global $dbh;
-		
 		if (!$this->id_rss_flux) {
 			// pas d'identifiant. on retourne un tableau vide
 		 	$this->id_rss_flux=0;
 		 	$this->nom_rss_flux = "" ;
 			$this->link_rss_flux = "" ;
 			$this->descr_rss_flux = "" ;
+			$this->metadata_rss_flux = 1 ;
 			$this->lang_rss_flux = "" ;
 			$this->copy_rss_flux = "" ;
 			$this->editor_rss_flux = "" ;
@@ -66,19 +71,22 @@ class rss_flux {
 			$this->img_link_rss_flux = "" ;
 			$this->format_flux = "";
 			$this->export_court_flux = 0;
-			$this->tpl_rss_flux = 0;
+			$this->tpl_title_rss_flux = "0";
+			$this->tpl_rss_flux = "0";
+			$this->id_tri_rss_flux = 0;
 			$this->compte_elements();
 		} else {
-			$requete = "SELECT id_rss_flux, nom_rss_flux, link_rss_flux, descr_rss_flux, lang_rss_flux, copy_rss_flux, editor_rss_flux, webmaster_rss_flux, ttl_rss_flux, img_url_rss_flux, img_title_rss_flux, img_link_rss_flux, format_flux, export_court_flux,tpl_rss_flux,";
+			$requete = "SELECT id_rss_flux, nom_rss_flux, link_rss_flux, descr_rss_flux, metadata_rss_flux, lang_rss_flux, copy_rss_flux, editor_rss_flux, webmaster_rss_flux, ttl_rss_flux, img_url_rss_flux, img_title_rss_flux, img_link_rss_flux, format_flux, export_court_flux, tpl_title_rss_flux, tpl_rss_flux, id_tri_rss_flux,";
 			$requete .= "IF(date_add(rss_flux_last,INTERVAL ttl_rss_flux MINUTE)>sysdate(),rss_flux_content,'') as contenu_du_flux ";
 			$requete .= "FROM rss_flux WHERE id_rss_flux='".$this->id_rss_flux."' " ;
-			$result = pmb_mysql_query($requete, $dbh) or die ($requete."<br /> in rss_flux.class.php : ".pmb_mysql_error());
+			$result = pmb_mysql_query($requete);
 			if(pmb_mysql_num_rows($result)) {
 				$temp = pmb_mysql_fetch_object($result);
 			 	$this->id_rss_flux			= $temp->id_rss_flux ;
 				$this->nom_rss_flux			= $temp->nom_rss_flux ;
 				$this->link_rss_flux 		= $temp->link_rss_flux ;     
-				$this->descr_rss_flux 		= $temp->descr_rss_flux ;    
+				$this->descr_rss_flux 		= $temp->descr_rss_flux ;
+				$this->metadata_rss_flux 	= $temp->metadata_rss_flux ;
 				$this->lang_rss_flux 		= $temp->lang_rss_flux ;     
 				$this->copy_rss_flux 		= $temp->copy_rss_flux ;     
 				$this->editor_rss_flux 		= $temp->editor_rss_flux ;   
@@ -90,7 +98,9 @@ class rss_flux {
 				$this->format_flux			= $temp->format_flux ;	
 				$this->contenu_du_flux		= $temp->contenu_du_flux ;
 				$this->export_court_flux	= $temp->export_court_flux;
+				$this->tpl_title_rss_flux	        = $temp->tpl_title_rss_flux;
 				$this->tpl_rss_flux	        = $temp->tpl_rss_flux;
+				$this->id_tri_rss_flux      = $temp->id_tri_rss_flux;
 				$this->compte_elements();
 			} else {
 				// pas de flux avec cette cle
@@ -98,6 +108,7 @@ class rss_flux {
 			 	$this->nom_rss_flux = "" ;
 				$this->link_rss_flux = "" ;
 				$this->descr_rss_flux = "" ;
+				$this->metadata_rss_flux = 1 ;
 				$this->lang_rss_flux = "" ;
 				$this->copy_rss_flux = "" ;
 				$this->editor_rss_flux = "" ;
@@ -109,7 +120,9 @@ class rss_flux {
 				$this->format_flux="";
 				$this->contenu_du_flux="";
 				$this->export_court_flux = 0;
-				$this->tpl_rss_flux = 0;
+				$this->tpl_title_rss_flux = "0";
+				$this->tpl_rss_flux = "0";
+				$this->id_tri_rss_flux = 0;
 				$this->compte_elements();
 			}
 		}
@@ -140,6 +153,7 @@ class rss_flux {
 		$dsi_flux_form = str_replace('!!nom_rss_flux!!'			, htmlentities($this->nom_rss_flux			,ENT_QUOTES, $charset), $dsi_flux_form);
 		$dsi_flux_form = str_replace('!!link_rss_flux!!'		, htmlentities($this->link_rss_flux     	,ENT_QUOTES, $charset), $dsi_flux_form);
 		$dsi_flux_form = str_replace('!!descr_rss_flux!!'		, htmlentities($this->descr_rss_flux    	,ENT_QUOTES, $charset), $dsi_flux_form);
+		$dsi_flux_form = str_replace('!!metadata_rss_flux!!'	, ($this->metadata_rss_flux ? "checked='checked'" : ""), $dsi_flux_form);
 		$dsi_flux_form = str_replace('!!lang_rss_flux!!'		, htmlentities($this->lang_rss_flux     	,ENT_QUOTES, $charset), $dsi_flux_form);
 		$dsi_flux_form = str_replace('!!copy_rss_flux!!'		, htmlentities($this->copy_rss_flux     	,ENT_QUOTES, $charset), $dsi_flux_form);
 		$dsi_flux_form = str_replace('!!editor_rss_flux!!'		, htmlentities($this->editor_rss_flux   	,ENT_QUOTES, $charset), $dsi_flux_form);
@@ -153,7 +167,7 @@ class rss_flux {
 		
 		
 		$rqt="select idcaddie as id_obj, name as name_obj from caddie where type='NOTI' order by name ";
-		$result = pmb_mysql_query($rqt, $dbh) or die ($rqt."<br /> in rss_flux.class.php : ".pmb_mysql_error());
+		$result = pmb_mysql_query($rqt);
 		$paniers = "";
 		while (($contenant = pmb_mysql_fetch_object($result))) {
 			if (array_search($contenant->id_obj,$this->num_paniers)!==false) $checked="checked" ; 
@@ -166,7 +180,7 @@ class rss_flux {
 		$dsi_flux_form = str_replace('!!paniers!!', $paniers,  $dsi_flux_form);
 		
 		$rqt="select id_bannette as id_obj, nom_bannette as name_obj from bannettes where proprio_bannette=0 order by nom_bannette ";
-		$result = pmb_mysql_query($rqt, $dbh) or die ($rqt."<br /> in rss_flux.class.php : ".pmb_mysql_error());
+		$result = pmb_mysql_query($rqt);
 		$bannettes = "";
 		while (($contenant = pmb_mysql_fetch_object($result))) {
 			if (array_search($contenant->id_obj,$this->num_bannettes)!==false) $checked="checked" ; 
@@ -177,6 +191,16 @@ class rss_flux {
 							</div>";	
 		}
 		$dsi_flux_form = str_replace('!!bannettes!!', $bannettes,  $dsi_flux_form);
+		
+		if($this->id_tri_rss_flux>0){
+		    $sort = new sort("notices","base");
+		    $dsi_flux_form = str_replace('!!tri!!', $this->id_tri_rss_flux, $dsi_flux_form);
+		    $dsi_flux_form = str_replace('!!tri_name!!', $sort->descriptionTriParId($this->id_tri_rss_flux), $dsi_flux_form);
+		}else{
+		    $dsi_flux_form = str_replace('!!tri!!', "", $dsi_flux_form);
+		    $dsi_flux_form = str_replace('!!tri_name!!', $msg['dsi_flux_form_no_active_tri'], $dsi_flux_form);
+		}
+		
 		$dsi_flux_form = str_replace('!!delete!!', $button_delete,  $dsi_flux_form);
 	
 		// afin de revenir où on etait : $form_cb, le critere de recherche
@@ -189,16 +213,15 @@ class rss_flux {
 	//		delete() : suppression 
 	// ---------------------------------------------------------------
 	public function delete() {
-		global $dbh;
 		global $msg;
 		
-		if (!$this->id_rss_flux) return $msg[dsi_flux_no_access]; // impossible d'acceder 
+		if (!$this->id_rss_flux) return $msg['dsi_flux_no_access']; // impossible d'acceder 
 	
 		$requete = "delete from rss_flux_content WHERE num_rss_flux='$this->id_rss_flux'";
-		pmb_mysql_query($requete, $dbh);
+		pmb_mysql_query($requete);
 	
 		$requete = "delete from rss_flux WHERE id_rss_flux='$this->id_rss_flux'";
-		pmb_mysql_query($requete, $dbh);
+		pmb_mysql_query($requete);
 	}
 	
 	
@@ -221,6 +244,7 @@ class rss_flux {
 		$req .= "nom_rss_flux      ='".$temp->nom_rss_flux       ."', " ;
 		$req .= "link_rss_flux     ='".$temp->link_rss_flux      ."', " ;
 		$req .= "descr_rss_flux    ='".$temp->descr_rss_flux     ."', " ;
+		$req .= "metadata_rss_flux ='".$temp->metadata_rss_flux  ."', " ;
 		$req .= "lang_rss_flux     ='".$temp->lang_rss_flux      ."', " ;
 		$req .= "copy_rss_flux     ='".$temp->copy_rss_flux      ."', " ;
 		$req .= "editor_rss_flux   ='".$temp->editor_rss_flux    ."', " ;
@@ -230,13 +254,14 @@ class rss_flux {
 		$req .= "img_title_rss_flux='".$temp->img_title_rss_flux ."', " ;
 		$req .= "img_link_rss_flux ='".$temp->img_link_rss_flux  ."', " ;
 		$req .= "export_court_flux ='".$temp->export_court_flux  ."', " ;
+		$req .= "tpl_title_rss_flux='".$temp->tpl_title_rss_flux ."', " ;
 		$req .= "tpl_rss_flux      ='".$temp->tpl_rss_flux       ."', " ;
+		$req .= "id_tri_rss_flux   ='".$temp->id_tri_rss_flux    ."', " ;
 		$req .= "format_flux       ='".$temp->format_flux        ."' " ;
 	
 		$req.=$clause ;
-		$res = pmb_mysql_query($req, $dbh) or die ($req) ;
+		$res = pmb_mysql_query($req);
 		if (!$this->id_rss_flux) $this->id_rss_flux = pmb_mysql_insert_id() ;
-		if (!$this->id_rss_flux) die ("Pb grave pendant l'enregistrement du flux");
 		
 		pmb_mysql_query("delete from rss_flux_content where num_rss_flux='$this->id_rss_flux' " ) ;
 		for ($i=0;$i<count($temp->num_paniers);$i++) {
@@ -252,22 +277,20 @@ class rss_flux {
 	//		compte_elements() : methode pour pouvoir recompter en dehors !
 	// ---------------------------------------------------------------
 	public function compte_elements() {
-		global $dbh ;
-		
 		$this->nb_paniers=0;
 		$this->nb_bannettes=0;
 		$this->num_paniers=array();
 		$this->num_bannettes=array();
 	
 		$req_nb = "SELECT num_contenant from rss_flux_content WHERE num_rss_flux='".$this->id_rss_flux."' and type_contenant='CAD' " ;
-		$res_nb = pmb_mysql_query($req_nb, $dbh) or die ($req_nb."<br /> in rss_flux.class.php : ".pmb_mysql_error());
+		$res_nb = pmb_mysql_query($req_nb);
 		while (($res = pmb_mysql_fetch_object($res_nb))) {
 			$this->num_paniers[]=$res->num_contenant ;
 			$this->nb_paniers++ ;
 		}
 		
 		$req_nb = "SELECT num_contenant from rss_flux_content WHERE num_rss_flux='".$this->id_rss_flux."' and type_contenant='BAN' " ;
-		$res_nb = pmb_mysql_query($req_nb, $dbh) or die ($req_nb."<br /> in rss_flux.class.php : ".pmb_mysql_error());
+		$res_nb = pmb_mysql_query($req_nb);
 		while ($res = pmb_mysql_fetch_object($res_nb)) {
 			$this->num_bannettes[]=$res->num_contenant ;
 			$this->nb_bannettes++ ;
@@ -321,12 +344,29 @@ class rss_flux {
 		global $dbh;
 		global $msg;
 		
-		if (!$this->id_rss_flux) return $msg[dsi_flux_no_access]; // impossible d'acceder 
+		if (!$this->id_rss_flux) return $msg['dsi_flux_no_access']; // impossible d'acceder 
 	
 		$requete = "update rss_flux set rss_flux_content='".addslashes($this->contenu_du_flux)."', rss_flux_last=sysdate() WHERE id_rss_flux='$this->id_rss_flux'";
 		pmb_mysql_query($requete, $dbh);
 	}
 	
+	protected function get_sort_rss_flux_query($query='', $sort_name="notices") {
+	    global $opac_flux_rss_notices_order;
+	    
+	    if($this->id_tri_rss_flux) {
+	        $dSort = new dataSort($sort_name, 'session');
+	        $dSort->applyTri($this->id_tri_rss_flux);
+	    }
+	    
+	    if (isset($_SESSION["last_sort$sort_name"])) {
+	        $sort = new sort($sort_name, 'session');
+	        $query = $sort->appliquer_tri($_SESSION["last_sort$sort_name"], $query, "notice_id", 0, 0);
+	    } else {
+	        if (!$opac_flux_rss_notices_order) $opac_flux_rss_notices_order="index_serie, tnvol, index_sew";
+	        $query = "order by ".$opac_flux_rss_notices_order;
+	    }
+	    return $query;
+	}
 	
 	// ---------------------------------------------------------------
 	//		id des notices concernees, attention, on n'envoie que les publiques (statuts de notices)
@@ -335,7 +375,6 @@ class rss_flux {
 	
 		global $dbh, $liens_opac ;
 		global $charset;
-		global $opac_flux_rss_notices_order ;
 		global $opac_notice_affichage_class;
 		global $deflt2docs_location;
 		
@@ -344,9 +383,8 @@ class rss_flux {
 			return;
 		}
 		$retour_aff = '';
-		if (!$opac_flux_rss_notices_order) $opac_flux_rss_notices_order="index_serie, tnvol, index_sew";	
 		if (!$charset) $charset='ISO-8859-1';
-		
+		$rqt = array();
 		if ($this->nb_bannettes) {
 			$rqt[] = "select distinct notice_id, niveau_biblio, index_sew, create_date, update_date, index_serie, tnvol, year, date_parution 
 					from notices join bannette_contenu on num_notice=notice_id 
@@ -361,7 +399,8 @@ class rss_flux {
 		}
 		$rqtfinale = implode(' union ',$rqt) ;
 		pmb_mysql_query("create temporary table tmpfluxrss ENGINE=MyISAM $rqtfinale ",$dbh); // Thu, 27 Apr 2006 23:40:11 +0100
-		$query_not = "select distinct notice_id, niveau_biblio, index_sew, DATE_FORMAT(create_date,'%a, %e %b %Y %T') as pubdate from tmpfluxrss order by $opac_flux_rss_notices_order" ;
+		$query_not = "select distinct notice_id, niveau_biblio, DATE_FORMAT(create_date,'%a, %e %b %Y %T') as pubdate from tmpfluxrss ";
+		$query_not = $this->get_sort_rss_flux_query($query_not);
 		$res = pmb_mysql_query($query_not,$dbh);
 		while (($tmp=pmb_mysql_fetch_object($res))) {
 			if($opac_notice_affichage_class != ""){
@@ -369,7 +408,18 @@ class rss_flux {
 			}else $notice = new notice_affichage($tmp->notice_id, $liens_opac, "", 1, 0, 0, 1, true);
 			$notice->visu_expl = 0 ;
 			$notice->visu_explnum = 0 ;
-			$notice->do_header_without_html();
+			$title = '';
+			if($this->tpl_title_rss_flux){
+			    if(intval($this->tpl_title_rss_flux)) {
+			        $noti_tpl = notice_tpl_gen::get_instance($this->tpl_title_rss_flux);
+			        $title.=$noti_tpl->build_notice($tmp->notice_id,$deflt2docs_location);
+			    } else {
+			        $title.= record_display::get_display_for_rss_title($tmp->notice_id, $this->tpl_title_rss_flux);
+			    }
+			} else {
+			    $notice->do_header_without_html();
+			    $title .= $notice->notice_header_without_html;
+			}
 			if($tmp->niveau_biblio == 'b') {
 				$bulletin_id = pmb_mysql_result(pmb_mysql_query("select bulletin_id from bulletins where num_notice = ".$tmp->notice_id), 0, 'bulletin_id');
 				$permalink = str_replace("!!id!!", $bulletin_id, $liens_opac['lien_rech_bulletin']);
@@ -377,7 +427,7 @@ class rss_flux {
 				$permalink = str_replace("!!id!!", $tmp->notice_id, $liens_opac['lien_rech_notice']);
 			}
 			$retour_aff .= "<item>
-								<title>".htmlspecialchars ($notice->notice_header_without_html,ENT_QUOTES, $charset)."</title>
+								<title>".htmlspecialchars ($title,ENT_QUOTES, $charset)."</title>
 								<pubDate>".htmlspecialchars ($tmp->pubdate,ENT_QUOTES, $charset)."</pubDate>
 								<link>".htmlspecialchars ($permalink, ENT_QUOTES, $charset)."</link>" ;
 
@@ -387,8 +437,12 @@ class rss_flux {
 				$notice->do_isbd(1,0);
 				$desc=$notice->notice_isbd;
 			}elseif($this->tpl_rss_flux){
-				$noti_tpl = notice_tpl_gen::get_instance($this->tpl_rss_flux);
-				$desc.=$noti_tpl->build_notice($tmp->notice_id,$deflt2docs_location);
+			    if(intval($this->tpl_rss_flux)) {
+    			    $noti_tpl = notice_tpl_gen::get_instance($this->tpl_rss_flux);
+    				$desc.=$noti_tpl->build_notice($tmp->notice_id,$deflt2docs_location);
+			    } else {
+			        $desc.= record_display::get_display_for_rss_description($tmp->notice_id, $this->tpl_rss_flux);
+			    }
 			}else{
 				switch ($this->format_flux) {
 					case 'TITLE' :

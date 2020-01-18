@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: doc_num.php,v 1.63 2018-06-15 13:21:33 dgoron Exp $
+// $Id: doc_num.php,v 1.66 2019-07-03 10:10:46 ccraig Exp $
 
 $base_path=".";
 require_once($base_path."/includes/init.inc.php");
@@ -73,7 +73,8 @@ if($explnum->explnum_bulletin != 0){
 		if(!$id_for_rigths){
 			$id_for_rigths = $row->bulletin_notice;
 		}
-	}$type = "" ;
+	}
+	$type = "" ;
 }
 
 
@@ -84,7 +85,7 @@ if ($gestion_acces_active==1 && $gestion_acces_empr_notice==1) {
 	$rights= $dom_2->getRights($_SESSION['id_empr_session'],$id_for_rigths);
 } else {
 	$dom_2=null;
-	$rights='';
+	$rights=0;
 }
 
 //Accessibilité des documents numériques aux abonnés en opac
@@ -93,6 +94,7 @@ $req_restriction_abo = "SELECT explnum_visible_opac, explnum_visible_opac_abon F
 $result=pmb_mysql_query($req_restriction_abo,$dbh);
 $expl_num=pmb_mysql_fetch_array($result,PMB_MYSQL_ASSOC);
 
+$docnum_rights = 0;
 //droits d'acces emprunteur/document numérique
 if ($gestion_acces_active==1 && $gestion_acces_empr_docnum==1) {
 	$ac= new acces();
@@ -105,10 +107,9 @@ $req_restriction_docnum_abo = "SELECT explnum_download_opac, explnum_download_op
 
 $result_docnum=pmb_mysql_query($req_restriction_docnum_abo,$dbh);
 $docnum_expl_num=pmb_mysql_fetch_array($result_docnum,PMB_MYSQL_ASSOC);
-
 		
-if( ($rights & 16 || (is_null($dom_2) && $expl_num["explnum_visible_opac"] && (!$expl_num["explnum_visible_opac_abon"] || ($expl_num["explnum_visible_opac_abon"] && $_SESSION["user_code"]))))
-	&& ($docnum_rights & 8 || (is_null($dom_3) && $docnum_expl_num["explnum_download_opac"] && (!$docnum_expl_num["explnum_download_opac_abon"] || ($docnum_expl_num["explnum_download_opac_abon"] && $_SESSION["user_code"]))))){
+if( ( ($rights & 16) || (is_null($dom_2) && $expl_num["explnum_visible_opac"] && (!$expl_num["explnum_visible_opac_abon"] || ($expl_num["explnum_visible_opac_abon"] && $_SESSION["user_code"]))))
+    && ( ($docnum_rights & 8) || (empty($dom_3) && $docnum_expl_num["explnum_download_opac"] && (!$docnum_expl_num["explnum_download_opac_abon"] || ($docnum_expl_num["explnum_download_opac_abon"] && $_SESSION["user_code"]))))){
 
 	if (!($file_loc = $explnum->get_is_file())) {
 		$content = $explnum->get_file_content();
@@ -232,7 +233,13 @@ if( ($rights & 16 || (is_null($dom_2) && $expl_num["explnum_visible_opac"] && (!
 		exit ;
 	}
 }else{
-	if(!$_SESSION['id_empr_session']){
+    if(!$_SESSION['id_empr_session']
+        && ( is_null($dom_2) )
+        && ( is_null($dom_3) )
+        && $expl_num["explnum_visible_opac"]
+        && $docnum_expl_num["explnum_download_opac"]
+        && ($docnum_expl_num["explnum_download_opac_abon"] || $expl_num["explnum_visible_opac_abon"])
+        ){
 		require_once($base_path."/includes/templates/common.tpl.php");
 		$short_header = str_replace("!!liens_rss!!","",$short_header);
 		print $short_header;

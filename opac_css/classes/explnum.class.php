@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum.class.php,v 1.16 2018-09-21 08:15:52 dgoron Exp $
+// $Id: explnum.class.php,v 1.17.2.1 2019-10-28 14:24:54 btafforeau Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
@@ -179,7 +179,7 @@ if ( ! defined( 'EXPLNUM_CLASS' ) ) {
 			return $data;
 		}
 
-		function get_is_file() {
+		public function get_is_file() {
 			$path = '';
 			if (! $this->explnum_id) {
 				return '';
@@ -237,11 +237,11 @@ if ( ! defined( 'EXPLNUM_CLASS' ) ) {
 			return $filename;
 		}
 
-		function get_create_date() {
+		public function get_create_date() {
 			return $this->explnum_create_date;
 		}
 		
-		function get_update_date() {
+		public function get_update_date() {
 			return $this->explnum_update_date;
 		}
 		
@@ -288,6 +288,25 @@ if ( ! defined( 'EXPLNUM_CLASS' ) ) {
 			if ($this->explnum_repertoire && $this->explnum_path)
 				return true;
 			return false;
+		}
+		
+		public static function get_p_perso($id_explnum) {
+	        $p_perso= array();
+	        
+            $p_perso_explnums = new parametres_perso("explnum");
+            $ppersos = $p_perso_explnums->show_fields($id_explnum);
+	        // Filtre ceux qui ne sont pas visibles à l'OPAC ou qui n'ont pas de valeur
+	        if (!empty($ppersos['FIELDS']) && is_array($ppersos['FIELDS'])) {
+	            foreach ($ppersos['FIELDS'] as $pperso) {
+	                if ($pperso['OPAC_SHOW'] && $pperso['AFF']) {
+	                    if ($pperso["TYPE"] !== 'html') {
+	                        $pperso['AFF'] = nl2br($pperso["AFF"]);
+	                    }
+	                    $p_perso[$pperso['NAME']] = $pperso;
+	                }
+	            }
+	        }
+	        return $p_perso;
 		}
 		
 	} # fin de la classe explnum

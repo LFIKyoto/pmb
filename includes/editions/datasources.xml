@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
 <!-- sources de données pour les éditions
-$Id: datasources.xml,v 1.6 2018-11-07 13:25:41 dgoron Exp $ -->
+$Id: datasources.xml,v 1.7 2019-03-01 07:55:03 ngantier Exp $ -->
 
 <!-- DTD Rapide pour la formation du fichier
 datasources -> balise racine
@@ -154,7 +154,7 @@ value (dans values) -> Les valeurs de la liste ou le nom du fichier xml de PMB
 			<field id='exemplaires_expl_date_depot' field='exemplaires.expl_date_depot' label='msg:filing_date' type='date' input='calc'/>
 			<field id='exemplaires_expl_date_retour' field='exemplaires.expl_date_retour' label='msg:return_date' type='date' input='calc'/>
 			<field id='exemplaires_expl_note' field='exemplaires.expl_note' label='msg:377' type='text' input='manual'/>
-			<field id='exemplaires_expl_prix' field='exemplaires.expl_prix' label='msg:4050' type='text' input='manual'/>
+			<field id='exemplaires_expl_prix' field='exemplaires.expl_prix' label='msg:expl_price' type='text' input='manual'/>
 			<field id='lenders_lender_libelle' field='lenders.lender_libelle' label='msg:651' type='integer' input='list'>
 				<join field_join='lenders.idlender'>left join lenders on exemplaires.expl_owner = lenders.idlender</join>
 				<values type='query'>
@@ -678,7 +678,7 @@ value (dans values) -> Les valeurs de la liste ou le nom du fichier xml de PMB
 			<field id='notices_expl_expl_cote' field='exemplaires.expl_cote' label='msg:296' type='text' input='manual'>
 				<join>left join exemplaires ON exemplaires.expl_notice=notices.notice_id AND exemplaires.expl_bulletin=0</join>
 			</field>
-			<field id='notices_expl_expl_prix' field='exemplaires.expl_prix' label='msg:4050' type='text' input='manual'>
+			<field id='notices_expl_expl_prix' field='exemplaires.expl_prix' label='msg:expl_price' type='text' input='manual'>
 				<join>left join exemplaires ON exemplaires.expl_notice=notices.notice_id AND exemplaires.expl_bulletin=0</join>
 			</field>
 			<field id='notices_expl_lenders_lender_libelle' field='lenders.lender_libelle' label='msg:651' type='integer' input='list'>

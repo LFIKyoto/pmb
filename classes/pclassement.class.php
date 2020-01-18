@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pclassement.class.php,v 1.5 2018-12-12 15:00:54 ngantier Exp $
+// $Id: pclassement.class.php,v 1.6 2019-02-26 09:07:58 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,6 +16,8 @@ class pclassement {
 	
 	protected $typedoc;
 	
+	protected $locations;
+	
 	public function __construct($id=0) {
 		$this->id = $id+0;
 		$this->fetch_data();
@@ -24,14 +26,40 @@ class pclassement {
 	protected function fetch_data() {
 		$this->name = '';
 		$this->typedoc = '';
+		$this->locations = array();
 		// on récupère les données
-		$query = "select id_pclass,name_pclass,typedoc from pclassement where id_pclass='".$this->id."' ";
+		$query = "select id_pclass,name_pclass,typedoc,locations from pclassement where id_pclass='".$this->id."' ";
 		$result = pmb_mysql_query($query);
 		if ($row = pmb_mysql_fetch_object($result)) {
 			$this->name = $row->name_pclass;
 			$this->typedoc = $row->typedoc;
+			$this->locations = explode(',' , $row->locations);
 		}
 	}
+	
+	protected function get_locations_form() {
+		global $thesaurus_classement_location;
+		global $pclassement_locations_form;
+		
+		$locations_form = '';
+		if($thesaurus_classement_location) {
+			$locations_form = $pclassement_locations_form;
+			
+			$locations ="";
+			$query = "SELECT idlocation, location_libelle FROM docs_location ORDER BY location_libelle";
+			$result = pmb_mysql_query($query);
+			while($obj=pmb_mysql_fetch_object($result)) {
+				$as=array_search($obj->idlocation,$this->locations);
+				$locations .= "
+				<input type='checkbox' name='locations_list[]' value='".$obj->idlocation."' ".($as !== null && $as!==false ? "checked='checked'" : "")." class='checkbox' id='location_".$obj->idlocation."' />
+				<label for='numloc".$obj->idlocation."'>&nbsp;".$obj->location_libelle."</label>
+				<br />";
+			}
+			$locations_form = str_replace('!!locations!!', $locations, $locations_form);
+		}
+		return $locations_form;
+	}
+	
 	public function get_form() {
 		global $msg, $charset;
 		global $pclassement_form;
@@ -55,12 +83,14 @@ class pclassement {
 		$doctype = new marc_list('doctype');
 		$toprint_typdocfield = " <select name='typedoc_list[]' MULTIPLE SIZE=20 >";
 		foreach($doctype->table as $value=>$libelletypdoc) {
-		    if((strpos($this->typedoc, (string) $value)===false)) $tag = "<option value='$value'>";
+			if((strpos($this->typedoc, (string) $value)===false)) $tag = "<option value='$value'>";
 			else $tag = "<option value='$value' SELECTED>";
 			$toprint_typdocfield .= "$tag$libelletypdoc</option>";
 		}
 		$toprint_typdocfield .= "</select>";
 		$form = str_replace('!!type_doc!!', $toprint_typdocfield, $form);
+		
+		$form = str_replace('!!locations!!', $this->get_locations_form(), $form);
 		
 		$form = str_replace('!!update_url!!', "./autorites.php?categ=indexint&sub=pclass_update&id_pclass=".$this->id, $form);
 		$form = str_replace('!!delete_url!!', "./autorites.php?categ=indexint&sub=pclass_delete&id_pclass=".$this->id, $form);
@@ -72,6 +102,7 @@ class pclassement {
 	public function set_properties_from_form() {
 		global $libelle;
 		global $typedoc_list;
+		global $locations_list;
 		
 		$this->name = stripslashes($libelle);
 		$typedoc = '';
@@ -81,6 +112,11 @@ class pclassement {
 			}
 		}
 		$this->typedoc = $typedoc;
+		
+		$this->locations = array();
+		if(is_array($locations_list)) {
+			$this->locations = $locations_list;
+		}
 	}
 	
 	public function save() {
@@ -93,13 +129,15 @@ class pclassement {
 		if($this->id) {
 			$query = "UPDATE pclassement 
 				SET name_pclass='".addslashes($this->name)."', 
-					typedoc='".addslashes($this->typedoc)."'  
+					typedoc='".addslashes($this->typedoc)."',
+					locations='".addslashes(implode(',', $this->locations))."'
 				WHERE id_pclass =".$this->id;
 		}
 		else {
 			$query = "INSERT INTO pclassement 
 				SET name_pclass='".addslashes($this->name)."', 
-					typedoc='".addslashes($this->typedoc)."' ";
+					typedoc='".addslashes($this->typedoc)."',
+					locations='".addslashes(implode(',', $this->locations))."'";
 		}
 		pmb_mysql_query($query);
 	}
@@ -170,17 +208,20 @@ class pclassement {
 		global $msg;
 		global $thesaurus_classement_defaut;
 		global $thesaurus_classement_mode_pmb;
+		global $thesaurus_classement_location, $deflt_docs_location;
 	
 		if(!$selected) {
 			$selected = $thesaurus_classement_defaut;
 		}
 		$selector = '';
-		$query = "select id_pclass,name_pclass,typedoc from pclassement ";
+		$query = "select id_pclass,name_pclass,typedoc, locations from pclassement ";
 		$result = pmb_mysql_query($query);
 		if ($thesaurus_classement_mode_pmb != 0 && pmb_mysql_num_rows($result) > 1) {
 			$selector .= "<select id='".$name."' name='".$name."'>";
 			while ($row = pmb_mysql_fetch_object($result)) {
-				$selector .= "<option value='".$row->id_pclass."' ".($selected == $row->id_pclass ? "selected='selected'" : "").">".$row->name_pclass."</option>";
+				if(!$thesaurus_classement_location || ($selected == $row->id_pclass) || ($thesaurus_classement_location && in_array($deflt_docs_location, explode(',', $row->locations)))) {
+					$selector .= "<option value='".$row->id_pclass."' ".($selected == $row->id_pclass ? "selected='selected'" : "").">".$row->name_pclass."</option>";
+				}
 			}
 			$selector .= "</select>";
 		} else {
@@ -189,6 +230,34 @@ class pclassement {
 			$selector .= "<input type='hidden' id='".$name."' name='".$name."' value='".$selected."' />";
 		}
 		return $selector;
+	}
+	
+	public static function is_visible($id_pclass=1) {
+		global $thesaurus_classement_location, $deflt_docs_location;
+		
+		if($thesaurus_classement_location && $deflt_docs_location) {
+			$pclassement = new pclassement($id_pclass);
+			if(in_array($id_pclass, $pclassement->locations)) {
+				return true;
+			}
+			return false;	
+		}
+		return true;
+	}
+	
+	public static function get_default_id($id_pclass=1) {
+		global $thesaurus_classement_location, $deflt_docs_location;
+	
+		if($thesaurus_classement_location && $deflt_docs_location) {
+			$query = "select id_pclass, locations from pclassement order by id_pclass";
+			$result = pmb_mysql_query($query);
+			while ($row = pmb_mysql_fetch_object($result)) {
+				if(in_array($deflt_docs_location, explode(',', $row->locations))) {
+					return $row->id_pclass;
+				}
+			}
+		}
+		return $id_pclass;
 	}
 }
 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rfid_config.inc.php,v 1.9 2018-05-25 13:35:28 dgoron Exp $
+// $Id: rfid_config.inc.php,v 1.10 2019-05-28 13:35:21 ngantier Exp $
 
 
 function get_rfid_port() {
@@ -11,13 +11,15 @@ function get_rfid_port() {
 	// Donne le port rfid associé à l'ip du client
 	$rfid_port = '';
 	if( $pmb_rfid_ip_port) {
+	    $rfid_port_list = array();
 		$rfid_cmds=explode(";",$pmb_rfid_ip_port);		
 		foreach($rfid_cmds as $rfid_cmd) {			
 			$rfid_cmd_1=explode(",",$rfid_cmd);
-			$rfid_port_list[trim($rfid_cmd_1[0])]=trim($rfid_cmd_1[1]);			
+			if($rfid_cmd_1[0]) {
+			    $rfid_port_list[trim($rfid_cmd_1[0])]=trim($rfid_cmd_1[1]);
+			}
 		}		
-		
-		if($rfid_port_list[$_SERVER['REMOTE_ADDR']]) {
+		if(!empty($rfid_port_list[$_SERVER['REMOTE_ADDR']])) {
 			$rfid_port=$rfid_port_list[$_SERVER['REMOTE_ADDR']];
 		}
 	}

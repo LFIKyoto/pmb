@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: reindex_cms.inc.php,v 1.8 2017-11-22 11:07:34 dgoron Exp $
+// $Id: reindex_cms.inc.php,v 1.9 2019-03-19 07:56:53 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,7 +17,7 @@ $jauge_size = GAUGE_SIZE;
 $jauge_size .= "px";
 
 // initialisation de la borne de départ
-if (empty($start)) {
+if (empty($start) && empty($start_2)) {
 	$start=$start_2=0;
 	//remise a zero de la table au début
 	pmb_mysql_query("TRUNCATE cms_editorial_words_global_index",$dbh);

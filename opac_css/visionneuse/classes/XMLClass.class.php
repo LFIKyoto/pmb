@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: XMLClass.class.php,v 1.4 2017-07-03 09:07:10 dgoron Exp $
+// $Id: XMLClass.class.php,v 1.5 2019-04-30 14:36:31 ngantier Exp $
 
 class XMLClass {
 	public $defaultMimetypeFile;			//xml décrivant les classes à utilisé par défaut
@@ -38,7 +38,7 @@ class XMLClass {
 		else $xmlToParse = $this->file;
 		
 		if (!($fp = @fopen($xmlToParse , "r"))) {
-			die("impossible d'ouvrir le fichier $xmlToParse");
+		    die(htmlentities("impossible d'ouvrir le fichier $xmlToParse", ENT_QUOTES, $charset));
 			}
 		$data = fread ($fp,filesize($xmlToParse));
 

@@ -2,14 +2,15 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_invoice.class.php,v 1.26 2018-08-30 14:09:07 apetithomme Exp $
+// $Id: rent_invoice.class.php,v 1.27 2019-06-12 12:48:05 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+use Spipu\Html2Pdf\Html2Pdf;
 
 require_once($class_path."/rent/rent_account.class.php");
 require_once($class_path."/entites.class.php");
 require_once($class_path."/marc_table.class.php");
-require_once($class_path.'/html2pdf/html2pdf.class.php');
 require_once($include_path.'/templates/rent/rent_invoice.tpl.php');
 require_once($class_path."/actes.class.php");
 require_once($class_path."/lignes_actes.class.php");
@@ -542,9 +543,9 @@ class rent_invoice {
 			$invoice_tpl=utf8_encode($invoice_tpl);
 		}
 		
-		$html2pdf = new HTML2PDF('PL','A4','fr');
+		$html2pdf = new Html2Pdf('PL','A4','fr');
 		$html2pdf->setTestTdInOnePage(false);
-		$html2pdf->WriteHTML($invoice_tpl);
-		$html2pdf->Output(sprintf($msg['acquisition_invoice_pdf_filename'], $this->get_accounts()[0]->get_supplier()->raison_sociale, $this->get_id()).'.pdf','D');
+		$html2pdf->writeHTML($invoice_tpl);
+		$html2pdf->output(sprintf($msg['acquisition_invoice_pdf_filename'], $this->get_accounts()[0]->get_supplier()->raison_sociale, $this->get_id()).'.pdf','D');
 	}
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_common_sort.class.php,v 1.6 2018-09-18 13:02:21 apetithomme Exp $
+// $Id: frbr_entity_common_sort.class.php,v 1.10.2.2 2019-09-19 15:08:51 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,14 +13,19 @@ class frbr_entity_common_sort extends frbr_entity_root{
 	protected $indexation_sub_type;
 	protected $indexation_path;
 	protected $fields;
+	protected $details;
 	
 	public function __construct($id=0){
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 		parent::__construct();
 	}
 	
 	public function set_num_datanode($id){
-		$this->num_datanode = $id+0;
+	    $this->num_datanode = (int) $id;
+	}
+	
+	public function get_num_datanode(){
+	    return $this->num_datanode;
 	}
 	
 	/*
@@ -35,8 +40,8 @@ class frbr_entity_common_sort extends frbr_entity_root{
 			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)){
 				$row = pmb_mysql_fetch_object($result);
-				$this->id = $row->id_datanode_content+0;
-				$this->num_datanode = $row->datanode_content_num_datanode+0;
+				$this->id = (int) $row->id_datanode_content;
+				$this->num_datanode = (int) $row->datanode_content_num_datanode;
 				$this->json_decode($row->datanode_content_data);
 			}	
 		}
@@ -47,15 +52,31 @@ class frbr_entity_common_sort extends frbr_entity_root{
 		global $charset;
 		
 		$human_query = "";
-		$frbr_instance_fields = new frbr_filter_fields($this->indexation_type, $this->indexation_path, $this->indexation_sub_type);
+		$details = $this->managed_datas[$this->manage_id]['details'];
+		$frbr_instance_fields = new frbr_sort_fields($this->indexation_type, $this->indexation_path, $details);
 		foreach ($this->managed_datas[$this->manage_id]['fields'] as $field) {
 			$f=explode("_",$field['NAME']);
-			if($f[2]) {
+			$title = "";			
+			if ($f[0] == "authperso") {
+			    $groups = $frbr_instance_fields->grouped();
+			    foreach($groups as $group) {
+			        foreach ($group as $id => $label) {
+			            if ($id == $field['NAME']) {
+			                $title = $label;
+			                break;
+			            }
+			        }
+			    }
+			}else if($f[2] && isset($frbr_instance_fields::$fields[$frbr_instance_fields->type]["FIELD"][$f[1]]["TABLE"])) {
 				$title = $msg[$frbr_instance_fields::$fields[$frbr_instance_fields->type]["FIELD"][$f[1]]["TABLE"][0]["TABLEFIELD"][$f[2]]["NAME"]];
-			} else {
+			} elseif (isset($msg[$frbr_instance_fields::$fields[$frbr_instance_fields->type]["FIELD"][$f[1]]["NAME"]])) {
 				$title = $msg[$frbr_instance_fields::$fields[$frbr_instance_fields->type]["FIELD"][$f[1]]["NAME"]];
+			} else {
+			    $title = $frbr_instance_fields::$fields[$frbr_instance_fields->type]["FIELD"][$f[1]]["NAME"];
 			}
-			if ($human_query) $human_query .= ", ";
+			if ($human_query) {
+			    $human_query .= ", ";
+			}
 			$human_query .= " <i><strong>".htmlentities($title,ENT_QUOTES,$charset)."</strong> ".htmlentities(get_msg_to_display(frbr_sort_fields::get_types()[$field['TYPE']]),ENT_QUOTES,$charset)." (".htmlentities(get_msg_to_display(frbr_sort_fields::get_directions()[$field['ASC_DESC']]),ENT_QUOTES,$charset).")</i> ";
 		}
 		return $human_query;
@@ -124,9 +145,9 @@ class frbr_entity_common_sort extends frbr_entity_root{
 	}
 
 	public function sort_datas($datas){
-		$sorted_datas = array();
-		if(count($this->parameters->id) && count($datas)){
-			$frbr_sort_fields = new frbr_sort_fields($this->indexation_type, $this->indexation_path);
+	   	$sorted_datas = $datas;
+		if(!empty($this->parameters->id) && is_array($datas) && count($datas)){
+		    $frbr_sort_fields = new frbr_sort_fields($this->indexation_type, $this->indexation_path, $this->indexation_sub_type);
 			$frbr_sort_fields->unformat_fields($this->fields);
 			$sorted_datas = $frbr_sort_fields->sort_datas($datas);
 		}
@@ -156,5 +177,9 @@ class frbr_entity_common_sort extends frbr_entity_root{
 	
 	public function set_fields($fields) {
 		$this->fields = $fields;
+	}
+	
+	public function set_details($details) {
+	    $this->details = $details;
 	}
 }

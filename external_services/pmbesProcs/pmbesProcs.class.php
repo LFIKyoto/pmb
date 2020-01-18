@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesProcs.class.php,v 1.11 2017-10-18 13:38:33 ngantier Exp $
+// $Id: pmbesProcs.class.php,v 1.12 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], '.class.php')) die('no access');
 
@@ -135,7 +135,7 @@ class pmbesProcs extends external_services_api_class {
 				}
 			}
 
-			while(list($cle, $valeur)= each($line)) {
+			foreach ($line as $cle => $valeur) {
 
 				if($valeur) {
 

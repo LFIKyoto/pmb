@@ -106,8 +106,8 @@ function search_other_function_human_query($n) {
 }
 
 function search_other_function_post_values() {
-	global $heyrieux_public;
-	return "<input type=\"hidden\" name=\"heyrieux_public\" value=\"$heyrieux_public\">\n";
+	global $heyrieux_public, $charset;
+	return "<input type=\"hidden\" name=\"heyrieux_public\" value=\"".htmlentities($heyrieux_public, ENT_QUOTES, $charset)."\">\n";
 }
 
 ?>

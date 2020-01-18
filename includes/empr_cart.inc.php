@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr_cart.inc.php,v 1.36 2017-11-21 12:01:00 dgoron Exp $
+// $Id: empr_cart.inc.php,v 1.42 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,6 +17,7 @@ function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = 
 	global $action;
 	global $baselink;
 	global $deflt_catalog_expanded_caddies;
+	global $idcaddie_new;
 	
 	if ($lien_edition) $lien_edition_panier_cst = "<input type=button class=bouton value='$msg[caddie_editer]' onclick=\"document.location='$lien_origine&action=edit_cart&idemprcaddie=!!idemprcaddie!!';\" />";
 		else $lien_edition_panier_cst = "";
@@ -33,7 +34,8 @@ function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = 
 		else print $boutons_select."<input class='bouton' type='button' value=' $msg[new_cart] ' onClick=\"document.location='$lien_origine&action=new_cart&item=$item'\" />";
 		print "</div><br>";
 	}
-	if(sizeof($liste)) {
+	$script_submit = '';
+	if (!empty($liste)) {
 		print pmb_bidi("<div class='row'><a href='javascript:expandAll()'><img src='".get_url_icon('expand_all.gif')."' id='expandall' border='0'></a>
 				<a href='javascript:collapseAll()'><img src='".get_url_icon('collapse_all.gif')."' id='collapseall' border='0'></a>$titre</div>");
 		print confirmation_delete("$lien_origine&action=del_cart&item=$item&idemprcaddie=");
@@ -56,7 +58,11 @@ function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = 
 			print "<script src='./javascript/classementGen.js' type='text/javascript'></script>";
 		}
 		$parity=0;
-		while (list($cle, $valeur) = each($liste)) {
+		foreach ($liste as $cle => $valeur) {
+		    if (!empty($idcaddie_new) && ($idcaddie_new != $valeur['idemprcaddie'])) continue;		    
+		    if (!empty($idcaddie_new) && ($idcaddie_new == $valeur['idemprcaddie'])) {
+		        $script_submit =  "<script>document.getElementById('id_" . $valeur['idemprcaddie'] . "').checked=true;document.forms['print_options'].submit()</script>";
+		    }		    
 			$rqt_autorisation=explode(" ",$valeur['autorisations']);
 			if (array_search ($PMBuserid, $rqt_autorisation)!==FALSE || $PMBuserid==1) {
 				$classementRow = $valeur['empr_caddie_classement'];
@@ -64,8 +70,12 @@ function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = 
 					$classementRow=classementGen::getDefaultLibelle();
 				}
 				$link = "$lien_origine&action=$action_click&idemprcaddie=".$valeur['idemprcaddie']."&item=$item";
-				
-				if (($parity=1-$parity)) $pair_impair = "even"; else $pair_impair = "odd";
+				$parity = 1 - $parity;
+				if ($parity) {
+				    $pair_impair = "even";
+				} else {
+				    $pair_impair = "odd";
+				}
 	
 				$lien_edition_panier = str_replace('!!idemprcaddie!!', $valeur['idemprcaddie'], $lien_edition_panier_cst);
 		        $aff_lien = $lien_edition_panier;
@@ -81,11 +91,14 @@ function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = 
 		            $print_cart[$classementRow]["cart_list"].= pmb_bidi("<tr class='$pair_impair' $tr_javascript ><td class='classement60'>");
 		            if($action != "transfert" && $action != "del_cart" && $action!="save_cart") {
 		            	$print_cart[$classementRow]["cart_list"].= pmb_bidi("<input type='checkbox' id='id_".$valeur['idemprcaddie']."' name='caddie[".$valeur['idemprcaddie']."]' value='".$valeur['idemprcaddie']."'>&nbsp;");
-		            	$print_cart[$classementRow]["cart_list"].= pmb_bidi("<a href='#' onClick='javascript:document.getElementById(\"id_".$valeur['idemprcaddie']."\").checked=true; document.forms[\"print_options\"].submit();' /><strong>".$valeur['name']."</strong>");
+		            	$print_cart[$classementRow]["cart_list"].= pmb_bidi("<a href='#' onClick='javascript:document.getElementById(\"id_".$valeur['idemprcaddie']."\").checked=true; document.forms[\"print_options\"].submit();' />");
 		            } else {		            
-						$print_cart[$classementRow]["cart_list"].= pmb_bidi("<a href='$link' /><strong>".$valeur['name']."</strong>");
-		            }	
+						$print_cart[$classementRow]["cart_list"].= pmb_bidi("<a href='$link' />");
+		            }
+		            $print_cart[$classementRow]["cart_list"].= pmb_bidi("<span ".($valeur['favorite_color'] != '#000000' ? "style='color:".$valeur['favorite_color']."'" : "").">");
+		            $print_cart[$classementRow]["cart_list"].= pmb_bidi("<strong>".$valeur['name']."</strong>");
 	                if ($valeur['comment']) $print_cart[$classementRow]["cart_list"].=  pmb_bidi("<br /><small>(".$valeur['comment'].")</small>");
+	                $print_cart[$classementRow]["cart_list"].= pmb_bidi("</span>");
 	            	$print_cart[$classementRow]["cart_list"].=  pmb_bidi("</td>
 	            		".$myCart->aff_nb_items_reduit()."
 	            		<td class='classement20'>$aff_lien</td>
@@ -95,13 +108,16 @@ function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = 
 		            $print_cart[$classementRow]["cart_list"].= pmb_bidi("<td class='classement60'>");
 		            if($sub!='gestion' && $sub!='action'  && $action!="save_cart") {
 						$print_cart[$classementRow]["cart_list"].= pmb_bidi("<input type='checkbox' id='id_".$valeur['idemprcaddie']."' name='caddie[".$valeur['idemprcaddie']."]' value='".$valeur['idemprcaddie']."'>&nbsp;");		            	
-						$print_cart[$classementRow]["cart_list"].= pmb_bidi("<a href='#' onClick='javascript:document.getElementById(\"id_".$valeur['idemprcaddie']."\").checked=true; document.forms[\"print_options\"].submit();' /><strong>".$valeur['name']."</strong>");
+						$print_cart[$classementRow]["cart_list"].= pmb_bidi("<a href='#' onClick='javascript:document.getElementById(\"id_".$valeur['idemprcaddie']."\").checked=true; document.forms[\"print_options\"].submit();' />");
 		            } else {
-		            	$print_cart[$classementRow]["cart_list"].= pmb_bidi("<a href='$link' /><strong>".$valeur['name']."</strong>");
+		            	$print_cart[$classementRow]["cart_list"].= pmb_bidi("<a href='$link' />");
 		            }
+		            $print_cart[$classementRow]["cart_list"].= pmb_bidi("<span ".($valeur['favorite_color'] != '#000000' ? "style='color:".$valeur['favorite_color']."'" : "").">");
+		            $print_cart[$classementRow]["cart_list"].= pmb_bidi("<strong>".$valeur['name']."</strong>");
 		            if ($valeur['comment']){
 		            	$print_cart[$classementRow]["cart_list"].= pmb_bidi("<br /><small>(".$valeur['comment'].")</small>");
 		            }
+		            $print_cart[$classementRow]["cart_list"].= pmb_bidi("</span>");
 		            $print_cart[$classementRow]["cart_list"].=pmb_bidi("</a></td>");
 		            $print_cart[$classementRow]["cart_list"].=pmb_bidi($myCart->aff_nb_items_reduit());
 		            if(($sub=="gestion" && $quoi=="panier") || ($action=="del_cart")){
@@ -144,6 +160,6 @@ function aff_paniers_empr($item=0, $lien_origine="./circ.php?", $action_click = 
 		print unserialize($post_param_serialized);
 	}			
 	 if($sub!='gestion')  print"</form>";
-	
+	 print $script_submit;
 
 }

@@ -2,18 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frais.class.php,v 1.13 2017-04-20 16:25:28 dgoron Exp $
+// $Id: frais.class.php,v 1.15 2019-08-09 13:06:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class frais{
 	
-	public $id_frais = 0;					//Identifiant du frais 
+    public $id_frais = 0;					//Identifiant du frais annexe
 	public $libelle = '';
 	public $condition_frais = '';
 	public $montant = '000000.00';
 	public $num_cp_compta = 0;
 	public $num_tva_achat = 0;
+	public $add_to_new_order = 0;
 	
 	//Constructeur.	 
 	public function __construct($id_frais= 0) {
@@ -24,7 +25,7 @@ class frais{
 	}
 	
 		
-	// charge le frais à partir de la base.
+	// charge un frais annexe à partir de la base.
 	public function load(){
 		$q = "select * from frais where id_frais = '".$this->id_frais."' ";
 		$r = pmb_mysql_query($q) ;
@@ -34,32 +35,42 @@ class frais{
 		$this->montant = $obj->montant;
 		$this->num_cp_compta = $obj->num_cp_compta;
 		$this->num_tva_achat = $obj->num_tva_achat;
+		$this->add_to_new_order = $obj->add_to_new_order;
 	}
 	
-	// enregistre le frais de tva en base.
+	// enregistre le frais annexe en base.
 	public function save(){
 		if($this->libelle == '') die("Erreur de création frais"); 
-		if($this->id_frais) {
-			
-			$q = "update frais set libelle ='".$this->libelle."', condition_frais = '".$this->condition_frais."', ";
-			$q.= "montant = '".$this->montant."', num_cp_compta = '".$this->num_cp_compta."', ";
-			$q.= "num_tva_achat = '".$this->num_tva_achat."', index_libelle = ' ".strip_empty_words($this->libelle)." ' ";
-			$q.= "where id_frais = '".$this->id_frais."' ";
-			$r = pmb_mysql_query($q);
+		if($this->id_frais) {		
+		    
+			$q = "update frais set 
+                    libelle ='{$this->libelle}', 
+                    condition_frais = '{$this->condition_frais}', 
+                    montant = '{$this->montant}', 
+                    num_cp_compta = '{$this->num_cp_compta}', 
+                    num_tva_achat = '{$this->num_tva_achat}', 
+                    index_libelle = ' ".strip_empty_words($this->libelle)." ',
+                    add_to_new_order = {$this->add_to_new_order}
+                where id_frais = {$this->id_frais} ";
+			pmb_mysql_query($q);
 	
 		} else {
 		
-			$q = "insert into frais set libelle = '".$this->libelle."', condition_frais =  '".$this->condition_frais."', ";
-			$q.= "montant = '".$this->montant."', num_cp_compta = '".$this->num_cp_compta."', num_tva_achat = '".$this->num_tva_achat."', index_libelle = ' ".strip_empty_words($this->libelle)." ' ";
-			$r = pmb_mysql_query($q);
+			$q = "insert into frais set 
+                    libelle = '{$this->libelle}', 
+                    condition_frais =  '{$this->condition_frais}', 
+                    montant = '{$this->montant}',  
+                    num_cp_compta = '{$this->num_cp_compta}',  
+                    num_tva_achat = '{$this->num_tva_achat}', 
+                    index_libelle = ' ".strip_empty_words($this->libelle)." ',
+                    add_to_new_order = {$this->add_to_new_order} ";
+			pmb_mysql_query($q);
 			$this->id_frais = pmb_mysql_insert_id();
-		
 		}
 	
 	}
 
-
-	//supprime un taux de tva de la base
+	//supprime un frais annexe de la base
 	public static function delete($id_frais=0) {
 		$id_frais += 0;
 		if(!$id_frais) return; 	
@@ -92,7 +103,7 @@ class frais{
 		
 	}
 
-	//Vérifie si le frais est utilisé dans les fournisseurs	
+	//Vérifie si le frais annexe est utilisé dans les fournisseurs	
 	public static function hasFournisseurs($id_frais){
 		$id_frais += 0;
 		if (!$id_frais) return 0;
@@ -101,10 +112,28 @@ class frais{
 		return pmb_mysql_result($r, 0, 0);
 	}
 
-	//optimization de la table taux de tva
+	//optimization de la table frais
 	public function optimize() {
 		$opt = pmb_mysql_query('OPTIMIZE TABLE frais');
 		return $opt;
 	}
+	
+	public static function getFraisForNewOrder() {
+	    
+	    $ret = [];
+	    $q = "select 
+                frais.id_frais, frais.libelle as libelle_frais, frais.condition_frais, frais.montant as montant_frais, frais.num_cp_compta as num_cp_compta_frais, 
+                tva_achats.id_tva, tva_achats.libelle as libelle_tva, tva_achats.taux_tva 
+            from frais left join tva_achats on frais.num_tva_achat = tva_achats.id_tva 
+            where frais.add_to_new_order=1 order by frais.libelle";
+	    $r = pmb_mysql_query($q);
+	    if(!pmb_mysql_num_rows($r)) {
+	        return [];
+	    }
+	    while($row=pmb_mysql_fetch_assoc($r)) {
+	        $ret[] = $row;
+	    }
+	    return $ret;
+	}
 }
-?>
+

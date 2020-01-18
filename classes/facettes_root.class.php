@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facettes_root.class.php,v 1.17 2018-10-26 09:12:39 dgoron Exp $
+// $Id: facettes_root.class.php,v 1.19 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -222,7 +222,7 @@ abstract class facettes_root {
 	
 	public static function make_facette($objects_ids){
 		$return = "";
-		$class_name = get_called_class();
+		$class_name = static::class;
 		$facettes = new $class_name($objects_ids);
 		if($facettes->exists_with_results) {
 			$return .= static::get_facette_wrapper();
@@ -234,7 +234,7 @@ abstract class facettes_root {
 	}
 
 	public static function make_ajax_facette($objects_ids){
-		$class_name = get_called_class();
+	    $class_name = static::class;
 		$facettes = new $class_name($objects_ids);
 		return array(
 			'exists_with_results' => (isset($_SESSION["cms_build_activate"]) && $_SESSION["cms_build_activate"] ? true : $facettes->exists_with_results),
@@ -509,7 +509,7 @@ abstract class facettes_root {
 							
 						$cacValue = encoding_normalize::json_encode(array($name,$detailFacette['libelle'],$detailFacette['code_champ'],$detailFacette['code_ss_champ'],$id,$detailFacette['nb_result']));
 						if(static::get_compare_notice_active()){
-							if(!isset($facette_compare->facette_compare[$id]) || !sizeof($facette_compare->facette_compare[$id])){
+							if (!isset($facette_compare->facette_compare[$id]) || empty($facette_compare->facette_compare[$id])) {
 								$onclick='select_compare_facette(\''.htmlentities($cacValue,ENT_QUOTES,$charset).'\')';
 								$img='double_section_arrow_16.png';
 							}else{

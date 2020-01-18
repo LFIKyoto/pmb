@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_record_formation.class.php,v 1.28 2018-07-05 15:32:20 vtouchard Exp $
+// $Id: nomenclature_record_formation.class.php,v 1.31 2019-07-03 15:35:48 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -33,6 +33,7 @@ class nomenclature_record_formation{
 	public $nature=0;
 	public $workshops=array();
 	public $instruments =array();
+	public $voices = array();
 	public $instruments_other =array();
 	public $instruments_data =array();
 	public $id = 0;
@@ -69,6 +70,8 @@ class nomenclature_record_formation{
 		$this->instruments_other =array();// non standard
 		$this->instruments_data=array();
 		$this->nature=0;
+		$this->voices = array();
+		
 		if($this->id){
 			$query = "select * from nomenclature_notices_nomenclatures where id_notice_nomenclature = ".$this->id;
 			$result = pmb_mysql_query($query,$dbh);
@@ -158,7 +161,7 @@ class nomenclature_record_formation{
 		// Ateliers de la nomenclature de la notice
 		$data_workshop=array();
 		foreach($this->workshops as $workshop){
-			$data_workshop[]=$workshop->get_data();
+		    $data_workshop[]=$workshop->get_data($duplicate);
 		}
 		// Instruments non standards de la nomenclature de la notice
 		$data_intruments=array();
@@ -166,12 +169,12 @@ class nomenclature_record_formation{
 			$data=$instrument->get_data();
 			$data['effective']=$this->instruments_data[$key]['effective'];
 			$data['order']=$this->instruments_data[$key]['order'];
-			$data['id_exotic_instrument'] = $key;
-			if(isset($this->instruments_other[$key])){
+			$data['id_exotic_instrument'] = ($duplicate ? 0 : $key);
+			if(!empty($this->instruments_other[$key])){
 				foreach ($this->instruments_other[$key] as $other_key => $instrument_other)	{
 					$data_other=$instrument_other->get_data();
 					$data_other['order']=$this->instruments_data[$key]['other'][$other_key]['order'];
-					$data_other['id_exotic_instrument'] = $other_key;
+					$data_other['id_exotic_instrument'] = ($duplicate ? 0 : $other_key);
 					$data['other'][]=$data_other;
 				}
 			}			
@@ -204,8 +207,8 @@ class nomenclature_record_formation{
 		$this->num_type=$data["num_type"]*1;	
 		$this->label=stripslashes($data["label"]);
 		$this->abbreviation=stripslashes($data["abbr"]);
-		$this->notes=stripslashes($data["notes"]);
-		$this->families_notes=stripslashes_array($data["families_notes"]);
+		$this->notes= !empty($data['notes']) ? stripslashes($data["notes"]) : '';
+		$this->families_notes=!empty($data["families_notes"]) ? stripslashes_array($data["families_notes"]) : array();
 		$this->exotic_instruments_note=(isset($data["exotic_instruments_note"]) ? stripslashes($data["exotic_instruments_note"]) : '');
 		$this->order=$data["order"]*1;	
 
@@ -215,7 +218,7 @@ class nomenclature_record_formation{
 		$this->instruments = array();// non standard
 		$this->instruments_data = array();
 	
-		// instruments non standarts de la nomenclature de la notice
+		// instruments non standards de la nomenclature de la notice
 		if(isset($data["instruments"]) && is_array($data["instruments"])){
 			foreach($data["instruments"] as $form_id => $formation_instrument){
 				$this->instruments_data[$form_id]["id"]=$formation_instrument["id"]*1;
@@ -267,9 +270,7 @@ class nomenclature_record_formation{
 			notice_nomenclature_families_notes='". addslashes(serialize($this->families_notes)) ."',
 			notice_nomenclature_exotic_instruments_note='". addslashes($this->exotic_instruments_note) ."',
 			notice_nomenclature_order='".$this->order."'
-		";	
-		
-		
+		";		
 		if(!$this->id){
 			$req= 'INSERT INTO nomenclature_notices_nomenclatures SET '.$fields;
 			pmb_mysql_query($req, $dbh);
@@ -311,7 +312,6 @@ class nomenclature_record_formation{
 					pmb_mysql_query($req, $dbh);
 				}	
 			}
-			
 		}
  		if($audit_type == 'creation'){
  		    audit::insert_creation(AUDIT_NOTICE,$this->num_record,'Nomenclature: '.$this->label.'('.$this->get_abbreviation().')');
@@ -373,7 +373,7 @@ class nomenclature_record_formation{
 		if(isset($data["instruments"]) && is_array($data["instruments"])){
 			foreach($data["instruments"] as $instruments){
 				$ids_others_exotics_instruments[$instruments["id_exotic_instrument"]] = array();
-				if(is_array($instruments["other"])){
+				if(isset($instruments["other"]) && is_array($instruments["other"])){
 					foreach($instruments["other"] as $others_instruments){
 						$ids_others_exotics_instruments[$instruments["id_exotic_instrument"]][] = $others_instruments["id_exotic_instrument"];  
 					}
@@ -416,6 +416,104 @@ class nomenclature_record_formation{
 		 * TODO: Détruire également les Workshops
 		 */
 		
+	}
+	
+	public function get_instruments_index_data() {
+	    $nomenclature = new nomenclature_nomenclature();
+	    $nomenclature->set_abbreviation($this->abbreviation);
+	    $nomenclature->analyze();
+	    $data=[];
+	    for($i=0 ; $i<count($nomenclature->get_families()) ; $i++){
+	        $family = $nomenclature->get_families()[$i];
+	        for($j=0 ; $j<count($family->get_musicstands()) ; $j++){
+	            $musicstand = $family->get_musicstands()[$j];
+	            for($k=0 ; $k<count($musicstand->get_instruments()); $k++){
+	                
+	                $instrument = $musicstand->get_instruments()[$k];
+	                $instru_infos = $instrument->get_tree_informations();
+	                $instru_infos["formation"] = $this->get_label();
+	                $instru_infos["family"] = $family->get_id();
+	                $instru_infos["musicstand"] = $musicstand->get_name();
+	                $data = $this->add_instrument_to_index_data($data,$instru_infos);
+	                
+	                for($l=0 ; $l<count($instrument->get_others_instruments()); $l++){
+	                    $other_instrument = $instrument->get_others_instruments()[$l];
+	                    $other_instru_infos = $other_instrument->get_tree_informations();
+	                    $other_instru_infos["formation"] = $this->get_label();
+	                    $other_instru_infos["family"] = $family->get_id();
+	                    $other_instru_infos["musicstand"] = $musicstand->get_name();
+	                    $data = $this->add_instrument_to_index_data($data,$other_instru_infos);
+	                }
+	            }
+	        }
+	    }
+	    //exotic
+	    $instruments = $this->get_data()["instruments"];
+	    foreach($instruments as $instru) {	
+	        $instru["musicstand"] = "";
+	        $instru["family"] = "exotic";
+	        $instru["formation"] = $this->get_label();
+	        $data = $this->add_instrument_to_index_data($data,$instru);
+	    }
+	    //workshops
+	    $workshops = $this->get_data()["workshops"];
+	    foreach ($workshops as $workshop) {
+	        foreach($workshop["instruments"] as $instru) {
+	            $instru["musicstand"] = "";
+	            $instru["family"] = "workshop";
+	            $instru["formation"] = $this->get_label();
+	            $data = $this->add_instrument_to_index_data($data,$instru);
+	        }
+	    }
+	    return $data;
+	}
+	
+	public function get_voices_index_data() {
+	    $nomenclature = new nomenclature_nomenclature();
+	    $nomenclature->set_abbreviation($this->abbreviation);
+	    $nomenclature->analyze_voices();
+	    $voices = $nomenclature->get_voices();
+	    $nb = count($voices);
+	    $data=[];
+	    for ($i = 0; $i < $nb; $i++) {
+    	    $query = 'select voice_name, id_voice as id from nomenclature_voices where voice_code = "'.$voices[$i]['code'].'"';
+    	    $result = pmb_mysql_fetch_assoc(pmb_mysql_query($query));
+    	    $voices[$i]['name'] = $result['voice_name'];
+    	    $voices[$i]['formation'] = $this->get_label();
+    	    $voices[$i]['id'] = $result['id'];
+    	    $data = $this->add_voice_to_index_data($data,$voices[$i]);
+	    }
+	    return $data;
+	}
+	
+	private function add_instrument_to_index_data($data,$instrument){
+	    $nb = count($data);
+	    $inserted = false;
+	    for($i=0 ; $i<$nb ; $i++){
+	        if ($data[$i]['id'] === $instrument['id'] && $data[$i]['family'] === $instrument['family']){
+	            $inserted= true;
+	            $data[$i]['effective']+= $instrument['effective'];
+	        }
+	    }
+	    if($inserted === false){
+	        $data[] = $instrument;
+	    }
+	    return $data;
+	}
+
+	private function add_voice_to_index_data($data, $voice) {
+        $nb = count($data);
+        $voice_inserted = false;
+        for($i=0 ; $i<$nb ; $i++){
+            if ($data[$i]['id'] === $voice['id']){
+                $voice_inserted= true;
+                $data[$i]['effective']+= $voice['effective'];
+            }
+        }
+        if ($voice_inserted === false) {
+            $data[] = $voice;
+        }
+        return $data;
 	}
 
 } // end of nomenclature_record_formation

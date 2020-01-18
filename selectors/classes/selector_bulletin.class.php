@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: selector_bulletin.class.php,v 1.3 2017-06-12 14:54:57 jpermanne Exp $
+// $Id: selector_bulletin.class.php,v 1.4 2019-08-29 10:05:39 btafforeau Exp $
   
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,13 +16,13 @@ class selector_bulletin extends selector {
 	}
 	
 	public static function get_params_url() {
-		global $idperio;
+	    global $idperio, $parent, $user_input, $f_user_input;
 	
-		if(!$parent) $parent=0;
-		if(!$user_input) $user_input = $f_user_input;
+		if (empty($parent)) $parent = 0;
+		if (empty($user_input)) $user_input = $f_user_input;
 	
 		$params_url = parent::get_params_url();
-		$params_url .= ($idperio ? "&idperio=".$idperio : "");
+		if (!empty($idperio)) $params_url .= "&idperio=".$idperio;
 		return $params_url;
 	}
 }

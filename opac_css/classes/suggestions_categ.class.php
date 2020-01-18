@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions_categ.class.php,v 1.4 2017-04-26 10:20:06 dgoron Exp $
+// $Id: suggestions_categ.class.php,v 1.5 2019-07-10 06:44:08 btafforeau Exp $
 
 
 class suggestions_categ{
@@ -41,7 +41,7 @@ class suggestions_categ{
 	}
 
 	//Retourne une liste des categories de suggestions (tableau id->libelle)
-	static function getCategList() {
+	public static function getCategList() {
 		$list_categ = array();
 
 		$q = "select * from suggestions_categ order by libelle_categ ";
@@ -53,14 +53,14 @@ class suggestions_categ{
 	}
 
 	//Vérifie si une categorie de suggestions existe			
-	static function exists($id_categ) {
+	public static function exists($id_categ) {
 		$q = "select count(1) from suggestions_categ where id_categ = '".$id_categ."' ";
 		$r = pmb_mysql_query($q); 
 		return pmb_mysql_result($r, 0, 0);
 	}
 		
 	//Vérifie si le libelle d'une categorie de suggestions existe déjà en base
-	static function existsLibelle($libelle, $id_categ=0) {
+	public static function existsLibelle($libelle, $id_categ=0) {
 		$q = "select count(1) from suggestions_categ where libelle_categ = '".$libelle."' ";
 		if($id_categ) $q.= "and id_categ != '".$id_categ."' ";
 		$r = pmb_mysql_query($q);

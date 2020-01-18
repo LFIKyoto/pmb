@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sugg.inc.php,v 1.6 2018-01-04 10:57:16 jpermanne Exp $
+// $Id: sugg.inc.php,v 1.7 2019-05-29 12:12:29 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $aff_alerte, $msg;
 
 $temp_aff = alerte_sugg() ;
 if ($temp_aff) $aff_alerte.= "<ul>".$msg["alerte_suggestion"].$temp_aff."</ul>" ;

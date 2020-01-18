@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_instrument.class.php,v 1.13 2016-06-01 08:19:25 dgoron Exp $
+// $Id: nomenclature_instrument.class.php,v 1.17 2019-07-03 15:35:47 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -82,7 +82,16 @@ class nomenclature_instrument{
 	 * @access protected
 	 */
 	protected $abbreviation;
-	
+	/**
+	 * Id de l'instrument
+	 * @access protected
+	 */
+	protected $id=0;
+	/**
+	 * Numéro de pupitre
+	 * @access protected
+	 */
+	protected $musicstand_num;
 	/**
 	 * Constructeur
 	 *
@@ -98,8 +107,8 @@ class nomenclature_instrument{
 			$this->id = $id*1;
 			$this->fetch_datas();
 		}else{
-			$this->set_code($code);
-			$this->set_name($name);
+            $this->set_code($code);
+    		$this->set_name($name);
 		}
 	} // end of member function __construct
 	
@@ -125,10 +134,10 @@ class nomenclature_instrument{
 		}
 	}
 	
-	public function get_data(){
+	public function get_data($duplicate = false){
 		return(
 			array(
-				"id" => $this->id,
+			    "id" => ($duplicate ? 0 : $this->id),
 				"code" => $this->get_code(),
 				"name" => $this->get_name(),
 				"musicstand_num" => $this->get_musicstand_num(),
@@ -367,6 +376,10 @@ class nomenclature_instrument{
 		return $this->id;
 	}
 	
+	public function set_id($id){
+	    $this->id = intval($id);
+	}
+	
 	/**
 	 * Setter
 	 *
@@ -420,7 +433,8 @@ class nomenclature_instrument{
 		$tree = array(
 				'id' => $this->get_id(),
 				'code' => $this->get_code(),
-				'name' => $this->get_name()
+				'name' => $this->get_name(),
+		        'effective' => $this->get_effective() 
 		);
 		return $tree;
 	}
@@ -488,4 +502,15 @@ class nomenclature_instrument{
 		return $instrument_name;
 	}
 	
+	public static function get_instrument_name_from_id($id) {
+		$instrument_name = '';
+		$id = intval($id);
+		$query = "select instrument_name from nomenclature_instruments where id_instrument=".$id;
+		$result = pmb_mysql_query($query);
+		if (pmb_mysql_num_rows($result)) {
+			$row = pmb_mysql_fetch_object($result);
+			$instrument_name = $row->instrument_name;
+		}
+		return $instrument_name;
+	} 
 } // end of nomenclature_instrument

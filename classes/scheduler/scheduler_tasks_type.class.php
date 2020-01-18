@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scheduler_tasks_type.class.php,v 1.3 2018-07-17 09:59:14 dgoron Exp $
+// $Id: scheduler_tasks_type.class.php,v 1.4 2019-08-01 14:47:46 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -264,10 +264,10 @@ class scheduler_tasks_type {
 	
 	//affiche la planification de tâches par type
 	public function get_display_list() {
-		global $charset;
+	    global $charset,$msg;
 	
 		$display = '';
-		$query = "SELECT id_planificateur, libelle_tache, desc_tache FROM planificateur WHERE num_type_tache = '".$this->id."'";
+		$query = "SELECT id_planificateur, libelle_tache, desc_tache,statut,calc_next_heure_deb,calc_next_date_deb FROM planificateur WHERE num_type_tache = '".$this->id."'";
 		$res = pmb_mysql_query($query);
 		$parity_source= $this->id % 2;
 		if ($res) {
@@ -277,7 +277,14 @@ class scheduler_tasks_type {
 				$display .= "<tr style='cursor: pointer' class='$pair_impair_source' $tr_javascript_source>
 				<td>".htmlentities($row->libelle_tache, ENT_QUOTES, $charset)."</td>
 						<td>".htmlentities($row->desc_tache, ENT_QUOTES, $charset)."</td>
-						<td></td><td></td></tr>";
+						<td>".($row->statut == 1 ? $msg['planificateur_task_statut_active'] : $msg['planificateur_task_statut_inactive'])."</td>
+                        <td>!!next_exec!!</td>
+                </tr>";
+				$next_exec = "";
+				if($row->statut == 1){
+				    $next_exec = htmlentities(formatdate($row->calc_next_date_deb),ENT_QUOTES,$charset)." ".htmlentities($row->calc_next_heure_deb,ENT_QUOTES,$charset);
+				}
+				$display = str_replace('!!next_exec!!',$next_exec,$display);
 			}
 		}
 		return $display;

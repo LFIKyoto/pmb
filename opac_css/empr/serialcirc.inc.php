@@ -2,16 +2,20 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc.inc.php,v 1.8 2018-11-20 12:36:40 dgoron Exp $
+// $Id: serialcirc.inc.php,v 1.11 2019-06-18 12:22:49 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 if(!isset($actions_form_submit)) $actions_form_submit = '';
 if(!isset($action)) $action = '';
+if(!isset($expl_to_hold)) $expl_to_hold = '';
+if(!isset($expl_to_point)) $expl_to_point = '';
 
 require_once($class_path."/serialcirc_empr.class.php");
 require_once($class_path."/serialcirc_diff.class.php");
 require_once($include_path."/serialcirc.inc.php");
+
+if(!isset($expl_id)) $expl_id = '';
 
 $serialcirc_empr = new serialcirc_empr();
 switch ($lvl){
@@ -53,7 +57,7 @@ switch ($lvl){
 	case "copy" :
 		print "<h3><span>".htmlentities($msg["serialcirc_ask_copy"],ENT_QUOTES,$charset)."</span></h3>";
 		if($action == "ask_copy"){
-			if($bulletin_id != 0){
+			if(!empty($bulletin_id)){
 				$serialcirc_empr->ask_copy($bulletin_id,$serialcirc_ask_copy_analysis,$serialcirc_ask_comment);
 			}else if($expl_cb){			
 				print $serialcirc_empr->show_ask_form($expl_cb);

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: quotas_list.inc.php,v 1.19 2017-10-18 13:08:53 ngantier Exp $
+// $Id: quotas_list.inc.php,v 1.19.6.1 2019-10-16 06:58:58 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -11,7 +11,7 @@ if(!isset($first)) $first = '';
 if(!isset($min_value)) $min_value = '';
 if(!isset($max_value)) $max_value = '';
 if(!isset($max_quota)) $max_quota = '';
-if(!isset($force_lend)) $force_lend = '';
+if(!isset($force_lend)) $force_lend = 0;
 
 //Gestion des éléments du type de quota
 require_once($include_path."/templates/quotas.tpl.php");

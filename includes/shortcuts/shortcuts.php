@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: shortcuts.php,v 1.12 2017-09-07 13:48:47 dgoron Exp $
+// $Id: shortcuts.php,v 1.13 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "shortcuts.php")) die("no access");
 
@@ -45,10 +45,11 @@ function touche(e) {
 		default:	
 			switch(key) {
 ";
-if(isset($raclavier) && $raclavier)
-while(list($cle, $key) = each($raclavier)) {
-	print "				case ".ord(pmb_strtolower($key[0]))." : document.location='$key[1]'; break;\n";
-	}
+if(isset($raclavier) && $raclavier) {
+    foreach ($raclavier as $cle => $key) {
+    	print "				case ".ord(pmb_strtolower($key[0]))." : document.location='$key[1]'; break;\n";
+    }
+}
 print "				default : clean_raccourci(); break;\n";
 
 print "			}

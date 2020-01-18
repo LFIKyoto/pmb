@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: parametres_perso.tpl.php,v 1.26 2018-10-31 09:28:17 dgoron Exp $
+// $Id: parametres_perso.tpl.php,v 1.28 2019-05-27 12:33:51 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 // templates pour les forms paramètres personalisés emprunteurs
 //	----------------------------------
+global $msg, $form_list, $current_module, $form_edit, $base_path;
 
 $form_list="<div class=''>
 	<div>!!liste_champs_perso!!</div>

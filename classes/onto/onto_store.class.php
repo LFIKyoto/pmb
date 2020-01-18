@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_store.class.php,v 1.14 2018-12-20 11:00:19 mbertin Exp $
+// $Id: onto_store.class.php,v 1.15 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -108,8 +108,8 @@ abstract class onto_store {
 	 * @return int
 	 * @access public
 	 */
-	public function num_rows(){
-		return sizeof($this->result);
+	public function num_rows() {
+		return count($this->result);
 	}
 
 	/**

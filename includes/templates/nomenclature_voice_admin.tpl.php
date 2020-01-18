@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_voice_admin.tpl.php,v 1.7 2017-11-07 15:34:41 ngantier Exp $
+// $Id: nomenclature_voice_admin.tpl.php,v 1.8 2019-05-27 12:26:22 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $nomenclature_voice_list_tpl, $msg, $charset, $nomenclature_voice_list_line_tpl, $nomenclature_voice_form_tpl, $current_module;
 
 $nomenclature_voice_list_tpl="	
 <script type='text/javascript' src='./javascript/sorttable.js'></script>			

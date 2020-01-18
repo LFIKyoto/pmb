@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions_genes.tpl.php,v 1.6 2009-11-30 10:39:25 kantin Exp $
+// $Id: suggestions_genes.tpl.php,v 1.7 2019-05-27 16:19:33 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $sug_list_form, $current_module, $msg, $charset, $acquisition_sugg_categ;
 
 //	------------------------------------------------------------------------------
 // $sug_list_form : template de liste pour les suggestions

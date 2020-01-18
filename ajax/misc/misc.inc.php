@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: misc.inc.php,v 1.10 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: misc.inc.php,v 1.11 2019-05-29 12:03:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $fname;
 
 $func_format=array(
 "verifdate"=>"ajax_verif_date",

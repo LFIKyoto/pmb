@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entites.class.php,v 1.61 2018-12-20 11:00:19 mbertin Exp $
+// $Id: entites.class.php,v 1.62.2.3 2019-11-29 13:48:06 dbellamy Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
+require_once ($class_path.'/budgets.class.php');
 require_once ($class_path.'/coordonnees.class.php');
 require_once ($class_path.'/exercices.class.php');
 require_once ($class_path.'/rent/rent_accounts.class.php');
@@ -16,11 +17,14 @@ if($pmb_indexation_lang) {
 	require_once ($include_path.'/marc_tables/'.$pmb_indexation_lang.'/empty_words');
 }
 
+if(!defined('TYP_ENT_FOU')) define('TYP_ENT_FOU', 0); //Type entité 0=fournisseur
+if(!defined('TYP_ENT_ETAB')) define('TYP_ENT_ETAB', 1); //Type entité 1=bibliothèque
+    
 class entites{
 	
 	
 	public $id_entite = 0;				//Identifiant de l'entité	
-	public $type_entite = 0;			//Type de l'entité (0=fournisseur, 1=bibliothèque)
+	public $type_entite = TYP_ENT_FOU;	//Type entité (0=fournisseur, 1=bibliothèque)
 	public $num_bibli = 0;				//Identifiant de la bibliothèque si Fournisseur, 0 sinon.
 	public $raison_sociale = '';
 	public $commentaires = '';
@@ -37,9 +41,13 @@ class entites{
 	public $num_paiement = 0;			//Identifiant du mode de paiement
 	public $index_entite = '';			//Champ de recherche fulltext 
 	 
+	protected static $etablissements = NULL;
+	protected static $fournisseurs = NULL;
+	 
 	//Constructeur.	 
 	public function __construct($id_entite= 0) {
-		$this->id_entite = $id_entite+0;
+	    
+		$this->id_entite = intval($id_entite);
 		if ($this->id_entite) {
 			$this->load();
 		}
@@ -116,7 +124,7 @@ class entites{
 		$q = "delete from offres_remises where num_fournisseur = '".$id_entite."' ";
 		pmb_mysql_query($q);
 		
-		$q = "update abts_abts set fournisseur='0' where num_fournisseur = '".$id_entite."' ";
+		$q = "update abts_abts set fournisseur='0' where fournisseur = '".$id_entite."' ";
 		pmb_mysql_query($q);
 	}
 
@@ -127,6 +135,50 @@ class entites{
 		return pmb_mysql_result($r, 0, 0);
 	}
 
+	//vérifie l'existence d'un fournisseur en base a partir de son identifiant
+	public static function is_a_fournisseur_id($id_entite= 0) {
+	    
+	    $id_entite = intval($id_entite);
+	    if (!$id_entite) {
+	        return 0;
+	    }
+	    $q = "SELECT count(1) from entites where id_entite = '".$id_entite."' and type_entite=".TYP_ENT_FOU;
+	    $r = pmb_mysql_query($q);
+	    return pmb_mysql_result($r, 0, 0);
+	    
+	}
+	
+	
+	//vérifie l'existence d'un etablissement en base a partir de son identifiant
+	public static function is_a_etablissement_id($id_entite= 0) {
+	    
+	    $id_entite = intval($id_entite);
+	    if (!$id_entite) {
+	        return 0;
+	    }
+	    $q = "SELECT count(1) from entites where id_entite = '".$id_entite."' and type_entite=".TYP_ENT_ETAB;
+	    $r = pmb_mysql_query($q);
+	    return pmb_mysql_result($r, 0, 0);
+	    
+	}
+	
+	
+	//vérifie l'existence d'un fournisseur en base a partir de sa raison sociale et de l'etablissement de rattachement
+	public static function is_a_fournisseur_raison_sociale($raison_sociale = '', $id_etablissement = 0 , $id_fournisseur = 0) {
+	    
+	    $id_etablissement = intval($id_etablissement);
+	    $id_fournisseur = intval($id_fournisseur);
+	    
+	    $q = "SELECT count(1) from entites where raison_sociale = '".addslashes($raison_sociale)."' and num_bibli = '".$id_etablissement."' and type_entite=".TYP_ENT_FOU;
+	    if($id_fournisseur){
+	        $q.=" and id_entite != '".$id_fournisseur."'";
+	    }
+	    $r = pmb_mysql_query($q);
+	    return pmb_mysql_result($r, 0, 0);
+	    
+	}
+	
+	
 	//vérifie l'existence d'une entité en base à partir de sa raison sociale
 	public static function exists_rs($raison_sociale= 0, $numero_bibli=0, $id_entite = 0) {
 		//Contrainte à appliquer :
@@ -160,12 +212,162 @@ class entites{
 		return $q;
 	}
 	
-	//Retourne la liste des fournisseurs dans un ResultSet
+	//Retourne un tableau id_entite=>['id_entite'=>id_entite , 'raison sociale' => raison_sociale]
+	public static function get_etablissements_by_user($id_user = 0, $renew = FALSE) {
+	    
+	    $id_user = intval($id_user);
+	    
+	    static::get_all_etablissements($renew);
+	    
+	    if( $id_user && !isset(static::$etablissements['by_user'][$id_user]) ) {
+	        return [];
+	    }
+	    if( $id_user && isset(static::$etablissements['by_user'][$id_user]) ) {
+	        return static::$etablissements['by_user'][$id_user];
+	    }
+	    return static::$etablissements['by_id'];
+	}
+	
+	
+	protected static function get_all_etablissements($renew=FALSE) {
+	    
+	    if(is_null(static::$etablissements) || $renew) {
+	        static::$etablissements = ['by_id'=>[], 'by_user'=>[]];
+	        $q = "select id_entite, raison_sociale, autorisations from entites where type_entite = ".TYP_ENT_ETAB." order by raison_sociale";
+	        $r = pmb_mysql_query($q);
+	        if(pmb_mysql_num_rows($r)) {
+	            while($row = pmb_mysql_fetch_assoc($r)){
+	                $autorisations = explode(' ', trim($row['autorisations']));
+	                static::$etablissements['by_id'][$row['id_entite']] = [
+	                    'id_entite' => $row['id_entite'],
+	                    'raison_sociale' => $row['raison_sociale'],
+	                ];
+	                if(count($autorisations)) {
+	                    foreach($autorisations as $id_user) {
+	                        static::$etablissements['by_user'][$id_user][$row['id_entite']] = [
+	                            'id_entite' => $row['id_entite'],
+	                            'raison_sociale' => $row['raison_sociale'],
+	                        ];
+	                    }
+	                }
+	            }
+	        }
+	    }
+	    return static::$etablissements;
+	}
+	
+	
+	//Retourne un selecteur html avec la liste des etablissements
+	public static function get_hmtl_select_etablissements($id_user=0, $selected=0, $sel_all=FALSE, $sel_attr=array()) {
+	    
+	    global $msg,$charset;
+	    
+	    $id_user = intval($id_user);
+	    $selected = intval($selected);
+	    
+	    $etablissements = static::get_etablissements_by_user($id_user);
+	    if(!count($etablissements)) {
+	        return '';
+	    }
+	    $sel="<select ";
+	    if (is_array($sel_attr) && count($sel_attr)) {
+	        foreach($sel_attr as $attr=>$val) {
+	            $sel.="$attr='".$val."' ";
+	        }
+	    }
+	    $sel.=">";
+	    if($sel_all) {
+	        $etablissements = [0=>['id_entite'=>0, 'raison_sociale'=>$msg['acquisition_coord_all']]] + $etablissements;
+	    }
+	    foreach($etablissements as $k=>$etablissement) {
+	        $sel.= "<option value='".$k."' ";
+	        if($k==$selected) {
+	            $sel.=" selected='selected' ";
+	        }
+	        $sel.= ">".htmlentities($etablissement['raison_sociale'], ENT_QUOTES, $charset)."</option>";
+	    }
+	    $sel.= "</select>";
+	    return $sel;
+	}
+	
+	//Retourne une checkbox "Tous les etablissements"
+	public static function get_html_checkbox_all_etablissements($checked=0, $chk_attr=array()) {
+	    
+	    global $msg, $charset;
+	    
+	    $checked = intval($checked);
+	    $chk = "<input type='checkbox' ";
+	    if (is_array($chk_attr) && count($chk_attr)) {
+	        foreach($chk_attr as $attr=>$val) {
+	            $chk.= "$attr='".$val."' ";
+	        }
+	    }
+	    if($checked) {
+	        $chk.= "checked='checked' ";
+	    }
+	    $chk.= ">";
+	    $chk.= "<label ";
+	    if($chk_attr['id']) {
+	        $chk.= "for='".$chk_attr['id']."' ";
+	    }
+	    $chk.= ">".htmlentities($msg['acquisition_affect_fou_to_all_etab'], ENT_QUOTES, $charset)."</label>";
+	    return $chk;
+	}
+	
+	
+	//Retourne un tableau id_entite=>['id_entite'=>id_entite , 'raison sociale' => raison_sociale]
+	public static function get_fournisseurs_by_etablissement($etablissement = 0, $renew = FALSE) {
+	    
+	    $etablissement = intval($etablissement);
+	    static::get_all_fournisseurs($renew);
+	    if( $etablissement && !isset(static::$fournisseurs['by_etablissement'][$etablissement]) ) {
+	        return [];
+	    }
+	    if( $etablissement && isset(static::$fournisseurs['by_etablissement'][$etablissement]) ) {
+	        if(isset(static::$fournisseurs['by_etablissement'][0])) {
+	            return array_merge (static::$fournisseurs['by_etablissement'][0], static::$fournisseurs['by_etablissement'][$etablissement]);
+	        }
+	        return static::$fournisseurs['by_etablissement'][$etablissement];
+	    }
+	    return static::$fournisseurs['by_id'];
+	}
+	
+	
+	protected static function get_all_fournisseurs($renew=FALSE) {
+	    
+	    if(is_null(static::$fournisseurs) || $renew) {
+	        static::$fournisseurs = ['by_id'=>[], 'by_etablissement'=>[]];
+	        $q = "select id_entite, num_bibli, raison_sociale from entites where type_entite = ".TYP_ENT_FOU;
+	        $r = pmb_mysql_query($q);
+	        if(pmb_mysql_num_rows($r)) {
+	            while($row = pmb_mysql_fetch_assoc($r)){
+	                static::$fournisseurs['by_id'][$row['id_entite']] = [
+	                    'id_entite' => $row['id_entite'],
+	                    'num_bibli' => $row['num_bibli'],
+	                    'raison_sociale' => $row['raison_sociale'],
+	                ];
+	                static::$fournisseurs['by_etablissement'][$row['num_bibli']][$row['id_entite']] = [
+	                    'id_entite' => $row['id_entite'],
+	                    'num_bibli' => $row['num_bibli'],
+	                    'raison_sociale' => $row['raison_sociale'],
+	                ];
+	            }
+	        }
+	    }
+	    return static::$fournisseurs;
+	}
+	
+	
+	//Retourne la liste des fournisseurs d'un etablissement dans un ResultSet
 	public static function list_fournisseurs($id_bibli=0, $debut=0, $nb_per_page=0, $aq=0) {
-		$restrict = "type_entite = '0' ";
+	    
+	    $id_bibli = intval($id_bibli);
+	    
+	    $restrict = 'num_bibli=0 ';
 		if ($id_bibli) {
-			$restrict.= "and num_bibli = '".$id_bibli."' ";
+	        $restrict = "num_bibli in (0, ".$id_bibli.") ";
 		}
+	    $restrict = "type_entite = ".TYP_ENT_FOU." and {$restrict} ";
 		if(!$aq) {
 			$q = "select * from entites where ".$restrict;
 			$q.= "order by raison_sociale ";
@@ -188,16 +390,19 @@ class entites{
 		return $r;				
 	}
 
-	//Compte le nb de fournisseurs pour une bibliothèque
+	
+	//Compte le nb de fournisseurs pour un etablissement
 	public static function getNbFournisseurs($id_bibli=0, $aq=0) {
-		$restrict = '';
+	    
+	    $id_bibli = intval($id_bibli);
+	    
+	    $restrict = "num_bibli=0 ";
 		if ($id_bibli) {
-			$restrict.= "num_bibli = '".$id_bibli."' ";
+	        $restrict = "num_bibli in (0, {$id_bibli}) ";
 		}
 		
 		if (!$aq) {
-			$q = "select count(1) from entites where type_entite = '0' ";
-			if ($restrict) $q.="and ".$restrict;
+			$q = "select count(1) from entites where type_entite = ".TYP_ENT_FOU." and {$restrict} ";
 		} else {
 			$q = $aq->get_query_count("entites","raison_sociale","index_entite", "id_entite", $restrict);
 		}
@@ -229,6 +434,63 @@ class entites{
 		return $r;
 	}
 
+	
+	protected static function get_array_types_produits_sans_remise($id_fournisseur = 0) {
+	    
+	    $id_fournisseur = intval($id_fournisseur);
+	    if (!$id_fournisseur) {
+	        return [];
+	    }
+	    $q = "select id_produit as id, libelle from types_produits where id_produit not in (select num_produit from offres_remises where num_fournisseur={$id_fournisseur}) order by libelle";
+	    $r = pmb_mysql_query($q);
+	    $n = pmb_mysql_num_rows($r);
+	    if(!$n) {
+	        return [];
+	    }
+	    $t = [];
+	    while($row = pmb_mysql_fetch_assoc($r)) {
+	        $t[] = ['id'=>$row['id'], 'libelle'=>$row['libelle']];
+	    }
+	    return $t;
+	    
+	}
+	
+	
+	public static function get_html_select_types_produits_sans_remise($id_fournisseur = 0, $sel_attr = array()) {
+	    
+	    global $charset;
+	    
+	    $id_fournisseur = intval($id_fournisseur);
+	    if(!is_array($sel_attr)) {
+	        $sel_attr = [];
+	    }
+	    $types_produits = static::get_array_types_produits_sans_remise($id_fournisseur);
+	    
+	    if(!count($types_produits)) {
+	        return '';
+	    }
+	    
+	    $sel="<select ";
+	    if (is_array($sel_attr) && count($sel_attr)) {
+	        foreach($sel_attr as $attr=>$val) {
+	            $sel.="$attr='".$val."' ";
+	        }
+	    }
+	    $sel.=">";
+	    foreach($types_produits as $k=>$type_produit) {
+	        $sel.= "<option value='".$type_produit['id']."' ";
+	        if($k==0) {
+	            $sel.=" selected='selected' ";
+	        }
+	        $sel.= ">".htmlentities($type_produit['libelle'], ENT_QUOTES, $charset)."</option>";
+	    }
+	    $sel.= "</select>";
+	    return $sel;
+	    
+	    
+	}
+	
+	
 	//Retourne la liste des actes d'un type pour une bibliothèque dans un ResultSet
 	public static function listActes($id_bibli, $type_acte, $statut='-1', $debut=0, $nb_per_page=0, $aq=0, $user_input='', $tri='', $id_exercice=0) {
 		if ($statut == '-1') {		
@@ -457,6 +719,27 @@ class entites{
 		return $r;
 	}
 
+
+	//Retourne la liste des ids des budgets actifs pour une entité, triés par libelle alpha
+	public static function getIdsBudgetsActifsAsArray($id_entite=0) {
+	    
+	    $id_entite = intval($id_entite);
+	    $ret = array();
+	    if(!$id_entite) {
+	        return $ret;
+	    }
+	    $q = "select id_budget from budgets where num_entite = '".$id_entite."' and statut = '1' order by libelle";
+	    $r = pmb_mysql_query($q);
+	    if(pmb_mysql_num_rows($r)) {
+	        while($row = pmb_mysql_fetch_array($r, MYSQLI_NUM)) {
+	            $ret[] = $row[0];
+	        }
+	    }
+	    
+	    return $ret;
+	}
+	
+	
 	//Retourne un Resultset contenant les rubriques finales des budgets d'une entite en fonction des droits de l'utilisateur courant si per_user=TRUE 
 	//modification de la recherche : on retourne les rubriques finales, mais on cherche dans toutes les rubriques
 	public static function listRubriquesFinales($id_entite=0, $id_exer, $per_user=FALSE, $debut=0, $nb_per_page=0, $elt_query=''){
@@ -654,6 +937,19 @@ class entites{
 		return;
 	}
 	
+	//recuperation de l'etablissement par défaut
+	public static function getDefaultBibliId() {
+	    $id_bibli = static::getSessionBibliId();
+	    if (!$id_bibli) {
+	        $tab_bibli = static::get_entities();
+	        if(count($tab_bibli)) {
+	           $id_bibli = $tab_bibli[0]['id'];
+	        }
+	    }
+	    return $id_bibli;
+	}
+	
+	
 	//Retourne un selecteur html avec la liste des bibliotheques
 	public static function getBibliHtmlSelect($user=FALSE, $selected=0, $sel_all=FALSE, $sel_attr=array()) {
 		global $msg,$charset;
@@ -799,5 +1095,111 @@ class entites{
 		$display .=" </table></form>";
 		return $display;
 	}
+	
+	
+	// Acquisition - Retourne un formulaire liste des fournisseurs pour un etablissement
+	static public function get_form_list_fournisseurs($id_etablissement = 0, $function_name = '', $class_name = '') {
+	    
+	    global $msg, $charset;
+	    global $categ, $sub;
+	    global $current_module;
+	    
+	    $id_etablissement = intval($id_etablissement);
+	    
+	    if(!$class_name || !class_exists($class_name)) {
+	        $class_name = '';
+	    }
+	    if($class_name && !method_exists($class_name, $function_name)) {
+	        $class_name = '';
+	        $function_name = '';
+	    }
+	    if(!$class_name && function_exists($function_name)) {
+	        $function_name = '';
+	    }
+	    
+	    if(!SESSuserid) {
+	        return '';
+	    }
+
+	    if(!$id_etablissement) {
+	        $etablissements = static::get_etablissements_by_user(SESSuserid);
+	    }
+	    
+	    //pas d'etablissements
+	    if(!(count($etablissements))) {
+	        return '';
+	    }
+	    
+	    //1 seul etablissement
+	    if (count($etablissements) == 1) {
+	        reset ($etablissements);
+	        $k = current($etablissements);
+	        static::setSessionBibliId($k);
+	        if($class_name) {
+	            $instance = new $class_name();
+	            return $instance->$function_name($k);
+	        } else if($function_name) {
+	            $function_name($k);
+	            return;
+	        }
+	        return '';
+	    }
+	    
+	    //plusieurs etablissements et 1 etablissement en session
+	    $def_etablissement = static::getSessionBibliId();
+	    if($def_etablissement && isset($etablissements[$def_etablissement])) {
+	        $k = $def_etablissement;
+	        if($class_name) {
+	            $instance = new $class_name();
+	            return $instance->$function_name($k);
+	        } else if($function_name) {
+	            $function_name($k);
+	            return;
+	        }
+	    }
+	    //sinon on retourne une liste des etablissements
+	    return static::get_form_list_etablissements(SESSuserid);
+	}
+	
+	
+	// Acquisition - Retourne un formulaire liste des etablissements
+	static protected function get_form_list_etablissements($id_user = 0) {
+	    
+	    global $msg, $charset;
+	    global $categ, $sub;
+	    global $current_module;
+	    
+	    $id_user = intval($id_user);
+	    if(!$id_user) {
+	        return '';
+	    }
+	    
+	    $etablissements = static::get_etablissements_by_user($id_user);
+	    
+	    if(!count($etablissements)) {
+	        return '';
+	    }
+	    
+	    $display = "<form class='form-".$current_module."' id='list_biblio_form' name='list_biblio_form' method='post' action=\"\" >";
+	    $display .= "<h3>".htmlentities($msg['acquisition_menu_chx_ent'], ENT_QUOTES, $charset)."</h3><div class='row'></div>";
+	    $display .= "<table>";
+	    
+	    $parity=1;
+	    foreach($etablissements as $k=>$etablissement) {
+	        if ($parity % 2) {
+	            $pair_impair = "even";
+	        } else {
+	            $pair_impair = "odd";
+	        }
+	        $parity += 1;
+	        $tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='".$pair_impair."'\" onmousedown=\"document.forms['list_biblio_form'].setAttribute('action','./acquisition.php?categ=".$categ."&sub=".$sub."&action=list&id_bibli=".$k."');document.forms['list_biblio_form'].submit(); \" ";
+	        $display .= "<tr class='".$pair_impair."' ".$tr_javascript." style='cursor: pointer'><td><i>".htmlentities($etablissement['raison_sociale'], ENT_QUOTES, $charset)."</i></td></tr>";
+	    }
+	    $display .=" </table></form>";
+	    return $display;
+	}
+	
+	
 }
-?>
+
+

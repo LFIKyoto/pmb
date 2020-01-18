@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: babelio.class.php,v 1.14 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: babelio.class.php,v 1.16 2019-06-19 10:01:04 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-global $class_path,$base_path, $include_path;
+global $class_path;
 require_once($class_path."/connecteurs.class.php");
 require_once($class_path."/curl.class.php");
 
@@ -26,7 +26,7 @@ class babelio extends connector {
 	public $error;					//Y-a-t-il eu une erreur	
 	public $error_message;			//Si oui, message correspondant
 	
-    public function babelio($connector_path="") {
+	public function __construct($connector_path="") {
     	parent::__construct($connector_path);
     }
     
@@ -106,6 +106,7 @@ class babelio extends connector {
 	}
 	
 	public function getTypeOfEnrichment($notice_id,$source_id){
+	    $type = array();
 		$type['type'] = array(
 			"citation",
 			"critique"
@@ -143,7 +144,6 @@ class babelio extends connector {
 	}
 	
 	public function getInfos($type,$isbn){
-		global $charset;
 		if(!$isbn) return "";
 		$return = "";
 		$t = time();
@@ -165,6 +165,7 @@ class babelio extends connector {
 	}
 	
 	public function getEnrichmentPagin($sommaire){
+	    global $msg;
 		$current = $sommaire['PAGE'][0]['value'];
 		$nb_page = ceil($sommaire['NB_RESULTATS'][0]['value']/$sommaire['RESULTATS_PAR_PAGE'][0]['value']);
 		$ret = "";
@@ -185,7 +186,7 @@ class babelio extends connector {
 			<div class='row'>
 				<div class='row'> ".
 				$this->msg['babelio_enrichment_publish_date']." ".$date;
-			if($this->typeOfEnrichment == 'critique') $result.= "&nbsp;".$this->stars($url['NOTE'][0]['value']) ;
+			if($this->typeOfEnrichment == 'critique') $result.= "&nbsp;".$this->stars(isset($url['NOTE'][0]['value']) ? $url['NOTE'][0]['value'] : 0) ;
 			$result.="
 				</div>
 				<blockquote>";

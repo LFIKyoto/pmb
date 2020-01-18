@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entities_authorities_controller.class.php,v 1.2 2018-10-11 08:08:20 vtouchard Exp $
+// $Id: entities_authorities_controller.class.php,v 1.3 2019-06-11 08:53:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -63,7 +63,7 @@ class entities_authorities_controller extends entities_controller {
 		}
 		$this->parity += 1;
 		
-		if(get_called_class() == 'entities_categories_controller') {
+		if(static::class == 'entities_categories_controller') {
 			$notice_count = $this->get_query_notice_count();
 		} else {
 			$notice_count_sql = $this->get_query_notice_count();

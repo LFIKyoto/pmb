@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_common_datasource.xml,v 1.9 2018-06-06 14:23:50 arenou Exp $ -->
+$Id: cms_module_common_datasource.xml,v 1.10 2019-03-20 10:51:52 dgoron Exp $ -->
 
 <XMLlist>
 	<entry code="cms_module_common_datasource_selector_choice">Choisissez un sélecteur pour la source de données</entry>
@@ -15,4 +15,7 @@ $Id: cms_module_common_datasource.xml,v 1.9 2018-06-06 14:23:50 arenou Exp $ -->
 	<entry code="cms_module_commom_datasource_selector_save_error">Erreur à la sauvegarde du sélecteur "%s"</entry>
 	<entry code="cms_module_common_selector_doctypes">Sélecteur d'un ou plusieurs types de document</entry>	
 	<entry code="cms_module_common_datasource_categories_use_autopostage">Etendre aux catégories filles</entry>
+	<entry code="cms_module_common_datasource_operator_between_authorities">Opérateur entre autorités</entry>
+	<entry code="cms_module_common_datasource_operator_between_authorities_or">Ou</entry>
+	<entry code="cms_module_common_datasource_operator_between_authorities_and">Et</entry>
 </XMLlist>

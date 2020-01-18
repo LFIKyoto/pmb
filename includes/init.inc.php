@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: init.inc.php,v 1.53 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: init.inc.php,v 1.57.2.1 2019-11-28 14:39:12 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -32,7 +32,7 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 if (!$base_path) $base_path=".";
 
-if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "1");
+if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "1");
 	
 include_once ("$base_path/includes/error_report.inc.php") ;
 
@@ -67,6 +67,7 @@ if (!defined('TYPE_LOCATION'))		define('TYPE_LOCATION',15);
 if (!defined('TYPE_SUR_LOCATION'))	define('TYPE_SUR_LOCATION',16);
 if (!defined('TYPE_CONCEPT'))		define('TYPE_CONCEPT',17);
 if (!defined('TYPE_ONTOLOGY'))		define('TYPE_ONTOLOGY',18);
+if (!defined('TYPE_DOCWATCH'))		define('TYPE_DOCWATCH',19);
 
 // A n'utiliser QUE dans le contexte des MAP
 if (!defined('TYPE_RECORD')) 		define('TYPE_RECORD',11);
@@ -77,6 +78,19 @@ if(!defined('TYPE_NOTICE_RESPONSABILITY_PRINCIPAL')) 	define('TYPE_NOTICE_RESPON
 if(!defined('TYPE_NOTICE_RESPONSABILITY_AUTRE')) 		define('TYPE_NOTICE_RESPONSABILITY_AUTRE', 4);
 if(!defined('TYPE_NOTICE_RESPONSABILITY_SECONDAIRE')) 	define('TYPE_NOTICE_RESPONSABILITY_SECONDAIRE', 5);
 if(!defined('TYPE_TU_RESPONSABILITY_INTERPRETER')) 		define('TYPE_TU_RESPONSABILITY_INTERPRETER', 6);
+
+// define pour différent flags de situation document
+define ('EX_OK', 1);
+define ('EX_INCONNU', 2);
+define ('HAS_RESA_GOOD', 4); // l'exemplaire est réservé pour ce lecteur
+define ('NON_PRETABLE', 8);
+define ('HAS_NOTE', 16);
+define ('HAS_RESA_FALSE', 32); // l'exemplaire est réservé pour un autre lecteur
+define ('ALREADY_LOANED', 64); // cet emprunteur a déjà emprunté ce document
+define ('ALREADY_BORROWED', 128); // ce document est emprunté par un autre emprunteur
+define ('HAS_RESA_PLANNED_FALSE', 256); //Les prévisions sur le document sont égales ou supérieures au nb d'exemplaires disponibles
+define ('IS_TRUSTED',512); //l'exemplaire est monopolisé
+define ('IS_GROUP',1024); //l'exemplaire fait parti d'un groupe d'exemplaires
 
 require_once("$class_path/XMLlist.class.php");
 
@@ -97,6 +111,9 @@ require_once("$include_path/sessions.inc.php");
 require_once("$include_path/misc.inc.php");
 require_once("$javascript_path/misc.inc.php");
 require_once("$include_path/user_error.inc.php");
+
+// Chargement de l'autoload des librairies externes
+require_once $base_path.'/vendor/autoload.php';
 
 if(!isset($_SESSION['CURRENT'])) $_SESSION['CURRENT'] = '';
 if(!isset($_SESSION['ext_type'])) $_SESSION['ext_type'] = '';
@@ -192,7 +209,7 @@ if (!$base_nocheck) {
 			case CHECK_USER_SESSION_INVALIDE :
 				print "<div id='login-box'>".return_error_message($msg[11], $msg['checkuser_session_invalide'], 1, './index.php', basename($_SERVER['REQUEST_URI']))."</div>";
 				break;
-			case CHECK_USER_AUCUN_DROIT :
+			case CHECK_USER_AUCUN_DROITS :
 				print "<div id='login-box'>".return_error_message($msg[11], $msg['checkuser_aucun_droit'], 1)."</div>";
 				break;
 			case CHECK_USER_PB_ENREG_SESSION :
@@ -251,7 +268,7 @@ if (!$base_noheader) {
 		$base_nobody = 0;
 	}
 	if (!$base_nobody) print "<body class='$current_module $pmb_dojo_gestion_style' id='body_current_module' page_name='$current_module'>";
-	if ($base_title) {
+	if (isset($base_title)) {
 		eval ("\$base_title_temp=\"".$database_window_title.$base_title."\";") ;
 		echo window_title($base_title_temp);
 	}
@@ -267,6 +284,7 @@ if (file_exists($include_path."/parameters_subst/rfid_per_localisations_subst.xm
 $parameter_subst->extract();
 
 // Activation RFID selon les prefs user
+if (!isset($param_rfid_activate)) $param_rfid_activate = '';
 if($pmb_rfid_activate)	$pmb_rfid_activate=$param_rfid_activate;
 // Préparation des js sripts pour la RFID
 if($pmb_rfid_activate) {	

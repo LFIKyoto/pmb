@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_generic.class.php,v 1.17 2018-11-29 09:04:17 dgoron Exp $
+// $Id: searcher_generic.class.php,v 1.19 2019-06-11 08:53:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -316,6 +316,9 @@ class searcher_generic {
 		print '<p>Temps Total (en seconde) : '.(microtime(true) - $start).'</p></div>';
 	}
 	
+	public function get_temporary_table_name($suffix='') {
+	    return static::class.substr(md5(microtime(true)), 0, 16).$suffix;
+	}
 
 	public function init_fields_restrict($mode){
 		return false;

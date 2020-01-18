@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entrez.class.php,v 1.19 2017-07-12 15:15:02 tsamson Exp $
+// $Id: entrez.class.php,v 1.22 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
 if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
-	if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "0");
+    if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "0");
 	require_once($include_path.'/xslt-php4-to-php5.inc.php');
 }
 
@@ -35,7 +35,7 @@ class entrez extends connector {
 	}
     
     public function source_get_property_form($source_id) {
-    	global $charset,$pmb_default_operator;
+    	global $charset,$pmb_default_operator, $xsl_transform;
     	
     	$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
@@ -109,9 +109,9 @@ class entrez extends connector {
     	global $entrez_database, $entrez_maxresults, $entrez_operator;
     	global $del_xsl_transform;
     	
-    	$t["entrez_database"]=stripslashes($entrez_database);
-    	$t["entrez_maxresults"]=$entrez_maxresults+0;
-    	$t["entrez_operator"]=$entrez_operator+0;
+    	$t["entrez_database"] = stripslashes($entrez_database);
+    	$t["entrez_maxresults"] = (int) $entrez_maxresults;
+    	$t["entrez_operator"] = (int) $entrez_operator;
     	
     	//Vérification du fichier
     	if (($_FILES["xslt_file"])&&(!$_FILES["xslt_file"]["error"])) {
@@ -153,8 +153,8 @@ class entrez extends connector {
 			$this->error = 1;
 			return;
 		}
-		$entrez_operator = $entrez_operator+0;
-		$entrez_maxresults= $entrez_maxresults+0;
+		$entrez_operator = (int) $entrez_operator;
+		$entrez_maxresults= (int) $entrez_maxresults;
 		
 		$unimarc_pubmed_mapping = array (
 			'XXX' => '',

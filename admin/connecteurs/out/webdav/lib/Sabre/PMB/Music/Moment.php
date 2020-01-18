@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Moment.php,v 1.9 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: Moment.php,v 1.11 2019-07-05 13:25:14 btafforeau Exp $
 
 namespace Sabre\PMB\Music;
 
@@ -11,17 +11,17 @@ use Sabre\DAV;
 class Moment extends Collection {
 	protected $concept;
 	
-	function __construct($name,$config) {
+	public function __construct($name,$config) {
 		parent::__construct($config);
 		$this->concept =  new \concept(substr($this->get_code_from_name($name),1));
 		$this->type = "moment";
 	}
 
-	function getName() {
+	public function getName() {
 		return $this->format_name($this->concept->get_display_label()." (C".$this->concept->get_id().")");
 	}
 
-	function getChildren() {
+	public function getChildren() {
 		$children = array();
 		$moment_concept_id = $this->get_moment_concept()->get_id();
 		$query = "select explnum_id from explnum join index_concept on explnum_id = num_object and type_object = ".TYPE_EXPLNUM." where explnum_mimetype!= 'URL' and explnum_notice = ".$this->parentNode->get_notice_id()." and num_concept = ".$moment_concept_id;
@@ -57,7 +57,7 @@ class Moment extends Collection {
 			if(!file_exists($filename)){
 				//Erreur de copie du fichier
 				unlink($filename);
-				throw new Sabre_DAV_Exception_FileNotFound('Empty file (filename ' . $filename . ')');
+				throw new DAV\Exception\NotFound('Empty file (filename ' . $filename . ')');
 			}
 			if(!filesize($filename)){
 				//Premier PUT d'un client Windows...
@@ -190,7 +190,7 @@ class Moment extends Collection {
 		return $num_concept;
 	}
 
-	function hasChildren() {
+	public function hasChildren() {
 		$moment_concept_id = $this->get_moment_concept()->get_id();
 		$query = "select explnum_id from explnum join index_concept on explnum_id = num_object and type_object = ".TYPE_EXPLNUM." where explnum_mimetype!= 'URL' and explnum_notice = ".$this->parentNode->get_notice_id()." and num_concept = ".$moment_concept_id;
 		$query = $this->filterExplnums($query);

@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.6 2018-06-29 13:02:47 tsamson Exp $ -->
+$Id: manifest.xml,v 1.8.6.1 2019-09-19 08:39:10 tsamson Exp $ -->
 
 <manifest>
 	<name lang="fr_FR">Concepts</name>
@@ -15,7 +15,7 @@ $Id: manifest.xml,v 1.6 2018-06-29 13:02:47 tsamson Exp $ -->
 	<created_date>2017-05-04</created_date>
 	<version>1.0</version>
 	<default_language>fr_FR</default_language>
-	<path_indexation directory="authorities"></path_indexation>
+	<path_indexation directory="skos"></path_indexation>
 	<use>
 		<datasources>
 			<datasource>frbr_entity_concepts_datasource_records</datasource>
@@ -31,6 +31,8 @@ $Id: manifest.xml,v 1.6 2018-06-29 13:02:47 tsamson Exp $ -->
 			<datasource>frbr_entity_common_datasource_aut_link</datasource>
 			<datasource>frbr_entity_common_datasource_composed_concepts</datasource>
 			<datasource>frbr_entity_concepts_datasource_used_in_custom_fields</datasource>
+			<datasource>frbr_entity_concepts_datasource_entities_used_in_composed_concept</datasource>
+			<datasource>frbr_entity_concepts_datasource_authperso</datasource>
 		</datasources>
 		<views>
 			<view>frbr_entity_concepts_view_conceptslist</view>

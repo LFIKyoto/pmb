@@ -2,28 +2,41 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: change_password.inc.php,v 1.18 2018-07-24 13:23:12 dgoron Exp $
+// $Id: change_password.inc.php,v 1.18.6.2 2019-12-04 10:27:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-if (!$allow_pwd) die();
-if(!isset($new_password)) $new_password = '';
-if(!isset($confirm_new_password)) $confirm_new_password = '';
+global $allow_pwd, $action, $msg, $id_empr, $old_password, $new_password, $confirm_new_password, $empr_login, $opac_websubscribe_password_regexp;
 
-print "<div id='change-password'>
-<div id='change-password-container'>
-<form action=\"empr.php\" method=\"post\" name=\"FormName\">
-<table style='width:60%' cellpadding='5'>
-	<tr>
-		<td style='width:50%'>".$msg["empr_new_password"]."</td>
-		<td style='width:50%'><input type=\"hidden\" name=\"lvl\" value=\"valid_change_password\"/><input type=\"password\" name=\"new_password\" size=\"15\" border=\"0\" value=\"$new_password\"/></td>
-	</tr>
-	<tr>
-		<td style='width:50%'>".$msg["empr_confirm_new_password"]."</td>
-		<td style='width:50%'><input type=\"password\" name=\"confirm_new_password\" size=\"15\" border=\"0\" value=\"$confirm_new_password\"/></td>
-	</tr>
-	<tr>
-		<td colspan=2><input type='button' class='bouton' name='ok' value='&nbsp;$msg[empr_valid_password]&nbsp;' onClick='this.form.submit()'/></td>
-	</tr>
-</table></form>
-</div></div>";
+if (!$allow_pwd) die();
+
+switch ($action) {
+    case "save":
+        $emprunteur = new emprunteur($id_empr);
+        if ($emprunteur->pwd == emprunteur::get_hashed_password($empr_login, $old_password)) {
+            if ($new_password == $confirm_new_password) {
+                if (pmb_preg_match("/$opac_websubscribe_password_regexp/", $new_password)) {
+                    emprunteur::hash_password($empr_login, $new_password);
+                    $status = 'empr_password_changed';
+                } else {
+                    $status = 'empr_password_bad_security';
+                }
+            } else {
+                $status = 'empr_password_does_not_match';
+            }
+        } else {
+            $status = 'empr_old_password_wrong';
+        }
+        print "<div id='change-password'>
+                   <div id='change-password-container'>
+                       $msg[$status]
+                       <br />
+                       <br />
+                   </div>
+               </div>";
+        break;
+    case "get_form":
+    default:
+        print emprunteur_display::get_display_change_password($id_empr);
+        break;
+}

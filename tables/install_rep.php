@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: install_rep.php,v 1.45 2017-10-27 14:14:16 ngantier Exp $
+// $Id: install_rep.php,v 1.47 2019-08-01 13:16:36 btafforeau Exp $
 
 // prevents direct script access
 if(preg_match('/noinstall_rep\.php/', $_SERVER['REQUEST_URI'])) {
@@ -35,14 +35,15 @@ header("Content-Type: text/html; charset=$charset");
 function restore($src) {
 	global $link;
 	global $buffer_sql;
-	$SQL='';
-	if($src) {
-		$filename=$src;
-		if(open_restore_stream($src) && $buffer_sql) {
+	if (!empty($src)) {
+		if (open_restore_stream($src) && !empty($buffer_sql)) {
 			// open source file
 			$SQL = preg_split('/;\s*\n|;\n/m', $buffer_sql);
-			for($i=0; $i < sizeof($SQL); $i++) {
-				if($SQL[$i]) $result = pmb_mysql_query($SQL[$i], $link);
+			$nb_queries = count($SQL);
+			for ($i = 0; $i < $nb_queries; $i++) {
+			    if (!empty($SQL[$i])) {
+			        $result = pmb_mysql_query($SQL[$i], $link);
+			    }
 			}
 		} else {
 			die("can't open file $src to restore");

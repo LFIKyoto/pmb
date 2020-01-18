@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: computed_field.class.php,v 1.8 2018-12-28 16:27:31 tsamson Exp $
+// $Id: computed_field.class.php,v 1.12 2019-02-20 13:26:14 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -142,7 +142,7 @@ class computed_field {
 		
 		$this->area_num = $computed_field_area_num*1;
 		$this->field_num = $computed_field_field_num;
-		$this->template = $computed_field_template;
+		$this->template = stripslashes($computed_field_template);
 		$this->fields_used = array();
 		$computed_field_fields_used = encoding_normalize::json_decode(stripslashes($computed_field_fields_used), true);
 		foreach ($computed_field_fields_used as $computed_field_field_used) {
@@ -189,16 +189,41 @@ class computed_field {
 	    global $msg;
 	    
 	    $fields = array(
-    	        'empr_environment' => array(
-                        'properties' => array(
-                	            'empr_nom' => $msg[67], 
-                	            'empr_prenom' => $msg[68], 
-                	            'empr_codestat' => $msg['codestat_empr'], 
-                	            'empr_localisation' => $msg[298]
-                        ),
-                        'label' => $msg['empr_environment']
-    	        )
+//     	        'empr_environment' => array(
+//                         'properties' => array(
+//                 	            'empr_nom' => $msg[67], 
+//                 	            'empr_prenom' => $msg[68], 
+//                 	            'empr_codestat' => $msg['codestat_empr'], 
+//                 	            'empr_location' => $msg[298]
+//                         ),
+//                         'label' => $msg['empr_environment']
+//     	        )
 	    );
 	    return $fields;
+	}
+	
+	public static function get_empr_fields() {
+		global $msg, $pmb_sur_location_activate;
+		
+		$p_perso = new parametres_perso("empr");
+		$t_fields = $p_perso->get_t_fields();
+		$properties = array(
+				'nom' => $msg[67],
+				'prenom' => $msg[68],
+				'codestat' => $msg['codestat_empr'],
+				'location' => $msg[298]
+		);
+		if ($pmb_sur_location_activate) {
+			$properties['surloc'] = $msg['sur_location_select_surloc'];
+		}
+		foreach ($t_fields as $field) {
+			$properties["cp_".$field['NAME']] = $field['TITRE'];
+		}
+		
+		$fields = array(
+				'properties' => $properties,
+				'label' => $msg['empr_environment']
+		);
+		return $fields;
 	}
 }

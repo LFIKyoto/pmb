@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id: search_fields_expl.xml,v 1.49 2018-07-11 13:55:20 dgoron Exp $ -->
+<!-- $Id: search_fields_expl.xml,v 1.51.6.2 2019-11-27 10:08:20 dgoron Exp $ -->
 <pmbfields>
 
 	<!-- Zone fixedFields :
@@ -50,7 +50,7 @@
 				<index_i>index_sew</index_i>
 				<id_field>notice_id</id_field>
 			</query>
-			<query for="STARTWITH" regDiacrit="yes" Keep_EmptyWord="yes"> 
+			<query for="STARTWITH"> 
 				<main><![CDATA[
 				select distinct expl_id from exemplaires, notices where (tit1 like '!!p!!%') and notice_id=expl_notice 
 				union select distinct expl_id from exemplaires, notices, bulletins where (tit1 like '!!p!!%') and bulletin_id=expl_bulletin and bulletin_notice=notice_id
@@ -58,7 +58,7 @@
 				union select distinct expl_id from exemplaires, notices,analysis,bulletins where (tit1 like '!!p!!%') and analysis_notice=notice_id and analysis_bulletin=bulletin_id and bulletin_id=expl_bulletin
 				]]></main>
 			</query>
-			<query for="ENDWITH" regDiacrit="yes" Keep_EmptyWord="yes">
+			<query for="ENDWITH">
 				<main><![CDATA[			
 				select distinct expl_id from exemplaires, notices where (tit1 like '%!!p!!') and notice_id=expl_notice 
 				union select distinct expl_id from exemplaires, notices, bulletins where (tit1 like '%!!p!!') and bulletin_id=expl_bulletin and bulletin_notice=notice_id
@@ -66,7 +66,7 @@
 				union select distinct expl_id from exemplaires, notices,analysis,bulletins where (tit1 like '%!!p!!') and analysis_notice=notice_id and analysis_bulletin=bulletin_id and bulletin_id=expl_bulletin
 				]]></main>
 			</query>
-			<query for="EXACT" regDiacrit="yes" Keep_EmptyWord="yes">
+			<query for="EXACT">
 				<main><![CDATA[	
 				select distinct expl_id from exemplaires, notices where (tit1 like '!!p!!') and notice_id=expl_notice 
 				union select distinct expl_id from exemplaires, notices, bulletins where (tit1 like '!!p!!') and bulletin_id=expl_bulletin and bulletin_notice=notice_id
@@ -2098,6 +2098,20 @@
 				 	where notices_relations.num_notice=notice_id and relation_type='!!p!!' and direction='both' and analysis_bulletin=bulletin_id and bulletin_id=expl_bulletin and analysis_notice=notice_id
 				 ]]></main>		
 			</query>
+		</field>
+		<field title="msg:recherche_exemplaires_bulletin_notice" id="71">
+			<input type="list">
+				<options>
+					<option value="not in">msg:39</option>
+					<option value="in">msg:40</option>
+				</options>	
+			</input>
+			<query for="EQ">
+				<main><![CDATA[
+				select distinct expl_id from exemplaires where expl_bulletin != 0 and expl_id !!p!! (
+					select expl_id from exemplaires JOIN bulletins ON expl_bulletin = bulletin_id AND expl_bulletin != 0 JOIN notices ON num_notice=notice_id
+				)]]></main>			
+			</query>
 		</field>		
 		<field title="msg:localisation_sort" id="16" separator="msg:exemplaires_query">
 			<input type="query_list">
@@ -2254,6 +2268,24 @@
 			</query>
 			<query for="BETWEEN" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct expl_id from exemplaires	where if('!!p!!', create_date>='!!p!!', 1) and if('!!p1!!', create_date<='!!p1!! 23:59:59', 1)]]></main>
+			</query>
+			<query for="LESS_THAN_DAYS">
+				<main><![CDATA[select distinct expl_id from exemplaires	where create_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+			</query>
+			<query for="MORE_THAN_DAYS">
+				<main><![CDATA[select distinct expl_id from exemplaires	where create_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+			</query>
+			<query for="THIS_WEEK">
+				<main><![CDATA[select distinct expl_id from exemplaires where WEEK(create_date,1) = WEEK(NOW()) AND YEAR(create_date) = YEAR(NOW())]]></main>
+			</query>
+			<query for="THIS_MONTH">
+				<main><![CDATA[select distinct expl_id from exemplaires where MONTH(create_date) = MONTH(NOW()) AND YEAR(create_date) = YEAR(NOW())]]></main>
+			</query>
+			<query for="LAST_MONTH">
+				<main><![CDATA[select distinct expl_id from exemplaires where PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(create_date, '%Y%m')) = 1]]></main>
+			</query>
+			<query for="THIS_YEAR">
+				<main><![CDATA[select distinct expl_id from exemplaires where YEAR(create_date) = YEAR(NOW())]]></main>
 			</query>	
 		</field>
 		<field title="msg:filing_date" id="68">
@@ -2275,6 +2307,24 @@
 			</query>
 			<query for="BETWEEN" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct expl_id from exemplaires	where if('!!p!!', expl_date_depot>='!!p!!', 1) and if('!!p1!!', expl_date_depot<='!!p1!!', 1)]]></main>
+			</query>
+			<query for="LESS_THAN_DAYS">
+				<main><![CDATA[select distinct expl_id from exemplaires	where expl_date_depot > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+			</query>
+			<query for="MORE_THAN_DAYS">
+				<main><![CDATA[select distinct expl_id from exemplaires	where expl_date_depot < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+			</query>
+			<query for="THIS_WEEK">
+				<main><![CDATA[select distinct expl_id from exemplaires where WEEK(expl_date_depot,1) = WEEK(NOW()) AND YEAR(expl_date_depot) = YEAR(NOW())]]></main>
+			</query>
+			<query for="THIS_MONTH">
+				<main><![CDATA[select distinct expl_id from exemplaires where MONTH(expl_date_depot) = MONTH(NOW()) AND YEAR(expl_date_depot) = YEAR(NOW())]]></main>
+			</query>
+			<query for="LAST_MONTH">
+				<main><![CDATA[select distinct expl_id from exemplaires where PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(expl_date_depot, '%Y%m')) = 1]]></main>
+			</query>
+			<query for="THIS_YEAR">
+				<main><![CDATA[select distinct expl_id from exemplaires where YEAR(expl_date_depot) = YEAR(NOW())]]></main>
 			</query>	
 		</field>
 		<field title="msg:return_date" id="69">
@@ -2296,6 +2346,24 @@
 			</query>
 			<query for="BETWEEN" notAllowedFor="list,query_list,marclist,query_auth">
 				<main><![CDATA[select distinct expl_id from exemplaires	where if('!!p!!', expl_date_retour>='!!p!!', 1) and if('!!p1!!', expl_date_retour<='!!p1!!', 1)]]></main>
+			</query>
+			<query for="LESS_THAN_DAYS">
+				<main><![CDATA[select distinct expl_id from exemplaires	where expl_date_retour > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+			</query>
+			<query for="MORE_THAN_DAYS">
+				<main><![CDATA[select distinct expl_id from exemplaires	where expl_date_retour < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+			</query>
+			<query for="THIS_WEEK">
+				<main><![CDATA[select distinct expl_id from exemplaires where WEEK(expl_date_retour,1) = WEEK(NOW()) AND YEAR(expl_date_retour) = YEAR(NOW())]]></main>
+			</query>
+			<query for="THIS_MONTH">
+				<main><![CDATA[select distinct expl_id from exemplaires where MONTH(expl_date_retour) = MONTH(NOW()) AND YEAR(expl_date_retour) = YEAR(NOW())]]></main>
+			</query>
+			<query for="LAST_MONTH">
+				<main><![CDATA[select distinct expl_id from exemplaires where PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(expl_date_retour, '%Y%m')) = 1]]></main>
+			</query>
+			<query for="THIS_YEAR">
+				<main><![CDATA[select distinct expl_id from exemplaires where YEAR(expl_date_retour) = YEAR(NOW())]]></main>
 			</query>	
 		</field>
 		<field group="9" title="msg:search_item_creator" id="93">
@@ -2536,7 +2604,7 @@
 
 		<field title="msg:caddie_de_NOTI" id="25" separator="msg:caddie_menu">
 			<input type="query_list">
-				<query>select idcaddie,name from caddie where type='NOTI' order by name</query>
+				<query use_global='PMBuserid'>select idcaddie,name from caddie where type='NOTI' and (autorisations like '!!PMBuserid!! %' or autorisations like '% !!PMBuserid!!' or autorisations like '% !!PMBuserid!! %' or autorisations like '!!PMBuserid!!' or autorisations_all=1) order by name</query>
 			</input>
 			<variable name="ck_affiche" type="input">
 				<default type="value">0</default>
@@ -2574,7 +2642,7 @@
 		</field>
 		<field title="msg:caddie_de_EXPL" id="26">
 			<input type="query_list">
-				<query>select idcaddie,name from caddie where type='EXPL' order by name</query>
+				<query use_global='PMBuserid'>select idcaddie,name from caddie where type='EXPL' and (autorisations like '!!PMBuserid!! %' or autorisations like '% !!PMBuserid!!' or autorisations like '% !!PMBuserid!! %' or autorisations like '!!PMBuserid!!' or autorisations_all=1) order by name</query>
 			</input>
 			<variable name="ck_affiche" type="input">
 				<default type="value">0</default>
@@ -2608,7 +2676,7 @@
 		</field>
 		<field title="msg:caddie_de_BULL" id="27">
 			<input type="query_list">
-				<query>select idcaddie,name from caddie where type='BULL' order by name</query>
+				<query use_global='PMBuserid'>select idcaddie,name from caddie where type='BULL' and (autorisations like '!!PMBuserid!! %' or autorisations like '% !!PMBuserid!!' or autorisations like '% !!PMBuserid!! %' or autorisations like '!!PMBuserid!!' or autorisations_all=1) order by name</query>
 			</input>
 			<variable name="ck_affiche" type="input">
 				<default type="value">0</default>
@@ -3098,6 +3166,24 @@
 				<query for="GTEQ" notAllowedFor="list,query_list,marclist,query_auth">
 					<main><![CDATA[SELECT DISTINCT expl_custom_origine AS expl_id FROM expl_custom_values WHERE expl_custom_champ=!!field!! AND expl_custom_date >= '!!p!!']]></main>
 				</query>
+				<query for="LESS_THAN_DAYS">
+					<main><![CDATA[SELECT DISTINCT expl_custom_origine AS expl_id FROM expl_custom_values WHERE expl_custom_champ=!!field!! AND expl_custom_date > DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="MORE_THAN_DAYS">
+					<main><![CDATA[SELECT DISTINCT expl_custom_origine AS expl_id FROM expl_custom_values WHERE expl_custom_champ=!!field!! AND expl_custom_date < DATE_SUB(NOW(), INTERVAL !!p!! DAY)]]></main>
+				</query>
+				<query for="THIS_WEEK">
+					<main><![CDATA[SELECT DISTINCT expl_custom_origine AS expl_id FROM expl_custom_values WHERE expl_custom_champ=!!field!! AND WEEK(expl_custom_date,1) = WEEK(NOW()) and YEAR(expl_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="THIS_MONTH">
+					<main><![CDATA[SELECT DISTINCT expl_custom_origine AS expl_id FROM expl_custom_values WHERE expl_custom_champ=!!field!! AND MONTH(expl_custom_date) = MONTH(NOW()) and YEAR(expl_custom_date) = YEAR(NOW())]]></main>
+				</query>
+				<query for="LAST_MONTH">
+					<main><![CDATA[SELECT DISTINCT expl_custom_origine AS expl_id FROM expl_custom_values WHERE expl_custom_champ=!!field!! AND PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(expl_custom_date, '%Y%m')) = 1]]></main>
+				</query>
+				<query for="THIS_YEAR">
+					<main><![CDATA[SELECT DISTINCT expl_custom_origine AS expl_id FROM expl_custom_values WHERE expl_custom_champ=!!field!! AND YEAR(expl_custom_date) = YEAR(NOW())]]></main>
+				</query>
 				<query for="ISEMPTY">
 					<main><![CDATA[SELECT DISTINCT expl_id FROM exemplaires LEFT JOIN expl_custom_values ON expl_id=expl_custom_origine AND expl_custom_champ=!!field!! WHERE expl_custom_date='' OR expl_custom_date IS NULL OR expl_custom_date='0000-00-00']]></main>
 				</query>
@@ -3108,7 +3194,7 @@
 					<main><![CDATA[SELECT DISTINCT expl_custom_origine AS expl_id FROM expl_custom_values WHERE expl_custom_champ=!!field!! AND 
 						if('!!p!!', expl_custom_date >= '!!p!!', 1) and if('!!p1!!', expl_custom_date<='!!p1!!', 1)]]>
 					</main>
-				</query>	
+				</query>
 			</field>
 		</fieldType>
 		<fieldType type="pret" prefix="p">
@@ -3272,5 +3358,12 @@
 		<operator name="AUTHORITY">msg:authority_query</operator>
 		<operator name="BETWEEN">msg:search_between_query</operator>
 		<operator name="NEAR">msg:parperso_option_duration_type0</operator>
+		<operator name="LESS_THAN_DAYS">msg:less_than_days_query</operator>
+		<operator name="MORE_THAN_DAYS">msg:more_than_days_query</operator>
+		<operator name="THIS_WEEK" emptyAllowed="yes">msg:this_week_query</operator>
+		<operator name="LAST_WEEK" emptyAllowed="yes">msg:last_week_query</operator>
+		<operator name="THIS_MONTH" emptyAllowed="yes">msg:this_month_query</operator>
+		<operator name="LAST_MONTH" emptyAllowed="yes">msg:last_month_query</operator>
+		<operator name="THIS_YEAR" emptyAllowed="yes">msg:this_year_query</operator>
 	</operators>
 </pmbfields>

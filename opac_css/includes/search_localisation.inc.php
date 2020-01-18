@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_localisation.inc.php,v 1.5 2015-04-03 11:16:16 jpermanne Exp $
+// $Id: search_localisation.inc.php,v 1.5.14.1 2019-10-15 09:59:04 btafforeau Exp $
 
 // Permet de positioner par défaut le sélecteur de localisation en recherche sur la localisation du lecteur
 // s'il est connecté. Paramétrer opac_search_other_function
@@ -73,8 +73,8 @@ function search_other_function_human_query($n) {
 }
 
 function search_other_function_post_values() {
-	global $recherche_loc;
-	return "<input type=\"hidden\" name=\"recherche_loc\" value=\"$recherche_loc\">\n";
+	global $recherche_loc, $charset;
+	return "<input type=\"hidden\" name=\"recherche_loc\" value=\"".htmlentities($recherche_loc, ENT_QUOTES, $charset)."\">\n";
 }
 
 ?>

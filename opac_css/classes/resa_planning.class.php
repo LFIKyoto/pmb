@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa_planning.class.php,v 1.6 2016-12-22 11:28:33 dgoron Exp $
+// $Id: resa_planning.class.php,v 1.7 2019-06-18 12:48:20 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -28,7 +28,7 @@ class resa_planning{
 
 	public function __construct($id_resa= 0) {
 
-		$id_resa+=0;
+	    $id_resa = intval($id_resa);
 		
 		if ($id_resa) {
 			$this->id_resa = $id_resa;
@@ -95,7 +95,7 @@ class resa_planning{
 
 		global $dbh;
 
-		$id_resa+=0;
+		$id_resa = intval($id_resa);
 		if($id_resa) {
 			$q = "delete from resa_planning where id_resa=$id_resa ";
 			$r = pmb_mysql_query($q, $dbh);
@@ -109,8 +109,8 @@ class resa_planning{
 
 		global $dbh;
 
-		$id_notice+=0;
-		$id_bulletin+=0;
+		$id_notice = intval($id_notice);
+		$id_bulletin = intval($id_bulletin);
 		if (!$id_notice && !$id_bulletin) {
 			return 0;
 		}
@@ -136,9 +136,9 @@ class resa_planning{
 
 		global $dbh,$msg;
 		global $pmb_location_reservation,$pmb_location_resa_planning;
-		$id_empr+=0;
-		$id_notice+=0;
-		$id_bulletin+=0;
+		$id_empr = intval($id_empr);
+		$id_notice = intval($id_notice);
+		$id_bulletin = intval($id_bulletin);
 
 		if($id_empr && ($id_notice || $id_bulletin)) {
 			$q = "select expl_location, location_libelle, count(expl_id) as nb from exemplaires join docs_location on expl_location=idlocation join docs_statut on expl_statut=idstatut ";

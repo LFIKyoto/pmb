@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: audit.class.php,v 1.5 2017-02-08 13:41:40 dgoron Exp $
+// $Id: audit.class.php,v 1.6 2019-08-19 12:50:37 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -103,8 +103,10 @@ class audit {
 		$query .= "order by quand ";
 		$result = @pmb_mysql_query($query);
 		if(!$result) die("can't select from table audit left join users :<br /><b>$query</b> ");
-		while ($audit=pmb_mysql_fetch_object($result)) {
-			$this->all_audit[] = $audit ; 
+		if(pmb_mysql_num_rows($result)){
+		    while ($audit=pmb_mysql_fetch_object($result)) {
+		        $this->all_audit[] = $audit ;
+		    }
 		}
 	}
 
@@ -113,7 +115,7 @@ class audit {
 	// ---------------------------------------------------------------
 	public function get_creation () {
 		global $dbh, $pmb_type_audit ;
-		if (!$pmb_type_audit) return 0;
+        if (!$pmb_type_audit || !isset($this->all_audit[0])) return 0;
 		return $this->all_audit[0];
 	}
 	
@@ -122,7 +124,7 @@ class audit {
 	// ---------------------------------------------------------------
 	public function get_last () {
 		global $pmb_type_audit ;
-		if (!$pmb_type_audit) return 0;
+        if (!$pmb_type_audit || !isset($this->all_audit[(count($this->all_audit)-1)])) return 0;
 		return $this->all_audit[(count($this->all_audit)-1)];
 	}
 	

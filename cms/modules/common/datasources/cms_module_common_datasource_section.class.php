@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_section.class.php,v 1.12 2018-06-21 16:24:19 dgoron Exp $
+// $Id: cms_module_common_datasource_section.class.php,v 1.13 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -56,7 +56,7 @@ class cms_module_common_datasource_section extends cms_module_common_datasource{
 		
 		$this->parameters= array();
 		$this->parameters['selector'] = $selector_choice;
-		$this->parameters['load_articles_data'] = $cms_module_common_datasource_section_load_articles_data+0;
+		$this->parameters['load_articles_data'] = (int) $cms_module_common_datasource_section_load_articles_data;
 		return parent::save_form();
 	}
 	

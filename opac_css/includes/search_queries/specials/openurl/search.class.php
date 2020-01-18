@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.3 2017-07-12 15:15:01 tsamson Exp $
+// $Id: search.class.php,v 1.4 2019-01-16 16:57:14 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -125,7 +125,9 @@ class openurl_search {
 			switch ($_SESSION["search_type".$valeur[0]]) {
 			case 'simple_search':
 				global $search;
-				
+				if(empty($search)) {
+					$search=array();
+				}
 				switch($_SESSION["notice_view".$valeur[0]]["search_mod"]) {
 				case 'title':
 					$search[0]="f_6";
@@ -214,7 +216,9 @@ class openurl_search {
 			break;
 			case 'term_search':
 				global $search;
-				
+				if(empty($search)) {
+					$search=array();
+				}
 				$search[0]="f_1";
 				$op_="EQ";
 				$valeur_champ=$_SESSION["notice_view".$valeur[0]]["search_id"];
@@ -246,7 +250,9 @@ class openurl_search {
 			break;
 			case 'module':
 				global $search;
-	       			       		
+				if(empty($search)) {
+					$search=array();
+				}	       		
 	       		switch($_SESSION["notice_view".$valeur[0]]["search_mod"]) {
 	       		case 'categ_see':
 					$search[0]="f_1";	

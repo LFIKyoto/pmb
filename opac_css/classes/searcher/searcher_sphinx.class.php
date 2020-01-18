@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_sphinx.class.php,v 1.9 2018-11-12 14:57:29 ngantier Exp $
+// $Id: searcher_sphinx.class.php,v 1.10 2019-05-27 12:55:59 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -79,7 +79,9 @@ class searcher_sphinx {
 	
 	protected function get_search_indexes(){
 		global $lang;
-		return $this->index_name.'_'.$lang.','.$this->index_name;
+		global $sphinx_indexes_prefix;
+		
+		return $sphinx_indexes_prefix.$this->index_name.'_'.$lang.','.$sphinx_indexes_prefix.$this->index_name;
 	}
 
 	protected function get_full_raw_query(){

@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: id_notice.inc.php,v 1.3 2015-08-14 12:33:05 dbellamy Exp $
+// $Id: id_notice.inc.php,v 1.4 2019-06-05 09:04:42 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $acces_j, $gestion_acces_active, $gestion_acces_user_notice, $class_path, $PMBuserid, $pmb_show_notice_id, $f_notice_id, $msg;
 
 //droits d'acces lecture notice
 $acces_j='';
@@ -23,7 +24,7 @@ if($prefix_id){
 }
 
 $rqt = "select * from notices where notice_id='".$f_notice_id."'";
-$res = pmb_mysql_query($rqt,$dbh);
+$res = pmb_mysql_query($rqt);
 
 if(pmb_mysql_num_rows($res)){
 	$ident = pmb_mysql_fetch_object($res);	

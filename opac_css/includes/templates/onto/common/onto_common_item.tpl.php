@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_item.tpl.php,v 1.3 2018-11-28 16:09:18 tsamson Exp $
+// $Id: onto_common_item.tpl.php,v 1.4.6.1 2019-11-25 12:52:58 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -86,10 +86,9 @@ $ontology_tpl['form_scripts'] = '
 		function onto_remove_selector_value(element_name,element_order){
 			document.getElementById(element_name+"_"+element_order+"_value").value = "";
 			document.getElementById(element_name+"_"+element_order+"_display_label").value = "";
+			document.getElementById(element_name+"_"+element_order+"_ressource_template").innerHTML = "";
 		}
 	}
-				
-	ajax_parse_dom();
 </script>';
 
 $ontology_tpl['form_movable_div'] = '

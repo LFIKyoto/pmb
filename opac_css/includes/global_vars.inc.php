@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: global_vars.inc.php,v 1.10 2017-07-12 15:15:01 tsamson Exp $
+// $Id: global_vars.inc.php,v 1.11 2019-06-10 08:57:12 btafforeau Exp $
 
 // fichier de configuration générale
 
@@ -23,7 +23,7 @@ if(preg_match('/global_vars\.inc\.php/', $REQUEST_URI)) {
 function add_sl(&$var) {
 	if (is_array($var)) {
 		reset($var);
-		while (list($k,$v)=each($var)) {
+		foreach ($var as $k => $v) {
 			add_sl($var[$k]);
 		}
 	} else {
@@ -32,7 +32,7 @@ function add_sl(&$var) {
 }
 
 /* on récupère tout sans se poser de question, attention à la sécurité ! */
-while (list($__key__PMB, $val) = @each($_GET)) {
+foreach ($_GET as $__key__PMB => $val) {
 	if (($__key__PMB!="base_path")&&($__key__PMB!="include_path")&&($__key__PMB!="class_path")) {
 		if (get_magic_quotes_gpc())
 			$GLOBALS[$__key__PMB] = $val;
@@ -42,7 +42,7 @@ while (list($__key__PMB, $val) = @each($_GET)) {
 		}
 	}
 }
-while (list($__key__PMB, $val) = @each($_POST)) {
+foreach ($_POST as $__key__PMB => $val) {
 	if (($__key__PMB!="base_path")&&($__key__PMB!="include_path")&&($__key__PMB!="class_path")) {
 		if (get_magic_quotes_gpc())
 			$GLOBALS[$__key__PMB] = $val;
@@ -54,7 +54,7 @@ while (list($__key__PMB, $val) = @each($_POST)) {
 }
 
 //Post de fichiers
-while (list($__key__PMB, $val) = @each($_FILES)) {
+foreach ($_FILES as $__key__PMB => $val) {
 	if (($__key__PMB!="base_path")&&($__key__PMB!="include_path")&&($__key__PMB!="class_path")) {
 		if (get_magic_quotes_gpc())
 			$GLOBALS[$__key__PMB] = $val;

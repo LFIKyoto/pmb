@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: openurl.class.php,v 1.8 2017-07-12 15:15:00 tsamson Exp $
+// $Id: openurl.class.php,v 1.10 2019-07-18 12:48:24 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -446,8 +446,8 @@ class openurl extends connector {
 
     	$t['libelle'] = $libelle ? stripslashes($libelle) : "OpenURL";
     	$t['source_name'] = $source_name ? stripslashes($source_name) : "OpenURL";
-    	$t['iwidth']=$iwidth+0;
-    	$t['iheight']=$iheight+0;
+    	$t['iwidth'] = (int) $iwidth;
+    	$t['iheight'] = (int) $iheight;
     	$t['infobulle'] = $infobulle ? stripslashes($infobulle) : "";
 //      	if (($_FILES["conf_file"])&&(!$_FILES["conf_file"]["error"])) {
 //			$file_params = file_get_contents($_FILES["conf_file"]["tmp_name"]);
@@ -651,7 +651,7 @@ class openurl extends connector {
 			$param = $export_param->get_parametres($export_param->context);
 			//petit nettoyage pour un bon fonctionnement...
 			foreach($param as $key => $value){
-				$param["exp_".$key] = $param[$key];
+				$param["exp_".$key] = $value;
 			}
 			//maintenant que c'est en ordre, on peut y aller!
 			$export = new export(array($notice_id),array(),array());

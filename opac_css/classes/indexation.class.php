@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: indexation.class.php,v 1.27 2018-12-20 14:00:06 mbertin Exp $
+// $Id: indexation.class.php,v 1.31.4.3 2019-11-28 11:06:52 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -99,7 +99,12 @@ class indexation {
 				$datatype = static::$xml_indexation[$this->type]['FIELD'][$i]['DATATYPE'];
 			}
 			$this->datatypes[$datatype][] = static::$xml_indexation[$this->type]['FIELD'][$i]['ID'];
-			
+			if(isset(static::$xml_indexation[$this->type]['FIELD'][$i]['INDEX_ALSO_FROM'])) {
+			    $index_also_from = static::$xml_indexation[$this->type]['FIELD'][$i]['INDEX_ALSO_FROM'][0]['DATATYPE'];
+			    foreach ($index_also_from as $other_datatype) {
+			            $this->datatypes[$other_datatype['value']][] = static::$xml_indexation[$this->type]['FIELD'][$i]['ID'];
+			    }
+			}
 			//recuperation de la liste des informations a mettre a jour
 			//conservation des mots vides
 			if(isset(static::$xml_indexation[$this->type]['FIELD'][$i]['KEEPEMPTYWORD']) && static::$xml_indexation[$this->type]['FIELD'][$i]['KEEPEMPTYWORD'] == "yes"){
@@ -176,7 +181,7 @@ class indexation {
 					$use_word=false;
 				}
 				if(isset($table['IDKEY'][0])){
-					$select[]=(isset($table['ALIAS'])?$table['ALIAS']:$table['NAME']).".".$table['IDKEY'][0]['value']." as subst_for_autorite_".$table['IDKEY'][0]['value'];
+					$select[]=(isset($table['IDKEY'][0]['ALIAS'])?$table['IDKEY'][0]['ALIAS']:$table['NAME']).".".$table['IDKEY'][0]['value']." as subst_for_autorite_".$table['IDKEY'][0]['value'];
 				}
 				for ($j=0;$j<count($table['TABLEFIELD']);$j++) {
 					$select[]=((isset($table['ALIAS']) && (strpos($table['TABLEFIELD'][$j]["value"],".")=== false)) ? $table['ALIAS']."." : "").$table['TABLEFIELD'][$j]["value"];
@@ -323,6 +328,12 @@ class indexation {
 		$this->initialized = true;
 	}
 		
+	protected function get_indexation_location() {
+	    global $pmb_indexation_location;
+	    //Indexation localisée ?
+	    return $pmb_indexation_location;
+	}
+	
 	protected function get_indexation_lang() {
 		//il existe une spécificité pour les notices (langue d'indexation) - classe dérivée
 		return "";
@@ -412,7 +423,9 @@ class indexation {
 									continue;
 								}
 								if(isset($this->tab_code_champ[$k][$nom_champ]['internal']) && $this->tab_code_champ[$k][$nom_champ]['internal']){
-									$langage=$this->get_indexation_lang();
+								    if($this->get_indexation_location()) {
+								        $langage=$this->get_indexation_lang();
+								    }
 								}
 								if(isset($this->tab_code_champ[$k][$nom_champ]['marctype']) && $this->tab_code_champ[$k][$nom_champ]['marctype']){
 									//on veut toutes les langues, pas seulement celle de l'interface...
@@ -435,7 +448,7 @@ class indexation {
 														'autorite' => $tab_row["subst_for_marc_".$this->tab_code_champ[$k][$nom_champ]['marctype']]
 												);
 												//Etait présent dans la méthode d'indexation de la classe notice
-												if(get_called_class() == 'indexation_record') {
+												if(static::class == 'indexation_record') {
 													
 													//gestion de la recherche tous champs pour les marclist
 													if(!isset(static::$marclist_liste_mots[$liste_mots])) {
@@ -580,6 +593,15 @@ class indexation {
 								}
 							}
 							break;
+						case "explnum" :
+						    $rqt = "select explnum_id from notices join explnum on explnum_notice = notice_id and explnum_notice!=0 where notice_id = ".$object_id." union select explnum_id from notices join bulletins on num_notice = notice_id join explnum on explnum_bulletin = bulletin_id and explnum_bulletin != 0 where notice_id = ".$object_id;
+						    $res = pmb_mysql_query($rqt);
+						    if(pmb_mysql_num_rows($res)) {
+						        while($row= pmb_mysql_fetch_object($res)){
+						            $ids[] =$row->explnum_id;
+						        }
+						    }
+						    break;
 						default :
 							$ids = array($object_id);
 					}
@@ -597,6 +619,8 @@ class indexation {
 										'pond' => $p_perso->get_pond($code_ss_champ)
 								);
 								foreach($value as $val) {
+									//Elimination des balises HTML - Y compris celles mal formées
+									$val = preg_replace('#<[^>]+>#','',$val);
 									if($val != ''){
 										$tab_field_insert[] = $this->get_tab_field_insert($object_id, $infos, $j, $val);
 										$j++;
@@ -636,6 +660,8 @@ class indexation {
 					foreach ($auth['ss_champ'] as $ss_field){
 						$j=1;
 						foreach ($ss_field as $code_ss_champ =>$val){
+							//Elimination des balises HTML - Y compris celles mal formées
+							$val = preg_replace('#<[^>]+>#','',$val);
 							$infos = array(
 									'champ' => $code_champ,
 									'ss_champ' => $code_ss_champ,
@@ -700,8 +726,8 @@ class indexation {
 				}
 				$query = "SELECT id_authperso_authority, authperso_authority_authperso_num
 					FROM ".$this->reference_table." 
-					JOIN aut_link ON (".$this->reference_table.".".$this->reference_key."=aut_link.aut_link_from_num and aut_link_from = ".$authority_type." or (".$this->reference_table.".".$this->reference_key." = aut_link_to_num and aut_link_to = ".$authority_type." and aut_link_reciproc = 1))  
-					JOIN authperso_authorities ON (aut_link.aut_link_to_num=authperso_authorities.id_authperso_authority or (aut_link_reciproc = 1 and aut_link_from_num=authperso_authorities.id_authperso_authority )) 
+					JOIN aut_link ON (".$this->reference_table.".".$this->reference_key."=aut_link.aut_link_from_num and aut_link_from = ".$authority_type." or (".$this->reference_table.".".$this->reference_key." = aut_link_to_num and aut_link_to = ".$authority_type." ))  
+					JOIN authperso_authorities ON (aut_link.aut_link_to_num=authperso_authorities.id_authperso_authority or ( aut_link_from_num=authperso_authorities.id_authperso_authority )) 
 					WHERE ".$this->reference_table.".".$this->reference_key."=".$object_id." AND ((aut_link.aut_link_to > 1000))";
 				$result = pmb_mysql_query($query,$dbh);
 				while(($row=pmb_mysql_fetch_object($result))) {

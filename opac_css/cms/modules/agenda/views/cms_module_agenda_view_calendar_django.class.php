@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_agenda_view_calendar_django.class.php,v 1.9 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: cms_module_agenda_view_calendar_django.class.php,v 1.10.6.3 2019-11-04 10:54:54 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -105,11 +105,12 @@ le {{event.event_start.format_value}}
 		$events = array();
 		if(count($datas['events'])){
 			foreach($datas['events'] as $event){
-				if(isset($event['event_start']) && $event['event_start']){
+			    $event->id_event = $event->id;
+				if(!empty($event->event_start)){
 					$events[] =$event;
-					$styles[$event['id_type']] = array("color" => $event['color'], "calendar" => $this->format_text($event['calendar']));
+					$styles[$event->id_type] = array("color" => $event->color, "calendar" => $this->format_text($event->calendar));
 					if($nb_displayed<$this->parameters['nb_displayed_events_under']) {
-						$event['link'] = $this->get_constructed_link("article",$event['id']);
+						$event->link = $this->get_constructed_link("event",$event->id);
 						$render_datas['events'][]=$event;
 						$nb_displayed++;
 					}
@@ -172,9 +173,9 @@ le {{event.event_start.format_value}}
 							start_day = new Date(event['event_start']['time']*1000);
 							if(event['event_end']){
 								end_day = new Date(event['event_end']['time']*1000);
-							}
+							}else end_day = false;
 							//juste une date ou dates debut et fin
-							if(date.difference(value, start_day, 'day') == 0 || (start_day && end_day && date.difference(value, start_day, 'day') <= 0 &&date.difference(value, end_day, 'day') >= 0 )){
+							if(date.difference(value, start_day, 'day') == 0 || (start_day && end_day && date.difference(value, start_day, 'day') <= 0 && date.difference(value, end_day, 'day') >= 0 )){
 								current_events.push(event);
 							}
 							start_day = end_day = false;
@@ -182,7 +183,7 @@ le {{event.event_start.format_value}}
 						if(current_events.length == 1){
 							//un seul evenement sur la journee, on l'affiche directement
 							var link = '".$this->get_constructed_link("event","!!id!!")."';
-							document.location = link.replace('!!id!!',current_events[0]['id']);
+							document.location = link.replace('!!id!!',current_events[0]['id_event']);
 						}else if (current_events.length > 1){
 							//plusieurs evenements, on affiche la liste...
 							var month = value.getMonth()+1;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: records_flux.class.php,v 1.9 2017-12-05 09:49:40 mbertin Exp $
+// $Id: records_flux.class.php,v 1.11 2019-07-10 06:44:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -44,7 +44,7 @@ class records_flux {
 	// ---------------------------------------------------------------
 	//		constructeur
 	// ---------------------------------------------------------------
-	function __construct($flag_all=true) {	
+	public function __construct($flag_all=true) {	
 		global $msg;	
 		global $opac_biblio_name;
 		if($flag_all)$this->getRecords();	
@@ -167,10 +167,10 @@ class records_flux {
 					'|[\x00-\x7F][\x80-\xBF]+'.
 					'|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*'.
 					'|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})'.
-					'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
+					'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/',
 					'', $this->envoi );
 		} else {
-			$this->envoi = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]/S',
+			$this->envoi = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]/',
 					'', $this->envoi );
 		}
 		return $this->envoi;

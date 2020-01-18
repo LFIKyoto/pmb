@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_selectors_tabs.class.php,v 1.4 2018-12-20 11:00:19 mbertin Exp $
+// $Id: searcher_selectors_tabs.class.php,v 1.6 2019-03-02 14:08:41 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -61,15 +61,21 @@ class searcher_selectors_tabs extends searcher_tabs {
         if(!is_array($concept_schemes)){
             $concept_schemes = [$concept_schemes];
         }
-        $found = false;
+        $first_found = 0;
         foreach($this->tabs as $mode => $tab){
             if(in_array($tab['SHOW_IN_SELECTOR'],['yes','only'])){
-                if($tab['OBJECTS_TYPE'] == 'concepts'){
-                    $found = false;
+                if($tab['OBJECTS_TYPE'] == 'concepts'){  
+                    if($first_found === 0){
+                        $first_found = $mode;
+                    }
                     if($tab['VARVIS']){
                         for($i=0 ; $i<count($tab['VARVIS']) ; $i++){
                             if($tab['VARVIS'][$i]['NAME'] == 'concept_scheme'){
-                                $found = true;
+                                if(count($concept_schemes) == 0){
+                                    if($mode == $this->get_default_selector_mode()){
+                                        return $mode;
+                                    }
+                                }
                                 foreach($tab['VARVIS'][$i]['VALUE'] as $id => $visibility){
                                     if(in_array($id,$concept_schemes) && $visibility){
                                         return $mode;
@@ -77,14 +83,19 @@ class searcher_selectors_tabs extends searcher_tabs {
                                 }
                             }
                         }
-                        if($found == false){
-                            return $mode; 
-                        }
                     }
                 }
             }
         }
-        return 1;
+        if($first_found === 0){
+            foreach($this->tabs as $mode => $tab){
+                if(in_array($tab['SHOW_IN_SELECTOR'],['yes','only'])){
+                    $first_found = $mode;
+                    break;
+                }
+            }
+        }
+        return $first_found;
     }
 }
 ?>

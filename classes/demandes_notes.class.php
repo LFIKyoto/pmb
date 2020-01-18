@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_notes.class.php,v 1.35 2018-12-03 10:15:23 ngantier Exp $
+// $Id: demandes_notes.class.php,v 1.38 2019-08-27 10:15:58 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -27,10 +27,11 @@ class demandes_notes {
 	public $notes_read_gestion = 0; // flag gestion sur la lecture de la note par l'utilisateur
 	public $notes_read_opac = 0; // flag opac sur la lecture de la note par le lecteur
 	public $demande_final_note_num = 0;
+	public $demande_end = 0;
 	
 	public function __construct($id_note=0,$id_action=0){
-		$this->id_note = $id_note+0;
-		$this->num_action = $id_action+0;
+	    $this->id_note = intval($id_note);
+		$this->num_action = intval($id_action);
 		$this->fetch_data();
 	}
 	
@@ -313,8 +314,8 @@ class demandes_notes {
 		}
 		$dialog_note = str_replace('!!redirectto!!',$redirect_to,$dialog_note);
 		$dialog_note = str_replace('!!idaction!!',$num_action,$dialog_note);
-		$dialog='';
-		if(sizeof($notes)){
+		$dialog = '';
+		if (!empty($notes)) {
 			foreach($notes as $idNote=>$note){
 				//Utilisateur ou lecteur ? 
 				if($note->notes_type_user==="1"){
@@ -345,7 +346,7 @@ class demandes_notes {
 				// affichage de l'audit des notes seulement si nécessaire
 				$audit_note = new audit(16,$note->id_note);
 				$audit_note->get_all();
-				if(sizeof($audit_note->all_audit)>1){
+				if (count($audit_note->all_audit) > 1) {
 					$dialog.="<input type='image' src='".get_url_icon('historique.gif')."'
 					onClick=\"openPopUp('./audit.php?type_obj=16&object_id=$note->id_note', 'audit_popup'); return false;\" title=\"".$msg['audit_button']."\" value=\"".$msg['audit_button']."\" />";
 				}				

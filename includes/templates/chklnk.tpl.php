@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: chklnk.tpl.php,v 1.3 2017-10-26 13:35:54 dgoron Exp $
+// $Id: chklnk.tpl.php,v 1.4 2019-05-27 12:35:59 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $admin_chklnk_content_form, $msg, $cms_active, $admin_chklnk_form, $current_module;
 
 $admin_chklnk_content_form = "
 		<div class='row'>

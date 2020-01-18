@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: openurl_instance.class.php,v 1.2 2016-12-22 16:36:18 dgoron Exp $
+// $Id: openurl_instance.class.php,v 1.3 2019-07-11 10:24:50 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -21,8 +21,8 @@ class openurl_instance {
 	public $notice_externe_id = 0;		// identifiant de la notice externe
 	public $parent_id = 0;				// identifiant de la notice parente
 	public $params = array();			// jeu de paramètres...
-	public $notice_infos = "";			// informations sur la notice
-	public $parent_infos = "";			// informations sur la notice parente, si disponible...
+	public $notice_infos = array();			// informations sur la notice
+	public $parent_infos = array();			// informations sur la notice parente, si disponible...
 	public $serialization = "";		// mode de sérialization
 	public $referent;					// entité referent
 	public $referringEntity;			// entité referring_entity

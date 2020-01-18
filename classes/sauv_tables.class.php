@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sauv_tables.class.php,v 1.16 2017-11-07 15:20:00 ngantier Exp $
+// $Id: sauv_tables.class.php,v 1.17 2019-06-04 08:09:06 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -135,22 +135,22 @@ class sauv_table {
 				$tTablesSelected = explode(",", $this -> sauv_table_tables);
 				$requete = "show tables";
 				$resultat = pmb_mysql_query($requete) or die(pmb_mysql_error());
-				$tTables = array();
+				$tTables_tab = array();
 				while (list ($table) = pmb_mysql_fetch_row($resultat)) {
-					$tTables[] = $table;
+				    $tTables_tab[] = $table;
 				}
 
 				$tables_list = "<table style='width:100%'>";
 				$curCol = 0;
 				$nMaxCol = 3;
 				$tables_list.= "<tr>";
-				for ($i = 0; $i < count($tTables); $i ++) {
-					$tables_list.= "<td class='brd'><input type=\"checkbox\" name=\"sauv_table_tables[]\" value=\"".$tTables[$i]."\" ";
-					$as=array_search($tTables[$i], $tTablesSelected);
+				for ($i = 0; $i < count($tTables_tab); $i ++) {
+				    $tables_list.= "<td class='brd'><input type=\"checkbox\" name=\"sauv_table_tables[]\" value=\"".$tTables_tab[$i]."\" ";
+					$as=array_search($tTables_tab[$i], $tTablesSelected);
 					if (( $as!== false)&&($as!==null)) {
 						$tables_list.= "checked";
 					}
-					$tables_list.= " class=\"saisie-simple\">&nbsp;".$tTables[$i]."</td>";
+					$tables_list.= " class=\"saisie-simple\">&nbsp;".$tTables_tab[$i]."</td>";
 					$curCol ++;
 					if ($curCol == $nMaxCol) {
 						$tables_list.= "</tr>\n";

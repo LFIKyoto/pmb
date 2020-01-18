@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scheduler_task.class.php,v 1.6 2018-12-28 10:10:21 dgoron Exp $
+// $Id: scheduler_task.class.php,v 1.9 2019-06-17 11:45:23 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -78,7 +78,7 @@ class scheduler_task {
 	public function get_messages() {
 		global $base_path, $lang;
 		
-		$tache_path = $base_path."/admin/planificateur/".str_replace('scheduler_', '', get_called_class());
+		$tache_path = $base_path."/admin/planificateur/".str_replace('scheduler_', '', static::class);
 		if (file_exists($tache_path."/messages/".$lang.".xml")) {
 			$file_name=$tache_path."/messages/".$lang.".xml";
 		} else if (file_exists($tache_path."/messages/fr_FR.xml")) {

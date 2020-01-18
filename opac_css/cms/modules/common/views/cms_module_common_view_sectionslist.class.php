@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_sectionslist.class.php,v 1.13 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: cms_module_common_view_sectionslist.class.php,v 1.13.6.1 2019-09-17 09:59:20 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -89,18 +89,19 @@ class cms_module_common_view_sectionslist extends cms_module_common_view_django{
 				} else {
 					$infos= $cms_section->format_datas(true, false, true, true);
 				}
-				$infos['link'] = $this->get_constructed_link("section",$section);
-				if (!empty($infos['articles'])) {
-					foreach ($infos['articles'] as $i=>$article) {
-						$infos['articles'][$i]['link'] = $this->get_constructed_link("article",$article["id"]);
+				$infos->link = $this->get_constructed_link("section",$section);
+				if (!empty($infos->articles)) {
+					foreach ($infos->articles as $i=>$article) {
+						$infos->articles[$i]->link = $this->get_constructed_link("article",$article->id);
 					}
 				}
-				if($cms_section->num_parent) {
-					$infos['parent']['link'] = $this->get_constructed_link("section",$infos['parent']["id"]);
+				if($cms_section->num_parent) {  
+					$infos->parent->link = $this->get_constructed_link("section",$infos->parent->id);
 				}
-				if(count($infos['children'])) {
-					foreach ($infos['children'] as $i=>$child) {
-						$infos['children'][$i]['link'] = $this->get_constructed_link("section",$child["id"]);
+				if(count($infos->children)) {
+					foreach ($infos->children as $child) {
+					    //$infos->children[$i]->link = $this->get_constructed_link("section",$child->id);
+					    $child->link = $this->get_constructed_link("section",$child->id);
 					}
 				}
 				$render_datas['sections'][]=$infos;

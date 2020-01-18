@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_layer_model.class.php,v 1.12 2016-11-05 14:49:07 ngantier Exp $
+// $Id: map_layer_model.class.php,v 1.13 2019-04-12 15:24:06 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
     die("no access");
@@ -58,7 +58,7 @@ class map_layer_model {
      */
     public function __construct($ids) {
 
-        if (!$ids[0])
+        if (!isset($ids[0]))
             $ids = array();
         $this->ids = $ids;
 

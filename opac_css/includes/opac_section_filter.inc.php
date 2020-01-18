@@ -62,8 +62,8 @@ function search_other_function_human_query($n) {
 }
 
 function search_other_function_post_values() {
-	global $cnl_bibli;
-	return "<input type=\"hidden\" name=\"cnl_bibli\" value=\"$cnl_bibli\">\n";
+	global $cnl_bibli, $charset;
+	return "<input type=\"hidden\" name=\"cnl_bibli\" value=\"".htmlentities($cnl_bibli, ENT_QUOTES, $charset)."\">\n";
 }
 
 ?>

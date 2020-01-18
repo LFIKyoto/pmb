@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.25 2018-10-11 12:28:15 ngantier Exp $
+// $Id: main.inc.php,v 1.28 2019-06-07 08:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $page, $sub, $msg, $option_show_notice_fille, $option_show_expl;
 
 require_once($class_path."/search.class.php");
 require_once($class_path."/mono_display_expl.class.php");
@@ -149,10 +151,12 @@ function print_results($sc,$table,$url,$url_to_search_form,$hidden_form=true,$se
 		}
 	} else print "<br />".$msg["1915"]." ";
 
-	print "<input type='button' class='bouton' onClick=\"document.search_form.action='$url_to_search_form'; document.search_form.target='$search_target'; document.search_form.submit(); return false;\" value=\"".$msg["search_back"]."\"/>";
+	print searcher::get_quick_actions("EXPL");
+	print "<br/><input type='button' class='bouton' onClick=\"document.search_form.action='$url_to_search_form'; document.search_form.target='$search_target'; document.search_form.submit(); return false;\" value=\"".$msg["search_back"]."\"/>";
 	
 	// transformation de la recherche en multicritères: on reposte tout avec mode=6
 	print "&nbsp;<input  type='button' class='bouton' onClick='document.search_transform.submit(); return false;' value=\"".$msg["search_expl_to_notice_transformation"]."\"/>";
+	print searcher::get_check_uncheck_all_buttons();
 	print "<form name='search_transform' action='./catalog.php?categ=search&mode=6&sub=launch'  method='post' style='display:none;'>";	
 	foreach($_POST as $key =>$val) {
 		if($val) {

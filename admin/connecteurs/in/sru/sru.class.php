@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sru.class.php,v 1.13 2017-07-12 15:15:02 tsamson Exp $
+// $Id: sru.class.php,v 1.14 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -95,7 +95,7 @@ class sru extends connector {
     /*Renvoi le formulaire de propri�t� de la source
      */
     public function source_get_property_form($source_id) {
-    	global $charset, $base_path;
+    	global $charset, $base_path, $url;
 //    	
 //R�cup�ration des param�tres de la source
 //
@@ -131,9 +131,9 @@ class sru extends connector {
 		<div class='row'>
 		";
 		
-		if (!$url) 
+		if (empty($url)) {
 			$form.="<h3 style='text-align:center'>".$this->msg["rec_addr"]."</h3>";
-		else {
+		} else {
 //	
 //Demande au serveur des propri�t�s de la source
 //

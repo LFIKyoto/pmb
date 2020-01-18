@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scheduler_caddie.class.php,v 1.4 2018-11-13 12:14:03 dgoron Exp $
+// $Id: scheduler_caddie.class.php,v 1.5 2019-06-10 08:57:12 btafforeau Exp $
 
 require_once($class_path."/scheduler/scheduler_task.class.php");
 require_once($class_path."/parameters.class.php");
@@ -85,7 +85,7 @@ class scheduler_caddie extends scheduler_task {
 											}
 											$liste = array_merge($liste_0,$liste_1);
 											if(count($liste)) {
-												while(list($cle, $object) = each($liste)) {
+											    foreach ($liste as $cle => $object) {
 													$myCart->pointe_item($object,$myCart_selected->type);
 												}
 											}
@@ -158,7 +158,7 @@ class scheduler_caddie extends scheduler_task {
 										$nb_elements_total=count($liste);
 											
 										if($nb_elements_total){
-											while(list($cle, $object) = each($liste)) {
+										    foreach ($liste as $cle => $object) {
 												$myCart->reindex_object($object);
 											}
 										}

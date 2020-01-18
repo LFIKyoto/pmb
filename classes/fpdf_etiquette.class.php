@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fpdf_etiquette.class.php,v 1.10 2017-02-01 09:54:16 dgoron Exp $
+// $Id: fpdf_etiquette.class.php,v 1.11 2019-06-06 12:17:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -56,7 +56,7 @@ class FPDF_Etiquette extends FPDF
 	*                              Public methods                               *
 	*                                                                           *
 	****************************************************************************/
-	public function FPDF_Etiquette($nbrXSticks, $nbrYSticks, $orientation='P',$unit='mm',$format='A4')
+	public function __construct($nbrXSticks, $nbrYSticks, $orientation='P',$unit='mm',$format='A4')
 	{
 		parent::__construct($orientation, $unit, $format);
 	

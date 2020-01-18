@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external_common.inc.php,v 1.24 2018-11-30 09:23:39 dgoron Exp $
+// $Id: external_common.inc.php,v 1.26 2019-07-03 07:03:42 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $from_mode, $external_env, $external_type, $class_path, $include_path, $code, $search, $serialized_search;
 
 if(!isset($from_mode)) $from_mode = '';
 if(!isset($external_env)) $external_env = '';
@@ -173,11 +175,11 @@ if ($_SESSION["ext_type"]=="simple") {
 		    		${$op}=$op_;
 		    		    			
 		    		//contenu de la recherche
-		    		$field="field_0_".$search[0];
-		    		$field_=array();
-		    		$field_[0]=$code;
+		    		$field = "field_0_".$search[0];
+		    		$field_array_ = array();
+		    		$field_array_[0] = $code;
 		    		global ${$field};
-		    		${$field}=$field_;
+		    		${$field} = $field_array_;
 		    	    	
 		    		//opérateur inter-champ
 		    		$inter="inter_0_".$search[0];

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: template.class.php,v 1.3 2018-12-20 11:00:19 mbertin Exp $
+// $Id: template.class.php,v 1.4 2019-06-11 08:53:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -167,7 +167,7 @@ class template {
 		global $action;
 		
 		$id = intval($id);
-		$class_name = get_called_class();
+		$class_name = static::class;
 		$template_instance = static::get_template_instance($id);
 		
 		switch ($action) {

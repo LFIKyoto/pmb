@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: collections.inc.php,v 1.17 2017-08-04 07:23:56 dgoron Exp $
+// $Id: collections.inc.php,v 1.18 2019-06-03 07:04:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $msg, $tri_param, $entities_collections_controller, $id;
 
 // fonctions communes aux pages de gestion des autorités
 require('./autorites/auth_common.inc.php');

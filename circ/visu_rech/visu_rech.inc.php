@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: visu_rech.inc.php,v 1.11 2012-02-15 14:46:23 dgoron Exp $
+// $Id: visu_rech.inc.php,v 1.12 2019-05-31 07:52:31 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -56,7 +56,7 @@ switch($mode) {
 		include('./circ/resa/view_serial.inc.php');
 		break;
 	default :
-		if ($ex_query) {
+		if (!empty($ex_query)) {
 			$back_to_visu=1;
 			include('./circ/visu_ex.inc.php');
 		} else{

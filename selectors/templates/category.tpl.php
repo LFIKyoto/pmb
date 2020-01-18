@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: category.tpl.php,v 1.39 2018-05-26 09:13:54 dgoron Exp $
+// $Id: category.tpl.php,v 1.40 2019-05-21 09:12:35 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -126,6 +126,9 @@ function set_parent_w(f_caller, id_value, libelle_value,w,callback,id_thesaurus)
 			if (i==n_aut_link) w.parent.add_aut_link();
 			
 			var selObj = w.parent.document.getElementById('f_aut_link_table_list');
+            if (!selObj) {
+                selObj = w.parent.document.getElementById('f_aut_link_table_list_' + i);
+            }
 			var selIndex=selObj.selectedIndex;
 			w.parent.document.getElementById('f_aut_link_table'+i).value= selObj.options[selIndex].value;
 			

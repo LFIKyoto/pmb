@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sort.inc.php,v 1.6 2018-10-18 09:04:00 ngantier Exp $
+// $Id: sort.inc.php,v 1.8.4.1 2019-11-04 11:17:15 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -13,10 +13,14 @@ include($include_path."/templates/sort.tpl.php");
 switch($sub){
 	case 'get_sort':
 		$display = '';
-		$sort = new sort('notices','session');
+		
+		if (empty($sort_name)) {
+		    $sort_name = "notices";
+		}
+		$sort = new sort($sort_name,'session');
 		
 		//Si vidage historique des tris demandé ?
-		if ($raz_sort && suppr_ids) {
+		if ($raz_sort && $suppr_ids) {
 			$suppr_sort_ids = array();
 			$suppr_sort_ids = explode(",",$suppr_ids);
 			if (count($suppr_sort_ids)) {
@@ -25,7 +29,7 @@ switch($sub){
 		}
 		
 		if (isset($_GET['page_en_cours'])) {
-			$page_en_cours=$_GET['page_en_cours'];
+		    $page_en_cours=htmlentities($_GET['page_en_cours'],ENT_QUOTES,$charset);
 		}
 		
 		if (isset($params)) {

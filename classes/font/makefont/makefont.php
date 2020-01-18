@@ -363,7 +363,7 @@ function MakeFont($fontfile,$afmfile,$enc='cp1252',$patch=array(),$type='TrueTyp
 		if($type=='Type1')
 		{
 			//Find first two sections and discard third one
-			$header=(ord($file{0})==128);
+			$header=(ord(substr($file, 0, 1))==128);
 			if($header)
 			{
 				//Strip first binary header
@@ -373,7 +373,7 @@ function MakeFont($fontfile,$afmfile,$enc='cp1252',$patch=array(),$type='TrueTyp
 			if(!$pos)
 				die('<B>Error:</B> font file does not seem to be valid Type1');
 			$size1=$pos+6;
-			if($header and ord($file{$size1})==128)
+			if($header and ord(substr($file, $size1, 1))==128)
 			{
 				//Strip second binary header
 				$file=substr($file,0,$size1).substr($file,$size1+6);

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authperso_admin.tpl.php,v 1.7 2017-11-07 15:33:07 ngantier Exp $
+// $Id: authperso_admin.tpl.php,v 1.9 2019-05-27 12:57:30 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $authperso_list_tpl, $authperso_list_line_tpl, $authperso_form_tpl, $msg, $charset;
 
 $authperso_list_tpl="	
 <h1>".htmlentities($msg["admin_authperso"], ENT_QUOTES, $charset)."</h1>			

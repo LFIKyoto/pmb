@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_datasource_monitoring_website.class.php,v 1.14 2018-12-13 15:19:36 dgoron Exp $
+// $Id: docwatch_datasource_monitoring_website.class.php,v 1.16 2019-02-26 15:14:08 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -151,7 +151,8 @@ class docwatch_datasource_monitoring_website extends docwatch_datasource{
 			$informations = array();
 			$loaded=false;
 			$aCurl = new Curl();
-			$aCurl->timeout=2;
+			$aCurl->set_option('CURLOPT_SSL_VERIFYPEER',false);
+			$aCurl->timeout=15;
 			$content = $aCurl->get($link);
 			$html=$content->body;
 			if($html && $content->headers['Status-Code'] == 200){
@@ -161,6 +162,14 @@ class docwatch_datasource_monitoring_website extends docwatch_datasource{
 					$old_errors_value = false;
 					if(libxml_use_internal_errors(true)){
 						$old_errors_value = true;
+					}
+					$get_encode=array();
+					if(preg_match("/<.*?charset[ ]*=[ ]*[\"'](.*?)[\"'].*?>/",$html,$get_encode) && isset($get_encode[1])){
+						if(pmb_strtolower($get_encode[1]) == 'utf-8'){
+							$html='<?xml encoding="utf-8" ?>'.$html;
+						}elseif((pmb_strtolower($get_encode[1]) == 'iso-8859-1') || (pmb_strtolower($get_encode[1]) == 'iso-8859-15')){
+							$html='<?xml encoding="iso-8859-1" ?>'.$html;
+						}
 					}
 					$loaded = $dom->loadHTML($html);
 					if($loaded) {

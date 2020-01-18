@@ -101,19 +101,24 @@
 		</link>
 	</field>
 	
+	<!-- message -->
+	<field name="msg:empr_msg" type="text" value="m" id="13" filterable="no" sortable="no" displayable="yes">
+		<tablefield>empr_msg</tablefield>
+	</field>
+	
 	</fixedfields>
 	<specialfields>
 		<field name="msg:add_empr_cart" id="1" function="iconepanier">
 		</field>
-		<field name="msg:relance_dernier_niveau" id="2" function="filter_niveau" defaultvalue="msg:all_level_relances">
+		<field name="msg:relance_dernier_niveau" id="2" function="relance::filter_niveau" defaultvalue="msg:all_level_relances">
 			<param>level_min</param>
 		</field>
-		<field name="msg:relance_niveau_suppose" id="3" function="filter_niveau" defaultvalue="msg:all_level_relances">
+		<field name="msg:relance_niveau_suppose" id="3" function="relance::filter_niveau" defaultvalue="msg:all_level_relances">
 			<param>level_normal</param>
 		</field>
 		<field name="msg:empr_nb_pret" id="4" function="get_nbpret" defaultvalue="msg:empr_nb_pret">
 		</field>
-		<field name="msg:empr_filter_expl_loc" id="13" function="filter_loc_expl" defaultvalue="msg:all_location"/>
+		<field name="msg:empr_filter_expl_loc" id="13" function="relance::filter_loc_expl" defaultvalue="msg:all_location"/>
 	</specialfields>
 	
 	<!-- Table de référence pour les champs personnalisés de prêts -->

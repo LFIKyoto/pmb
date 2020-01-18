@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_bdp.inc.php,v 1.23 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: func_bdp.inc.php,v 1.25 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -16,58 +16,11 @@ function import_new_notice_suite() {
 	global $index_sujets ;
 	global $pmb_keyword_sep ;
 	
-	global $info_600_a, $info_600_j, $info_600_x, $info_600_y, $info_600_z ;
-	global $info_601_a, $info_601_j, $info_601_x, $info_601_y, $info_601_z ;
-	global $info_602_a, $info_602_j, $info_602_x, $info_602_y, $info_602_z ;
-	global $info_605_a, $info_605_j, $info_605_x, $info_605_y, $info_605_z ;
-	global $info_606_a, $info_606_j, $info_606_x, $info_606_y, $info_606_z ;
-	global $info_607_a, $info_607_j, $info_607_x, $info_607_y, $info_607_z ;
-
 	if (is_array($index_sujets)) $mots_cles = implode (" $pmb_keyword_sep ",$index_sujets);
 		else $mots_cles = $index_sujets;
 	
-	for ($a=0; $a<sizeof($info_600_a); $a++) {
-		$mots_cles .= " $pmb_keyword_sep ".$info_600_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_600_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_600_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_600_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_600_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_600_z[$a][$j] ;
-		}
-	for ($a=0; $a<sizeof($info_601_a); $a++) {
-		$mots_cles .= " $pmb_keyword_sep ".$info_601_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_601_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_601_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_601_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_601_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_601_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_601_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_601_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_601_z[$a][$j] ;
-		}
-	for ($a=0; $a<sizeof($info_602_a); $a++) {
-		$mots_cles .= " $pmb_keyword_sep ".$info_602_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_602_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_602_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_602_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_602_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_602_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_602_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_602_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_602_z[$a][$j] ;
-		}
-	for ($a=0; $a<sizeof($info_605_a); $a++) {
-		$mots_cles .= " $pmb_keyword_sep ".$info_605_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_605_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_605_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_605_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_605_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_605_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_605_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_605_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_605_z[$a][$j] ;
-		}
-	for ($a=0; $a<sizeof($info_606_a); $a++) {
-		$mots_cles .= " $pmb_keyword_sep ".$info_606_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_606_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_606_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_606_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_606_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_606_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_606_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_606_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_606_z[$a][$j] ;
-		}
-	for ($a=0; $a<sizeof($info_607_a); $a++) {
-		$mots_cles .= " $pmb_keyword_sep ".$info_607_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_607_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_607_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_607_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_607_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_607_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_607_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_607_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_607_z[$a][$j] ;
-		}
+	$mots_cles .= import_records::get_mots_cles();
+	
 	$mots_cles ? $index_matieres = strip_empty_words($mots_cles) : $index_matieres = '';
 	$rqt_maj = "update notices set index_l='".addslashes($mots_cles)."', index_matieres=' ".addslashes($index_matieres)." ' where notice_id='$notice_id' " ;
 	pmb_mysql_query($rqt_maj, $dbh);
@@ -83,8 +36,9 @@ function traite_exemplaires () {
 	// lu en 010$d de la notice
 	$price = $prix[0];
 	
+	$nb_infos_995 = count($info_995);
 	// la zone 995 est répétable
-	for ($nb_expl = 0; $nb_expl < sizeof ($info_995); $nb_expl++) {
+	for ($nb_expl = 0; $nb_expl < $nb_infos_995; $nb_expl++) {
 		/* RAZ expl */
 		$expl = array();
 		
@@ -188,46 +142,5 @@ function traite_exemplaires () {
 
 // fonction spécifique d'export de la zone 995
 function export_traite_exemplaires ($ex=array()) {
-	
-	$subfields["a"] = $ex -> lender_libelle;
-	$subfields["c"] = $ex -> lender_libelle;
-	$subfields["f"] = $ex -> expl_cb;
-	$subfields["k"] = $ex -> expl_cote;
-	$subfields["u"] = $ex -> expl_note;
-
-	if ($ex->statusdoc_codage_import) $subfields["o"] = $ex -> statusdoc_codage_import;
-	if ($ex -> tdoc_codage_import) $subfields["r"] = $ex -> tdoc_codage_import;
-		else $subfields["r"] = "uu";
-	if ($ex -> sdoc_codage_import) $subfields["q"] = $ex -> sdoc_codage_import;
-		else $subfields["q"] = "u";
-	
-	global $export996 ;
-	$export996['f'] = $ex -> expl_cb ;
-	$export996['k'] = $ex -> expl_cote ;
-	$export996['u'] = $ex -> expl_note ;
-
-	$export996['m'] = substr($ex -> expl_date_depot, 0, 4).substr($ex -> expl_date_depot, 5, 2).substr($ex -> expl_date_depot, 8, 2) ;
-	$export996['n'] = substr($ex -> expl_date_retour, 0, 4).substr($ex -> expl_date_retour, 5, 2).substr($ex -> expl_date_retour, 8, 2) ;
-
-	$export996['a'] = $ex -> lender_libelle;
-	$export996['b'] = $ex -> expl_owner;
-
-	$export996['v'] = $ex -> location_libelle;
-	$export996['w'] = $ex -> ldoc_codage_import;
-
-	$export996['x'] = $ex -> section_libelle;
-	$export996['y'] = $ex -> sdoc_codage_import;
-
-	$export996['e'] = $ex -> tdoc_libelle;
-	$export996['r'] = $ex -> tdoc_codage_import;
-
-	$export996['1'] = $ex -> statut_libelle;
-	$export996['2'] = $ex -> statusdoc_codage_import;
-	$export996['3'] = $ex -> pret_flag;
-	
-	global $export_traitement_exemplaires ;
-	$export996['0'] = $export_traitement_exemplaires ;
-	
-	return 	$subfields ;
-
-	}	
+	return import_expl::export_traite_exemplaires($ex);
+}	

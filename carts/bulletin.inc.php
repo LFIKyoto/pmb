@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bulletin.inc.php,v 1.15 2016-10-20 09:29:15 ngantier Exp $
+// $Id: bulletin.inc.php,v 1.16.6.1 2019-10-30 08:15:48 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $item, $action, $idcaddie, $include_child, $include_analysis, $what, $aff, $msg;
 
 if($item) {
 	$item_list = explode(',', $item);
@@ -31,6 +33,14 @@ if($item) {
 						}	
 					} else {
 						$myCart->add_item($elt,"BULL",$what);
+					}
+					if($include_analysis && $myCart->type == 'NOTI') {
+					    $tab_list_child=bulletinage::get_list_analysis($elt);
+					    if(count($tab_list_child)) {
+					        foreach ($tab_list_child as $notice_id) {
+					            $myCart->add_item($notice_id,"NOTI");
+					        }
+					    }
 					}
 				}
 				$myCart->compte_items();

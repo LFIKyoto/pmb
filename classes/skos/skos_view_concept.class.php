@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: skos_view_concept.class.php,v 1.9 2018-12-28 15:15:37 ngantier Exp $
+// $Id: skos_view_concept.class.php,v 1.11.6.1 2019-11-20 17:00:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -117,11 +117,18 @@ class skos_view_concept {
 			    foreach ($vedette_elements as $subdivision => $elements) {
 			        if($subdivision_header['code'] == $subdivision) {
     			        foreach ($elements as $element) {
-    			            $display_datas['composed_concept_elements'][$vedette->get_subdivision_name_by_code($subdivision)][] = array(
-    			                'type' => get_msg_to_display($concept->get_vedette()->get_at_available_field_num($element->get_type())['name']),
-    			                'label' => $element->get_isbd(),
-    			                'link' => str_replace("!!id!!", $element->get_db_id(), $element->get_link_see())
-    			            );
+    			            if ($element->get_db_id()) {
+        			        	if (isset($element->get_params()['authperso_name'])) {
+        			        		$type = $element->get_params()['authperso_name'];
+        			        	} else {
+        			        		$type = get_msg_to_display($concept->get_vedette()->get_at_available_field_num($element->get_type())['name']);
+        			        	}
+        			            $display_datas['composed_concept_elements'][$vedette->get_subdivision_name_by_code($subdivision)][] = array(
+        			                'type' => $type,
+        			                'label' => $element->get_isbd(),
+        			                'link' => str_replace("!!id!!", $element->get_db_id(), $element->get_link_see())
+        			            );
+    			            }
     			        }
 			        }
 			    }
@@ -130,7 +137,21 @@ class skos_view_concept {
 		return self::render($display_datas, "skos_view_concept_detail_concept");
 	}
 	
-		
+	static public function get_alter_hidden_list_concept($concept) {
+	    $display_datas = array();
+	    
+	    $datas = $concept->get_details();
+	    $formatted_datas = array();
+	    foreach ($datas as $property => $values){
+	        if ($property == "http://www.w3.org/2004/02/skos/core#altLabel" || $property == "http://www.w3.org/2004/02/skos/core#hiddenLabel") {
+    	        $formatted_datas[$property]['values'] = $values;
+    	        $formatted_datas[$property]['label'] = skos_onto::get_property_label("http://www.w3.org/2004/02/skos/core#Concept", $property);
+	        }
+	    }
+	    $display_datas['properties'] = $formatted_datas;
+	    return self::render($display_datas, "skos_view_concept_detail_concept");
+	}
+	
 	/**
 	 * Retourne l'affichage de la liste des autorités indexées avec le concept
 	 * @param skos_concept $concept
@@ -142,7 +163,6 @@ class skos_view_concept {
 		$indexed_authorities = $concept->get_indexed_authorities();
 		foreach ($indexed_authorities as $type => $authorities) {
 			foreach ($authorities as $authority) {
-// 				/var_dump($authority);
 				switch ($type) {
 					case 'author' :
 						if (!isset($datas['authorities']['author'])) {

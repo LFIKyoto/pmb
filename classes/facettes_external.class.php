@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facettes_external.class.php,v 1.12 2018-12-20 11:00:19 mbertin Exp $
+// $Id: facettes_external.class.php,v 1.14.6.2 2019-11-27 10:38:52 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -146,6 +146,7 @@ class facettes_external extends facettes_root {
 					if(document.getElementById('filtre_compare_form_values')) {
 						document.getElementById('filtre_compare_form_values').value='filter';
 					}
+					document.form_values.page.value = 1;
 					document.search_form.submit();
 					return true;
 				} else {
@@ -154,6 +155,7 @@ class facettes_external extends facettes_root {
 			}
 			function facettes_external_valid_facette(datas){
 				facettes_external_add_searchform(JSON.stringify(datas));
+		        document.form_values.page.value = 1;
 				document.search_form.submit();
 				return true;
 			}
@@ -163,6 +165,7 @@ class facettes_external extends facettes_root {
 				input_form_values.setAttribute('name', 'reinit_facettes_external');
 				input_form_values.setAttribute('value', '1');
 				document.forms['search_form'].appendChild(input_form_values);
+		        document.form_values.page.value = 1;
 				document.search_form.submit();
 				return true;
 			}
@@ -195,6 +198,9 @@ class facettes_external extends facettes_root {
 		static::destroy_global_env(false); // false = sans destruction de la variable de session
 		
 		//creation des globales => parametres de recherche
+		if(empty($search)) {
+			$search = array();
+		}
 		$nb_search = count($search);
 		if ($_SESSION['facettes_external']) {
 			for ($i=0;$i<count($_SESSION['facettes_external']);$i++) {
@@ -287,6 +293,11 @@ class facettes_external extends facettes_root {
 	protected static function get_link_not_clicked($name, $label, $code_champ, $code_ss_champ, $id, $nb_result) {
 		$datas = array($name, $label, $code_champ, $code_ss_champ, $id, $nb_result);
 		$link = "facettes_external_valid_facette(".encoding_normalize::json_encode($datas).");"; 
+		return $link;
+	}
+	
+	protected static function get_link_reinit_facettes() {
+		$link = "facettes_external_reinit();";
 		return $link;
 	}
 	

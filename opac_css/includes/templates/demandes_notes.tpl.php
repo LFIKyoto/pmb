@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_notes.tpl.php,v 1.8 2018-01-25 10:13:28 dgoron Exp $
+// $Id: demandes_notes.tpl.php,v 1.9 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $form_dialog_note;
+global $form_dialog_note, $msg, $charset;
 
 $form_dialog_note="
 <script src='./javascript/tablist.js' type='text/javascript'></script>

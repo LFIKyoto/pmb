@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_instruments.class.php,v 1.3 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: nomenclature_instruments.class.php,v 1.4 2019-06-27 13:57:54 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -53,11 +53,11 @@ class nomenclature_instruments{
 	
 	} // end of member function add_instrument
 	
-	public function get_data() {
+	public function get_data($duplicate = false) {
 		$data=array();
 		
 		foreach($this->instruments  as $instrument){
-			$data[]=$instrument->get_data();
+		    $data[]=$instrument->get_data($duplicate);
 		}
 		return($data);
 	}

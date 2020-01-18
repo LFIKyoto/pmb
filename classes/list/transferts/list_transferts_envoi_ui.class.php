@@ -2,17 +2,13 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_transferts_envoi_ui.class.php,v 1.1 2018-12-27 10:05:22 dgoron Exp $
+// $Id: list_transferts_envoi_ui.class.php,v 1.1.6.1 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path.'/list/transferts/list_transferts_ui.class.php');
 
 class list_transferts_envoi_ui extends list_transferts_ui {
-	
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	protected function get_title() {
 		global $msg;

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_instrument.tpl.php,v 1.3 2018-07-05 15:32:20 vtouchard Exp $
+// $Id: nomenclature_instrument.tpl.php,v 1.4 2019-05-27 12:35:59 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $nomenclature_instrument_dialog_tpl, $msg;
 
 $nomenclature_instrument_dialog_tpl = "
 <div style='width: 400px; height: 500px; overflow: auto;'>

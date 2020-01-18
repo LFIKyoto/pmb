@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions.class.php,v 1.44 2017-07-10 13:01:34 tsamson Exp $
+// $Id: suggestions.class.php,v 1.47 2019-07-24 09:08:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -38,7 +38,7 @@ class suggestions{
 	
 	//Constructeur.	 
 	public function __construct($id_suggestion=0) {
-		$this->id_suggestion = $id_suggestion+0;
+		$this->id_suggestion = intval($id_suggestion);
 		if ($this->id_suggestion) {
 			$this->load();	
 		}
@@ -52,31 +52,33 @@ class suggestions{
 		
 		$q = "select * from suggestions left join explnum_doc_sugg on num_suggestion=id_suggestion where id_suggestion = '".$this->id_suggestion."' ";
 		$r = pmb_mysql_query($q, $dbh) ;
-		$obj = pmb_mysql_fetch_object($r);
-		$this->titre = $obj->titre;
-		$this->editeur = $obj->editeur;
-		$this->auteur = $obj->auteur;
-		$this->code = $obj->code;
-		$this->prix = $obj->prix;
-		$this->nb = $obj->nb;
-		$this->commentaires = $obj->commentaires;
-		$this->commentaires_gestion = $obj->commentaires_gestion;
-		$this->date_creation = $obj->date_creation;
-		$this->date_decision = $obj->date_decision;
-		$this->statut = $obj->statut;
-		$this->num_produit = $obj->num_produit;
-		$this->num_entite = $obj->num_entite;
-		$this->num_rubrique  = $obj->num_rubrique ;
-		$this->num_fournisseur = $obj->num_fournisseur;
-		$this->num_notice = $obj->num_notice;
-		$this->index_suggestion = $obj->index_suggestion;
-		$this->url_suggestion = $obj->url_suggestion;
-		$this->num_categ = $obj->num_categ;
-		$this->sugg_location = $obj->sugg_location;
-		$this->date_publi = $obj->date_publication;
-		$this->sugg_src = $obj->sugg_source;
-		$this->sugg_explnum = $obj->num_explnum_doc;
-		$this->sugg_noti_unimarc = $obj->notice_unimarc;
+		if(pmb_mysql_num_rows($r)) {
+    		$obj = pmb_mysql_fetch_object($r);
+    		$this->titre = $obj->titre;
+    		$this->editeur = $obj->editeur;
+    		$this->auteur = $obj->auteur;
+    		$this->code = $obj->code;
+    		$this->prix = $obj->prix;
+    		$this->nb = $obj->nb;
+    		$this->commentaires = $obj->commentaires;
+    		$this->commentaires_gestion = $obj->commentaires_gestion;
+    		$this->date_creation = $obj->date_creation;
+    		$this->date_decision = $obj->date_decision;
+    		$this->statut = $obj->statut;
+    		$this->num_produit = $obj->num_produit;
+    		$this->num_entite = $obj->num_entite;
+    		$this->num_rubrique  = $obj->num_rubrique ;
+    		$this->num_fournisseur = $obj->num_fournisseur;
+    		$this->num_notice = $obj->num_notice;
+    		$this->index_suggestion = $obj->index_suggestion;
+    		$this->url_suggestion = $obj->url_suggestion;
+    		$this->num_categ = $obj->num_categ;
+    		$this->sugg_location = $obj->sugg_location;
+    		$this->date_publi = $obj->date_publication;
+    		$this->sugg_src = $obj->sugg_source;
+    		$this->sugg_explnum = $obj->num_explnum_doc;
+    		$this->sugg_noti_unimarc = $obj->notice_unimarc;
+		}
 	}
 
 	
@@ -317,7 +319,7 @@ class suggestions{
 	
 	
 	//Retourne une requete pour liste des suggestions par statut pour une bibliothèque
-	public static function listSuggestions($id_bibli=0, $statut='-1', $num_categ='-1', $mask, $debut=0, $nb_per_page=0, $aq=0, $order='',$location=0, $user_input='',$source=0, $user_id=0, $user_statut='-1', $date_inf='', $date_sup='') {
+	public static function listSuggestions($id_bibli=0, $statut='-1', $num_categ='-1', $mask, $debut=0, $nb_per_page=0, $aq=0, $order='',$location=0, $user_input='',$source=0, $user_id=0, $user_statut = array(), $date_inf='', $date_sup='') {
 		
 		if($source) 
 			$filtre_src = " sugg_source = '".$source."' ";

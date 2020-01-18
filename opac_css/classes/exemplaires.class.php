@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: exemplaires.class.php,v 1.3 2017-07-26 07:57:49 dgoron Exp $
+// $Id: exemplaires.class.php,v 1.4.4.1 2019-10-21 14:45:11 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -71,10 +71,12 @@ class exemplaires {
 			global $opac_sur_location_activate;
 			global $opac_view_filter_class;
 			global $opac_expl_data;
-			global $opac_show_exemplaires;
+			global $memo_p_perso_expl;
 			global $opac_show_exemplaires_analysis;
 			
 			$this->data = array();
+			$this->data['expls'] = array();
+			$this->data['colonnesarray'] = array();
 // 			if((is_null($this->dom_2) && $opac_show_exemplaires && $this->is_visu_expl() && (!$this->is_visu_expl_abon() || ($this->is_visu_expl_abon() && $_SESSION["user_code"]))) || ($this->get_rights() & 8)) {
 				if($opac_view_filter_class){
 					if(!sizeof($opac_view_filter_class->params["nav_sections"])){
@@ -104,8 +106,12 @@ class exemplaires {
 				$surloc_field="";
 				if ($opac_sur_location_activate==1) $surloc_field="surloc_libelle,";
 				if (!$opac_expl_data) $opac_expl_data="tdoc_libelle,".$surloc_field."location_libelle,section_libelle,expl_cote";
-				$colonnesarray=explode(",",$opac_expl_data);
 				
+				//Présence de champs personnalisés
+				if (strstr($opac_expl_data, "#")) {
+				    if(!$memo_p_perso_expl)	$memo_p_perso_expl=new parametres_perso("expl");
+				}
+				$colonnesarray=explode(",",$opac_expl_data);
 				$this->data['colonnesarray'] = $colonnesarray;
 		
 				if ($result && pmb_mysql_num_rows($result)) {
@@ -134,9 +140,19 @@ class exemplaires {
 						);
 						
 						foreach ($colonnesarray as $colonne) {
-							$expl_datas[$colonne] = $expl->{$colonne};
+						    if (substr($colonne,0,1)=="#") {
+						        //champs personnalisés
+						        $cp_id=substr($colonne,1);
+						        $memo_p_perso_expl->get_values($expl->expl_id);
+						        if (!$memo_p_perso_expl->no_special_fields) {
+						            $temp=$memo_p_perso_expl->get_formatted_output((isset($memo_p_perso_expl->values[$cp_id]) ? $memo_p_perso_expl->values[$cp_id] : array()), $cp_id);
+						            if (!$temp) $temp="&nbsp;";
+						            $expl_datas[$colonne] = $temp;
+						        }
+						    } else {
+						        $expl_datas[$colonne] = $expl->{$colonne};
+						    }
 						}
-						
 						if($expl->pret_retour) { // exemplaire sorti
 							$rqt_empr = "SELECT empr_nom, empr_prenom, id_empr FROM empr WHERE id_empr='".$expl->pret_idempr."' ";
 							$res_empr = pmb_mysql_query($rqt_empr);

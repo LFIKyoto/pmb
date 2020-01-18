@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: frbr_entity_common_view_django.xml,v 1.3 2018-06-13 06:21:51 dgoron Exp $ -->
+$Id: frbr_entity_common_view_django.xml,v 1.3.6.1 2019-10-23 13:32:54 dgoron Exp $ -->
 
 <XMLlist>
 	<entry code="frbr_entity_common_view_django_add_template">Ajouter un template</entry>
@@ -26,6 +26,7 @@ $Id: frbr_entity_common_view_django.xml,v 1.3 2018-06-13 06:21:51 dgoron Exp $ -
 	<entry code="frbr_entity_common_view_django_session_vars_opac_url_desc">Variable $opac_url_base</entry>
 	<entry code="frbr_entity_common_view_django_session_vars_platform_desc">Nom du système d'exploitation</entry>
 	<entry code="frbr_entity_common_view_django_session_vars_browser_desc">Nom du navigateur</entry>
+	<entry code="frbr_entity_common_view_django_session_vars_server_addr_desc">Adresse IP du serveur</entry>
 	<entry code="frbr_entity_common_view_django_session_vars_empr_nom_desc">Nom de l'emprunteur</entry>
 	<entry code="frbr_entity_common_view_django_session_vars_empr_prenom_desc">Prénom de l'emprunteur</entry>
 	<entry code="frbr_entity_common_view_django_session_vars_empr_mail_desc">Mail de l'emprunteur</entry>

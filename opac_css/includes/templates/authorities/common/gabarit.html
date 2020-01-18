@@ -1,4 +1,4 @@
-<!-- $Id: gabarit.html,v 1.8 2018-07-05 12:58:03 ccraig Exp $ -->
+<!-- $Id: gabarit.html,v 1.10 2019-05-22 08:03:41 ngantier Exp $ -->
 
 <style type="text/css">
 .aut_display_table {
@@ -32,7 +32,9 @@
 						<div id="authority_display_table" class="aut_display_table">
 							{% block aut_see %}
 								{% if authority.thumbnail_url %}
-									{{ authority.thumbnail }}
+									<div class="vignetteAuthorite">
+										{{ authority.thumbnail }}
+									</div>
 								{% endif %}
 								{% block title %}
 									<h3>{{authority.isbd}}</h3>
@@ -88,6 +90,8 @@
 											</div>
 										{% endif %}
 									{% endfor %}
+								{% endblock %}							
+								{% block map %}
 								{% endblock %}
 								{% block enrichment %}
 								{% endblock %}

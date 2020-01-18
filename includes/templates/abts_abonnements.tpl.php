@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abts_abonnements.tpl.php,v 1.36 2018-03-08 14:24:04 plmrozowski Exp $
+// $Id: abts_abonnements.tpl.php,v 1.39.2.1 2019-10-09 07:44:03 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 global $abonnement_view,$abonnement_list,$abonnement_form;
-
-global $antivol_form;
+global $antivol_form, $msg, $creation_abonnement_form, $edition_abonnement_form, $current_module, $tpl_calendrier, $abonnement_serialcirc_empr_list_empr, $abonnement_serialcirc_empr_list_group, $abonnement_serialcirc_empr_list_group_elt, $admin_abts_status_form;
+global $pmb_serialcirc_active;
 
 $abonnement_view = "
 <div id='abts_abonnement!!id_abonnement!!' class='notice-parent'>
@@ -61,7 +61,7 @@ $abonnement_view = "
 		!!serialcirc_empr_list!! 
 		
 	</table>			
-	<input type='button' class='bouton' value='".$msg["serialcirc_diffusion_gestion_button"]."' onClick=\"document.location='./catalog.php?categ=serialcirc_diff&sub=view&num_abt=!!id_abonnement!!';\"/>&nbsp;
+	".($pmb_serialcirc_active ? "<input type='button' class='bouton' value='".$msg["serialcirc_diffusion_gestion_button"]."' onClick=\"document.location='./catalog.php?categ=serialcirc_diff&sub=view&num_abt=!!id_abonnement!!';\"/>&nbsp;" : "")."
 	!!serialcirc_export_list_bt!!	
 </div>
 ";
@@ -117,9 +117,16 @@ $abonnement_script1
 			</div>
 		</div>
 		<input type='hidden' name='num_notice' id='num_notice' value='!!num_notice!!'/>
-		<div class='row'>
-			
+		<div class='row'></div>
+        <div class='colonne2'>
+			<div class='row'>
+				<label for='abonnement_name_opac' class='etiquette'>".$msg["abonnements_nom_opac_abonnement"]."</label>
+			</div>
+			<div class='row'>
+				<input type='text' size='40' name='abt_name_opac' id='abt_name_opac' data-translation-fieldname='abt_name_opac' value='!!abt_name_opac!!'/>
+			</div>
 		</div>
+        <div class='row'></div>
 		<div class='colonne2'>
 			<div class='row'>
 				<label for='abonnement_name' class='etiquette'>".$msg["abonnements_liste_modele"]."</label>
@@ -211,6 +218,15 @@ $abonnement_script1
 			</div>
 		</div>
 		<div class='row'></div>
+        <div class='colonne2'>
+			<div class='row'>
+				<label for='abonnement_name_opac' class='etiquette'>".$msg["abonnements_nom_opac_abonnement"]."</label>
+			</div>
+			<div class='row'>
+				<input type='text' size='40' name='abt_name_opac' id='abt_name_opac' data-translation-fieldname='abt_name_opac' value='!!abt_name_opac!!'/>
+			</div>
+		</div>
+        <div class='row'></div>
 		<div class='colonne2'>
 			<div class='row'>
 				<label for='date_debut_lib' class='etiquette'>".$msg["abonnements_date_debut"]."</label>

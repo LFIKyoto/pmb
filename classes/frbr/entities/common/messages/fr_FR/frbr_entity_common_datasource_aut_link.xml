@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: frbr_entity_common_datasource_aut_link.xml,v 1.3 2017-09-15 14:47:30 vtouchard Exp $ -->
+$Id: frbr_entity_common_datasource_aut_link.xml,v 1.4 2019-01-18 14:36:27 dbellamy Exp $ -->
 
 <XMLlist>
 	<entry code="frbr_entity_common_datasource_aut_link_authors">Auteurs liés</entry>
@@ -13,10 +13,11 @@ $Id: frbr_entity_common_datasource_aut_link.xml,v 1.3 2017-09-15 14:47:30 vtouch
 	<entry code="frbr_entity_common_datasource_aut_link_concepts">Concepts liés</entry>
 	<entry code="frbr_entity_common_datasource_aut_link_publishers">Editeurs liés</entry>
 	<entry code="frbr_entity_common_datasource_aut_link_collections">Collections liées</entry>
-	<entry code="frbr_entity_common_datasource_aut_link_subcollections">Sous-collection liées</entry>
+	<entry code="frbr_entity_common_datasource_aut_link_subcollections">Sous-collections liées</entry>
 	<entry code="frbr_entity_common_datasource_aut_link_series">Titres de série liés</entry>
 	<entry code="frbr_entity_common_datasource_aut_link_works">Oeuvres liées</entry>
-	<entry code="frbr_entity_common_datasource_aut_link_indexint">Indexations décimales liés</entry>
+	<entry code="frbr_entity_common_datasource_aut_link_indexint">Indexations décimales liées</entry>
 	<entry code="frbr_entity_common_datasource_aut_link_type">Type de lien</entry>
 	<entry code="frbr_entity_common_datasource_aut_link_all_links">Tous</entry>	
+	<entry code="frbr_entity_common_datasource_aut_link_authpersos">Autorités personnalisées liées</entry>
 </XMLlist>

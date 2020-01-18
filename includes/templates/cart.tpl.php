@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cart.tpl.php,v 1.65 2018-05-25 13:35:28 dgoron Exp $
+// $Id: cart.tpl.php,v 1.68.6.1 2019-10-23 12:47:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $quelle, $include_path, $cart_form, $msg, $current_module, $liaison_tpl, $pmb_rfid_activate, $pmb_rfid_serveur_url, $rfid_port, $expl_cb_caddie_tmpl, $begin_result_expl_liste_unique, $cart_procs_form, $cart_proc_view_remote, $notice_linked_suppr_form, $bull_liked_suppr_form, $cart_choix_quoi, $cart_choix_quoi_not_ou_dep, $cart_choix_quoi_action, $cart_transfert_not_movable_expl_table, $cart_choix_quoi_exporter, $cart_choix_quoi_edition, $cart_choix_quoi_impr_cote, $cart_action_selector, $cart_action_selector_line, $cart_transfert_not_movable_expl_table_line;
 
 if(!isset($quelle)) $quelle = '';
 
@@ -49,6 +51,10 @@ $cart_form = "
 			<input type='text' class='saisie-80em' id='cart_comment' name='cart_comment' value='!!comment!!' />
 		</div>
 		<div class='row'>
+			<label class='etiquette' for='autorisations_all'>".$msg["caddie_autorisations_all"]."</label>
+			<input type='checkbox' id='autorisations_all' name='autorisations_all' value='1' !!autorisations_all!! />
+		</div>
+		<div class='row'>
 			<label class='etiquette' for='form_type'>".$msg['caddie_autorisations']."</label>
 			<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);'>
 			<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);'>
@@ -67,6 +73,9 @@ $cart_form = "
 		<div id='div_acces_rapide' class='row'>
 			<label class='etiquette' for='acces_rapide'>".$msg["caddie_fast_access"]."</label>&nbsp;<input type='checkbox' id='acces_rapide' name='acces_rapide' !!acces_rapide!!>
 		</div>
+		<div id='div_favorite_color' class='row'>
+			<label class='etiquette' for='favorite_color'>".$msg["caddie_favorite_color"]."</label>&nbsp;<input type='color' id='favorite_color' name='favorite_color' value='!!favorite_color!!'>
+		</div>
 	</div>
 	<!-- liaisons -->
 	<!--	boutons	-->
@@ -74,6 +83,7 @@ $cart_form = "
 		<div class='left'>
 			<input type='button' class='bouton' value='".$msg['76']."' onClick=\"!!formulaire_annuler!!\">&nbsp;
 			<input type='submit' value='".$msg['77']."' class='bouton' onClick=\"return test_form(this.form)\" />
+            !!button_duplicate!!
 			<input type='hidden' name='form_actif' value='1'>
 		</div>
 		<div class='right'>
@@ -252,6 +262,10 @@ $cart_procs_form = "
 			<input type='text' name='f_proc_comment' value='!!comment!!' maxlength='255' class='saisie-50em' />
 		</div>
 		<div class='row'>
+			<label class='etiquette' for='autorisations_all'>".$msg["procs_autorisations_all"]."</label>
+			<input type='checkbox' id='autorisations_all' name='autorisations_all' value='1' !!autorisations_all!! />
+		</div>
+		<div class='row'>
 			<label class='etiquette' for='form_comment'>".$msg['procs_autorisations']."</label>
 			<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);'>
 			<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);'>
@@ -367,14 +381,14 @@ $cart_choix_quoi = "
 		<div class=row>
 			<div class=colonne2>
 				<div class='row'>
-					<input type='checkbox' name='elt_flag' value='1' !!elt_flag_checked!!>".$msg['caddie_item_marque'];
-			if ($quelle=="supprbase" || $quelle=="supprpanier") $cart_choix_quoi .= "&nbsp;<input type='checkbox' name='elt_flag_inconnu' value='1'>".$msg['caddie_item_blob'];
+					<input type='checkbox' name='elt_flag' id='elt_flag' value='1' !!elt_flag_checked!!><label for='elt_flag'>".$msg['caddie_item_marque']."</label>";
+if ($quelle=="supprbase" || $quelle=="supprpanier") $cart_choix_quoi .= "&nbsp;<input type='checkbox' name='elt_flag_inconnu' id='elt_flag_inconnu' value='1'><label for='elt_flag_inconnu'>".$msg['caddie_item_blob']."</label>";
 			$cart_choix_quoi .= "
 				</div>
 				<!--<div class='row'>&nbsp;</div>-->
 				<div class='row'>
-					<input type='checkbox' name='elt_no_flag' value='1' !!elt_no_flag_checked!!>".$msg['caddie_item_NonMarque'];
-			if ($quelle=="supprbase" || $quelle=="supprpanier") $cart_choix_quoi .= "&nbsp;<input type='checkbox' name='elt_no_flag_inconnu' value='1'>".$msg['caddie_item_blob'];
+					<input type='checkbox' name='elt_no_flag' id='elt_no_flag' value='1' !!elt_no_flag_checked!!><label for='elt_no_flag'>".$msg['caddie_item_NonMarque']."</label>";
+			if ($quelle=="supprbase" || $quelle=="supprpanier") $cart_choix_quoi .= "&nbsp;<input type='checkbox' name='elt_no_flag_inconnu' id='elt_no_flag_inconnu' value='1'><label for='elt_no_flag_inconnu'>".$msg['caddie_item_blob']."</label>";
 			$cart_choix_quoi .= "
 				</div>
 			</div>
@@ -412,10 +426,10 @@ $cart_choix_quoi_action = "
 	<!--	Contenu du form	-->
 	<div class='form-contenu'>
 		<div class='row'>
-			<input type='checkbox' name='elt_flag' value='1'>".$msg['caddie_item_marque']."
+			<input type='checkbox' name='elt_flag' id='elt_flag' value='1'><label for='elt_flag'>".$msg['caddie_item_marque']."</label>
 		</div>
 		<div class='row'>
-			<input type='checkbox' name='elt_no_flag' value='1'>".$msg['caddie_item_NonMarque']."
+			<input type='checkbox' name='elt_no_flag' id='elt_no_flag' value='1'><label for='elt_no_flag'>".$msg['caddie_item_NonMarque']."</label>
 		</div>
 	</div>
 </form>
@@ -465,10 +479,10 @@ $cart_choix_quoi_edition = "
 	<!--	Contenu du form	-->
 	<div class='form-contenu'>
 		<div class='row'>
-			<input type='checkbox' name='elt_flag' value='1'>".$msg['caddie_item_marque']."
+			<input type='checkbox' name='elt_flag' id='elt_flag' value='1'><label for='elt_flag'>".$msg['caddie_item_marque']."</label>
 		</div>
 		<div class='row'>
-			<input type='checkbox' name='elt_no_flag' value='1'>".$msg['caddie_item_NonMarque']."
+			<input type='checkbox' name='elt_no_flag' id='elt_no_flag' value='1'><label for='elt_no_flag'>".$msg['caddie_item_NonMarque']."</label>
 		</div>		
 		<!-- notice_template -->
 	</div>
@@ -489,10 +503,10 @@ $cart_choix_quoi_impr_cote = "
 	<!--	Contenu du form	-->
 	<div class='form-contenu'>
 		<div class='row'>
-			<input type='checkbox' id='elt_flag' name='elt_flag' value='1' !!elt_flag_chk!! >".$msg['caddie_item_marque']."
+			<input type='checkbox' id='elt_flag' name='elt_flag' value='1' !!elt_flag_chk!! ><label for='elt_flag'>".$msg['caddie_item_marque']."</label>
 		</div>
 		<div class='row'>
-			<input type='checkbox' id='elt_no_flag' name='elt_no_flag' value='1' !!elt_no_flag_chk!! >".$msg['caddie_item_NonMarque']."
+			<input type='checkbox' id='elt_no_flag' name='elt_no_flag' value='1' !!elt_no_flag_chk!! ><label for='elt_no_flag'>".$msg['caddie_item_NonMarque']."</label>
 		</div>
 		<br />
 		<div class='row'>

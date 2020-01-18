@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // Â© 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sur_location.tpl.php,v 1.5 2017-11-21 12:00:59 dgoron Exp $
+// $Id: sur_location.tpl.php,v 1.6 2019-05-27 14:05:40 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $tpl_sur_location_tableau, $msg, $tpl_sur_location_tableau_ligne, $sur_location_map_tpl, $charset, $tpl_sur_location_form, $current_module, $tpl_docs_loc_table_line, $pmb_map_activate;
 
 //*******************************************************************
 // Définition des templates pour les listes en edition
@@ -41,7 +43,6 @@ $tpl_sur_location_tableau_ligne = "
 //    ----------------------------------------------------
 //    Onglet map
 //    ----------------------------------------------------
-global $pmb_map_activate;
 $sur_location_map_tpl = "";
 if ($pmb_map_activate)
 	$sur_location_map_tpl = "

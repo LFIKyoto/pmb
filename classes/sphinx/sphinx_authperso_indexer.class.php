@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sphinx_authperso_indexer.class.php,v 1.5 2018-07-16 09:51:38 arenou Exp $
+// $Id: sphinx_authperso_indexer.class.php,v 1.6 2019-02-18 13:45:53 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -99,7 +99,6 @@ class sphinx_authperso_indexer extends sphinx_authorities_indexer {
 									}
 									break;
 								default :
-									continue;
 									break; //useless
 							}
 						}else{

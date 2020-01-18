@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_autorities.class.php,v 1.9 2018-11-29 09:04:17 dgoron Exp $
+// $Id: searcher_autorities.class.php,v 1.11.4.1 2019-11-08 11:07:11 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -118,9 +118,10 @@ class searcher_autorities extends opac_searcher_generic {
 			if ($last_param) {
 				$query = $this->_get_search_query().' '.$tri_param.' '.$limit_param;
 			} else {
+				$query = $this->_get_search_query().$this->get_authority_join();
 				$authority_tri = $this->get_authority_tri();
-				//$authority_tri = "";
-				$query = $this->_get_search_query().($authority_tri ? ' order by '.$authority_tri : '').' limit '.$start.', '.$number;
+				$query .= ($authority_tri ? ' order by '.$authority_tri : '');
+				$query .=' limit '.$start.', '.$number;
 			}
 			$res = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($res)){
@@ -134,11 +135,11 @@ class searcher_autorities extends opac_searcher_generic {
 	
 	public function get_authority_tri() {
 		// à surcharger si besoin
-		return '';
+		return ' id_authority desc ';
 	}
 
 	protected function _sort_result($start,$number){
-		if ($this->user_query != '*') {
+		if ($this->user_query != '*' && $this->user_query !== '') {
 			$this->_get_pert();
 		}
 		$this->_sort($start,$number);
@@ -302,5 +303,9 @@ class searcher_autorities extends opac_searcher_generic {
 		}
 
 		return $human_queries;
+	}
+	
+	protected function get_authority_join() {
+	    return "";
 	}
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facettes_external.class.php,v 1.15 2018-12-11 09:41:42 dgoron Exp $
+// $Id: facettes_external.class.php,v 1.18.6.2 2019-11-27 10:38:52 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -146,6 +146,7 @@ class facettes_external extends facettes_root {
 					if(document.getElementById('filtre_compare_form_values')) {
 						document.getElementById('filtre_compare_form_values').value='filter';
 					}
+					document.form_values.page.value = 1;
 					document.form_values.submit();
 					return true;
 				} else {
@@ -154,6 +155,7 @@ class facettes_external extends facettes_root {
 			}
 			function facettes_external_valid_facette(datas){
 				facettes_external_add_searchform(JSON.stringify(datas));
+		        document.form_values.page.value = 1;
 				document.form_values.submit();
 				return true;
 			}
@@ -163,6 +165,7 @@ class facettes_external extends facettes_root {
 				input_form_values.setAttribute('name', 'reinit_facettes_external');
 				input_form_values.setAttribute('value', '1');
 				document.forms['form_values'].appendChild(input_form_values);
+		        document.form_values.page.value = 1;
 				document.form_values.submit();
 				return true;
 			}
@@ -195,6 +198,9 @@ class facettes_external extends facettes_root {
 		static::destroy_global_env(false); // false = sans destruction de la variable de session
 		
 		//creation des globales => parametres de recherche
+		if(empty($search)) {
+			$search = array();
+		}
 		$nb_search = count($search);
 		if ($_SESSION['facettes_external']) {
 			for ($i=0;$i<count($_SESSION['facettes_external']);$i++) {
@@ -261,8 +267,11 @@ class facettes_external extends facettes_root {
 	
 	public static function destroy_global_env($with_session=true){
 		global $search;
-		
-		$nb_search = count($search);
+		if(is_array($search) && count($search)){
+			$nb_search = count($search);
+		}else{
+			$nb_search = 0;
+		}
 		for ($i=$nb_search; $i>=0; $i--) {
 			if($search[$i] == 's_5') {
 				static::destroy_global_search_element($i);
@@ -284,6 +293,11 @@ class facettes_external extends facettes_root {
 	protected static function get_link_not_clicked($name, $label, $code_champ, $code_ss_champ, $id, $nb_result) {
 		$datas = array($name, $label, $code_champ, $code_ss_champ, $id, $nb_result);
 		$link = "facettes_external_valid_facette(".encoding_normalize::json_encode($datas).");"; 
+		return $link;
+	}
+	
+	protected static function get_link_reinit_facettes() {
+		$link = "facettes_external_reinit();";
 		return $link;
 	}
 	

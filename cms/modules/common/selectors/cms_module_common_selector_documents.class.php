@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_documents.class.php,v 1.5 2016-09-21 13:09:44 vtouchard Exp $
+// $Id: cms_module_common_selector_documents.class.php,v 1.6 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -39,7 +39,7 @@ class cms_module_common_selector_documents extends cms_module_common_selector{
 					
 					if(pmb_mysql_num_rows($result)){
 						while($row = pmb_mysql_fetch_object($result)){
-							$this->value['ids'][] = $row->document_link_num_document+0;
+						    $this->value['ids'][] = (int) $row->document_link_num_document;
 						}
 					}
 					break;
@@ -55,7 +55,7 @@ class cms_module_common_selector_documents extends cms_module_common_selector{
 						
 					if(pmb_mysql_num_rows($result)){
 						while($row = pmb_mysql_fetch_object($result)){
-							$this->value['ids'][] = $row->document_link_num_document+0;
+						    $this->value['ids'][] = (int) $row->document_link_num_document;
 						}
 					}
 					break;
@@ -71,7 +71,7 @@ class cms_module_common_selector_documents extends cms_module_common_selector{
 						
 					if(pmb_mysql_num_rows($result)){
 						while($row = pmb_mysql_fetch_object($result)){
-							$this->value['ids'][] = $row->id_document+0;
+						    $this->value['ids'][] = (int) $row->id_document;
 						}
 					}
 					break;

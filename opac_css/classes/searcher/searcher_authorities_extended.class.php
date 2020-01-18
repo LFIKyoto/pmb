@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_authorities_extended.class.php,v 1.5 2018-10-31 11:23:01 ngantier Exp $
+// $Id: searcher_authorities_extended.class.php,v 1.9.2.1 2019-11-08 11:07:11 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -69,10 +69,12 @@ class searcher_authorities_extended extends searcher_autorities {
 		    		$champ=$es->fixedfields[$s[1]]["TITLE"];
 	   			} elseif ($s[0]=="s") {
 		    		$champ=$es->specialfields[$s[1]]["TITLE"];
-	   			} else {
+	   			} elseif ($s[0]=="authperso") {
+                    // TO DO
+	   			}else {
 		    		$champ=$es->pp->t_fields[$s[1]]["TITRE"];
 	   			}
-	   			if (((string)$field[0]=="") && (!$es->op_empty[${$op}])) {
+	   			if (empty($field[0]) && (!$es->op_empty[${$op}])) {
 		    		$search_error_message=sprintf($msg["extended_empty_field"],$champ);
 	   				$flag=true;
 					break;
@@ -80,8 +82,18 @@ class searcher_authorities_extended extends searcher_autorities {
 	   		}
     	}
     	$this->with_make_search=true;
-    	$this->table = $es->make_search($this->get_temporary_table_name("_".rand(0,10)."_"));    	
-		return "select ".$this->object_index_key." as ".$this->object_key.", pert from ".$this->table;
+    	$this->table = $es->make_search($this->get_temporary_table_name("_".rand(0,10)."_"));   
+
+        $query = "describe $this->table";
+        $result = pmb_mysql_query($query);
+        $columns = pmb_mysql_fetch_assoc($result);
+
+        // Détection si concept
+        if (is_array($columns) && in_array('id_item', $columns)) {
+            return "select id_item as ".$this->object_key.", pert from ".$this->table;
+        }
+
+        return "select ".$this->table.".".$this->object_index_key." as ".$this->object_key.", pert from ".$this->table;
 	}
 
 	protected function _get_pert($with_explnum=false, $query=false){

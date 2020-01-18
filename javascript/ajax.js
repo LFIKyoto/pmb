@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax.js,v 1.44 2018-06-14 07:36:49 dgoron Exp $
+// $Id: ajax.js,v 1.47 2019-08-06 09:53:27 ngantier Exp $
 
 requete=new Array();
 line=new Array();
@@ -28,13 +28,13 @@ function isFirefox1() {
 }
 
 function findPos(obj) {
-	var curleft = curtop = 0
+	var curleft = curtop = 0;
 	if (obj.offsetParent) {
-		curleft = obj.offsetLeft
-		curtop = obj.offsetTop
+		curleft = obj.offsetLeft - obj.scrollLeft;
+		curtop+= obj.offsetTop - obj.scrollTop;
 		while (obj = obj.offsetParent) {
-				curleft += obj.offsetLeft;
-				curtop += obj.offsetTop;
+			curleft+= obj.offsetLeft - obj.scrollLeft;
+			curtop+= obj.offsetTop - obj.scrollTop;
 		}
 	}
 	return [curleft,curtop];
@@ -282,7 +282,7 @@ function ajax_update_info(e,code,touche) {
 			} else {
 				if(touche.indexOf(e.keyCode) > -1){
 					if ((document.getElementById("d"+id).style.display=="none")&&(document.getElementById(id).value!="")) {
-						p=document.getElementById(id);
+						p=document.getElementById(id);						
 						poss=findPos(p);
 						poss[1]+=p.clientHeight;
 						document.getElementById("d"+id).style.left=poss[0]+"px";
@@ -612,3 +612,20 @@ function ajax_insert_element(id){
 	var callback=document.getElementById(id).getAttribute("callback");
 	if (callback) window[callback](id, true);
 }
+
+function ajax_get_entity(action, from, id, field_id, field_label, event_name) {
+	var req = new http_request();
+	req.request('./ajax.php?module=ajax&categ=entities&action='+action+'&from='+from+'&id='+id,true,'',true,function(data){
+		var jsonArray = JSON.parse(data);
+		if(document.getElementById(field_id)) {
+			document.getElementById(field_id).value = jsonArray.entity_id;
+		}
+		if(document.getElementById(field_label)) {
+			document.getElementById(field_label).value = jsonArray.entity_label;
+		}
+		if (event_name) {
+			document.body.dispatchEvent(new Event(event_name, jsonArray));
+		}	
+	});
+}	
+	

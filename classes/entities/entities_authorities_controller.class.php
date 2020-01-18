@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entities_authorities_controller.class.php,v 1.14 2018-09-20 09:45:59 vtouchard Exp $
+// $Id: entities_authorities_controller.class.php,v 1.18 2019-08-06 12:20:19 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -65,7 +65,7 @@ class entities_authorities_controller extends entities_controller {
 		}
 		$this->parity += 1;
 		
-		if(get_called_class() == 'entities_categories_controller') {
+		if(static::class == 'entities_categories_controller') {
 			$notice_count = $this->get_query_notice_count();
 		} else {
 			$notice_count_sql = $this->get_query_notice_count();
@@ -118,7 +118,7 @@ class entities_authorities_controller extends entities_controller {
 			$page=1;
 			$this->page = $page; 
 		} else {
-			$this->page = $page+0;
+		    $this->page = (int) $page;
 		}
 		$debut =($this->page-1)*$nb_per_page_gestion;
 		
@@ -148,7 +148,7 @@ class entities_authorities_controller extends entities_controller {
 	public function proceed() {
 		global $sub;
 		global $force_unlock;
-		global $PMBuserid;
+		global $PMBuserid, $save_and_continue;
 		//parade pour la facto
 		$formatted_sub = $sub;
 		if($sub) {
@@ -186,16 +186,19 @@ class entities_authorities_controller extends entities_controller {
 				if ($this->id && $entity_locking->is_locked()) {
 				    if($PMBuserid == $entity_locking->get_locked_user_id()){
 				        $updated_id = $this->proceed_update();
-				        $entity_locking->unlock_entity();
-				        if($updated_id) {
-				            print $this->get_display_view($updated_id);
-				        }
+				        $entity_locking->unlock_entity();				        
 				    }else{
 				        print $entity_locking->get_save_error_message();
+				        break;
 				    }
 				} else{
-				    $updated_id = $this->proceed_update();
-				    if($updated_id) {
+				    $updated_id = $this->proceed_update();				   
+				}
+				if($updated_id) {
+				    if ($save_and_continue) {
+				        $this->id = 0;
+				        $this->proceed_form();
+				    } else {
 				        print $this->get_display_view($updated_id);
 				    }
 				}
@@ -224,6 +227,8 @@ class entities_authorities_controller extends entities_controller {
 	}
 	
 	public function proceed_delete() {
+	    global $msg;
+	    
 		$object_instance = $this->get_object_instance();
 		$sup_result = $object_instance->delete();
 		if(!$sup_result) {

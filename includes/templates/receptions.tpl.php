@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: receptions.tpl.php,v 1.12 2017-11-23 15:48:51 ngantier Exp $
+// $Id: receptions.tpl.php,v 1.15 2019-07-18 13:50:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $recept_search_form, $current_module, $msg, $charset, $recept_list_form, $recept_search_form_suite, $sel_date_form, $recept_hrow_form, $recept_row_form, $sel_fou_form, $sel_dem_form, $sel_rub_form, $bt_app, $bt_rel, $bt_chk, $link_not, $link_bull,$link_art, $link_sug, $bt_cat, $recept_cat_error_form, $pmb_numero_exemplaire_auto;
 
 //	------------------------------------------------------------------------------
 //	$recept_form : template de recherche pour les receptions
@@ -249,7 +251,8 @@ $recept_row_form= "
 	</td>
 	<td width='0px' style='overflow:visible;' >
 		<input type='checkbox' id='chk[!!no!!]' name='chk[]' tabindex='1' value='!!no!!' class='act_cell_chkbox2' />
-		<input type='hidden' id='id_lig[!!no!!]' name='id_lig[!!no!!]' value='!!id_lig!!' /> 
+		<input type='hidden' id='date_last_relance[!!no!!]' name='date_last_relance[]' value='!!date_last_relance!!' />
+        <input type='hidden' id='id_lig[!!no!!]' name='id_lig[!!no!!]' value='!!id_lig!!' /> 
 <!--		<input type='hidden' id='id_sug[!!no!!]' name='id_sug[!!no!!]' value='!!id_sug!!' /> --> 
 		<input type='hidden' id='typ_lig[!!no!!]' name='typ_lig[!!no!!]' value='!!typ_lig!!' /> 	
 		<input type='hidden' id='id_prod[!!no!!]' name='id_prod[!!no!!]' value='!!id_prod!!' />

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pnb_param.tpl.php,v 1.8 2018-06-28 12:34:27 ngantier Exp $
+// $Id: pnb_param.tpl.php,v 1.9.6.1 2019-11-05 15:22:42 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+global $pnb_param_form, $current_module, $msg, $pnb_param_form_drm_parameters;
 
 $pnb_param_form = "
 <form class='form-$current_module' name='formulaire' action='admin.php?categ=pnb&sub=param&action=save' method='post'>
@@ -112,6 +114,35 @@ $pnb_param_form = "
 		<div class='row'>
 		</div>     
 	</div>
+	<h3>".$msg['pnb_admin_import_expl']."</h3>
+	<div class='form-contenu'> 
+    	<div class='row'>
+    		<div class='colonne3'>
+    			<label class='etiquette' for='typedoc'>".$msg['pnb_admin_import_expl_typedoc']."</label>
+    		</div>
+    		<div class='colonne_suite'>
+                !!typedoc!!
+    		</div>		    	
+		</div>  	
+    	<div class='row'>
+    		<div class='colonne3'>
+    			<label class='etiquette' for='statut'>".$msg['pnb_admin_import_expl_statut']."</label>
+    		</div>
+    		<div class='colonne_suite'>
+                !!statut!!
+    		</div>		    	
+		</div> 
+	    <div class='row'>
+    	    <div class='colonne3'>
+    			<label class='etiquette' for='codestat'>".$msg['pnb_admin_import_expl_codestat']."</label>
+    		</div>
+    		<div class='colonne_suite'>
+                !!codestat!!
+    		</div>
+    	</div>
+		<div class='row'>
+		</div>   
+	</div>
 	<div class='row'>
 		<div class='left'>
 			<input type='submit' class='bouton' value='".$msg[77]."' />
@@ -121,7 +152,6 @@ $pnb_param_form = "
 	</div>
 </form>
 ";
-
 
 $pnb_param_form_drm_parameters = "
 <form class='form-$current_module' name='formulaire' action='admin.php?categ=pnb&sub=drm_parameters&action=save' method='post'>

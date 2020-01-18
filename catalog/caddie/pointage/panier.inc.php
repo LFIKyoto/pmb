@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: panier.inc.php,v 1.4 2016-11-15 13:35:23 dgoron Exp $
+// $Id: panier.inc.php,v 1.6 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $idcaddie, $action, $idcaddie_selected, $msg, $elt_flag_inconnu, $elt_no_flag_inconnu, $cle, $object;
 
 if($idcaddie) {
 	$myCart = new caddie($idcaddie);
@@ -37,7 +39,7 @@ if($idcaddie) {
 				}	
 				$liste= array_merge($liste_0,$liste_1);
 				if($liste) {
-					while(list($cle, $object) = each($liste)) {
+				    foreach ($liste as $cle => $object) {
 						$myCart->pointe_item($object,$myCart_selected->type);	
 					}
 				}	

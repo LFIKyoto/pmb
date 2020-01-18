@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: visits_statistics.class.php,v 1.4 2017-12-28 10:11:08 apetithomme Exp $
+// $Id: visits_statistics.class.php,v 1.5 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -200,7 +200,7 @@ class visits_statistics {
 	}
 	
 	public function update_visits($type, $value) {
-		if (!type) return false;
+		if (!$type) return false;
 		
 		$this->get_statistics();
 		if (!isset($this->statistics[$this->date][$type])) {

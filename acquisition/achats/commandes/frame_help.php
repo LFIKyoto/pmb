@@ -2,7 +2,9 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frame_help.php,v 1.5 2017-11-21 12:01:00 dgoron Exp $
+// $Id: frame_help.php,v 1.6 2019-05-28 15:12:23 btafforeau Exp $
+
+global $whatis, $include_path, $helpdir, $dbh;
 
 $base_path="./../../..";
 $base_auth = "ACQUISITION_AUTH";

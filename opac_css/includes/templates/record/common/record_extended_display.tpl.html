@@ -1,4 +1,4 @@
-<!-- $Id: record_extended_display.tpl.html,v 1.94 2018-12-03 15:00:09 dgoron Exp $ -->
+<!-- $Id: record_extended_display.tpl.html,v 1.97.6.1 2019-11-07 14:25:48 ngantier Exp $ -->
 {% block css_style %}
 	<style type="text/css">
 		
@@ -98,7 +98,16 @@
 							</div>	
 						{% endif %}
 					{% endblock %}
-					
+					{% block record_pnb %}
+						<!-- Bouton de pnb -->
+						{% if record.pnb_datas.flag_pnb_visible %}
+							<div class="statutPartN">
+								<span class="imgStatutPartN"><img class="imgStatutPartN" src="{{ img.new_w.png }}" style="border:0px" alt="{{ msg.record_display_new }}"/></span><span class="StatutPartN"><a href="#" id="bt_pnb_NotCourte-{{ record.id }}" onclick="{{ record.pnb_datas.onclick }}" class="bt_pnb_NotCourte">{{ msg.empr_bt_checkout }}</a></span>										
+				                <div id="response_pnb_pret_{{ record.id }}">
+				                </div>
+				            </div>   
+						{% endif %}						
+					{% endblock %}
 					{% block record_new %}
 						{% if record.new %}
 							<!-- Statut particulier (nouveaute)-->
@@ -268,7 +277,7 @@
 										{% else %}
 										 ; 
 										{% endif %}
-										<a href="{{ record.linked_permalink.author | replace '!!id!!' auteur.id }}" title="{{ auteur.auteur_titre }}">{{ auteur.auteur_titre }}</a>{% if auteur.fonction_aff %}, {{ auteur.fonction_aff }}{% endif %}
+										<a href="{{ record.linked_permalink.author | replace '!!id!!' auteur.id }}" title="{{ auteur.auteur_titre }}">{{ auteur.auteur_titre }}</a>{% if auteur.fonction_aff %}, {{ auteur.fonction_aff }}{% endif %}{% if auteur.qualification %} ({{ auteur.qualification }}){% endif %}
 										{% if loop.last %}
 													</span>
 												</td>

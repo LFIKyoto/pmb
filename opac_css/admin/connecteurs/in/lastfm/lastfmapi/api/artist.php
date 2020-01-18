@@ -32,7 +32,7 @@ class lastfmApiArtist extends lastfmApi {
 	 * @param array $fullAuth A boolean value stating if the user has full authentication or not
 	 * @param array $config An array of config variables related to caching and other features
 	 */
-	function __construct($auth, $fullAuth, $config) {
+	public function __construct($auth, $fullAuth, $config) {
 		$this->auth = $auth;
 		$this->fullAuth = $fullAuth;
 		$this->config = $config;
@@ -383,7 +383,7 @@ class lastfmApiArtist extends lastfmApi {
 			$vars = array_merge($vars, $methodVars);
 			
 			if ( $call = $this->apiGetCall($vars) ) {
-				$similar = '';
+				$similar = array();
 				$i = 0;
 				foreach ( $call->similarartists->artist as $artist ) {
 					$similar[$i]['name'] = (string) $artist->name;

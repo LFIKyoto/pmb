@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: select.php,v 1.51 2018-12-11 07:59:19 dgoron Exp $
+// $Id: select.php,v 1.53 2019-03-13 12:04:05 dgoron Exp $
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
@@ -62,7 +62,8 @@ $autoloader->add_register("selectors_class",true);
 
 print "<script type='text/javascript'>
 	 		self.focus();
- 		</script>";
+ 		</script>
+        <div id='att'></div>";
 print reverse_html_entities();
 
 switch($what) {
@@ -228,6 +229,10 @@ switch($what) {
 		break;
 	case 'groups':
 		$selector_instance = new selector_groups(stripslashes($user_input));
+		break;
+	case 'connectors':
+		$selector_instance = new selector_connectors(stripslashes($user_input));
+		$selector_instance->set_source_id($source_id);
 		break;
 	case 'query_list':
 		$selector_instance = new selector_query_list(stripslashes($user_input));

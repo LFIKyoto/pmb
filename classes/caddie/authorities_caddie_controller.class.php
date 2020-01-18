@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authorities_caddie_controller.class.php,v 1.21 2018-09-05 07:31:01 dgoron Exp $
+// $Id: authorities_caddie_controller.class.php,v 1.32 2019-07-16 09:43:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
     die("no access");
@@ -178,15 +178,15 @@ class authorities_caddie_controller extends caddie_root_controller {
     }
 
     public static function proceed_selection($idcaddie = 0, $sub = '', $quelle = '', $moyen = '') {
-        global $msg;
+        global $msg, $charset;
         global $action;
         global $id;
         global $elt_flag, $elt_no_flag;
         global $cart_choix_quoi_action;
 		global $erreur_explain_rqt;
 		
-        $idcaddie += 0;
-        $id += 0;
+		$idcaddie = intval($idcaddie);
+        $id = intval($id);
         if ($idcaddie) {
             $myCart = static::get_object_instance($idcaddie);
             print pmb_bidi($myCart->aff_cart_titre());
@@ -211,6 +211,8 @@ class authorities_caddie_controller extends caddie_root_controller {
                     }
                     break;
                 case 'pointe_item':
+                	$model_class_name = static::get_model_class_name();
+                	print $model_class_name::show_actions($idcaddie,static::$object_type);
                     if (authorities_caddie_procs::check_rights($id)) {
                         $hp = new parameters($id, "authorities_caddie_procs");
                         $hp->get_final_query();
@@ -220,6 +222,8 @@ class authorities_caddie_controller extends caddie_root_controller {
                     print pmb_bidi($myCart->aff_cart_nb_items());
                     break;
                 case 'add_item':
+                	$model_class_name = static::get_model_class_name();
+                	print $model_class_name::show_actions($idcaddie,static::$object_type);
                     //C'est ici qu'on fait une action
                     if (authorities_caddie_procs::check_rights($id)) {
                         $hp = new parameters($id, "authorities_caddie_procs");
@@ -238,8 +242,10 @@ class authorities_caddie_controller extends caddie_root_controller {
                     }
                     print $myCart->aff_cart_nb_items();
                     if ($sub == 'action') {
-                        echo "<hr /><input type='button' class='bouton' value='" . $msg["caddie_menu_action_suppr_panier"] . "' onclick='document.location=&quot;./autorites.php?categ=caddie&amp;sub=action&amp;quelle=supprpanier&amp;action=choix_quoi&amp;object_type=".static::$object_type."&amp;idcaddie=".$idcaddie."&amp;item=&amp;elt_flag=" . $elt_flag . "&amp;elt_no_flag=" . $elt_no_flag . "&quot;' />";
-                        echo "&nbsp;<input type='button' class='bouton' value='".$msg["caddie_menu_action_edit_panier"]."' onclick=\"document.location='./autorites.php?categ=caddie&sub=gestion&quoi=panier&action=edit_cart&idcaddie=".$idcaddie."&item=0'\" />";
+                        echo "<hr /><input type='button' class='bouton' value='" . $msg["caddie_menu_action_suppr_panier"] . "' onclick='document.location=&quot;./autorites.php?categ=caddie&amp;sub=action&amp;quelle=supprpanier&amp;action=choix_quoi&amp;object_type=".static::$object_type."&amp;idcaddie=".$idcaddie."&amp;item=&amp;elt_flag=" . $elt_flag . "&amp;elt_no_flag=" . $elt_no_flag . "&quot;' />",
+                        "&nbsp;<input type='button' class='bouton' value='".$msg["caddie_menu_action_edit_panier"]."' onclick=\"document.location='./autorites.php?categ=caddie&sub=gestion&quoi=panier&action=edit_cart&idcaddie=".$idcaddie."&item=0'\" />",
+                        "&nbsp;<input type='button' class='bouton' value='".$msg["caddie_supprimer"]."' onclick=\"confirmation_delete(".$myCart->get_idcaddie().",'".htmlentities(addslashes($myCart->name),ENT_QUOTES, $charset)."')\" />",
+                        confirmation_delete("./autorites.php?categ=caddie&sub=gestion&action=del_cart&idcaddie=");
                     }
                     break;
                 default:
@@ -268,10 +274,10 @@ class authorities_caddie_controller extends caddie_root_controller {
         }
     }
 
-    public static function print_prepare() {
+    public static function print_prepare($idcaddie_new=0) {
         global $msg, $base_path;
         global $object_type, $item, $current_print, $aff_lien, $boutons_select;
-		global $selected_objects;
+        global $selected_objects, $pager;
 		
         if (!$object_type) {
         	$object_type = "MIXED";
@@ -283,13 +289,20 @@ class authorities_caddie_controller extends caddie_root_controller {
         //Affichage de la sélection des paniers
         $requete = "SELECT authorities_caddie.*, COUNT(object_id) AS nb_objects, COUNT(flag=1) AS nb_flags 
         			FROM authorities_caddie 
-        			LEFT JOIN authorities_caddie_content ON caddie_id = idcaddie
-        			WHERE  (type = '".$object_type."' or type ='MIXED')
-        			GROUP BY idcaddie ORDER BY type, name, comment";
+        			LEFT JOIN authorities_caddie_content ON caddie_id = idcaddie ";
+        if($object_type != "MIXED") {
+        	$requete .= " WHERE type = '".$object_type."' ";
+        }
+        $requete .= " GROUP BY idcaddie ORDER BY type, name, comment";
         $resultat = pmb_mysql_query($requete);
         $ctype = "";
         $parity = 0;
+        $script_submit = '';
         while ($ca = pmb_mysql_fetch_object($resultat)) {
+            if (!empty($idcaddie_new) && ($idcaddie_new != $ca->idcaddie)) continue;
+            if (!empty($idcaddie_new) && ($idcaddie_new == $ca->idcaddie)) {
+                $script_submit =  "<script>document.getElementById('id_" . $ca->idcaddie . "').checked=true;document.forms['print_options'].submit()</script>";
+            }
             $ca_auth = explode(" ", $ca->autorisations);
             $as = in_array(SESSuserid, $ca_auth);
             if (($as !== false) && ($as !== null)) {
@@ -301,7 +314,8 @@ class authorities_caddie_controller extends caddie_root_controller {
                     $ca->caddie_classement = classementGen::getDefaultLibelle();
                 }
                 $print_cart[$ctype]["classement_list"][$ca->caddie_classement]["title"] = stripslashes($ca->caddie_classement);
-                if (($parity = 1 - $parity)) {
+                $parity = 1 - $parity;
+                if ($parity) {
                     $pair_impair = "even";
                 } else {
                     $pair_impair = "odd";
@@ -331,13 +345,24 @@ class authorities_caddie_controller extends caddie_root_controller {
 						</tr>");
             }
         }
-        print "		<input type='radio' id='pager_2' name='pager' value='2'/>&nbsp;" . $msg["print_size_selected_elements_authorities"] . "<br />
-        			<input type='radio' id='pager_1' name='pager' value='1'/>&nbsp;".$msg["print_size_current_page_authorities"]."<br/>
-                    <input type='radio' id='pager_0' name='pager' value='0' checked='checked'/>&nbsp;".$msg["print_size_all_authorities"]."<br/>
+        
+        if (!isset($pager) && !$selected_objects) $pager = 0;
+        elseif (!isset($pager)) $pager = 2;
+        if (!isset($selected_objects)) $selected_objects = '';
+        print "<script>
+            function get_params_url() {
+                var pager = document.querySelector('input[name=\"pager\"]:checked').value;               
+                       //'./cart.php?action=new_cart&object_type=".$object_type."&item=".$item."&current_print=".$current_print."&authorities_caddie=1&pager=$pager&&selected_objects=$selected_objects'
+                return './cart.php?action=new_cart&object_type=" . $object_type . "&item=$item&current_print=$current_print&authorities_caddie=1&selected_objects=$selected_objects&pager=' +  pager;
+            }
+        </script>";
+        print "		<input type='radio' id='pager_2' name='pager' value='2' " . ($pager == 2 ? "checked='checked'" : "") . "/>&nbsp;<label for='pager_2'>" . $msg["print_size_selected_elements_authorities"] . "</label><br />
+        			<input type='radio' id='pager_1' name='pager' value='1' " . ($pager == 1 ? "checked='checked'" : "") . "/>&nbsp;<label for='pager_1'>".$msg["print_size_current_page_authorities"]."</label><br/>
+                    <input type='radio' id='pager_0' name='pager' value='0' " . (!$pager ? "checked='checked'" : "") . "/>&nbsp;<label for='pager_0'>".$msg["print_size_all_authorities"]."</label><br/>
 					<div class='row'>
 						<hr/>
 						".$boutons_select."&nbsp;
-						<input class='bouton' type='button' value='".$msg['new_cart']."' onClick=\"document.location='./cart.php?action=new_cart&object_type=".$object_type."&item=".$item."&current_print=".$current_print."&authorities_caddie=1'\" />
+						<input class='bouton' type='button' value='".$msg['new_cart']."' onClick=\"document.location=get_params_url();\" />
 					</div>
 					<hr/>";
 
@@ -377,15 +402,12 @@ class authorities_caddie_controller extends caddie_root_controller {
         print "		<div class='row'>
         				<hr />
 	        			".$boutons_select."&nbsp;
-	        			<input class='bouton' type='button' value='".$msg['new_cart']."' onClick=\"document.location='./cart.php?action=new_cart&object_type=".$object_type."&item=".$item."&current_print=".$current_print."&authorities_caddie=1'\" />
+	        			<input class='bouton' type='button' value='".$msg['new_cart']."' onClick=\"document.location=get_params_url();\" />
 	        		</div>";
         print "	</form>
 		<script type='text/javascript' src='".$base_path."/javascript/popup.js'></script>
-        <script type='text/javascript'>
-        	if(getSelectedObjects('opener')) {
-        		document.getElementById('pager_2').checked = 'checked';
-			}	
-        </script>";
+        ";
+        print $script_submit;
     }
 
     public static function print_cart() {
@@ -456,13 +478,22 @@ class authorities_caddie_controller extends caddie_root_controller {
 	                while (($r = pmb_mysql_fetch_object($resultat))) {
 	                	$c->add_item($r->id_authority, $object_type);
 	                }
-                } else {                	
+                } else { 
                 	if($environement["pager"]){
                 		$simple_search_results = $sat->get_sorted_result("default",($nb_per_page_search * $page), $nb_per_page_search);
                 	} else {
                 		$simple_search_results = explode(',',$sat->get_result());
                 	}
                 	foreach($simple_search_results as $id) {
+                	    if (!$environement["pager"] && $environement['SEARCH_OBJECTS_TYPE'] == 'CONCEPTS' && $environement["SEARCH_TYPE"] == 'classic') {
+                	       $query = "SELECT id_authority FROM authorities WHERE num_object=" . $id . " and type_object=" . AUT_TABLE_CONCEPT;
+                	       $res = @pmb_mysql_query($query);         
+                	       if (($r = pmb_mysql_fetch_object($res))) {
+                	           $id = $r->id_authority;
+                	       } else {
+                	           continue;
+                	       }
+                        }
                 		if ($environement["pager"] != 2 || in_array($id, $environement['selected_objects'])) {
                 			$c->add_item($id, $object_type);
                 		}

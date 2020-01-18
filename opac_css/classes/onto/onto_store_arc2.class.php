@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_store_arc2.class.php,v 1.5 2017-06-20 12:45:34 dgoron Exp $
+// $Id: onto_store_arc2.class.php,v 1.7 2019-05-29 08:14:14 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -133,8 +133,11 @@ class onto_store_arc2 extends onto_store {
 		$tabResult=array();
 	
 		if(!count($this->errors)){
-			//Si je n'ai pas déjà des erreurs
-			//J'execute la requete
+		    //Si je n'ai pas déjà des erreurs
+		    if (!pmb_mysql_ping($this->store->a['db_con'])) {
+		        $this->store->createDBCon();
+		    }
+		    //J'execute la requete
 			$result = $this->store->query($query);
 				
 			if($erreurs=$this->store->getErrors()){

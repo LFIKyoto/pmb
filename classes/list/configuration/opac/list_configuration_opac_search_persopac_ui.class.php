@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_configuration_opac_search_persopac_ui.class.php,v 1.1 2018-10-12 12:18:37 dgoron Exp $
+// $Id: list_configuration_opac_search_persopac_ui.class.php,v 1.2.2.1 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -17,10 +17,7 @@ class list_configuration_opac_search_persopac_ui extends list_configuration_opac
 	}
 	
 	protected function init_default_applied_sort() {
-		$this->applied_sort = array(
-				'by' => 'search_order',
-				'asc_desc' => 'asc'
-		);
+	    $this->add_applied_sort('search_order');
 	}
 	
 	protected function get_main_fields_from_sub() {
@@ -86,8 +83,8 @@ class list_configuration_opac_search_persopac_ui extends list_configuration_opac
 		switch($property) {
 			case 'search_order':
 				$content .= "
-					<input type='button' class='bouton_small' value='-' onClick=\"document.location='".static::get_controller_url_base()."&action=up&id=".$object->search_id."'\"/></a>
-					<input type='button' class='bouton_small' value='+' onClick=\"document.location='".static::get_controller_url_base()."&action=down&id=".$object->search_id."'\"/>
+					<img src='".get_url_icon('bottom-arrow.png')."' title='".htmlentities($msg['move_bottom_arrow'], ENT_QUOTES, $charset)."' alt='".htmlentities($msg['move_bottom_arrow'], ENT_QUOTES, $charset)."' onClick=\"document.location='".static::get_controller_url_base()."&action=down&id=".$object->search_id."'\" style='cursor:pointer;'/></a>
+					<img src='".get_url_icon('top-arrow.png')."' title='".htmlentities($msg['move_top_arrow'], ENT_QUOTES, $charset)."' alt='".htmlentities($msg['move_top_arrow'], ENT_QUOTES, $charset)."' onClick=\"document.location='".static::get_controller_url_base()."&action=up&id=".$object->search_id."'\" style='cursor:pointer;'/>
 				";
 				break;
 			case 'search_directlink':

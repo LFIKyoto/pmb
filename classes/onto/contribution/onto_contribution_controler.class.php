@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_contribution_controler.class.php,v 1.8 2018-09-21 12:14:57 apetithomme Exp $
+// $Id: onto_contribution_controler.class.php,v 1.12 2019-06-04 14:58:14 tsamson Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
 	die("no access");
 
@@ -46,7 +46,7 @@ class onto_contribution_controler extends onto_common_controler {
 			case 'delete' :
 				print $msg["onto_contribution_delete_in_progress"];
 				$this->proceed_delete(true);
-				print "<script type='text/javascript'>window.location = './empr.php?tab=contribution_area&lvl=contribution_area_list'</script>";
+				print "<script type='text/javascript'>window.location = './catalog.php?categ=contribution_area&action=list'</script>";
 				break;
 			case 'edit_entity' :
 			    $this->proceed_edit_entity();
@@ -89,7 +89,7 @@ class onto_contribution_controler extends onto_common_controler {
 	protected function proceed_push() {
 		global $class_path;
 		
-		$return = '';
+		$return = array();
 		if ($this->params->action == "save_push") {
 			$return = $this->proceed_save(false);
 		}
@@ -151,9 +151,11 @@ class onto_contribution_controler extends onto_common_controler {
 		$result = $this->proceed_handler_save($this->item);
 		if ($result !== true) {
 			$ui_class_name = self::resolve_ui_class_name($this->params->sub, $this->handler->get_onto_name());
-			$ui_class_name::display_errors($this, $result);
+			return array(
+			    "errors" => $ui_class_name::display_errors($this, $result, true)
+			);
 		} else {
-			$display_label = $this->item->get_label($this->handler->get_display_label($this->handler->get_class_uri($this->params->sub)));
+			$display_label = $this->item->get_label($this->handler->get_display_labels($this->handler->get_class_uri($this->params->sub)));
 			return array(
 					"uri" => $this->item->get_uri(),
 					"displayLabel" => $display_label,

@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch.tpl.php,v 1.26 2018-08-21 15:38:44 plmrozowski Exp $
+// $Id: docwatch.tpl.php,v 1.29 2019-05-27 14:34:56 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $docwatch_tpl, $msg, $docwatch_new_source_form_tpl;
+global $charset, $current_module, $docwatch_watch_form_tpl, $docwatch_category_form_tpl, $docwatch_duplicate_source_form_tpl;
 
 $docwatch_tpl = "
 <script type='text/javascript' src='./javascript/ajax.js'></script>
@@ -167,6 +170,34 @@ $docwatch_category_form_tpl = '
 		</div>
 	</div>	
 	<div class="row"></div>		
+</form>
+';
+
+$docwatch_duplicate_source_form_tpl = '
+<form data-dojo-attach-point="containerNode" data-dojo-attach-event="onreset:_onReset,onsubmit:_onSubmit" ${!nameAttrSetting}>
+	<div class="form-contenu">
+		<input type="hidden" name="id_duplicated_datasource" id="id_duplicated_datasource" value=""/>
+		<input type="hidden" name="className" id="className" value=""/>
+		<div class="row">
+			<label>'.encoding_normalize::utf8_normalize($msg['dsi_docwatch_datasource_title']).'</label>
+		</div>	
+		<div class="row">		
+			<input type="text" id="title" name="title" required="true" data-dojo-type="dijit/form/ValidationTextBox"/>
+		</div>
+		<div class="row">
+			<label>'.encoding_normalize::utf8_normalize($msg['dsi_docwatch_source_form_watch_parent']).'</label>
+		</div>
+		<div class="row">
+			<select  id="num_watch" name="num_watch" data-dojo-type="dijit/form/Select" style="width:auto"></select>
+		</div>
+		<div class="row"></div>
+	</div>
+	<div class="row">
+		<div class="left">
+			<button data-dojo-type="dijit/form/Button" id="docwatch_form_save" type="submit">'.encoding_normalize::utf8_normalize($msg['dsi_docwatch_form_save']).'</button>
+		</div>
+	</div>
+	<div class="row"></div>
 </form>
 ';
 

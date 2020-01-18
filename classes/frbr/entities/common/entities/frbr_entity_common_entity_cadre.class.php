@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_common_entity_cadre.class.php,v 1.22 2018-03-27 08:48:44 dgoron Exp $
+// $Id: frbr_entity_common_entity_cadre.class.php,v 1.24 2019-08-19 09:27:30 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -91,7 +91,7 @@ class frbr_entity_common_entity_cadre extends frbr_entity_common_entity {
 					switch ($ligne->cadre_content_type) {
 						case "view":
 							$this->view = array(
-								'id' => $ligne->id_cadre_content+0,
+							    'id' => (int) $ligne->id_cadre_content,
 								'name' => $ligne->cadre_content_object
 							);
 							break;
@@ -410,11 +410,10 @@ class frbr_entity_common_entity_cadre extends frbr_entity_common_entity {
 	public function show_cadre($datanodes_data = array()) {
 		if(isset($this->datanode) && is_object($this->datanode)) {
 			if ($this->view['id'] != 0) {
-				if (isset($datanodes_data[$this->datanode->get_id()]) && count($datanodes_data[$this->datanode->get_id()][0])) {
+			    if (!empty($datanodes_data[$this->datanode->get_id()]) && count($datanodes_data[$this->datanode->get_id()][0])) {
 					$datanode_datasource_class_name = $this->datanode->get_datasource()['name'];
 					$datasource = new $datanode_datasource_class_name($this->datanode->get_datasource()['id']);
 					$limit = $datasource->get_parameters()->nb_max_elements;
-					
 					$data = array_slice($datanodes_data[$this->datanode->get_id()][0], 0, $limit);
 					return $this->get_content_cadre($data);
 				} else {

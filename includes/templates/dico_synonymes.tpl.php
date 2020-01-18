@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dico_synonymes.tpl.php,v 1.7 2017-09-28 09:23:36 dgoron Exp $
+// $Id: dico_synonymes.tpl.php,v 1.8 2019-05-27 14:55:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $select_prop, $aff_liste_mots, $msg, $current_module, $aff_modif_mot, $mot_js, $aff_mot_lie;
 
 // template pour le form de dictionnaire des synonymes
 

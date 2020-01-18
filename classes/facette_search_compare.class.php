@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facette_search_compare.class.php,v 1.15 2018-12-11 09:41:42 dgoron Exp $
+// $Id: facette_search_compare.class.php,v 1.17 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -114,7 +114,7 @@ class facette_search_compare {
 	
 	protected function add_result($group_label, $value, $pos, $key, $groupby_key, $tmpArray=array()) {
 		$this->result[$group_label][$pos] = array(
-			'count' => sizeof($tmpArray),
+			'count' => count($tmpArray),
 			'value' => $value,
 			'pos' => $pos,
 			'key' => $key,
@@ -135,10 +135,10 @@ class facette_search_compare {
 				$pos++;
 				$this->headers[$pos]=$facette_compare[1];
 			}
-			if(sizeof($tmpArray)){
+			if (!empty($tmpArray)) {
 				//et on organise par critère de regroupement.
-				if(sizeof($this->facette_groupby)){
-					foreach($this->facette_groupby as $key_groupby=>$facette_groupby){
+				if (!empty($this->facette_groupby)) {
+					foreach ($this->facette_groupby as $key_groupby => $facette_groupby) {
 						// je regroupe sous les valeurs de la facette choisie pour le regroupement
 						$query = $this->get_query_groupby($facette_groupby, $tmpArray);
 						$result=pmb_mysql_query($query);
@@ -156,19 +156,19 @@ class facette_search_compare {
 							$this->result[$line->value][$pos]['notices_ids'].=$line->id_notice;
 							unset($tmpArray[$line->id_notice]);
 						}
-						if(sizeof($tmpArray)){
-							$tmpArray=array_flip($tmpArray);
+						if (!empty($tmpArray)) {
+							$tmpArray = array_flip($tmpArray);
 							//pas de valeur de regroupement, je regroupe sous le message facettes_not_grouped
 							$this->add_result($msg['facettes_not_grouped'], $facette_compare[1], $pos, $key, $key_groupby, $tmpArray);
 						}
 					}
-				}else{
+				} else {
 					//pas de valeur de regroupement, je regroupe sous le message facettes_not_grouped
 					$this->add_result($msg['facettes_not_grouped'], $facette_compare[1], $pos, $key, 0, $tmpArray);
 				}
 			}
 			//le tri du résultat
-			if(sizeof($this->result)){
+			if (!empty($this->result)) {
 				self::sort_compare($this->result);
 			}
 		}
@@ -183,7 +183,7 @@ class facette_search_compare {
 	public function compare($searcher){
 		self::session_facette_compare($this);
 	
-		if(sizeof($this->facette_compare)){
+		if (!empty($this->facette_compare)) {
 			$listeNotices = "0";
 			if($searcher->get_nb_results()){
 				$listeNotices = $searcher->get_result();
@@ -199,7 +199,7 @@ class facette_search_compare {
 			$this->build_result();
 				
 			//Si trop de résultat, la génération du tableau html sera trop longue = on coupe.
-			if(sizeof($this->result)*sizeof($this->facette_compare) > $this->max_display){
+			if ((count($this->result) * count($this->facette_compare)) > $this->max_display) {
 				return 'facette_compare_too_more_result';
 			}
 			return true;
@@ -229,17 +229,17 @@ class facette_search_compare {
 		$body="";
 		$header="";
 		
-		if(sizeof($this->result)){
+		if (!empty($this->result)) {
 			//Les entetes
-			foreach($this->headers as $pos=>$compareHeader){
-				$header.=$facette_search_compare_header;
-				$header=str_replace("!!compare_hearder_libelle!!", $compareHeader, $header);
+			foreach ($this->headers as $compareHeader) {
+				$header.= $facette_search_compare_header;
+				$header = str_replace("!!compare_hearder_libelle!!", $compareHeader, $header);
 			}
 			
 			//les tailles CSS
-			$facette_search_compare_wrapper=str_replace("!!first_collumn_size!!", $this->first_collumn_size, $facette_search_compare_wrapper);
-			$cullumn_size=round((100-$this->first_collumn_size)/(sizeof($this->headers)));
-			$facette_search_compare_wrapper=str_replace("!!cullumn_size!!", $cullumn_size, $facette_search_compare_wrapper);
+			$facette_search_compare_wrapper = str_replace("!!first_collumn_size!!", $this->first_collumn_size, $facette_search_compare_wrapper);
+			$cullumn_size = round((100 - $this->first_collumn_size) / count($this->headers));
+			$facette_search_compare_wrapper = str_replace("!!cullumn_size!!", $cullumn_size, $facette_search_compare_wrapper);
 			
 			//les lignes
 			$even_odd='even';
@@ -262,10 +262,11 @@ class facette_search_compare {
 				//chacun des elements et elements cachés d'une ligne
 				$elements="";
 				$hidden_elements="";
-				for($i=1;$i<sizeof($this->headers)+1;$i++){
+				$nb_headers = count($this->headers);
+				for ($i = 1; $i < $nb_headers + 1; $i++) {
 					//un element d'une ligne
-					$element=$facette_search_compare_element;
-					$hidden_element=$facette_search_compare_hidden_element;
+					$element = $facette_search_compare_element;
+					$hidden_element = $facette_search_compare_hidden_element;
 					
 					if($comparedElements[$i]['notices_ids']){
 						$element=str_replace("!!compare_element_libelle!!", $comparedElements[$i]['count'], $element);
@@ -303,7 +304,7 @@ class facette_search_compare {
 		$facette_search_compare_wrapper=str_replace("!!compare_body!!", $body, $facette_search_compare_wrapper);
 		
 		//construction du lien AJAX
-		if(get_called_class() == 'facettes_external_search_compare') {
+		if(static::class == 'facettes_external_search_compare') {
 			$facette_search_compare_wrapper=str_replace("!!categ!!", "facettes_external", $facette_search_compare_wrapper);
 		} else {
 			$facette_search_compare_wrapper=str_replace("!!categ!!", "facettes", $facette_search_compare_wrapper);
@@ -391,21 +392,20 @@ class facette_search_compare {
 		$_SESSION['check_facette_groupby'][$id]['available']=$available;
 	}
 	
-	public static function sort_compare(&$array){
+	public static function sort_compare(&$array) {
 		global $msg;
 		
-		$tmp=array();
-		if(sizeof($array[$msg['facettes_not_grouped']])){
-			$tmp=$array[$msg['facettes_not_grouped']];
+		$tmp = array();
+		if (!empty($array[$msg['facettes_not_grouped']])) {
+			$tmp = $array[$msg['facettes_not_grouped']];
 			unset($array[$msg['facettes_not_grouped']]);
 		}
 		
 		krsort($array);
 		
-		if(sizeof($tmp)){
-			$array[$msg['facettes_not_grouped']]= $tmp;
+		if (!empty($tmp)) {
+			$array[$msg['facettes_not_grouped']] = $tmp;
 		}
-		
 		return $array;
 	}
 	
@@ -416,28 +416,28 @@ class facette_search_compare {
 	 * @param integer $notice_nb le nombre de notices à afficher par passe
 	 * @param integer $notice_tpl l'identifiant du template d'affichage, si null, affiche le header de la classe d'affichage
 	 */
-	public static function call_notice_display(&$notices_ids,$notice_nb,$notice_tpl){
+	public static function call_notice_display(&$notices_ids, $notice_nb, $notice_tpl) {
 		global $base_path,$charset,$msg;
 		
-		$notices_ids=explode(",",$notices_ids);
+		$notices_ids = explode(",", $notices_ids);
 		
-		$notices='';
-		for($i_notice_nb=0;$i_notice_nb<$notice_nb;$i_notice_nb++) {
-			if($notices_ids[$i_notice_nb]){
-				$notices.='<li>';
+		$notices = '';
+		for ($i_notice_nb = 0; $i_notice_nb < $notice_nb; $i_notice_nb++) {
+			if (!empty($notices_ids[$i_notice_nb])) {
+				$notices .= '<li>';
 				
 				// notice de monographie
 				$nt = new mono_display($notices_ids[$i_notice_nb], 0);
-				$notices.=$nt->header;
+				$notices .= $nt->header;
 				
 				unset($notices_ids[$i_notice_nb]);
-				$notices.='</a>';
-				$notices.='</li>';
+				$notices .= '</a>';
+				$notices .= '</li>';
 			}
 		}
 		
-		if(sizeof($notices_ids)){
-			$notices_ids=implode(',', $notices_ids);
+		if (!empty($notices_ids)) {
+			$notices_ids = implode(',', $notices_ids);
 		}
 		return $notices;
 	}
@@ -460,10 +460,10 @@ class facette_search_compare {
 				$facette_search_compare->facette_compare=array();
 			}
 			static::set_compare_checked_session(array());
-		}else{
-			if(sizeof($check_facette_compare)){
+		} else {
+			if (!empty($check_facette_compare)) {
 				static::set_compare_checked_session(array());
-				foreach($check_facette_compare as $key=>$f_c){
+				foreach ($check_facette_compare as $f_c) {
 					$f_c=stripslashes($f_c);
 					$f_c = encoding_normalize::utf8_normalize($f_c);
 					$f_c_tab=pmb_utf8_array_decode(json_decode($f_c));
@@ -476,7 +476,7 @@ class facette_search_compare {
 						$facettes_compare_checked[$f_c_tab[4]]['value']=$f_c;
 						static::set_compare_checked_session($facettes_compare_checked);
 					}else{
-						if(get_called_class() == 'facettes_external_search_compare') {
+					    if (static::class == 'facettes_external_search_compare') {
 							unset($_SESSION['check_facettes_external_compare'][$f_c_tab[4]]);
 						} else {
 							unset($_SESSION['check_facette_compare'][$f_c_tab[4]]);
@@ -487,9 +487,9 @@ class facette_search_compare {
 				static::unset_compare_checked_session();
 			}
 		
-			if(sizeof($check_facette_groupby)){
+			if (!empty($check_facette_groupby)) {
 				static::set_groupby_checked_session(array());
-				foreach($check_facette_groupby as $key=>$f_gb){
+				foreach ($check_facette_groupby as $f_gb) {
 					$f_gb=stripslashes($f_gb);
 					$f_gb = encoding_normalize::utf8_normalize($f_gb);
 					$f_gb_tab=pmb_utf8_array_decode(json_decode($f_gb));
@@ -502,7 +502,7 @@ class facette_search_compare {
 						$facettes_groupby_checked[$f_gb_tab[3]]['value']=$f_gb;
 						static::set_groupby_checked_session($facettes_groupby_checked);
 					}else{
-						if(get_called_class() == 'facettes_external_search_compare') {
+					    if (static::class == 'facettes_external_search_compare') {
 							unset($_SESSION['check_facettes_external_groupby'][$f_gb_tab[3]]);
 						} else {
 							unset($_SESSION['check_facette_groupby'][$f_gb_tab[3]]);
@@ -559,11 +559,11 @@ class facette_search_compare {
 	public static function form_write_facette_compare(){
 		global $charset;
 		
-		$form='';
+		$form = '';
 		$facettes_compare_checked = static::get_compare_checked_session();
-		if(sizeof($facettes_compare_checked)){
-			foreach($facettes_compare_checked as $facette_compare){
-				$form .= "<input type=\"hidden\" name=\"check_facette_compare[]\" value=\"".htmlentities($facette_compare['value'],ENT_QUOTES,$charset)."\">\n";
+		if (!empty($facettes_compare_checked)) {
+			foreach($facettes_compare_checked as $facette_compare) {
+				$form .= "<input type=\"hidden\" name=\"check_facette_compare[]\" value=\"".htmlentities($facette_compare['value'], ENT_QUOTES, $charset)."\">\n";
 			}
 		}
 		$facettes_groupby_checked = static::get_groupby_checked_session();
@@ -584,18 +584,18 @@ class facette_search_compare {
 	/**
 	 * @return string le bouton d'ajout du critère de groupage dans le tableau HTML des facettes
 	 */
-	public static function get_groupby_row($facette_compare,$groupBy,$idGroupBy){
+	public static function get_groupby_row($facette_compare, $groupBy, $idGroupBy) {
 		global $msg;
 		global $charset;
-		$script="";
-		if(sizeof($facette_compare->facette_groupby[$idGroupBy])){
-			$script= "
-				<th class='groupby_button' onclick=\"group_by('".htmlentities($groupBy,ENT_QUOTES,$charset)."');\"><img title='".$msg['facette_compare_groupby']."' class='facette_compare_grp' alt='".$msg['facette_compare_groupby']."' src='".get_url_icon('group_by.png')."'/></th>
-				<input type='hidden' id='facette_groupby_".$idGroupBy."' name='check_facette_groupby[]' value='".htmlentities($groupBy,ENT_QUOTES,$charset)."'/>";
-		}else{
-			$script= "
-				<th class='groupby_button' onclick=\"group_by('".htmlentities($groupBy,ENT_QUOTES,$charset)."');\"><img title='".$msg['facette_compare_groupby']."' class='facette_compare_grp' alt='".$msg['facette_compare_groupby']."' src='".get_url_icon('group_by_grey.png')."'/></th>
-				<input type='hidden' id='facette_groupby_".$idGroupBy."' name='check_facette_groupby[]' value=''/>";
+		$script = "";
+		if (!empty($facette_compare->facette_groupby[$idGroupBy])) {
+			$script = "
+				<th class='groupby_button' onclick=\"group_by('".htmlentities($groupBy, ENT_QUOTES, $charset)."');\"><img title='".$msg['facette_compare_groupby']."' class='facette_compare_grp' alt='".$msg['facette_compare_groupby']."' src='".get_url_icon('group_by.png')."'/></th>
+				<input type='hidden' id='facette_groupby_$idGroupBy' name='check_facette_groupby[]' value='".htmlentities($groupBy, ENT_QUOTES, $charset)."'/>";
+		} else {
+			$script = "
+				<th class='groupby_button' onclick=\"group_by('".htmlentities($groupBy, ENT_QUOTES, $charset)."');\"><img title='".$msg['facette_compare_groupby']."' class='facette_compare_grp' alt='".$msg['facette_compare_groupby']."' src='".get_url_icon('group_by_grey.png')."'/></th>
+				<input type='hidden' id='facette_groupby_$idGroupBy' name='check_facette_groupby[]' value=''/>";
 			}	
 		return $script;
 	}

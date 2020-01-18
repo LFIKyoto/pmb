@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms.tpl.php,v 1.6 2017-03-30 14:48:07 dgoron Exp $
+// $Id: cms.tpl.php,v 1.7 2019-05-27 11:54:29 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
+
+global $cms_build_menu_tpl, $msg, $cms_pages_menu_tpl, $cms_frbr_pages_menu_tpl, $cms_editorial_menu_tpl, $cms_section_menu_tpl, $cms_article_menu_tpl, $cms_collection_menu_tpl;
 
 $cms_build_menu_tpl = "
 	<h1>".$msg["cms_menu_build_block"]." <span>> !!menu_sous_rub!!</span></h1>

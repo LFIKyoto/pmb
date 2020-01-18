@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: harvest.inc.php,v 1.2 2017-05-12 15:15:56 dgoron Exp $
+// $Id: harvest.inc.php,v 1.3 2019-06-05 09:04:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $acces_m, $gestion_acces_active, $gestion_acces_user_notice, $PMBuserid, $id, $charset, $notice_id, $harvest_id;
+global $profil_id, $action, $msg;
 
 require_once($class_path."/harvest_notice.class.php");
 // functions particulières à ce module

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: selector.class.php,v 1.12 2018-10-08 13:59:40 vtouchard Exp $
+// $Id: selector.class.php,v 1.13 2019-06-11 08:53:57 btafforeau Exp $
   
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -168,7 +168,7 @@ class selector {
 	
 	public function get_title() {
 		global $msg;
-		return $msg[get_called_class()];
+		return $msg[static::class];
 	}
 	
 	public function get_sel_header_template() {

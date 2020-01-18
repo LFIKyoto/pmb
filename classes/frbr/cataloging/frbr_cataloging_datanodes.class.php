@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_cataloging_datanodes.class.php,v 1.2 2018-01-17 15:01:13 dgoron Exp $
+// $Id: frbr_cataloging_datanodes.class.php,v 1.3 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -27,7 +27,7 @@ class frbr_cataloging_datanodes {
 	 * Constructeur
 	 */
 	public function __construct($num_category=0) {
-		$this->num_category = $num_category+0;
+	    $this->num_category = (int) $num_category;
 		$this->fetch_data();
 	}
 	

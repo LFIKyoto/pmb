@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_licence.class.php,v 1.12 2018-12-20 11:00:19 mbertin Exp $
+// $Id: explnum_licence.class.php,v 1.16 2019-06-12 12:48:05 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+use Spipu\Html2Pdf\Html2Pdf;
 
 require_once($include_path.'/templates/explnum_licence/explnum_licence.tpl.php');
 require_once($class_path.'/explnum_licence/explnum_licence_profile.class.php');
@@ -281,7 +283,7 @@ class explnum_licence {
 			return '';
 		}
 		if(!count($selected)){
-			$selected = array(0);
+			$selected = array([0]);
 		}
 		$licence_ids = array_keys($selected);
 		
@@ -327,7 +329,8 @@ class explnum_licence {
 				$current_profile = str_replace('!!explnum_licence_profile_id!!', htmlentities($profile->get_id(), ENT_QUOTES, $charset), $current_profile);
 				$current_profile = str_replace('!!explnum_licence_profile_logo_url!!', htmlentities($profile->get_logo_url(), ENT_QUOTES, $charset), $current_profile);
 				$current_profile = str_replace('!!explnum_licence_profile_label!!', htmlentities($profile->get_label(), ENT_QUOTES, $charset), $current_profile);
-				$current_profile = str_replace('!!explnum_licence_profile_selected!!', (in_array($profile->get_id(), $selected) ? ' checked="checked" ' : ''), $current_profile);
+				$is_checked = (in_array($profile->get_id(), $selected) || (empty($selected) && empty($html)));
+				$current_profile = str_replace('!!explnum_licence_profile_selected!!', ($is_checked ? ' checked="checked" ' : ''), $current_profile);
 				$current_profile = str_replace('!!explnum_licence_profile_selector_index!!', $selector_index, $current_profile);
 				
 				$html.= $current_profile;
@@ -446,7 +449,7 @@ class explnum_licence {
 		}
 		global $msg;
 		global $charset;
-		global $explnum_licence_profile_details, $explnum_licence_right_details, $explnum_licence_info_picto;
+		global $explnum_licence_profile_details, $explnum_licence_right_details;
 		$html = '';
 		$profiles = self::get_explnum_licence_profiles($explnum_id);
 		if (!count($profiles)) {
@@ -464,8 +467,7 @@ class explnum_licence {
 				$profile_detail = str_replace('!!explnum_licence_profile_logo_url!!', htmlentities($profile->get_logo_url(), ENT_QUOTES, $charset), $profile_detail);
 				
 				$profile_detail = str_replace('!!explnum_licence_profile_image!!', $profile->get_logo_url() ? "<img style='height:30px;' src='".$profile->get_logo_url()."' alt='".htmlentities($profile->get_label(), ENT_QUOTES, $charset)."'/>" : '' , $profile_detail);
-				$profile_detail = str_replace('!!explnum_licence_profile_explanation!!', htmlentities($profile->get_explanation(), ENT_QUOTES, $charset), $profile_detail);
-				$profile_detail = str_replace('!!explnum_licence_profile_quotation_rights!!', htmlentities($profile->get_quotation_rights(), ENT_QUOTES, $charset), $profile_detail);
+				$profile_detail = str_replace('!!explnum_licence_profile_explanation!!', nl2br(htmlentities($profile->get_explanation(), ENT_QUOTES, $charset)), $profile_detail);
 				$prohibitions = $authorizations = '';
 				foreach ($profile->get_rights() as $right) {
 					$right_detail = str_replace('!!explnum_licence_right_image!!', $right->get_logo_url() ? "<img style='height:30px;' src='".$right->get_logo_url()."' alt='".htmlentities($right->get_label(), ENT_QUOTES, $charset)."' />" : '', $explnum_licence_right_details);
@@ -501,13 +503,12 @@ class explnum_licence {
 		global $charset;
 		global $class_path;
 		global $explnum_licence_pdf_container_template;
-		require_once($class_path.'/html2pdf/html2pdf.class.php');
 		
 		$template = str_replace('!!explnum_licence_profiles_details!!', self::get_explnum_licence_details($explnum_id), $explnum_licence_pdf_container_template);
 		
-		$html2pdf = new HTML2PDF('P','A4','fr');
-		$html2pdf->WriteHTML($template);
-		$html2pdf->Output('licence_'.$explnum_id.'.pdf');
+		$html2pdf = new Html2Pdf('P','A4','fr');
+		$html2pdf->writeHTML($template);
+		$html2pdf->output('licence_'.$explnum_id.'.pdf');
 	}
 	
 	public static function get_explnum_licence_tooltip($explnum_id){
@@ -516,7 +517,7 @@ class explnum_licence {
 		}
 		global $msg;
 		global $charset;
-		global $explnum_licence_profile_details, $explnum_licence_right_details, $explnum_licence_info_picto;
+		global $explnum_licence_profile_details, $explnum_licence_right_details;
 		$html = '';
 		$profiles = self::get_explnum_licence_profiles($explnum_id);
 		if (!count($profiles)) {
@@ -528,6 +529,26 @@ class explnum_licence {
 			foreach($profiles_id as $profile_id){
 				$profile = new explnum_licence_profile($profile_id);
 				$html.= ($profile->get_logo_url() ? '<img src="'.$profile->get_logo_url().'" height="30px;"/><br/>' : '').$profile->get_label().'<br/>';
+			}
+		}
+		return $html;
+	}
+	
+	public static function get_explnum_licence_quotation($explnum_id){
+		global $explnum_licence_profile_quotation;
+		
+		if (!$explnum_id) {
+			return '';
+		}
+		$html = '';
+		$profiles = self::get_explnum_licence_profiles($explnum_id);
+		if (!count($profiles)) {
+			return $html;
+		}
+		foreach ($profiles as $profiles_id) {
+			foreach($profiles_id as $profile_id){
+				$profile = new explnum_licence_profile($profile_id);
+				$html.= str_replace('!!profile_quotation!!', $profile->get_quotation_rights_for_explnum($explnum_id), $explnum_licence_profile_quotation);
 			}
 		}
 		return $html;

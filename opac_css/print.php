@@ -2,7 +2,9 @@
 // +--------------------------------------------------------------------------+
 // | PMB est sous licence GPL, la réutilisation du code est cadrée            |
 // +--------------------------------------------------------------------------+
-// $Id: print.php,v 1.113 2018-12-13 16:54:54 dgoron Exp $
+// $Id: print.php,v 1.120 2019-06-12 12:48:06 btafforeau Exp $
+
+use Spipu\Html2Pdf\Html2Pdf;
 
 $base_path=".";
 require_once($base_path."/includes/init.inc.php");
@@ -154,10 +156,10 @@ if ($action!="print_$lvl") {
 	if($lvl) $output_final.="<h2 class='print_title'>".$msg["print_title_".$lvl]."</h2>";
 	else $output_final .="<h2 class='print_title'>".$msg["print_title"]."</h2>";
 	$output_final.= "<h3 class='print_options' >".$msg["print_options"]."</h3>";
-	$output_final.= "<form name='print_options' id='print_options' action='print.php?lvl=$lvl&action=print_$lvl' method='post'>";
+	$output_final.= "<form name='print_options' id='print_options' action='print.php?lvl=" . urlencode($lvl) . "&action=print_" . urlencode($lvl) . "' method='post'>";
 	if($id_liste) $output_final .= "<input type='hidden' name='id_liste' value='$id_liste'>";
 	if($id_etagere) $output_final .= "<input type='hidden' name='id_etagere' value='$id_etagere'>";
-	if($current_search) $output_final .= "<input type='hidden' name='current_search' value='$current_search'/>";
+	if($current_search) $output_final .= "<input type='hidden' name='current_search' value='" . htmlentities($current_search,ENT_QUOTES,$charset) . "'/>";
 	
 	 if(!$id_liste && !$id_etagere && !$current_search){
 		 $script_selnoti = "
@@ -337,7 +339,7 @@ if ($action!="print_$lvl") {
 				
 				var req = new http_request();				
 				var url='./ajax.php?module=ajax&categ=print_docnum&sub=get_list&select_noti='+document.getElementById('select_noti').value+
-				'&number='+ number;
+				'&number='+ number+'".($id_etagere ? "&id_etagere=".$id_etagere : '').($id_liste ? "&id_liste=".$id_liste : '')."';
 				req.request(url);				
 				docnum_part.innerHTML = req.get_text();						
 			}
@@ -553,12 +555,10 @@ if ($action!="print_$lvl") {
 			if($number && $select_noti){
 				$notices = explode(",",$select_noti);
 			} else {
-				$rqt = "select * from opac_liste_lecture where id_liste='$id_liste'";
-				$res = pmb_mysql_query($rqt);
-				$liste=pmb_mysql_fetch_object($res);
+				$liste = new liste_lecture($id_liste);
 				$nom_liste = $liste->nom_liste;
 				$description = $liste->description;
-				$notices=explode(',',$liste->notices_associees);
+				$notices = $liste->sort_notices($liste->notices);
 			}
 			break;
 		case 'print_search':
@@ -661,7 +661,10 @@ if ($action!="print_$lvl") {
 						if ($vignette) $current->do_image($current->notice_public,false);
 					} else {
 						$current->do_isbd($short,$ex);
-						if ($vignette) $current->do_image($current->notice_isbd,false);
+						if ($vignette) {
+						    if ($output == 'pdf') $opac_notice_is_pdf = true;
+						    $current->do_image($current->notice_isbd,false);
+						}
 					}
 					//Icone type de Document
 					if (!isset($icon_doc)) {
@@ -682,16 +685,25 @@ if ($action!="print_$lvl") {
 						$notice_aff .= "<h3>&nbsp;".$iconDoc.$current->notice_header."</h3>";
 					}
 					if ($current->notice->niveau_biblio =='s') {
+					    if (!isset($bulletins)) $bulletins = '';
 						$perio="<span class='fond-mere'>[".$msg['isbd_type_perio'].$bulletins."]</span>&nbsp;";
 					} elseif ($current->notice->niveau_biblio =='a') {
 						$perio="<span class='fond-article'>[".$msg['isbd_type_art']."]</span>&nbsp;";
 					} else $perio="";
-					if ($type=='PUBLIC') $notice_aff .= $perio.$current->notice_public; else $notice_aff .= $perio.$current->notice_isbd;
+					if ($type=='PUBLIC') {
+					    $notice_aff .= $perio.$current->notice_public;
+					} else { 
+					    $notice_aff .= $perio.$current->notice_isbd;
+					}
 					if ($ex) $notice_aff .= $current->affichage_expl ;
 					$output_final .= $notice_aff."<hr /> ";
 				}
 			}
-			$notices_aff.=$notice_aff;
+			if ($opac_notice_is_pdf) {
+			    $notices_aff.= "<nobreak>" . $notice_aff . "</nobreak>";
+			} else {
+			    $notices_aff.= $notice_aff;
+			}
 			if($noti_tpl) {
 				$notices_aff .= "<br /> ";
 			} else {
@@ -719,14 +731,9 @@ if ($output=="pdf"){
 			$notices_aff = utf8_encode($notices_aff);
 		}
 	}
-
-	require_once $class_path.'/mpdf/vendor/autoload.php';
-	
-	$mpdf = new mPDF();
-	$mpdf->autoScriptToLang = true;
-	$mpdf->autoLangToFont = true;
-	$mpdf->WriteHTML($notices_aff);
-	$mpdf->Output('diffusion.pdf','I');
+	$html2pdf = new Html2Pdf();
+	$html2pdf->writeHTML($notices_aff);
+	$html2pdf->output('diffusion.pdf','I');
 	exit;
 }
 

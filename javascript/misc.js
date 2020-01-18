@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: misc.js,v 1.17 2017-10-13 10:53:49 dgoron Exp $
+// $Id: misc.js,v 1.22.6.1 2019-11-21 14:20:10 dgoron Exp $
 
 
 // Fonction check_checkbox : Permet de changer l'etats d'une liste de checkbox.
@@ -13,7 +13,9 @@ function check_checkbox(checkbox_list,level) {
 	ids=checkbox_list.split('|');
 	while (ids.length>0) {
 		id=ids.shift();
-		document.getElementById(id).checked = state;
+		if(!document.getElementById(id).disabled) {
+			document.getElementById(id).checked = state;
+		}
 	}
 }
 
@@ -349,14 +351,161 @@ function closeCurrentEnv(){
 	);
 }
 
+function get_input_date_time_inter_js(div, name, id, today, msg_date_begin, msg_date_end) {
+	
+	var date = new Date();
+	if (today) {
+		date = null;
+	} else {
+		date = date.toISOString().substr(0, 10);
+	}    
+	var label_begin = document.createElement('label');
+	label_begin.innerHTML = pmbDojo.messages.getMessage('date', msg_date_begin);
+
+	var date_begin = document.createElement('input');
+    date_begin.setAttribute('type', 'date');
+    date_begin.setAttribute('id', id + '_date_begin');
+    date_begin.setAttribute('value', date);
+	
+
+	var time_begin = document.createElement('input');
+	time_begin.setAttribute('type', 'time');
+	time_begin.setAttribute('id', id + '_time_begin');
+			
+	var label_end = document.createElement('label');
+	label_end.innerHTML = pmbDojo.messages.getMessage('date', msg_date_end);
+			
+	var date_end = document.createElement('input');
+    date_end.setAttribute('type','date');
+    date_end.setAttribute('id', id + '_date_end');
+    date_end.value = date;
+    
+	var time_end = document.createElement('input');
+	time_end.setAttribute('type','time');
+	time_end.setAttribute('id', id + '_time_end');
+	
+	var del = document.createElement('input');
+	del.setAttribute('type', 'button');
+    del.setAttribute('class', 'bouton');
+    del.setAttribute('value', 'X');
+    
+    var buttonId = id.split('_');
+    buttonId.pop();
+    buttonId = buttonId.join('_');
+    var buttonAdd = document.getElementById('button_add_' + buttonId);
+    
+	if (use_dojo_calendar == 1) { 
+		del.addEventListener('click', function() {
+			require(['dijit/registry'], function(registry) {
+				empty_dojo_calendar_by_id(id + '_date_begin');
+				empty_dojo_calendar_by_id(id + '_time_begin');
+				empty_dojo_calendar_by_id(id + '_date_end');
+				empty_dojo_calendar_by_id(id + '_time_end');
+			});
+		}, false);
+		
+	} else {
+	    date_begin.setAttribute('name', name + '[date_begin]');
+		time_begin.setAttribute('name', name + '[time_begin]');
+	    date_end.setAttribute('name', name + '[date_end]');
+		time_end.setAttribute('name', name + '[time_end]');
+		del.addEventListener('click', function() {
+			document.getElementById(id + '_date_begin').value = '';
+			document.getElementById(id + '_time_begin').value = '';
+			document.getElementById(id + '_date_end').value = '';
+			document.getElementById(id + '_time_end').value = '';
+		}, false);
+		
+	}
+	var br = document.createElement('br');
+	div.appendChild(label_begin);
+	div.appendChild(document.createTextNode(' '));
+	div.appendChild(date_begin);
+	div.appendChild(document.createTextNode(' '));
+	div.appendChild(time_begin);
+	div.appendChild(document.createTextNode(' '));
+	div.appendChild(label_end);
+	div.appendChild(document.createTextNode(' '));
+	div.appendChild(date_end);
+	div.appendChild(document.createTextNode(' '));
+	div.appendChild(time_end);
+	div.appendChild(document.createTextNode(' '));
+	div.appendChild(del);
+	if (buttonAdd) div.appendChild(buttonAdd);
+	div.appendChild(br);
+	
+	if (use_dojo_calendar == 1) { 		
+		require(['dijit/form/TimeTextBox', 'dijit/form/DateTextBox'], function(TimeTextBox, DateTextBox) {
+			new DateTextBox({value : date, name : name + '[date_begin]'}, id + '_date_begin').startup();
+
+			new TimeTextBox({value: null,
+				name : name + '[time_begin]',
+				constraints : {
+					timePattern : 'HH:mm',
+					clickableIncrement : 'T00:15:00',
+					visibleIncrement : 'T01:00:00',
+					visibleRange : 'T01:00:00'
+				}
+			}, id + '_time_begin').startup();
+
+			new DateTextBox({value : date, name : name + '[date_end]'}, id + '_date_end').startup();
+
+			new TimeTextBox({value : null,
+				name : name + '[time_end]',
+				constraints : {
+					timePattern : 'HH:mm',
+					clickableIncrement : 'T00:15:00',
+					visibleIncrement : 'T01:00:00',
+					visibleRange : 'T01:00:00'
+				}
+			}, id + '_time_end').startup();
+		});
+		
+	} 
+    return div;
+}
+
+function get_input_date_js(name, id, value, required, onchange) {
+	
+    var input_date = document.createElement('input');
+    input_date.setAttribute('name', name);
+    input_date.setAttribute('id', id);
+    if (use_dojo_calendar == 1) { 
+        input_date.setAttribute('data-dojo-type', 'dijit/form/DateTextBox');
+        input_date.setAttribute('type', 'text');
+    } else {
+        input_date.setAttribute('type', 'date');
+    }
+    if (value) {
+    	input_date.setAttribute('value', value);
+    } else {
+    	input_date.setAttribute('value', '');
+    }
+    return input_date;
+}
+
 function set_parent_value(f_caller, id, value){
-	window.parent.document.forms[f_caller].elements[id].value = value;
+	if (!f_caller || !id) return;
+	if(typeof window.parent.document.forms[f_caller] != 'undefined') {
+		window.parent.document.forms[f_caller].elements[id].value = value;
+	} else if(typeof window.opener.document.forms[f_caller] != 'undefined') {
+		window.opener.document.forms[f_caller].elements[id].value = value;
+	} 
 }
 
 function get_parent_value(f_caller, id){
-	return window.parent.document.forms[f_caller].elements[id].value;
+	if(typeof window.parent.document.forms[f_caller] != 'undefined') {
+		return window.parent.document.forms[f_caller].elements[id].value;
+	} else if(typeof window.opener.document.forms[f_caller] != 'undefined') {
+		return window.opener.document.forms[f_caller].elements[id].value;
+	}
+	return '';
 }
 
 function set_parent_focus(f_caller, id){
-	window.parent.document.forms[f_caller].elements[id].focus();
+	if(typeof window.parent.document.forms[f_caller] != 'undefined') {
+		window.parent.document.forms[f_caller].elements[id].focus();
+	} else if(typeof window.opener.document.forms[f_caller] != 'undefined') {
+		window.opener.document.forms[f_caller].elements[id].focus();
+	}
 }

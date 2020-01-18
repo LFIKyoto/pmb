@@ -2,7 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: impr_cote_suite.php,v 1.3 2017-08-07 12:14:47 jpermanne Exp $
+// $Id: impr_cote_suite.php,v 1.5 2019-07-12 10:25:27 btafforeau Exp $
+
+global $base_noheader, $pmb_label_construct_script, $idcaddie, $elt_flag, $elt_no_flag, $fpdf, $label_grid_nb_per_row, $label_grid_nb_per_col;
+global $page_orientation, $unit, $page_format, $label_grid_from_top, $label_grid_from_left, $label_grid_h_spacing, $label_grid_v_spacing;
+global $first_row, $first_col, $content_type;
 
 $base_path = "../../..";   
 $class_path = "$base_path/classes";

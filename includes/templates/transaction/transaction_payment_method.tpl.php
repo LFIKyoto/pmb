@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: transaction_payment_method.tpl.php,v 1.1 2018-12-21 14:45:20 ngantier Exp $
+// $Id: transaction_payment_method.tpl.php,v 1.2 2019-05-27 10:16:50 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $transaction_payment_method_form, $msg, $current_module, $transaction_payment_method_list_form;
 
 $transaction_payment_method_form="
 

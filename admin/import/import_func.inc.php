@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_func.inc.php,v 1.130 2018-12-20 11:00:19 mbertin Exp $
+// $Id: import_func.inc.php,v 1.135 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -73,9 +73,15 @@ $tpl_beforeupload_expl = "
                    	<div class='row'>&nbsp;</div>
                    		<div clas='row'>
                    			<div class='colonne2'>
-                   				&nbsp;<br />
-                   				&nbsp;
-                   			</div>
+	                   			<label class='etiquette' for='import_notice_existing_replace'>".$msg['import_notice_existing_replace']."</label>
+	                    		<div>
+	                    			<input type='radio' name='import_notice_existing_replace' id='import_notice_existing_replace0' value='0' checked='checked' onclick='param_existing_replace_display();'> <label for='import_notice_existing_replace0'>".$msg['39']."</label> 
+	                    			<input type='radio' name='import_notice_existing_replace' id='import_notice_existing_replace1' value='1' onclick='param_existing_replace_display();'> <label for='import_notice_existing_replace1'>".$msg['40']."</label>
+	                    		</div>
+	                    		<div id='import_notice_existing_replace_message' class='warning' style='display: none;'>
+	                    			".htmlentities($msg['import_notice_existing_replace_message'], ENT_QUOTES, $charset)."
+	                    		</div>
+	                   		</div>
                    			<div class='colonne-suite'>
                    				<label class='etiquette' for='authorities_default_origin'>".htmlentities($msg['import_authorities_origin_default_value'],ENT_QUOTES,$charset)."</label><br />
 								".origin::gen_combo_box("authorities")."
@@ -137,6 +143,7 @@ $tpl_beforeupload_expl = "
                         <INPUT NAME=\"action\" TYPE=\"hidden\" value=\"afterupload\" />
                     </div>
                     </div>
+				".import_expl::get_advanced_form()."
                 <INPUT TYPE='SUBMIT' class='bouton' NAME='upload' VALUE='".$msg[502]."' />
                 </FORM>
                 <script type='text/javascript'>
@@ -145,6 +152,13 @@ $tpl_beforeupload_expl = "
 							document.getElementById('list_param_links').style.display='';
 						} else {
 							document.getElementById('list_param_links').style.display='none';
+						}
+					}
+                	function param_existing_replace_display(){
+						if(document.getElementById('import_notice_existing_replace1').checked){
+							document.getElementById('import_notice_existing_replace_message').style.display='';
+						} else {
+							document.getElementById('import_notice_existing_replace_message').style.display='none';
 						}
 					}
 				</script>";
@@ -205,9 +219,15 @@ $tpl_beforeupload_notices = "
                    		<div class='row'>&nbsp;</div>
                    		<div clas='row'>
                    			<div class='colonne2'>
-                   				&nbsp;<br />
-                   				&nbsp;
-                   			</div>
+	                   			<label class='etiquette' for='import_notice_existing_replace'>".$msg['import_notice_existing_replace']."</label>
+	                    		<div>
+	                    			<input type='radio' name='import_notice_existing_replace' id='import_notice_existing_replace0' value='0' checked='checked' onclick='param_existing_replace_display();'> <label for='import_notice_existing_replace0'>".$msg['39']."</label> 
+	                    			<input type='radio' name='import_notice_existing_replace' id='import_notice_existing_replace1' value='1' onclick='param_existing_replace_display();'> <label for='import_notice_existing_replace1'>".$msg['40']."</label>
+	                    		</div>
+	                    		<div id='import_notice_existing_replace_message' class='warning' style='display: none;'>
+	                    			".htmlentities($msg['import_notice_existing_replace_message'], ENT_QUOTES, $charset)."
+	                    		</div>
+	                   		</div>
                    			<div class='colonne-suite'>
                    				<label class='etiquette' for='authorities_default_origin'>".htmlentities($msg['import_authorities_origin_default_value'],ENT_QUOTES,$charset)."</label><br />
 								".origin::gen_combo_box("authorities","authorities_default_origin")."
@@ -224,6 +244,7 @@ $tpl_beforeupload_notices = "
                             <INPUT NAME='action' TYPE='hidden' value='afterupload' />
                             </div>
                         </div>
+                    ".import_records::get_advanced_form()."
                     <INPUT TYPE='SUBMIT' class='bouton' NAME='upload' VALUE='".$msg[502]."' />
                     </FORM>
                     <script type='text/javascript'>
@@ -232,6 +253,13 @@ $tpl_beforeupload_notices = "
 								document.getElementById('list_param_links').style.display='';
 							} else {
 								document.getElementById('list_param_links').style.display='none';
+							}
+						}
+                    	function param_existing_replace_display(){
+							if(document.getElementById('import_notice_existing_replace1').checked){
+								document.getElementById('import_notice_existing_replace_message').style.display='';
+							} else {
+								document.getElementById('import_notice_existing_replace_message').style.display='none';
 							}
 						}
 					</script>";
@@ -585,6 +613,7 @@ function recup_noticeunimarc($notice) {
 					$no_edition=$record->get_subfield_array($cle,"a");
 					break;
 				case "210": /* publisher */ // b: adr
+				case "219":
 					$editeur_lieu=$record->get_subfield_array_array($cle, "a");
 					$editeur_adr=$record->get_subfield_array_array($cle, "b");
 					$editeur_nom=$record->get_subfield_array_array($cle, "c");
@@ -751,9 +780,41 @@ function recup_noticeunimarc_link($notice){
 }
 
 /*
+ * En cas de remplacement de notice
+ */
+function del_associations_existing_notice($id=0) {
+	if($id) {
+		//Suppression de la vignette de la notice si il y en a une d'uploadée
+		thumbnail::delete($id);
+		
+		$p_perso=new parametres_perso("notices");
+		$p_perso->delete_values($id);
+		
+		$requete = "DELETE FROM notices_categories WHERE notcateg_notice='$id'" ;
+		@pmb_mysql_query($requete, $dbh);
+		
+		$requete = "DELETE FROM notices_langues WHERE num_notice='$id'" ;
+		@pmb_mysql_query($requete, $dbh);
+		
+		notice_relations::delete($id);
+		
+		$requete = "DELETE FROM responsability WHERE responsability_notice='$id'" ;
+		@pmb_mysql_query($requete, $dbh);
+		
+		// Supression des liens avec les titres uniformes
+		$requete = "DELETE FROM notices_titres_uniformes WHERE ntu_num_notice='$id'" ;
+		@pmb_mysql_query($requete, $dbh);
+		
+		// Nettoyage indexation concepts
+		$index_concept = new index_concept($id, TYPE_NOTICE);
+		$index_concept->delete();
+	}
+}
+
+/*
  * Import d'une nouvelle notice
  */
-function import_new_notice() {
+function import_new_notice($notice_existing_id=0) {
 
 	global $dbh ;
 	global $notice_id ;
@@ -827,9 +888,16 @@ function import_new_notice() {
 	global $authorities_default_origin;
 
 	global $import_force_notice_is_new;
+	global $import_notice_existing_replace;
 	
 	global $notice_replace_links;
 
+	//Suppression des associations pour le remplacement
+	$notice_existing_id += 0;
+	if($import_notice_existing_replace && $notice_existing_id) {
+		del_associations_existing_notice($notice_existing_id);
+	}
+	
 	$origin_authority= $authorities_default_origin;
 	$add_explnum=FALSE;
 	/* traitement des éditeurs */
@@ -1118,335 +1186,314 @@ function import_new_notice() {
 		$notice_date_is_new = date('Y-m-d H:i:s');		
 	}
 	
-		/* and at least, the insertion in notices table */
-		$sql_ins = "insert into notices (
-						typdoc			,
-						code        	,
-						statut			,
-		                tit1            ,
-		                tit2            ,
-		                tit3            ,
-		                tit4            ,
-		                tparent_id      ,
-		                tnvol           ,
-		                ed1_id          ,
-		                ed2_id          ,
-		                year            ,
-		                npages          ,
-		                ill             ,
-		                size            ,
-		                accomp          ,
-		                coll_id         ,
-		                subcoll_id      ,
-		                nocoll          ,
-		                mention_edition	,
-		                n_gen           ,
-		                n_contenu       ,
-		                n_resume        ,
-		                index_l,
-		                indexint,
-		                niveau_biblio,
-		                niveau_hierar,
-		                lien,
-		                eformat,
-		                origine_catalogage,
-		                prix,
-						create_date,
-						date_parution,
-						notice_is_new,
-						notice_date_is_new
-				) values (
-						'".$doc_type."',
-						'".addslashes($isbn_OK)."',
-						'".$statutnot."',
-		                '".(isset($tit[0]['a']) ? addslashes(clean_string($tit[0]['a'])) : '')."',
-		                '".(isset($tit[0]['c']) ? addslashes(clean_string($tit[0]['c'])) : '')."',
-		                '".(isset($tit[0]['d']) ? addslashes(clean_string($tit[0]['d'])) : '')."',
-		                '".(isset($tit[0]['e']) ? addslashes(clean_string($tit[0]['e'])) : '')."',
-		                '".$serie_id."',
-		                '".addslashes($tnvol_ins)."',
-		                 ".$ed1_id." ,
-		                 ".$ed2_id." ,
-		                '".addslashes($year)."',
-		                '".addslashes($nbpages)."',
-		                '".addslashes($illustration)."',
-		                '".addslashes($taille)."',
-		                '".addslashes($mat_accomp)."',
-		                 ".$coll_id." ,
-		                 ".$subcoll_id." ,
-		                '".addslashes($nocoll_ins)."',
-		                '".addslashes($mention_edit)."',
-		                '".addslashes($n_gen_total     )."',
-		             	'".addslashes($n_contenu_total )."',
-		             	'".addslashes($n_resume_total  )."',
-		                '".addslashes($index_l)."',
-		                '".$indexint_id."',
-		                '".$bibliographic_level."',
-		                '".$hierarchic_level."',
-		                '".(isset($lien[0]) ? addslashes($lien[0]) : '')."',
-		                '".(isset($eformat[0]) ? addslashes($eformat[0]) : '')."',
-		                '".$orinot_id."',
-		                '".addslashes($price)."',
-						sysdate(),
-						'".addslashes($date_parution)."',
-						'".$notice_is_new."',
-						'".$notice_date_is_new."'	
-						)";
-		pmb_mysql_query($sql_ins,$dbh) or die ("Couldn't insert into notices ! = ".$sql_ins);
-		$notice_id = pmb_mysql_insert_id($dbh) ;
-		notice::majNotices($notice_id);
+	/* and at least, the insertion in notices table */
+	if(isset($import_notice_existing_replace) && ($import_notice_existing_replace==1) && $notice_existing_id) {
+		$sql_ins = "update notices set ";
+	} else {
+		$sql_ins = "insert into notices set ";
+	}
+	$sql_ins .= "
+		typdoc = '".$doc_type."',
+		code = '".addslashes($isbn_OK)."',
+		statut = '".$statutnot."',
+		tit1 = '".(isset($tit[0]['a']) ? addslashes(clean_string($tit[0]['a'])) : '')."',
+		tit2 = '".(isset($tit[0]['c']) ? addslashes(clean_string($tit[0]['c'])) : '')."',
+		tit3 = '".(isset($tit[0]['d']) ? addslashes(clean_string($tit[0]['d'])) : '')."',
+		tit4 = '".(isset($tit[0]['e']) ? addslashes(clean_string($tit[0]['e'])) : '')."',
+		tparent_id = '".$serie_id."',
+		tnvol = '".addslashes($tnvol_ins)."',
+		ed1_id = ".$ed1_id." ,
+		ed2_id = ".$ed2_id." ,
+		year = '".addslashes($year)."',
+		npages = '".addslashes($nbpages)."',
+		ill = '".addslashes($illustration)."',
+		size = '".addslashes($taille)."',
+		accomp = '".addslashes($mat_accomp)."',
+		coll_id = ".$coll_id." ,
+		subcoll_id = ".$subcoll_id." ,
+		nocoll = '".addslashes($nocoll_ins)."',
+		mention_edition = '".addslashes($mention_edit)."',
+		n_gen = '".addslashes($n_gen_total)."',
+		n_contenu = '".addslashes($n_contenu_total )."',
+		n_resume = '".addslashes($n_resume_total  )."',
+		index_l = '".addslashes($index_l)."',
+		indexint = '".$indexint_id."',
+		niveau_biblio = '".$bibliographic_level."',
+		niveau_hierar = '".$hierarchic_level."',
+		lien = '".(isset($lien[0]) ? addslashes($lien[0]) : '')."',
+		eformat = '".(isset($eformat[0]) ? addslashes($eformat[0]) : '')."',
+		origine_catalogage = '".$orinot_id."',
+		prix = '".addslashes($price)."',
+		date_parution = '".addslashes($date_parution)."',
+		notice_is_new = '".$notice_is_new."',
+		notice_date_is_new = '".$notice_date_is_new."' ";
+	if(isset($import_notice_existing_replace) && ($import_notice_existing_replace==1) && $notice_existing_id) {
+		$sql_ins .= " where notice_id = ".$notice_existing_id;
+	} else {
+		$sql_ins .= ", create_date = sysdate() "; 
+	}
+	pmb_mysql_query($sql_ins,$dbh) or die ("Couldn't insert into notices ! = ".$sql_ins);
+	if($notice_existing_id) {
+		$notice_id = $notice_existing_id;
+		audit::insert_modif(AUDIT_NOTICE,$notice_id);
+	} else {
+		$notice_id = pmb_mysql_insert_id($dbh);
 		audit::insert_creation(AUDIT_NOTICE,$notice_id);
-		//calcul des droits d'accès s'ils sont activés
-		calc_notice_acces_rights($notice_id);
+	}
+	notice::majNotices($notice_id);
+	
+	//calcul des droits d'accès s'ils sont activés
+	calc_notice_acces_rights($notice_id);
 
-		// on devait attendre que la notice soit intégrée pour faire l'association avec la notice..;
-		if($collec['authority_number']){
-			keep_authority_infos($collec['authority_number'],"scollection",$origin_authority,$notice_id,$collec);
-		}
-		if($subcollec['authority_number']){
-			keep_authority_infos($subcollec['authority_number'],"subcollection",$origin_authority,$notice_id,$subcollec);
-		}
+	// on devait attendre que la notice soit intégrée pour faire l'association avec la notice..;
+	if($collec['authority_number']){
+		keep_authority_infos($collec['authority_number'],"scollection",$origin_authority,$notice_id,$collec);
+	}
+	if($subcollec['authority_number']){
+		keep_authority_infos($subcollec['authority_number'],"subcollection",$origin_authority,$notice_id,$subcollec);
+	}
 
 
-		/* INSERT de la notice OK, on va traiter les auteurs
-		70# : personnal : type auteur 70                71# : collectivités : type auteur 71
-		1 seul en 700                                   idem pour les déclinaisons
-		n en 701 n en 702
-		les 7#0 tombent en auteur principal : responsability_type = 0
-		les 7#1 tombent en autre auteur : responsability_type = 1
-		les 7#2 tombent en auteur secondaire : responsability_type = 2
-		*/
-		$aut_array = array();
-		/* on compte tout de suite le nbre d'enreg dans les répétables */
-		$nb_repet_701=sizeof($aut_701);
-		$nb_repet_711=sizeof($aut_711);
-		$nb_repet_702=sizeof($aut_702);
-		$nb_repet_712=sizeof($aut_712);
-		//indicateur["710"];
-		/* renseignement de aut0 */
-		if (isset($aut_700[0]['a']) && $aut_700[0]['a']!="") { /* auteur principal en 700 ? */
-			$aut_array[] = array(
-				"entree" => $aut_700[0]['a'],
-				"rejete" => $aut_700[0]['b'],
-				"author_comment" => $aut_700[0]['c']." ".$aut_700[0]['d'],
-				"date" => $aut_700[0]['f'],
-				"type_auteur" => "70",
-				"fonction" => $aut_700[0][4],
-				"id" => 0,
-				"responsabilite" => 0,
-				"ordre" => 0,
-				'authority_number' =>  $aut_700[0][3]
-			) ;
-		} elseif (isset($aut_710[0]['a']) && $aut_710[0]['a']!="") { /* auteur principal en 710 ? */
-			if(substr($indicateur["710"][0],0,1)=="1")	$type_auteur="72";
-				else $type_auteur="71";
-
-			$lieu=$aut_710[0]['e'];
-			if(!$lieu)$lieu=$aut_710[0]['k'];
-			$aut_array[] = array(
-				"entree" => $aut_710[0]['a'],
-				"rejete" => $aut_710[0]['g'],
-				"subdivision" => $aut_710[0]['b'],
-				"author_comment" => $aut_710[0]['c'],
-				"numero" => $aut_710[0]['d'],
-				"lieu" => $lieu,
-				"ville" => $aut_710[0]['l'],
-				"pays" => $aut_710[0]['m'],
-				"web" => $aut_710[0]['n'],
-				"date" => $aut_710[0]['f'],
-				"type_auteur" => $type_auteur,
-				"fonction" => $aut_710[0][4],
-				"id" => 0,
-				"responsabilite" => 0,
-				"ordre" => 0,
-				'authority_number' =>  $aut_710[0][3]
-			 ) ;
-		}
-
-		/* renseignement de aut1 */
-		for ($i=0 ; $i < $nb_repet_701 ; $i++) {
-			$aut_array[] = array(
-				"entree" => $aut_701[$i]['a'],
-				"rejete" => $aut_701[$i]['b'],
-				"author_comment" => $aut_701[$i]['c']." ".$aut_701[$i]['d'],
-				"date" => $aut_701[$i]['f'],
-				"type_auteur" => "70",
-				"fonction" => $aut_701[$i][4],
-				"id" => 0,
-				"responsabilite" => 1,
-				"ordre" => ($i+1),
-				'authority_number' =>  $aut_701[$i][3]
-			) ;
-		}
-
-		for ($i=0 ; $i < $nb_repet_711 ; $i++) {
-			if(substr($indicateur["711"][$i],0,1)=="1")	$type_auteur="72";
+	/* INSERT de la notice OK, on va traiter les auteurs
+	70# : personnal : type auteur 70                71# : collectivités : type auteur 71
+	1 seul en 700                                   idem pour les déclinaisons
+	n en 701 n en 702
+	les 7#0 tombent en auteur principal : responsability_type = 0
+	les 7#1 tombent en autre auteur : responsability_type = 1
+	les 7#2 tombent en auteur secondaire : responsability_type = 2
+	*/
+	$aut_array = array();
+	/* on compte tout de suite le nbre d'enreg dans les répétables */
+	$nb_repet_701 = count($aut_701);
+	$nb_repet_711 = count($aut_711);
+	$nb_repet_702 = count($aut_702);
+	$nb_repet_712 = count($aut_712);
+	//indicateur["710"];
+	/* renseignement de aut0 */
+	if (isset($aut_700[0]['a']) && $aut_700[0]['a']!="") { /* auteur principal en 700 ? */
+		$aut_array[] = array(
+			"entree" => $aut_700[0]['a'],
+			"rejete" => $aut_700[0]['b'],
+			"author_comment" => $aut_700[0]['c']." ".$aut_700[0]['d'],
+			"date" => $aut_700[0]['f'],
+			"type_auteur" => "70",
+			"fonction" => $aut_700[0][4],
+			"id" => 0,
+			"responsabilite" => 0,
+			"ordre" => 0,
+			'authority_number' =>  $aut_700[0][3]
+		) ;
+	} elseif (isset($aut_710[0]['a']) && $aut_710[0]['a']!="") { /* auteur principal en 710 ? */
+		if(substr($indicateur["710"][0],0,1)=="1")	$type_auteur="72";
 			else $type_auteur="71";
 
-			$lieu=$aut_711[$i]['e'];
-			if(!$lieu)$lieu=$aut_711[$i]['k'];
-			$aut_array[] = array(
-				"entree" => $aut_711[$i]['a'],
-				"rejete" => $aut_711[$i]['g'],
-				"subdivision" => $aut_711[$i]['b'],
-				"author_comment" => $aut_711[$i]['c'],
-				"numero" => $aut_711[$i]['d'],
-				"lieu" => $lieu,
-				"ville" => $aut_711[$i]['l'],
-				"pays" => $aut_711[$i]['m'],
-				"web" => $aut_711[$i]['n'],
-				"date" => $aut_711[$i]['f'],
-				"type_auteur" => $type_auteur,
-				"fonction" => $aut_711[$i][4],
-				"id" => 0,
-				"responsabilite" => 1,
-				"ordre" => ($i+1),
-				'authority_number' =>  $aut_711[$i][3]
-			) ;
-		}
+		$lieu=$aut_710[0]['e'];
+		if(!$lieu)$lieu=$aut_710[0]['k'];
+		$aut_array[] = array(
+			"entree" => $aut_710[0]['a'],
+			"rejete" => $aut_710[0]['g'],
+			"subdivision" => $aut_710[0]['b'],
+			"author_comment" => $aut_710[0]['c'],
+			"numero" => $aut_710[0]['d'],
+			"lieu" => $lieu,
+			"ville" => $aut_710[0]['l'],
+			"pays" => $aut_710[0]['m'],
+			"web" => $aut_710[0]['n'],
+			"date" => $aut_710[0]['f'],
+			"type_auteur" => $type_auteur,
+			"fonction" => $aut_710[0][4],
+			"id" => 0,
+			"responsabilite" => 0,
+			"ordre" => 0,
+			'authority_number' =>  $aut_710[0][3]
+		 ) ;
+	}
 
-		/* renseignement de aut2 */
-		for ($i=0 ; $i < $nb_repet_702 ; $i++) {
-			$aut_array[] = array(
-				"entree" => $aut_702[$i]['a'],
-				"rejete" => $aut_702[$i]['b'],
-				"author_comment" => $aut_702[$i]['c']." ".$aut_702[$i]['d'],
-				"date" => $aut_702[$i]['f'],
-				"type_auteur" => "70",
-				"fonction" => $aut_702[$i][4],
-				"id" => 0,
-				"responsabilite" => 2,
-				"ordre" => ($i+1),
-				'authority_number' =>  $aut_702[$i][3]
-			) ;
-		}
+	/* renseignement de aut1 */
+	for ($i=0 ; $i < $nb_repet_701 ; $i++) {
+		$aut_array[] = array(
+			"entree" => $aut_701[$i]['a'],
+			"rejete" => $aut_701[$i]['b'],
+			"author_comment" => $aut_701[$i]['c']." ".$aut_701[$i]['d'],
+			"date" => $aut_701[$i]['f'],
+			"type_auteur" => "70",
+			"fonction" => $aut_701[$i][4],
+			"id" => 0,
+			"responsabilite" => 1,
+			"ordre" => ($i+1),
+			'authority_number' =>  $aut_701[$i][3]
+		) ;
+	}
 
-		for ($i=0 ; $i < $nb_repet_712 ; $i++) {
-			if(substr($indicateur["712"][$i],0,1)=="1")	$type_auteur="72";
-			else $type_auteur="71";
+	for ($i=0 ; $i < $nb_repet_711 ; $i++) {
+		if(substr($indicateur["711"][$i],0,1)=="1")	$type_auteur="72";
+		else $type_auteur="71";
 
-			$lieu=$aut_712[$i]['e'];
-			if(!$lieu)$lieu=$aut_712[$i]['k'];
-			$aut_array[] = array(
-				"entree" => $aut_712[$i]['a'],
-				"rejete" => $aut_712[$i]['g'],
-				"subdivision" => $aut_712[$i]['b'],
-				"author_comment" => $aut_712[$i]['c'],
-				"numero" => $aut_712[$i]['d'],
-				"lieu" => $lieu,
-				"ville" => $aut_712[$i]['l'],
-				"pays" => $aut_712[$i]['m'],
-				"web" => $aut_712[$i]['n'],
-				"date" => $aut_712[$i]['f'],
-				"type_auteur" => $type_auteur,
-				"fonction" => $aut_712[$i][4],
-				"id" => 0,
-				"responsabilite" => 2,
-				"ordre" => ($i+1),
-				'authority_number' =>  $aut_712[$i][3]
-			) ;
-		}
+		$lieu=$aut_711[$i]['e'];
+		if(!$lieu)$lieu=$aut_711[$i]['k'];
+		$aut_array[] = array(
+			"entree" => $aut_711[$i]['a'],
+			"rejete" => $aut_711[$i]['g'],
+			"subdivision" => $aut_711[$i]['b'],
+			"author_comment" => $aut_711[$i]['c'],
+			"numero" => $aut_711[$i]['d'],
+			"lieu" => $lieu,
+			"ville" => $aut_711[$i]['l'],
+			"pays" => $aut_711[$i]['m'],
+			"web" => $aut_711[$i]['n'],
+			"date" => $aut_711[$i]['f'],
+			"type_auteur" => $type_auteur,
+			"fonction" => $aut_711[$i][4],
+			"id" => 0,
+			"responsabilite" => 1,
+			"ordre" => ($i+1),
+			'authority_number' =>  $aut_711[$i][3]
+		) ;
+	}
 
-		// récup des infos auteurs et mise en tableau :
-		// appel de la fonction membre d'importation et insertion en table
-		$rqt_ins = "insert into responsability (responsability_author, responsability_notice, responsability_fonction, responsability_type, responsability_ordre) VALUES ";
-		$values="";
-		if(count($aut_array)){
-			for ($i=0 ; $i<sizeof($aut_array) ; $i++ ){
-				$aut = array();
-				$aut['name'] = (isset($aut_array[$i]['entree']) ? clean_string($aut_array[$i]['entree']) : '');
-				$aut['rejete'] = (isset($aut_array[$i]['rejete']) ? clean_string($aut_array[$i]['rejete']) : '');
-				$aut['type'] = $aut_array[$i]['type_auteur'];
-				$aut['date'] = (isset($aut_array[$i]['date']) ? clean_string($aut_array[$i]['date']) : '');
-				$aut['subdivision'] = (isset($aut_array[$i]['subdivision']) ? clean_string($aut_array[$i]['subdivision']) : '');
-				$aut['numero'] = (isset($aut_array[$i]['numero']) ? clean_string($aut_array[$i]['numero']) : '');
-				$aut['lieu'] = (isset($aut_array[$i]['lieu']) ? clean_string($aut_array[$i]['lieu']) : '');
-				$aut['ville'] = (isset($aut_array[$i]['ville']) ? clean_string($aut_array[$i]['ville']) : '');
-				$aut['pays'] = (isset($aut_array[$i]['pays']) ? clean_string($aut_array[$i]['pays']) : '');
-				$aut['web'] = (isset($aut_array[$i]['web']) ? clean_string($aut_array[$i]['web']) : '');
-				$aut['author_comment'] = (isset($aut_array[$i]['author_comment']) ? clean_string($aut_array[$i]['author_comment']) : '');
-				$aut['authority_number'] = (isset($aut_array[$i]['authority_number']) ? clean_string($aut_array[$i]['authority_number']) : '');
-				//si on à demander la prise en compte des numéro d'autorités
-				if($authorities_notices && $aut['authority_number']!=""){
-					$aut_array[$i]["id"] = keep_authority_infos($aut['authority_number'],"author",$origin_authority,$notice_id,$aut);
-				}
-				if(!$aut_array[$i]["id"]){
-					$aut_array[$i]["id"] = auteur::import($aut);
-				}
-				$aut_array[$i]['fonction'] = trim($aut_array[$i]['fonction']);
-				if ($aut_array[$i]["id"]) {
-					if($values!= "") $values.=",";
-					$values.=" ('".$aut_array[$i]["id"]."','".$notice_id."','".addslashes($aut_array[$i]['fonction'])."','".$aut_array[$i]['responsabilite']."','".$aut_array[$i]['ordre']."') " ;
-	//				$rqt = $rqt_ins . " ('".$aut_array[$i]["id"]."','".$notice_id."','".addslashes($aut_array[$i]['fonction'])."','".$aut_array[$i]['responsabilite']."','".$aut_array[$i]['ordre']."') " ;
-	//				@pmb_mysql_query($rqt, $dbh);
-				}
+	/* renseignement de aut2 */
+	for ($i=0 ; $i < $nb_repet_702 ; $i++) {
+		$aut_array[] = array(
+			"entree" => $aut_702[$i]['a'],
+			"rejete" => $aut_702[$i]['b'],
+			"author_comment" => $aut_702[$i]['c']." ".$aut_702[$i]['d'],
+			"date" => $aut_702[$i]['f'],
+			"type_auteur" => "70",
+			"fonction" => $aut_702[$i][4],
+			"id" => 0,
+			"responsabilite" => 2,
+			"ordre" => ($i+1),
+			'authority_number' =>  $aut_702[$i][3]
+		) ;
+	}
+
+	for ($i=0 ; $i < $nb_repet_712 ; $i++) {
+		if(substr($indicateur["712"][$i],0,1)=="1")	$type_auteur="72";
+		else $type_auteur="71";
+
+		$lieu=$aut_712[$i]['e'];
+		if(!$lieu)$lieu=$aut_712[$i]['k'];
+		$aut_array[] = array(
+			"entree" => $aut_712[$i]['a'],
+			"rejete" => $aut_712[$i]['g'],
+			"subdivision" => $aut_712[$i]['b'],
+			"author_comment" => $aut_712[$i]['c'],
+			"numero" => $aut_712[$i]['d'],
+			"lieu" => $lieu,
+			"ville" => $aut_712[$i]['l'],
+			"pays" => $aut_712[$i]['m'],
+			"web" => $aut_712[$i]['n'],
+			"date" => $aut_712[$i]['f'],
+			"type_auteur" => $type_auteur,
+			"fonction" => $aut_712[$i][4],
+			"id" => 0,
+			"responsabilite" => 2,
+			"ordre" => ($i+1),
+			'authority_number' =>  $aut_712[$i][3]
+		) ;
+	}
+
+	// récup des infos auteurs et mise en tableau :
+	// appel de la fonction membre d'importation et insertion en table
+	$rqt_ins = "insert into responsability (responsability_author, responsability_notice, responsability_fonction, responsability_type, responsability_ordre) VALUES ";
+	$values = "";
+	if (!empty($aut_array)) {
+	    $nb_aut = count($aut_array);
+	    for ($i = 0; $i < $nb_aut; $i++) {
+			$aut = array();
+			$aut['name'] = (isset($aut_array[$i]['entree']) ? clean_string($aut_array[$i]['entree']) : '');
+			$aut['rejete'] = (isset($aut_array[$i]['rejete']) ? clean_string($aut_array[$i]['rejete']) : '');
+			$aut['type'] = $aut_array[$i]['type_auteur'];
+			$aut['date'] = (isset($aut_array[$i]['date']) ? clean_string($aut_array[$i]['date']) : '');
+			$aut['subdivision'] = (isset($aut_array[$i]['subdivision']) ? clean_string($aut_array[$i]['subdivision']) : '');
+			$aut['numero'] = (isset($aut_array[$i]['numero']) ? clean_string($aut_array[$i]['numero']) : '');
+			$aut['lieu'] = (isset($aut_array[$i]['lieu']) ? clean_string($aut_array[$i]['lieu']) : '');
+			$aut['ville'] = (isset($aut_array[$i]['ville']) ? clean_string($aut_array[$i]['ville']) : '');
+			$aut['pays'] = (isset($aut_array[$i]['pays']) ? clean_string($aut_array[$i]['pays']) : '');
+			$aut['web'] = (isset($aut_array[$i]['web']) ? clean_string($aut_array[$i]['web']) : '');
+			$aut['author_comment'] = (isset($aut_array[$i]['author_comment']) ? clean_string($aut_array[$i]['author_comment']) : '');
+			$aut['authority_number'] = (isset($aut_array[$i]['authority_number']) ? clean_string($aut_array[$i]['authority_number']) : '');
+			//si on à demander la prise en compte des numéro d'autorités
+			if($authorities_notices && $aut['authority_number']!=""){
+				$aut_array[$i]["id"] = keep_authority_infos($aut['authority_number'],"author",$origin_authority,$notice_id,$aut);
 			}
-			@pmb_mysql_query($rqt_ins.$values);
+			if(!$aut_array[$i]["id"]){
+				$aut_array[$i]["id"] = auteur::import($aut);
+			}
+			$aut_array[$i]['fonction'] = trim($aut_array[$i]['fonction']);
+			if ($aut_array[$i]["id"]) {
+				if($values!= "") $values.=",";
+				$values.=" ('".$aut_array[$i]["id"]."','".$notice_id."','".addslashes($aut_array[$i]['fonction'])."','".$aut_array[$i]['responsabilite']."','".$aut_array[$i]['ordre']."') " ;
+//				$rqt = $rqt_ins . " ('".$aut_array[$i]["id"]."','".$notice_id."','".addslashes($aut_array[$i]['fonction'])."','".$aut_array[$i]['responsabilite']."','".$aut_array[$i]['ordre']."') " ;
+//				@pmb_mysql_query($rqt, $dbh);
+			}
 		}
-		// Titres uniformes
-		global $pmb_use_uniform_title;
-		if ($pmb_use_uniform_title) {
-			$nb_tu=sizeof($tu_500);
-			for ($i=0 ; $i<$nb_tu ; $i++ ) {
-				$value_tu[$i]['name'] = $tu_500[$i]['a'];
-				$value_tu[$i]['tonalite'] = $tu_500[$i]['u'];
-				$value_tu[$i]['comment'] = $tu_500[$i]['n'];
-				$value_tu[$i]['authority_number'] = $tu_500[$i]['3'];
+		@pmb_mysql_query($rqt_ins.$values);
+	}
+	// Titres uniformes
+	global $pmb_use_uniform_title;
+	if ($pmb_use_uniform_title) {
+		$nb_tu = count($tu_500);
+		for ($i=0 ; $i<$nb_tu ; $i++ ) {
+			$value_tu[$i]['name'] = $tu_500[$i]['a'];
+			$value_tu[$i]['tonalite'] = $tu_500[$i]['u'];
+			$value_tu[$i]['comment'] = $tu_500[$i]['n'];
+			$value_tu[$i]['authority_number'] = $tu_500[$i]['3'];
 
-				for($j=0;$j<count($tu_500_r[$i]);$j++) {
-					$value_tu[$i]['distrib'][$j]= $tu_500_r[$i][$j];
-				}
-				for($j=0;$j<count($tu_500_s[$i]);$j++) {
-					$value_tu[$i]['ref'][$j]= $tu_500_s[$i][$j];
-				}
-				for($j=0;$j<count($tu_500_j[$i]);$j++) {
-					$value_tu[$i]['subdiv'][$j]= $tu_500_j[$i][$j];
-				}
-				if($authorities_notices && $aut['authority_number']!=""){
-					$tu_id = keep_authority_infos($value_tu[$i]['authority_number'],"uniform_title",$origin_authority,$notice_id,$value_tu[$i]);
-				}else{
-					$tu_id = titre_uniforme::import($value_tu[$i]);
-				}
-				if($tu_id) {
-					$requete = "INSERT INTO notices_titres_uniformes SET
-					ntu_num_notice='$notice_id',
-					ntu_num_tu='$tu_id',
-					ntu_titre='".addslashes($tu_500[$i]['i'])."',
-					ntu_date='".addslashes($tu_500[$i]['k'])."',
-					ntu_sous_vedette='".addslashes($tu_500[$i]['l'])."',
-					ntu_langue='".addslashes($tu_500[$i]['m'])."',
-					ntu_version='".addslashes($tu_500[$i]['q'])."',
-					ntu_mention='".addslashes($tu_500[$i]['w'])."',
-					ntu_ordre=$i
-					";
-					pmb_mysql_query($requete, $dbh);
-				}
+			for($j=0;$j<count($tu_500_r[$i]);$j++) {
+				$value_tu[$i]['distrib'][$j]= $tu_500_r[$i][$j];
+			}
+			for($j=0;$j<count($tu_500_s[$i]);$j++) {
+				$value_tu[$i]['ref'][$j]= $tu_500_s[$i][$j];
+			}
+			for($j=0;$j<count($tu_500_j[$i]);$j++) {
+				$value_tu[$i]['subdiv'][$j]= $tu_500_j[$i][$j];
+			}
+			if($authorities_notices && $aut['authority_number']!=""){
+				$tu_id = keep_authority_infos($value_tu[$i]['authority_number'],"uniform_title",$origin_authority,$notice_id,$value_tu[$i]);
+			}else{
+				$tu_id = titre_uniforme::import($value_tu[$i]);
+			}
+			if($tu_id) {
+				$requete = "INSERT INTO notices_titres_uniformes SET
+				ntu_num_notice='$notice_id',
+				ntu_num_tu='$tu_id',
+				ntu_titre='".addslashes($tu_500[$i]['i'])."',
+				ntu_date='".addslashes($tu_500[$i]['k'])."',
+				ntu_sous_vedette='".addslashes($tu_500[$i]['l'])."',
+				ntu_langue='".addslashes($tu_500[$i]['m'])."',
+				ntu_version='".addslashes($tu_500[$i]['q'])."',
+				ntu_mention='".addslashes($tu_500[$i]['w'])."',
+				ntu_ordre=$i
+				";
+				pmb_mysql_query($requete, $dbh);
 			}
 		}
+	}
 
-		global $lang_code		;
-		global $org_lang_code		;
-		if((is_array($lang_code) && count($lang_code)) || (is_array($org_lang_code) && count($org_lang_code))) {
-			$rqt_ins = "insert into notices_langues (num_notice, type_langue, code_langue, ordre_langue) VALUES ";
-			$values = "";
-			$lang_code = array_unique($lang_code);
-			for ($i=0; $i<count($lang_code); $i++) {
-				$lang_code[$i]=trim($lang_code[$i]);
-				if($values!="") $values.=",";
-				$values.="('$notice_id',0, '".addslashes($lang_code[$i])."','$i') ";
-				//$rqt_ins = "insert into notices_langues (num_notice, type_langue, code_langue) VALUES ('$notice_id',0, '".addslashes($lang_code[$i])."') " ;
-				//@pmb_mysql_query($rqt_ins, $dbh);
-			}
-			$org_lang_code = array_unique($org_lang_code);
-			for ($i=0; $i<count($org_lang_code); $i++) {
-				$org_lang_code[$i]=trim($org_lang_code[$i]);
-				if($values!="") $values.=",";
-				$values.="('$notice_id',1, '".addslashes($org_lang_code[$i])."','".$i."') ";
-				//$rqt_ins = "insert into notices_langues (num_notice, type_langue, code_langue) VALUES ('$notice_id',1, '".addslashes($org_lang_code[$i])."') " ;
-	// 			@pmb_mysql_query($rqt_ins, $dbh);
-			}
-			@pmb_mysql_query($rqt_ins.$values, $dbh);
+	global $lang_code		;
+	global $org_lang_code		;
+	if((is_array($lang_code) && count($lang_code)) || (is_array($org_lang_code) && count($org_lang_code))) {
+		$rqt_ins = "insert into notices_langues (num_notice, type_langue, code_langue, ordre_langue) VALUES ";
+		$values = "";
+		$lang_code = array_unique($lang_code);
+		for ($i=0; $i<count($lang_code); $i++) {
+			$lang_code[$i]=trim($lang_code[$i]);
+			if($values!="") $values.=",";
+			$values.="('$notice_id',0, '".addslashes($lang_code[$i])."','$i') ";
+			//$rqt_ins = "insert into notices_langues (num_notice, type_langue, code_langue) VALUES ('$notice_id',0, '".addslashes($lang_code[$i])."') " ;
+			//@pmb_mysql_query($rqt_ins, $dbh);
 		}
+		$org_lang_code = array_unique($org_lang_code);
+		for ($i=0; $i<count($org_lang_code); $i++) {
+			$org_lang_code[$i]=trim($org_lang_code[$i]);
+			if($values!="") $values.=",";
+			$values.="('$notice_id',1, '".addslashes($org_lang_code[$i])."','".$i."') ";
+			//$rqt_ins = "insert into notices_langues (num_notice, type_langue, code_langue) VALUES ('$notice_id',1, '".addslashes($org_lang_code[$i])."') " ;
+// 			@pmb_mysql_query($rqt_ins, $dbh);
+		}
+		@pmb_mysql_query($rqt_ins.$values, $dbh);
+	}
 	//Import des catégories
 	category_auto::save_info_categ();
 	//Calcule de la signature
@@ -1604,8 +1651,9 @@ function import_notice_link(){
 	}
 
 	//On traite les notices qui ont été mises en attente de création
-	if($notices_a_creer[$id_unimarc]) {
-		for($i=0;$i<sizeof($notices_a_creer[$id_unimarc]);$i++){
+	if (!empty($notices_a_creer[$id_unimarc])) {
+	    $nb_notices_a_creer = count($notices_a_creer[$id_unimarc]);
+	    for ($i = 0; $i < $nb_notices_a_creer; $i++) {
 			if($notices_a_creer[$id_unimarc][$i]['lnk'] == 'parent'){
 				//on a une relation vers un parent
 				if (!notice_relations::relation_exists($notices_a_creer[$id_unimarc][$i]['id_asso'], $notice_id, $notices_a_creer[$id_unimarc][$i]['type_lnk'])) {
@@ -1659,14 +1707,15 @@ function import_notice_link(){
 		unset($notices_a_creer[$id_unimarc]);
 	}
 	//On rattache le perio a ses notices de bulletin
-	if ($bulletins_a_creer[$id_unimarc]){
-		$id_perio=$notice_id;
-		for($i=0;$i<sizeof($bulletins_a_creer[$id_unimarc]);$i++){
+	if (!empty($bulletins_a_creer[$id_unimarc])) {
+		$id_perio = $notice_id;
+		$nb_bulletins_a_creer = count($bulletins_a_creer[$id_unimarc]);
+		for ($i = 0; $i < $nb_bulletins_a_creer; $i++) {
 			//Si on décomante la suite et qu on commente la fin ya un bulletin de créé qui ne doit pas exister (test avec export tt lien)
-			$bulletin=array();
-			$bulletin=array("titre"=>$bulletins_a_creer[$id_unimarc][$i]['titre'],"date"=>$bulletins_a_creer[$id_unimarc][$i]['date_date'],"mention"=>$bulletins_a_creer[$id_unimarc][$i]['mention'],"num"=>$bulletins_a_creer[$id_unimarc][$i]['bull_num']);
-			$id_bulletin= creer_bulletin($id_perio,$bulletin,"","");
-			creer_lien_notice_bulletin("",$id_perio,$id_bulletin,$bulletins_a_creer[$id_unimarc][$i]['bull_notice'],"",$bulletin);
+			$bulletin = array();
+			$bulletin = array("titre" => $bulletins_a_creer[$id_unimarc][$i]['titre'], "date" => $bulletins_a_creer[$id_unimarc][$i]['date_date'], "mention" => $bulletins_a_creer[$id_unimarc][$i]['mention'], "num" => $bulletins_a_creer[$id_unimarc][$i]['bull_num']);
+			$id_bulletin = creer_bulletin($id_perio, $bulletin, "", "");
+			creer_lien_notice_bulletin("", $id_perio, $id_bulletin, $bulletins_a_creer[$id_unimarc][$i]['bull_notice'], "", $bulletin);
 		}
 		unset($bulletins_a_creer[$id_unimarc]);
 	}
@@ -1684,7 +1733,7 @@ function get_infos_notices_liees($notices_liees=array(), $cle_uni='', $lien='', 
 			foreach($result_tab as $field){
 				//on récupère toutes les options du $9 dans un tableau
 			   $options=array();
-			   for($i=0;$i<sizeof($field['9']);$i++){
+			   for($i=0;$i<count($field['9']);$i++){
 					$chaine_parse = explode(':',$field['9'][$i]);
 					if($chaine_parse[0] == 'lnk'){
 						$options["lien"] = $chaine_parse[1];
@@ -1697,7 +1746,7 @@ function get_infos_notices_liees($notices_liees=array(), $cle_uni='', $lien='', 
 				foreach($result_tab as $field){
 					//on récupère toutes les options du $9 dans un tableau
 				   $options=array();
-				   for($i=0;$i<sizeof($field['9']);$i++){
+				   for($i=0;$i<count($field['9']);$i++){
 						$chaine_parse = explode(':',$field['9'][$i]);
 						if($chaine_parse[0] == 'type_lnk'){
 							$options["type_lnk"] = $chaine_parse[1];
@@ -1712,7 +1761,7 @@ function get_infos_notices_liees($notices_liees=array(), $cle_uni='', $lien='', 
 			foreach($fields as $field){
 				//on récupère toutes les options du $9 dans un tableau
 			   $options=array();
-			   for($i=0;$i<sizeof($field['9']);$i++){
+			   for($i=0;$i<count($field['9']);$i++){
 					$chaine_parse = explode(':',$field['9'][$i]);
 					if($chaine_parse[0] == 'lnk'){
 						$options["lien"] = $chaine_parse[1];
@@ -1726,7 +1775,7 @@ function get_infos_notices_liees($notices_liees=array(), $cle_uni='', $lien='', 
 			foreach($result_tab as $field){
 				//on récupère toutes les options du $9 dans un tableau
 			   $options=array();
-			   for($i=0;$i<sizeof($field['9']);$i++){
+			   for($i=0;$i<count($field['9']);$i++){
 					$chaine_parse = explode(':',$field['9'][$i]);
 					if($chaine_parse[0] == 'type_lnk'){
 						$options["type_lnk"] = $chaine_parse[1];
@@ -1741,7 +1790,7 @@ function get_infos_notices_liees($notices_liees=array(), $cle_uni='', $lien='', 
 			foreach($fields as $field){
 				//on récupère toutes les options du $9 dans un tableau
 			   $options=array();
-			   for($i=0;$i<sizeof($field['9']);$i++){
+			   for($i=0;$i<count($field['9']);$i++){
 					$chaine_parse = explode(':',$field['9'][$i]);
 					if($chaine_parse[0] == 'type_lnk'){
 						$options["type_lnk"] = $chaine_parse[1];
@@ -1870,7 +1919,7 @@ function creer_liens_pour_articles($tab_bull=array(),$tab_perio=array(), $tab_fi
 										"mention"=>"00/00/0000","date"=>"0000-00-00","titre_bull"=>"bull_générique");
 			}
 		} else {
-			for($i=0;$i<sizeof($tab_perio);$i++){
+			for($i=0;$i<count($tab_perio);$i++){
 				if(!$notices_crees[get_valeur_champ9($tab_perio[$i]['9'],'id')] && !$tab_perio[$i]['0'][0]){
 					//On a les deux liens, on regarde si le perio existe déjà dans la base
 					$id_perio=creer_notice_periodique(get_valeur_champ9($tab_perio[$i]['9'],'id'),$tab_perio[$i]['t'][0],$tab_perio[$i]['x'][0]);
@@ -1929,14 +1978,14 @@ function creer_bulletinage_et_articles($bull=array(), $art=array()){
 		}
 	}
 	if($bull){
-		for($i=0;$i<sizeof($bull);$i++){
+		for($i=0;$i<count($bull);$i++){
 			$bulletin=array();
 			$bulletin=array("titre"=>$bull[$i]['t'][0],"date"=>$bull[$i]['d'][0],"mention"=>$bull[$i]['e'][0],"num"=>$bull[$i]['v'][0]);
 			creer_bulletin($notice_id,$bulletin,"","");
 		}
 	}
 	if($art){
-		for($i=0;$i<sizeof($art);$i++){
+		for($i=0;$i<count($art);$i++){
 			if(!$notices_crees[get_valeur_champ9($art[$i]['9'],'id')] && !$art[$i]['0'][0]){
 				$bulletin=array();
 				$bulletin=array("titre"=>$art[$i]['t'][1],"date"=>$art[$i]['d'][0],"mention"=>$art[$i]['e'][0],"num"=>$art[$i]['v'][0]);
@@ -1960,7 +2009,7 @@ function creer_bulletinage_et_articles($bull=array(), $art=array()){
 function get_valeur_champ9($champ9=array(),$crit=''){
 	$options=array();
 	$options[$crit]='';
-   for($i=0;$i<sizeof($champ9);$i++){
+   for($i=0;$i<count($champ9);$i++){
 		$chaine_parse = explode(':',$champ9[$i]);
 		if($chaine_parse[0] == $crit) {
 			$options[$crit] = $chaine_parse[1];

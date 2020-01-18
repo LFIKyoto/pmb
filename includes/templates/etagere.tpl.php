@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: etagere.tpl.php,v 1.19 2018-06-14 10:19:16 dgoron Exp $
+// $Id: etagere.tpl.php,v 1.20.6.1 2019-10-23 12:30:58 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 // templates pour la gestion des paniers
+
+global $etagere_form, $msg, $current_module;
 
 // template pour le form de création d'une étagère
 $etagere_form = "
@@ -116,6 +118,7 @@ $etagere_form.="
 	<div class='left'>
 		<input type='button' class='bouton' value='$msg[76]' onClick=\"document.location='!!formulaire_annuler!!';\">
 		<input type='submit' value='$msg[77]' class='bouton' onClick=\"return test_form(this.form)\" />
+        !!button_duplicate!!
 		</div>
 	<div class='right'>
 		<!--!!bouton_suppr!!-->

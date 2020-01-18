@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: thumbnail.class.php,v 1.9 2018-11-20 13:57:31 dgoron Exp $
+// $Id: thumbnail.class.php,v 1.10 2019-03-29 11:54:49 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -140,6 +140,33 @@ class thumbnail {
 		return $thumbnail_url;
 	}
 	
+	public static function create_from_base64($object_id, $object_type = 'record', $thumbnail_base64='') {
+		global $opac_url_base;
+		
+		$thumbnail_url = '';
+		// vignette de la notice uploadé dans un répertoire
+		if(static::get_parameter_img_folder_id($object_type) && $object_id){
+			$query = "select repertoire_path from upload_repertoire where repertoire_id ='".static::get_parameter_img_folder_id($object_type)."'";
+			$result = pmb_mysql_query($query);
+			if(pmb_mysql_num_rows($result)){
+				$row=pmb_mysql_fetch_object($result);
+				$filename_output=$row->repertoire_path.static::get_img_prefix($object_type).$object_id;
+			}
+			if(is_dir($row->repertoire_path) && $filename_output) {
+				$details = explode(',', $thumbnail_base64);
+				$ini =substr($details[0], 11);
+				$type = explode(';', $ini);
+				if($type[0]) {
+					$created = file_put_contents($filename_output, base64_decode($details[1]));
+					if($created) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
 	//Suppression de la vignette de la notice si il y en a une d'uploadée
 	public static function delete($object_id, $object_type = 'record') {
 		if(static::get_parameter_img_folder_id($object_type)){
@@ -153,21 +180,27 @@ class thumbnail {
 		}
 	}
 	
+	public static function is_valid_folder($object_type='record') {
+		$is_valid = false;
+		if(static::get_parameter_img_folder_id($object_type)){
+			$req = "select repertoire_path from upload_repertoire where repertoire_id ='".static::get_parameter_img_folder_id($object_type)."'";
+			$res = pmb_mysql_query($req);
+			if(pmb_mysql_num_rows($res)){
+				$rep=pmb_mysql_fetch_object($res);
+				if(is_dir($rep->repertoire_path)){
+					$is_valid = true;
+				}
+			}
+		}
+		return $is_valid;
+	}
+	
 	public static function get_message_folder($object_type='record') {
 		global $msg;
 		
 		$message_folder="";
 		if(static::get_parameter_img_folder_id($object_type)){
-			$notice_img_folder_error=0;
-			$req = "select repertoire_path from upload_repertoire where repertoire_id ='".static::get_parameter_img_folder_id($object_type)."'";
-			$res = pmb_mysql_query($req);
-			if(pmb_mysql_num_rows($res)){
-				$rep=pmb_mysql_fetch_object($res);
-				if(!is_dir($rep->repertoire_path)){
-					$notice_img_folder_error=1;
-				}
-			}else $notice_img_folder_error=1;
-			if($notice_img_folder_error){
+			if(!static::is_valid_folder($object_type)){
 				if (SESSrights & ADMINISTRATION_AUTH){
 					$requete = "select * from parametres where gestion=0 and type_param='pmb' and sstype_param='notice_img_folder_id' ";
 					$res = pmb_mysql_query($requete);

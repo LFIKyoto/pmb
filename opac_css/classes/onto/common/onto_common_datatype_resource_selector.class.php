@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_resource_selector.class.php,v 1.3 2017-09-13 12:38:29 tsamson Exp $
+// $Id: onto_common_datatype_resource_selector.class.php,v 1.5 2019-06-04 10:19:02 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -46,21 +46,12 @@ class onto_common_datatype_resource_selector extends onto_common_datatype {
 		
 	public function get_raw_value() {
 		//si c'est un tableau, on retourne la première valeur dans le cas générale
-		$raw_value = '';
 		if (is_array($this->value)) {
 			foreach ($this->value as $key => $value) {
-				if (!$raw_value) {
-					$raw_value = $value;
-					break;
-				}
+                return $value;
 			}
-		} else {
-			$raw_value = $this->value;
 		}
-// 		if (strpos($raw_value,'#') !== false) {
-// 			$raw_value = substr($raw_value,strpos($raw_value,"#")+1);
-// 		}
-		return $raw_value;
+		return $this->value;
 	}
 
 } // end of onto_common_datatype_resource_selector

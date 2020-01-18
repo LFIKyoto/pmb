@@ -1,7 +1,9 @@
 /* +-------------------------------------------------+
 // | 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_grammar.js,v 1.1 2018-11-26 10:04:59 tsamson Exp $ */
+// $Id: vedette_grammar.js,v 1.2 2019-04-10 12:54:08 tsamson Exp $ */
+
+var vedetteTabalreadyParsed = [];
 
 function getGrammarForm(grammarName) {
 
@@ -25,6 +27,7 @@ function manageVedetteTab(tab) {
 					removeOverlay(grammarDiv);
 					updateTabs(tab);
 					grammarDiv.innerHTML = xhr.responseText;
+					preLoadScripts(grammarDiv);
 					init_drag();
 				}
 			}

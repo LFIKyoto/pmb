@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docs_statut.class.php,v 1.8 2017-01-03 11:14:01 dgoron Exp $
+// $Id: docs_statut.class.php,v 1.9 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -65,10 +65,10 @@ class docs_statut {
 		global $dbh;
 	
 		// check sur le type de  la variable passée en paramètre
-		if(!sizeof($data) || !is_array($data)) {
-			// si ce n'est pas un tableau ou un tableau vide, on retourne 0
+		if ((empty($data) && !is_array($data)) || !is_array($data)) {
+		    // si ce n'est pas un tableau ou un tableau vide, on retourne 0
 			return 0;
-			}
+		}
 		// check sur les éléments du tableau
 		$long_maxi = pmb_mysql_field_len(pmb_mysql_query("SELECT statut_libelle FROM docs_statut limit 1"),0);
 		$data['statut_libelle'] = rtrim(substr(preg_replace('/\[|\]/', '', rtrim(ltrim($data['statut_libelle']))),0,$long_maxi));

@@ -2,12 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_contribution.inc.php,v 1.7 2018-12-28 16:19:06 tsamson Exp $
+// $Id: ajax_contribution.inc.php,v 1.8 2019-01-14 11:33:12 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 if ($opac_contribution_area_activate && $allow_contribution) {
-	if ($iframe) {
+	if (!empty($iframe)) {
 		print '<textarea>';
 	}
 	switch ($sub) {
@@ -24,7 +24,7 @@ if ($opac_contribution_area_activate && $allow_contribution) {
 			require_once($base_path.'/includes/contribution_area.inc.php');
 			break;
 	}
-	if ($iframe) {
+	if (!empty($iframe)) {
 		print '</textarea>';
 	}
 }

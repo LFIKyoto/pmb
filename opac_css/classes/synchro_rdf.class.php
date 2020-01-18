@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: synchro_rdf.class.php,v 1.8 2017-06-02 14:46:13 dgoron Exp $
+// $Id: synchro_rdf.class.php,v 1.9 2019-03-04 16:44:45 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -775,7 +775,7 @@ class synchro_rdf{
 				$triplet[1]=$field['NAME'];
 				$arrayValues=array();
 				foreach ($field['FIELD'] as $fieldName){
-					if($tmp=trim($row->$fieldName['NAME'])){
+				    if($tmp=trim($row->{$fieldName['NAME']})){
 						$arrayValues[]['value']=$tmp;
 					}
 				}

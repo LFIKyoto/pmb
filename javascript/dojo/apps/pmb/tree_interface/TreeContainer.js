@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: TreeContainer.js,v 1.2 2018-04-10 12:29:29 vtouchard Exp $
+// $Id: TreeContainer.js,v 1.3 2019-03-29 16:16:25 tsamson Exp $
 
 
 define([
@@ -24,7 +24,7 @@ define([
 		},
 		postCreate:function(){
 			this.inherited(arguments);
-			this.leftContentPane = new ContentPane({region : 'left', splitter:true, style: {width: '20%'} });
+			this.leftContentPane = new ContentPane({region : 'left', splitter:true, style: {width: '25%'} });
 			this.initTree();
 		},
 		

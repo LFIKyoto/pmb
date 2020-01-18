@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lettre_delivery_PDF.class.php,v 1.2 2018-08-07 15:13:33 dgoron Exp $
+// $Id: lettre_delivery_PDF.class.php,v 1.4 2019-08-09 10:49:04 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
+global $class_path;
 require_once("$class_path/pdf/accounting/lettre_accounting_PDF.class.php");
 
 class lettre_delivery_PDF extends lettre_accounting_PDF {
@@ -36,10 +37,8 @@ class lettre_delivery_PDF extends lettre_accounting_PDF {
 	public $x_qte = '';
 	public $w_qte = '';
 	
-	protected function get_parameter_value($name) {
-		$parameter_name = 'acquisition_pdfliv_'.$name;
-		global $$parameter_name;
-		return $$parameter_name;
+	protected static function get_parameter_prefix() {
+	    return 'acquisition_pdfliv';
 	}
 	
 	protected function _init() {

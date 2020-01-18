@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc.tpl.php,v 1.9 2018-01-25 10:13:28 dgoron Exp $
+// $Id: serialcirc.tpl.php,v 1.10 2019-05-29 11:23:32 btafforeau Exp $
 
 // templates pour gestion des autorités collections
 
@@ -16,6 +16,7 @@ global $report_late_mail;
 global $transmission_accepted_mail;
 global $ret_accepted_mail;
 global $serialcirc_hold_mail;
+global $msg, $charset;
 
 $serialcirc_circ_list_tpl ="
 		<table>

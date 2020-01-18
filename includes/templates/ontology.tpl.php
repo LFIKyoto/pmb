@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ontology.tpl.php,v 1.4 2017-02-03 12:00:48 jpermanne Exp $
+// $Id: ontology.tpl.php,v 1.5 2019-05-27 12:54:49 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $ontology_tpl, $msg;
 
 $ontology_tpl['list'] = "
 <br />

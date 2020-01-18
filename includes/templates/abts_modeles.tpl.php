@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abts_modeles.tpl.php,v 1.30 2017-11-24 11:45:50 ngantier Exp $
+// $Id: abts_modeles.tpl.php,v 1.31.6.1 2019-12-04 08:33:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $modele_view,$modele_list,$modele_form;
+global $modele_view, $modele_list, $modele_form, $serial_id, $msg, $modele_script1, $current_module, $base_path, $tpl_calendrier, $tpl_del_bouton, $tpl_copy_bouton;
 
 if(!isset($serial_id)) $serial_id = 0;
 
@@ -376,5 +376,5 @@ $tpl_calendrier = "
 ";
 		
 $tpl_del_bouton="<input type=\"submit\" class='bouton' value='".$msg["63"]."' onClick=\"document.getElementById('act').value='del';confirm_delete();return false;\"/>";
-$tpl_copy_bouton="<input type='button' class='bouton' value='".$msg["abts_modeles_copy_modele"]."' onclick=\"openPopUp('./select.php?what=notice&niveau_biblio=S&modele_id=!!modele_id!!&serial_id=!!serial_id!!&caller=notice&param1=f_rel_id_0&param2=f_rel_0&no_display=0', 'selector_notice')\" />";			
+$tpl_copy_bouton="<input type='button' class='bouton' value='".$msg["abts_modeles_copy_modele"]."' onclick=\"openPopUp('./select.php?what=perio&niveau_biblio=S&modele_id=!!modele_id!!&serial_id=!!serial_id!!&caller=notice&param1=f_rel_id_0&param2=f_rel_0&no_display=0', 'selector_notice')\" />";			
 ?>

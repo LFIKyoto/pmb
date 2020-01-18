@@ -2,15 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes.inc.php,v 1.2 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: demandes.inc.php,v 1.3 2019-05-29 12:12:29 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $msg, $aff_alerte;
 
 $temp_aff = alerte_demandes() ;
 if ($temp_aff) $aff_alerte.= "<ul>".$msg["alerte_demandes"].$temp_aff."</ul>" ;
 
 function alerte_demandes () {
-	global $dbh ;
 	global $msg;
 				
 	// comptage des demandes à valider

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: prolongation.inc.php,v 1.37 2018-12-12 09:08:19 mbertin Exp $
+// $Id: prolongation.inc.php,v 1.38.6.1 2019-11-28 14:23:50 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -19,7 +19,9 @@ require_once("$class_path/pret.class.php");
 require_once("$class_path/serial_display.class.php");
 require_once("$class_path/serials.class.php");
 require_once($class_path.'/emprunteur.class.php');
+require_once($class_path.'/expl.class.php');
 require_once($class_path.'/mailtpl.class.php');
+require_once($class_path.'/emprunteur_datas.class.php');
 require_once($include_path.'/mail.inc.php');
 require_once($include_path.'/mailing.inc.php');
 
@@ -78,6 +80,8 @@ function prolonger($id_prolong) {
 						//Tableau de passage des paramètres
 						$struct["READER"] = $id_empr;
 						$struct["EXPL"] = $id_prolong;
+						$struct["NOTI"] = exemplaire::get_expl_notice_from_id($id_prolong);
+						$struct["BULL"] = exemplaire::get_expl_bulletin_from_id($id_prolong);
 			
 						$pret_nombre_prolongation=$qt -> get_quota_value($struct);		
 			
@@ -132,6 +136,7 @@ function prolonger($id_prolong) {
 					$mailtpl = new mailtpl($pdflettreresa_resa_prolong_email);
 					$destinataire=pmb_mysql_fetch_object($empr_result);
 					
+					$emprunteur_datas = new emprunteur_datas($destinataire->id_empr);
 					
 					$objet_mail = $mailtpl->info['objet'];
 					$message = $mailtpl->info['tpl'];
@@ -187,12 +192,12 @@ function prolonger($id_prolong) {
 					$message_to_send=str_replace("!!empr_cb!!", $destinataire->empr_cb,$message_to_send);
 					$message_to_send=str_replace("!!empr_login!!", $destinataire->empr_login,$message_to_send);
 					$message_to_send=str_replace("!!empr_mail!!", $destinataire->empr_mail,$message_to_send);
-					if (strpos($message_to_send,"!!empr_loans!!")) $message_to_send=str_replace("!!empr_loans!!", m_liste_prets($destinataire),$message_to_send);
-					if (strpos($message_to_send,"!!empr_resas!!")) $message_to_send=str_replace("!!empr_resas!!", m_liste_resas($destinataire),$message_to_send);
-					if (strpos($message_to_send,"!!empr_name_and_adress!!")) $message_to_send=str_replace("!!empr_name_and_adress!!", nl2br(m_lecteur_adresse($destinataire)),$message_to_send);
+					if (strpos($message_to_send,"!!empr_loans!!")) $message_to_send=str_replace("!!empr_loans!!", $emprunteur_datas->m_liste_prets(),$message_to_send);
+					if (strpos($message_to_send,"!!empr_resas!!")) $message_to_send=str_replace("!!empr_resas!!", $emprunteur_datas->m_liste_resas(),$message_to_send);
+					if (strpos($message_to_send,"!!empr_name_and_adress!!")) $message_to_send=str_replace("!!empr_name_and_adress!!", nl2br($emprunteur_datas->m_lecteur_adresse()),$message_to_send);
 					if (strpos($message_to_send,"!!empr_dated!!")) $message_to_send=str_replace("!!empr_dated!!", $destinataire->aff_empr_date_adhesion,$message_to_send);
 					if (strpos($message_to_send,"!!empr_datef!!")) $message_to_send=str_replace("!!empr_datef!!", $destinataire->aff_empr_date_expiration,$message_to_send);
-					if (strpos($message_to_send,"!!empr_all_information!!")) $message_to_send=str_replace("!!empr_all_information!!", nl2br(m_lecteur_info($destinataire)),$message_to_send);
+					if (strpos($message_to_send,"!!empr_all_information!!")) $message_to_send=str_replace("!!empr_all_information!!", nl2br($emprunteur_datas->m_lecteur_info()),$message_to_send);
 					$message_to_send=str_replace("!!empr_loc_name!!", $loc_name,$message_to_send);
 					$message_to_send=str_replace("!!empr_loc_adr1!!", $loc_adr1,$message_to_send);
 					$message_to_send=str_replace("!!empr_loc_adr2!!", $loc_adr2,$message_to_send);

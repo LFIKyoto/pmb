@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: emprunteur.class.php,v 1.29 2018-06-05 08:31:02 vtouchard Exp $
+// $Id: emprunteur.class.php,v 1.33 2019-06-18 07:52:20 ngantier Exp $
 
 // classe emprunteur
 //	inclure :
@@ -201,7 +201,7 @@ class emprunteur {
 		else {
 			// constitution du code HTML
 			$prets_list = "";
-			while(list($cle, $valeur) = each($this->prets)) {
+			foreach ($this->prets as $cle => $valeur) {
 				$prets_list .= "
 				<tr>
 				<form name=prolong${valeur['cb']} action='circ.php'>
@@ -241,6 +241,7 @@ class emprunteur {
 		global $dbh;
 		global $msg ;
 	
+		$affiche = '';
 		// on commence par vérifier si l'emprunteur a des réservations
 		$query = "select count(1) from resa where resa_idempr=".$this->id;
 		$result = pmb_mysql_query($query, $dbh);
@@ -456,6 +457,44 @@ class emprunteur {
 			$this->pnb_password = $parameters['empr_pnb_password'];
 			$this->pnb_password_hint = $parameters['empr_pnb_password_hint'];
 		}
+	}
+	
+	public function update_empr_status($status) {
+	    $status = intval($status);	    
+	    if ($status && $this->id) {
+	        $query = "
+                UPDATE empr SET empr_statut = $status WHERE id_empr = $this->id
+            ";
+	        pmb_mysql_query($query);
+	    }
+	}
+	
+	/**
+	 * Renvoi du mail de confirmation d'inscription
+	 */
+	public function registration_confirmation_email() {
+		global $msg, $charset;
+		global $opac_biblio_name,$opac_biblio_email,$opac_url_base ;
+		global $opac_url_base;
+		
+		$obj = str_replace("!!biblio_name!!",$opac_biblio_name,$msg['subs_mail_obj']) ;
+		$corps = str_replace("!!biblio_name!!",$opac_biblio_name,$msg['subs_mail_corps']) ;
+		$corps = str_replace("!!empr_first_name!!", $this->prenom,$corps) ;
+		$corps = str_replace("!!empr_last_name!!",$this->nom,$corps) ;
+		
+		// nouvelle clé de validation :
+		$alphanum  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+		$cle_validation = substr(str_shuffle($alphanum), 0, 20);
+		$query = "UPDATE empr set cle_validation = '".$cle_validation."' WHERE id_empr = ".$this->id;
+		pmb_mysql_query($query);
+		
+		$lien_validation = "<a href='".$opac_url_base."subscribe.php?subsact=validation&login=".urlencode($this->login)."&cle_validation=$cle_validation'>".$opac_url_base."subscribe.php?subsact=validation&login=".$this->login."&cle_validation=$cle_validation</a>";
+		$corps = str_replace("!!lien_validation!!",$lien_validation,$corps) ;
+		
+		$headers  = "MIME-Version: 1.0\n";
+		$headers .= "Content-type: text/html; charset=iso-8859-1\n";
+		
+		return mailpmb(trim($this->prenom." ".$this->nom), $this->mail, $obj, $corps, $opac_biblio_name, $opac_biblio_email, $headers);
 	}
 	
 } # fin de déclaration classe emprunteur

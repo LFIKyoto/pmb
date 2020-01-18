@@ -2,13 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: newrecords_flux.class.php,v 1.11 2017-12-05 09:49:40 mbertin Exp $
+// $Id: newrecords_flux.class.php,v 1.16 2019-07-10 06:44:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once("$class_path/filter_results.class.php");
 require_once("$class_path/notice_affichage.class.php");
 require_once("$class_path/notice_affichage.ext.class.php");
+require_once("$class_path/notice_tpl_gen.class.php");
 
 // definition de la classe de gestion des 'flux RSS'
 class newrecords_flux {
@@ -29,11 +30,13 @@ class newrecords_flux {
 	protected $imageTitle = "";
 	protected $imageLink = "";
 	public $envoi = "";
+	public $ttl_rss_flux = 0;	
+	public $img_url_rss_flux = '';
 	
 	// ---------------------------------------------------------------
 	//		constructeur
 	// ---------------------------------------------------------------
-	function __construct($flag_all=true) {	
+	public function __construct($flag_all=true) {	
 		global $msg;	
 		if($flag_all)$this->getRecords();	
 		$this->title=$msg["newrecord_rss_flux_name"];
@@ -153,10 +156,10 @@ class newrecords_flux {
 					'|[\x00-\x7F][\x80-\xBF]+'.
 					'|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*'.
 					'|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})'.
-					'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
+					'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/',
 					'', $this->envoi );
 		} else {
-			$this->envoi = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]/S',
+			$this->envoi = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]/',
 					'', $this->envoi );
 		}
 		return $this->envoi;
@@ -165,8 +168,13 @@ class newrecords_flux {
 	private function aff_notices_list($notices_list){
 		global $dbh,$charset,$opac_url_base ;
 		global $opac_notice_affichage_class;
+		global $opac_short_url_rss_records_format;
 		
-		$retour_aff="";	
+		$retour_aff="";
+		
+		$rss_records_format = substr($opac_short_url_rss_records_format,0,1);
+		$id_tpl = 0;
+		
 		foreach($notices_list as $notice_id){
 			
 			$req = "select notice_id, notice_date_is_new, niveau_biblio from notices where notice_id=$notice_id";
@@ -185,10 +193,25 @@ class newrecords_flux {
 					<pubDate>".htmlspecialchars ($r->notice_date_is_new,ENT_QUOTES, $charset)."</pubDate>
 					<link>".htmlspecialchars ($opac_url_base."index.php?lvl=notice_display&id=".$r->notice_id,ENT_QUOTES, $charset)."</link>" ;
 				
-				$notice->do_isbd(0,0);
-				$desc=$notice->notice_isbd;	
+				switch ($rss_records_format) {
+					case 'H': //Template de notices
+						$image = '';
+						if(!$id_tpl) $id_tpl=substr($opac_short_url_rss_records_format,2);
+						if($id_tpl){
+							$tpl = notice_tpl_gen::get_instance($id_tpl);
+							$desc = $tpl->build_notice($r->notice_id);
+						}
+						break;
+					case '9': //Templates Django de notices
+						break;
+					case '1':
+					default:
+						$image = $this->do_image($notice->notice->code,$notice->notice->thumbnail_url,$notice->notice->tit1) ;
+						$notice->do_isbd(0,0);
+						$desc=$notice->notice_isbd;
+						break;
+				}
 				$desc_explnum=$this->do_explnum($notice->notice_id, $r->niveau_biblio);
-				$image = $this->do_image($notice->notice->code,$notice->notice->thumbnail_url,$notice->notice->tit1) ;
 				$desc = str_replace("<br />","<br/>",$desc);
 				$retour_aff .= "	<description>".htmlspecialchars(strip_tags($image.$desc,"<table><tr><td><br/><img>"),ENT_QUOTES, $charset)."</description>";
 				$retour_aff .= $desc_explnum;

@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contact_form_object.class.php,v 1.3 2018-12-06 09:45:26 dgoron Exp $
+// $Id: contact_form_object.class.php,v 1.4.4.1 2019-10-09 08:18:47 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
+require_once($class_path."/translation.class.php");
 require_once($class_path."/contact_form/contact_form_recipients.class.php");
 require_once($include_path."/templates/contact_form/contact_form.tpl.php");
 
@@ -22,18 +23,25 @@ class contact_form_object {
 	 */
 	protected $label;
 	
+	/**
+	 * Votre message
+	 * @var string
+	 */
+	protected $message;
+	
 	public function __construct($id=0) {
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 		$this->fetch_data();
 	}
 	
 	protected function fetch_data() {
 		
 		if($this->id) {
-			$query = 'select object_label from contact_form_objects where id_object ='.$this->id;
+			$query = 'select object_label, object_message from contact_form_objects where id_object ='.$this->id;
 			$result = pmb_mysql_query($query);
 			$row = pmb_mysql_fetch_object($result);
 			$this->label = $row->object_label;
+			$this->message = $row->object_message;
 		}
 	}
 	
@@ -52,7 +60,11 @@ class contact_form_object {
 			$form = str_replace('!!delete!!', '', $form);
 		}
 		$form = str_replace('!!label!!', htmlentities($this->label, ENT_QUOTES, $charset), $form);
+		$form = str_replace('!!message!!', htmlentities($this->message, ENT_QUOTES, $charset), $form);
 		$form = str_replace('!!id!!', $this->id, $form);
+		
+		$translation = new translation($this->id, 'contact_form_objects');
+		$form .= $translation->connect('contact_form_object_form');
 		return $form;
 	}
 	
@@ -61,8 +73,10 @@ class contact_form_object {
 	 */
 	public function set_properties_from_form() {
 		global $object_label;
+		global $object_message;
 		
 		$this->label = stripslashes($object_label);
+		$this->message = stripslashes($object_message);
 	}
 	
 	/**
@@ -78,13 +92,18 @@ class contact_form_object {
 			$where = '';
 		}
 		$query .= '
-				object_label = "'.addslashes($this->label).'"
+				object_label = "'.addslashes($this->label).'",
+                object_message = "'.addslashes($this->message).'"
 				'.$where;
 		$result = pmb_mysql_query($query);
 		if($result) {
 			if(!$this->id) {
 				$this->id = pmb_mysql_insert_id();
 			}
+			//Traductions
+			$translation = new translation($this->id, 'contact_form_objects');
+			$translation->update_small_text('object_label');
+			$translation->update_text('object_message');
 			return true;
 		} else {
 			return false;
@@ -101,6 +120,7 @@ class contact_form_object {
 			$contact_form_recipients = new contact_form_recipients('by_objects');
 			$contact_form_recipients->unset_recipient($this->id);
 			$contact_form_recipients->save();
+			translation::delete($this->id, 'contact_form_objects');
 			$query = "delete from contact_form_objects where id_object = ".$this->id;
 			$result = pmb_mysql_query($query);
 			return true;
@@ -118,5 +138,13 @@ class contact_form_object {
 	
 	public function set_label($label) {
 		$this->label = $label;
+	}
+	
+	public function get_message() {
+	    return $this->message;
+	}
+	
+	public function set_message($message) {
+	    $this->message = $message;
 	}
 }

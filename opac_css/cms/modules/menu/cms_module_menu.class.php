@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_menu.class.php,v 1.18 2017-11-21 12:01:00 dgoron Exp $
+// $Id: cms_module_menu.class.php,v 1.20 2019-07-18 13:40:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -412,20 +412,20 @@ class cms_module_menu extends cms_module_common_module {
 		return $form;
 	}
 	
-	function execute_ajax(){
+	public function execute_ajax(){
 		global $charset;
 		global $do;
 		global $menu;
 		$response = array();
-		switch($do){
+		switch($do) {
 			case "get_tree" :
-				if(!isset($this->managed_datas['module']['menus'][$menu]) || !isset($this->managed_datas['module']['menus'][$menu]['items'])){
+				if (!isset($this->managed_datas['module']['menus'][$menu]['items'])) {
 					$items = array(
 						'identifier' => 'id',
 						'label' => 'title',
 						'items' => array()
 					);					
-				}else {
+				} else {
 					$items = array(
 						'identifier' => 'id',
 						'label' => 'title',
@@ -505,12 +505,12 @@ class cms_module_menu extends cms_module_common_module {
 		return $response;
 	}
 	
-	function get_next_item_id($menu){	
+	public function get_next_item_id($menu){	
 		$max =  $this->_get_max_item_id($this->managed_datas['module']['menus'][$menu]['items'],0)+1;
 		return $max;
 	}
 	
-	function _get_max_item_id($items,$max){
+	public function _get_max_item_id($items,$max){
 		if(is_array($items)){
 			foreach($items as $item){
 				if(count($item['children'])){

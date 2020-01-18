@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: SourceUI.js,v 1.18 2015-05-21 15:43:05 dgoron Exp $
+// $Id: SourceUI.js,v 1.19 2019-03-13 14:48:22 dgoron Exp $
 
 
 define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/dom-construct", "dojo/dom", "dojo/on", "dojo/topic","dojo/_base/lang","dijit/registry","dijit/form/Button","dijit/form/CheckBox","dijit/form/ValidationTextBox"], function(declare, ContentPane, domConstruct, dom, on, topic, lang, registry, Button, CheckBox, ValidationTextBox){
@@ -10,6 +10,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/dom-construct", 
 		sourceId:0,
 		watchId:0,
 		className:0,
+		sourceTitle:null,
 		postCreate:function(){
 			this.own(
 				topic.subscribe("sourcesListUI", lang.hitch(this,this.handleEvents)),
@@ -83,6 +84,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane", "dojo/dom-construct", 
 					else
 						window.eval(scripts[i].text);
 				}
+				this.sourceTitle = dom.byId("docwatch_datasource_title").value;
 			});
 			this.refresh();
 		},			

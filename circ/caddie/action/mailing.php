@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mailing.php,v 1.29 2018-04-27 12:36:47 dgoron Exp $
+// $Id: mailing.php,v 1.30.4.1 2019-11-06 11:24:01 dgoron Exp $
 
 // définition du minimum nécéssaire
 $base_path="../../..";
@@ -121,56 +121,7 @@ switch ($sub) {
 					</div>
 					$mailtpl_vars
 					$get_sel_img
-					<div class='row'>
-						<label class='etiquette' >".$msg["empr_mailing_form_message_piece_jointe"]." (".ini_get('upload_max_filesize').")</label>
-					</div>
-					<div id='add_pieces'>
-						<input type='hidden' id='nb_piece' value='1'/>
-						<div class='row' id='piece_1'>
-							<input type='file' id='pieces_jointes_mailing_1' name='pieces_jointes_mailing[]' class='saisie-80em' size='60'/><input class='bouton' type='button' value='X' onclick='document.getElementById(\"pieces_jointes_mailing_1\").value=\"\"'/>
-							<input class='bouton' type='button' value='+' onClick=\"add_pieces_jointes_mailing();\"/>
-		  				</div>
-		  			</div>
-		  			<script type='text/javascript'>
-		  				function add_pieces_jointes_mailing(){
-		  					var nb_piece=document.getElementById('nb_piece').value;
-		  					nb_piece= (nb_piece*1) + 1;
-		  					
-							var template = document.getElementById('add_pieces');
-							
-							var divpiece=document.createElement('div');
-				       		divpiece.className='row';
-				       		divpiece.setAttribute('id','piece_'+nb_piece);
-				       		template.appendChild(divpiece);
-				       		document.getElementById('nb_piece').value=nb_piece;
-				       		
-				       		var inputfile=document.createElement('input');
-				       		inputfile.setAttribute('type','file');
-				       		inputfile.setAttribute('name','pieces_jointes_mailing[]');
-				       		inputfile.setAttribute('id','pieces_jointes_mailing_'+nb_piece);
-				       		inputfile.setAttribute('class','saisie-80em');
-				       		inputfile.setAttribute('size','60');
-				       		divpiece.appendChild(inputfile);
-				       		
-				       		var inputfile=document.createElement('input');
-				       		inputfile.setAttribute('type','button');
-				       		inputfile.setAttribute('value','X');
-				       		inputfile.setAttribute('onclick','del_pieces_jointes_mailing('+nb_piece+');');
-				       		inputfile.setAttribute('class','bouton');
-				       		divpiece.appendChild(inputfile);
-						}
-						
-						function del_pieces_jointes_mailing(nb_piece){
-							var parent = document.getElementById('add_pieces');
-							var child = document.getElementById('piece_'+nb_piece);
-							parent.removeChild(child);
-							
-							var nb_piece=document.getElementById('nb_piece').value;
-		  					nb_piece= (nb_piece*1) - 1;
-		  					document.getElementById('nb_piece').value=nb_piece;
-							
-						}
-					</script>
+					".mailtpl::get_attachments_form()."
 					<div class='row'>
 						<label for='associated_campaign' class='etiquette'>".$msg["associated_campaign"]."</label>
 						<input type='checkbox' name='associated_campaign' value=\"1\" />
@@ -303,6 +254,8 @@ switch ($sub) {
 						";
 				}
 			}
+			//Reset du pointage les mails non envoyés
+			$mailing->reset_flag_not_sended();
 		}
 		break;
 	
@@ -322,10 +275,10 @@ function construit_formulaire_recharge ($time_out, $action, $name, $hidden_param
 	$formulaire="\n<form class='form-$current_module' name=\"$name\" method=\"post\" action=\"$action\">";
 	$formulaire.="\n<h3>$texte_titre</h3>
 		<div class='form-contenu'>";
-		
-	while (list($cle, $params) = each($hidden_param)) {
+	
+	foreach ($hidden_param as $cle => $params) {
 		$formulaire.="\n<INPUT NAME=\"$cle\" TYPE=\"hidden\" value=\"$params\">";
-		} // fin de liste
+	} // fin de liste
 	$formulaire.=$texte_message;
 	$formulaire.="\n</div>";
 	if ($time_out<0) $formulaire.="\n<div class='row'><input type=submit class=bouton value='".$msg['form_recharge_bt_continuer']."' /></div>";

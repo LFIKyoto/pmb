@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authority.inc.php,v 1.6 2018-07-11 12:29:57 ngantier Exp $
+// $Id: authority.inc.php,v 1.7 2019-05-29 12:42:11 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $item, $msg, $action, $idcaddie, $object_type, $current_print;
 
 require_once($class_path."/caddie/authorities_caddie_controller.class.php");
 if($item) {

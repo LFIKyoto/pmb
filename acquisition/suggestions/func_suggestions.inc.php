@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_suggestions.inc.php,v 1.26 2017-11-21 12:00:59 dgoron Exp $
+// $Id: func_suggestions.inc.php,v 1.28 2019-07-12 10:25:27 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $include_path;
 
 // gestion des suggestions
 require_once($class_path.'/entites.class.php');
@@ -434,4 +436,3 @@ function catalog_notice_form(){
 	print $display;
 }
 ?>
-

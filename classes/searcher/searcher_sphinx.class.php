@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_sphinx.class.php,v 1.16 2018-11-12 14:57:29 ngantier Exp $
+// $Id: searcher_sphinx.class.php,v 1.18 2019-05-27 12:55:59 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -80,7 +80,9 @@ class searcher_sphinx {
 	
 	protected function get_search_indexes(){
 		global $lang;
-		return $this->index_name.'_'.$lang.','.$this->index_name;
+		global $sphinx_indexes_prefix;
+		
+		return $sphinx_indexes_prefix.$this->index_name.'_'.$lang.','.$sphinx_indexes_prefix.$this->index_name;
 	}
 
 	protected function get_full_raw_query(){
@@ -97,6 +99,8 @@ class searcher_sphinx {
 	}
 	
 	protected function _get_objects_ids(){
+	    
+	    global $sphinx_indexes_prefix;
 		if(isset($this->objects_ids)){
 			return $this->objects_ids;
 		}
@@ -132,19 +136,23 @@ class searcher_sphinx {
 		    $this->sc->SetFilter($filters[$i]['name'], $filters[$i]['values']);
 		}
 		$nb = 0;
+		$count = 0;
 		do {
 			$this->sc->SetLimits($nb, $this->bypass);
  			$result = $this->sc->Query($query,$this->get_search_indexes());
- 			for($i = 0 ; $i<count($result['matches']) ; $i++){
- 				if($this->objects_ids){
- 					$this->objects_ids.=',';
- 				}
- 				$this->objects_ids.=$result['matches'][$i]['id'];
- 			}
- 			$nb+=count($result['matches']);
- 			$this->insert_in_tmp_table($result['matches']);
- 			if(!$this->nb_result){
- 				$this->nb_result = $result['total_found'];
+ 			if(!empty($result['matches'])){
+ 			    $count = count($result['matches']);
+     			for($i=0 ; $i<$count ; $i++){
+     				if($this->objects_ids){
+     					$this->objects_ids.=',';
+     				}
+     				$this->objects_ids.=$result['matches'][$i]['id'];
+     			}
+     			$nb+=$count;
+     			$this->insert_in_tmp_table($result['matches']);
+     			if(!$this->nb_result){
+     				$this->nb_result = $result['total_found'];
+     			}
  			}
  		} while ($nb < $result['total_found']);
  		return $this->objects_ids;

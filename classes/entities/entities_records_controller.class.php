@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entities_records_controller.class.php,v 1.15 2018-11-21 16:07:46 apetithomme Exp $
+// $Id: entities_records_controller.class.php,v 1.16 2019-06-11 08:53:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -172,7 +172,7 @@ class entities_records_controller extends entities_controller {
 					$tab->GET = $_GET;
 					$ret_url= htmlentities(serialize($tab), ENT_QUOTES,$charset);
 					
-					switch (get_called_class()) {
+					switch (static::class) {
 						case 'entities_records_controller':
 							$action_form = $this->url_base.'?categ=update&id='.$this->id;
 							break;

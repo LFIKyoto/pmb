@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: print_cart_tpl.class.php,v 1.1 2017-10-13 13:31:05 ngantier Exp $
+// $Id: print_cart_tpl.class.php,v 1.2 2019-08-20 09:18:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,14 +14,12 @@ class print_cart_tpl {
 	private $header;
 	private $footer;
 	
-	public function __construct($id=0) {
-		$this->id = $id+0;
+	public function __construct($id = 0) {
+		$this->id = (int) $id;
 		$this->fetch_data();
 	}
 	
 	private function fetch_data() {
-		global $dbh;
-		
 		$this->name = '';
 		$this->header = '';
 		$this->footer = '';
@@ -155,7 +153,7 @@ class print_cart_tpl {
 	}	
 		
 	public function get_list() {
-		global $dbh, $cart_tpl_list_tpl, $cart_tpl_list_line_tpl, $msg;
+		global $cart_tpl_list_tpl, $cart_tpl_list_line_tpl, $msg;
 			
 		$odd_even = "odd";
 		$tpl_list = '';

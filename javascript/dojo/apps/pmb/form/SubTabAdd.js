@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: SubTabAdd.js,v 1.12 2018-12-04 08:53:31 ngantier Exp $
+// $Id: SubTabAdd.js,v 1.16 2019-04-19 09:40:05 ccraig Exp $
 
 
 define([
@@ -91,7 +91,15 @@ define([
 			  	/** fin cas particulier **/
 			  	
 				if(queryObject.what != 'notice'){
-					new FormEdit('autorites', this.getGridTypeEntity(queryObject.what), this.containerNode);
+					switch(queryObject.what) {
+						case 'authperso':
+						case 'oeuvre_event':
+							new FormEdit('autorites', this.getGridTypeEntity(queryObject.what)+'_'+queryObject.authperso_id, this.containerNode);
+							break;
+						default:
+							new FormEdit('autorites', this.getGridTypeEntity(queryObject.what), this.containerNode);
+							break;
+					}
 				}
 //				new FormController();
 				
@@ -110,6 +118,10 @@ define([
 //				
 //				observer.observe(this.containerNode, config);
 //				
+				var formName = query("input[type='text'][data-pmb-deb-rech]", this.containerNode);
+			  	if(formName.length){
+			  		this.updateFormName(formName);
+			  	}
 				this.getParent().resizeIframe();
 			},
 			resize: function(){
@@ -234,6 +246,8 @@ define([
 						return 'authperso';
 					case 'ontology':
 						return 'concepts';
+					case 'oeuvre_event':
+						return 'authperso';
 				}
 			},
 			setSubmitEvent: function(queryResult){
@@ -378,6 +392,16 @@ define([
 					for (var j=0; j<text_areas_with_tinymce.length; j++) {
 						tinyMCE_execCommand('mceAddControl', true, text_areas_with_tinymce[j]);
 					}
+				}
+			},
+			updateFormName : function(formName) {
+				var debRech = '';
+				this.parameters.selectorURL.split('?')[1].split('&').forEach((param) => {
+					var item = param.split('=');
+					if (item[0] == 'deb_rech' && item[1] != '*') debRech = decodeURIComponent(item[1]);
+				});
+				if (formName[0] && debRech) {
+					formName[0].value = debRech;
 				}
 			}
 		})

@@ -2,11 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: surligner.inc.php,v 1.26 2018-11-29 09:04:17 dgoron Exp $
+// $Id: surligner.inc.php,v 1.30.2.1 2019-09-18 09:41:49 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "inc.php")) die("no access");
 
+global $class_path, $include_path;
 global $pmb_indexation_lang;
+global $user_query, $opac_stemming_active;
+global $inclure_recherche;
 
 require_once($class_path."/analyse_query.class.php");
 require_once($class_path."/XMLlist.class.php");
@@ -19,10 +22,10 @@ $carac = $carac_spec->table;
 reset($carac_spec->table);
 
 //Nettoyage de la chaine recherchée
-function nettoyer_chaine($tree="",&$tableau,&$tableau_l,$aq,$not) {
+function nettoyer_chaine($tree = array(),&$tableau,&$tableau_l,$aq,$not) {
 	global $empty_word,$charset;
 	
-	if ($tree=="") $tree=$aq->tree;	
+	if (empty($tree)) $tree = $aq->tree;	
 	
 	for ($i=0; $i<count($tree); $i++) {
 		$mot = "";
@@ -60,8 +63,8 @@ if (!empty($user_query) && (trim($user_query) !== "*")) {
 }
 
 //On calcule des variables de session qui seront utilisées dans surligner.js.php
-$_SESSION['surligner_tableau'] = implode("','",$tableau);
-$_SESSION['surligner_tableau_l'] = implode("','",addslashes_array($tableau_l));
+$_SESSION['surligner_tableau'] = strip_tags(implode("','",$tableau));
+$_SESSION['surligner_tableau_l'] = strip_tags(implode("','",addslashes_array($tableau_l)));
 
 $_SESSION['surligner_codes'] = "";
 $j=0;
@@ -101,6 +104,10 @@ $inclure_recherche .= "<script type='text/javascript'>
 		return(chaine);		
 	}
 </script>";
-$inclure_recherche .= "<script type='text/javascript' src='./includes/javascript/surligner.js.php'></script>";
+
+// Ne pas déplacer l'inclusion - Ce fichier la variable de session $_SESSION['surligner_codes']
+require_once("$include_path/javascript/surligner.js.php");
+//$inclure_recherche .= "<script type='text/javascript' src='./includes/javascript/surligner.js.php'></script>";
+$inclure_recherche .= "<script type='text/javascript' src='./temp/surligner_codes.js'></script>";
 $inclure_recherche .= "<script type='text/javascript' src='./includes/javascript/surligner.js'></script>";
 ?>

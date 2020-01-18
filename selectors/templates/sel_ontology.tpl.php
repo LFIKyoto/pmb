@@ -4,7 +4,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_ontology.tpl.php,v 1.22 2018-10-08 16:41:52 arenou Exp $
+// $Id: sel_ontology.tpl.php,v 1.25.6.1 2019-11-22 09:55:59 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -105,6 +105,9 @@ if($dyn==1){
 			if (i==n_aut_link) w.parent.add_aut_link();
 			
 			var selObj = w.parent.document.getElementById('f_aut_link_table_list');
+            if (!selObj) {
+                selObj = w.parent.document.getElementById('f_aut_link_table_list_' + i);
+            }
 			var selIndex=selObj.selectedIndex;
 			w.parent.document.getElementById('f_aut_link_table'+i).value= selObj.options[selIndex].value;
 			
@@ -121,6 +124,7 @@ if($dyn==1){
 	<!--
 	function set_parent(f_caller, element, id_value, libelle_value, type_value, callback)
 	{	
+	    let origine = f_caller;
  		w=window;
 		//début Copier/Coller depuis le template sel_editeur.tpl.php
 		var i=0;
@@ -130,6 +134,9 @@ if($dyn==1){
 			parent.parent.close();
 			return;
 		}
+		if (origine == 'skos') {
+		    f_caller = this.parent.document.querySelectorAll('form[id^=\"concept_concept_temp_\"]')[0].id;
+        }
 		var n_element=w.parent.document.forms[f_caller].elements['$max_field'].value;
 		var flag = 1;
 		
@@ -145,7 +152,12 @@ if($dyn==1){
 			for (var i=0; i<n_element; i++) {
 				if ((w.parent.document.getElementById('$field_id'+i).value==0)||(w.parent.document.getElementById('$field_id'+i).value=='')) break;
 			}
-			if (i==n_element) w.parent.$add_field();
+			if (i == n_element && origine == 'skos') {
+			    node = this.parent.document.getElementById('$field_id'+(i-1));
+			    w.parent.$add_field(node);
+			} else if (i == n_element) {
+			    w.parent.$add_field();
+            }
 			w.parent.document.getElementById('$field_id'+i).value = id_value;
 			w.parent.document.getElementById('$field_name_id'+i).value = reverse_html_entities(libelle_value);
 		}	
@@ -228,8 +240,8 @@ if($dyn==1){
 	$jscript = "
 	<script type='text/javascript'>
 		function set_parent(f_caller, element, id_value, libelle_value, type_value, callback){
-			window.parent.document.forms[f_caller].elements['".$param1."'].value = id_value;
-			window.parent.document.forms[f_caller].elements['".$param2."'].value = reverse_html_entities(libelle_value);
+			set_parent_value(f_caller,'".$param1."', id_value);
+			set_parent_value(f_caller,'".$param2."', reverse_html_entities(libelle_value));
 			if(callback)
 				window.parent[callback]('$infield');
 			closeCurrentEnv();
@@ -246,7 +258,7 @@ $sel_search_form ="
 <form name='search_form' method='post' action='!!base_url!!'>
 	<input type='text' name='deb_rech' value=\"!!deb_rech!!\">
 	&nbsp;
-	<input type='submit' class='bouton_small' value='$msg[142]' />&nbsp;<input type='button' class='bouton' value='!!add_button_label!!' onclick='!!add_button_onclick!!'/>
+	<input type='submit' class='bouton_small' value='$msg[142]' />
 </form>
 <script type='text/javascript'>
 	if(document.forms['search_form'].elements['deb_rech']){

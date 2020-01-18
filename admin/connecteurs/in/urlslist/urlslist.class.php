@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: urlslist.class.php,v 1.7 2017-07-12 15:15:02 tsamson Exp $
+// $Id: urlslist.class.php,v 1.8 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -40,7 +40,7 @@ class urlslist extends connector {
 	}
     
     public function source_get_property_form($source_id) {
-    	global $charset,$dbh;
+        global $charset, $libelle, $infobulle, $source_name, $width, $height, $cp_field;
   		$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
 			//Affichage du formulaire avec $params["PARAMETERS"]
@@ -78,7 +78,7 @@ class urlslist extends connector {
 				<div class='colonne-suite'>
 					<select name='cp_field'>";
     	$query = "select idchamp, titre from notices_custom where type='url'";
-    	$result = pmb_mysql_query($query,$dbh);
+    	$result = pmb_mysql_query($query);
     	if(pmb_mysql_num_rows($result)){
     		while($row = pmb_mysql_fetch_object($result)){
     			$form.="
@@ -148,6 +148,8 @@ class urlslist extends connector {
 	}
 	
 	public function getTypeOfEnrichment($source_id){
+	    global $charset, $libelle, $infobulle;
+	    
 		$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
 			//Affichage du formulaire avec $params["PARAMETERS"]

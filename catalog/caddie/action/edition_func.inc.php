@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: edition_func.inc.php,v 1.57 2018-08-06 12:25:20 dgoron Exp $
+// $Id: edition_func.inc.php,v 1.60 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $codes_auteurs;
 
 require_once("$class_path/thesaurus.class.php");
 require_once($class_path."/parametres_perso.class.php");
@@ -130,7 +132,7 @@ function afftab_cart_objects ($idcaddie=0, $flag="" , $no_flag = "",$notice_tpl=
 		// inclusion du javascript de gestion des listes dépliables
 		// début de liste
 		$entete_bloc_prec="";
-		while(list($cle, $object) = each($liste)) {
+		foreach ($liste as $cle => $object) {
 			if ($object['content']=="") {
 				//On regarde le type de notice
 				$requete="select niveau_biblio, niveau_hierar FROM notices WHERE notice_id='".$object['object_id']."' ";
@@ -185,7 +187,7 @@ function afftab_cart_objects ($idcaddie=0, $flag="" , $no_flag = "",$notice_tpl=
 		
 		// boucle de parcours des exemplaires trouvés
 		$entete_bloc_prec="";
-		while(list($cle, $expl) = each($liste)) {
+		foreach ($liste as $cle => $expl) {
 			if (!$expl["content"]) {
 				$rqt_test = "select expl_bulletin from exemplaires where expl_id='".$expl['object_id']."' ";
 				$result_test = pmb_mysql_query($rqt_test, $dbh);
@@ -257,7 +259,7 @@ function afftab_cart_objects ($idcaddie=0, $flag="" , $no_flag = "",$notice_tpl=
 		// inclusion du javascript de gestion des listes dépliables
 		// début de liste
 		$entete_bloc_prec="";
-		while(list($cle, $expl) = each($liste)) {
+		foreach ($liste as $cle => $expl) {
 			if (!$expl["content"]) {
 				$rqt_tout = "select * from bulletins where bulletin_id = '".$expl['object_id']."' ";
 				$entete_bloc="BULL";
@@ -412,7 +414,7 @@ function extrait_info_notice ($sql="", $entete=1, $flag="") {
 	global $worksheet ;
 	global $myCart ;
 	global $entete_bloc;
-	global $msg;
+	global $msg, $charset;
 	
 	global $debligne_excel;
 	global $etat_table ; // permet de savoir si les tag table sont ouverts ou fermés
@@ -539,7 +541,7 @@ function extrait_info_notice ($sql="", $entete=1, $flag="") {
 						$perso_=$p_perso->show_fields(($libelle_caddie_type=='notices'?$id_notice:$id_expl));
 						for ($i=0; $i<count($perso_["FIELDS"]); $i++) {
 							$p=$perso_["FIELDS"][$i];
-							$worksheet->write_string($debligne_excel,($max_aut*6+$nbr_champs+$nbr_languages+2+$i),strip_tags(html_entity_decode($p["AFF"],ENT_QUOTES|ENT_COMPAT,"iso-8859-15")));
+							$worksheet->write_string($debligne_excel,($max_aut*6+$nbr_champs+$nbr_languages+2+$i),strip_tags(html_entity_decode($p["AFF"],ENT_QUOTES|ENT_COMPAT,$charset)));
 						}
 					}
 				}

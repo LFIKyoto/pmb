@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rec_history.inc.php,v 1.54 2018-10-31 11:23:01 ngantier Exp $
+// $Id: rec_history.inc.php,v 1.60.2.1 2019-11-04 11:17:15 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -35,8 +35,9 @@ function rec_history() {
 	       		$look_CONTENT,
 				$look_CONCEPT;
 	       	global $typdoc,$l_typdoc;
-	     
-			$_SESSION["nb_queries"]=$_SESSION["nb_queries"]+1;
+	       	
+	       	if(!isset($_SESSION["level1"])) $_SESSION["level1"] = array();
+			$_SESSION["nb_queries"]=intval($_SESSION["nb_queries"])+1;
 			$n=$_SESSION["nb_queries"];
 			$_SESSION["user_query".$n]=$user_query;
 			$_SESSION["map_emprises_query".$n]=$map_emprises_query;
@@ -67,7 +68,7 @@ function rec_history() {
 		case "extended_search":
 		case "extended_search_authorities":
 			global $es;
-			$_SESSION["nb_queries"]=$_SESSION["nb_queries"]+1;
+			$_SESSION["nb_queries"] = intval($_SESSION["nb_queries"]) + 1;
 			$n=$_SESSION["nb_queries"];
 			$_SESSION["human_query".$n]=$es->make_human_query();
 			global $search;
@@ -91,7 +92,7 @@ function rec_history() {
     			$field1_="field_".$i."_".$search[$i]."_1";
     			global ${$field1_};
     			$field1=${$field1_};
-    			$_SESSION["n_fields_".$i."_".$search[$i]."_".$n."_1"]=count($field1);
+    			$_SESSION["n_fields_".$i."_".$search[$i]."_".$n."_1"]=(is_array($field1) ? count($field1) : 0);
     			if(is_array($field1)) {
     				for ($j=0; $j<count($field1); $j++) {
     					$_SESSION["field_".$i."_".$search[$i]."_".$j."_".$n."_1"]=$field1[$j];
@@ -112,7 +113,7 @@ function rec_history() {
 			global $search_term;
 			global $term_click;
 			global $page_search;
-			$_SESSION["nb_queries"]=$_SESSION["nb_queries"]+1;
+			$_SESSION["nb_queries"] = intval($_SESSION["nb_queries"]) + 1;
 			$n=$_SESSION["nb_queries"];
 			$_SESSION["search_type".$n]=$search_type;
 			$_SESSION["search_term".$n]=stripslashes($search_term);
@@ -123,7 +124,7 @@ function rec_history() {
 		case "tags_search":
 			global $user_query;
 			
-			$_SESSION["nb_queries"]=$_SESSION["nb_queries"]+1;
+			$_SESSION["nb_queries"] = intval($_SESSION["nb_queries"]) + 1;
 			$n=$_SESSION["nb_queries"];
 			$_SESSION["user_query".$n]=$user_query;
 			$_SESSION["search_type".$n]="simple_search";
@@ -183,12 +184,14 @@ function get_history($n) {
 	       	if ($opac_search_other_function) search_other_function_get_history($n);
 	       	
 	       	break;
-		case "extended_search_authorities":
+		case "extended_search_authorities":		    
+		    global $es;
 		    if(is_object($es) && get_class($es) != "search_authorities"){
     		    $es = new search_authorities("search_fields_authorities");
     		}
 		case "extended_search":
-			global $search;
+			global $search;			
+			$search = array();
 			for ($i=0; $i<$_SESSION["nb_search".$n]; $i++) {
 				$search[$i]=$_SESSION["search_".$i."_".$n];
 				$inter="inter_".$i."_".$search[$i];
@@ -287,7 +290,7 @@ function get_human_query($n) {
 			break;
 		case "term_search":
 			if ($_SESSION["search_term".$n]=="") $r1="(tous les termes)"; else $r1=stripslashes($_SESSION["search_term".$n]);
-			$r=sprintf($msg["term_search_history"],$r1,($_SESSION["page_search".$n]+1),$_SESSION["term_click".$n]);
+			$r=sprintf($msg["term_search_history"],$r1, (intval($_SESSION["page_search".$n]) + 1), $_SESSION["term_click".$n]);
 			break;
 		case "module":
 			$r=sprintf($msg["navigation_search_libelle"],stripslashes($_SESSION["human_query".$n]));
@@ -507,7 +510,7 @@ function rec_last_history() {
 			}
 			break;
 		case "extended_search":
-			if (!$facette_test || (strpos($_SERVER['HTTP_REFERER'],$_SESSION['last_authority']['lvl']) !== false && $_SESSION['last_authority']['need_new_search'])) {
+		    if (!$facette_test || (!empty($_SESSION['last_authority']) && strpos($_SERVER['HTTP_REFERER'],$_SESSION['last_authority']['lvl']) !== false && $_SESSION['last_authority']['need_new_search'])) {
 				$_SESSION["lq_page"]=$page_;
 				$_SESSION["lq_affiliate_page"]=$affiliate_page;
 				$_SESSION["lq_catalog_page"]=$catalog_page;
@@ -544,9 +547,12 @@ function get_last_history() {
 	}
 	
 	$search_type=$_SESSION["search_type".$_SESSION["last_query"]];
-	$facette_test=$_SESSION["lq_facette_test"];
-
-	if($search_type == "module" && count($_SESSION['facette'] == 0)){
+	if (isset($_SESSION["lq_facette_test"])) {
+	   $facette_test = $_SESSION["lq_facette_test"];
+	} else {
+	    $facette_test = 0;
+	}
+	if($search_type == "module" && (empty($_SESSION['facette']) || count($_SESSION['facette'] == 0))){
 		//Cas spécial pour section_see
 		$ajout_section='';
 		if ($_SESSION['last_module_search']['search_mod']=='section_see') {
@@ -589,7 +595,9 @@ function get_last_history() {
 				$l_typdoc=$_SESSION["lq_l_typdoc"];
 				$join=$_SESSION["lq_join"];
 				$id_thes=$_SESSION["lq_id_thes"];
-				$_SESSION["facette"]=$_SESSION["lq_facette"];
+				if (isset($_SESSION["lq_facette"])) {
+				    $_SESSION["facette"]=$_SESSION["lq_facette"];
+				}
 				$_SESSION["level1"]=$_SESSION["lq_level1"];
 				if ($opac_search_other_function) search_other_function_get_history($_SESSION["last_query"]);
 			}
@@ -598,6 +606,9 @@ function get_last_history() {
 			global $mode;
 			$mode = "extended";
 			global $search;
+			if(empty($search)) {
+				$search=array();
+			}
 			$search[0]="s_1";
 			$op_="EQ";
 			 
@@ -633,6 +644,10 @@ function get_last_history() {
 			$catalog_page=$_SESSION["lq_catalog_page"];
 			$mode=$_SESSION["lq_mode"];
 			break;
+		case "external_search" :
+		    $my_search = new search("search_fields_unimarc");
+		    $my_search->json_decode_search($_SESSION["last_unimarc_search"]);
+		    break;
 	}
 	if ($facette_test) {
 		global $page,$mode,$catalog_page,$affiliate_page;
@@ -656,6 +671,9 @@ function rec_last_authorities(){
 	global $location,$plettreaut,$dcote,$lcote,$nc,$ssub;
 	global $nb_level_enfants, $nb_level_parents;
 	
+	if(empty($_SESSION["last_module_search"])) {
+	    $_SESSION["last_module_search"] = array();
+	}
 	$_SESSION["last_module_search"]["search_mod"]="$lvl";
 	$_SESSION["last_module_search"]["search_id"]=$id;
 	$_SESSION["last_module_search"]["search_page"]=$page;

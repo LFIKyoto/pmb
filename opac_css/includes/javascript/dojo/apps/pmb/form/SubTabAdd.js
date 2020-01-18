@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: SubTabAdd.js,v 1.2 2018-12-04 09:54:54 ngantier Exp $
+// $Id: SubTabAdd.js,v 1.4 2019-01-24 10:12:49 dgoron Exp $
 
 
 define([
@@ -91,7 +91,15 @@ define([
 			  	/** fin cas particulier **/
 			  	
 				if(queryObject.what != 'notice'){
-					new FormEdit('autorites', this.getGridTypeEntity(queryObject.what), this.containerNode);
+					switch(queryObject.what) {
+						case 'authperso':
+						case 'oeuvre_event':
+							new FormEdit('autorites', this.getGridTypeEntity(queryObject.what)+'_'+queryObject.authperso_id, this.containerNode);
+							break;
+						default:
+							new FormEdit('autorites', this.getGridTypeEntity(queryObject.what), this.containerNode);
+							break;
+					}
 				}
 //				new FormController();
 				
@@ -234,6 +242,8 @@ define([
 						return 'authperso';
 					case 'ontology':
 						return 'concepts';
+					case 'oeuvre_event':
+						return 'authperso';
 				}
 			},
 			setSubmitEvent: function(queryResult){

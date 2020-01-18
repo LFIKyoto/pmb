@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_request_parameters.tpl.php,v 1.1 2016-01-25 10:21:08 vtouchard Exp $
+// $Id: scan_request_parameters.tpl.php,v 1.2 2019-05-27 10:18:04 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $scan_request_parameters_form, $current_module, $msg;
 
 $scan_request_parameters_form ="
 <form method='post' class='form-$current_module' name='scan_request_parameters_form' action='!!action!!&action=save'>

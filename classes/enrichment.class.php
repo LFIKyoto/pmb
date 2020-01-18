@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: enrichment.class.php,v 1.10 2018-02-26 16:06:33 dgoron Exp $
+// $Id: enrichment.class.php,v 1.11 2019-08-20 09:18:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -59,8 +59,8 @@ class enrichment {
 								}elseif(!$info['type'][$i]['label']){
 									$info['type'][$i]['label'] = $msg[substr($this->types_names[$info['type'][$i]],4)];
 								}
-								if(in_array($info['type'][$i]['code'],$s['TYPE_ENRICHEMENT_ALLOWED'])){
-									$enrichment_types[]= $info['type'][$i];
+								if (!empty($s['TYPE_ENRICHEMENT_ALLOWED'])) {
+									$enrichment_types[] = $info['type'][$i];
 								}
 							}
 							

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: xml_dom.class.php,v 1.4 2018-05-31 08:48:15 dgoron Exp $
+// $Id: xml_dom.class.php,v 1.7 2019-07-11 10:24:50 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -148,8 +148,8 @@ class xml_dom {
 	 Les attributs ne peuvent être cités que sur le noeud final.
 	 \endverbatim
 	 */
-	public function get_node($path,$node="") {
-		if ($node=="") $node=&$this->tree;
+	public function get_node($path, $node = array()) {
+		if (empty($node)) $node =& $this->tree;
 		$paths=explode("/",$path);
 		for ($i=0; $i<count($paths); $i++) {
 			if ($i==count($paths)-1) {
@@ -214,7 +214,7 @@ class xml_dom {
 	 */
 	public function get_nodes($path,$node="") {
 		$n=0;
-		$nodes="";
+		$nodes=[];
 		while ($nod=$this->get_node($path."[$n]",$node)) {
 			$nodes[]=$nod;
 			$n++;
@@ -234,6 +234,7 @@ class xml_dom {
 	 */
 	public function get_datas($node,$force_entities=false) {
 		$char="";
+		if(!isset($node["TYPE"])) $node["TYPE"] = '';
 		if ($node["TYPE"]!=1) return false;
 		//Recherche des fils et vérification qu'il n'y a que du texte !
 		$flag_text=true;

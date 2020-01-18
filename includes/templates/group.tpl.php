@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: group.tpl.php,v 1.23 2017-10-19 14:06:54 ngantier Exp $
+// $Id: group.tpl.php,v 1.24.6.2 2019-11-27 09:02:53 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $group_header, $msg, $group_footer, $group_search, $current_module, $group_form, $base_path, $group_list_tmpl, $group_form_add_membre;
 
 // template pour la gestion des groupes
 
@@ -76,16 +78,14 @@ $group_form = "
 <form class='form-$current_module' name='group_form' method='post' action='./circ.php?categ=groups&action=update'>
 <h3>!!titre!!</h3>
 <div class='form-contenu'>
+	<div class='row'>	
+		<label class='etiquette' for='group_name'>$msg[911]</label>
+	</div>
 	<div class='row'>
+		<input class='saisie-50em' type='text' id='group_name' name='group_name' value='!!group_name!!' />
+	</div>
+    <div class='row'>
 		<div class=colonne2>
-			<div class='row'>	
-				<label class='etiquette' for='group_name'>$msg[911]</label>
-			</div>
-			<div class='row'>
-				<input class='saisie-50em' type='text' id='group_name' name='group_name' value='!!group_name!!' />
-			</div>
-		</div>
-		<div class=colonne_suite>
 			<div class='row'>
 				<input type='checkbox' id='lettre_rappel' name='lettre_rappel' !!lettre_rappel!! value='1' />	
 				<label class='etiquette' for='lettre_rappel'>$msg[group_lettre_rappel]</label>
@@ -100,6 +100,21 @@ $group_form = "
 				<label class='etiquette' for='lettre_rappel_show_nomgroup'>$msg[group_lettre_rappel_show_nomgroup]</label>
 			</div>
 		</div>
+		<div class=colonne_suite>
+			<div class='row'>
+				<input type='checkbox' id='lettre_resa' name='lettre_resa' !!lettre_resa!! value='1' />	
+				<label class='etiquette' for='lettre_resa'>$msg[group_lettre_resa]</label>
+			</div>
+			<div class='row'>
+				<input type='checkbox' id='mail_resa' name='mail_resa' !!mail_resa!! value='1' />	
+				<label class='etiquette' for='mail_resa'>$msg[group_mail_resa]</label>
+			</div>
+			<div class='row'>&nbsp;</div>
+			<div class='row'>
+				<input type='checkbox' id='lettre_resa_show_nomgroup' name='lettre_resa_show_nomgroup' !!lettre_resa_show_nomgroup!! value='1' />	
+				<label class='etiquette' for='lettre_resa_show_nomgroup'>$msg[group_lettre_resa_show_nomgroup]</label>
+			</div>
+		</div>
 	</div>
 	<div class='row'>
 		<label class='etiquette' for='libelle_resp'>$msg[913]</label>
@@ -109,6 +124,18 @@ $group_form = "
 		<input class='bouton' type='button' onclick=\"openPopUp('./select.php?what=emprunteur&caller=group_form&param1=respID&param2=libelle_resp', 'selector')\" title=\"$msg[grp_liste]\" value='$msg[parcourir]' />
 		<input type='button' class='bouton' value='$msg[raz]' onclick=\"this.form.libelle_resp.value=''; this.form.respID.value='0'; \" /><br>
 		<label class='etiquette' for='group_add_resp'>".$msg['group_add_resp']."</label>&nbsp;<input type='checkbox' id='group_add_resp' name='group_add_resp' value='1' />
+	</div>
+    <div class='row'>
+		<label class='etiquette' for='comment_gestion'>".$msg['groupe_comment_gestion']."</label>
+	</div>
+	<div class='row'>
+		<textarea class='saisie-80em' id='comment_gestion' name='comment_gestion' cols='62' rows='4' wrap='virtual'>!!comment_gestion!!</textarea>
+	</div>
+    <div class='row'>
+		<label class='etiquette' for='comment_opac'>".$msg['groupe_comment_opac']."</label>
+	</div>
+	<div class='row'>
+		<textarea class='saisie-80em' id='comment_opac' name='comment_opac' cols='62' rows='4' wrap='virtual'>!!comment_opac!!</textarea>
 	</div>
 </div>
 <div class='row'>

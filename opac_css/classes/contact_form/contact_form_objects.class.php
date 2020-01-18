@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contact_form_objects.class.php,v 1.3 2016-09-27 12:39:09 jpermanne Exp $
+// $Id: contact_form_objects.class.php,v 1.3.10.2 2019-10-30 08:15:37 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,6 +14,12 @@ class contact_form_objects {
 	 * Liste des objets
 	 */
 	protected $objects;
+	
+	/**
+	 * Identifiant de l'objet sélectionné
+	 * @var integer
+	 */
+	protected $selected;
 	
 	/**
 	 * Constructeur
@@ -40,16 +46,20 @@ class contact_form_objects {
 	/**
 	 * Sélecteur d'objets de mail
 	 */
-	public function gen_selector() {
-		global $contact_form_objects_id;
+	public function gen_selector($email_object_free_entry=0) {
+	    global $msg, $charset;
+	    global $contact_form_objects_id;
 
-		$selector = "<select name='contact_form_objects' data-dojo-type='dijit/form/Select' ";
+		$selector = "<select name='contact_form_objects' data-dojo-type='dijit/form/Select' onchange='contact_form_object_change(this.value);' ";
 		if (isset($contact_form_objects_id)) {
 			$selector .= " data-dojo-props='value:".$contact_form_objects_id."'";
 		}
 		$selector .= " maxHeight='80'>";
 		foreach ($this->objects as $object) {
-			$selector .= "<option value='".$object->get_id()."'>".$object->get_label()."</option>";
+		    $selector .= "<option value='".$object->get_id()."'>".$object->get_translated_label()."</option>";
+		}
+		if($email_object_free_entry) {
+		    $selector .= "<option value='0'>".htmlentities($msg['contact_form_object_other'], ENT_QUOTES, $charset)."</option>";
 		}
 		$selector .= "</select>";
 		return $selector;
@@ -57,5 +67,25 @@ class contact_form_objects {
 	
 	public function get_objects() {
 		return $this->objects;
+	}
+	
+	public function get_selected() {
+	    if(!isset($this->selected)) {
+	        if(count($this->objects)) {
+	            $this->selected = $this->objects[0]->get_id();
+	        } else {
+	            $this->selected = 0;
+	        }
+	    }
+	    return $this->selected;
+	}
+	
+	public function get_selected_object() {
+	    foreach ($this->objects as $object) {
+	        if($object->get_id() == $this->get_selected()) {
+	            return $object;
+	        }
+	    }
+	    return false;
 	}
 }

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mail.class.php,v 1.2 2018-04-24 10:18:09 dgoron Exp $
+// $Id: mail.class.php,v 1.4 2019-06-20 09:46:13 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+use PHPMailer\PHPMailer\PHPMailer;
 
 class mail {
     
@@ -171,6 +173,8 @@ class mail {
 				$tmp_array_email[1]='';
 			}
 			$mail->setFrom($tmp_array_email[0],$tmp_array_email[1]);
+			//Le paramètre ci-dessous est utilisé comme destinataires pour les réponses automatiques (erreur de destinataire, validation anti-spam, ...)
+			$mail->Sender=$this->from_mail;
 		} else {
 			$mail->setFrom($this->from_mail,$this->from_name);
 		}

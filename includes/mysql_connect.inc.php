@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mysql_connect.inc.php,v 1.15 2017-07-31 13:21:40 tsamson Exp $
+// $Id: mysql_connect.inc.php,v 1.16 2019-07-05 12:06:47 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -37,7 +37,9 @@ function connection_mysql($er_connec=1, $my_bd='', $bd=1, $er_bd=1) {
 		return 0 ;
 		}
 	if($bd) {
-		$my_bd == '' ? $my_bd=DATA_BASE : $my_bd;
+	    if ($my_bd == '') {
+	        $my_bd = DATA_BASE;
+	    }
 		if( pmb_mysql_select_db($my_bd, $my_connec)==0 && $er_bd==1 ) {
 			$__erreur_cnx_base__ = 'erreur '.pmb_mysql_errno().' : '.pmb_mysql_error().'<br />';
 			return 0 ;

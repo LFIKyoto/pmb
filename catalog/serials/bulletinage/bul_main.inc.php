@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bul_main.inc.php,v 1.12 2016-05-06 12:44:27 jpermanne Exp $
+// $Id: bul_main.inc.php,v 1.12.10.1 2019-12-04 10:15:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -49,6 +49,9 @@ switch($action) {
 	case 'copy_isdone':
 		include('./catalog/serials/bulletinage/copy_isdone.inc.php');
 		break;
+	case 'bul_move':
+	    include('./catalog/serials/bulletinage/bul_move.inc.php');
+	    break;
 	default:
 		echo "case default -> à traiter (retour vers info périodique ou accueil périodiques)";
 		break;

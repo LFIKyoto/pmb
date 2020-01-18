@@ -2,7 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: term_show.php,v 1.12 2017-11-22 11:07:34 dgoron Exp $
+// $Id: term_show.php,v 1.14 2019-06-07 08:05:39 btafforeau Exp $
+
+global $base_path, $base_auth, $javascript_path, $base_query, $term, $first, $id_thes, $jscript_term;
+
 
 $base_path="../../../..";                            
 $base_auth = ""; 
@@ -10,7 +13,6 @@ $base_auth = "";
 require_once ("$base_path/includes/init.inc.php"); 
 require_once("$class_path/term_show.class.php"); 
 require_once ("$javascript_path/misc.inc.php");
-
 
 //Récupération des paramètres du formulaire appellant
 $base_query = "history=".rawurlencode(stripslashes($term))."&history_thes=".rawurlencode(stripslashes($id_thes));
@@ -34,6 +36,8 @@ function parent_link($categ_id,$categ_see) {
 	if ($tcateg->has_notices()) {
 		$link="<a href='".$base_path."/catalog.php?categ=search&mode=1&aut_id=$categ&etat=aut_search&aut_type=categ&no_rec_history=$no_rec_history' target=_top><img src='".get_url_icon('search.gif')."' border=0 align='absmiddle'></a>";
 		$visible=true;	
+	} else {
+	    $link = "";
 	}
 	$r=array("VISIBLE"=>$visible,"LINK"=>$link);
 	return $r;

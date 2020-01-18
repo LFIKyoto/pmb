@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export_z3950_new.php,v 1.9 2017-08-02 08:49:00 tsamson Exp $
+// $Id: export_z3950_new.php,v 1.10 2019-01-16 16:57:14 dgoron Exp $
 
 $base_path="../..";
 
@@ -126,6 +126,9 @@ function construct_query($query,$not,$level,$argn="",$oper="") {
 		if (!$idf) 
 			make_error(3,"1=".$use[0]);
 		else {
+			if(empty($search)) {
+				$search = array();
+			}
 			$search[]="f_".$idf;
 			$vals=array();
 			$vals[0]=traite_val($use[1],$idf);

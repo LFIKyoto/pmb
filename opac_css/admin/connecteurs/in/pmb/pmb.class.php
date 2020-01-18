@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmb.class.php,v 1.12 2018-10-19 09:40:16 dgoron Exp $
+// $Id: pmb.class.php,v 1.19 2019-08-01 13:52:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -42,7 +42,7 @@ class xml_dom_pmb {
 	/**
 	 * \protected
 	 */
-	function close_node() {
+	public function close_node() {
 		$this->last_elt[$this->depth-1]["CHILDS"][]=$this->cur_elt;
 		$this->last_char=false;
 		$this->cur_elt=$this->last_elt[$this->depth-1];
@@ -52,7 +52,7 @@ class xml_dom_pmb {
 	/**
 	 * \protected
 	 */
-	function startElement($parser,$name,$attribs) {
+	public function startElement($parser,$name,$attribs) {
 		if ($this->last_char) $this->close_node();
 		$this->last_elt[$this->depth]=$this->cur_elt;
 		$this->cur_elt=array();
@@ -66,7 +66,7 @@ class xml_dom_pmb {
 	/**
 	 * \protected
 	 */
-	function endElement($parser,$name) {
+	public function endElement($parser,$name) {
 		if ($this->last_char) $this->close_node();
 		$this->close_node();
 	}
@@ -74,7 +74,7 @@ class xml_dom_pmb {
 	/**
 	 * \protected
 	 */
-	function charElement($parser,$char) {
+	public function charElement($parser,$char) {
 		if ($this->last_char) $this->close_node();
 		$this->last_char=true;
 		$this->last_elt[$this->depth]=$this->cur_elt;
@@ -91,7 +91,7 @@ class xml_dom_pmb {
 	 * @param string $xml XML a manipuler
 	 * @param string $charset Charset du document XML
 	 */
-	function xml_dom_pmb($xml,$charset="iso-8859-1") {
+	public function __construct($xml,$charset="iso-8859-1") {
 		$this->charset=$charset;
 		$this->cur_elt=array("NAME"=>"document","TYPE"=>"0");
 		
@@ -139,8 +139,8 @@ class xml_dom_pmb {
 	 Les attributs ne peuvent être cités que sur le noeud final.
 	 \endverbatim
 	 */
-	function get_node($path,$node="") {
-		if ($node=="") $node=&$this->tree;
+	public function get_node($path, $node = array()) {
+		if (empty($node)) $node =& $this->tree;
 		$paths=explode("/",$path);
 		for ($i=0; $i<count($paths); $i++) {
 			if ($i==count($paths)-1) {
@@ -201,11 +201,11 @@ class xml_dom_pmb {
 	 a/b/id@c	Tous les noeuds éléments c fils de a/b. L'attribut est ignoré
 	 \endverbatim
 	 */
-	function get_nodes($path,$node="") {
-		$n=0;
-		$nodes="";
-		while ($nod=$this->get_node($path."[$n]",$node)) {
-			$nodes[]=$nod;
+	public function get_nodes($path, $node="") {
+		$n = 0;
+		$nodes = array();
+		while ($nod = $this->get_node($path."[$n]", $node)) {
+			$nodes[] = $nod;
 			$n++;
 		}
 		return $nodes;
@@ -221,7 +221,7 @@ class xml_dom_pmb {
 	 * @param bool $force_entities true : les données sont renvoyées avec les entités xml, false : les données sont renvoyées sans entités
 	 * @return string données sérialisées du noeud élément
 	 */
-	function get_datas($node,$force_entities=false) {
+	public function get_datas($node,$force_entities=false) {
 		$char="";
 		if ($node["TYPE"]!=1) return false;
 		//Recherche des fils et vérification qu'il n'y a que du texte !
@@ -259,7 +259,7 @@ class xml_dom_pmb {
 	 * @param noeud $node Noeud élément duquel on veut les attributs
 	 * @return mixed Tableau des attributs Nom => Valeur ou false si ce n'est pas un noeud de type 1
 	 */
-	function get_attributes($node) {
+	public function get_attributes($node) {
 		if ($node["TYPE"]!=1) return false;
 		return $node["ATTRIBUTES"];
 	}
@@ -291,7 +291,7 @@ class xml_dom_pmb {
 	 a/b/id@c[3]	Renvoie : "2"
 	 \endverbatim
 	 */
-	function get_value($path,$node="") {
+	public function get_value($path,$node="") {
 		$elt=$this->get_node($path,$node);
 		if ($elt) {
 			$paths=explode("/",$path);
@@ -350,7 +350,7 @@ class xml_dom_pmb {
 	 a/b/id@c	Renvoie : [0]=>"0",[1]=>"1",[2]=>"2"
 	 \endverbatim
 	 */
-	function get_values($path,$node="") {
+	public function get_values($path,$node="") {
 		$n=0;
 		while ($elt=$this->get_node($path."[$n]",$node)) {
 			$elts[$n]=$elt;
@@ -437,6 +437,29 @@ class pmb extends connector {
 		if(!isset($authentification)) $authentification = '';
 		if(!isset($auth_login)) $auth_login = '';
 		if(!isset($auth_password)) $auth_password = '';
+		if(!isset($auth_connexion_phrase)) $auth_connexion_phrase = '';
+		
+		$checked1 = '';
+		$checked2 = '';
+		$checked3 = '';
+		
+		if ($protocole == SOAP) {
+		    $checked1 = "checked";
+		} else {
+		    $protocole = JSONRPC;
+		}
+		
+		if ($protocole == JSONRPC) {
+		    $checked2 = "checked";
+		} else {
+		    $protocole = JSONRPC;
+		}
+		
+		if ($authentification == "1") {
+		    $checked3 = " checked ";
+		} else {
+		    $authentification = "0";
+		}
 		
 		$form="
 		<script type='text/javascript'>var old_search_index='search_index_".$url."'</script>
@@ -455,9 +478,9 @@ class pmb extends connector {
 			<div class='colonne_suite'>
 				<input name='protocole' id='protocole' class='' type='radio' value='".SOAP."' ".
 					//on coche l'option déjà enregistrée. Par défaut l'option Json est cochée
-					($protocole == SOAP ? " checked " : $protocole = JSONRPC)."'/>".$this->msg["pmb_prtcl_soap"]."
+					$checked1."'/>".$this->msg["pmb_prtcl_soap"]."
 				<input name='protocole' id='protocole' class='' type='radio' value='".JSONRPC."'".
-					($protocole == JSONRPC ? " checked " : $protocole = JSONRPC)."/>".$this->msg["pmb_prtcl_json"]."
+					$checked2."/>".$this->msg["pmb_prtcl_json"]."
 			</div>
 		</div>
 		<div class='row'>
@@ -482,7 +505,7 @@ class pmb extends connector {
 			</div>
 			<div class='colonne_suite'>
 				<input type='checkbox' name='authentification' id='authentification' class='' value='".($authentification=="0" ? "0" : "1")."'".
-				($authentification == "1" ? " checked " : $authentification = "0").
+				$checked3.
 				//on désactive login et mot de passe en fonction du checkbox
 				" onchange='checkAuth();' />
 			</div>
@@ -505,6 +528,15 @@ class pmb extends connector {
 				($authentification == "0" ? " disabled " : "")."'/>
 			</div>
 		</div>
+        <div class='row'>
+			<div class='colonne3'>
+				<label for=''>".$this->msg["pmb_connexion_phrase"]."</label>
+			</div>
+			<div class='colonne_suite'>
+				<input type='text' name='auth_connexion_phrase' id='auth_connexion_phrase' class='saisie-50em' value='".htmlentities($auth_connexion_phrase,ENT_QUOTES,$charset)."'".
+				($authentification == "0" ? " disabled " : "")."'/>
+			</div>
+		</div>
 
 		<div class='row'></div>
 		<script type='text/javascript'>
@@ -513,9 +545,11 @@ class pmb extends connector {
 			if(document.getElementById('authentification').checked){
 				document.getElementById('auth_login').disabled = false;
 				document.getElementById('auth_password').disabled = false;
+                document.getElementById('auth_connexion_phrase').disabled = false;
 			}else {
 				document.getElementById('auth_login').disabled = true;
 				document.getElementById('auth_password').disabled = true;
+                document.getElementById('auth_connexion_phrase').disabled = true;
 			}
 		}
 		</script>		
@@ -550,6 +584,7 @@ class pmb extends connector {
 		$stop=false;
 		
 		//construit le tableau pour la recherche multi-critère
+		$tab_query = array();
 		foreach ($query as $i=>$q) {
 			$t = array();
 			$t["inter"]= $q->inter;
@@ -580,6 +615,8 @@ class pmb extends connector {
 				$ws=new jsonRPCClient($url);
 				$ws->setUser($vars['auth_login']);
 				$ws->setPwd($vars['auth_password']);
+				$ws->setSalt($vars['auth_connexion_phrase']);
+				$tab_query = encoding_normalize::utf8_normalize($tab_query);
 				$res = $ws->pmbesSearch_advancedSearch($query[0]->sc_type,$tab_query);
 				//Si il y a des résultats
 				if ($res["nbResults"]) {
@@ -768,7 +805,7 @@ class pmb extends connector {
     
 	public function make_serialized_source_properties($source_id) {
     	global $url,$response_group,$search_index,$max_return,$protocole, $authentification,$display_items;
-    	global $auth_login, $auth_password;
+    	global $auth_login, $auth_password, $auth_connexion_phrase;
     	$t["url"]=stripslashes($url);
     	$t["protocole"]=$protocole;
     	$t["response_group"]=$response_group;
@@ -777,6 +814,7 @@ class pmb extends connector {
   		$t["authentification"]=$authentification;
   		$t["auth_login"]=$auth_login;
   		$t["auth_password"]=$auth_password;
+  		$t["auth_connexion_phrase"]=stripslashes($auth_connexion_phrase);
   		$t["display_items"]=$display_items;
 		$this->sources[$source_id]["PARAMETERS"]=serialize($t);
 	}
@@ -807,6 +845,7 @@ class pmb extends connector {
 				$ws=new jsonRPCClient($url);
 				$ws->setUser($vars['auth_login']);
 				$ws->setPwd($vars['auth_password']);
+				$ws->setSalt($vars['auth_connexion_phrase']);
 				break;
 			case SOAP:				
 				$ws=new SoapClient($url."&wsdl");
@@ -853,6 +892,7 @@ class pmb extends connector {
 				$ws=new jsonRPCClient($url);
 				$ws->setUser($vars['auth_login']);
 				$ws->setPwd($vars['auth_password']);
+				$ws->setSalt($vars['auth_connexion_phrase']);
 				break;
 			case SOAP:				
 				$ws=new SoapClient($url."&wsdl");
@@ -903,6 +943,7 @@ class pmb extends connector {
 				$ws=new jsonRPCClient($url);
 				$ws->setUser($vars['auth_login']);
 				$ws->setPwd($vars['auth_password']);
+				$ws->setSalt($vars['auth_connexion_phrase']);
 				break;
 			case SOAP:				
 				$ws=new SoapClient($url."&wsdl");

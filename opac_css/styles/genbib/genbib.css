@@ -1,7 +1,7 @@
 /* +--------------------------------------------------------------------------+
 // 2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: genbib.css,v 1.83 2014-06-06 13:30:33 wlair Exp $ */
+// $Id: genbib.css,v 1.86 2017-06-21 12:39:16 wlair Exp $ */
 
 
 /* ---------------------------------------------------------------------------*/
@@ -71,9 +71,9 @@ body, #intro_message .p1 p, #main #search ul.search_tabs li#current, #onglets_li
 	padding: 0px;	
 }
 
-body { 
+body {
 	font-family : Arial, Verdana, Helvetica, sans-serif;
-	font-size : 12px;
+	font-size: 75%;
 }
 
 #container {
@@ -153,10 +153,10 @@ iframe#iframe_resume_panier {
 	max-height: 211px;
 	height: auto !important;
 	height: 211px;
-    height: expression(this.height > 211px ? "211px" : true);
+	height: expression(this.height > 211px ? "211px" : true);
 	display: inline;
-	margin-right: 3px;
-	margin-left: 3px;
+	margin-right: 2px;
+	margin-left: 2px;
 }
 
 
@@ -169,12 +169,15 @@ iframe#iframe_resume_panier {
 	margin-left: 200px;
 	display: block;
 	height: 40px;
+	/* position: absolute; */
+	top: auto;
 }
 
 #intro_bibli .p2 ul, #intro_bibli .p2 #menuDeroulant, .cms_menu_deep0 {
     position: absolute;
     z-index: 10;
     vertical-align: bottom;
+   	list-style-type: none;
 }
 
 #intro_bibli .p2 ul li, #intro_bibli .p2 #menuDeroulant li, .cms_menu_deep0 li {
@@ -263,12 +266,14 @@ iframe#iframe_resume_panier {
 /* ---------------------------------------------------------------------------*/
 
 
-#bandeau { 
+#bandeau {
 	 width: 170px;
 	 padding-left: 10px;
 	 background-color: #ffffff;
 	 float: left;
 	 margin-top: 220px;
+	 z-index: 2;
+	 position: relative;
 }
 
 #bandeau div {
@@ -423,7 +428,7 @@ iframe#iframe_resume_panier {
 
 #main h3 {
 	margin-bottom: 0px;
-	font-size: 16px;
+	font-size: 1.33333em;
 }
 
 
@@ -435,8 +440,8 @@ iframe#iframe_resume_panier {
 #main_header h3 {
 	background-color: #ffffff;
 	opacity: 0.5;
-	-ms-filter: "alpha(opacity=50)"; /* IE 8 */
-    filter : alpha(opacity=50); /* IE < 8 */ 
+	-ms-filter: "alpha(opacity=50)";/* IE 8 */
+	filter : alpha(opacity=50);/* IE < 8 */
 	position: absolute;
 	top: 100px;
 	margin-left: -200px;
@@ -508,7 +513,7 @@ iframe#iframe_resume_panier {
 #main #search ul.search_tabs, #onglets_list ul.list_tabs {
     margin-top: -23px;
     margin-left: -16px;
-    font-size: 14px;
+    font-size: 1.166666em;
 }
 
 #main #search ul.search_tabs li, #onglets_list ul.list_tabs li, #empr_onglet ul.empr_tabs li {
@@ -879,6 +884,11 @@ input#a2z_abt_actif {
     margin-bottom: 15px;
 }
 
+#location-container table tr td a b {
+    font-weight: normal;
+    font-size: 1.166666em;
+}
+
 
 /* -----------------------------------------------------*/
 /*               Dernieres Acquisitions                 */
@@ -916,7 +926,12 @@ input#a2z_abt_actif {
 	padding: 0px;
 }
 
-
+/* notices format Neuf*/
+#last_entries .title_notCourte > h3,
+#last_entries .title_notCourte > h3 span {
+	margin:0px;
+	padding:0px;
+}
 /* -----------------------------------------------------*/
 /*                        Etageres                      */
 /* -----------------------------------------------------*/
@@ -1260,7 +1275,6 @@ ul {
 	margin-top: 0px;
 	margin-bottom: 0px;
 	margin-left: 0px;
-	list-style: none;
 	padding-left: 0px;
 }
 
@@ -1420,7 +1434,7 @@ ul.empr_subtabs li a {
 }
 
 .notice-heada {
-    font-size: 12px;
+    font-size: 100%;
     font-weight: bold;
 }
 

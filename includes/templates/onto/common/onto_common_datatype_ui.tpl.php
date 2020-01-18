@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_ui.tpl.php,v 1.25 2018-11-03 14:00:37 tsamson Exp $
+// $Id: onto_common_datatype_ui.tpl.php,v 1.28 2019-08-29 10:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -474,3 +474,82 @@ $ontology_tpl['form_row_content_linked_authority_selector']='
 <input type="hidden" value="!!form_row_content_linked_authority_selector_value!!" name="!!onto_row_id!![!!onto_row_order!!][value]" id="!!onto_row_id!!_!!onto_row_order!!_value">
 <input type="hidden" value="!!form_row_content_linked_authority_selector_range!!" name="!!onto_row_id!![!!onto_row_order!!][type]" id="!!onto_row_id!!_!!onto_row_order!!_type"/>
 ';
+
+/**
+ * Liste boutons radios ou checkbox
+ */
+$ontology_tpl['form_row_content_list_checkbox_option']='
+<input type="!!radio_or_checkbox!!" name="!!onto_row_id!![!!onto_row_order!!][value][]" id="!!onto_row_id!!_!!onto_row_order!!_!!onto_row_content_value_index!!" value="!!onto_row_content_value!!" !!onto_checked!! !!onto_disabled!! />
+<label for="!!onto_row_id!!_!!onto_row_order!!_!!onto_row_content_value_index!!">!!onto_row_content_label!!<label>';
+
+$ontology_tpl['form_row_content_list_checkbox'] = '
+<input type="hidden" value="!!onto_row_content_values!!" id="!!onto_row_id!!_!!onto_row_order!!_value" />
+<script>
+if (typeof window.!!onto_row_id!!_!!onto_row_order!!_script == "undefined") {
+	document.querySelectorAll("input[name=\'!!onto_row_id!![!!onto_row_order!!][value][]\']").forEach(function(node, index, nodes) {
+		node.addEventListener("click", function() {
+			var values = [];
+			nodes.forEach(function(node) {
+				if (node.checked) {
+					values.push(node.value);
+				}
+			});
+			document.getElementById("!!onto_row_id!!_!!onto_row_order!!_value").value=values.join();
+		});
+	});
+	window.!!onto_row_id!!_!!onto_row_order!!_script = true;
+}
+</script>';
+
+$ontology_tpl['form_row_content_floating_date_script'] = "<script>
+function date_flottante_type_onchange(field_name) {
+    var type = document.getElementById(field_name + '_value').value;
+    switch(type) {
+        case '4' : // interval date
+            document.getElementById(field_name + '_date_begin_zone_label').style.display = '';
+            document.getElementById(field_name + '_date_end_zone').style.display = '';
+            break;
+        case '0' : // vers
+        case '1' : // avant
+        case '2' : // après
+        case '3' : // date précise
+        default :
+            document.getElementById(field_name + '_date_begin_zone_label').style.display = 'none';
+            document.getElementById(field_name + '_date_end_zone').style.display = 'none';
+            break;
+    }
+}
+    
+function date_flottante_reset_fields(field_name) {
+    document.getElementById(field_name + '_date_begin').value = '';
+    document.getElementById(field_name + '_date_end').value = '';
+    document.getElementById(field_name + '_comment').value = '';
+}
+</script>";
+
+$ontology_tpl['form_row_content_floating_date'] = "<div>
+					<select id='!!onto_row_id!!_!!onto_row_order!!_value' name='!!onto_row_id!![!!onto_row_order!!][value]' onchange=\"date_flottante_type_onchange('!!onto_row_id!!_!!onto_row_order!!');\">
+ 						<option value='0'>" . $msg['parperso_option_duration_type0'] . "</option>
+ 						<option value='1'>" . $msg['parperso_option_duration_type1'] . "</option>
+ 						<option value='2'>" . $msg['parperso_option_duration_type2'] . "</option>
+ 						<option value='3'>" . $msg['parperso_option_duration_type3'] . "</option>
+ 						<option value='4'>" . $msg['parperso_option_duration_type4'] . "</option>
+					</select>
+ 					<span id='!!onto_row_id!!_!!onto_row_order!!_date_begin_zone'>
+						<label id='!!onto_row_id!!_!!onto_row_order!!_date_begin_zone_label' for='!!onto_row_id!!_!!onto_row_order!!_date_begin'>" . $msg['parperso_option_duration_begin'] . "</label>
+						<input type='text' id='!!onto_row_id!!_!!onto_row_order!!_date_begin' name='!!onto_row_id!![!!onto_row_order!!][date_begin]' value='!!floating_date_begin!!' placeholder='" . $msg["format_date_input_placeholder"] . "' maxlength='11' size='11' />
+					</span>
+ 					<span id='!!onto_row_id!!_!!onto_row_order!!_date_end_zone'>
+						<label id='!!onto_row_id!!_!!onto_row_order!!_date_end_zone_label' for='!!onto_row_id!!_!!onto_row_order!!_date_end'>" . $msg['parperso_option_duration_end'] . "</label>
+						<input type='text' id='!!onto_row_id!!_!!onto_row_order!!_date_end' name='!!onto_row_id!![!!onto_row_order!!][date_end]' value='!!floating_date_end!!' placeholder='" . $msg["format_date_input_placeholder"] . "' maxlength='11' size='11' />
+					</span>
+					<label>" . $msg['parperso_option_duration_comment'] . "</label>
+					<input type='text' id='!!onto_row_id!!_!!onto_row_order!!_comment' name='!!onto_row_id!![!!onto_row_order!!][comment]' value='!!floating_date_comment!!' class='saisie-30em'/>
+					<input class='bouton' type='button' value='X' onClick=\"date_flottante_reset_fields('!!onto_row_id!!_!!onto_row_order!!');\"/>
+            <!--<input class='bouton' type='button' value='+' onclick='add_custom_date_flottante_()' >-->
+		</div>
+		<script>
+            document.getElementById('!!onto_row_id!!_!!onto_row_order!!_value').value = !!floating_date_value!!;
+			date_flottante_type_onchange('!!onto_row_id!!_!!onto_row_order!!');
+        </script>";
+

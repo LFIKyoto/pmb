@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_store_arc2.class.php,v 1.19 2018-08-30 08:16:47 apetithomme Exp $
+// $Id: onto_store_arc2.class.php,v 1.22.2.1 2019-10-07 15:20:46 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -41,6 +41,7 @@ class onto_store_arc2 extends onto_store {
 			$this->errors[]=$this->store->getErrors();
 			return false;
 		}else{
+		    pmb_mysql_query("SET GLOBAL wait_timeout=300", $this->store->getDBCon());
 			if(!$this->store->isSetUp()) {
 				//Si les tables du store n'existent pas
 				//On crée les tables
@@ -134,7 +135,10 @@ class onto_store_arc2 extends onto_store {
 	
 		if(!count($this->errors)){
 			//Si je n'ai pas déjà des erreurs
-			//J'execute la requete
+		    if (!pmb_mysql_ping($this->store->a['db_con'])) {
+		        $this->store->createDBCon();
+		    }
+		    //J'execute la requete
 			$result = $this->store->query($query);
 				
 			if($erreurs=$this->store->getErrors()){
@@ -149,7 +153,7 @@ class onto_store_arc2 extends onto_store {
 				return false;
 			}else{
 				//on transforme le résultat et on l'insère dans la variable $this->result
-				if(isset($result["result"]["rows"]) && sizeof($result["result"]["rows"])){
+				if (!empty($result["result"]["rows"])) {
 					foreach($result["result"]["rows"] as $keyLine=>$valueLine) {
 						//on construit l'objet
 						$stdClass=new stdClass();

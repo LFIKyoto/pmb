@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_contribution_datatype_upload_directories_ui.class.php,v 1.2 2018-10-05 10:29:14 tsamson Exp $
+// $Id: onto_contribution_datatype_upload_directories_ui.class.php,v 1.4 2019-08-14 08:02:58 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -42,7 +42,7 @@ class onto_contribution_datatype_upload_directories_ui extends onto_common_datat
 		global $msg,$charset,$ontology_tpl, $ontology_tpl;		
 		
 		$form=$ontology_tpl['form_row'];
-		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->label, 'utf-8') ,ENT_QUOTES,$charset) , $form);
+		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->get_label(), 'utf-8') ,ENT_QUOTES,$charset) , $form);
 		
 		static::get_directories();
 		
@@ -87,8 +87,9 @@ class onto_contribution_datatype_upload_directories_ui extends onto_common_datat
 			$content.=$row;
 		}
 		
-		$form=str_replace("!!onto_rows!!",$content ,$form);
-		$form=str_replace("!!onto_row_id!!",$instance_name.'_'.$property->pmb_name , $form);
+		$form = str_replace("!!onto_rows!!", $content, $form);
+		$form = str_replace("!!onto_row_scripts!!", static::get_scripts(), $form);
+		$form = str_replace("!!onto_row_id!!", $instance_name.'_'.$property->pmb_name, $form);
 		return $form;
 		
 	} // end of member function get_form
@@ -107,7 +108,7 @@ class onto_contribution_datatype_upload_directories_ui extends onto_common_datat
 		
 		$display='<div id="'.$instance_name.'_'.$property->pmb_name.'">';
 		$display.='<p>';
-		$display.=$property->label.' : ';
+		$display.=$property->get_label().' : ';
 		foreach($datas as $data){
 			$display.=$data->get_formated_value();
 		}

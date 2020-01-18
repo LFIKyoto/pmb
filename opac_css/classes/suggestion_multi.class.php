@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestion_multi.class.php,v 1.19 2017-11-23 10:12:31 ngantier Exp $
+// $Id: suggestion_multi.class.php,v 1.21 2019-06-18 07:58:32 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -30,6 +30,7 @@ class suggestion_multi{
 	public function display_form(){
 		global $dbh, $multi_sug_form,$charset, $msg, $sug_src;
 		
+		$ligne = '';
 		//On charge la liste des sources
 		$req = "select * from suggestions_source order by libelle_source";
 			$res= pmb_mysql_query($req,$dbh);
@@ -138,7 +139,7 @@ class suggestion_multi{
 			$multi_sug_form = str_replace('!!max_ligne!!',$i,$multi_sug_form);
 		}
 		$multi_sug_form = str_replace('!!ligne!!',$ligne,$multi_sug_form);
-		
+		$multi_sug_form.= "<script type='text/javascript'>add_line(0);</script>";
 		return $multi_sug_form;		
 	}
 	
@@ -191,7 +192,7 @@ class suggestion_multi{
 					pmb_mysql_query($req,$dbh);
 					$idSugg = pmb_mysql_insert_id();
 						
-					if (is_object($uni)) $uni->delete();
+					if (isset($uni) && is_object($uni)) $uni->delete();
 					
 					$sug_orig = new suggestions_origine($id_empr, $idSugg);
 					$sug_orig->type_origine = 1;

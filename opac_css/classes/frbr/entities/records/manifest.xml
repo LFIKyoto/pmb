@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.4 2018-06-11 14:18:45 vtouchard Exp $ -->
+$Id: manifest.xml,v 1.6 2019-09-04 13:20:56 tsamson Exp $ -->
 
 <manifest>
 	<name lang="fr_FR">Notices</name>
@@ -27,8 +27,10 @@ $Id: manifest.xml,v 1.4 2018-06-11 14:18:45 vtouchard Exp $ -->
 			<datasource>frbr_entity_records_datasource_concepts</datasource>
 			<datasource>frbr_entity_records_datasource_works</datasource>
             <datasource>frbr_entity_records_datasource_parent_works</datasource>
+			<datasource>frbr_entity_records_datasource_linked_records</datasource>
 			<datasource>frbr_entity_common_datasource_custom_fields</datasource>
 			<datasource>frbr_entity_common_datasource_composed_concepts</datasource>
+			<datasource>frbr_entity_records_datasource_authperso</datasource>
 		</datasources>
 		<views>
 			<view>frbr_entity_records_view_recordslist</view>

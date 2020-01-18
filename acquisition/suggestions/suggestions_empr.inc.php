@@ -2,15 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions_empr.inc.php,v 1.4 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: suggestions_empr.inc.php,v 1.5 2019-05-28 15:00:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $statut, $class_path, $msg, $charset;
 
 require_once($class_path."/suggestions_map.class.php");
 require_once("./acquisition/suggestions/func_suggestions.inc.php");
-
-global $dbh, $statut;
 
 $sug_map = new suggestions_map();
 
@@ -20,7 +19,7 @@ else  $statut_clause= "and statut='".$statut."'";
 
 $req="select count(id_suggestion) as nb, concat(empr_nom,' ',empr_prenom) as nom, id_empr as id, empr_location from suggestions, suggestions_origine, empr
  where origine=id_empr and num_suggestion=id_suggestion and type_origine=1 $statut_clause group by nom";
-$res = pmb_mysql_query($req,$dbh);
+$res = pmb_mysql_query($req);
 
 	$aff = "
 	<h1>".$msg['acquisition_sug_ges']."</h1>

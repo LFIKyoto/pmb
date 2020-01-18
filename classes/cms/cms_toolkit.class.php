@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_toolkit.class.php,v 1.5 2018-06-07 13:59:50 mbertin Exp $
+// $Id: cms_toolkit.class.php,v 1.6 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -129,7 +129,7 @@ class cms_toolkit{
 	}
 	
 	public function set_active($active) {
-		$this->active = $active+0;
+	    $this->active = (int) $active;
 	}
 	
 	public function set_data($data) {

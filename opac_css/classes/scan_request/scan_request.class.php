@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_request.class.php,v 1.19 2018-12-06 12:27:17 dgoron Exp $
+// $Id: scan_request.class.php,v 1.22.2.1 2019-11-27 08:55:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -63,6 +63,8 @@ class scan_request {
 
 	protected $formatted_deadline_date = null;
 	
+	protected $nb_scanned_pages = 0;
+	
 	protected static $scripts_already_included = false;
 	
 	protected $scannable_linked_record = false;
@@ -105,6 +107,7 @@ class scan_request {
 				$this->formatted_date = formatdate($this->date);
 				$this->formatted_wish_date = formatdate($this->wish_date);
 				$this->formatted_deadline_date = formatdate($this->deadline_date);
+				$this->nb_scanned_pages = $row->scan_request_nb_scanned_pages;
 				
 				$query = 'select * from scan_request_linked_records where scan_request_linked_record_num_request = '.$this->id.' order by scan_request_linked_record_order';
 				$result = pmb_mysql_query($query, $dbh);
@@ -207,13 +210,14 @@ class scan_request {
 	}
 	
 	public function get_values_from_form() {
-		global $scan_request_title, $scan_request_desc, $scan_request_num_location, $scan_request_comment;
+	    global $scan_request_title, $scan_request_desc, $scan_request_nb_scanned_pages, $scan_request_num_location, $scan_request_comment;
 		global $scan_request_priority, $scan_request_status, $scan_request_date, $scan_request_wish_date, $scan_request_deadline_date;
 		global $scan_request_linked_records_notices, $scan_request_linked_records_bulletins;
 		global $empr_location;
 		
-		$this->title = stripslashes($scan_request_title);
-		$this->desc = stripslashes($scan_request_desc);
+		$this->title = strip_tags(stripslashes($scan_request_title));
+		$this->desc = strip_tags(stripslashes($scan_request_desc));
+		$this->nb_scanned_pages = strip_tags(stripslashes($scan_request_nb_scanned_pages));
 		$this->num_location = (isset($scan_request_num_location) ? $scan_request_num_location+0 : $empr_location);
 		$scan_request_priority += 0;
 		$this->priority = new scan_request_priority($scan_request_priority);
@@ -255,6 +259,7 @@ class scan_request {
 			$content = $msg["scan_request_creation_mail_content"];
 			$content = str_replace("!!scan_title!!", $this->title, $content);
 			$content = str_replace("!!scan_desc!!", $this->desc, $content);
+			$content = str_replace("!!scan_nb_scanned_pages!!", $this->nb_scanned_pages, $content);
 			$content = str_replace("!!scan_dest!!", $this->get_lib_empr($this->num_dest_empr*1), $content);
 			mailpmb($location->libelle, $location->email, $title, $content, $empr_prenom." ".$empr_nom, $empr_mail, $headers);
 		}
@@ -278,6 +283,7 @@ class scan_request {
 		}
 		$query .= 'scan_request_title="'.addslashes($this->title).'",
 				scan_request_desc="'.addslashes($this->desc).'",
+                scan_request_nb_scanned_pages = "'.addslashes($this->nb_scanned_pages).'",
 				scan_request_num_priority="'.$this->priority->get_id().'",
 				scan_request_date="'.$this->date.'",
 				scan_request_wish_date="'.$this->wish_date.'",
@@ -370,9 +376,10 @@ class scan_request {
 		global $msg, $charset;
 		global $base_path;
 		global $scan_request_link_in_record;
+		global $allow_scan_request;
 		
 		$display = '';
-		if ($_SESSION['id_empr_session']) {
+		if ($_SESSION['id_empr_session'] && $allow_scan_request) {
 			$display = $scan_request_link_in_record;
 			
 			$scan_requests_on_record = scan_requests::get_scan_requests_on_record($_SESSION['id_empr_session'], $record_id, $record_type);
@@ -443,6 +450,7 @@ class scan_request {
 		$display = str_replace('!!date!!', ($this->date ? substr($this->date,0,10) : date('Y-m-d')), $display);
 		$display = str_replace('!!wish_date!!', ($this->wish_date ? substr($this->wish_date,0,10) : date('Y-m-d')), $display);
 		$display = str_replace('!!deadline_date!!', ($this->deadline_date ? substr($this->deadline_date,0,10) : date('Y-m-d')), $display);
+		$display = str_replace('!!nb_scanned_pages!!', $this->nb_scanned_pages, $display);
 		
 		if($opac_scan_request_location_activate) {
 			$display = str_replace("!!location_selector!!",gen_liste ("select idlocation, location_libelle from docs_location where location_visible_opac = 1 order by location_libelle ", "idlocation", "location_libelle", 'scan_request_num_location'.$id_suffix, "", $this->num_location, "", "", "", $msg['no_location'],0), $display);
@@ -551,7 +559,7 @@ class scan_request {
 		);
 
 		global $_mimetypes_bymimetype_, $_mimetypes_byext_ ;
-		if (!count($_mimetypes_bymimetype_)) {
+		if (empty($_mimetypes_bymimetype_)) {
 			create_tableau_mimetype();
 		}
 		
@@ -874,5 +882,9 @@ class scan_request {
 			}
 		}
 		return '';
+	}
+	
+	public function get_nb_scanned_pages(){
+	    return $this->nb_scanned_pages;
 	}
 }

@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_result.tpl.php,v 1.19 2018-06-04 14:50:58 dgoron Exp $
+// $Id: search_result.tpl.php,v 1.20 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
 global $search_result_affiliate_lvl1;
 global $search_extented_result_affiliate_lvl1;
+global $msg;
 
 // template for PMB OPAC
 /*

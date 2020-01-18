@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mailing.class.php,v 1.5 2017-08-18 15:29:02 jpermanne Exp $
+// $Id: mailing.class.php,v 1.6.6.1 2019-11-15 11:51:19 dgoron Exp $
 
 global $class_path;
 require_once($class_path."/scheduler/scheduler_task.class.php");
@@ -12,58 +12,76 @@ require_once($class_path."/empr_caddie.class.php");
 class mailing extends scheduler_task {
 	
 	public function execution() {
-		global $dbh,$msg;
+		global $msg, $charset;
 		
 		if (SESSrights & CIRCULATION_AUTH) {
 			$parameters = $this->unserialize_task_params();	
-			if ($parameters['empr_caddie'] && $parameters['mailtpl_id']) {	
-				$percent = 0;
+			if (($parameters['empr_caddie'] || $parameters['empr_search_perso']) && $parameters['mailtpl_id']) {	
 				if($this->statut == WAITING) {
 					$this->send_command(RUNNING);
 				}
 				if($this->statut == RUNNING) {
-					if (method_exists($this->proxy, 'pmbesMailing_sendMailingCaddie')) {
-						$email_cc = '';
-						if (isset($parameters['email_cc'])) {
-							$email_cc = trim($parameters['email_cc']);
-						}
-						$result = $this->proxy->pmbesMailing_sendMailingCaddie($parameters['empr_caddie'], $parameters['mailtpl_id'], $email_cc);
-						if ($result) {
-							$this->report[] = "<tr><td>
+				    $result = array();
+				    $email_cc = '';
+				    if (isset($parameters['email_cc'])) {
+				        $email_cc = trim($parameters['email_cc']);
+				    }
+				    $empr_choice = mailing_empr::TYPE_CADDIE;
+				    if (isset($parameters['empr_choice'])) {
+				        $empr_choice = $parameters['empr_choice'];
+				    }
+				    
+				    if (mailing_empr::TYPE_CADDIE == $empr_choice) {
+				        if (method_exists($this->proxy, 'pmbesMailing_sendMailingCaddie')) {
+				            $result = $this->proxy->pmbesMailing_sendMailingCaddie($parameters['empr_caddie'], $parameters['mailtpl_id'], $email_cc);
+				        } else {
+				            $this->add_function_rights_report("sendMailingCaddie","pmbesMailing");
+				        }
+				    } else {
+				        if (method_exists($this->proxy, 'pmbesMailing_sendMailingSearchPerso')) {
+				            $result = $this->proxy->pmbesMailing_sendMailingSearchPerso($parameters['empr_search_perso'], $parameters['mailtpl_id'], $email_cc);
+				        } else {
+				            $this->add_function_rights_report("sendMailingSearchPerso","pmbesMailing");
+				        }
+				    }
+				    
+				    if (is_array($result) && count($result)) {
+				        $this->report[] = "<tr><td>
 								<h1>$msg[empr_mailing_titre_resultat]</h1>
-								<strong>$msg[admin_mailtpl_sel]</strong> 
+								<strong>$msg[admin_mailtpl_sel]</strong>
 								".htmlentities($result["name"],ENT_QUOTES,$charset)."<br />
-								<strong>$msg[empr_mailing_form_obj_mail]</strong> 
+								<strong>$msg[empr_mailing_form_obj_mail]</strong>
 								".htmlentities($result["object_mail"],ENT_QUOTES,$charset)."
 								</td></tr>";
-							
-							$tpl_report = "<tr><td>
+				        
+				        $tpl_report = "<tr><td>
 								<strong>$msg[empr_mailing_resultat_envoi]</strong>";
-							$msg['empr_mailing_recap_comptes'] = str_replace("!!total_envoyes!!", $result["nb_mail_sended"], $msg['empr_mailing_recap_comptes']) ;
-							$msg['empr_mailing_recap_comptes'] = str_replace("!!total!!", $result["nb_mail"], $msg['empr_mailing_recap_comptes']) ;
-							$tpl_report .= $msg['empr_mailing_recap_comptes'] ;
-							
-							$sql = "select id_empr, empr_mail, empr_nom, empr_prenom from empr, empr_caddie_content where flag='2' and empr_caddie_id=".$parameters['empr_caddie']." and object_id=id_empr ";
-							$sql_result = pmb_mysql_query($sql) ;
-							if (pmb_mysql_num_rows($sql_result)) {
-								$tpl_report .= "<hr /><div class='row'>
-									<strong>$msg[empr_mailing_liste_erreurs]</strong>  
+				        $msg['empr_mailing_recap_comptes'] = str_replace("!!total_envoyes!!", $result["nb_mail_sended"], $msg['empr_mailing_recap_comptes']) ;
+				        $msg['empr_mailing_recap_comptes'] = str_replace("!!total!!", $result["nb_mail"], $msg['empr_mailing_recap_comptes']) ;
+				        $tpl_report .= $msg['empr_mailing_recap_comptes'] ;
+				        
+				        $sql = "select id_empr, empr_mail, empr_nom, empr_prenom from empr, empr_caddie_content where flag='2' and empr_caddie_id=".$parameters['empr_caddie']." and object_id=id_empr ";
+				        $sql_result = pmb_mysql_query($sql) ;
+				        if (pmb_mysql_num_rows($sql_result)) {
+				            $tpl_report .= "<hr /><div class='row'>
+									<strong>$msg[empr_mailing_liste_erreurs]</strong>
 									</div>";
-								while ($obj_erreur=pmb_mysql_fetch_object($sql_result)) {
-									$tpl_report .= "<div class='row'>
-										".$obj_erreur->empr_nom." ".$obj_erreur->empr_prenom." (".$obj_erreur->empr_mail.") 
+				            while ($obj_erreur=pmb_mysql_fetch_object($sql_result)) {
+				                $tpl_report .= "<div class='row'>
+										".$obj_erreur->empr_nom." ".$obj_erreur->empr_prenom." (".$obj_erreur->empr_mail.")
 										</div>
 										";
-								}
-							}
-							$tpl_report .= "</td></tr>";
-
-							$this->report[] = $tpl_report;
-							$this->update_progression(100);
-						}	
-					} else {
-						$this->add_function_rights_report("sendMailingCaddie","pmbesMailing");
-					}
+				            }
+				        }
+						//Reset du pointage les mails non envoyés
+						//DG - #76725 Je le laisse commenté pour la raison suivante :
+						// Si l'on dépointe les mails non envoyés (erreur sur l'adresse mail) sur une tâche auto fréquente, il y a des risques de devenir SPAMMEUR
+//						$mailing->reset_flag_not_sended();
+				        $tpl_report .= "</td></tr>";
+				        
+				        $this->report[] = $tpl_report;
+				        $this->update_progression(100);
+				    }
 				}
 			} else {
 				$this->add_content_report($this->msg["mailing_unknown"]);

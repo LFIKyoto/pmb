@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa_planning.tpl.php,v 1.12 2017-09-28 09:23:36 dgoron Exp $
+// $Id: resa_planning.tpl.php,v 1.13 2019-05-27 16:19:33 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $id_notice, $id_bulletin, $id_empr, $groupID, $layout_begin, $msg, $menu_search_commun, $menu_search, $form_resa_dates;
 
 if(!isset($id_notice)) $id_notice = 0;
 if(!isset($id_bulletin)) $id_bulletin = 0;

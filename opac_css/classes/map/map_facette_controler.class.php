@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_facette_controler.class.php,v 1.3 2018-07-03 13:28:01 ngantier Exp $
+// $Id: map_facette_controler.class.php,v 1.4 2019-02-26 13:48:41 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/map/map_objects_controler.class.php");
@@ -54,16 +54,14 @@ class map_facette_controler extends map_objects_controler {
   	
 	public function get_json_informations(){
   		global $opac_url_base;
-  		global $opac_map_max_holds;
-  		global $dbh;
   		  		
   		$map_hold = $this->get_bounding_box();
   		if($map_hold){
   			$coords = $map_hold->get_coords();
   			if(!count($coords)) {
   				return "";
-  			}  
-  			return "mode:\"facette\", type:\"" . $this->type . "\", initialFit: [ ".self::get_coord_initialFit($coords)."], layers : ".json_encode($this->model->get_json_informations(false, $opac_url_base,$this->editable)).", data : " . json_encode(array_merge($this->location_objects,$this->surlocation_objects));
+  			}
+  			return "mode:\"facette\", type:\"" . $this->type . "\", initialFit: [ ".self::get_coord_initialFit($coords)."], layers : ".json_encode($this->model->get_json_informations(false, $opac_url_base,$this->editable)).", data : " . encoding_normalize::json_encode(array_merge($this->location_objects,$this->surlocation_objects));
   		}else{
   			return "";
   		}
@@ -89,29 +87,8 @@ class map_facette_controler extends map_objects_controler {
   	}
   	
   	public function get_map_size() {
-  		global $opac_map_size_location_facette;
-                global $charset;
-  	
+  		global $opac_map_size_location_facette;        
 		$size=explode("*",$opac_map_size_location_facette);
-		
-  		if(count($size)!=2) {
-                    $map_size="width:100%; height:200px;";
-  		} else {
-                    if (is_numeric($size[0])) {
-                        $size[0] = $size[0] . "px";
-                    }
-                    if (is_numeric($size[1])) {
-                        $size[1] = $size[1] . "px";
-                    }
-                    $map_size= "width:".$size[0]."; height:".$size[1].";";
-  		}
-                
-                if ($charset != "utf8") {
-                   $map_size = utf8_encode($map_size);
-                }
-  		return $map_size;
-  	}
-  	
-  	
-  	
+		return $this->format_size($size);
+  	} 	
 } 

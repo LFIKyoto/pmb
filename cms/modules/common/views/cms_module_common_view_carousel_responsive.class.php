@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_carousel_responsive.class.php,v 1.14 2018-03-30 15:16:28 ccraig Exp $
+// $Id: cms_module_common_view_carousel_responsive.class.php,v 1.15.4.1 2019-09-17 09:59:20 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/h2o/h2o.php");
@@ -381,18 +381,18 @@ class cms_module_common_view_carousel_responsive extends cms_module_common_view_
  		
  		//parametres généraux
  		$this->parameters['mode'] = $cms_module_common_view_carousel_mode;
- 		$this->parameters['speed'] = $cms_module_common_view_carousel_speed+0;
- 		$this->parameters['pause'] = $cms_module_common_view_carousel_pause+0;
- 		$this->parameters['display_max_quantity'] = $cms_module_common_view_carousel_display_max_quantity+0;
- 		$this->parameters['display_min_quantity'] = $cms_module_common_view_carousel_display_min_quantity+0;
- 		$this->parameters['slide_quantity'] = $cms_module_common_view_carousel_slide_quantity+0;
- 		$this->parameters['slide_width'] = $cms_module_common_view_carousel_slide_width+0;
+ 		$this->parameters['speed'] = (int) $cms_module_common_view_carousel_speed;
+ 		$this->parameters['pause'] = (int) $cms_module_common_view_carousel_pause;
+ 		$this->parameters['display_max_quantity'] = (int) $cms_module_common_view_carousel_display_max_quantity;
+ 		$this->parameters['display_min_quantity'] = (int) $cms_module_common_view_carousel_display_min_quantity;
+ 		$this->parameters['slide_quantity'] = (int) $cms_module_common_view_carousel_slide_quantity;
+ 		$this->parameters['slide_width'] = (int) $cms_module_common_view_carousel_slide_width;
  		$this->parameters['autostart'] = $cms_module_common_view_carousel_autostart==1 ? true : false;
  		$this->parameters['autotransition'] = $cms_module_common_view_carousel_autotransition==1 ? true : false;
  		$this->parameters['autohover'] = $cms_module_common_view_carousel_autohover==1 ? true : false;
  		$this->parameters['pager'] = $cms_module_common_view_carousel_pager==1 ? true : false;
 		//paramètres avancés
- 		$this->parameters["slide_margin"] = $cms_module_common_view_carousel_slide_margin+0;
+ 		$this->parameters["slide_margin"] = (int) $cms_module_common_view_carousel_slide_margin;
  		$this->parameters["random_start"] = $cms_module_common_view_carousel_random_start == 1 ? true : false;
  		$this->parameters["easing"] = $cms_module_common_view_carousel_easing;
  		$this->parameters["captions"] = $cms_module_common_view_carousel_captions == 1 ? true : false;
@@ -408,7 +408,7 @@ class cms_module_common_view_carousel_responsive extends cms_module_common_view_
  		$this->parameters["stop_text"] = $cms_module_common_view_carousel_stop_text;
  		$this->parameters["autocontrols_combine"] = $cms_module_common_view_carousel_auto_controls_combine == 1 ? true : false;
  		$this->parameters["auto_direction"] = $cms_module_common_view_carousel_auto_direction;
- 		$this->parameters["auto_delay"] = $cms_module_common_view_carousel_auto_delay+0;
+ 		$this->parameters["auto_delay"] = (int) $cms_module_common_view_carousel_auto_delay;
 		return parent::save_form();	
 	}
 	
@@ -464,7 +464,7 @@ class cms_module_common_view_carousel_responsive extends cms_module_common_view_
 			}
 			$datas['no_image_url'] = $path.$this->parameters['no_image'];
 			for($i=0 ; $i<count($datas['records']) ; $i++){
-				if(!isset($datas['records'][$i]['vign']) || $datas['records'][$i]['vign'] == ""){
+				if(is_array($datas['records'][$i]) && empty($datas['records'][$i]['vign'])){
 					$datas['records'][$i]['vign'] = $datas['no_image_url'];
 				}
 			}

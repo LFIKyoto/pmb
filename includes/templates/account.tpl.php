@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: account.tpl.php,v 1.22 2017-11-30 16:11:43 wlair Exp $
+// $Id: account.tpl.php,v 1.24.6.1 2019-10-21 12:41:03 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $account_layout, $msg, $account_form, $current_module, $user_acquisition_adr_form, $charset, $account_menu;
 
 // $account_menu : menu page 'edit your account'
 $account_menu = "
@@ -116,6 +118,16 @@ $account_form ="
 	</div>
 	<hr />
 </div>
+
+<!-- email -->
+<div class='row'>
+	<div class='colonne3'>
+		<label class='etiquette'>".$msg['email']." &nbsp;</label><br />
+		<input type='text' class='saisie-20em' id='form_user_email' name='form_user_email' value='!!user_email!!' autocomplete='off' />
+	</div>
+    <hr />
+</div>
+
 <div class='row'>
 	<div class='colonne4'>
 		<div class='row'>

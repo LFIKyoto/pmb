@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes.php,v 1.9 2017-01-26 16:07:10 dgoron Exp $
+// $Id: demandes.php,v 1.10 2019-08-26 08:36:37 btafforeau Exp $
 
+global $base_path, $base_auth, $base_title, $base_use_dojo, $include_path, $class_path, $msg, $menu_bar, $extra, $extra2, $extra_info, $use_shortcuts;
+global $database_window_title, $demandes_layout, $categ, $charset, $plugin, $sub, $demandes_layout_end, $lang, $footer;
 
 // définition du minimum nécéssaire 
-$base_path=".";                            
+$base_path = ".";                            
 $base_auth = "DEMANDES_AUTH";  
 $base_title = "\$msg[demandes_menu_title]";
 $base_use_dojo = 1;
@@ -36,8 +38,8 @@ $nb_themes = demandes_themes::get_qty();
 $nb_types = demandes_types::get_qty();
 if(!$nb_themes || !$nb_types) {
 	//Pas de themes ou de types définis
-	$error_msg.= htmlentities($msg["demandes_err_theme_type"],ENT_QUOTES, $charset)."<div class='row'></div>";	
-	error_message($msg[321], $error_msg.htmlentities($msg["demandes_err_par"],ENT_QUOTES, $charset), '1', './admin.php?categ=demandes');
+	$error_msg = htmlentities($msg["demandes_err_theme_type"], ENT_QUOTES, $charset)."<div class='row'></div>";	
+	error_message($msg[321], $error_msg.htmlentities($msg["demandes_err_par"], ENT_QUOTES, $charset), '1', './admin.php?categ=demandes');
 } else {
 	switch($categ){
 		case 'gestion':
@@ -57,7 +59,7 @@ if(!$nb_themes || !$nb_types) {
 			break;
 		case 'plugin' :
 			$plugins = plugins::get_instance();
-			$file = $plugins->proceed("demandes",$plugin,$sub);
+			$file = $plugins->proceed("demandes", $plugin, $sub);
 			if($file){
 				include $file;
 			}
@@ -72,5 +74,5 @@ print $demandes_layout_end;
 print $footer;
 
 // deconnection MYSql
-pmb_mysql_close($dbh);
+pmb_mysql_close();
 ?>

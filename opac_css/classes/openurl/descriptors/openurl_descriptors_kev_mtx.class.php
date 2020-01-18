@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: openurl_descriptors_kev_mtx.class.php,v 1.4 2017-07-12 09:07:56 dgoron Exp $
+// $Id: openurl_descriptors_kev_mtx.class.php,v 1.5 2019-02-21 11:04:30 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -566,6 +566,7 @@ class openurl_descriptor_byval_kev_mtx_book extends openurl_descriptor_byval_kev
 					}
 					break;
 				case "210" :
+				case "219":
 					foreach($f['s'] as $s){
 						switch($s['c']){
 							//lieu de publication
@@ -612,6 +613,7 @@ class openurl_descriptor_byval_kev_mtx_book extends openurl_descriptor_byval_kev
 					}
 					break;
 				case "210" :
+				case "219":
 					foreach($f['s'] as $s){
 						switch($s['c']){
 							//lieu de publication
@@ -947,6 +949,7 @@ class openurl_descriptor_byval_kev_mtx_journal extends openurl_descriptor_byval_
 					}
 					break;
 				case "210" :
+				case "219":
 					foreach($f['s'] as $s){
 						switch($s['c']){
 							case "c" :
@@ -978,6 +981,7 @@ class openurl_descriptor_byval_kev_mtx_journal extends openurl_descriptor_byval_
 					}
 					break;
 				case "210" :
+				case "219":
 					foreach($f['s'] as $s){
 						switch($s['c']){
 							case "h" :

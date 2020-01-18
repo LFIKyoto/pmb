@@ -2,13 +2,18 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docnum.inc.php,v 1.30 2018-01-18 08:30:15 wlair Exp $
+// $Id: docnum.inc.php,v 1.31 2019-03-12 10:59:25 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // second niveau de recherche OPAC sur document numérique
 require_once($class_path."/suggest.class.php");
 require_once($class_path."/sort.class.php");
+
+global $begin_result_liste, $count, $charset, $typdoc, $limiter, $page;
+global $add_cart_link, $gestion_acces_active, $link_to_print_search_result;
+global $opac_search_other_function, $opac_nb_max_tri, $opac_stemming_active, $opac_notices_depliable, $opac_search_allow_refinement, $opac_visionneuse_allow; 
+global $opac_allow_external_search, $opac_search_cache_duration, $opac_photo_filtre_mimetype;
 
 //Enregistrement des stats
 if($pmb_logs_activate){
@@ -98,17 +103,17 @@ if ($opac_search_other_function) {
 //creation table tempo search_result_notices_ contenant les ids des notices visibles pour le lecteur courant.
 $tx = session_id();
 $table_tempo_notices = "search_result_notices_".$tx;
-pmb_mysql_query("drop table if exists $table_tempo_notices", $dbh);
+pmb_mysql_query("drop table if exists $table_tempo_notices");
 $q_table_tempo_notices = "create temporary table ".$table_tempo_notices." engine=memory ".$q_restrict;
-$res_table_tempo_notices = pmb_mysql_query($q_table_tempo_notices,$dbh);
+$res_table_tempo_notices = pmb_mysql_query($q_table_tempo_notices);
 
 //ajout index
 $q_index_tempo_notices = "alter table ".$table_tempo_notices." add index i_id(notice_id)";
-pmb_mysql_query($q_index_tempo_notices,$dbh);
+pmb_mysql_query($q_index_tempo_notices);
 
 //creation table tempo search_result_explnum_ contenant les ids des documents numériques et les ids de notices pour monographies/articles.
 $table_tempo_explnum = "search_result_explnum_".$tx;
-pmb_mysql_query("drop table if exists $table_tempo_explnum", $dbh);
+pmb_mysql_query("drop table if exists $table_tempo_explnum");
 
 //droits d'acces emprunteur/document numérique
 $acces_j='';
@@ -123,19 +128,19 @@ if ($gestion_acces_active==1 && $gestion_acces_empr_docnum==1) {
 }
 
 $q_table_tempo_explnum = "create temporary table $table_tempo_explnum engine=memory select explnum_id, explnum_notice as notice_id, explnum_mimetype, 1.00 as pert from explnum join $table_tempo_notices on explnum_notice=notice_id $acces_j where explnum_notice!=0 $q_restrict ";
-$res_table_tempo_explnum = pmb_mysql_query($q_table_tempo_explnum,$dbh);
+$res_table_tempo_explnum = pmb_mysql_query($q_table_tempo_explnum);
 
 //ajout index
 $q_index_tempo_explnum = "alter table ".$table_tempo_explnum." add primary key i_id(explnum_id)";
-pmb_mysql_query($q_index_tempo_explnum,$dbh);
+pmb_mysql_query($q_index_tempo_explnum);
 
 //ajout dans la table tempo search_result_explnum_ des ids des documents numériques et des ids de notices pour les notices de periodique des bulletins.
 $q_in_tempo_explnum = "insert ignore into $table_tempo_explnum select explnum_id, bulletin_notice as notice_id, explnum_mimetype, 1.00 as pert from explnum join bulletins on explnum_bulletin=bulletin_id $acces_j where num_notice=0 and bulletin_notice in (select notice_id from $table_tempo_notices) $q_restrict";
-$res_in_tempo_explnum = pmb_mysql_query($q_in_tempo_explnum,$dbh);
+$res_in_tempo_explnum = pmb_mysql_query($q_in_tempo_explnum);
 
 //ajout dans la table tempo search_result_explnum_ des ids des documents numériques et des ids de notices pour les notices de bulletins.
 $q_in_tempo_explnum = "insert ignore into $table_tempo_explnum select explnum_id, num_notice as notice_id, explnum_mimetype, 1.00 as pert from explnum join bulletins on explnum_bulletin=bulletin_id $acces_j where num_notice in (select notice_id from $table_tempo_notices) $q_restrict";
-$res_in_tempo_explnum = pmb_mysql_query($q_in_tempo_explnum,$dbh);
+$res_in_tempo_explnum = pmb_mysql_query($q_in_tempo_explnum);
 
 $search_terms = $aq->get_positive_terms($aq->tree);
 //On enlève le dernier terme car il s'agit de la recherche booléenne complète
@@ -154,7 +159,7 @@ if($new_clause) {
 
 	//suppression des recherches obsoletes en cache
 	$q_cache_del= "delete from search_cache where delete_on_date < NOW()";
-	pmb_mysql_query($q_cache_del,$dbh);
+	pmb_mysql_query($q_cache_del);
 
 	//recuperation signature recherche
 	$str_to_hash = "type_search=explnum";
@@ -163,7 +168,7 @@ if($new_clause) {
 
 	//la recherche brute est elle en cache ?
 	$q_cache_read = "select value from search_cache where object_id='".addslashes($sign)."'";
-	$r_cache_read = pmb_mysql_query($q_cache_read, $dbh);
+	$r_cache_read = pmb_mysql_query($q_cache_read);
 
 	//si oui, recuperation
 	if (pmb_mysql_num_rows($r_cache_read)) {
@@ -177,7 +182,7 @@ if($new_clause) {
 	} else {
 		// Recherche des documents numeriques correspondants a la recherche.
 		$q_explnum = "select distinct(explnum_id), $pert from explnum where $new_clause";
-		$r_explnum = pmb_mysql_query($q_explnum, $dbh);
+		$r_explnum = pmb_mysql_query($q_explnum);
 		$nb_explnum = pmb_mysql_num_rows($r_explnum);
 		$t_explnum = array();
 		$s_explnum = '';
@@ -193,20 +198,20 @@ if($new_clause) {
 		//mise en cache des resultats de la recherche
 		$str_to_cache = serialize($t_explnum);
 		$q_cache_insert = "insert into search_cache set object_id ='".addslashes($sign)."', value ='".addslashes($str_to_cache)."', delete_on_date = now() + interval ".$opac_search_cache_duration." second";
-		pmb_mysql_query($q_cache_insert,$dbh);
+		pmb_mysql_query($q_cache_insert);
 
 	}
 
 	if (count($t_explnum)) {
 		//restriction des resultats
 		$q_result_docnum = "delete from $table_tempo_explnum where explnum_id not in (".$s_explnum.") " ;
-		$r_result_docnum = pmb_mysql_query($q_result_docnum,$dbh);
+		$r_result_docnum = pmb_mysql_query($q_result_docnum);
 	
 		//Ajout pertinence dans $table_tempo_explnum
 		$t_pert = array();
 		foreach($t_explnum as $t_id=>$t_pert) {
 			$q_pert = "update $table_tempo_explnum set pert=$t_pert where explnum_id=$t_id";
-			$r_pert =  pmb_mysql_query($q_pert,$dbh);
+			$r_pert =  pmb_mysql_query($q_pert);
 		}
 	}
 	
@@ -239,7 +244,7 @@ if ($_SESSION["last_sortnotices"]!="") {
 }
 //fin gestion du tri
 
-$found = pmb_mysql_query($requete, $dbh);
+$found = pmb_mysql_query($requete);
 
 print "	</div>\n
 		<div id=\"resultatrech_liste\">";

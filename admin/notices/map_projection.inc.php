@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_projection.inc.php,v 1.2 2015-04-03 11:16:20 jpermanne Exp $
+// $Id: map_projection.inc.php,v 1.3 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -56,8 +56,8 @@ function map_projection_form($nom="", $id=0) {
 
 	$admin_map_projection_form = str_replace('!!id!!', $id, $admin_map_projection_form);
 
-	if(!$id) $admin_map_projection_form = str_replace('!!form_title!!', $msg[admin_noti_map_projection_ajout], $admin_map_projection_form);
-	else $admin_map_projection_form = str_replace('!!form_title!!', $msg[admin_noti_map_projection_modification], $admin_map_projection_form);
+	if(!$id) $admin_map_projection_form = str_replace('!!form_title!!', $msg['admin_noti_map_projection_ajout'], $admin_map_projection_form);
+	else $admin_map_projection_form = str_replace('!!form_title!!', $msg['admin_noti_map_projection_modification'], $admin_map_projection_form);
 
 	$admin_map_projection_form = str_replace('!!nom!!', htmlentities($nom,ENT_QUOTES, $charset), $admin_map_projection_form);
 	

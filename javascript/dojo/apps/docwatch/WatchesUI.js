@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: WatchesUI.js,v 1.25 2017-11-30 10:53:34 dgoron Exp $
+// $Id: WatchesUI.js,v 1.26.6.1 2019-10-07 16:15:02 arenou Exp $
 
 
 define(["dojo/_base/declare", "dijit/layout/ContentPane" ,"apps/docwatch/WatchStore", "dojo/store/Observable", "apps/docwatch/WatchesModel", "dijit/Tree", "dojo/dom-construct", "dojo/topic", "dojo/_base/lang", "dijit/form/Button", "apps/docwatch/Dialog", "dojo/on", "dijit/tree/dndSource", "dojo/aspect"], function(declare, ContentPane, WatchStore, Observable, WatchesModel, Tree, domConstruct, topic, lang, Button, Dialog, on, dndSource, aspect){
@@ -15,6 +15,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane" ,"apps/docwatch/WatchSt
 				topic.subscribe("itemListUI",lang.hitch(this,this.handleEvents)),
 				topic.subscribe("itemsStore",lang.hitch(this,this.handleEvents)),
 				topic.subscribe("sourcesStore",lang.hitch(this,this.handleEvents)),
+				topic.subscribe("source",lang.hitch(this,this.handleEvents)),
 				//DEBUG, on s'abonne
 				//topic.subscribe("itemsListUI",lang.hitch(this,this.handleEvents)),
 				//topic.subscribe("sourcesListUI",lang.hitch(this,this.handleEvents)),
@@ -40,7 +41,7 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane" ,"apps/docwatch/WatchSt
 				on(domConstruct.create("img",{src:pmbDojo.images.getImage('expand_all.gif')},divCollapse,"last"),'click', lang.hitch(this, this.expandAll)),
 				on(domConstruct.create("img",{src:pmbDojo.images.getImage('collapse_all.gif')},divCollapse,"last"), 'click', lang.hitch(this, this.collapseAll))
 			);
-			setInterval(lang.hitch(this, this.checkWatchesTTL), 120000);
+			//setInterval(lang.hitch(this, this.checkWatchesTTL), 120000);
 		},
 		
 		handleEvents: function(evtType,evtArgs){
@@ -74,6 +75,9 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane" ,"apps/docwatch/WatchSt
 					break;
 				case "askedSources":
 					this.checkSourcesTTL(evtArgs.sources);
+					break;
+				case "openDuplicateSourceForm":
+					this.openDuplicateSourceForm(evtArgs.item);
 					break;
 			}
 		},
@@ -179,6 +183,19 @@ define(["dojo/_base/declare", "dijit/layout/ContentPane" ,"apps/docwatch/WatchSt
 			}
 			topic.publish("watchesUI","showWatchForm",{
 				categories: this.watchesStore.getCategories(),
+				values: item
+			});
+		},
+		
+		openDuplicateSourceForm: function(item){
+			if(!item){
+				item = {};
+			}
+			if(this.tree.selectedItem && this.tree.selectedItem.type == "watch"){
+				item.parent_watch = this.tree.selectedItem.id;
+			}
+			topic.publish("watchesUI","showDuplicateSourceForm",{
+				watches: this.watchesStore.getWatches(),
 				values: item
 			});
 		},

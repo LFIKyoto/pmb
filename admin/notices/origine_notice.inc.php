@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: origine_notice.inc.php,v 1.10 2018-10-12 11:59:35 dgoron Exp $
+// $Id: origine_notice.inc.php,v 1.11 2019-06-07 13:03:04 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -50,24 +50,28 @@ function orinot_form($nom="", $pays="FR", $diffusion=1, $id=0) {
 	print confirmation_delete("./admin.php?categ=notices&sub=orinot&action=del&id=");
 	print $admin_orinot_form;
 
-	}
+}
 
+$id = intval($id);
 switch($action) {
-	case 'update':
+    case 'update':
+        if(empty($form_nom)) $form_nom = '';
+        if(empty($form_pays)) $form_pays = '';
+        if(empty($form_diffusion)) $form_diffusion = '';        
 		if(!empty($form_nom)) {
 			if($id) {
 				$requete = "UPDATE origine_notice SET orinot_nom='$form_nom',orinot_pays='$form_pays',orinot_diffusion='$form_diffusion' WHERE orinot_id='$id' ";
 				$res = pmb_mysql_query($requete, $dbh);
-				} else {
-					$requete = "SELECT count(1) FROM origine_notice WHERE orinot_nom='$form_nom' LIMIT 1 ";
+			} else {
+				$requete = "SELECT count(1) FROM origine_notice WHERE orinot_nom='$form_nom' LIMIT 1 ";
+				$res = pmb_mysql_query($requete, $dbh);
+				$nbr = pmb_mysql_result($res, 0, 0);
+				if($nbr == 0){
+					$requete = "INSERT INTO origine_notice (orinot_nom,orinot_pays,orinot_diffusion) VALUES ('$form_nom','$form_pays','$form_diffusion') ";
 					$res = pmb_mysql_query($requete, $dbh);
-					$nbr = pmb_mysql_result($res, 0, 0);
-					if($nbr == 0){
-						$requete = "INSERT INTO origine_notice (orinot_nom,orinot_pays,orinot_diffusion) VALUES ('$form_nom','$form_pays','$form_diffusion') ";
-						$res = pmb_mysql_query($requete, $dbh);
-						}
-					}
+				}
 			}
+		}
 		show_orinot($dbh);
 		break;
 	case 'add':

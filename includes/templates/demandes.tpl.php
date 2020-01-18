@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes.tpl.php,v 1.31 2017-11-23 16:07:58 ngantier Exp $
+// $Id: demandes.tpl.php,v 1.35 2019-08-27 10:15:58 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $demandes_menu, $msg, $plugins, $demandes_layout, $current_module, $demandes_layout_end, $form_filtre_demande, $current_module, $pmb_lecteurs_localises, $form_liste_demande;
+global $form_modif_demande, $form_consult_dmde, $form_liste_docnum, $form_reponse_final, $reponse_finale, $charset, $form_linked_record, $form_consult_linked_record, $faq_active;
 
 // $acquisition_menu : menu page acquisition
 $demandes_menu = "
@@ -25,12 +28,16 @@ $demandes_menu = "
 		<li><a href='./demandes.php?categ=action&sub=com'>".$msg['demandes_menu_comm']."</a></li>
 		<li><a href='./demandes.php?categ=action&sub=rdv_plan'>".$msg['demandes_menu_rdv_planning']."</a></li>
 		<li><a href='./demandes.php?categ=action&sub=rdv_val'>".$msg['demandes_menu_rdv_a_valide']."</a></li>
-	</ul>
-	<h3 onclick='menuHide(this,event)'>".$msg['demandes_menu_faq']."</h3>
+	</ul>";
+if($faq_active) {
+    $demandes_menu.= "
+    <h3 onclick='menuHide(this,event)'>".$msg['demandes_menu_faq']."</h3>
 	<ul>
 		<li><a href='./demandes.php?categ=faq&sub=question'>".$msg['demandes_menu_faq']."</a></li>
+	</ul>
+    ";    
+}
 
-	</ul>";
 $plugins = plugins::get_instance();	
 $demandes_menu.= $plugins->get_menu("demandes")."	
 	<div id='div_alert' class='erreur'></div>
@@ -58,6 +65,7 @@ $form_filtre_demande = "
  		document.forms['search'].submit();
 	} 
 </script>
+<script src='".$base_path."/javascript/ajax.js'></script>
 <h1>".$msg['demandes_gestion']." : ".$msg['demandes_search_form']." !!etat_demandes!!</h1>
 <form class='form-".$current_module."' id='search' name='search' method='post' action=\"./demandes.php?categ=list\">
 	<h3>".$msg['demandes_search_filtre_form']."</h3>
@@ -83,7 +91,7 @@ $form_filtre_demande = "
 		<div class='row'>
 			<div class='colonne3'>
 				<input type='hidden' id='idempr' name='idempr' value='!!idempr!!' />
-				<input type='text' id='empr_txt' name='empr_txt' class='saisie-20emr' value='!!empr_txt!!'/>
+				<input type='text' id='empr_txt' name='empr_txt' class='saisie-20emr' value='!!empr_txt!!' completion='empr' autfield='idempr' autocomplete='off' tabindex='1'/>
 				<input type='button' class='bouton_small' value='...' onclick=\"openPopUp('./select.php?what=origine&caller=search&param1=idempr&param2=empr_txt&deb_rech='+".pmb_escape()."(this.form.empr_txt.value)+'&filtre=ONLY_EMPR&callback=filtrer_user".($pmb_lecteurs_localises ? "&empr_loca='+this.form.dmde_loc.value": "'").", 'selector')\" />
 				<input type='button' class='bouton_small' value='X' onclick=\"document.getElementById('idempr').value=0;document.getElementById('empr_txt').value='';\" />
 			</div>
@@ -115,7 +123,8 @@ $form_filtre_demande = "
 			<div class='colonne3'>
 				!!type!!
 			</div>
-		</div>";
+		</div>
+<script>ajax_parse_dom();</script>";
 if($pmb_lecteurs_localises)
 $form_filtre_demande .="
 		<div class='row'> 
@@ -233,6 +242,7 @@ $form_modif_demande = "
 		return true;	
 	}
 </script>
+<script src='".$base_path."/javascript/ajax.js'></script>
 <h1>".$msg['demandes_gestion']." : ".$msg['admin_demandes']."</h1>
 <form class='form-".$current_module."' id='modif_dmde' name='modif_dmde' method='post' action=\"!!form_action!!\">
 	<h3>!!form_title!!</h3>
@@ -320,7 +330,7 @@ $form_modif_demande = "
 		<div class='row'>
 			<div class='colonne3'>
 				<input type='hidden' id='idempr' name='idempr' value='!!idempr!!' />
-				<input type='text' id='empr_txt' name='empr_txt' disabled class='saisie-20emr' value='!!empr_txt!!'/>
+				<input type='text' id='empr_txt' name='empr_txt' class='saisie-20emr' value='!!empr_txt!!' completion='empr' autfield='idempr' autocomplete='off' tabindex='1'/>
 				<input type='button' class='bouton_small' value='...' onclick=\"openPopUp('./select.php?what=origine&caller=modif_dmde&param1=idempr&param2=empr_txt&deb_rech='+".pmb_escape()."(this.form.empr_txt.value)+'&filtre=ONLY_EMPR', 'selector')\" />
 				<input type='button' class='bouton_small' value='X' onclick=\"this.form.idempr.value='0';this.form.empr_txt.value='';\"/>	
 			</div>
@@ -348,8 +358,7 @@ $form_modif_demande = "
 
 <script type='text/javascript'>
 	function test_form(form) {	
-
-		if(isNaN(form.progression.value) || form.progression.value > 100){
+		if(isNaN(form.progression.value) || form.progression.value > 100 || form.progression.value < 0 ){
 	    	alert(\"$msg[demandes_progres_ko]\");
 			return false;
 	    }
@@ -368,6 +377,7 @@ $form_modif_demande = "
 		return check_form();
 			
 	}
+	ajax_parse_dom();
 </script>
 ";
 
@@ -645,5 +655,6 @@ $form_linked_record = "
 
 $form_consult_linked_record = "
 				<label class='etiquette'>".$msg['demandes_linked_record']." : </label>
+				!!linked_record_icon!!
 				<a href='!!linked_record_link!!' title='!!linked_record!!'>!!linked_record!!</a>";
 ?>

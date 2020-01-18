@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: congres_see.inc.php,v 1.35 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: congres_see.inc.php,v 1.37 2019-07-05 12:36:24 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -15,7 +15,7 @@ require_once("$class_path/aut_link.class.php");
 print "<div id='aut_details'>\n";
 
 if($id) {
-	$id+=0;
+    $id = intval($id);
 	$rqt_auteurs = "select author_id as aut from authors where author_see='$id' and author_id!=0 ";
 	$rqt_auteurs .= "union select author_see as aut from authors where author_id='$id' and author_see!=0 " ;
 	$res_auteurs = pmb_mysql_query($rqt_auteurs, $dbh);
@@ -55,7 +55,11 @@ if($id) {
 	$res = pmb_mysql_query($requete, $dbh);
 	while (($obj=pmb_mysql_fetch_object($res))) {
 		$objRenvoi = new auteur($obj->aut);
-		pmb_strlen($renvoi) ? $renvoi .= ', ('.$objRenvoi->get_isbd().")" : $renvoi = $objRenvoi->isbd_entry;
+		if (pmb_strlen($renvoi)) {
+		    $renvoi .= ', ('.$objRenvoi->get_isbd().")";
+		} else {
+		    $renvoi = $objRenvoi->isbd_entry;
+		}
 	}
 
 	if (pmb_strlen($renvoi)) print pmb_bidi("<span class='number_results'>$renvoi</span><br />\n");

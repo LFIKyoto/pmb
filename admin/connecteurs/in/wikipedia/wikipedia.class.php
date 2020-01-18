@@ -2,14 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: wikipedia.class.php,v 1.12 2017-11-30 10:00:36 dgoron Exp $
+// $Id: wikipedia.class.php,v 1.13 2019-03-25 15:26:00 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
 require_once($class_path."/connecteurs.class.php");
 require_once($class_path."/curl.class.php");
-require_once($class_path."/nusoap/nusoap.php");
 
 class wikipedia extends connector {
 	

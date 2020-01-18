@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedettes_ui.class.php,v 1.5 2018-12-17 23:09:30 ccraig Exp $
+// $Id: vedettes_ui.class.php,v 1.8 2019-05-28 10:45:34 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -89,11 +89,15 @@ class vedettes_ui {
 	public static function get_grammar_form($vedette, $property_name, $order, $instance_name, $property_type = "", $no_add_script=1){
 	    global $dbh,$base_path,$charset,$lang;
 	    global $vedette_tpl;
+	    global $pmb_allow_authorities_first_page;
 	    
 	    $form_html = '';
 	    //TODO Retirer le style brut
-	    if(!$order && $no_add_script){
-	        $form_html.=$vedette_tpl['css'].$vedette_tpl['form_body_script'];
+	    if(!$order){
+	        $form_html.=$vedette_tpl['css'];
+	        if ($no_add_script) {
+	            $form_html .= $vedette_tpl['form_body_script'];
+	        }
 	    }
 	    $form_html.=$vedette_tpl['grammar_body'];
 	    
@@ -115,8 +119,12 @@ class vedettes_ui {
 	        $vedette_element_ui_class_name = vedette_element::search_vedette_element_ui_class_name($available_field["class_name"]);
 	        $js_class_name = $available_field["class_name"];
 	        $authid=0;
+	        $field_params = "";
 	        if(isset($available_field['params'])){
-	            $authid=$available_field['params']['id_authority'];
+	            $field_params = encoding_normalize::json_encode($available_field['params']);
+	            if (!empty($available_field['params']['id_authority'])) {
+	                $authid = $available_field['params']['id_authority'];
+	            }
 	            if (method_exists($vedette_element_ui_class_name, 'get_js_class_name')) {
 	                $js_class_name = $vedette_element_ui_class_name::get_js_class_name($available_field['params']);
 	            }
@@ -131,7 +139,7 @@ class vedettes_ui {
 	        $tmp_html = str_replace("!!available_field_type!!", $js_class_name, $tmp_html);
 	        $tmp_html = str_replace("!!available_field_num!!", $available_field['num'], $tmp_html);
 	        $tmp_html = str_replace("!!authid!!", $authid, $tmp_html);
-	        $tmp_html = str_replace("!!vedette_element_params!!", encoding_normalize::json_encode($available_field['params']), $tmp_html);
+	        $tmp_html = str_replace("!!vedette_element_params!!", $field_params, $tmp_html);
 	        
 	        $tmp_html=str_replace("!!vedette_composee_available_field_label!!", get_msg_to_display($available_field['name']), $tmp_html);
 	        $available_fields_html.=$tmp_html;
@@ -139,6 +147,7 @@ class vedettes_ui {
 	    $form_html=str_replace("!!available_fields_scripts!!", $available_fields_scripts, $form_html);
 	    $form_html=str_replace("!!vedette_composee_available_fields!!", $available_fields_html, $form_html);
 	    $form_html=str_replace("!!get_vedette_element_switchcases!!", $get_vedette_element_switchcases, $form_html);
+	    $form_html=str_replace("!!direct_search!!", $pmb_allow_authorities_first_page, $form_html);
 	    
 	    //les zones de subdivision
 	    $subdivisions_html='';
@@ -168,10 +177,10 @@ class vedettes_ui {
 	                
 	                $tab_vedette_elements[$subdivision["order"]][$position] = $element->get_isbd();
 	                $element_ui_class_name = vedette_element::search_vedette_element_ui_class_name(get_class($element));
-	                $params = $element->get_params();
-	                $current_element_html = str_replace("!!vedette_composee_element_form!!", $element_ui_class_name::get_form($params), $current_element_html);
-	                if(!empty($params['label'])){
-	                    $autority_type = get_msg_to_display($params["label"]);
+	                $element_params = $element->get_params();
+	                $current_element_html = str_replace("!!vedette_composee_element_form!!", $element_ui_class_name::get_form($element_params), $current_element_html);
+	                if(!empty($element_params['label'])){
+	                    $autority_type = get_msg_to_display($element_params["label"]);
 	                }else{
 	                    $field_class_name = $vedette->get_at_available_field_class_name(get_class($element));
 	                    $autority_type = get_msg_to_display($field_class_name["name"]);

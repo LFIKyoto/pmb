@@ -2,9 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl.inc.php,v 1.38 2017-11-21 12:01:00 dgoron Exp $
+// $Id: expl.inc.php,v 1.40 2019-06-05 09:04:42 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $acces_j, $gestion_acces_active, $gestion_acces_user_notice, $class_path, $PMBuserid, $ex_query, $EAN, $isbn, $code, $rqt_bulletin;
+global $where_typedoc, $typdoc_query, $nb_results, $msg, $pmb_allow_external_search, $nb_per_page_search, $limit_page, $page, $begin_result_liste;
+global $link, $link_expl, $link_explnum, $end_result_liste, $link_serial, $link_analysis, $link_bulletin, $include_path, $nav_bar, $n_max_page;
+global $page_en_cours, $deb;
 
 // accès à une notice par code-barre, ISBN, ou numéro commercial ou  par CB exemplaire
 
@@ -27,6 +32,7 @@ $isbn = '';
 $code = '';
 $rqt_bulletin = 0;
 
+$where_typedoc = "";
 if(isEAN($ex_query)) {
 	// la saisie est un EAN -> on tente de le formater en ISBN
 	$EAN=$ex_query;
@@ -53,11 +59,11 @@ if(isEAN($ex_query)) {
 		// ce n'est rien de tout ça, on prend la saisie telle quelle
 		$code = str_replace("*","%",$ex_query);
 		// filtrer par typdoc_query si selectionné
-		if($typdoc_query) $where_typedoc=" and typdoc='$typdoc_query' ";
+		if(!empty($typdoc_query) && !empty($typdoc_query[0])) $where_typedoc=" and typdoc in ('".implode("','", $typdoc_query)."')";
 	}
 }
 
-if(!$nb_results) {
+if(empty($nb_results)) {
 	
 	// on compte
 	if ($EAN && $isbn) {
@@ -67,7 +73,7 @@ if(!$nb_results) {
 		$requete.= $acces_j;
 		$requete.= "left join exemplaires on notices.notice_id=exemplaires.expl_notice ";
 		$requete.= "WHERE niveau_biblio='m' AND (exemplaires.expl_cb like '$code' OR exemplaires.expl_cb='$ex_query' OR notices.code in ('$code','$EAN'".($code10?",'$code10'":"").")) ";
-		$myQuery = pmb_mysql_query($requete, $dbh);
+		$myQuery = pmb_mysql_query($requete);
 		
 	} elseif ($isbn) {
 		
@@ -76,7 +82,7 @@ if(!$nb_results) {
 		$requete.= $acces_j;
 		$requete.= "left join exemplaires on notices.notice_id=exemplaires.expl_notice ";
 		$requete.= " WHERE niveau_biblio='m' AND (exemplaires.expl_cb like '$code' OR exemplaires.expl_cb='$ex_query' OR notices.code in ('$code'".($code10?",'$code10'":"").")) ";
-		$myQuery = pmb_mysql_query($requete, $dbh);
+		$myQuery = pmb_mysql_query($requete);
 		if(pmb_mysql_num_rows($myQuery)==0) {
 			// rien trouvé en monographie
 			// cas où un exemplaire de bulletin correspond à un ISBN
@@ -98,7 +104,7 @@ if(!$nb_results) {
 		$requete.= "left join exemplaires on notices.notice_id=exemplaires.expl_notice ";
 		$requete.= "WHERE niveau_biblio='m' AND (exemplaires.expl_cb like '$code' OR notices.code like '$code' OR exemplaires.expl_cb like '$ex_query_original' OR notices.code like '$ex_query_original') $where_typedoc ";
 				
-		$myQuery = pmb_mysql_query($requete, $dbh);
+		$myQuery = pmb_mysql_query($requete);
 		if(pmb_mysql_num_rows($myQuery)==0) {
 			// rien trouvé en monographie
 			$requete = "SELECT distinct notices.*, bulletin_id FROM notices ";
@@ -133,7 +139,7 @@ if(!$nb_results) {
 		$requete.= "left join exemplaires on notices.notice_id=exemplaires.expl_notice ";
 		$requete.= "WHERE niveau_biblio='m' AND (exemplaires.expl_cb like '$code' OR exemplaires.expl_cb='$ex_query' OR notices.code in ('$code','$EAN'".($code10?",'$code10'":"").")) ";
 		$requete.= $limit_page;
-		$myQuery = pmb_mysql_query($requete, $dbh);
+		$myQuery = pmb_mysql_query($requete);
 		
 	} elseif ($isbn) {
 		// recherche d'un isbn
@@ -142,7 +148,7 @@ if(!$nb_results) {
 		$requete.= "left join exemplaires on notices.notice_id=exemplaires.expl_notice ";
 		$requete.= "WHERE niveau_biblio='m' AND (exemplaires.expl_cb like '$code' OR exemplaires.expl_cb='$ex_query' OR notices.code in ('$code'".($code10?",'$code10'":"").")) ";
 		$requete.= $limit_page;
-		$myQuery = pmb_mysql_query($requete, $dbh);
+		$myQuery = pmb_mysql_query($requete);
 		if(pmb_mysql_num_rows($myQuery)==0) {
 			// rien trouvé en monographie
 			// cas où un exemplaire de bulletin correspond à un ISBN
@@ -163,7 +169,7 @@ if(!$nb_results) {
 		$requete.= "left join exemplaires on notices.notice_id=exemplaires.expl_notice ";
 		$requete.= "WHERE niveau_biblio='m' AND (exemplaires.expl_cb like '$code' OR notices.code like '$code') $where_typedoc ";
 		$requete.= $limit_page;
-		$myQuery = pmb_mysql_query($requete, $dbh);
+		$myQuery = pmb_mysql_query($requete);
 		if(pmb_mysql_num_rows($myQuery)==0) {
 			// rien trouvé en monographie
 			$requete = "SELECT distinct notices.*, bulletin_id FROM notices ";
@@ -214,7 +220,7 @@ if ($rqt_bulletin!=1) {
 	}
 } else {
 	// C'est un pério !
-	$res = @pmb_mysql_query($requete, $dbh);
+	$res = @pmb_mysql_query($requete);
 	if (pmb_mysql_num_rows($res)) {
 		if (pmb_mysql_num_rows($res) ==1) {
 			$row = pmb_mysql_fetch_object($res);
@@ -241,7 +247,7 @@ if ($rqt_bulletin!=1) {
 }
 
 //Gestion de la pagination
-if ($nb_results) {
+if (!empty($nb_results)) {
 	
 	$nav_bar.="
 	<form name='search_form' action='./catalog.php?categ=search&mode=0' method='post' style='display:none'>

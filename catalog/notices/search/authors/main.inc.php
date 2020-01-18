@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.14 2017-01-30 14:09:09 dgoron Exp $
+// $Id: main.inc.php,v 1.15 2019-06-05 09:04:42 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $f_notice_id, $ex_query, $pmb_show_notice_id, $link, $link_expl, $link_explnum, $link_serial, $link_analysis;
+global $link_bulletin, $link_explnum_serial, $link_explnum_analysis, $link_explnum_bulletin, $shcut;
 
 // recherche notice (catalogage) : page de switch recherche auteurs/titres
 require_once($class_path."/searcher.class.php");

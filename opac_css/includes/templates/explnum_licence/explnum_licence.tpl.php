@@ -2,9 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_licence.tpl.php,v 1.1 2017-07-21 08:34:40 vtouchard Exp $
+// $Id: explnum_licence.tpl.php,v 1.5 2019-05-29 11:23:33 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $base_path;
+global $explnum_licence_profile_details;
+global $explnum_licence_pdf_container_template;
+global $explnum_licence_right_details;
+global $explnum_licence_info_picto;
+global $explnum_licence_script_dialog;
+global $explnum_licence_profile_quotation;
 
 $explnum_licence_profile_details = "
 			<h2>!!explnum_licence_label!!</h2>
@@ -16,7 +24,6 @@ $explnum_licence_profile_details = "
 			<a target='_blank' href='!!explnum_licence_profile_uri!!'>!!explnum_licence_profile_uri!!</a>
 	
 			<p>!!explnum_licence_profile_explanation!!</p>
-			<i>!!explnum_licence_profile_quotation_rights!!</i>
 			!!explnum_licence_rights_details!!
 		";
 
@@ -32,13 +39,20 @@ $explnum_licence_right_details = "
 		<p>!!explnum_licence_right_explanation!!</p>
 		";
 
-$explnum_licence_info_picto = '<i style="cursor:pointer;" data-parsed="" class="fa fa-info-circle" data-explnum-id="!!explnum_id!!"></i>
-							  <i style="cursor:pointer;" data-parsed="" class="fa fa-file-pdf-o" data-is-pdf="true" data-explnum-id="!!explnum_id!!"></i>
-		';
+$explnum_licence_info_picto = '
+	<span style="cursor:pointer;" data-parsed="" data-explnum-id="!!explnum_id!!" data-content-type="tooltip">
+		<i class="fa fa-info-circle"></i>
+	</span>
+	<span style="cursor:pointer;" data-parsed="" data-is-pdf="true" data-explnum-id="!!explnum_id!!">
+		<i class="fa fa-file-pdf-o"></i>
+	</span>
+	<span style="cursor:pointer;" data-parsed="" data-explnum-id="!!explnum_id!!" data-content-type="quotation">
+		<i class="fa fa-quote-left"></i>
+	</span>';
 
 $explnum_licence_script_dialog = '			
-		<script type="text/javascript">
-require(["dojo/dom", 
+<script type="text/javascript">
+	require(["dojo/dom", 
 		"dojo/query", 
 		"dojo/ready", 
 		"dojo/on", 
@@ -48,13 +62,13 @@ require(["dojo/dom",
 		"dojo/dom-attr", 
 		"dojo/_base/lang"], function (dom, query, ready, on, request, registry, Tooltip, domAttr, lang) {
     ready(function () {
-        var queryResult = query("i[data-explnum-id][data-parsed=\"\"]");
+        var queryResult = query("span[data-explnum-id][data-parsed=\"\"]");
         if (queryResult.length) {
             queryResult.forEach(function (inode) {
                 if (!inode.getAttribute("data-is-pdf")) {
                     on(inode, "mouseover", function (e) {
                         if (!domAttr.get(this, "id")) { 
-							request.post("'.$base_path.'/ajax.php?module=ajax&categ=explnum&sub=get_licence_tooltip", {
+							request.post("'.$base_path.'/ajax.php?module=ajax&categ=explnum&sub=get_licence_" + domAttr.get(this, "data-content-type"), {
 	                            data: {
 	                                id: domAttr.get(this, "data-explnum-id")
 	                            },
@@ -87,4 +101,14 @@ require(["dojo/dom",
         }
     });
 });
+
+	function profile_quotation_copy_to_clipboard(copyButton){
+		var copyText = copyButton.previousElementSibling;
+		copyText.select();
+		document.execCommand("copy");
+	}
 </script>';
+
+$explnum_licence_profile_quotation = '
+<input type="text" value="!!profile_quotation!!" size="50"/>
+<i style="cursor:pointer;" class="fa fa-copy" onclick="profile_quotation_copy_to_clipboard(this);"></i>';

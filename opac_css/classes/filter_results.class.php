@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: filter_results.class.php,v 1.13 2018-09-07 08:08:10 dgoron Exp $
+// $Id: filter_results.class.php,v 1.14 2019-07-10 06:44:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,7 +13,7 @@ class filter_results {
 	private $notice_ids = '';
 	
 	
-	function __construct($notice_ids,$filter_by_view=1) {
+	public function __construct($notice_ids,$filter_by_view=1) {
 		if(is_array($notice_ids))$notice_ids=implode(',', $notice_ids);		
 		$this->notice_ids = $notice_ids;
 

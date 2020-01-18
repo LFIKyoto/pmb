@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: zip.class.php,v 1.3 2017-07-12 09:07:56 dgoron Exp $
+// $Id: zip.class.php,v 1.4 2019-07-10 06:44:08 btafforeau Exp $
   
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -23,7 +23,7 @@ class zip {
 		}
 	}
 	
-	function readZip() {
+	public function readZip() {
 		/* Ouverture de l'archive et lecture des entrées */
  		$this->zip = zip_open($this->zipPath);
  		if (is_resource($this->zip)) {
@@ -38,7 +38,7 @@ class zip {
  		}
 	}
 	
-	function get_file_content($file_path){
+	public function get_file_content($file_path){
 		if(!$this->tmp_path[$file_path]){
 			$this->tmp_path[$file_path]=array_search('uri', @array_flip(stream_get_meta_data($GLOBALS[mt_rand()]=tmpfile())));
 			$fp = fopen($this->tmp_path[$file_path], "w+");
@@ -79,7 +79,7 @@ class zip {
 		return $content;
 	}
 	
-	function getPagesSizes(){
+	public function getPagesSizes(){
 		//pour chaque page
 		if(!$this->pagesSizes){
 			$page = 1;

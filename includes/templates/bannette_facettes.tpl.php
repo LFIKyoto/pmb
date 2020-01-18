@@ -2,13 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannette_facettes.tpl.php,v 1.2 2017-10-19 14:42:59 dgoron Exp $
+// $Id: bannette_facettes.tpl.php,v 1.3.6.1 2019-11-06 08:53:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $tpl_facette_elt_ajax;
-global $tpl_facette_elt;
-global $dsi_facette_tpl;
+global $tpl_facette_elt_ajax, $tpl_facette_elt, $dsi_facette_tpl, $msg, $charset;
 
 $tpl_facette_elt_ajax="
 	<div class='row'>
@@ -19,6 +17,28 @@ $tpl_facette_elt_ajax="
 			!!liste1!!
 		</select>
 		<div id='liste2_!!i_field!!' ></div>
+        <div id='bannette_facettes_options' class='row'>
+    		<div class='row'>
+    			<label>".htmlentities($msg['order_sort_facette'],ENT_QUOTES,$charset)."</label>
+    		</div>
+    		<div class='row'>
+    			<input type='radio' id='order_sort_asc_!!i_field!!' name='order_sort_!!i_field!!' value='0' !!order_sort_asc_checked!!/>
+    			<label for='order_sort_asc_!!i_field!!'>".htmlentities($msg['intit_gest_tri3'],ENT_QUOTES,$charset)."</label>
+    			<input type='radio' id='order_sort_desc_!!i_field!!' name='order_sort_!!i_field!!' value='1' !!order_sort_desc_checked!!/>
+    			<label for='order_sort_desc_!!i_field!!'>".htmlentities($msg['intit_gest_tri4'],ENT_QUOTES,$charset)."</label>
+    		</div>
+    		<div class='row'>
+    			<label>".htmlentities($msg['datatype_sort_facette'],ENT_QUOTES,$charset)."</label>
+    		</div>
+    		<div class='row'>
+    			<input type='radio' id='datatype_sort_alpha_!!i_field!!' name='datatype_sort_!!i_field!!' value='alpha' !!datatype_sort_alpha_checked!!/>
+    			<label for='datatype_sort_alpha_!!i_field!!'>".htmlentities($msg['datatype_sort_alpha'],ENT_QUOTES,$charset)."</label>
+    			<input type='radio' id='datatype_sort_num_!!i_field!!' name='datatype_sort_!!i_field!!' value='num' !!datatype_sort_num_checked!!/>
+    			<label for='datatype_sort_num_!!i_field!!'>".htmlentities($msg['datatype_sort_num'],ENT_QUOTES,$charset)."</label>
+    			<input type='radio' id='datatype_sort_date_!!i_field!!' name='datatype_sort_!!i_field!!' value='date' !!datatype_sort_date_checked!!/>
+    			<label for='datatype_sort_date_!!i_field!!'>".htmlentities($msg['datatype_sort_date'],ENT_QUOTES,$charset)."</label>
+    		</div>
+        </div>
 		<input type='button' class='bouton' value='$msg[raz]' onclick=\"fonction_raz_facette('i_full_field_!!i_field!!');\" />
 	</div>
 	<script>load_subfields('!!i_field!!','!!ss_crit!!')</script>	

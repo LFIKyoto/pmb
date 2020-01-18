@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: skos_view_concept.tpl.php,v 1.9 2018-07-12 15:38:49 ngantier Exp $
+// $Id: skos_view_concept.tpl.php,v 1.10 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $msg;
 global $skos_view_concept_concept_in_list_with_all_links;
 global $skos_view_concept_concept_in_list;
 global $skos_view_concept_concept;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_records_tab.class.php,v 1.2 2017-11-21 14:29:34 dgoron Exp $
+// $Id: searcher_records_tab.class.php,v 1.3 2019-04-23 09:19:56 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -39,7 +39,7 @@ class searcher_records_tab extends searcher_records {
     			$created_table = 'search_result'.md5(microtime(true));
 				$rqt = 'create temporary table '.$created_table.' '.$searcher_record->get_raw_query();
 				$res = pmb_mysql_query($rqt);
-				pmb_mysql_query('alter table '.$created_table.' add index i_id('.$this->object_key.')',$dbh);
+				pmb_mysql_query('alter table '.$created_table.' add index i_id('.$this->object_key.')');
 				if (!$query) {
 					$reference = $created_table;
 					$query = 'select '.$reference.'.'.$this->object_key.' from '.$reference;
@@ -105,6 +105,9 @@ class searcher_records_tab extends searcher_records {
 				if(is_object($instance)){
 					if (isset($searchfield['fieldrestrict']) && is_array($searchfield['fieldrestrict'])) {
 						$instance->add_fields_restrict($searchfield['fieldrestrict']);
+					}
+					if (isset($searchfield['query']) && $searchfield['mode'] == "query") {
+					    $instance->set_query($searchfield['query']);
 					}
 					$this->searcher_records_instances[] = $instance;
 				}

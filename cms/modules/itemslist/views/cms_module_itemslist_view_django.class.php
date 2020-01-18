@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_itemslist_view_django.class.php,v 1.3 2016-02-12 10:13:45 jpermanne Exp $
+// $Id: cms_module_itemslist_view_django.class.php,v 1.4 2019-01-15 15:13:13 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -58,11 +58,13 @@ class cms_module_itemslist_view_django extends cms_module_common_view_django{
 	}
 	
 	public function render($datas){
-		for($i=0 ; $i<count($datas['items']) ; $i++){
-			$datas['items'][$i]['link'] = $this->get_constructed_link('item',$datas['items'][$i]['id']);
-			$tags = $datas['items'][$i]['tags'];
-			for($j=0 ; $j<count($tags) ; $j++){
-				$datas['items'][$i]['tags'][$j]['link'] = $this->get_constructed_link('tag',$tags[$j]['id']);
+		if(is_array($datas['items']) && count($datas['items'])){
+			for($i=0 ; $i<count($datas['items']) ; $i++){
+				$datas['items'][$i]['link'] = $this->get_constructed_link('item',$datas['items'][$i]['id']);
+				$tags = $datas['items'][$i]['tags'];
+				for($j=0 ; $j<count($tags) ; $j++){
+					$datas['items'][$i]['tags'][$j]['link'] = $this->get_constructed_link('tag',$tags[$j]['id']);
+				}
 			}
 		}
 		return parent::render($datas);

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_licence_right.tpl.php,v 1.3 2018-04-20 15:26:05 dgoron Exp $
+// $Id: explnum_licence_right.tpl.php,v 1.4 2019-05-27 10:39:09 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $admin_explnum_licence_right_form, $current_module, $msg, $charset;
 
 //statuts de contribution
 $admin_explnum_licence_right_form = "<form class='form-$current_module' id='explnumlicencerightform' name='explnumlicencerightform' method=post action=\"./admin.php?categ=docnum&sub=licence&action=settings&id=!!explnum_licence_id!!&what=rights&rightaction=save&rightid=!!id!!\">

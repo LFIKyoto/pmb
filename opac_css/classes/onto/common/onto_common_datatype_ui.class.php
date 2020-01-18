@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_ui.class.php,v 1.7 2018-12-12 16:26:40 apetithomme Exp $
+// $Id: onto_common_datatype_ui.class.php,v 1.10.2.1 2019-09-18 09:12:22 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -67,11 +67,11 @@ abstract class onto_common_datatype_ui extends onto_root_ui{
 	 * @static
 	 * @access public
 	 */
-public static function get_validation_js($item_uri,$property, $restrictions,$datas, $instance_name,$flag){
+	public static function get_validation_js($item_uri,$property, $restrictions,$datas, $instance_name,$flag){
 		global $msg;
 				
 		return '{
-			"message": "'.addslashes($property->label).'",
+			"message": "'.addslashes($property->get_label()).'",
 			"valid" : true,
 			"nb_values": 0,
 			"error": "",
@@ -114,7 +114,7 @@ public static function get_validation_js($item_uri,$property, $restrictions,$dat
 						this.message = "'.addslashes($msg['onto_error_too_much_values']).'";
 						break;
  				}
-				this.message = this.message.replace("%s","'.addslashes($property->label).'");
+				this.message = this.message.replace("%s","'.addslashes($property->get_label()).'");
 				return this.message;
 			}
 		}';
@@ -148,7 +148,7 @@ public static function get_validation_js($item_uri,$property, $restrictions,$dat
 		$form=$ontology_tpl['form_row_hidden'];
 		
 		$content = '';
-		if (sizeof($datas)) {	
+		if (!empty($datas) && sizeof($datas)) {	
 			$new_element_order = max(array_keys($datas));
 			
 			$form = str_replace("!!onto_new_order!!",$new_element_order , $form);
@@ -193,10 +193,10 @@ public static function get_validation_js($item_uri,$property, $restrictions,$dat
 		$onto_disabled = '';
 		$onto_input_props = '';
 		
-		if (!empty($property->pmb_extended['readonly'])) {
-			$onto_input_props = "readOnly : true";
+		if (!empty($property->pmb_extended['readonly'])) {			
+			$onto_input_props = 'readonly="readonly"';
 			if (strpos($form,'!!onto_disabled!!')) {
-				$onto_disabled = "disabled : true";
+				$onto_disabled = 'disabled="disabled"';
 				/**
 				 * on a besoin du champ new order
 				 */			
@@ -213,10 +213,11 @@ public static function get_validation_js($item_uri,$property, $restrictions,$dat
 		}
 		
 		if (!empty($property->pmb_extended['placeholder'])) {
+		    $property->pmb_extended['placeholder'] = onto_common_ui::get_message($property->pmb_extended['placeholder']);
 			if ($onto_input_props) {
-				$onto_input_props.= ',';
+				$onto_input_props.= ' ';
 			}
-			$onto_input_props.= 'placeHolder : \''.$property->pmb_extended['placeholder'].'\'';
+			$onto_input_props.= 'placeholder="'.$property->pmb_extended['placeholder'].'"';
 		}
 
 		$form = str_replace("!!onto_disabled!!", $onto_disabled, $form);
@@ -224,4 +225,13 @@ public static function get_validation_js($item_uri,$property, $restrictions,$dat
 		return $form;
 	}
 	
+	public static function get_scripts() {
+		$scripts = static::get_field_change_script();
+		return $scripts;
+	}
+	
+	protected static function get_field_change_script() {
+		global $ontology_tpl;
+		return $ontology_tpl['form_row_common_field_change_script'];
+	}
 } // end of onto_common_datatype_ui

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_level1.inc.php,v 1.5 2018-05-14 08:22:07 tsamson Exp $
+// $Id: ajax_level1.inc.php,v 1.6 2019-01-16 14:35:30 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -18,7 +18,7 @@ if ($autolevel1) {
 	$mode="tous";
 }
 
-if ($segment_id) {
+if (isset($segment_id) && $segment_id) {
     $segment = new search_segment($segment_id);
     print $segment->get_rebound_form(); 
 } else {

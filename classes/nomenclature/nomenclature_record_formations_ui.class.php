@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_record_formations_ui.class.php,v 1.28 2018-07-05 15:32:20 vtouchard Exp $
+// $Id: nomenclature_record_formations_ui.class.php,v 1.29 2019-07-03 15:35:48 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -140,7 +140,7 @@ class nomenclature_record_formations_ui {
 						if(isset($instrument["other"]) && is_array($instrument["other"])) {
     						foreach ($instrument["other"] as $instrument_other){	
     							if($instruments_no_standard_tpl)$instruments_no_standard_tpl.=" / ";
-    							$instruments_no_standard_tpl.= " ".$instrument_other["effective"]." ".$instrument_other["code"];
+    							$instruments_no_standard_tpl.= " ".$instrument["effective"]." ".$instrument_other["code"];
     							if($instrument_other["name"])$instruments_no_standard_tpl.=" ( ". $instrument_other["name"]." ) ";
     							
     						}				

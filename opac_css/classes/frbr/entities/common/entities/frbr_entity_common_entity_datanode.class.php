@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_common_entity_datanode.class.php,v 1.14 2018-09-14 15:43:22 tsamson Exp $
+// $Id: frbr_entity_common_entity_datanode.class.php,v 1.16.2.3 2019-09-26 13:47:22 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -60,6 +60,9 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 	
 	protected static $datanode_instances = array();
 	
+	protected $parent_type = '';
+	protected $parent_parameters = array();
+
 	public function __construct($id=0) {
 		parent::__construct($id);
 	}
@@ -86,28 +89,28 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 					switch ($ligne->datanode_content_type) {
 						case "datasource":
 							$this->datasource = array(
-								'id' => $ligne->id_datanode_content+0,
+							    'id' => (int) $ligne->id_datanode_content,
 								'name' => $ligne->datanode_content_object,
 								'data' => json_decode($ligne->datanode_content_data)
 							);
 							break;
 						case "filter":
 							$this->filter = array(
-								'id' => $ligne->id_datanode_content+0,
+							    'id' => (int) $ligne->id_datanode_content,
 								'name' => $ligne->datanode_content_object,
 								'data' => json_decode($ligne->datanode_content_data)
 							);
 							break;
 						case "sort":
 							$this->sort = array(
-								'id' => $ligne->id_datanode_content+0,
+							    'id' => (int) $ligne->id_datanode_content,
 								'name' => $ligne->datanode_content_object,
 								'data' => json_decode($ligne->datanode_content_data)
 							);
 							break;
 						case "children_filter":
 							$this->children_filter = array(
-								'id' => $ligne->id_datanode_content+0,
+							    'id' => (int) $ligne->id_datanode_content,
 								'name' => $ligne->datanode_content_object,
 								'data' => json_decode($ligne->datanode_content_data)
 							);
@@ -132,9 +135,24 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 		$form .= $this->get_parent_name_from_page($num_parent);
 		if ($this->id) {	
 			$form .= "<input type='hidden' name='".$this->type."_num_parent' id='".$this->type."_num_parent' value='".$num_parent."'/>";
-		}				
+		}
 		$form .="</div>";
 		return $form;
+	}
+	
+	protected function get_datasources_options_authperso($datasource_name, $selected_datasource) {
+	    global $msg;
+	    $options = "";
+	    $query = "SELECT id_authperso, authperso_name FROM authperso";
+	    $result = pmb_mysql_query($query);
+	    if (pmb_mysql_num_rows($result)) {
+            $options .= "<optgroup label='".$msg["authperso"]."'>";
+	        while ($row = pmb_mysql_fetch_assoc($result)) {
+	            $options .= "<option value='".$datasource_name."_".$row['id_authperso']."'".($datasource_name."_".$row['id_authperso'] == $selected_datasource ? " selected='selected'" : "").">".$row['authperso_name']."</option>";
+	        }
+	        $options .= "</optgroup>";
+	    }
+	    return $options;
 	}
 	
 	protected function get_datasources_list_form($no_child = false){
@@ -146,8 +164,7 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 			$this->entity_type = null;
 		} else {
 			$datasources = $this->elements_used['parent_datasource'];
-		}	
-		
+		}
 		if(count($datasources)>1){
 			$form = "
 			<div class='colonne3'>
@@ -159,13 +176,18 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 				<select name='datanode_datasource_choice' id='datanode_datasource_choice' data-pmb-evt='{\"class\":\"EntityForm\", \"type\":\"change\", \"method\":\"frbrEntityLoadElemForm\", \"parameters\":{\"id\":\"0\", \"domId\":\"datasource_form\", \"numPage\":\"".$this->get_page()->get_id()."\",\"filterRefresh\":\"1\",\"sortRefresh\":\"1\"}}'>
 						<option value='frbr_entity_common_datasource'>".$this->format_text($this->msg['frbr_entity_common_entity_datanode_datasource_choice'])."</option>";
 					foreach($datasources as $datasource){
-						$form.= "
-						<option value='".$datasource."'".(isset($this->datasource['name']) && $datasource == $this->datasource['name'] && !$no_child ? " selected='selected'" : "").">".$this->format_text($this->msg[$datasource])."</option>";
+					    if (preg_match("#authperso$#", $datasource)) {
+					        $selected_datasource = isset($this->datasource['name']) ? $this->datasource['name'] : "";
+					        $form.= $this->get_datasources_options_authperso($datasource, $selected_datasource);
+					    } else {
+    						$form.= "
+    						<option value='".$datasource."'".(isset($this->datasource['name']) && $datasource == $this->datasource['name'] && !$no_child ? " selected='selected'" : "").">".$this->format_text($this->msg[$datasource])."</option>";
+					    }
 					}
 					$form.="
 				</select>";
 				}else{
-					$form.= $this->format_text($this->msg[$this->datasource['name']])."<input type='hidden' value='".$this->datasource['name']."' name='datanode_datasource_choice'/>";
+				    $form.= $this->format_datasource_name($this->datasource['name'])."<input type='hidden' value='".$this->datasource['name']."' name='datanode_datasource_choice'/>";
 				}
 				$form.= "</div>";
 		}else{
@@ -173,6 +195,10 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 				<input type='hidden' name='datanode_datasource_choice' id='datanode_datasource_choice' value='".$datasources[0]."'/>";
 		}
 		return $form;
+	}
+	
+	protected  function format_datasource_name($name) {
+	    return $this->format_text($this->msg[$name]);
 	}
 	
 	protected function get_filters_list_form(){
@@ -248,6 +274,7 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 		global $msg;
 		$parameters_form = "
 			<div class='row'>";
+		$parameters_form .= $this->get_authperso_parameter_form();
 		$parameters_form .= $this->get_datasources_list_form($no_child);
 		$parameters_form .= "</div>";
 		if((isset($this->datasource['id']) && $this->datasource['id']) || (isset($this->elements_used['datasource']) && count($this->elements_used['datasource'])==1)){
@@ -344,7 +371,14 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 					$type_instance = new frbr_entity_common_sort($type_id);
 					break;
 				default:
-					$type_instance = new ${$datanode_type}($type_id);
+				    if (preg_match("#authperso_([\d]+)$#", ${$datanode_type})) {
+				        $authperso =  preg_split("#_([\d]+)#", ${$datanode_type}, 0 ,PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+				        $type_instance = new $authperso[0]($type_id);
+				        $type_instance->set_authperso_id($authperso[1]);
+				        $type_instance->set_class_name(${$datanode_type});
+				    } else {
+				        $type_instance = new ${$datanode_type}($type_id);
+				    }
 					break;
 			}
 			$type_instance->set_num_datanode($this->id);
@@ -470,8 +504,8 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 	}
 	
 	public function set_parent_from_num($num_parent) {
-		$num_parent += 0;
-		if($num_parent) {
+		$num_parent = (int) $num_parent;
+		if (!empty($num_parent)) {
 			$class_name = frbr_entity_common_entity_datanode::get_class_name_from_id($num_parent);
 			$this->parent = new $class_name($num_parent);
 		}
@@ -519,11 +553,13 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 		if (is_object($this->parent) && $this->parent->get_id()) {
 			$this->elements_used["parent_datasource"] = $this->parent->elements_used["datasource"];
 			$this->msg = array_merge($this->msg, $this->parent->msg);
+			$this->parent_parameters = $this->parent->get_datasource()["data"];
 		}else{ //Noeud directement sous la page donc
 			$class_name = 'frbr_entity_'.$this->page->get_entity().'_datanode';
 			$datanode = new $class_name();
 			$this->elements_used["parent_datasource"] = $datanode->elements_used["datasource"];
 			$this->msg = array_merge($this->msg, $datanode->msg);
+			$this->parent_parameters = $this->page->get_parameters();
 		}
 	}
 	
@@ -585,22 +621,18 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 		global $msg, $charset;
 		$form = "";
 		if($this->entity_type){
-			if($this->entity_type == "concepts") {
-				$form .= "<p>".$this->format_text($this->msg['frbr_entity_common_entity_datanode_filter_unavailable'])."</p>";
-			} else {
-				$form .= "						
-	 					<select id='datanode_filter_choice' name='datanode_filter_choice' data-pmb-evt='{\"class\":\"EntityForm\", \"type\":\"change\", \"method\":\"frbrEntityLoadManagedElemForm\", \"parameters\":{\"elem\":\"frbr_entity_common_filter\", \"id\":\"0\", \"domId\":\"filter_form\", \"numPage\":\"".$this->page->get_id()."\", \"className\" : \"".$this->class_name."\", \"indexation\" : ".encoding_normalize::json_encode($this->informations['indexation'])."}}'>
-	 						<option value=''>".$this->format_text($this->msg['frbr_entity_common_entity_datanode_filter_choice'])."</option>";
-				if(isset($this->managed_datas['filters'])) {
-					foreach($this->managed_datas['filters'] as $key => $infos) {
-						$form.= "
-							<option value='".$key."' ".(isset($this->filter['data']) && $key == "filter".$this->filter['data']->id ? "selected='selected'" : "").">".$infos['name']."</option>";
-					}
+			$form .= "						
+ 					<select id='datanode_filter_choice' name='datanode_filter_choice' data-pmb-evt='{\"class\":\"EntityForm\", \"type\":\"change\", \"method\":\"frbrEntityLoadManagedElemForm\", \"parameters\":{\"elem\":\"frbr_entity_common_filter\", \"id\":\"0\", \"domId\":\"filter_form\", \"numPage\":\"".$this->page->get_id()."\", \"className\" : \"".$this->class_name."\", \"indexation\" : ".encoding_normalize::json_encode($this->informations['indexation'])."}}'>
+ 						<option value=''>".$this->format_text($this->msg['frbr_entity_common_entity_datanode_filter_choice'])."</option>";
+			if(isset($this->managed_datas['filters'])) {
+				foreach($this->managed_datas['filters'] as $key => $infos) {
+					$form.= "
+						<option value='".$key."' ".(isset($this->filter['data']) && $key == "filter".$this->filter['data']->id ? "selected='selected'" : "").">".$infos['name']."</option>";
 				}
-				$form.="
-						</select>";
-				$form.="<img src='".get_url_icon('add.png')."' alt='".$msg["925"]."' data-pmb-evt='{\"class\":\"EntityForm\", \"type\":\"click\", \"method\":\"loadDialog\", \"parameters\":{\"element\":\"filter\", \"idElement\":\"".$this->id."\", \"manageId\": 0, \"quoi\" : \"filters\", \"className\" : \"".$this->class_name."\"}}' title=\"".$this->format_text($this->msg['frbr_entity_common_entity_datanode_filter_create'])."\" />";
 			}
+			$form.="
+					</select>";
+			$form.="<img src='".get_url_icon('add.png')."' alt='".$msg["925"]."' data-pmb-evt='{\"class\":\"EntityForm\", \"type\":\"click\", \"method\":\"loadDialog\", \"parameters\":{\"element\":\"filter\", \"idElement\":\"".$this->id."\", \"manageId\": 0, \"quoi\" : \"filters\", \"className\" : \"".$this->class_name."\"}}' title=\"".$this->format_text($this->msg['frbr_entity_common_entity_datanode_filter_create'])."\" />";
 		} else {
 			$form .= "<p>".htmlentities($msg['frbr_datasource_choice'], ENT_QUOTES, $charset)."</p>";
 		}
@@ -611,21 +643,17 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 		global $msg, $charset;
 		$form = "";
 		if($this->entity_type){
-			if($this->entity_type == "concepts") {
-				$form .= "<p>".$this->format_text($this->msg['frbr_entity_common_entity_datanode_sort_unavailable'])."</p>";
-			} else {
-				$form .= "<select id='datanode_sort_choice' name='datanode_sort_choice' data-pmb-evt='{\"class\":\"EntityForm\", \"type\":\"change\", \"method\":\"frbrEntityLoadManagedElemForm\", \"parameters\":{\"elem\":\"frbr_entity_common_sort\", \"id\":\"0\", \"domId\":\"sort_form\", \"numPage\":\"".$this->page->get_id()."\", \"className\" : \"".$this->class_name."\", \"indexation\" : ".encoding_normalize::json_encode($this->informations['indexation'])."}}'>
-	 						<option value=''>".$this->format_text($this->msg['frbr_entity_common_entity_datanode_sort_choice'])."</option>";
-				if(isset($this->managed_datas['sorting'])) {
-					foreach($this->managed_datas['sorting'] as $key => $infos) {
-						$form.= "
-				 			<option value='".$key."' ".(isset($this->sort['data']) && $key == "sort".$this->sort['data']->id ? "selected='selected'" : "").">".$infos['name']."</option>";
-					}
+			$form .= "<select id='datanode_sort_choice' name='datanode_sort_choice' data-pmb-evt='{\"class\":\"EntityForm\", \"type\":\"change\", \"method\":\"frbrEntityLoadManagedElemForm\", \"parameters\":{\"elem\":\"frbr_entity_common_sort\", \"id\":\"0\", \"domId\":\"sort_form\", \"numPage\":\"".$this->page->get_id()."\", \"className\" : \"".$this->class_name."\", \"indexation\" : ".encoding_normalize::json_encode($this->informations['indexation'])."}}'>
+ 						<option value=''>".$this->format_text($this->msg['frbr_entity_common_entity_datanode_sort_choice'])."</option>";
+			if(isset($this->managed_datas['sorting'])) {
+				foreach($this->managed_datas['sorting'] as $key => $infos) {
+					$form.= "
+			 			<option value='".$key."' ".(isset($this->sort['data']) && $key == "sort".$this->sort['data']->id ? "selected='selected'" : "").">".$infos['name']."</option>";
 				}
-				$form.="
- 					</select>
-				<img src='".get_url_icon('add.png')."' alt='".$msg["925"]."' data-pmb-evt='{\"class\":\"EntityForm\", \"type\":\"click\", \"method\":\"loadDialog\", \"parameters\":{\"element\":\"sort\", \"idElement\":\"".$this->id."\", \"manageId\": \"0\", \"quoi\" : \"sorting\", \"className\" : \"".$this->class_name."\"}}' title=\"".$this->format_text($this->msg['frbr_entity_common_entity_datanode_sort_create'])."\" />";
 			}
+			$form.="
+				</select>
+			<img src='".get_url_icon('add.png')."' alt='".$msg["925"]."' data-pmb-evt='{\"class\":\"EntityForm\", \"type\":\"click\", \"method\":\"loadDialog\", \"parameters\":{\"element\":\"sort\", \"idElement\":\"".$this->id."\", \"manageId\": \"0\", \"quoi\" : \"sorting\", \"className\" : \"".$this->class_name."\"}}' title=\"".$this->format_text($this->msg['frbr_entity_common_entity_datanode_sort_create'])."\" />";
 		} else {
 			$form .= "<p>".htmlentities($msg['frbr_datasource_choice'], ENT_QUOTES, $charset)."</p>";
 		}
@@ -648,9 +676,17 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 	}
 	
 	public function get_datanode_datas($data, $limit = false) {
-		$datanode_datasource_class_name = $this->get_datasource()['name'];
-		$this->datasource_instance = new $datanode_datasource_class_name($this->get_datasource()['id']);
-	
+		//cas particulier des autorites perso
+	    if (preg_match("#authperso_([\d]+)$#", $this->get_datasource()['name'])) {
+	        $authperso =  preg_split("#_([\d]+)#", $this->get_datasource()['name'], 0 ,PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+		    $this->datasource_instance = new $authperso[0]($this->get_datasource()['id']);
+		    if (!empty($authperso[1])) {
+		        $this->datasource_instance->set_authperso_id($authperso[1]);
+		    }
+		} else {
+		    $datanode_datasource_class_name = $this->get_datasource()['name'];
+		    $this->datasource_instance = new $datanode_datasource_class_name($this->get_datasource()['id']);
+		}
 		if (isset($this->get_filter()['id']) && $this->get_filter()['id']!= 0) {
 			$datanode_filter_class_name = $this->get_filter()['name'];
 			$filter = new $datanode_filter_class_name($this->get_filter()['id']);
@@ -658,6 +694,10 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 			$filter->set_indexation_path($this->informations['indexation']['path']);
 			$filter->set_indexation_sub_type($this->informations['indexation']['sub_type']);
 			$filter->set_fields($this->managed_datas['filters']['filter'.$this->get_filter()['data']->id]['fields']);
+			if (!isset($this->managed_datas['filters']['filter'.$this->get_filter()['data']->id]['details'])) {
+			    $this->managed_datas['filters']['filter'.$this->get_filter()['data']->id]['details'] = [];
+			}
+			$filter->set_details($this->managed_datas['filters']['filter'.$this->get_filter()['data']->id]['details']);
 			$this->datasource_instance->set_filter($filter);
 		}
 		if (isset($this->get_sort()['id']) && $this->get_sort()['id']!= 0) {
@@ -667,8 +707,13 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 			$sort->set_indexation_path($this->informations['indexation']['path']);
 			$sort->set_indexation_sub_type($this->informations['indexation']['sub_type']);
 			$sort->set_fields($this->managed_datas['sorting']['sort'.$this->get_sort()['data']->id]['fields']);
+			if (!isset($this->managed_datas['sorting']['sort'.$this->get_sort()['data']->id]['details'])) {
+			    $this->managed_datas['sorting']['sort'.$this->get_sort()['data']->id]['details'] = [];
+			}
+			$sort->set_details($this->managed_datas['sorting']['sort'.$this->get_sort()['data']->id]['details']);
 			$this->datasource_instance->set_sort($sort);
 		}
+		$this->datasource_instance->set_parent_type($this->get_parent_type());
 		if (count($data)) {
 		    $data = $this->datasource_instance->get_datas($data);
 		}
@@ -753,5 +798,35 @@ class frbr_entity_common_entity_datanode extends frbr_entity_common_entity {
 	        $parameter = $this->datasource['data']->$property;
 	    }
 	    return $parameter;
+	}
+	
+	public function get_parent_type(){
+	    if(!empty($this->parent_type)){
+	        return $this->parent_type;
+	    }
+	    $query = "select datanode_num_parent, page_entity from frbr_datanodes join frbr_pages on
+				frbr_pages.id_page=frbr_datanodes.datanode_num_page where id_datanode = ".$this->id;
+	    $result = pmb_mysql_query($query);
+	    if(pmb_mysql_num_rows($result)){
+	        $result = pmb_mysql_fetch_assoc($result);
+	        if($result['datanode_num_parent'] != 0){
+	            $this->parent_type = frbr_entity_common_entity_datanode::get_entity_type_from_id($result['datanode_num_parent']);
+	            return $this->parent_type;
+	        }
+	        $this->parent_type = $result['page_entity'];
+	    }
+	    return $this->parent_type;
+	}
+	
+	protected function get_authperso_parameter_form() {
+	    $form = "";
+	    if (!empty($this->parent_parameters)) {
+	        $num_authperso = (!empty($this->parent_parameters->authperso_id) ? $this->parent_parameters->authperso_id : (!empty($this->parent_parameters->authperso->value) ? $this->parent_parameters->authperso->value : 0));
+	        if ($num_authperso) {
+	            $form .= "<input type='hidden' name='datanode_authperso_num' id='datanode_authperso_num' value='$num_authperso' />";
+	        }
+	    }
+	    return $form;
+	    
 	}
 }

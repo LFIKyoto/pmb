@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_metadatas_datasource_metadatas_page_opac.class.php,v 1.15 2018-02-21 11:14:44 dgoron Exp $
+// $Id: cms_module_metadatas_datasource_metadatas_page_opac.class.php,v 1.16.6.1 2019-10-30 11:15:47 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -21,6 +21,7 @@ class cms_module_metadatas_datasource_metadatas_page_opac extends cms_module_met
 	
 	public function get_query(){
 		global $id;
+		global $lang;
 		
 		$post = $_POST;
 		$get = $_GET;
@@ -55,7 +56,13 @@ class cms_module_metadatas_datasource_metadatas_page_opac extends cms_module_met
 					$query = "select serie_id as id, serie_name as title, 'authority' as type from series where serie_id='".$id."'";
 					break;
 				case 'categ_see':
-					$query = "select num_noeud as id, libelle_categorie as title, comment_public as resume, 'authority' as type from categories where num_noeud='".$id."'";
+					$thes = thesaurus::getByEltId($id);
+					$query = "select noeuds.id_noeud as id, if (catlg.num_noeud is null, catdef.libelle_categorie, catlg.libelle_categorie) as title, 
+							if (catlg.num_noeud is null, catdef.comment_public, catlg.comment_public) as resume,
+							'authority' as type
+							from noeuds left join categories as catdef on noeuds.id_noeud = catdef.num_noeud and catdef.langue = '".$thes->langue_defaut."'
+							left join categories as catlg on catdef.num_noeud = catlg.num_noeud and catlg.langue = '".$lang."'		
+							where noeuds.id_noeud='".$id."'";
 					break;
 				case 'indexint_see':
 					$query = "select indexint_id as id, indexint_name as title, indexint_comment as resume, 'authority' as type from indexint where indexint_id='".$id."'";
@@ -82,9 +89,8 @@ class cms_module_metadatas_datasource_metadatas_page_opac extends cms_module_met
 					$query ="select id_item as id, value as title from skos_fields_global_index where code_champ =1 and code_ss_champ =1 and id_item = '".$id."'";
 					break;
 				case "authperso_see":
-					global $dbh;
 					$query = "select num_type from authperso_custom_values join authperso_custom on authperso_custom_champ = idchamp where authperso_custom_origine = '".$id."'";
-					$result = pmb_mysql_query($query,$dbh);
+					$result = pmb_mysql_query($query);
 					if(pmb_mysql_num_rows($result)){
 						$row = pmb_mysql_fetch_object($result);
 						$query = "select '".$id."' as id ,'".addslashes(authperso::get_isbd($id))."' as title";
@@ -104,6 +110,7 @@ class cms_module_metadatas_datasource_metadatas_page_opac extends cms_module_met
 		global $opac_show_book_pics;
 		global $opac_book_pics_url;
 		global $dbh,$msg;
+		global $base_path;
 		//on commence par récupérer le type et le sous-type de page...
 		$type_page_opac = cms_module_common_datasource_typepage_opac::get_type_page();
 		$subtype_page_opac = cms_module_common_datasource_typepage_opac::get_subtype_page();
@@ -151,8 +158,14 @@ class cms_module_metadatas_datasource_metadatas_page_opac extends cms_module_met
 					if (isset($metadatas["metadatas"]) && is_array($metadatas["metadatas"])) {
 						foreach ($metadatas["metadatas"] as $key=>$value) {
 							try {
-								$group_metadatas[$i]["metadatas"][$key] = H2o::parseString($value)->render($datas);
+							    $template_path = $base_path.'/temp/'.LOCATION.'_datasource_metadatas_page_opac_'.md5($value);
+							    if(!file_exists($template_path) || (md5($value) != md5_file($template_path))){
+							        file_put_contents($template_path, $value);
+							    }
+							    $H2o = H2o_collection::get_instance($template_path);
+							    $group_metadatas[$i]["metadatas"][$key] = $H2o->render($datas);
 							}catch(Exception $e){
+							    
 							}
 						}
 					}

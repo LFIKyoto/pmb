@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_logo.class.php,v 1.20 2018-09-18 13:47:50 apetithomme Exp $
+// $Id: cms_logo.class.php,v 1.21 2019-06-05 10:21:33 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -207,6 +207,10 @@ class cms_logo {
   			
   			if(strpos($mode,'custom_') !== false){
   				$elems = explode('_',$mode);
+  				if (!is_numeric($elems[1])) {
+  				    header("HTTP/1.0 404 Not Found");
+  				    return;
+  				}
   				$size = $elems[1]*1;
   				if($size>0){
   					$dst_img=$this->resize($size,$size);
@@ -231,13 +235,16 @@ class cms_logo {
 						$dst_img=$this->resize(600,600);
 						break;
 					case 'large' :
-					default :
 						$dst_img=$this->resize(0,0);
 						if($this->img_infos['type'] == 'png') {
 							//Pour les images non redimensionnées
 							imageSaveAlpha($dst_img, true);
 						}
 						break;
+					default :
+					    header("HTTP/1.0 404 Not Found");
+					    return;
+					    break;
 				}
 			}
 			if($dst_img) {

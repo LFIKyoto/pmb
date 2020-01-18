@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: session.inc.php,v 1.47 2018-11-29 07:50:19 dgoron Exp $
+// $Id: session.inc.php,v 1.49 2019-06-25 13:58:14 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $cms_build_activate;
 
 require_once($include_path."/sessions.inc.php");
 
@@ -33,9 +35,6 @@ if (!isset($logout)) $logout=0;
 
 //Sauvegarde de l'environnement
 if (isset($_SESSION["user_code"]) && $_SESSION["user_code"]) {
-	if(isset($_SESSION['cart_anonymous'])){
-		unset($_SESSION['cart_anonymous']);
-	}
 	$requete="select count(*) from opac_sessions where empr_id='".$_SESSION["id_empr_session"]."'";
 	if(!pmb_mysql_result(pmb_mysql_query($requete), 0, 0)) {
 		//Première connexion à l'OPAC
@@ -50,7 +49,7 @@ if (isset($_SESSION["user_code"]) && $_SESSION["user_code"]) {
 //Si logout = 1, destruction de la session
 if ($logout) { 
 	if($_SESSION["cms_build_activate"])$cms_build_activate=1;	
-	if($_SESSION["build_id_version"])$build_id_version=$_SESSION["build_id_version"];
+	if(isset($_SESSION["build_id_version"]) && $_SESSION["build_id_version"]) $build_id_version=$_SESSION["build_id_version"];
 	$_SESSION=array();
 	if(!$cms_build_activate){		
 		if (ini_get("session.use_cookies")) {
@@ -63,7 +62,9 @@ if ($logout) {
 		sessionDelete("PmbOpac");
 	}
 	$_SESSION["cms_build_activate"]=$cms_build_activate;
-	$_SESSION["build_id_version"]=$build_id_version;
+	if (isset($_SESSION["build_id_version"]) && $_SESSION["build_id_version"]) { 
+	    $_SESSION["build_id_version"] = $build_id_version;
+	}
 	
 }
 

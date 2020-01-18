@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesMySQL.class.php,v 1.4 2017-06-22 08:49:22 dgoron Exp $
+// $Id: pmbesMySQL.class.php,v 1.5 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -43,7 +43,7 @@ class pmbesMySQL extends external_services_api_class {
 					$i++;
 				}
 	
-				while(list($cle, $valeur) = each($table)) {
+				foreach ($table as $cle => $valeur) {
 					$requete = $action." TABLE ".$valeur." ";
 					$res = @pmb_mysql_query($requete, $dbh);
 					$nbr_lignes = @pmb_mysql_num_rows($res);

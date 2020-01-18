@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: aut_link.class.php,v 1.37 2018-07-09 15:23:46 arenou Exp $
+// $Id: aut_link.class.php,v 1.45 2019-07-03 12:38:52 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 // gestion des liens entre autorités
@@ -81,25 +81,28 @@ class aut_link {
 		}
 		$this->aut_list=array();		
 			
-		$rqt="select * from aut_link where (aut_link_from='".$this->aut_table."'	and aut_link_from_num='".$this->id."' )
-		or ( aut_link_to='".$this->aut_table."' and aut_link_to_num='".$this->id."' and aut_link_reciproc=1 )
-		order by aut_link_type ";
+		$rqt="select * from aut_link where (aut_link_from='".$this->aut_table."' and aut_link_from_num='".$this->id."')
+		order by aut_link_type, aut_link_string_start_date, aut_link_string_end_date, aut_link_rank";
 		$aut_res=pmb_mysql_query($rqt, $dbh);
 		$i=0;
-		while($row = pmb_mysql_fetch_object($aut_res)){
+		while ($row = pmb_mysql_fetch_object($aut_res)) {
 			$i++;
-			$this->aut_list[$i]['to']=$row->aut_link_to;
-			$this->aut_list[$i]['to_num']=$row->aut_link_to_num;
-			$this->aut_list[$i]['type']=$row->aut_link_type;
-			$this->aut_list[$i]['reciproc']=$row->aut_link_reciproc;
-			$this->aut_list[$i]['comment']=$row->aut_link_comment;
+			$this->aut_list[$i]['to'] = $row->aut_link_to;
+			$this->aut_list[$i]['to_num'] = $row->aut_link_to_num;
+			$this->aut_list[$i]['type'] = $row->aut_link_type;
+			$this->aut_list[$i]['comment'] = $row->aut_link_comment;
+			$this->aut_list[$i]['string_start_date'] = $row->aut_link_string_start_date;
+			$this->aut_list[$i]['string_end_date'] = $row->aut_link_string_end_date;
+			$this->aut_list[$i]['start_date'] = $row->aut_link_start_date;
+			$this->aut_list[$i]['end_date'] = $row->aut_link_end_date;
+			$this->aut_list[$i]['rank'] = $row->aut_link_rank;
+			$this->aut_list[$i]['direction'] = $row->aut_link_direction;
+			$this->aut_list[$i]['reverse_link_num'] = $row->aut_link_reverse_link_num;
 						
-			if(($this->aut_table==$row->aut_link_to ) and ($this->id == $row->aut_link_to_num)) {
-				$this->aut_list[$i]['flag_reciproc']=1;
-				$this->aut_list[$i]['to']=$row->aut_link_from;
-				$this->aut_list[$i]['to_num']=$row->aut_link_from_num;
+			if($this->aut_list[$i]['reverse_link_num']) {
+				$this->aut_list[$i]['flag_reciproc'] = 1;
 			} else {
-				$this->aut_list[$i]['flag_reciproc']=0;
+				$this->aut_list[$i]['flag_reciproc'] = 0;
 			}
 			
 			switch($this->aut_list[$i]['to']){
@@ -161,21 +164,56 @@ class aut_link {
 				
 				break;
 			}
-			if($this->aut_list[$i]["flag_reciproc"]){
-				$type_relation=new marc_select("relationtype_autup","f_aut_link_type$i", $this->aut_list[$i]['type']);
-			}else {
-				$type_relation=new marc_select("relationtype_aut","f_aut_link_type$i", $this->aut_list[$i]['type']);
-			}
-			$this->aut_list[$i]['relation_libelle']=$type_relation->libelle;
+			$relation = new marc_select("aut_link","f_aut_link_type$i", $this->aut_list[$i]['type']);
+			$this->aut_list[$i]['relation_libelle'] = $relation->libelle;
 		}
 	}
 
-	public function get_form($caller="categ_form") {
-		global $msg,$add_aut_link,$aut_link0,$aut_link1,$form_aut_link;
-		global $thesaurus_concepts_active,$charset;
+	public function get_completion_table_name($table) {
+	    
+	    switch ($table) {
+	        case '1' :
+	            $table_name = 'authors';
+	            break;
+	        case '2' :
+	            $table_name =  'categories_mul';
+	            break;
+	        case '3' :
+	            $table_name = 'publishers';
+	            break;
+	        case '4' :
+	            $table_name = 'collections';
+	            break;
+	        case '5' :
+	            $table_name = 'subcollections';
+	            break;
+	        case '6' :
+	            $table_name = 'serie';
+	            break;
+	        case '7' :
+	            $table_name = 'titre_uniforme';
+	            break;
+	        case '8' :
+	            $table_name = 'indexint';
+	            break;
+	        case '10' :
+	            $table_name = 'onto';	            
+	            break;
+	        default :
+	            if ($table > 1000) {
+	                $table_name = 'authperso_' . (intval($table) - 1000);
+	            }
+	            break;
+	    }	
+	    return $table_name;
+	}
+	
+	public function get_form($caller = "categ_form") {
+	    global $msg,$add_aut_link,$aut_link0,$aut_link1,$form_aut_link;
+		global $thesaurus_concepts_active,$charset, $pmb_aut_link_autocompletion;
 		
 		$form = $add_aut_link;
-		$this->js_aut_link_table_list="
+		$this->js_aut_link_table_list = "
 		var aut_link_table_select=Array();
 		aut_link_table_select[".AUT_TABLE_AUTHORS."]='./select.php?what=auteur&caller=$caller&dyn=2&param1=';		
 		aut_link_table_select[".AUT_TABLE_CATEG."]='./select.php?what=categorie&caller=$caller&dyn=2&parent=1&p1=';
@@ -188,61 +226,96 @@ class aut_link {
 		aut_link_table_select[".AUT_TABLE_CONCEPT."]='./select.php?what=ontology&caller=$caller&element=concept&dyn=2&param1=';
 		";
 		
-		$aut_table_list = $this->generate_aut_type_selector($caller);
-		
-		$i=0;
-		if(!count($this->aut_list)){		
+        $aut_table_list = $this->generate_aut_type_selector($caller);
+
+		$i = 0;
+		if (!count($this->aut_list)) {		
 			// pas d'enregistrement	
 			$form.=$aut_link0;
 			
-			$liste_type_relation=new marc_select("relationtype_aut","f_aut_link_type$i", "","","","",array(array('name'=>'data-form-name','value'=>'f_aut_link_type')));	
-			$form=str_replace("!!aut_link_type!!",$liste_type_relation->display,$form);				
-			$form=str_replace("!!aut_link_reciproc!!","unchecked='unchecked'",$form);	
-			$form=str_replace("!!aut_link!!",$i,$form);	
-			$form=str_replace("!!aut_link_libelle!!","",$form);
-			$form=str_replace("!!aut_link_table!!","",$form);
-			$form=str_replace("!!aut_link_id!!","",$form);	
-			$form=str_replace("!!aut_link_comment!!","",$form);
+			$relation = new marc_select("aut_link", "f_aut_link_type$i", "", "", "", "", array(array('name'=>'data-form-name','value'=>'f_aut_link_type')));
+			
+			$form = str_replace("!!aut_link_type!!", $relation->display, $form);				
+			$form = str_replace("!!aut_link_reciproc!!", "checked='checked'", $form);	
+			$form = str_replace("!!aut_link!!", $i, $form);	
+			$form = str_replace("!!aut_link_libelle!!", "", $form);
+			$form = str_replace("!!aut_link_table!!", 1, $form);
+			$form = str_replace("!!aut_link_id!!", "", $form);	
+			$form = str_replace("!!aut_link_comment!!", "", $form);
+			$form = str_replace("!!aut_link_string_start_date!!", "", $form);
+			$form = str_replace("!!aut_link_string_end_date!!", "", $form);
+			$button_add = "<input id='button_add_f_aut_link' type='button' class='bouton_small' value='+' onClick='add_aut_link();'/>";
+			if ($pmb_aut_link_autocompletion) {
+			    $form = str_replace("!!aut_table_list!!", $this->generate_aut_type_selector($caller, 0, 0), $form);
+			    $completion = " autfield = 'f_aut_link_id0' completion = '" . self::get_completion_table_name(1) . "' ";
+			    $form = str_replace("!!completion!!", $completion, $form);			    
+			} else {			    
+			    $form = str_replace("!!aut_table_list!!", '', $form);
+			    $form = str_replace("!!completion!!",  '',  $form);
+			}
+			$form = str_replace('!!button_add_aut_link!!', $button_add, $form);
 			$i++;
-		} else{			
-			foreach ($this->aut_list as $aut) {	
-				// Construction de chaque ligne du formulaire	
-				if($i) $form_suivant=$aut_link1; else $form_suivant=$aut_link0;		
-				if($aut["flag_reciproc"]){
-					$liste_type_relation=new marc_select("relationtype_autup","f_aut_link_type$i", $aut["type"],"","","",array(array('name'=>'data-form-name','value'=>'f_aut_link_type')));
-				}else {
-					$liste_type_relation=new marc_select("relationtype_aut","f_aut_link_type$i", $aut["type"],"","","",array(array('name'=>'data-form-name','value'=>'f_aut_link_type')));
+		} else{
+			foreach ($this->aut_list as $aut) {
+				$button_add = '';
+				// Construction de chaque ligne du formulaire
+				if($i) {
+					$form_suivant=$aut_link1;
+				} else {
+					$form_suivant=$aut_link0;
 				}
-				$form_suivant=str_replace("!!aut_link_type!!",$liste_type_relation->display,$form_suivant);
-				if($aut["reciproc"]) $check="checked='checked'"; else $check="";
+				if ($aut['to_num'] == end($this->aut_list)['to_num']) {
+					$button_add = "<input id='button_add_f_aut_link' type='button' class='bouton_small' value='+' onClick='add_aut_link();'/>";
+				}
+				$form_suivant=str_replace('!!button_add_aut_link!!', $button_add, $form_suivant);
+				$relation = new marc_select("aut_link","f_aut_link_type$i", $aut["type"],"","","",array(array('name'=>'data-form-name','value'=>'f_aut_link_type')));
+				
+				$form_suivant=str_replace("!!aut_link_type!!",$relation->display,$form_suivant);
+				if($aut["reverse_link_num"]) $check="checked='checked'"; else $check="";
 				$form_suivant=str_replace("!!aut_link_reciproc!!",$check,$form_suivant);	
 				$form_suivant=str_replace("!!aut_link!!",$i,$form_suivant);
 				$form_suivant=str_replace("!!aut_link_libelle!!",htmlentities($aut["libelle"],ENT_QUOTES, $charset,false),$form_suivant);
 				$form_suivant=str_replace("!!aut_link_table!!",$aut["to"],$form_suivant);
 				$form_suivant=str_replace("!!aut_link_id!!",$aut["to_num"],$form_suivant);
 				$form_suivant=str_replace("!!aut_link_comment!!",$aut["comment"],$form_suivant);
-				$form.=$form_suivant;		
+				$form_suivant=str_replace("!!aut_link_string_start_date!!", $aut["string_start_date"], $form_suivant);
+				$form_suivant=str_replace("!!aut_link_string_end_date!!", $aut["string_end_date"], $form_suivant);
+				if ($pmb_aut_link_autocompletion) {
+				    $form_suivant = str_replace("!!aut_table_list!!", $this->generate_aut_type_selector($caller, $aut["to"], $i), $form_suivant);				    
+				    $completion = " autfield = 'f_aut_link_id" . $i . "' completion = '" . self::get_completion_table_name($aut["to"]) . "' ";
+				    if ($aut["type"] == 10) {
+				        $completion.= " att_id_filter = 'http://www.w3.org/2004/02/skos/core#Concept' ";
+				    }
+				    $form_suivant = str_replace("!!completion!!", $completion, $form_suivant);
+				} else {
+				    $form_suivant = str_replace("!!aut_table_list!!", '', $form_suivant);
+				    $form_suivant = str_replace("!!completion!!", '', $form_suivant);
+				}
+				$form.= $form_suivant;		
 				$i++;		
 			}				
 		}
-		$form=str_replace("!!max_aut_link!!",$i,$form);
-		$form=str_replace("!!js_aut_link_table_list!!",$this->js_aut_link_table_list,$form);
-		$form=str_replace("!!aut_table_list!!",$aut_table_list,$form);
-		if(!$aut_table_list && !count($this->aut_list)){
+		$form = str_replace("!!max_aut_link!!", $i, $form);
+		$form = str_replace("!!js_aut_link_table_list!!", $this->js_aut_link_table_list, $form);
+		$form = str_replace("!!aut_table_list!!", $aut_table_list, $form);
+		if (!$aut_table_list && !count($this->aut_list)) {
+		    $form_aut_link = str_replace("!!aut_table_list!!", '', $form_aut_link);		    
 			return str_replace("!!aut_link_contens!!", $msg['no_aut_link'], $form_aut_link);
 		}
-		return str_replace("!!aut_link_contens!!", $form , $form_aut_link);
-		
+		if (!$pmb_aut_link_autocompletion) {
+		    $form_aut_link = str_replace("!!aut_table_list!!", $aut_table_list , $form_aut_link);
+		} else {
+		    $form_aut_link = str_replace("!!aut_table_list!!", '', $form_aut_link);
+		}		
+		return str_replace("!!aut_link_contens!!", $form , $form_aut_link);		
 	}
 	
 	public function save_form() {
-		global $dbh;
-		//max_aut_link
-		//f_aut_link_typexxx
-		//f_aut_link_tablexxx
-		//f_aut_link_idxxx
+
 		global $max_aut_link;
 		if(!$this->aut_table && !$this->id) return;
+		$relations = new marc_list("aut_link");
+		$direction = '';
 		$this->delete_link();
 		for($i=0;$i<$max_aut_link;$i++){
 			eval("global \$f_aut_link_table".$i.";\$f_aut_link_table= \$f_aut_link_table$i;"); 
@@ -250,19 +323,69 @@ class aut_link {
 			eval("global \$f_aut_link_type".$i.";\$f_aut_link_type= \$f_aut_link_type$i;"); 
 			eval("global \$f_aut_link_reciproc".$i.";\$f_aut_link_reciproc= \$f_aut_link_reciproc$i;"); 
 			eval("global \$f_aut_link_comment".$i.";\$f_aut_link_comment= \$f_aut_link_comment$i;");
+			eval("global \$f_aut_link_string_start_date".$i.";\$f_aut_link_string_start_date= \$f_aut_link_string_start_date$i;");
+			eval("global \$f_aut_link_string_end_date".$i.";\$f_aut_link_string_end_date= \$f_aut_link_string_end_date$i;");
+			
+			$f_aut_link_start_date = detectFormatDate($f_aut_link_string_start_date);
+			$f_aut_link_end_date = detectFormatDate($f_aut_link_string_end_date, "max");
 			
 			// Les selecteurs de concept retourne l'uri et non id 
 			if($f_aut_link_table==AUT_TABLE_CONCEPT && !is_numeric($f_aut_link_id)){ 
 				$f_aut_link_id=onto_common_uri::get_id($f_aut_link_id);				
 			}
 			if($f_aut_link_reciproc)$f_aut_link_reciproc=1;
+			
+			$direction = 'up';
+			if (array_key_exists($f_aut_link_type, $relations->table['ascendant'])) {
+			    $direction = 'up';
+			} elseif (array_key_exists($f_aut_link_type, $relations->table['descendant'])) {
+			    $direction = 'down';			    
+			}			    
 			if($f_aut_link_id && $f_aut_link_table && $f_aut_link_type && !(($this->aut_table == $f_aut_link_table) && ($this->id == $f_aut_link_id))) {
-	 			$requete="INSERT INTO aut_link (aut_link_from, aut_link_from_num, aut_link_to,aut_link_to_num , aut_link_type, aut_link_reciproc, aut_link_comment) 
-	 			VALUES ('".$this->aut_table."', '".$this->id."','".$f_aut_link_table."', '".$f_aut_link_id."', '".$f_aut_link_type."', '".$f_aut_link_reciproc."','".$f_aut_link_comment."')";
+	 			$requete="INSERT INTO aut_link SET 
+                    aut_link_from='".$this->aut_table."', 
+                    aut_link_from_num='".$this->id."', 
+                    aut_link_to='".$f_aut_link_table."', 
+                    aut_link_to_num='".$f_aut_link_id."', 
+                    aut_link_type='".$f_aut_link_type."', 
+                    aut_link_comment='".$f_aut_link_comment."', 
+                    aut_link_string_start_date='" . $f_aut_link_string_start_date . "', 
+                    aut_link_string_end_date='" . $f_aut_link_string_end_date . "', 
+                    aut_link_start_date='" . $f_aut_link_start_date . "', 
+                    aut_link_end_date='" . $f_aut_link_end_date . "', 
+                    aut_link_rank='" . $i . "', 
+                    aut_link_direction='" . $direction . "'
+                ";
 				pmb_mysql_query($requete);
-			}
-			if($f_aut_link_reciproc){
-				$this->maj_index($f_aut_link_id, $f_aut_link_table > 1000 ? 9 : $f_aut_link_table);
+				$last_id = pmb_mysql_insert_id();
+				if ($f_aut_link_reciproc) {
+				    $type = $relations->inverse_of[$f_aut_link_type];
+				    if ($direction === "up") {
+				        $direction = "down";
+				    } else {
+				        $direction = "up";
+				    }
+				    $requete="INSERT INTO aut_link SET
+                        aut_link_from='" . $f_aut_link_table . "',
+                        aut_link_from_num='" . $f_aut_link_id . "',
+                        aut_link_to='" . $this->aut_table . "',
+                        aut_link_to_num='" . $this->id . "',
+                        aut_link_type='" . $type . "',
+                        aut_link_comment='" . $f_aut_link_comment . "',
+                        aut_link_string_start_date='" . $f_aut_link_string_start_date . "',
+                        aut_link_string_end_date='" . $f_aut_link_string_end_date . "',
+                        aut_link_start_date='" . $f_aut_link_start_date . "',
+                        aut_link_end_date='" . $f_aut_link_end_date . "',
+                        aut_link_rank='" . $i . "',
+                        aut_link_direction='" . $direction . "',
+                        aut_link_reverse_link_num='" . $last_id . "'
+                    ";
+				    pmb_mysql_query($requete);
+				    $reciproc_id = pmb_mysql_insert_id();
+				    $requete = "UPDATE aut_link SET aut_link_reverse_link_num=" . $reciproc_id . " WHERE id_aut_link=" . $last_id;
+				    pmb_mysql_query($requete);
+				    $this->maj_index($f_aut_link_id, $f_aut_link_table > 1000 ? 9 : $f_aut_link_table);
+				}				
 			}
 		}
 	}
@@ -275,22 +398,21 @@ class aut_link {
 		pmb_mysql_query("DELETE FROM aut_link WHERE aut_link_from='".$this->aut_table."' and aut_link_from_num='".$this->id."' ");
 		if(pmb_mysql_num_rows($result)) {
 			while($row = pmb_mysql_fetch_object($result)) {
-				$this->maj_index($row->aut_link_to_num, $row->aut_link_to > 1000 ? 9 : $row->aut_link_to);
+    			$this->maj_index($row->aut_link_to_num, $row->aut_link_to > 1000 ? 9 : $row->aut_link_to);
 			}
 		}
-		$query = "SELECT aut_link_from_num, aut_link_from FROM aut_link WHERE aut_link_to_num='".$this->id."' and aut_link_to='".$this->aut_table."' and aut_link_reciproc=1";
+		$query = "SELECT aut_link_from_num, aut_link_from FROM aut_link WHERE aut_link_to_num='".$this->id."' and aut_link_to='".$this->aut_table."' ";
 		$result = pmb_mysql_query($query);
-		pmb_mysql_query("DELETE FROM aut_link WHERE aut_link_to='".$this->aut_table."' and aut_link_to_num='".$this->id."' and aut_link_reciproc=1 ");
+		pmb_mysql_query("DELETE FROM aut_link WHERE aut_link_to='".$this->aut_table."' and aut_link_to_num='".$this->id."' ");
 		if(pmb_mysql_num_rows($result)) {
 			while($row = pmb_mysql_fetch_object($result)) {
-				$this->maj_index($row->aut_link_from_num, $row->aut_link_from > 1000 ? 9 : $row->aut_link_from);
+	       		$this->maj_index($row->aut_link_from_num, $row->aut_link_from > 1000 ? 9 : $row->aut_link_from);
 			}
 		}
 	}		
 	
 	// delete tous les liens (from et to) de cette autorité 
 	public function delete() {
-		global $dbh;
 		if(!$this->aut_table && !$this->id) return;
 		$query = "SELECT aut_link_to_num, aut_link_to FROM aut_link WHERE aut_link_from_num='".$this->id."' and aut_link_from='".$this->aut_table."'";
 		$result = pmb_mysql_query($query);
@@ -312,46 +434,93 @@ class aut_link {
 	
 	// copie les liens from et to par une autre autorité
 	public function add_link_to($copy_table,$copy_num) {
-		global $dbh;
-		if(!$this->aut_table && !$this->id && !$copy_link_to && !$copy_link_to_num) return;
-		
+	    if(!$this->aut_table && !$this->id && !$copy_table && !$copy_num) return;
+		$i = 0;
+		$relations = new marc_list("aut_link");
 		foreach ($this->aut_list as $aut) {		
-			if($aut["flag_reciproc"]){
-		 		$requete="INSERT INTO aut_link (aut_link_from, aut_link_from_num, aut_link_to,aut_link_to_num , aut_link_type, aut_link_reciproc, aut_link_comment) 
-		 		VALUES ('".$aut["to"]."', '".$aut["to_num"]."','".$copy_table."', '".$copy_num."', '".$aut["type"]."', '".$aut["reciproc"]."','".$aut["comment"]."')";					
-			}else {
-		 		$requete="INSERT INTO aut_link (aut_link_from, aut_link_from_num, aut_link_to,aut_link_to_num , aut_link_type, aut_link_reciproc, aut_link_comment) 
-		 		VALUES ('".$copy_table."', '".$copy_num."','".$aut["to"]."', '".$aut["to_num"]."', '".$aut["type"]."', '".$aut["reciproc"]."','".$aut["comment"]."')";							
-			}
-			@pmb_mysql_query($requete);
-		}		
+		    $requete = "INSERT INTO aut_link SET
+                aut_link_from='".$copy_table."',
+                aut_link_from_num='".$copy_num."',
+                aut_link_to='".$aut["to"]."',
+                aut_link_to_num='".$aut["to_num"]."',
+                aut_link_type='".$aut["type"]."',
+                aut_link_comment='".$aut["comment"]."',
+                aut_link_string_start_date='" . $aut["string_start_date"] . "',
+                aut_link_string_end_date='" . $aut["string_end_date"] . "',
+                aut_link_start_date='" . $aut["start_date"] . "',
+                aut_link_end_date='" . $aut["end_date"] . "',
+                aut_link_rank='" . $i . "',
+                aut_link_direction='" . $aut["direction"] . "'
+            ";
+		    pmb_mysql_query($requete);
+		    $last_id = pmb_mysql_insert_id();
+		    if ($aut["flag_reciproc"]) {
+		        $type = $relations->inverse_of[$aut["type"]];
+		        if ($aut["direction"] === "up") {
+		            $direction = "down";
+		        } else {
+		            $direction = "up";
+		        }
+		        $requete = "INSERT INTO aut_link SET
+                    aut_link_from='" . $aut["to"] . "',
+                    aut_link_from_num='" . $aut["to_num"] . "',
+                    aut_link_to='" . $copy_table . "',
+                    aut_link_to_num='" . $copy_num . "',
+                    aut_link_type='" . $type . "',
+                    aut_link_comment='".$aut["comment"]."',
+                    aut_link_string_start_date='" . $aut["string_start_date"] . "',
+                    aut_link_string_end_date='" . $aut["string_end_date"] . "',
+                    aut_link_start_date='" . $aut["start_date"] . "',
+                    aut_link_end_date='" . $aut["end_date"] . "',
+                    aut_link_rank='" . $i . "',
+                    aut_link_direction='" . $direction . "',
+                    aut_link_reverse_link_num='" . $last_id . "'
+                ";
+		        pmb_mysql_query($requete);
+		        $reciproc_id = pmb_mysql_insert_id();
+		        $requete = "UPDATE aut_link SET aut_link_reverse_link_num=" . $reciproc_id . " WHERE id_aut_link=" . $last_id;
+		        pmb_mysql_query($requete);			        
+		        $this->maj_index($aut["to_num"], $aut["to"] > 1000 ? 9 : $aut["to"]);
+		    }
+		    $i++;	
+		}			
 	}
 	
 	public function get_display($caller="categ_form") {
-		global $msg;
 		if(!count($this->aut_list)) return"";
 	
 		$aut_see_link = "./autorites.php?categ=see&sub=!!type!!&id=!!to_num!!";		
 
-		$marc_table=marc_list_collection::get_instance("relationtype_aut");
-		$liste_type_relation = $marc_table->table;
-		$marc_tableup=marc_list_collection::get_instance("relationtype_autup");
-		$liste_type_relationup = $marc_tableup->table;
-	
+		$marc = marc_list_collection::get_instance("aut_link");
+		$liste_type_relation = $marc->table;
+		
 		$aff="<ul>";
 		foreach ($this->aut_list as $aut) {
 			$type = $this->get_type_from_const(($aut['to']>1000?9:$aut['to']));
 			$aff.="<li>";
-			if($aut['flag_reciproc']) {
-				$aff.=$liste_type_relationup[$aut['type']]." : ";
+			if($aut['direction'] == 'up') {
+				$aff.= $liste_type_relation['ascendant'][$aut['type']]." : ";
 			} else	{
-				$aff.=$liste_type_relation[$aut['type']]." : ";
+			    $aff.= $liste_type_relation['descendant'][$aut['type']]." : ";
 			}
 			$link =str_replace("!!to_num!!",$aut['to_num'],$aut_see_link);
 			$link = str_replace("!!type!!",$type,$link);
 			$aff.=" <a href='".$link."'>".$aut['libelle']."</a>";
+			$aff_dates = '';
+			if ($aut['string_start_date']) {
+			    $aff_dates.= $aut['string_start_date'];
+			}
+			if ($aff_dates && $aut['string_end_date']) {
+			    $aff_dates.= ' - ';
+			}
+			if ($aut['string_end_date']) {
+			    $aff_dates.= $aut['string_end_date'];
+			}
+			if ($aff_dates && !$aut['comment']) {
+			    $aff.= " (" . $aff_dates . ")";
+			}
 			if($aut['comment']) {
-				$aff.=" (".$aut['comment'].")";
+			    $aff.= " (" . $aff_dates . ' ' . $aut['comment'] . ")";
 			}
 			$aff.="</li>";
 		}
@@ -424,7 +593,7 @@ class aut_link {
 	
 			$xml=fread($fp,$size);
 			fclose($fp);
-			$aut_links = _parser_text_no_function_($xml, "AUT_LINKS");
+			$aut_links = _parser_text_no_function_($xml, "AUT_LINKS", $filepath);
 			
 			$this->aut_link_xml = array();
 			$aut_definition = array();
@@ -463,7 +632,7 @@ class aut_link {
 	}
 	}
 	
-	public function get_type_from_const($const){
+	public static function get_type_from_const($const){
 		switch($const){
 			case "1" :
 				return "author";
@@ -488,49 +657,63 @@ class aut_link {
 		}	
 	}
 	
-	protected function generate_aut_type_selector($caller="categ_form"){
+	protected function generate_aut_type_selector($caller="categ_form", $aut_sel=0, $index=0){
 		global $msg;
 		global $thesaurus_concepts_active;
 		global $charset;
-		global $form_aut_link_buttons;
+		global $form_aut_link_buttons, $pmb_aut_link_autocompletion;
 	
-		$aut_table_list="<select id='f_aut_link_table_list' name='f_aut_link_table_list'>";
-		
+		if ($pmb_aut_link_autocompletion) {
+		    $aut_table_list="<select class='aut_link_authorities_selector' id='f_aut_link_table_list_" . $index . "' name='f_aut_link_table_list_" . $index . "' onchange = 'onchange_aut_link_selector($index)'>";
+		} else {
+		    $aut_table_list="<select class='aut_link_authorities_selector' id='f_aut_link_table_list' name='f_aut_link_table_list'>";
+		}
 		$options = '';
 		//Cas à gérer pour les autorités persos
 		$auth_type = ($this->aut_table <= 1000 ? $this->aut_table : 9);
-		
+		$first = 0;
 		foreach($this->aut_link_xml[$auth_type]['aut_to_display'] as $aut_to_display){
+		    $selected = '';
+		    if ((!$aut_sel && !$first) || ($aut_to_display == $aut_sel)) {		     	        
+		        $selected = ' selected="selected" ';
+		    }
+		    $first = 1;
 			switch($aut_to_display){
 				case '1':
-					$options.= '<option value="'.AUT_TABLE_AUTHORS.'" selected="selected">'.$msg["133"].'</option>';
+					$options.= '<option value="'.AUT_TABLE_AUTHORS.'" ' . $selected. '>'.$msg["133"].'</option>';
 					break;
 				case '2':
-					$options.= '<option value="'.AUT_TABLE_CATEG.'">'.$msg['134'].'</option>';
+					$options.= '<option value="'.AUT_TABLE_CATEG.'" ' . $selected. '>'.$msg['134'].'</option>';
 					break;
 				case '3':
-					$options.= '<option value="'.AUT_TABLE_PUBLISHERS.'">'.$msg['135'].'</option>';
+					$options.= '<option value="'.AUT_TABLE_PUBLISHERS.'" ' . $selected. '>'.$msg['135'].'</option>';
 					break;
 				case '4':
 					$options.= '<option value="'.AUT_TABLE_COLLECTIONS.'">'.$msg['136'].'</option>';
 					break;
 				case '5':
-					$options.= '<option value="'.AUT_TABLE_SUB_COLLECTIONS.'">'.$msg['137'].'</option>';
+					$options.= '<option value="'.AUT_TABLE_SUB_COLLECTIONS.'" ' . $selected. '>'.$msg['137'].'</option>';
 					break;
 				case '6':
-					$options.= '<option value="'.AUT_TABLE_SERIES.'">'.$msg['333'].'</option>';
+					$options.= '<option value="'.AUT_TABLE_SERIES.'" ' . $selected. '>'.$msg['333'].'</option>';
 					break;
 				case '7':
-					$options.= '<option value="'.AUT_TABLE_TITRES_UNIFORMES.'">'.$msg['aut_menu_titre_uniforme'].'</option>';
+					$options.= '<option value="'.AUT_TABLE_TITRES_UNIFORMES.'" ' . $selected. '>'.$msg['aut_menu_titre_uniforme'].'</option>';
 					break;
 				case '8':
-					$options.= '<option value="'.AUT_TABLE_INDEXINT.'">'.$msg['indexint_menu'].'</option>';
+					$options.= '<option value="'.AUT_TABLE_INDEXINT.'" ' . $selected. '>'.$msg['indexint_menu'].'</option>';
 					break;
 				case '9':
 					$authpersos = authpersos::get_instance();
 					$info=$authpersos->get_data();
-					foreach($info as $elt){
-						$tpl_elt="<option value='!!id_authperso!!'>!!name!!</option>";
+					foreach($info as $elt){					    
+					    $selected = '';
+					    if ($pmb_aut_link_autocompletion) {
+					        if(($elt['id'] + 1000) == $aut_sel) {
+					            $selected = ' selected="selected" ';
+					        }
+					    } 
+						$tpl_elt="<option value='!!id_authperso!!' " . $selected. ">!!name!!</option>";
 						$tpl_elt=str_replace('!!name!!',$elt['name'], $tpl_elt);
 						$tpl_elt=str_replace('!!id_authperso!!',$elt['id'] + 1000, $tpl_elt);
 						$this->js_aut_link_table_list.="aut_link_table_select[".($elt['id'] + 1000)."]='./select.php?what=authperso&authperso_id=".$elt['id']."&caller=$caller&dyn=2&param1=';";
@@ -539,13 +722,15 @@ class aut_link {
 					break;
 				case '10':
 					if($thesaurus_concepts_active){
-						$options.= '<option value="'.AUT_TABLE_CONCEPT.'">'.$msg['ontology_skos_menu'].'</option>';
+						$options.= '<option value="'.AUT_TABLE_CONCEPT.'" ' . $selected. '>'.$msg['ontology_skos_menu'].'</option>';
 					}
 					break;
 			}
 		}
 		if($options){
-			return $aut_table_list.$options.'</select>'.$form_aut_link_buttons;
+		    $add_button = $form_aut_link_buttons;		    
+		    $add_button = str_replace("!!index!!", $index, $add_button);	
+		    return $aut_table_list.$options.'</select>' . $add_button;
 		}
 		return '';
 	}

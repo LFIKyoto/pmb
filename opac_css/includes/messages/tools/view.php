@@ -27,12 +27,12 @@ print "<table border='1'>";
 $entete_colonne="<tr><th bgcolor=#00AA00>&nbsp;</th>";
 $nb_lang = 0;
 $messages_list=array();
-while(list($cle, $valeur) = each($avail_lang)) {
+foreach ($avail_lang as $cle => $valeur) {
 	$entete_colonne .= "<th>$valeur</th>";
 	$obj_lang = new XMLlist("../$cle.xml", 0);
 	$obj_lang->analyser();
 	$lang = $obj_lang->table;
-	while (list($key,$val) = each($lang)) {
+	foreach ($lang as $key => $val) {
 		$messages_list[$key][$nb_lang]=$val;
 	}
 	$nb_lang++;
@@ -41,7 +41,7 @@ while(list($cle, $valeur) = each($avail_lang)) {
 $entete_colonne .= "</tr>\n";
 
 echo $entete_colonne;
-while (list($cle,$valeur)=each($messages_list)) {
+foreach ($messages_list as $cle => $valeur) {
 	echo "<tr>";
 	echo "<td>".$cle."</td>";
 	for ($i=0; $i<$nb_lang; $i++) {

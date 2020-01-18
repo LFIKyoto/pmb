@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_request_admin_status.class.php,v 1.11 2018-12-06 12:27:17 dgoron Exp $
+// $Id: scan_request_admin_status.class.php,v 1.12 2019-06-21 15:28:06 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -129,7 +129,7 @@ class scan_request_admin_status {
 				}
 			}
 		}
-		if($publication_state['id']){
+		if(isset($publication_state['id']) && $publication_state['id']){
 			$form = str_replace("!!form_title!!",$msg['editorial_content_publication_state_edit'],$form);
 			$form = str_replace("!!label!!",htmlentities($publication_state['label'],ENT_QUOTES,$charset),$form);
 			$form = str_replace("!!visible!!",($publication_state['opac_show'] ? "checked='checked'": ""),$form);
@@ -150,7 +150,7 @@ class scan_request_admin_status {
 			$form = str_replace("!!bouton_supprimer!!","",$form);
 		}
 		for ($i=1;$i<=20; $i++) {
-			if ($publication_state['class_html']=="statutnot".$i) $checked = "checked";
+		    if (isset($publication_state['class_html']) && $publication_state['class_html']=="statutnot".$i) $checked = "checked";
 			else $checked = "";
 			$couleur[$i]="<span for='statutnot".$i."' class='statutnot".$i."' style='margin: 7px;'><img src='".get_url_icon('spacer.gif')."' width='10' height='10' />
 					<input id='statutnot".$i."' type=radio name='scan_request_status_class_html' value='statutnot".$i."' $checked class='checkbox' /></span>";

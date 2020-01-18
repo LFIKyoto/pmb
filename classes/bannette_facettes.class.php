@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannette_facettes.class.php,v 1.37 2018-12-20 11:00:19 mbertin Exp $
+// $Id: bannette_facettes.class.php,v 1.43.2.1 2019-11-06 08:53:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,6 +10,7 @@ require_once ($include_path."/templates/bannette_facettes.tpl.php");
 require_once($class_path."/notice_tpl_gen.class.php");
 require_once ("$class_path/mono_display.class.php") ; 
 require_once ("$class_path/serial_display.class.php") ;
+require_once ($class_path."/record_display.class.php") ;
 require_once($class_path."/notice_tpl_gen.class.php");
 
 class bannette_facettes{
@@ -17,6 +18,7 @@ class bannette_facettes{
 	public $facettes=array(); // facettes associées à la bannette
 	public $environement=array(); // affichage des notices
 	public $noti_tpl_document=0; // template de notice
+	public $noti_django_directory = '';
 	public $bannette_display_notice_in_every_group=0;
 	public $bannette_document_group=0;
 	public $sommaires=array(); // donnée du document à générer par un templatze
@@ -32,7 +34,7 @@ class bannette_facettes{
 		global $include_path,$msg;
 		global $dbh, $champ_base;
 	
-		if(!is_array($champ_base) || (!count($champ_base))) {
+		if(empty($champ_base) || !is_array($champ_base)) {
 			$file = $include_path."/indexation/notices/champs_base_subst.xml";
 			if(!file_exists($file)){
 				$file = $include_path."/indexation/notices/champs_base.xml";
@@ -60,7 +62,9 @@ class bannette_facettes{
 				$this->facettes[$i] = new stdClass();
 				$this->facettes[$i]->critere=$r->ban_facette_critere;
 				$this->facettes[$i]->ss_critere= $r->ban_facette_ss_critere;
-				$this->facettes[$i]->order_sort= $r->ban_facette_order;
+				$this->facettes[$i]->order= $r->ban_facette_order;
+				$this->facettes[$i]->order_sort= $r->ban_facette_order_sort;
+				$this->facettes[$i]->datatype_sort= $r->ban_facette_datatype_sort;
 				
 				if(!$this->bannette_display_notice_in_every_group){
 					$this->bannette_display_notice_in_every_group=$r->display_notice_in_every_group;
@@ -105,7 +109,7 @@ class bannette_facettes{
 		$i = 0;
 	
 		if($id!=100){
-			$isbd='';
+			$isbd = array();
 			$callable = array();
 			while($bool_search==0){
 				if($array['FIELD'][$i]['ID']==$id){
@@ -158,8 +162,18 @@ class bannette_facettes{
 			if(${$critere} > 0){
 				$ss_critere = 'list_ss_champs_'.$i;
 				global ${$ss_critere};
+				$order_sort = 'order_sort_'.$i;
+				global ${$order_sort};
+				$datatype_sort = 'datatype_sort_'.$i;
+				global ${$datatype_sort};
 								
-				$rqt = "insert into bannette_facettes set num_ban_facette = '".$this->id."', ban_facette_critere = '".${$critere}."', ban_facette_ss_critere='".${$ss_critere}."', ban_facette_order='".$order."' ";
+				$rqt = "insert into bannette_facettes 
+                    set num_ban_facette = '".$this->id."', 
+                    ban_facette_critere = '".${$critere}."', 
+                    ban_facette_ss_critere='".${$ss_critere}."', 
+                    ban_facette_order='".$order."',
+                    ban_facette_order_sort='".${$order_sort}."',
+                    ban_facette_datatype_sort='".${$datatype_sort}."' ";
 				pmb_mysql_query($rqt);
 				$order++;				
 			}			
@@ -205,7 +219,8 @@ class bannette_facettes{
 		$array = $this->array_sort();
 		$tpl = $tpl_facette_elt_ajax;
 
-		$i=0;
+		$select = '';
+		$i = 0;
 		foreach ($array as $id => $value) {
 			if(!$i){
 				$select.="<option value=".$id." selected='selected'>".$value."</option>";
@@ -215,6 +230,12 @@ class bannette_facettes{
 		}
 		$tpl = str_replace('!!i_field!!', $i_field, $tpl);
 		$tpl = str_replace("!!liste1!!",$select,$tpl);
+		$tpl = str_replace('!!order_sort_asc_checked!!', "checked='checked'", $tpl);
+		$tpl = str_replace('!!order_sort_desc_checked!!', "", $tpl);
+		
+		$tpl = str_replace('!!datatype_sort_alpha_checked!!', "checked='checked'", $tpl);
+		$tpl = str_replace('!!datatype_sort_num_checked!!', "", $tpl);
+		$tpl = str_replace('!!datatype_sort_date_checked!!', "", $tpl);
 		$tpl = str_replace("!!id_bannette!!",$this->id,$tpl);
 		return $tpl;
 	}	
@@ -248,6 +269,13 @@ class bannette_facettes{
 				}
 			}				
 			$tpl = str_replace("!!liste1!!",$select,$tpl);
+			
+			$tpl = str_replace('!!order_sort_asc_checked!!', (empty($this->facettes[$i]->order_sort) ? "checked='checked'" : ""), $tpl);
+			$tpl = str_replace('!!order_sort_desc_checked!!', (!empty($this->facettes[$i]->order_sort) ? "checked='checked'" : ""), $tpl);
+			
+			$tpl = str_replace('!!datatype_sort_alpha_checked!!', (empty($this->facettes[$i]->datatype_sort) || $this->facettes[$i]->datatype_sort == 'alpha' ? "checked='checked'" : ""), $tpl);
+			$tpl = str_replace('!!datatype_sort_num_checked!!', (isset($this->facettes[$i]->datatype_sort) && $this->facettes[$i]->datatype_sort == 'num' ? "checked='checked'" : ""), $tpl);
+			$tpl = str_replace('!!datatype_sort_date_checked!!', (isset($this->facettes[$i]->datatype_sort) && $this->facettes[$i]->datatype_sort == 'date' ? "checked='checked'" : ""), $tpl);
 			$facettes_tpl.=$tpl;
 		}
 				
@@ -290,10 +318,11 @@ class bannette_facettes{
 		$this->environement["ex"] = 0 ;
 		$this->environement["exnum"] = 1 ;
 		
+		$tpl_document='';
 		if($this->noti_tpl_document) {
-			$tpl_document=$this->noti_tpl_document->build_notice($notice_id, $deflt2docs_location, false, $id_bannette);
-		} else {
-			$tpl_document='';
+			$tpl_document .= $this->noti_tpl_document->build_notice($notice_id, $deflt2docs_location, false, $id_bannette);
+		} elseif($this->noti_django_directory) {
+		    $tpl_document .= record_display::get_display_in_result($notice_id, $this->noti_django_directory);
 		}
 		if(!$tpl_document) {
 			$n=pmb_mysql_fetch_object(@pmb_mysql_query("select * from notices where notice_id=".$notice_id));
@@ -327,15 +356,28 @@ class bannette_facettes{
 			
 		$critere= $facettes_list[0]->critere;
 		$ss_critere= $facettes_list[0]->ss_critere;
+		$order_sort= intval($facettes_list[0]->order_sort);
+		$datatype_sort= $facettes_list[0]->datatype_sort;
 	
+		$order_by = 'ORDER BY ';
+		if ($datatype_sort == 'date') {
+		    $order_by .= " STR_TO_DATE(value,'".$msg['format_date']."')";
+		} else {
+		    $order_by .= " value";
+		}
+		if($order_sort == 0){
+		    $order_by .= " asc";
+		} else {
+		    $order_by .= " desc";
+		}
 		if ($dsi_bannette_notices_order) {
 			$req = "SELECT * FROM notices_fields_global_index LEFT JOIN notices on (id_notice=notice_id)
 			WHERE id_notice IN (".$notices.")
-			AND code_champ = ".$critere."	AND code_ss_champ = ".$ss_critere." AND lang in ('','".$lang."') order by value,".$dsi_bannette_notices_order;
+			AND code_champ = ".$critere."	AND code_ss_champ = ".$ss_critere." AND lang in ('','".$lang."') ".$order_by.",".$dsi_bannette_notices_order;
 		} else {
 			$req = "SELECT * FROM notices_fields_global_index
 			WHERE id_notice IN (".$notices.")
-			AND code_champ = ".$critere."	AND code_ss_champ = ".$ss_critere." AND lang in ('','".$lang."') order by value ";
+			AND code_champ = ".$critere."	AND code_ss_champ = ".$ss_critere." AND lang in ('','".$lang."') ".$order_by;
 		}	
 		
 		//		print $req."<br>";
@@ -393,7 +435,7 @@ class bannette_facettes{
 					$already_printed=array();
 				}
 				
-				if(!sizeof($already_printed) || sizeof(array_diff($contens["values"],$already_printed))){
+				if (empty($already_printed) || !empty(array_diff($contens["values"],$already_printed))) {
 
 					if($this->gen_summary && $rang==1){
 						$this->index++;
@@ -439,7 +481,7 @@ class bannette_facettes{
 				}elseif(isset($contens["folder"]) && count($contens["folder"])){
 					
 					foreach($contens['folder'] as $folder2=>$values2){
-						if(!sizeof($already_printed) || sizeof(array_diff($values2["values"],$already_printed))){
+						if (empty($already_printed) || !empty(array_diff($values2["values"], $already_printed))) {
 							if($this->gen_summary && $rang==1){
 								$this->index++;
 								$this->summary.="<a href='#[".$this->index."]' class='summary_elt'>".htmlentities($this->index." - ".$folder,ENT_QUOTES,$charset)."</a><br />";
@@ -500,7 +542,7 @@ class bannette_facettes{
 					//on vide $already_printed pour afficher systèmatiquement la notice dans chaque groupe
 					$already_printed=array();
 				}	
-				if(!sizeof($already_printed) || sizeof(array_diff($contens["values"],$already_printed))){					
+				if (empty($already_printed) || !empty(array_diff($contens["values"], $already_printed))) {					
 					$this->index++;
 					$this->sommaires[$this->index]['title']=$folder;
 					$this->sommaires[$this->index]['level']=$rang;												
@@ -527,7 +569,7 @@ class bannette_facettes{
 				}elseif(isset($contens["folder"]) && count($contens["folder"])){
 						
 					foreach($contens['folder'] as $folder2=>$values2){
-						if(!sizeof($already_printed) || sizeof(array_diff($values2["values"],$already_printed))){
+						if (empty($already_printed) || !empty(array_diff($values2["values"], $already_printed)) || !empty($values2['folder'])) {
 							$this->index++;
 							$this->sommaires[$this->index]['title']=$folder;
 							$this->sommaires[$this->index]['level']=$rang;						

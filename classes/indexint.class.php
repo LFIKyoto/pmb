@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: indexint.class.php,v 1.101 2018-12-27 14:56:01 dgoron Exp $
+// $Id: indexint.class.php,v 1.103 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -44,8 +44,15 @@ class indexint {
 	// ---------------------------------------------------------------
 	public function __construct($id=0,$id_pclass=1) {
 		$this->indexint_id = $id+0;
-		$this->id_pclass=$id_pclass;
+		$this->init_id_pclass($id_pclass);
 		$this->getData();
+	}
+	
+	protected function init_id_pclass($id_pclass=1) {
+		$this->id_pclass=$id_pclass;
+		if(!pclassement::is_visible($id_pclass)) {
+			$this->id_pclass = pclassement::get_default_id($id_pclass);
+		}
 	}
 	
 	// ---------------------------------------------------------------
@@ -239,7 +246,7 @@ class indexint {
 		
 		if(!$this->indexint_id)
 			// impossible d'accéder à cette indexation
-			return $msg[indexint_unable];
+			return $msg['indexint_unable'];
 
 		if(($usage=aut_pperso::delete_pperso(AUT_TABLE_INDEXINT, $this->indexint_id,0) )){
 			// Cette autorité est utilisée dans des champs perso, impossible de supprimer
@@ -286,7 +293,7 @@ class indexint {
 			return false;
 		} else {
 			// Cette indexation est utilisée dans des notices, impossible de la supprimer
-			return '<strong>'.$this->name."</strong><br />${msg[indexint_used]}";
+			return '<strong>'.$this->name."</strong><br />${msg['indexint_used']}";
 		}
 	}
 
@@ -304,7 +311,7 @@ class indexint {
 		}
 		if (($this->indexint_id == $by) || (!$this->indexint_id))  {
 			// impossible de remplacer une autorité par elle-même
-			return $msg[indexint_self];
+			return $msg['indexint_self'];
 		}
 		
 		$aut_link= new aut_link(AUT_TABLE_INDEXINT,$this->indexint_id);
@@ -386,7 +393,7 @@ class indexint {
 				
 			}else {
 				require_once("$include_path/user_error.inc.php");
-				warning($msg[indexint_update], $msg[indexint_unable]);
+				warning($msg['indexint_update'], $msg['indexint_unable']);
 				return FALSE;
 			}
 		} else {
@@ -395,7 +402,7 @@ class indexint {
 			$check = pmb_mysql_query($dummy, $dbh);
 			if(pmb_mysql_num_rows($check)) {
 				require_once("$include_path/user_error.inc.php");
-				warning($msg[indexint_create], $msg[indexint_exists]);
+				warning($msg['indexint_create'], $msg['indexint_exists']);
 				return FALSE;
 			}
 			$requete = 'INSERT INTO indexint '.$requete.';';
@@ -414,7 +421,7 @@ class indexint {
 			}
 			else {
 				require_once("$include_path/user_error.inc.php");
-				warning($msg[indexint_create], $msg[indexint_unable_create]);
+				warning($msg['indexint_create'], $msg['indexint_unable_create']);
 				return FALSE;
 			}
 		}

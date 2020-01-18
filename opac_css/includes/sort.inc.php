@@ -22,7 +22,7 @@ if ($raz_sort) {
 
 $page_en_cours = '';
 if (isset($_GET['page_en_cours'])) {
-	$page_en_cours = $_GET['page_en_cours'];
+    $page_en_cours = strip_tags($_GET['page_en_cours']);
 }
 
 if (isset($params)) {
@@ -56,10 +56,10 @@ if (isset($_GET['modif_sort'])) {
 			echo $tmpStr;
 		} else {
 			$temp_tri = $_SESSION["nb_sortnotices"]-1;
-			print "<script> document.location='./index.php?" . $page_en_cours . "&get_last_query=" . $_SESSION["last_query"] . "&sort=" . $temp_tri."';</script>";	
+			print "<script> document.location='./index.php?" . $page_en_cours . "&get_last_query=" . htmlentities($_SESSION["last_query"],ENT_QUOTES,$charset) . "&sort=" . $temp_tri."';</script>";	
 		}	
 	} else {
-		print "<script> document.location='./index.php?" . $page_en_cours . "&get_last_query=" . $_SESSION["last_query"] . "';</script>";	
+	    print "<script> document.location='./index.php?" . $page_en_cours . "&get_last_query=" . htmlentities($_SESSION["last_query"],ENT_QUOTES,$charset) . "';</script>";	
 	}
 } else {
 	$tmpStr = $sort->show_tris_form();

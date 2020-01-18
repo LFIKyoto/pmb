@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scheduler_planning.class.php,v 1.11 2018-02-01 17:08:01 mbertin Exp $
+// $Id: scheduler_planning.class.php,v 1.12.4.1 2019-10-09 10:14:45 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 	
@@ -51,7 +51,7 @@ class scheduler_planning {
 	
 	public function __construct($id=0) {
 		$this->id = $id += 0;
-		if(get_called_class() != 'scheduler_planning') {
+		if(static::class != 'scheduler_planning') {
 			$this->get_messages();
 		}
 	}
@@ -60,7 +60,7 @@ class scheduler_planning {
 	public function get_messages() {
 		global $base_path, $lang;
 	
-		$tache_path = $base_path."/admin/planificateur/".str_replace(array('scheduler_', '_planning'), '', get_called_class());
+		$tache_path = $base_path."/admin/planificateur/".str_replace(array('scheduler_', '_planning'), '', static::class);
 		if (file_exists($tache_path."/messages/".$lang.".xml")) {
 			$file_name=$tache_path."/messages/".$lang.".xml";
 		} else if (file_exists($tache_path."/messages/fr_FR.xml")) {
@@ -332,8 +332,8 @@ class scheduler_planning {
 			$this->path_upload = "";
 		}
 		
-		$this->perio_heure = ($task_perio_heure == '' ? '*' : stripslashes($task_perio_heure));
-		$this->perio_minute = ($task_perio_min == '' ? '*' : stripslashes($task_perio_min));
+		$this->perio_heure = ($task_perio_heure == '' ? '00' : stripslashes($task_perio_heure));
+		$this->perio_minute = ($task_perio_min == '' ? '00' : stripslashes($task_perio_min));
 		
 		$this->perio_jour_mois = $this->build_perio_property_from_form($chkbx_task_quotidien);
 		$this->perio_jour = $this->build_perio_property_from_form($chkbx_task_hebdo);

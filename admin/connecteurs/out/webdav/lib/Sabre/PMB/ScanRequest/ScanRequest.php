@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ScanRequest.php,v 1.15 2016-12-20 09:59:09 dgoron Exp $
+// $Id: ScanRequest.php,v 1.17 2019-07-05 13:25:14 btafforeau Exp $
 namespace Sabre\PMB\ScanRequest;
 
 use Sabre\DAV;
@@ -10,7 +10,7 @@ use Sabre\DAV;
 class ScanRequest extends Collection {
 	protected $scan_request;
 
-	function __construct($name,$config) {
+	public function __construct($name,$config) {
 		parent::__construct($config);
 		
 		$id = substr($this->get_code_from_name($name),1);
@@ -18,11 +18,11 @@ class ScanRequest extends Collection {
 		$this->type = "scan_request";
 	}
 	
-	function getName() {
+	public function getName() {
 		return $this->format_name($this->scan_request->get_title()." (R".$this->scan_request->get_id().")");
 	}
 
-	function getChildren() {
+	public function getChildren() {
 		$children = array();
 		$query = "select scan_request_linked_record_num_notice as notice_id 
 				from scan_request_linked_records 
@@ -77,7 +77,7 @@ class ScanRequest extends Collection {
 	}
 
 	public function create_scan_request_file($notice_id, $bulletin_id, $name, $data = null,$from_music="") {
-		global $charset,$base_path,$id_rep;
+	    global $charset,$base_path,$id_rep, $matches;
 		global $pmb_nomenclature_record_children_link;
 		
 		if($this->check_write_permission()){
@@ -102,7 +102,7 @@ class ScanRequest extends Collection {
 			if(!file_exists($filename)){
 				//Erreur de copie du fichier
 				unlink($filename);
-				throw new Sabre_DAV_Exception_FileNotFound('Empty file (filename ' . $filename . ')');
+				throw new DAV\Exception\NotFound('Empty file (filename ' . $filename . ')');
 			}
 			if(!filesize($filename)){
 				//Premier PUT d'un client Windows...

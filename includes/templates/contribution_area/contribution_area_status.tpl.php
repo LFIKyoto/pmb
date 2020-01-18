@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution_area_status.tpl.php,v 1.1 2018-01-09 11:21:07 dgoron Exp $
+// $Id: contribution_area_status.tpl.php,v 1.2 2019-05-27 10:32:59 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $admin_contribution_area_status_form, $base_path, $current_module, $msg;
 
 //statuts de contribution
 $admin_contribution_area_status_form = "

@@ -2,14 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authors.tpl.php,v 1.55 2018-11-03 15:57:42 tsamson Exp $
+// $Id: authors.tpl.php,v 1.59.6.1 2019-11-13 16:15:02 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 global $author_form, $author_replace; 
 global $pmb_autorites_verif_js, $base_path;
 global $pmb_form_authorities_editables, $PMBuserid;
-
+global $msg, $current_module, $charset, $author_warning_author_exist;
 //	----------------------------------
 // $author_form : form saisie auteur
 // champs :
@@ -23,9 +23,13 @@ global $pmb_form_authorities_editables, $PMBuserid;
 $author_form = jscript_unload_question()."
 ".($pmb_autorites_verif_js!= "" ? "<script type='text/javascript' src='$base_path/javascript/$pmb_autorites_verif_js'></script>":"")."
 <script type='text/javascript'>
-<!--
-	function test_form(form)
-	{";
+	function test_form(form) {
+		if (typeof check_form == 'function') {
+			if (!check_form()) {
+				return false;
+			}
+		}
+	";
 
 if ($pmb_autorites_verif_js != "") {
 	$author_form .= "
@@ -62,7 +66,6 @@ function confirm_delete() {
 		w=window.open(document.getElementById(id).value);
 		w.focus();
 	}
--->
 </script>
 <script src='javascript/ajax.js'></script>
 <script type='text/javascript'>
@@ -123,7 +126,7 @@ function confirm_delete() {
 					<label class='etiquette' for='author_nom'>$msg[201]</label>
 				</div>
 				<div class='row'>
-					<input type='text' class='saisie-30em' id='author_nom' name='author_nom' value=\"!!author_nom!!\" />
+					<input type='text' class='saisie-30em' id='author_nom' name='author_nom' value=\"!!author_nom!!\" data-pmb-deb-rech='1'/>
 				</div>
 	        </div>
 			<div id='el0Child_1_b' class='colonne_suite' movable='yes' title=\"".htmlentities($msg[202], ENT_QUOTES, $charset)."\">
@@ -183,7 +186,7 @@ function confirm_delete() {
 					<label class='etiquette' for='form_subdivision'>".$msg["congres_subdivision_libelle"]."</label>
 				</div>
 				<div class='row'>
-					<input type='text' class='saisie-30em' id='form_subdivision' name='subdivision' value=\"!!subdivision!!\" />
+					<input type='text' class='saisie-80em' id='form_subdivision' name='subdivision' value=\"!!subdivision!!\" />
 				</div>
 	        </div>
 			<div id='el0Child_5_b' class='colonne_suite' movable='yes' title=\"".htmlentities($msg["congres_numero_libelle"], ENT_QUOTES, $charset)."\">
@@ -257,7 +260,9 @@ function confirm_delete() {
 <div class='row'>
 	<div class='left'>
 		<input type='button' class='bouton' value='$msg[76]' id='btcancel' onClick=\"unload_off();document.location='!!cancel_action!!';\" />
-		<input type='button' value='$msg[77]' class='bouton' id='btsubmit' onClick=\"if (test_form(this.form)) this.form.submit();\" />
+		<input type='button' value='$msg[77]' class='bouton' id='btsubmit' onClick=\"document.getElementById('save_and_continue').value=0;if (test_form(this.form)) this.form.submit();\" />
+		<input type='hidden' name='save_and_continue' id='save_and_continue' value='' />
+        <input type='button' id='update_continue' class='bouton' value='" . $msg['save_and_continue'] . "' onClick=\"document.getElementById('save_and_continue').value=1;if (test_form(this.form)) this.form.submit();\" />
 		!!remplace!!
 		!!voir_notices!!
 		!!dupliquer!!

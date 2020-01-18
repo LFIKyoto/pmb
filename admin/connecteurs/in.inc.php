@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: in.inc.php,v 1.30 2018-10-23 11:58:07 dgoron Exp $
+// $Id: in.inc.php,v 1.31 2019-08-01 08:59:42 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -104,7 +104,7 @@ function show_connectors() {
 				print "</td>";
 				
 				print "<td>";
-				print "<input type='button' class='bouton_small' value='".$msg["connecteurs_empty"]."' onClick='if (confirm(\"".$msg["connecteurs_del_notice_confirm"]."\")) document.location=\"admin.php?categ=connecteurs&sub=in&act=empty&source_id=".$s["SOURCE_ID"]."&id=$id\"'/>";
+				print "<input type='button' class='bouton_small' value='".$msg["connecteurs_empty"]."' onClick=\"if (confirm('".addslashes($msg["connecteurs_del_notice_confirm"])."')) document.location='admin.php?categ=connecteurs&sub=in&act=empty&source_id=".$s["SOURCE_ID"]."&id=".$id."'\"/>";
 				print "</td>";
 			}
 			else {

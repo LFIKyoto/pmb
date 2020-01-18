@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_typepage_opac.class.php,v 1.11 2018-05-23 14:19:48 dgoron Exp $
+// $Id: cms_module_common_datasource_typepage_opac.class.php,v 1.12 2019-07-19 08:02:14 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -376,6 +376,11 @@ class cms_module_common_datasource_typepage_opac {
 					return '2901';
 					break;
 			}
+		}
+		
+		//appel AJAX - Consultation d'un document du portfolio
+		if(strpos($url,'ajax.php') && strpos($url,'cms') && strpos($url,'document') && strpos($url,'render')) {
+		    return '2003';
 		}
 		
 		//appel AJAX - Log url externe

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bulletin_affichage.inc.php,v 1.24 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: bulletin_affichage.inc.php,v 1.27 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -11,8 +11,9 @@ require_once($base_path.'/classes/notice_affichage.class.php');
 require_once($base_path.'/classes/notice.class.php');
 
 function bulletin_affichage_reduit($id, $no_link=0) {
-	global $msg, $dbh, $css, $charset, $opac_show_exemplaires ;
-	$requete = "SELECT bulletin_id, bulletin_numero, bulletin_notice, mention_date, date_date, date_format(date_date, '".$msg["format_date_sql"]."') as aff_date_date FROM bulletins WHERE bulletin_id='$id'";
+	global $msg, $dbh, $css, $charset, $opac_show_exemplaires;
+	
+	$requete = "SELECT bulletin_id, bulletin_numero, bulletin_notice, mention_date, date_date, bulletin_titre, bulletin_cb, date_format(date_date, '".$msg["format_date_sql"]."') as aff_date_date FROM bulletins WHERE bulletin_id='$id'";
 	$res3 = pmb_mysql_query($requete, $dbh);
 	$obj = pmb_mysql_fetch_object($res3) ;
 	$notice3 = new notice($obj->bulletin_notice);
@@ -28,8 +29,9 @@ function bulletin_affichage_reduit($id, $no_link=0) {
 	} else $suite_aff = "" ;
 	if ($obj->mention_date) $res_print .=  $suite_aff.$msg['bull_mention_date'].$obj->mention_date."\n"; 
 	if ($obj->date_date) $res_print .= "<br />".$msg['bull_date_date']." ".$obj->aff_date_date." \n";     
+	$code_cb_bulletin = '';
 	if ($obj->bulletin_cb) {
-		$res_print .= "<br />".$msg[code_start]." ".htmlentities($obj->bulletin_cb,ENT_QUOTES, $charset)."\n";
+		$res_print .= "<br />".$msg['code_start']." ".htmlentities($obj->bulletin_cb,ENT_QUOTES, $charset)."\n";
 		$code_cb_bulletin = $obj->bulletin_cb;
 	}
 
@@ -44,8 +46,13 @@ function bulletin_affichage_reduit($id, $no_link=0) {
 function bulletin_affichage($id,$type=""){
 
 	global $dbh, $msg;
-	global $opac_show_exemplaires ;
+	global $opac_show_exemplaires, $css, $charset, $opac_resa_planning, $opac_resa, $opac_resa_popup, $opac_max_resa, $popup_resa, $opac_cart_allow, $allow_book;
+	
 	$display ="";
+	$code_cb_bulletin = '';
+	$ret_resa = '';
+	$message_nbresa = '';	
+	$fonction = '';
 	$requete = "SELECT bulletin_id, bulletin_numero, bulletin_notice, mention_date, date_date, bulletin_titre, bulletin_cb, date_format(date_date, '".$msg["format_date_sql"]."') as aff_date_date,num_notice FROM bulletins WHERE bulletin_id='$id'";
 	$res = @pmb_mysql_query($requete, $dbh);
 	while(($obj=pmb_mysql_fetch_array($res))) {

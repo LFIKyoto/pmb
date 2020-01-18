@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_sort_fields.class.php,v 1.3 2017-06-01 09:28:16 dgoron Exp $
+// $Id: frbr_sort_fields.class.php,v 1.3.8.1 2019-09-19 10:35:30 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -52,11 +52,13 @@ class frbr_sort_fields extends frbr_fields {
 				$r.="</td>";
 				$r.="<td><span class='field_critere'>";//Colonne 2
 				if ($f[0]=="f") {
-					if($f[2]) {
+				    if($f[2] && isset(self::$fields[$this->type]["FIELD"][$f[1]]["TABLE"]) && isset($msg[self::$fields[$this->type]["FIELD"][$f[1]]["TABLE"][0]["TABLEFIELD"][$f[2]]["NAME"]])) {
 						$r.=htmlentities($msg[self::$fields[$this->type]["FIELD"][$f[1]]["TABLE"][0]["TABLEFIELD"][$f[2]]["NAME"]],ENT_QUOTES,$charset);
-					} else {
+				    } elseif (isset($msg[self::$fields[$this->type]["FIELD"][$f[1]]["NAME"]])) {
 						$r.=htmlentities($msg[self::$fields[$this->type]["FIELD"][$f[1]]["NAME"]],ENT_QUOTES,$charset);
-					}
+				    } else {
+				        $r.=htmlentities(self::$fields[$this->type]["FIELD"][$f[1]]["NAME"],ENT_QUOTES,$charset);
+				    }
 				} elseif(array_key_exists($f[0],static::$pp)) {
 					$r.=htmlentities(static::$pp[$f[0]]->t_fields[$f[2]]["TITRE"],ENT_QUOTES,$charset);
 				}
@@ -90,7 +92,6 @@ class frbr_sort_fields extends frbr_fields {
 	
 	public function unformat_fields($to_unformat) {
 		global $fields;
-
 		$fields=array();
 		for ($i=0; $i<count($to_unformat); $i++) {
 			$fields[$i] = $to_unformat[$i]["NAME"];

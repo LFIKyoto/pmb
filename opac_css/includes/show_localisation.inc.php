@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: show_localisation.inc.php,v 1.85 2017-11-22 09:06:54 ngantier Exp $
+// $Id: show_localisation.inc.php,v 1.93 2019-06-18 12:34:53 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -16,13 +16,13 @@ if (!$opac_nb_sections_per_line) $opac_nb_sections_per_line=6;
 
 //Attaques XSS et injection SQL
 if(isset($nc)){
-	$nc+=0;
+	$nc = intval($nc);
 }
 if(isset($lcote)){
-	$lcote+=0;
+    $lcote = intval($lcote);
 }
 if(isset($ssub)){
-	$ssub+=0;
+    $ssub = intval($ssub);
 }
 if(isset($plettreaut)){
 	$plettreaut=pmb_alphabetic("^a-z0-9A-Z\-\s","",$plettreaut);
@@ -85,6 +85,8 @@ function affiche_notice_navigopac($requete){
 	
 	//FACETTES
 	$facettes_tpl = '';
+	//comparateur de facettes : on ré-initialise
+	$_SESSION['facette']=array();
 	if($nbr_lignes){
 		require_once($base_path.'/classes/facette_search.class.php');
 		$facettes_tpl .= facettes::get_display_list_from_query($requete_initiale);
@@ -163,7 +165,7 @@ if (!$location) {
 	}
 } else {
 	// id localisation fournie
-	$location+=0;
+    $location = intval($location);
 	$requete="select location_libelle,surloc_num, location_pic, name, adr1, adr2, cp, town, state, country, phone, email, website, commentaire, show_a2z from docs_location where idlocation='$location' and location_visible_opac=1";
 	$resultat=pmb_mysql_query($requete);
 	$objloc=pmb_mysql_fetch_object($resultat);
@@ -183,7 +185,7 @@ if (!$location) {
 		$resultat=pmb_mysql_query($requete);
 		if (pmb_mysql_num_rows($resultat)) {
 			if ($r=pmb_mysql_fetch_object($resultat)) {
-				if ($back_surloc) $url_surloc = $back_surloc;
+				if (!empty($back_surloc)) $url_surloc = $back_surloc;
 				else $url_surloc = "index.php?lvl=section_see&surloc=".$r->surloc_id;
 				$sur_location_link="<span class=\"espaceResultSearch\">&nbsp;</span><a href=\"".$url_surloc."\">". htmlentities( $r->surloc_libelle,ENT_QUOTES,$charset)."</a>";
 			}
@@ -215,7 +217,7 @@ if (!$location) {
 
 	//Il n'y a pas de section sélectionnée
 	if (!$id) {
-		$location+=0;
+	    $location = intval($location);
 		$requete="select idsection, section_libelle, section_pic from docs_section, exemplaires where expl_location=$location and section_visible_opac=1 and expl_section=idsection group by idsection order by section_libelle ";
 		$resultat=pmb_mysql_query($requete);
 		print "<b>".sprintf($msg["l_title_search"],"<a href='index.php?'>","</a>")."</b><br /><br />";
@@ -257,9 +259,9 @@ if (!$location) {
 		//enregistrement de l'endroit actuel dans la session
 		rec_last_authorities();
 		
-		$id+=0;
-		$location+=0;
-		if ($back_surloc) {
+		$id = intval($id);
+		$location = intval($location);
+		if (!empty($back_surloc)) {
 			$ajout_back = "&back_surloc=".rawurlencode($back_surloc)."&back_loc=".rawurlencode($url_loc).$param_section_see;
 		} else {
 			$ajout_back = "";
@@ -420,6 +422,20 @@ if (!$location) {
 			}
 		}else{//Navigation par un plan de classement
 
+			if(!isset($dcote) || !$dcote) {
+				$query = "SELECT distinct SUBSTR(expl_cote,1,1) as dcote  FROM notices $acces_j ,exemplaires $statut_j ";
+				$query.= "where expl_location=$location and expl_section=$id and notice_id=expl_notice ";
+				$query.= $statut_r;
+				$query.= " UNION ";
+				$query .= "SELECT distinct SUBSTR(expl_cote,1,1) as dcote FROM notices $acces_j ,exemplaires, bulletins $statut_j ";
+				$query.= "where  expl_location=$location and expl_section=$id and notice_id=bulletin_notice and expl_bulletin=bulletin_id ";
+				$query.= $statut_r;
+				$result = pmb_mysql_query($query);
+				if($result && pmb_mysql_num_rows($result) == 1) {
+					//Afin d'afficher les sous-niveaux du premier niveau
+					$dcote = pmb_mysql_result($result, 0, 0);
+				}
+			}
 			if (strlen($dcote)||($nc==1)) print "<a href='index.php?lvl=section_see&location=".$location."&id=".$id.$ajout_back."'>";
 			print pmb_bidi($section_libelle);
 
@@ -659,7 +675,7 @@ if (!$location) {
 						reset($index);
 						$ssub_val=array();
 						//Regroupement des libellés identiques hors dewey
-						while (list($key,$val)=each($index)) {
+						foreach ($index as $key => $val) {
 							if ($val["ssub"]) {
 								if ($ssub_val[$val["comment"]]) {
 									$ssub_val[$val["comment"]]["dcote"].=",".$val["dcote"];
@@ -677,7 +693,7 @@ if (!$location) {
 							reset($ssub_val);
 							asort($ssub_val);
 							print "<table>";
-							while (list($key,$val)=each($ssub_val)) {
+							foreach ($ssub_val as $key => $val) {
 								if ($cur_col==0) print "<tr>";
 								if (($key=="NC")||($key==$msg["l_unclassified"]."@ssub")) $nc1=1; else $nc1=0;
 								print "<td style='width:33%'><a href='./index.php?lvl=section_see&id=".$id."&location=".$location."&dcote=".$val["dcote"]."&lcote=".$val["lcote"]."&nc=".$nc1."&ssub=".$val["ssub"].$ajout_back."'><img src='".get_url_icon('folder.gif')."' alt='folder' class='center' style='border:0px'/>".htmlentities($val["comment"],ENT_QUOTES,$charset)."</a></td>";

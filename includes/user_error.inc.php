@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: user_error.inc.php,v 1.25 2017-11-22 11:07:34 dgoron Exp $
+// $Id: user_error.inc.php,v 1.26 2019-01-10 10:41:50 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -387,4 +387,5 @@ function return_box_confirm_message($error_title, $error_message, $ret_adr='', $
 			<input type='button' name='cancel' class='bouton' value=\" ".$cancel_texte_bouton." \" onClick='document.location=\"$cancel_adr\"'>
 		</form>
 	</div>";
+	return $html;
 }

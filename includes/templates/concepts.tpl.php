@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: concepts.tpl.php,v 1.1 2013-08-14 15:23:28 mbertin Exp $
+// $Id: concepts.tpl.php,v 1.3 2019-05-27 14:50:51 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $aut_concepts_menu, $msg;
 
 // Menu concepts
 $aut_concepts_menu = "

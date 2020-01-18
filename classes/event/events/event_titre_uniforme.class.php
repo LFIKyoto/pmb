@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: event_titre_uniforme.class.php,v 1.2 2018-10-23 12:40:53 arenou Exp $
+// $Id: event_titre_uniforme.class.php,v 1.3 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -23,7 +23,7 @@ class event_titre_uniforme extends event {
 	}
 
 	public function set_titre_uniforme_id($titre_uniforme_id) {
-		$this->titre_uniforme_id = $titre_uniforme_id+0;
+	    $this->titre_uniforme_id = (int) $titre_uniforme_id;
 		return $this;
 	}
 	
@@ -45,7 +45,7 @@ class event_titre_uniforme extends event {
 	}
 	
 	public function set_source_id($source_id) {
-		$this->source_id = $source_id+0;
+	    $this->source_id = (int) $source_id;
 	}
 
 	public function get_titre_uniforme_isbd() {

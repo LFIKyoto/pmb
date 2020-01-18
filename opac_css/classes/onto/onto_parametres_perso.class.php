@@ -2,13 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_parametres_perso.class.php,v 1.3 2018-09-24 13:39:22 tsamson Exp $
+// $Id: onto_parametres_perso.class.php,v 1.9 2019-08-20 15:11:35 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/parametres_perso.class.php");
 require_once($class_path."/encoding_normalize.class.php");
-require_once($class_path."/onto/onto_cms_parametres_perso.class.php");
 
 class onto_parametres_perso extends parametres_perso {
 	
@@ -29,6 +28,7 @@ class onto_parametres_perso extends parametres_perso {
 		'indexint' => 'http://www.pmbservices.fr/ontology#indexint',
 		'skos' => 'http://www.w3.org/2004/02/skos/core#Concept',
 		'explnum' => 'http://www.pmbservices.fr/ontology#docnum',
+		'expl' => 'http://www.pmbservices.fr/ontology#expl',
 	);
 	
 	/**
@@ -101,12 +101,13 @@ class onto_parametres_perso extends parametres_perso {
 		<rdfs:isDefinedBy rdf:resource='http://www.pmbservices.fr/ontology#'/>
        	<rdf:type rdf:resource='http://www.w3.org/1999/02/22-rdf-syntax-ns#Property'/>
 		<rdfs:domain rdf:resource='" . self::$entities_uri[$this->prefix] . "'/>
-		<rdfs:range rdf:resource='" . $this->uri_range . "'/>
-		<pmb:datatype rdf:resource='" . $this->uri_datatype . "'/>";
+		<rdfs:range rdf:resource='$this->uri_range'/>
+		<pmb:datatype rdf:resource='$this->uri_datatype'/>";
 			$onto.= $this->optional_properties;
 			
 			$onto.= "
-		<pmb:name>" . $this->uri_description . "</pmb:name>
+		<pmb:cp_options>".htmlspecialchars(encoding_normalize::json_encode($t_field["OPTIONS"][0]))."</pmb:cp_options>
+		<pmb:name>$this->uri_description</pmb:name>
     </rdf:Description>
 ";
 			// On n'oublie pas les noeuds blancs
@@ -161,15 +162,19 @@ class onto_parametres_perso extends parametres_perso {
 				
 			case "marclist" :
 				$this->uri_datatype = 'http://www.pmbservices.fr/ontology#marclist';
-				$dom = new DomDocument;
+				$dom = new DomDocument();
 				$dom->loadXML($t_field["OPTIONS"]);
 				$types=$dom->getElementsByTagName('DATA_TYPE');
+				$data_type = '';
 				foreach($types as $type){
 					$data_type = $type->firstChild->nodeValue;
 				}
 				$this->optional_properties.= "
 		<pmb:marclist_type>".$data_type."</pmb:marclist_type>";
 				break;
+			case "date_flot":
+			    $this->uri_datatype = 'http://www.pmbservices.fr/ontology#floating_date';
+			    break;
 			case "text" :
 			case "text_i18n" :
 			case "external" :
@@ -224,18 +229,19 @@ class onto_parametres_perso extends parametres_perso {
 				if (pmb_mysql_num_rows($result)) {
 					while ($row = pmb_mysql_fetch_object($result)) {
 						$this->optional_properties.= "
-        <pmb:list_item rdf:nodeID='list_item_".$this->uri_description."_".$row->id."'/>";
-						$this->blank_nodes.= "
-	<rdf:Description rdf:nodeID='list_item_".$this->uri_description."_".$row->id."'>
-		<rdfs:label xml:lang='fr'>".htmlspecialchars(encoding_normalize::utf8_normalize($row->libelle), ENT_QUOTES, 'utf-8')."</rdfs:label>
-		<pmb:identifier>".htmlspecialchars(encoding_normalize::utf8_normalize($row->id), ENT_QUOTES, 'utf-8')."</pmb:identifier>
-	</rdf:Description>";
+                            <pmb:list_item rdf:nodeID='list_item_".$this->uri_description."_".htmlspecialchars(encoding_normalize::utf8_normalize($row->id), ENT_QUOTES, 'utf-8')."'/>";
+                        $this->blank_nodes.= "
+                            <rdf:Description rdf:nodeID='list_item_".$this->uri_description."_".htmlspecialchars(encoding_normalize::utf8_normalize($row->id), ENT_QUOTES, 'utf-8')."'>
+                                <rdfs:label xml:lang='fr'>".htmlspecialchars(encoding_normalize::utf8_normalize($row->libelle), ENT_QUOTES, 'utf-8')."</rdfs:label>
+                                <pmb:identifier>".htmlspecialchars(encoding_normalize::utf8_normalize($row->id), ENT_QUOTES, 'utf-8')."</pmb:identifier>
+                                <pmb:msg_code></pmb:msg_code>
+                            </rdf:Description>";
 					}
 				}
 				break;
 			case 'query_list':
 				$this->optional_properties.= "
-		<pmb:list_query>".htmlspecialchars($options['QUERY'][0]['value'], ENT_QUOTES, 'utf-8')."</pmb:list_query>";
+                    <pmb:list_query>".htmlspecialchars($options['QUERY'][0]['value'], ENT_QUOTES, 'utf-8')."</pmb:list_query>";
 				break;
 		}
 		return $list_items;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_carousel_view_carousel.class.php,v 1.29 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: cms_module_carousel_view_carousel.class.php,v 1.31 2019-06-14 12:36:53 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/h2o/h2o.php");
@@ -219,7 +219,7 @@ class cms_module_carousel_view_carousel extends cms_module_common_view_django{
 						pause: '".$this->parameters['pause']."',
 						auto: true,
 						autoStart: ".($this->parameters['autostart'] ? "true" : "false").",
-						autoHover: ".($this->parameters['autohover'] ? "true" : "false").",
+						autoHover: ".((isset($this->parameters['autohover']) && $this->parameters['autohover']) ? "true" : "false").",
 						autoControls: false,
 						controls:true,
 						prevImage: '',
@@ -230,7 +230,7 @@ class cms_module_carousel_view_carousel extends cms_module_common_view_django{
 						startText: '',
 						stopImage: '',
 						//stopText:'',
-						pager: ".($this->parameters['pager'] ? "true" : "false").",
+						pager: ".((isset($this->parameters['pager']) && $this->parameters['pager']) ? "true" : "false").",
 						randomStart: false,
 						displaySlideQty: ".$this->parameters['display_quantity'].",
 						moveSlideQty: ".$this->parameters['slide_quantity']."
@@ -366,7 +366,7 @@ class cms_module_carousel_view_carousel extends cms_module_common_view_django{
 	}	
 
 	public function get_format_data_structure(){
-		if (get_called_class() == "cms_module_carousel_view_carousel") {
+	    if (static::class == "cms_module_carousel_view_carousel") {
 			$datas = new cms_module_carousel_datasource_notices();
 			$format_datas = $datas->get_format_data_structure();
  			$format_datas[0]['children'][] = array(

@@ -2,10 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: setcb.php,v 1.20 2018-07-27 10:06:25 dgoron Exp $
+// $Id: setcb.php,v 1.21 2019-06-05 09:04:41 btafforeau Exp $
 // popup de saisie d'un code barre
 
 // YPR 22/11/2004 : on lui passe en paramètre le DOM du champ à modifier en retour $returnDOM
+
+global $form, $field_name, $id, $base_path, $msg, $pmb_numero_exemplaire_auto, $checked, $pmb_numero_exemplaire_auto_script, $include_path;
 
 $base_path      = "../../";
 $base_title		= "";

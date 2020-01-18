@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice.class.php,v 1.50 2018-10-17 13:35:53 dgoron Exp $
+// $Id: notice.class.php,v 1.54 2019-06-18 12:49:29 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -355,7 +355,7 @@ require_once($base_path."/classes/subcollection.class.php");
         // remplacement des champs statiques
         // $print = str_replace("!!notice_id!!", $this->id, $print);
         if ($this->id<>"") {
-            $print = str_replace("!!notice_id!!", $msg['notice_id_start']." ".$this->id." ".$msg['notice_id_end']."<br />", $print);
+            $print = str_replace("!!notice_id!!", $msg['notice_id_start']." ".$this->id." ".(!empty($msg['notice_id_end'])?$msg['notice_id_end']:"")."<br />", $print);
             $print = str_replace("!!notice_id_only!!", $this->id, $print);
         } else {
             $print = str_replace("!!notice_id!!", "", $print);
@@ -398,26 +398,26 @@ require_once($base_path."/classes/subcollection.class.php");
             }
             $print = str_replace("!!tit1!!", $this->tit1, $print);
             $print = str_replace("!!tit1_ico!!", $tit1_ico, $print);
-            $print = str_replace("!!tit1display!!", "<b>$msg[tit1display_start]</b>".$this->tit1."$msg[tit1display_end]<br />", $print);
+            $print = str_replace("!!tit1display!!", '<b>'.$msg['tit1display_start'].'</b>'.$this->tit1.(!empty($msg['tit1display_end']) ? $msg['tit1display_end'] : "")."<br />", $print);
         } else {
             $print = str_replace("!!tit1!!","", $print);
         }
-
-        if ($this->tit2<>"") $print = str_replace("!!tit2!!", "<b>$msg[tit2_start]</b>".$this->tit2."<br />", $print);
+		
+        if ($this->tit2<>"") $print = str_replace("!!tit2!!", '<b>'.$msg['238'].'</b>'.$this->tit2."<br />", $print);
             else $print = str_replace("!!tit2!!", "", $print);
 
-        if ($this->tit3<>"") $print = str_replace("!!tit3!!", "<b>$msg[tit3_start]</b>".$this->tit3."<br />", $print);
+        if ($this->tit3<>"") $print = str_replace("!!tit3!!", '<b>'.$msg['239'].'</b>'.$this->tit3."<br />", $print);
             else $print = str_replace("!!tit3!!", "", $print);
 
-        if ($this->tit4<>"") $print = str_replace("!!tit4!!", "<b>$msg[tit4_start]</b>".$this->tit4."<br />", $print);
+        if ($this->tit4<>"") $print = str_replace("!!tit4!!", '<b>'.$msg['240'].'</b>'.$this->tit4."<br />", $print);
             else $print = str_replace("!!tit4!!","", $print);
 
-        if ($this->typdocdisplay<>"") $print = str_replace("!!typdocdisplay!!", "<b>$msg[typdocdisplay_start]</b> ".$this->typdocdisplay."<br />", $print);
+        if ($this->typdocdisplay<>"") $print = str_replace("!!typdocdisplay!!", '<b>'.$msg['typdocdisplay_start'].'</b>'.$this->typdocdisplay."<br />", $print);
             else $print = str_replace("!!typdocdisplay!!", $this->typdoc, $print);
 
         if ($this->tparent<>"") {
-            if ($this->tnvol) $tparent_libelle = "<b>$msg[tparent_start]</b>".$this->tparent." [".$this->tnvol."]<br />" ;
-                else $tparent_libelle = "<b>$msg[tparent_start]</b>".$this->tparent."<br />" ;
+        	if ($this->tnvol) $tparent_libelle = '<b>'.$msg['tparent_start'].'</b>'.$this->tparent." [".$this->tnvol."]<br />";
+                else $tparent_libelle = '<b>'.$msg['tparent_start'].'</b>'.$this->tparent."<br />";
             $print = str_replace("!!tparent!!", $tparent_libelle, $print);
         } else $print = str_replace("!!tparent!!", "", $print);
 
@@ -461,22 +461,22 @@ require_once($base_path."/classes/subcollection.class.php");
         $libelle_mention_resp = implode (" ",$mention_resp) ;
 
         // **********************************************
-        if ($this->ed1<>"") $print = str_replace("!!ed1!!", "<b>$msg[ed1_start]</b>".$this->ed1."<br />", $print);
+        if ($this->ed1<>"") $print = str_replace("!!ed1!!", '<b>'.$msg['ed1_start'].'</b>'.$this->ed1."<br />", $print);
             else $print = str_replace("!!ed1!!", "", $print);
 
-        if ($this->ed2<>"") $print = str_replace("!!ed2!!", "<b>$msg[ed2_start]</b>".$this->ed2."<br />", $print);
+            if ($this->ed2<>"") $print = str_replace("!!ed2!!", '<b>'.$msg['ed2_start'].'</b>'.$this->ed2."<br />", $print);
             else $print = str_replace("!!ed2!!", "", $print);
 
-        if ($this->coll<>"") $print = str_replace("!!coll!!", "<b>$msg[coll_start]</b>".$this->coll."<br />", $print);
+            if ($this->coll<>"") $print = str_replace("!!coll!!", '<b>'.$msg['coll_start'].'</b>'.$this->coll."<br />", $print);
             else $print = str_replace("!!coll!!", "", $print);
 
-        if ($this->subcoll<>"") $print = str_replace("!!subcoll!!", "<b>$msg[subcoll_start]</b>".$this->subcoll."<br />", $print);
+            if ($this->subcoll<>"") $print = str_replace("!!subcoll!!", '<b>'.$msg['subcoll_start'].'</b>'.$this->subcoll."<br />", $print);
             else $print = str_replace("!!subcoll!!", "", $print);
 
-        if ($this->year<>"") $print = str_replace("!!year!!", "<b>$msg[year_start]</b>".$this->year."<br />", $print);
+            if ($this->year<>"") $print = str_replace("!!year!!", '<b>'.$msg['year_start'].'</b>'.$this->year."<br />", $print);
             else $print = str_replace("!!year!!", "", $print);
 
-        if ($this->nocoll<>"") $print = str_replace("!!nocoll!!", "<b>$msg[nocoll_start]</b>".$this->nocoll."<br />", $print);
+            if ($this->nocoll<>"") $print = str_replace("!!nocoll!!", (!empty($msg['nocoll_start']) ? '<b>'.$msg['nocoll_start'].'</b>' : '') .$this->nocoll."<br />", $print);
             else $print = str_replace("!!nocoll!!", "", $print);
 
         if ($this->code<>"") {
@@ -488,40 +488,40 @@ require_once($base_path."/classes/subcollection.class.php");
                     $print = str_replace("!!image_petit!!", "<img src='http://images-eu.amazon.com/images/P/".$code_chiffre.".08.MZZZZZZZ.jpg' class='align_right' hspace='4' vspace='2'>", $print);
                     else $print = str_replace("!!image_petit!!", "", $print);
             } else     $print = str_replace("!!image_petit!!", "", $print);
-            $print = str_replace("!!code!!", "<b>$msg[code_start]</b>".$this->code."<br />", $print);
+            $print = str_replace("!!code!!", '<b>'.$msg['code_start'].'</b>'.$this->code."<br />", $print);
             } else {
                 $print = str_replace("!!image_petit!!", "", $print);
                 $print = str_replace("!!code!!", "", $print);
                 }
 
-        if ($this->npages<>"") $print = str_replace("!!npages!!", "<b>$msg[npages_start]</b>".$this->npages."<br />", $print);
+        if ($this->npages<>"") $print = str_replace("!!npages!!", '<b>'.$msg['npages_start'].'</b>'.$this->npages."<br />", $print);
             else $print = str_replace("!!npages!!", "", $print);
 
-        if ($this->ill<>"") $print = str_replace("!!ill!!", "<b>$msg[ill_start]</b>".$this->ill."<br />", $print);
+        if ($this->ill<>"") $print = str_replace("!!ill!!", '<b>'.$msg['ill_start'].'</b>'.$this->ill."<br />", $print);
             else $print = str_replace("!!ill!!", "", $print);
 
-        if ($this->size<>"") $print = str_replace("!!size!!", "<b>$msg[size_start]</b>".$this->size."<br />", $print);
+        if ($this->size<>"") $print = str_replace("!!size!!", '<b>'.$msg['size_start'].'</b>'.$this->size."<br />", $print);
             else $print = str_replace("!!size!!", "", $print);
 
-        if ($this->accomp<>"") $print = str_replace("!!accomp!!", "<b>$msg[accomp_start]</b>".$this->accomp."<br />", $print);
+        if ($this->accomp<>"") $print = str_replace("!!accomp!!", '<b>'.$msg['accomp_start'].'</b>'.$this->accomp."<br />", $print);
             else $print = str_replace("!!accomp!!", "", $print);
 
-         if ($this->n_gen<>"") $print = str_replace("!!n_gen!!", "<b>$msg[n_gen_start]</b>".nl2br(htmlentities($this->n_gen,ENT_QUOTES, $charset))."<br />", $print);
+         if ($this->n_gen<>"") $print = str_replace("!!n_gen!!", '<b>'.$msg['n_gen_start'].'</b>'.nl2br(htmlentities($this->n_gen,ENT_QUOTES, $charset))."<br />", $print);
             else $print = str_replace("!!n_gen!!", "", $print);
 
-         if ($this->n_contenu<>"") $print = str_replace("!!n_contenu!!", "<b>$msg[n_contenu_start]</b>".nl2br(htmlentities($this->n_contenu,ENT_QUOTES, $charset))."<br />", $print);
+         if ($this->n_contenu<>"") $print = str_replace("!!n_contenu!!", '<b>'.$msg['n_contenu_start'].'</b>'.nl2br(htmlentities($this->n_contenu,ENT_QUOTES, $charset))."<br />", $print);
             else $print = str_replace("!!n_contenu!!", "", $print);
 
-         if ($this->n_resume<>"") $print = str_replace("!!n_resume!!", "<b>$msg[n_resume_start]</b>".nl2br(htmlentities($this->n_resume,ENT_QUOTES, $charset))."<br />", $print);
+         if ($this->n_resume<>"") $print = str_replace("!!n_resume!!", '<b>'.$msg['n_resume_start'].'</b>'.nl2br(htmlentities($this->n_resume,ENT_QUOTES, $charset))."<br />", $print);
             else $print = str_replace("!!n_resume!!","", $print);
 
-        if ($this->index_l<>"") $print = str_replace("!!index_l!!", "<b>$msg[index_l_start]</b>".nl2br($this->index_l)."<br />", $print);
+		if ($this->index_l<>"") $print = str_replace("!!index_l!!", '<b>'.(!empty($msg['index_l_start']) ? $msg['index_l_start'] : '').'</b>'.nl2br($this->index_l)."<br />", $print);
             else $print = str_replace("!!index_l!!", "", $print);
 
-        if ($this->lang<>"") $print = str_replace("!!lang!!", $this->lang."<br />", $print);
+        if (!empty($this->lang)) $print = str_replace("!!lang!!", $this->lang."<br />", $print);
             else $print = str_replace("!!lang!!", "", $print);
 
-        if ($this->org_lang<>"") $print = str_replace("!!org_lang!!", $this->org_lang."<br />", $print);
+        if (!empty($this->org_lang)) $print = str_replace("!!org_lang!!", $this->org_lang."<br />", $print);
             else $print = str_replace("!!org_lang!!","", $print);
 
         if ($this->lien<>"") $print = str_replace("!!lien!!", "<br /><a href=\"".$this->lien."\" title=".$this->lien."><img src=./images/docweb.gif style='border:0px'> $this->lien</a>", $print);
@@ -530,7 +530,7 @@ require_once($base_path."/classes/subcollection.class.php");
         if ($this->eformat<>"") $print = str_replace("!!eformat!!", "[".$this->eformat."]<br />"."<br />", $print);
             else $print = str_replace("!!eformat!!", "", $print);
 
-        if ($this->prix<>"") $print = str_replace("!!prix!!", "<b>$msg[price_start]</b> ".$this->prix." <b>$msg[price_end]</b> ", $print);
+            if ($this->prix<>"") $print = str_replace("!!prix!!", '<b>'.$msg['price_start'].'</b> '.$this->prix." <b>".(!empty($msg['price_end']) ? $msg['price_end'] : "")."</b> ", $print);
             else $print = str_replace("!!prix!!", "", $print);
 
         // remplacement des champs dynamiques
@@ -541,15 +541,15 @@ require_once($base_path."/classes/subcollection.class.php");
 
         if (preg_match("#!!editeur!!#", $print)) {
             $remplacement = "";
-            if ($this->ed1_id) $remplacement = "<b>$msg[editeur_start]</b> "."<a href='".record_datas::format_url("index.php?lvl=publisher_see&id=".$this->ed1_id)."'>$this->ed1</a>"."<br />";
-				elseif ($this->ed2_id) $remplacement = "<b>$msg[editeur_start]</b> "."<a href='".record_datas::format_url("index.php?lvl=publisher_see&id=".$this->ed2_id)."'>$this->ed2</a>"."<br />";
+            if ($this->ed1_id) $remplacement = '<b>'.$msg['editeur_start'].'</b> '."<a href='".record_datas::format_url("index.php?lvl=publisher_see&id=".$this->ed1_id)."'>$this->ed1</a>"."<br />";
+				elseif ($this->ed2_id) $remplacement = '<b>'.$msg['editeur_start'].'</b> '."<a href='".record_datas::format_url("index.php?lvl=publisher_see&id=".$this->ed2_id)."'>$this->ed2</a>"."<br />";
                     else $remplacement = "";
             $print = str_replace("!!editeur!!", $remplacement, $print);
             }
 
         if (preg_match("#!!collection!!#", $print)) {
             $remplacement = "";
-            if ($this->coll_id) $remplacement = "<b>$msg[coll_start]</b> <a href='".record_datas::format_url("index.php?lvl=coll_see&id=".$this->coll_id)."'>$this->coll</a>";
+            if ($this->coll_id) $remplacement = '<b>'.$msg['coll_start']."</b><a href='".record_datas::format_url("index.php?lvl=coll_see&id=".$this->coll_id)."'>$this->coll</a>";
 
             if ($this->subcoll_id) {
                 $remplacement .= $remplacement ? ", " : "";
@@ -643,7 +643,7 @@ require_once($base_path."/classes/subcollection.class.php");
     public static function recup_notice_infos($id){
         global $infos_notice, $infos_expl;
 
-        $id+=0;
+        $id = intval($id);
         $rqt='select notice_id, typdoc, niveau_biblio, index_l, libelle_categorie, name_pclass, indexint_name
         from notices n
         left join notices_categories nc on nc.notcateg_notice=n.notice_id

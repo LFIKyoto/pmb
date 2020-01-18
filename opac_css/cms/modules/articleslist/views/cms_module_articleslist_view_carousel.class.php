@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_articleslist_view_carousel.class.php,v 1.9 2017-07-27 14:50:32 tsamson Exp $
+// $Id: cms_module_articleslist_view_carousel.class.php,v 1.9.6.1 2019-09-17 09:59:20 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -39,7 +39,7 @@ class cms_module_articleslist_view_carousel extends cms_module_carousel_view_car
 		for($i=0 ; $i<count($ids) ; $i++){
 			$article = cms_provider::get_instance("article",$ids[$i]);
 			$infos = $article->format_datas();
-			$infos['link'] = $this->get_constructed_link("article",$infos['id']);
+			$infos->link = $this->get_constructed_link("article",$infos->id);
 			$datas['records'][]=$infos;
 		}
 		return parent::render($datas);

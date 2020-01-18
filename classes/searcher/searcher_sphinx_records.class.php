@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_sphinx_records.class.php,v 1.10 2018-07-30 12:42:16 arenou Exp $
+// $Id: searcher_sphinx_records.class.php,v 1.15 2019-07-30 12:08:56 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -32,7 +32,7 @@ class searcher_sphinx_records extends searcher_sphinx {
 			if($this->objects_ids != ''){
 				$query.=' where notice_id not in ('.$this->objects_ids.')' ;
 			}
-			pmb_mysql_query($query) or die(mysql_error());
+			pmb_mysql_query($query);
 		}
 	}
 	
@@ -151,25 +151,33 @@ class searcher_sphinx_records extends searcher_sphinx {
 	
 	protected function get_filters(){
 		$filters = parent::get_filters();
-		global $typdoc_query,$statut_query;
-		if($typdoc_query){
+		global $statut_query,$typdoc_query;
+		if(!empty($typdoc_query)){
 			//on ne s'assure pas de savoir si c'est une chaine ou un tableau, c'est géré dans la classe racine à la volée! 
-			$filters[] = array(
-				'name'=> 'typdoc',
-				'values' => $typdoc_query
-			);
+			// par contre, on peut avoir un tableau avec une valeur vide...
+		    if(!is_array($typdoc_query) || (is_array($typdoc_query) && $typdoc_query[0] !== '')){
+    			$filters[] = array(
+    				'name'=> 'typdoc',
+    				'values' => $typdoc_query
+    			);
+		    }
 		}
-		if($statut_query){
+		if(!empty($statut_query)){
 			//on ne s'assure pas de savoir si c'est une chaine ou un tableau, c'est géré dans la classe racine à la volée! 
-			$filters[] = array(
-				'name'=> 'statut',
-				'values' => $statut_query
-			);
+			// par contre, on peut avoir un tableau avec une valeur vide...
+		    if(!is_array($statut_query) || (is_array($statut_query) && $statut_query[0] !== '')){
+		        $filters[] = array(
+    				'name'=> 'statut',
+    				'values' => $statut_query
+    			);
+		    }
 		}
 		return $filters;
 	}
 	
 	protected function _get_objects_ids() {
+	    global $sphinx_indexes_prefix;
+	    
 		if (isset($this->objects_ids)) {
 			return $this->objects_ids;
 		}
@@ -194,7 +202,7 @@ class searcher_sphinx_records extends searcher_sphinx {
 		$matches = array();
 		do {
 			$this->sc->SetLimits($nb, $this->bypass);
-			$result = $this->sc->Query($this->sphinx_query, "records_explnums");
+			$result = $this->sc->Query($this->sphinx_query, $sphinx_indexes_prefix.'records_explnums');
 			for($i = 0 ; $i<count($result['matches']) ; $i++){
 				if (in_array($result['matches'][$i]['attrs']['num_record'], $already_found)) {
 					continue;

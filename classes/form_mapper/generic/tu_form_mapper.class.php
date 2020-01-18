@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tu_form_mapper.class.php,v 1.5 2017-09-18 13:20:21 dgoron Exp $
+// $Id: tu_form_mapper.class.php,v 1.6 2019-08-27 08:26:02 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -121,6 +121,27 @@ class tu_form_mapper extends form_mapper{
         				'fields' => $fields
         		);
         		
+        		$concept = new index_concept($this->tuObject->id, TYPE_TITRE_UNIFORME);
+        		$concepts = $concept->get_concepts();
+        		$concept_labels = $concept_values = $concept_types = array();
+        		for ($i = 0; $i < count($concepts); $i++) {
+        		    $concept_labels[] = $concepts[$i]->get_display_label();
+        		    $concept_values[] = $concepts[$i]->get_uri();
+        		    $concept_types[] = $concepts[$i]->get_type();
+        		}
+        		$concepts_fields = array(
+        		    array('type'=> 'input', 'name'=>'concept_label', 'values'=> $concept_labels),
+        		    array('type'=> 'input', 'name'=>'concept_value', 'values'=> $concept_values),
+        		    array('type'=> 'input', 'name'=>'concept_type', 'values'=> $concept_types),
+        		);
+        		$concepts_array = array(
+        		    'jscallback' => 'onto_add',
+        		    'mainType' => "concept",
+        		    'callbackParams' => array('concept', 0),
+        		    'multiple' => 'true',
+        		    'fields' => $concepts_fields
+        		);
+        		
         		return array(
         			array(
         				'jscallback' => 'add_oeuvre_expression',
@@ -142,7 +163,8 @@ class tu_form_mapper extends form_mapper{
         					array('type'=> 'input', 'name'=>'date', 'values'=> array($this->tuObject->date)),
         				),
         			),
-        			$authors_array
+        			$authors_array,
+        		    $concepts_array
         		);
         		case 'notice':
 					$authors = array();
@@ -183,6 +205,28 @@ class tu_form_mapper extends form_mapper{
         					),
         				);
         			}
+        			
+        			$concept = new index_concept($this->tuObject->id, TYPE_TITRE_UNIFORME);
+        			$concepts = $concept->get_concepts();
+        			$concept_labels = $concept_values = $concept_types = array();
+        			for ($i = 0; $i < count($concepts); $i++) {
+        			    $concept_labels[] = $concepts[$i]->get_display_label();
+        			    $concept_values[] = $concepts[$i]->get_uri();
+        			    $concept_types[] = $concepts[$i]->get_type();
+        			}
+        			$concepts_fields = array(
+        			    array('type'=> 'input', 'name'=>'concept_label', 'values'=> $concept_labels),
+        			    array('type'=> 'input', 'name'=>'concept_value', 'values'=> $concept_values),
+        			    array('type'=> 'input', 'name'=>'concept_type', 'values'=> $concept_types),
+        			);
+        			$concepts_array = array(
+        			    'jscallback' => 'onto_add',
+        			    'mainType' => "concept",
+        			    'callbackParams' => array('concept', 0),
+        			    'multiple' => 'true',
+        			    'fields' => $concepts_fields
+        			);
+        			
 					return array(
 						array(
 							'jscallback' => 'add_titre_uniforme',
@@ -204,7 +248,8 @@ class tu_form_mapper extends form_mapper{
 									array('type'=> 'input', 'name'=>'f_year', 'values'=> array($this->tuObject->date))
 							)
 						),
-						$authors_array
+						$authors_array,
+					    $concepts_array
 					);
 	        default:
 	            return array();

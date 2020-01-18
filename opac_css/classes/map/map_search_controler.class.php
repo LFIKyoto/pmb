@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_search_controler.class.php,v 1.12 2018-12-03 09:48:44 ngantier Exp $
+// $Id: map_search_controler.class.php,v 1.17 2019-05-28 13:23:34 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/map/map_hold.class.php");
@@ -108,27 +108,45 @@ class map_search_controler {
   		
   		$current_search = $this->get_mode();
   		
-  		//	print $_SESSION["tab_result"];
-  		$notices_ids=explode(",",$_SESSION["tab_result"]);
+  		$notices_ids=array();
+  		if(!empty($_SESSION["tab_result"])) {
+  		    $notices_ids=explode(",",$_SESSION["tab_result"]);
+  		}
   		if(!count($notices_ids) || $notices_ids[0] == '') return $objects;
   		$objects[] = array(
   			'layer' => "record",
   			'ids' => $notices_ids
   		);
   		
-  		$requete = "select distinct map_emprise_obj_num from map_emprises join notices_categories on map_emprises.map_emprise_obj_num = notices_categories.num_noeud where map_emprises.map_emprise_type=2 and notices_categories.notcateg_notice in (".implode(",",$notices_ids).")";
-  		$result = pmb_mysql_query($requete,$dbh);
-  		if(pmb_mysql_num_rows($result)){
-  			$categ_ids = array();
-  			while ($row = pmb_mysql_fetch_object($result)) {
-  				$categ_ids[] = $row->map_emprise_obj_num;
-  			}
-  			$objects[] = array(
-  				'layer' => "authority",
-  				'type' => 2,
-  				'ids' => $categ_ids
-  			);
-  		
+  		if (count($notices_ids)) {
+  		    $requete = "select distinct map_emprise_obj_num from map_emprises join notices_categories on map_emprises.map_emprise_obj_num = notices_categories.num_noeud where map_emprises.map_emprise_type=2 and notices_categories.notcateg_notice in (" . implode(",", $notices_ids) . ")";
+  		    $result = pmb_mysql_query($requete, $dbh);
+  		    if (pmb_mysql_num_rows($result)) {
+  		        $categ_ids = array();
+  		        while ($row = pmb_mysql_fetch_object($result)) {
+  		            $categ_ids[] = $row->map_emprise_obj_num;
+  		        }
+  		        $objects[] = array(
+  		            'layer' => "authority",
+  		            'type' => 2,
+  		            'ids' => $categ_ids
+  		        );
+  		    }
+  		    $requete = "select distinct map_emprise_obj_num from map_emprises
+                                join index_concept on map_emprises.map_emprise_obj_num=index_concept.num_concept and index_concept.type_object = 1
+                                where index_concept.type_object = 1 and index_concept.num_object in (" . implode(",", $notices_ids) . ")";
+  		    $result = pmb_mysql_query($requete, $dbh);
+  		    if (pmb_mysql_num_rows($result)) {
+  		        $concept_ids = array();
+  		        while ($row = pmb_mysql_fetch_object($result)) {
+  		            $concept_ids[] = $row->map_emprise_obj_num;
+  		        }
+  		        $objects[] = array(
+  		            'layer' => "authority_concept",
+  		            'type' => 10,
+  		            'ids' => $concept_ids
+  		        );
+  		    }
   		}
   		return $objects;  		
   		 
@@ -148,8 +166,8 @@ class map_search_controler {
 		$json = array(); 	
   		if($this->model){
   			$json = $this->model->get_holds_informations($this->objects[$indice]['layer']);
-  			return json_encode($json);
   		}
+  		return json_encode($json);
   	}
   	
   	public function get_json_informations(){
@@ -161,7 +179,7 @@ class map_search_controler {
   		
   		$layer_params = json_decode($opac_map_base_layer_params,true);
   		$baselayer =  "baseLayerType: dojox.geo.openlayers.BaseLayerType.".$opac_map_base_layer_type;
-  		if(count($layer_params)){
+  		if(is_array($layer_params) && count($layer_params)){
   			if($layer_params['name']) $baselayer.=",baseLayerName:\"".$layer_params['name']."\"";
   			if($layer_params['url']) $baselayer.=",baseLayerUrl:\"".$layer_params['url']."\"";
   			if($layer_params['options']) $baselayer.=",baseLayerOptions:".json_encode($layer_params['options']);
@@ -174,7 +192,7 @@ class map_search_controler {
 	  		$map_hold = $this->get_bounding_box();
 	  		if($map_hold){
 		  		$coords = $map_hold->get_coords();
-		  		
+		  		if(!isset($map_emprises_query[0])) $map_emprises_query[0] = '';
 		  		$search_hold = new map_hold_polygon(0,0,$map_emprises_query[0]);
 		  		$search_bounding_box = $search_hold->get_bounding_box();
 		  		$search_coords = $search_bounding_box->get_coords();

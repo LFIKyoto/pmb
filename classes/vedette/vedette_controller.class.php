@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_controller.class.php,v 1.1 2018-11-26 10:04:59 tsamson Exp $
+// $Id: vedette_controller.class.php,v 1.2 2019-04-12 13:46:16 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -39,7 +39,7 @@ class vedette_controller {
         $html = '';
         if (!empty($this->params['name'])) {
             $vedette = new vedette_composee(0, $this->params['name']);
-            $html = encoding_normalize::utf8_normalize(vedettes_ui::get_grammar_form($vedette, $this->params['property_name'], 0, $this->params['instance_name']));
+            $html = encoding_normalize::utf8_normalize(vedettes_ui::get_grammar_form($vedette, $this->params['property_name'], 0, $this->params['instance_name'], 'http://www.w3.org/2000/01/rdf-schema#Literal'));
         }
         return $html;
     }

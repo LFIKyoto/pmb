@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_records_datasource_authors.class.php,v 1.4 2018-06-29 13:02:47 tsamson Exp $
+// $Id: frbr_entity_records_datasource_authors.class.php,v 1.5 2019-01-10 10:04:39 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -39,7 +39,7 @@ class frbr_entity_records_datasource_authors extends frbr_entity_common_datasour
 	    $form.= "
             <div class='row'>
 				<div class='colonne3'>
-					<label for='datanode_work_link_type'>".$this->format_text($this->msg['frbr_entity_records_datasource_authors_function'])."</label>
+					<label for='datanode_author_function'>".$this->format_text($this->msg['frbr_entity_records_datasource_authors_function'])."</label>
 				</div>
 				<div class='colonne-suite'>
 					".$this->get_author_function_selector($this->parameters->author_function)."
@@ -52,7 +52,7 @@ class frbr_entity_records_datasource_authors extends frbr_entity_common_datasour
 	    global $charset, $msg;
 	
 	    $authors_function = marc_list_collection::get_instance('function');
-	    $selector = "<select name='datanode_author_function' id='datanode_author_function' multiple='yes'>";
+	    $selector = "<select name='datanode_author_function[]' id='datanode_author_function' multiple='yes'>";
 	    $options = '';
 	    foreach($authors_function->table as $code => $libelle){
 	        if ((is_array($selected) && in_array($code, $selected)) || ($code == $selected)) {

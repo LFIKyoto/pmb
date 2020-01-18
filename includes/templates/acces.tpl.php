@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: acces.tpl.php,v 1.8 2017-11-30 10:00:36 dgoron Exp $
+// $Id: acces.tpl.php,v 1.10 2019-05-27 16:55:44 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $dom_view_form, $current_module, $msg, $charset, $user_prf_list_form, $used_list_form, $calc_list_form, $unused_list_form, $maj_form, $res_prf_list_form, $dom_rights_form, $dom_glo_rights_form, $id;
 
 $dom_view_form="
 <!-- domaine -->

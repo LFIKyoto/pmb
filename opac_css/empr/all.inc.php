@@ -1,11 +1,14 @@
 <?php
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: all.inc.php,v 1.77 2018-12-12 14:31:40 ngantier Exp $
+// $Id: all.inc.php,v 1.82.4.1 2019-11-06 11:04:26 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+require_once($class_path."/exemplaire.class.php");
 require_once($include_path."/notice_authors.inc.php");
 
 if(!isset($prolonge_id)) $prolonge_id = 0;
@@ -16,12 +19,12 @@ $page=$_SERVER['SCRIPT_NAME'];
 
 if ($dest=="TABLEAU") {
 	//Export excel
-	require_once ($class_path."/spreadsheet.class.php");
-	$worksheet = new spreadsheet();
+	require_once ($class_path."/spreadsheetPMB.class.php");
+	$worksheet = new spreadsheetPMB();
 	//formats
 	$heading_blue = array(
 		'fill' => array(
-			'type' => PHPExcel_Style_Fill::FILL_SOLID,
+			'type' => Fill::FILL_SOLID,
             'color' => array('rgb' => '00CCFF')
 		)
 	);
@@ -75,12 +78,16 @@ if ($dest=="TABLEAU") {
 			//Tableau de passage des paramètres
 			$struct["READER"] = $id_empr;
 			$struct["EXPL"] = $prolonge_id;
+			$struct["NOTI"] = exemplaire::get_expl_notice_from_id($prolonge_id);
+			$struct["BULL"] = exemplaire::get_expl_bulletin_from_id($prolonge_id);
 			$pret_nombre_prolongation = $qt -> get_quota_value($struct);
 		
 			//Initialisation des quotas la durée de prolongations
 			$qt = new quota("PROLONG_TIME_QUOTA");
 			$struct["READER"] = $id_empr;
-			$struct["EXPL"] = $prolonge_id;	
+			$struct["EXPL"] = $prolonge_id;
+			$struct["NOTI"] = exemplaire::get_expl_notice_from_id($prolonge_id);
+			$struct["BULL"] = exemplaire::get_expl_bulletin_from_id($prolonge_id);
 			$duree_prolongation = $qt -> get_quota_value($struct);	
 		
 		}
@@ -140,7 +147,7 @@ $sql = "SELECT notices_m.notice_id as num_notice_mono, bulletin_id, IF(pret_reto
 $sql.= "date_format(pret_retour, '".$msg["format_date_sql"]."') as aff_pret_retour, pret_retour, "; 
 $sql.= "date_format(pret_date, '".$msg["format_date_sql"]."') as aff_pret_date, " ;
 $sql.= "trim(concat(ifnull(notices_m.tit1,''),ifnull(notices_s.tit1,''),' ',ifnull(bulletin_numero,''), if(mention_date, concat(' (',mention_date,')') ,if (date_date, concat(' (',date_format(date_date, '".$msg["format_date_sql"]."'),')') ,'')))) as tit, "; 
-$sql.= "if(notices_m.notice_id, notices_m.notice_id, notices_s.notice_id) as not_id, if(notices_m.tparent_id, notices_m.tparent_id, notices_s.tparent_id) as tparent_id, if(notices_m.tnvol, notices_m.tnvol, notices_s.tnvol) as tnvol, ";
+$sql.= "if(notices_m.notice_id, notices_m.notice_id, notices_s.notice_id) as not_id, if(notices_m.tparent_id, notices_m.tparent_id, notices_s.tparent_id) as tparent_id, ifnull(notices_m.tnvol , notices_s.tnvol) as tnvol, ";
 $sql.= "tdoc_libelle, empr_location, location_libelle ";
 $sql.= "FROM (((exemplaires LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) ";
 $sql.= "        LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) ";
@@ -151,6 +158,14 @@ $sql.= $critere_requete;
 
 $req = pmb_mysql_query($sql) or die("Erreur SQL !<br />".$sql."<br />".pmb_mysql_error()); 
 $nb_elements = pmb_mysql_num_rows($req) ;
+
+if(!$dest && $nb_elements) {
+	print "<script type='text/javascript'>
+		if(document.getElementById('empr_loans_number')) {
+			document.getElementById('empr_loans_number').innerHTML = ' (".$nb_elements.")';
+		}	
+	</script>";
+}
 
 if (!$dest) {
 	global $opac_cart_allow;
@@ -297,7 +312,9 @@ if ($nb_elements) {
 						$qt = new quota("PROLONG_NMBR_QUOTA");
 						//Tableau de passage des paramètres
 						$struct["READER"] = $id_empr;
-						$struct["EXPL"] = $expl_id;						
+						$struct["EXPL"] = $expl_id;
+						$struct["NOTI"] = exemplaire::get_expl_notice_from_id($expl_id);
+						$struct["BULL"] = exemplaire::get_expl_bulletin_from_id($expl_id);
 						$pret_nombre_prolongation=$qt -> get_quota_value($struct);		
 	
 						if($cpt_prolongation>$pret_nombre_prolongation){
@@ -308,7 +325,9 @@ if ($nb_elements) {
 						//Initialisation des quotas la durée de prolongations
 						$qt = new quota("PROLONG_TIME_QUOTA");
 						$struct["READER"] = $id_empr;
-						$struct["EXPL"] = $expl_id;	
+						$struct["EXPL"] = $expl_id;
+						$struct["NOTI"] = exemplaire::get_expl_notice_from_id($expl_id);
+						$struct["BULL"] = exemplaire::get_expl_bulletin_from_id($expl_id);
 						$duree_prolongation=$qt -> get_quota_value($struct);	
 					} // fin if gestion par quotas
 				} // fin else if pmb_pret_restriction_prolongation>0
@@ -497,6 +516,8 @@ if ($nb_elements) {
 						//Tableau de passage des paramètres
 						$struct["READER"] = $id_empr;
 						$struct["EXPL"] = $expl_id;
+						$struct["NOTI"] = exemplaire::get_expl_notice_from_id($expl_id);
+						$struct["BULL"] = exemplaire::get_expl_bulletin_from_id($expl_id);
 						$pret_nombre_prolongation=$qt -> get_quota_value($struct);
 					}
 				}
@@ -514,14 +535,14 @@ if ($nb_elements) {
 	switch($lvl) {
 		case 'all':	
 			if(!$dest){
-				print '<br><br><span class="noLoan">'.$msg["empr_no_loan"].'</span>' ;
+				print '<br><span class="noLoan">'.$msg["empr_no_loan"].'</span>' ;
 			}elseif ($dest=="TABLEAU") {
 				$worksheet->write(0,0,$msg["empr_no_loan"],$heading_blue);
 			}
 			break;
 		case 'late':
 			if(!$dest){
-				print '<br><br>'.$msg["empr_no_late"] ;
+				print '<br>'.$msg["empr_no_late"] ;
 			}elseif ($dest=="TABLEAU") {
 				$worksheet->write(0,0,$msg["empr_no_late"],$heading_blue);
 			}
@@ -600,7 +621,7 @@ function aff_pret_groupes(){
 		$sql.= "date_format(pret_retour, '".$msg["format_date_sql"]."') as aff_pret_retour, pret_retour, "; 
 		$sql.= "date_format(pret_date, '".$msg["format_date_sql"]."') as aff_pret_date, " ;
 		$sql.= "trim(concat(ifnull(notices_m.tit1,''),ifnull(notices_s.tit1,''),' ',ifnull(bulletin_numero,''), if(mention_date, concat(' (',mention_date,')') ,if (date_date, concat(' (',date_format(date_date, '".$msg["format_date_sql"]."'),')') ,'')))) as tit, ";
-		$sql.= "if(notices_m.notice_id, notices_m.notice_id, notices_s.notice_id) as not_id, if(notices_m.tparent_id, notices_m.tparent_id, notices_s.tparent_id) as tparent_id, if(notices_m.tnvol, notices_m.tnvol, notices_s.tnvol) as tnvol, ";
+		$sql.= "if(notices_m.notice_id, notices_m.notice_id, notices_s.notice_id) as not_id, if(notices_m.tparent_id, notices_m.tparent_id, notices_s.tparent_id) as tparent_id, ifnull(notices_m.tnvol , notices_s.tnvol) as tnvol, ";
 		$sql.= "tdoc_libelle, location_libelle ";
 		$sql.= "FROM (((exemplaires LEFT JOIN notices AS notices_m ON expl_notice = notices_m.notice_id ) ";
 		$sql.= "        LEFT JOIN bulletins ON expl_bulletin = bulletins.bulletin_id) ";

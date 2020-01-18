@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index_concept_form.tpl.php,v 1.4 2018-01-25 10:13:28 dgoron Exp $
+// $Id: index_concept_form.tpl.php,v 1.5 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $base_path, $msg;
+global $base_path, $msg, $charset;
 global $index_concept_form;
 global $index_concept_add_button_form;
 global $index_concept_text_form;

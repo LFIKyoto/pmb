@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_affichage.class.php,v 1.517 2018-11-30 15:32:51 dgoron Exp $
+// $Id: notice_affichage.class.php,v 1.527.2.2 2019-11-07 14:25:48 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -181,7 +181,7 @@ class notice_affichage {
 		$this->show_map = $show_map;
 		$memo_expl = array();
 		if (!$id) return;
-		$id+=0;
+		$id = intval($id);
 		//droits d'acces emprunteur/notice
 		$this->dom_2=null;
 		$this->dom_3=null;
@@ -387,14 +387,14 @@ class notice_affichage {
 	
 	public function get_responsabilites() {
 		global $fonction_auteur;
-		global $dbh ;
+		global $dbh, $pmb_authors_qualification;
 		
 		$this->responsabilites = array(
 				'responsabilites' => array(),
 				'auteurs' => array()
 		);
 		
-		$rqt = "SELECT author_id, responsability_fonction, responsability_type, author_type,author_name, author_rejete, author_type, author_date, author_see, author_web, author_isni ";
+		$rqt = "SELECT author_id, responsability_fonction, responsability_type, id_responsability, author_type,author_name, author_rejete, author_type, author_date, author_see, author_web, author_isni ";
 		$rqt.= "FROM responsability, authors ";
 		$rqt.= "WHERE responsability_notice='".$this->notice_id."' AND responsability_author=author_id ";
 		$rqt.= "ORDER BY responsability_type, responsability_ordre " ;
@@ -413,6 +413,21 @@ class notice_affichage {
 				$auteur_titre = $auteur_isbd ;
 				// on complète auteur_isbd pour l'affichage complet
 				if ($notice->author_date) $auteur_isbd .= " (".$notice->author_date.")" ;
+			}			
+			$qualification = '';
+			if ($pmb_authors_qualification) {
+			    if ($notice->responsability_type == 0) {
+			        $vedette_type = TYPE_NOTICE_RESPONSABILITY_PRINCIPAL;
+			    } elseif ($notice->responsability_type == 1) {
+			        $vedette_type = TYPE_NOTICE_RESPONSABILITY_AUTRE;
+			    } else {
+			        $vedette_type = TYPE_NOTICE_RESPONSABILITY_SECONDAIRE;
+			    }
+			    $qualif_id = vedette_composee::get_vedette_id_from_object($notice->id_responsability, $vedette_type);
+			    if($qualif_id){
+			        $qualif = new vedette_composee($qualif_id);
+			        $qualification = $qualif->get_label();
+			    }
 			}
 			// URL de l'auteur
 			if ($notice->author_web) $auteur_web_link = " <a href='$notice->author_web' target='_blank' type='external_url_autor'><img src='".get_url_icon("globe.gif", 1)."' style='border:0px'/></a>";
@@ -428,7 +443,8 @@ class notice_affichage {
 					'rejete' => $notice->author_rejete,
 					'date' => $notice->author_date,
 					'type' => $notice->author_type,
-					'fonction_aff' => ($notice->responsability_fonction ? $fonction_auteur[$notice->responsability_fonction] : ''),
+			        'fonction_aff' => ($notice->responsability_fonction ? $fonction_auteur[$notice->responsability_fonction] : ''),
+			        'qualification' => $qualification,
 					'auteur_isbd' => $auteur_isbd,
 			        'auteur_titre' => $auteur_titre,
 			        'isni' => $notice->author_isni
@@ -527,7 +543,7 @@ class notice_affichage {
 		global $pmb_keyword_sep;
 	
 		$tmpcateg_aff = '';
-		while (list($nom_thesaurus, $val_lib)=each($categ_repetables)) {
+		foreach ($categ_repetables as $nom_thesaurus => $val_lib) {
 			//c'est un tri par libellé qui est demandé
 			if ($opac_categories_affichage_ordre==0){
 				$tmp=array();
@@ -560,13 +576,13 @@ class notice_affichage {
 	
 	// récupération des categories ------------------------------------------------------------------
 	public function fetch_categories() {
-		global $opac_thesaurus, $opac_categories_categ_in_line, $pmb_keyword_sep, $opac_categories_affichage_ordre;
+		global $opac_thesaurus, $opac_categories_categ_in_line, $opac_categories_affichage_ordre;
 		global $lang,$opac_categories_show_only_last;
 		global $categories_memo,$libelle_thesaurus_memo;
 		global $categories_top;
 
 		$categ_repetables = array() ;
-		if(!count($categories_top)) {
+		if(!isset($categories_top) || !is_array($categories_top) || !count($categories_top)) {
 			$q = "select id_noeud from noeuds where autorite='TOP' ";
 			$r = pmb_mysql_query($q);
 			while(($res = pmb_mysql_fetch_object($r))) {
@@ -644,7 +660,7 @@ class notice_affichage {
 						$path_table = array_reverse($path_table);
 						if(sizeof($path_table)) {
 							$temp_table = array();
-							while(list($xi, $l) = each($path_table)) {
+							foreach ($path_table as $xi => $l) {
 								$temp_table[] = $l['libelle'];
 							}
 							$parent_libelle = join(':', $temp_table);
@@ -1490,13 +1506,26 @@ class notice_affichage {
 		if($this->notice->ed2_id) {
 			$editeur = new publisher($this->notice->ed2_id);
 			$this->publishers[]=$editeur;
-			$editeurs ? $editeurs .= '&nbsp;: '.inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur)) : $editeurs = inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			if ($editeurs) {
+			    $editeurs .= '&nbsp;: '.inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			} else {
+			    $editeurs = inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			}
 		}
 
-		if($this->notice->year) $editeurs ? $editeurs .= ', '.$this->notice->year : $editeurs = $this->notice->year;
-		elseif ($this->notice->niveau_biblio == 'm' && $this->notice->niveau_hierar == 0)
-				$editeurs ? $editeurs .= ', [s.d.]' : $editeurs = "[s.d.]";
-
+		if($this->notice->year) {
+		    if ($editeurs) {
+		        $editeurs .= ', '.$this->notice->year;
+		    } else {
+		        $editeurs = $this->notice->year;
+		    }
+		} elseif ($this->notice->niveau_biblio == 'm' && $this->notice->niveau_hierar == 0) {
+		    if ($editeurs) {
+		        $editeurs .= ', [s.d.]';
+		    } else {
+		        $editeurs = "[s.d.]";
+		    }
+		}
 		if($editeurs) $this->notice_isbd .= "&nbsp;.&nbsp;-&nbsp;$editeurs";
 		// zone de la collation
 		$collation = '';
@@ -2412,7 +2441,7 @@ class notice_affichage {
 					$record_datas = record_display::get_record_datas($this->notice_id);
 					if ($record_datas->is_numeric()) {
 						if ($record_datas->get_availability() && $_SESSION["user_code"]) {
-							$this->affichage_expl = record_display::get_display_pnb_loan_button($this->notice_id);
+							$this->affichage_expl = $this->get_display_pnb_loan_button();
 							$ret.= $this->affichage_expl;
 						}
 						//affichage exemplaires numeriques
@@ -2441,6 +2470,24 @@ class notice_affichage {
 		$this->affichage_resa_expl = $ret ;
 		$this->affichage_resa_expl_flag = 1 ;
 		return $ret ;
+	}
+	
+	/**
+	 * function pour affichager le bouton d'emprunt d'un prêt pnb
+	 * 
+	 * @return string code html du boutton
+	 */
+	public function get_display_pnb_loan_button() {
+	    global $msg;
+	    global $charset;
+	    
+	    return '
+            <div id="pnb_notice-' . $this->notice_id . '">
+				<h3>'.htmlentities($msg['pnb_digital_expl'], ENT_QUOTES, $charset).'</h3>
+				<a id="bt_pnb_NotCourte-' . $this->notice_id . '" href="#" onclick="pnb_post_loan_info(' . $this->notice_id . ');return false;">' . htmlentities($msg['empr_bt_checkout'], ENT_QUOTES, $charset).'</a>
+                <div id="response_pnb_pret_' . $this->notice_id . '">
+                </div>
+			</div>';
 	}
 
 
@@ -2490,6 +2537,10 @@ class notice_affichage {
 		// toutes indexations
 		$ret_index = "";
 		// Catégories
+		// On demande à afficher le header seulement et on arrive ici..appelons donc le fetch_categories
+		if($this->header_only) {
+			$this->fetch_categories();
+		}
 		$ret_index .= $this->get_line_aff_suite($msg['categories_start'], $this->categories_toutes, 'categ');
 		
 		// Concepts
@@ -2550,9 +2601,15 @@ class notice_affichage {
 	public static function get_display_column($label='', $expl=array()) {
 		global $msg, $charset;
 		global $opac_url_base;
+		global $memo_p_perso_expl;
 		
 		$column = '';
-		if (($label == "location_libelle") && $expl['num_infopage']) {
+		if (strstr($label, "#")) {
+		    if (!$memo_p_perso_expl->no_special_fields) {
+		        $id=substr($label,1);
+		        $column .="<td class='".htmlentities($memo_p_perso_expl->t_fields[$id]['NAME'],ENT_QUOTES, $charset)."'>".htmlentities($expl[$label], ENT_QUOTES, $charset)."</td>";
+		    }
+		} elseif (($label == "location_libelle") && $expl['num_infopage']) {
 			if ($expl['surloc_id'] != "0") $param_surloc="&surloc=".$expl['surloc_id'];
 			else $param_surloc="";
 			$column .="<td class='".$label."'><a href=\"".$opac_url_base."index.php?lvl=infopages&pagesid=".$expl['num_infopage']."&location=".$expl['expl_location'].$param_surloc."\" title=\"".$msg['location_more_info']."\">".htmlentities($expl[$label], ENT_QUOTES, $charset)."</a></td>";
@@ -2626,8 +2683,17 @@ class notice_affichage {
 			$expls_datas = $record_datas->get_expls_datas();
 		}
 		$expl_list_header_deb="";
-		if(isset($expls_datas['colonnesarray']) && count($expls_datas['colonnesarray'])) foreach ($expls_datas['colonnesarray'] as $colonne) {
-			$expl_list_header_deb .= "<th class='expl_header_".$colonne."'>".htmlentities($msg['expl_header_'.$colonne],ENT_QUOTES, $charset)."</th>";
+		if(isset($expls_datas['colonnesarray']) && count($expls_datas['colonnesarray'])) {
+		    foreach ($expls_datas['colonnesarray'] as $colonne) {
+		        if (strstr($colonne, "#")) {
+		            if (!$memo_p_perso_expl->no_special_fields) {
+		                $id=substr($colonne,1);
+		                $expl_list_header_deb .= "<th class='expl_header_".$memo_p_perso_expl->t_fields[$id]['NAME']."'>".htmlentities($memo_p_perso_expl->t_fields[$id]['TITRE'],ENT_QUOTES, $charset)."</th>";
+		            }
+		        } else {
+		            $expl_list_header_deb .= "<th class='expl_header_".$colonne."'>".htmlentities($msg['expl_header_'.$colonne],ENT_QUOTES, $charset)."</th>";
+		        }
+    		}
 		}
 		$expl_list_header_deb.="<th class='expl_header_statut'>".$msg['statut']."</th>";
 		$expl_liste="";
@@ -2674,7 +2740,7 @@ class notice_affichage {
 					$perso_=$memo_p_perso_expl->show_fields($expl['expl_id']);
 					for ($i=0; $i<count($perso_["FIELDS"]); $i++) {
 						$p=$perso_["FIELDS"][$i];
-						if ($p['OPAC_SHOW'] ) {
+						if ($p['OPAC_SHOW'] && !in_array('#'.$p['ID'], $expls_datas['colonnesarray'])) {
 							if(!$header_found_p_perso) {
 								$header_perso_aff.="<th class='expl_header_tdoc_libelle'>".$p["TITRE_CLEAN"]."</th>";
 								$nb_perso_aff++;
@@ -2842,6 +2908,7 @@ class notice_affichage {
 		global $opac_book_pics_url ;
 		global $opac_book_pics_msg;
 		global $opac_url_base ;
+		global $opac_notice_is_pdf;
 		global $msg;
 		
 		if ($this->notice->code || $this->notice->thumbnail_url) {
@@ -2867,7 +2934,9 @@ class notice_affichage {
 			} else {
 				$image="" ;
 			}
-			if ($image) {
+			if (isset($opac_notice_is_pdf) && $opac_notice_is_pdf == true && $image) {
+			    $entree = "<table style='width:100%'><tr><td style='vertical-align:top;width:80%'>$entree</td><td class='align_right;width:20%' style='vertical-align:top'>$image</td></tr></table>" ;
+			} elseif ($image) {
 				$entree = "<table style='width:100%'><tr><td style='vertical-align:top'>$entree</td><td class='align_right' style='vertical-align:top'>$image</td></tr></table>" ;
 			} else {
 				$entree = "<table style='width:100%'><tr><td>$entree</td></tr></table>" ;

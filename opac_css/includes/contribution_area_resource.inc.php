@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution_area_resource.inc.php,v 1.1 2018-12-28 16:19:06 tsamson Exp $
+// $Id: contribution_area_resource.inc.php,v 1.3 2019-02-22 10:16:53 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -12,9 +12,21 @@ if (!$opac_contribution_area_activate || !$allow_contribution) {
 
 require_once($class_path.'/notice_affichage.class.php');
 require_once($class_path.'/authority.class.php');
+require_once($class_path.'/contribution_area/contribution_area_store.class.php');
 
 $template = "";
-if (!empty($type) && !empty($id)) {
+if (!is_numeric($id)) {
+    $contribution_area_store = new contribution_area_store();
+    //on stocke l'id de l'entité en base SQL s'il existe
+    $query = "select ?pmb_id where {
+					<$id> pmb:identifier ?pmb_id
+				}";
+    $contribution_area_store->get_datastore()->query($query);
+    if ($contribution_area_store->get_datastore()->num_rows()) {
+        $id = $contribution_area_store->get_datastore()->get_result()[0]->pmb_id;
+    }
+}
+if (!empty($type) && !empty($id) && is_numeric($id)) {
     switch ($type) {
         case 'categories':
             $authority = new authority(0, $id, AUT_TABLE_CATEG);
@@ -50,9 +62,10 @@ if (!empty($type) && !empty($id)) {
             break;
         case 'notice':
             if (!empty($id)) {
-                $notice = new notice_affichage($id);
-                $notice->do_header();
-                $template = $notice->notice_header;
+                $template = record_display::get_display_in_contribution($id);
+//                 $notice = new notice_affichage($id);
+//                 $notice->do_header();
+//                 $template = $notice->notice_header;
             }
     		break;
     }

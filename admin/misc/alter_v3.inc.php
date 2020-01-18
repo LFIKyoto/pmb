@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: alter_v3.inc.php,v 1.127 2017-07-12 15:15:03 tsamson Exp $
+// $Id: alter_v3.inc.php,v 1.128 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -1102,7 +1102,7 @@ switch ($action) {
 			}
 		// Info de localisation des 
 		$rqt = " select 1 " ;
-		echo traite_rqt($rqt,"<br /><br /><b>!! STOP!! </b><br />VOUS DEVEZ RENSEIGNER : <b>".$msg[deflt2docs_location]."</b> <br />YOU MUST GIVE :<b>".$msg[deflt2docs_location]."</b><br />Préférences :  <a href=../../account.php target=_blank>cliquez ici / click here</a>") ;
+		echo traite_rqt($rqt,"<br /><br /><b>!! STOP!! </b><br />VOUS DEVEZ RENSEIGNER : <b>".$msg['deflt2docs_location']."</b> <br />YOU MUST GIVE :<b>".$msg['deflt2docs_location']."</b><br />Préférences :  <a href=../../account.php target=_blank>cliquez ici / click here</a>") ;
 		// +-------------------------------------------------+
 		echo "</table>";
 		$rqt = "update parametres set valeur_param='".$action."' where type_param='pmb' and sstype_param='bdd_version' " ;
@@ -1114,7 +1114,7 @@ switch ($action) {
 	case "v3.29": 
 		echo "<table ><tr><th>".$msg['admin_misc_action']."</th><th>".$msg['admin_misc_resultat']."</th></tr>";
 		// +-------------------------------------------------+
-		if (!$deflt2docs_location) die ("<br /><br /><b>!! STOP!! </b><br />VOUS DEVEZ RENSEIGNER : <b>".$msg[deflt2docs_location]."</b> <br />YOU MUST GIVE :<b>".$msg[deflt2docs_location]."</b><br />Préférences :  <a href=../../account.php target=_blank>cliquez ici / click here</a>") ;
+		if (!$deflt2docs_location) die ("<br /><br /><b>!! STOP!! </b><br />VOUS DEVEZ RENSEIGNER : <b>".$msg['deflt2docs_location']."</b> <br />YOU MUST GIVE :<b>".$msg['deflt2docs_location']."</b><br />Préférences :  <a href=../../account.php target=_blank>cliquez ici / click here</a>") ;
 		// 
 		
 		$rqt = "ALTER TABLE notices CHANGE typdoc typdoc VARCHAR( 2 ) DEFAULT 'a' NOT NULL " ;

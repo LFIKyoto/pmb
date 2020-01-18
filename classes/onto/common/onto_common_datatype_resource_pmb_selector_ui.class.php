@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_resource_pmb_selector_ui.class.php,v 1.6 2018-05-18 10:33:54 arenou Exp $
+// $Id: onto_common_datatype_resource_pmb_selector_ui.class.php,v 1.8 2019-08-14 08:02:58 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -32,7 +32,7 @@ class onto_common_datatype_resource_pmb_selector_ui extends onto_common_datatype
 		global $msg,$charset,$ontology_tpl;
 		
 		$form=$ontology_tpl['form_row'];
-		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->label, 'utf-8') ,ENT_QUOTES,$charset) , $form);
+		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->get_label(), 'utf-8') ,ENT_QUOTES,$charset) , $form);
 		/** traitement initial du range ?!*/
 		$range_for_form = "";
 		if(is_array($property->range)){
@@ -58,7 +58,7 @@ class onto_common_datatype_resource_pmb_selector_ui extends onto_common_datatype
 		$content = str_replace("!!max_field_value!!", (count($datas) ? count($datas) : 1), $content);
 		
 		
-		if(sizeof($datas)){
+		if (!empty($datas)) {
 				
 			$i=1;
 			$first=true;

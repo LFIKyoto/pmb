@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_class.class.php,v 1.11 2018-09-06 10:12:16 apetithomme Exp $
+// $Id: onto_common_class.class.php,v 1.12 2019-07-17 08:36:38 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -108,9 +108,11 @@ class onto_common_class extends onto_common_root {
 	}
 	
 	public function get_restrictions(){
-		foreach($this->properties as $property){
-			$this->onto_restrictions[$property->uri] = $this->ontology->get_restriction($this->uri,$property->uri);
-		}
+	    if (is_array($this->properties)) {
+    		foreach($this->properties as $property){
+    			$this->onto_restrictions[$property->uri] = $this->ontology->get_restriction($this->uri,$property->uri);
+    		}
+	    }
 	}
 	
 	public function get_property_range($uri_property) {

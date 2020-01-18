@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: caddie_controller.class.php,v 1.24 2018-11-09 11:32:13 dgoron Exp $
+// $Id: caddie_controller.class.php,v 1.37.2.1 2019-10-25 08:49:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -164,8 +164,8 @@ class caddie_controller extends caddie_root_controller {
 		global $gestion_acces_active;
 		global $erreur_explain_rqt;
 		
-		$idcaddie += 0;
-		$id += 0;
+		$idcaddie = intval($idcaddie);
+		$id = intval($id);
 		if($idcaddie) {
 			$myCart = static::get_object_instance($idcaddie);
 			print pmb_bidi($myCart->aff_cart_titre());
@@ -190,6 +190,8 @@ class caddie_controller extends caddie_root_controller {
 					}
 					break;
 				case 'pointe_item':
+					$model_class_name = static::get_model_class_name();
+					print $model_class_name::show_actions($idcaddie,static::$object_type);
 					if (caddie_procs::check_rights($id)) {
 						$hp = new parameters ($id) ;
 						$hp->get_final_query();
@@ -199,6 +201,8 @@ class caddie_controller extends caddie_root_controller {
 					print pmb_bidi($myCart->aff_cart_nb_items());
 					break;
 				case 'add_item':
+					$model_class_name = static::get_model_class_name();
+					print $model_class_name::show_actions($idcaddie,static::$object_type);
 					//C'est ici qu'on fait une action
 					if (caddie_procs::check_rights($id)) {
 						$hp = new parameters ($id) ;
@@ -220,8 +224,10 @@ class caddie_controller extends caddie_root_controller {
 						if ($gestion_acces_active==1) {
 							echo "&nbsp;<input type='button' class='bouton' value='".htmlentities($msg["caddie_select_access_rights"],ENT_QUOTES,$charset)."' onclick='document.location=&quot;./catalog.php?categ=caddie&amp;sub=action&amp;quelle=access_rights&amp;action=suite&amp;idcaddie=".$idcaddie."&amp;elt_flag=".$elt_flag."&amp;elt_no_flag=".$elt_no_flag."&quot;' />";
 						}
-						echo "&nbsp;<input type='button' class='bouton' value='".$msg["caddie_menu_action_suppr_panier"]."' onclick='document.location=&quot;./catalog.php?categ=caddie&amp;sub=action&amp;quelle=supprpanier&amp;action=choix_quoi&amp;object_type=NOTI&amp;idcaddie=".$idcaddie."&amp;item=0&amp;elt_flag=".$elt_flag."&amp;elt_no_flag=".$elt_no_flag."&quot;' />";
-						echo "&nbsp;<input type='button' class='bouton' value='".$msg["caddie_menu_action_edit_panier"]."' onclick=\"document.location='./catalog.php?categ=caddie&sub=gestion&action=edit_cart&idcaddie=".$idcaddie."'\" />";
+						echo "&nbsp;<input type='button' class='bouton' value='".$msg["caddie_menu_action_suppr_panier"]."' onclick='document.location=&quot;./catalog.php?categ=caddie&amp;sub=action&amp;quelle=supprpanier&amp;action=choix_quoi&amp;object_type=NOTI&amp;idcaddie=".$idcaddie."&amp;item=0&amp;elt_flag=".$elt_flag."&amp;elt_no_flag=".$elt_no_flag."&quot;' />",
+						"&nbsp;<input type='button' class='bouton' value='".$msg["caddie_menu_action_edit_panier"]."' onclick=\"document.location='./catalog.php?categ=caddie&sub=gestion&action=edit_cart&idcaddie=".$idcaddie."'\" />",
+						"&nbsp;<input type='button' class='bouton' value='".$msg["caddie_supprimer"]."' onclick=\"confirmation_delete(".$myCart->get_idcaddie().",'".htmlentities(addslashes($myCart->name),ENT_QUOTES, $charset)."')\" />",
+						confirmation_delete("./catalog.php?categ=caddie&sub=gestion&action=del_cart&quoi=&idcaddie=");
 					}
 					break;
 				default:
@@ -293,13 +299,13 @@ class caddie_controller extends caddie_root_controller {
 								// transfert des notices de bulletin
 								if ($elt_flag) {
 									$liste = $myCartOrigine->get_cart("FLAG") ;
-									while(list($cle, $object) = each($liste)) {
+									foreach ($liste as $cle => $object) {
 										$myCart->add_item($object, $myCartOrigine->type) ;
 									}
 								}
 								if ($elt_no_flag) {
 									$liste = $myCartOrigine->get_cart("NOFLAG") ;
-									while(list($cle, $object) = each($liste)) {
+									foreach ($liste as $cle => $object) {
 										$myCart->add_item($object, $myCartOrigine->type) ;
 									}
 								}
@@ -308,13 +314,13 @@ class caddie_controller extends caddie_root_controller {
 								// transfert des notices de dépouillement
 								if ($elt_flag) {
 									$liste = $myCartOrigine->get_cart("FLAG") ;
-									while(list($cle, $object) = each($liste)) {
+									foreach ($liste as $cle => $object) {
 										$myCart->add_item($object, $myCartOrigine->type, "DEP") ;
 									}
 								}
 								if ($elt_no_flag) {
 									$liste = $myCartOrigine->get_cart("NOFLAG") ;
-									while(list($cle, $object) = each($liste)) {
+									foreach ($liste as $cle => $object) {
 										$myCart->add_item($object, $myCartOrigine->type, "DEP") ;
 									}
 								}
@@ -323,13 +329,13 @@ class caddie_controller extends caddie_root_controller {
 							// on est dans le cas "normal"
 							if ($elt_flag) {
 								$liste = $myCartOrigine->get_cart("FLAG") ;
-								while(list($cle, $object) = each($liste)) {
+								foreach ($liste as $cle => $object) {
 									$myCart->add_item($object, $myCartOrigine->type) ;
 								}
 							}
 							if ($elt_no_flag) {
 								$liste = $myCartOrigine->get_cart("NOFLAG") ;
-								while(list($cle, $object) = each($liste)) {
+								foreach ($liste as $cle => $object) {
 									$myCart->add_item($object, $myCartOrigine->type) ;
 								}
 							}
@@ -353,13 +359,15 @@ class caddie_controller extends caddie_root_controller {
 		global $action;
 		global $form_cb_expl;
 		global $begin_result_expl_liste_unique;
-	
+		global $alert_sound_list; //used outside
+		
 		if($idcaddie) {
 			$myCart = static::get_object_instance($idcaddie);
 			print pmb_bidi($myCart->aff_cart_titre());
 			switch ($action) {
 				case 'add_item':
 				case 'pointe_item':
+				    $form_cb_expl=trim($form_cb_expl);
 					$item_info = $myCart->get_item_info_from_expl_cb($form_cb_expl);
 					if($action == 'add_item') {
 						if ($item_info->expl_ajout_ok) $res_ajout = $myCart->add_item($item_info->expl_id,"EXPL");
@@ -404,7 +412,7 @@ class caddie_controller extends caddie_root_controller {
 	}	
 	
 	public static function proceed_edition_export_noti($idcaddie=0, $mode="simple") {
-		global $charset;
+		global $msg, $charset;
 		global $elt_flag , $elt_no_flag, $notice_tpl;
 		
 		$idcaddie += 0;
@@ -416,6 +424,7 @@ class caddie_controller extends caddie_root_controller {
 			header("Expires: 0");
 			header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
 			header("Pragma: public");
+			print '<html><head><title>'.$msg['print_title'].'</title><meta http-equiv=Content-Type content="text/html; charset='.$charset.'" /></head><body>';
 			switch ($mode) {
 				case 'advanced':
 					print $myCart->get_list_caddie_ui()->get_display_export_noti_list();
@@ -426,15 +435,17 @@ class caddie_controller extends caddie_root_controller {
 					print $contents;
 					break;
 			}
+			print '</body></html>';
 		}
 	}
 	
-	public static function print_prepare() {
+	public static function print_prepare($idcaddie_new=0) {
 		global $msg, $base_path;
 		global $object_type, $item, $current_print, $aff_lien, $boutons_select;
 		global $bannette_id;
-		global $selected_objects;
+		global $selected_objects, $include_child, $pager;
 		
+		if(!$object_type) $object_type = 'NOTI';
  		print "<script type='text/javascript' src='./javascript/tablist.js'></script>";
         print "<h3>" . $msg["print_cart_title"] . "</h3>\n";
         print "<form name='print_options' action='print_cart.php?action=print' method='post'>";
@@ -443,7 +454,13 @@ class caddie_controller extends caddie_root_controller {
         $resultat = pmb_mysql_query($requete);
         $ctype = "";
         $parity = 0;
+        $script_submit = '';
+        $print_cart = array();
         while ($ca = pmb_mysql_fetch_object($resultat)) {
+            if ($idcaddie_new && ($idcaddie_new != $ca->idcaddie)) continue;
+            if (!empty($idcaddie_new) && ($idcaddie_new == $ca->idcaddie)) {
+                $script_submit = "<script>document.getElementById('id_" . $ca->idcaddie . "').checked=true;document.forms['print_options'].submit()</script>";
+            }
             $ca_auth = explode(" ", $ca->autorisations);
             $as = in_array(SESSuserid, $ca_auth);
             if (($as !== false) && ($as !== null)) {
@@ -455,7 +472,8 @@ class caddie_controller extends caddie_root_controller {
                     $ca->caddie_classement = classementGen::getDefaultLibelle();
                 }
                 $print_cart[$ctype]["classement_list"][$ca->caddie_classement]["title"] = stripslashes($ca->caddie_classement);
-                if (($parity = 1 - $parity)) {
+                $parity = 1 - $parity;
+                if ($parity) {
                     $pair_impair = "even";
                 } else {
                     $pair_impair = "odd";
@@ -476,13 +494,28 @@ class caddie_controller extends caddie_root_controller {
                                                         </tr>");
             }
         }
+        if (!isset($pager) && !$selected_objects) $pager = 0;
+        elseif (!isset($pager)) $pager = 2;
+        if (!isset($include_child)) $include_child = 0;
+        if (!isset($selected_objects)) $selected_objects = '';
         print "
-			<input type='radio' id='pager_2' name='pager' value='2'/>&nbsp;" . $msg["print_size_selected_elements"] . "<br />
-        	<input type='radio' id='pager_1' name='pager' value='1'/>&nbsp;" . $msg["print_size_current_page"] . "<br />
-            <input type='radio' id='pager_0' name='pager' value='0' checked='checked' />&nbsp;" . $msg["print_size_all"] . "<br />
-            <input type='checkbox' id='include_child' name='include_child' />&nbsp;" . $msg["cart_include_child"];
+			<input type='radio' id='pager_2' name='pager' value='2' " . ($pager == 2 ? "checked='checked'" : "") . "/>&nbsp;<label for='pager_2'>" . $msg["print_size_selected_elements"] . "</label><br />
+        	<input type='radio' id='pager_1' name='pager' value='1' " . ($pager == 1 ? "checked='checked'" : "") . "/>&nbsp;<label for='pager_1'>" . $msg["print_size_current_page"] . "</label><br />
+            <input type='radio' id='pager_0' name='pager' value='0' " . (!$pager ? "checked='checked'" : "") . "/>&nbsp;<label for='pager_0'>" . $msg["print_size_all"] . "</label><br />
+            <input type='checkbox' id='include_child' name='include_child' value='1'/>&nbsp;<label for='include_child'>" . $msg["cart_include_child"] . "</label>";
+        print "<script> 
+            function get_params_url() {
+                var pager = document.querySelector('input[name=\"pager\"]:checked').value;
+                var include_child = '';
+                if (document.querySelector('input[name=\"include_child\"]:checked')) {
+                    include_child = 1;
+                }
+                return './cart.php?action=new_cart&object_type=" . $object_type . "&item=$item&current_print=$current_print&selected_objects=$selected_objects&pager=' +  pager + '&include_child=' + include_child;
+            }
+        </script>";
+        
         print "<div class='row'><hr />
-            	$boutons_select&nbsp;<input class='bouton' type='button' value=' " . $msg['new_cart'] . " ' onClick=\"document.location='./cart.php?action=new_cart&object_type=" . $object_type . "&item=$item&current_print=$current_print'\" />
+            	$boutons_select&nbsp;<input class='bouton' type='button' value=' " . $msg['new_cart'] . " ' onClick=\"document.location=get_params_url();\" />
             </div>";
         print "<hr />";
 
@@ -517,15 +550,12 @@ class caddie_controller extends caddie_root_controller {
         $boutons_select.= "&nbsp;<input type='button' value='" . $msg['print_cancel'] . "' class='bouton' onClick='self.close();' />";
         $object_type = "NOTI";
         print "<div class='row'><hr />
-                        $boutons_select&nbsp;<input class='bouton' type='button' value=' " . $msg['new_cart'] . " ' onClick=\"document.location='./cart.php?action=new_cart&object_type=" . $object_type . "&item=$item&current_print=$current_print'\" />
+                        $boutons_select&nbsp;<input class='bouton' type='button' value=' " . $msg['new_cart'] . " ' onClick=\"document.location=get_params_url();\" />
                         </div>";
         print "</form>
         <script type='text/javascript' src='".$base_path."/javascript/popup.js'></script>
-        <script type='text/javascript'>
-        	if(getSelectedObjects('opener')) {
-        		document.getElementById('pager_2').checked = 'checked';
-			}	
-        </script>";
+        ";
+        print $script_submit;
 	}	
 	
 	public static function print_cart() {
@@ -619,9 +649,16 @@ class caddie_controller extends caddie_root_controller {
 					$requete = "select expl_id as notice_id from $table " . $limit;
 					$object_type = "EXPL";
 					break;
+				default :
+				    $sh = new searcher_records_tab($environement["FORM_VALUES"]);
+				    $notices = $sh->get_result();
+				    $requete = "select  notice_id from notices where notice_id in ($notices)";
+				    break;
 			}
 		}
-		
+		if (!isset($environement['selected_objects'])) {
+		    $environement['selected_objects'] = array();
+		}
 		if ($environement["caddie"]) {
 			$message = '';
 			foreach ($environement["caddie"] as $environement_caddie) {

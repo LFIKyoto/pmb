@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: zotero.class.php,v 1.11 2017-10-11 08:53:30 jpermanne Exp $
+// $Id: zotero.class.php,v 1.15 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -30,7 +30,7 @@ class zotero extends connector {
 	}
 
 	public function source_get_property_form($source_id) {
-		global $charset;
+	    global $charset, $zotero_userid, $zotero_client_key;
 		 
 		$params=$this->get_source_params($source_id);
 		if ($params['PARAMETERS']) {
@@ -280,7 +280,7 @@ class zotero extends connector {
 		if ($out) {
 				
 			//On a un enregistrement unimarc, on l'enregistre
-			$rec_uni_dom=new xml_dom($out,$charset);
+			$rec_uni_dom=new xml_dom($out,"utf-8");
 			
 			if (!$rec_uni_dom->error) {
 				
@@ -330,11 +330,17 @@ class zotero extends connector {
 							for ($j=0; $j<count($ss); $j++) {
 								$usubfield=$ss[$j]["ATTRIBS"]["c"];
 								$value=$rec_uni_dom->get_datas($ss[$j]);
+								if($charset != "utf-8"){
+									$value=pmb_utf8_decode($value);
+								}
 								$subfield_order=$j;
 								$this->insert_content_into_entrepot($this->source_id, $ref, $date_import, $ufield, $usubfield, $field_order, $subfield_order, $value, $recid);
 							}
 						} else {
 							$value=$rec_uni_dom->get_datas($fs[$i]);
+							if($charset != "utf-8"){
+								$value=pmb_utf8_decode($value);
+							}
 							$this->insert_content_into_entrepot($this->source_id, $ref, $date_import, $ufield, $usubfield, $field_order, $subfield_order, $value, $recid);
 						}
 					}
@@ -392,7 +398,7 @@ class zotero extends connector {
 		global $form_until;
 		global $form_radio;
 
-		$source_id=$source_id+0;
+		$source_id = (int) $source_id;
 		$params=$this->get_source_params($source_id);
 		$vars=unserialize($params['PARAMETERS']);
 
@@ -505,7 +511,7 @@ class zotero_protocol {
 
 	public $channel = false;
 	public $url = '';
-	public $params = '';
+	public $params = array();
 	public $response = '';
 	public $error = false;
 	public $error_msg = '';

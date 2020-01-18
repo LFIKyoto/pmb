@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: fr_FR.xml,v 1.24 2018-12-27 15:17:07 dgoron Exp $ -->
+$Id: fr_FR.xml,v 1.28.2.2 2019-10-21 14:20:31 dgoron Exp $ -->
 
 <!DOCTYPE XMLlist SYSTEM "../../../../includes/XMLlist.dtd" >
 <XMLlist>
@@ -156,6 +156,7 @@ param1 = séparateur entre catégories
 param2 = séparateur entre thésaurus
 param3 = langue à prendre en compte
 param4 = afficher le nom du ou des thésaurus en entête, 0 ou 1
+param5 = nombre maxi de catégories à afficher, 0=tous
   </entry>
   <entry code="categories_output_description"></entry>
   
@@ -254,6 +255,7 @@ Liste des champs et des valeurs possibles pour les paramètres 2 et 3 :
 	expl_date_depot : date de dépôt
 	pret_flag : 1 = exemplaire empruntable, 0 =exemplaire non empruntable
 	nom_du_champ_perso : affiche la valeur de ce champ
+	caddies : identifiants de paniers
   </entry>
   <entry code="expl_by_field_output_description">
 Exemples :
@@ -290,6 +292,7 @@ param3 = critères de filtrage des exemplaires
 	expl_date_retour : date de retour
 	expl_date_depot : date de dépôt
 	pret_flag : 1 = exemplaire empruntable, 0 =exemplaire non empruntable
+	caddies : identifiants de paniers
   </entry>
   <entry code="expl_with_tpl_output_description">
 Exemple :
@@ -317,7 +320,31 @@ param4 = URL de l'image dans le cas où il n'y a qu'un seul document numérique, s
 param5 = filtre par identifiant de statut de document numérique (séparer par une virgule plusieurs valeurs), si vide pas de filtre.
   </entry>
   <entry code="expl_num_vign_reduit_output_description"></entry>
-  
+ 
+<!--#expl_num_by_field(param0,param1,param2,param3);-->
+  <entry code="expl_num_by_field_description">Affiche un champ des documents numériques selon les paramètres :</entry>
+  <entry code="expl_num_by_field_input_description">
+param0 = nombre maxi de documents numériques à afficher, 0=tous
+param1 = séparateur
+param2 = champ demandé
+param3 = critères de filtrage des documents numériques au format :
+	[champ1=valeur1;valeur2,champ2=valeur1]
+Liste des champs et des valeurs possibles pour les paramètres 2 et 3 :
+	explnum_id : identifiant du document numérique
+	explnum_nom : nom
+	explnum_mimetype : mimetype
+	explnum_url : URL du document
+	explnum_vignette : vignette du document
+	explnum_nomfichier : nom du fichier
+	explnum_extfichier : extension du fichier
+	nom_du_champ_perso : affiche la valeur de ce champ
+  </entry>
+  <entry code="expl_num_by_field_output_description">
+Exemples :
+#expl_num_by_field(1,'',explnum_nom); = affiche le nom du premier document numérique
+#expl_num_by_field(0, / ,explnum_nom,[explnum_extfichier=pdf]); = affiche les noms de tous les documents numériques avec l'extension PDF
+  </entry>
+   
 <!--#expl_num_with_tpl(param0,param1,param2,param3,param4,param5,param6);-->
   <entry code="expl_num_with_tpl_description">Affiche les documents numériques associés à la notice, selon une mise en forme à définir.</entry>
   <entry code="expl_num_with_tpl_input_description">
@@ -766,6 +793,12 @@ param0 :
   </entry>
   <entry code="date_bulletin_output_description"></entry>
   
+ <!--#bulletin_id();-->
+  <entry code="bulletin_id_description">
+Affiche l'identifiant du bulletin à partir d'un article.</entry>
+  <entry code="bulletin_id_input_description"></entry>
+  <entry code="bulletin_id_output_description"></entry>
+  
 <!--#issn();-->
   <entry code="issn_description">Affiche l'ISSN de la notice.</entry>
   <entry code="issn_input_description"></entry>
@@ -825,6 +858,21 @@ Exemple :
 &lt;i&gt;#title();#a_empty(#complement_title();, : );&lt;/i&gt;};,...);
   </entry>
 
+<!--#filter_from_notice_info(param0,param1,param2);-->
+  <entry code="filter_from_notice_info_description">Filtrer une liste de notices selon la valeur d'une propriété de l'objet notice_info</entry>
+  <entry code="filter_from_notice_info_input_description">
+param0 : tableau d'identifiants des notices ou identifiants séparés par une virgule 
+param1 : nom de la propriété pour le filtrage
+param2 : valeur de comparaison pour le filtrage
+  </entry>
+  <entry code="filter_from_notice_info_output_description">
+Exemple :
+#filter_from_notice_info(#linked_id(up,a,d);,0,&lt;br
+ /&gt;,#{In
+ :
+&lt;i&gt;#title();#a_empty(#complement_title();, : );&lt;/i&gt;};,memo_lang,en_UK);
+  </entry>
+  
 <!--#linked_id(param0,param1);-->
   <entry code="linked_id_description">(À utiliser avec la fonction #group();)Renvoie un tableau d'identifiants de notices liées selon les paramètres :</entry>
   <entry code="linked_id_input_description">
@@ -1126,7 +1174,14 @@ param1 : valeur
 param0 : nom de la variable
   </entry>
   <entry code="get_variable_output_description"></entry>
-  
+
+<!--#get_global_variable(param0);-->
+  <entry code="get_global_variable_description">Affiche la valeur d'une variable globale.</entry>
+  <entry code="get_global_variable_input_description">
+param0 : nom de la variable globale
+  </entry>
+  <entry code="get_global_variable_output_description"></entry>
+    
 <!--#strip_tags(param0);-->
   <entry code="strip_tags_description">Supprime les balises html d'une chaîne de caractères.</entry>
   <entry code="strip_tags_input_description">param0 : chaîne de caractères</entry>

@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: clean.class.php,v 1.15 2018-02-09 09:43:21 dgoron Exp $
+// $Id: clean.class.php,v 1.16 2019-04-29 11:04:20 dgoron Exp $
 
 global $class_path;
 require_once($class_path."/scheduler/scheduler_task.class.php");
 require_once($class_path."/netbase/netbase.class.php");
-		
+require_once($class_path."/netbase/netbase_cache.class.php");
+
 class clean extends scheduler_task {
 	
 	protected function execution_element($title, $method_name) {
@@ -25,6 +26,7 @@ class clean extends scheduler_task {
 	public function execution() {
 		global $dbh, $msg, $charset, $PMBusername;
 		global $acquisition_active,$pmb_indexation_docnum;
+		global $base_path;
 		
 		if (SESSrights & ADMINISTRATION_AUTH) {
 			$parameters = $this->unserialize_task_params();
@@ -129,6 +131,19 @@ class clean extends scheduler_task {
 								pmb_mysql_query($query);
 								$this->add_content_report('OK');
 							}else{
+								$this->add_content_report('KO');
+							}
+							break;
+						case CLEAN_CACHE_TEMPORARY_FILES:
+							$this->add_section_report($msg["cleaning_cache_temporary_files"]);
+							$cleaned = netbase_cache::clean_files($base_path."/temp");
+							if($cleaned) {
+								//Correctement réalisé en gestion, on nettoye à l'OPAC
+								$cleaned = netbase_cache::clean_files($base_path."/opac_css/temp");
+							}
+							if($cleaned) {
+								$this->add_content_report('OK');
+							} else {
 								$this->add_content_report('KO');
 							}
 							break;

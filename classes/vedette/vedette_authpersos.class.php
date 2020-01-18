@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_authpersos.class.php,v 1.9 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: vedette_authpersos.class.php,v 1.10 2019-04-19 09:40:05 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -17,6 +17,7 @@ class vedette_authpersos extends vedette_element{
 		$this->entity = authorities_collection::get_authority(AUT_TABLE_AUTHORITY, 0, [ 'num_object' => $id, 'type_object' => AUT_TABLE_AUTHPERSO]);
 		$params['id_authority'] = $this->entity->get_object_instance()->id;
 		$params['label'] = $this->entity->get_object_instance()->info['authperso']['name'];
+		$params['authperso_name'] = $this->entity->get_type_label();
 		parent::__construct($type, $id, $isbd, $params);
 	}
 

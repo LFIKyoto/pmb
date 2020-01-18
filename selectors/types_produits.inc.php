@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: types_produits.inc.php,v 1.16 2017-11-21 13:38:21 dgoron Exp $
+// $Id: types_produits.inc.php,v 1.17 2019-08-29 10:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $caller, $param1, $param2, $param3, $param4, $id_fou, $no_display, $bt_ajouter, $callback;
 
 // la variable $caller, passée par l'URL, contient le nom du form appelant
 $base_url = "./select.php?what=types_produits&caller=$caller&param1=$param1&param2=$param2&param3=$param3&param4=$param4&id_fou=$id_fou&no_display=$no_display&bt_ajouter=$bt_ajouter&callback=$callback";

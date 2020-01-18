@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cart.inc.php,v 1.102 2018-10-18 14:43:09 dgoron Exp $
+// $Id: cart.inc.php,v 1.108.2.1 2019-10-30 08:15:48 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -21,6 +21,8 @@ function aff_paniers($item=0, $object_type="NOTI", $lien_origine="./cart.php?", 
 	global $baselink;
 	global $deflt_catalog_expanded_caddies;
 	global $base_path;
+	global $idcaddie_new;
+	
 	
 	if ($lien_edition) $lien_edition_panier_cst = "<input type=button class=bouton value='$msg[caddie_editer]' onclick=\"document.location='$lien_origine&action=edit_cart&idcaddie=!!idcaddie!!';\" />";
 	else $lien_edition_panier_cst = "";
@@ -36,7 +38,17 @@ function aff_paniers($item=0, $object_type="NOTI", $lien_origine="./cart.php?", 
 	}	
 	if(($item)&&(!$nocheck)) {
 		print "<form name='print_options' action='$lien_origine&action=$action_click&object_type=".$object_type."&item=$item' method='post'>";
-		if($action!="save_cart")print "<input type='checkbox' name='include_child' >&nbsp;".$msg["cart_include_child"];
+		if($action!="save_cart") {
+		    if($object_type == 'NOTI') {
+		        print "<input type='checkbox' name='include_child' >&nbsp;".$msg["cart_include_child"];
+		    }
+		    if($object_type == 'NOTI' && notice::get_niveau_biblio($item) == 's') {
+		        print "<br /><input type='checkbox' name='include_bulletin_notice' >&nbsp;".$msg["cart_include_bulletin_notice"];
+		    }
+		    if(($object_type == 'NOTI' && notice::get_niveau_biblio($item) == 's') || ($object_type == 'BULL')) {
+		        print "<br /><input type='checkbox' name='include_analysis' >&nbsp;".$msg["cart_include_analysis"];
+		    }
+		}
 	}
 	print "<hr />";
 	$boutons_select='';
@@ -45,12 +57,20 @@ function aff_paniers($item=0, $object_type="NOTI", $lien_origine="./cart.php?", 
 		$boutons_select<input class='bouton' type='button' value=' $msg[new_cart] ' onClick=\"document.location='$lien_origine&action=new_cart&object_type=".$object_type."&item=$item'\" />
 		</div><br>";
 	}
-	if(sizeof($liste)) {
+	$script_submit = '';
+	if (!empty($liste)) {
 		print "<div class='row'><a href='javascript:expandAll()'><img src='".get_url_icon('expand_all.gif')."' id='expandall' border='0'></a>
 		<a href='javascript:collapseAll()'><img src='".get_url_icon('collapse_all.gif')."' id='collapseall' border='0'></a>$titre</div>";
 		print confirmation_delete("$lien_origine&action=del_cart&object_type=".$object_type."&item=$item&idcaddie=");
 		$parity=array();
-		while(list($cle, $valeur) = each($liste)) {
+		
+		foreach ($liste as $cle => $valeur) {
+		    if (!empty($idcaddie_new) && ($idcaddie_new == $valeur['idcaddie'])) {
+    		    $script_submit =  "<script>document.getElementById('id_" . $valeur['idcaddie'] . "').checked=true;document.forms['print_options'].submit()</script>";
+		    }
+		    if (!empty($idcaddie_new) && ($idcaddie_new == $valeur['idcaddie'])) {
+		        $script_submit =  "<script>document.getElementById('id_" . $valeur['idcaddie'] . "').checked=true;document.forms['print_options'].submit()</script>";
+		    }
 			$rqt_autorisation=explode(" ",$valeur['autorisations']);
 			if (array_search ($PMBuserid, $rqt_autorisation)!==FALSE || $PMBuserid==1) {
 				$aff_lien=str_replace('!!idcaddie!!', $valeur['idcaddie'], $lien_edition_panier_cst);
@@ -72,17 +92,20 @@ function aff_paniers($item=0, $object_type="NOTI", $lien_origine="./cart.php?", 
 					$rowPrint = "<tr class='$pair_impair' $tr_javascript ><td class='classement60'>".(!$nocheck?"<input type='checkbox' id='id_".$valeur['idcaddie']."' name='caddie[".$valeur['idcaddie']."]' value='".$valeur['idcaddie']."'>":"")."&nbsp;"; 
 					$link = "$lien_origine&action=$action_click&object_type=".$object_type."&idcaddie=".$valeur['idcaddie']."&item=$item";	
             		if(!$nocheck){
-            			$rowPrint.= "<a href='#' onclick='javascript:document.getElementById(\"id_".$valeur['idcaddie']."\").checked=true;document.forms[\"print_options\"].submit();' /><strong>".$valeur['name']."</strong>";
+            			$rowPrint.= "<a href='#' onclick='javascript:document.getElementById(\"id_".$valeur['idcaddie']."\").checked=true;document.forms[\"print_options\"].submit();' />";
             		} else {
             			if ($lien_pointage) {
-            				$rowPrint.= "<a href='#' onclick='javascript:document.getElementById(\"idcaddie\").value=".$item.";document.getElementById(\"idcaddie_selected\").value=".$valeur['idcaddie'].";document.forms[\"print_options\"].submit();' /><strong>".$valeur['name']."</strong>";
+            				$rowPrint.= "<a href='#' onclick='javascript:document.getElementById(\"idcaddie\").value=".$item.";document.getElementById(\"idcaddie_selected\").value=".$valeur['idcaddie'].";document.forms[\"print_options\"].submit();' />";
             			} else {
-            				$rowPrint.= "<a href='#' onclick='javascript:document.getElementById(\"idcaddie\").value=".$valeur['idcaddie'].";document.forms[\"print_options\"].submit();' /><strong>".$valeur['name']."</strong>";
+            				$rowPrint.= "<a href='#' onclick='javascript:document.getElementById(\"idcaddie\").value=".$valeur['idcaddie'].";document.forms[\"print_options\"].submit();' />";
             			}
-            		}			
+            		}
+            		$rowPrint .= "<span ".($valeur['favorite_color'] != '#000000' ? "style='color:".$valeur['favorite_color']."'" : "").">";
+					$rowPrint .= "<strong>".$valeur['name']."</strong>";
 					if ($valeur['comment']){
 						$rowPrint.= "<br /><small>(".$valeur['comment'].")</small>";
 					}
+					$rowPrint .= "</span>";
 	            	$rowPrint.=  "</td>
 	            		".$myCart->aff_nb_items_reduit()."
 	            		<td class='classement20'>$aff_lien</td>
@@ -90,11 +113,13 @@ function aff_paniers($item=0, $object_type="NOTI", $lien_origine="./cart.php?", 
 				} else {
 					$link = "$lien_origine&action=$action_click&object_type=".$object_type."&idcaddie=".$valeur['idcaddie']."&item=$item";
 	            	$rowPrint= "<tr class='$pair_impair' $tr_javascript >";
-	                $rowPrint.= "<td class='classement60'><a href='$link' /><strong>".$valeur['name']."</strong>";	
+	                $rowPrint.= "<td class='classement60'><a href='$link' />
+	                	<span ".($valeur['favorite_color'] != '#000000' ? "style='color:".$valeur['favorite_color']."'" : "").">
+	                	<strong>".$valeur['name']."</strong>";	
 	                if ($valeur['comment']){
 	                	$rowPrint.= "<br /><small>(".$valeur['comment'].")</small>";
 	                }
-	                $rowPrint.= "</a></td>";
+	                $rowPrint.= "</span></a></td>";
 	            	$rowPrint.= $myCart->aff_nb_items_reduit();
 	            	if ($lien_creation) {
 	            		$classementGen = new classementGen('caddie', $valeur['idcaddie']);
@@ -153,6 +178,7 @@ function aff_paniers($item=0, $object_type="NOTI", $lien_origine="./cart.php?", 
 	}				
 	//if(($item)&&(!$nocheck)) print"</form>";
 	if(($item)) print"</form>";		
+	print $script_submit;
 }
 
 // affichage d'un unique objet de caddie
@@ -187,7 +213,7 @@ function aff_cart_unique_object ($item, $caddie_type, $url_base="./catalog.php?c
 	}	
 	$nb_after_suppr = ($nbr_lignes ? $nbr_lignes-1 : 0);	
 	
-	if(!sizeof($liste) || !is_array($liste)) {
+	if (!is_array($liste) || empty($liste)) {
 		return $msg[399];
 	} else {
 		// en fonction du type de caddie on affiche ce qu'il faut
@@ -206,14 +232,14 @@ function aff_cart_unique_object ($item, $caddie_type, $url_base="./catalog.php?c
 			// boucle de parcours des exemplaires trouvés
 			// inclusion du javascript de gestion des listes dépliables
 			// début de liste
-			while(list($cle, $expl) = each($liste)) {
-				if (!$expl[content])
+		    foreach ($liste as $cle => $expl) {
+				if (!$expl['content'])
 					if($stuff = get_expl_info($expl['object_id'])) {
 						$stuff->lien_suppr_cart = "<a href='$url_base&action=del_item&object_type=EXPL&item=$expl&page=$page_suppr&nbr_lignes=$nb_after_suppr&nb_per_page=$nb_per_page'><img src='".get_url_icon('basket_empty_20x20.gif')."' alt='basket' title=\"".$msg['caddie_icone_suppr_elt']."\" /></a>";
 						$stuff = check_pret($stuff);
 						$aff_retour .= print_info($stuff,0,1);
 					} else {
-						$aff_retour .= "<strong>ID : ".$expl['object_id']."&nbsp;: ${msg[395]}</strong>";
+						$aff_retour .= "<div class='row'><strong>ID : ".$expl['object_id']."&nbsp;: ${msg[395]}</strong></div>";
 					}
 				else {
 					$cb_display = "
@@ -231,7 +257,7 @@ function aff_cart_unique_object ($item, $caddie_type, $url_base="./catalog.php?c
 			// boucle de parcours des bulletins trouvés
 			// inclusion du javascript de gestion des listes dépliables
 			// début de liste
-			while(list($cle, $expl) = each($liste)) {
+		    foreach ($liste as $cle => $expl) {
 				global $url_base_suppr_cart; 
 				$url_base_suppr_cart = $url_base ;
 				if ($bull_aff = show_bulletinage_info($expl["object_id"],0,1)) {

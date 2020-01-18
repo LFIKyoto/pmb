@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: parametres_perso.class.php,v 1.110 2018-12-20 11:00:19 mbertin Exp $
+// $Id: parametres_perso.class.php,v 1.117.2.2 2019-11-27 10:56:19 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -28,6 +28,7 @@ class parametres_perso {
 	
 	public static $fields = array();
 	public static $st_fields = array();
+	protected static $out_values = array();
 	
 	//Créateur : passer dans $prefix le type de champs persos et dans $base_url l'url a appeller pour les formulaires de gestion	
 	public function __construct($prefix,$base_url="",$option_visibilite=array()) {
@@ -180,7 +181,7 @@ class parametres_perso {
 		//Liste des types
 		$t_list="<select name='type'>\n";
 		reset($type_list_empr);
-		while (list($key,$val)=each($type_list_empr)) {
+		foreach ($type_list_empr as $key => $val) {
 			$t_list.="<option value='".$key."'";
 			if ($type==$key) $t_list.=" selected";
 			$t_list.=">".htmlentities($val,ENT_QUOTES, $charset)."</option>\n";
@@ -191,7 +192,7 @@ class parametres_perso {
 		//Liste des types de données
 		$t_list="<select name='datatype'>\n";
 		reset($datatype_list);
-		while (list($key,$val)=each($datatype_list)) {
+		foreach ($datatype_list as $key => $val) {
 			$t_list.="<option value='".$key."'";
 			if ($datatype==$key) $t_list.=" selected";
 			$t_list.=">".htmlentities($val,ENT_QUOTES, $charset)."</option>\n";
@@ -279,7 +280,7 @@ class parametres_perso {
 		
 		if (!$this->no_special_fields) {
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				$check_message="";
 				$field=array();
 				$field["ID"]=$key;
@@ -312,7 +313,7 @@ class parametres_perso {
 
 		if (!$this->no_special_fields) {
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				$field_name = $this->t_fields[$key]["NAME"];
 				global ${$field_name};
 				$field = ${$field_name};
@@ -330,12 +331,12 @@ class parametres_perso {
 		$exclu_tab=array();
 		if (!$this->no_special_fields) {
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				if($this->t_fields[$key]["EXCLUSION"])
 					$exclu_tab[] = $this->t_fields[$key];			
 			}
 			if(is_array($exclu_tab)) {
-				while (list($key,$val)=each($exclu_tab)) {
+			    foreach ($exclu_tab as $key => $val) {
 					$field_name = $exclu_tab[$key]["NAME"];
 					global ${$field_name};
 					$field = ${$field_name};
@@ -398,7 +399,7 @@ class parametres_perso {
 		$requete = "delete from ".$this->prefix."_custom_dates where ".$this->prefix."_custom_origine=$id";
 		pmb_mysql_query($requete);		
 		reset($this->t_fields);
-		while (list($key,$val)=each($this->t_fields)) {
+		foreach ($this->t_fields as $key => $val) {
 			$name=$val["NAME"];
 			global ${$name};
 			$value=${$name};
@@ -463,7 +464,7 @@ class parametres_perso {
 		//Enregistrement des champs personalisés
 		$return_val='';
 		reset($this->t_fields);
-		while (list($key,$val)=each($this->t_fields)) {
+		foreach ($this->t_fields as $key => $val) {
 			if($val["NAME"] == $name) {
 				global ${$name};
 				$value=${$name};
@@ -483,7 +484,7 @@ class parametres_perso {
 		$this->get_values($id);
 		if (!$this->no_special_fields) {
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				if($val["NAME"] == $name){
 					if(isset($this->values[$key]) && is_array($this->values[$key])) {
 						for ($i=0; $i<count($this->values[$key]); $i++) {			
@@ -507,7 +508,7 @@ class parametres_perso {
 		$this->get_values($id);
 		if (!$this->no_special_fields) {
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				if($val["NAME"] == $name){
 					if(isset($this->values[$key]) && is_array($this->values[$key])) {
 						for ($i=0; $i<count($this->values[$key]); $i++) {
@@ -576,7 +577,7 @@ class parametres_perso {
 			}
 			$check_scripts="";
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				if(!isset($this->values[$key])) $this->values[$key] = array();
 				$t=array();
 				$t["ID"]=$key;
@@ -628,7 +629,7 @@ class parametres_perso {
 			//Affichage champs persos
 			$c=0;
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				$t=array();				
 				$t['TITRE']='<b>'.htmlentities($val['TITRE'],ENT_QUOTES,$charset).' : </b>';
 				$t['TITRE_CLEAN']=htmlentities($val['TITRE'],ENT_QUOTES,$charset);
@@ -659,11 +660,11 @@ class parametres_perso {
 						$t['DETAILS'] = $aff['details'];
 					}
 				} else {											
-					$t['AFF']=htmlentities($aff,ENT_QUOTES,$charset);
+				    $t['AFF'] = htmlentities($aff,ENT_QUOTES,$charset);
 				}
-				$t['NAME']=static::$fields[$this->prefix][$key]['NAME'];
-				$t['ID']=static::$fields[$this->prefix][$key]['ID'];
-				$perso['FIELDS'][]=$t;
+				$t['NAME'] = static::$fields[$this->prefix][$key]['NAME'];
+				$t['ID'] = static::$fields[$this->prefix][$key]['ID'];
+				$perso['FIELDS'][] = $t;
 			}
 		}
 		return $perso;
@@ -673,6 +674,12 @@ class parametres_perso {
 		$query = "select idchamp from ".$this->prefix."_custom where name='".addslashes($name)."'";
 		$result = pmb_mysql_query($query);
 		return pmb_mysql_result($result, 0, 0);
+	}
+	
+	public function get_field_name_from_id($id) {
+	    $query = "select name from ".$this->prefix."_custom where idchamp='".addslashes($id)."'";
+	    $result = pmb_mysql_query($query);
+	    return pmb_mysql_result($result, 0, 0);
 	}
 			
 	public function get_formatted_output($values,$field_id) {
@@ -696,13 +703,16 @@ class parametres_perso {
     			static::$fields[$this->prefix][$field_id]["PREFIX"]=$this->prefix;
     		}
 		}
-		if(!empty($this->t_fields[$field_id])){
-    		$aff=$val_list_empr[$this->t_fields[$field_id]["TYPE"]](static::$fields[$this->prefix][$field_id],$values);
-		}else {
-		    $aff='';
+		if (!empty($this->t_fields[$field_id])) {
+    		$aff = $val_list_empr[$this->t_fields[$field_id]["TYPE"]](static::$fields[$this->prefix][$field_id],$values);
 		}
-		if(is_array($aff)) return $aff['withoutHTML']; 
-		else return $aff;
+		if (isset($aff)) {
+    		if (is_array($aff)) {
+    		    return $aff['withoutHTML']; 
+    		}
+    		return $aff;
+		}
+		return '';
 	}
 
 	//Appelé par sort_out_values
@@ -718,22 +728,50 @@ class parametres_perso {
 	
 	//Appelé dans get_out_values
 	protected function sort_out_values() {
-	
-		$fields = $this->values;
-		foreach ($fields as $name=>$field) {
-			uasort($field['values'], array($this, '_sort_out_values_by_format_values'));
-			$this->values[$name]['values'] = $field['values'];
-		}
+	    
+	    $fields = $this->values;
+	    foreach ($fields as $name=>$field) {
+	        uasort($field['values'], array($this, '_sort_out_values_by_format_values'));
+	        $this->values[$name]['values'] = $field['values'];
+	    }
 	}
 	
 	//Récupération des valeurs stockées dans les base pour un emprunteur ou autre
 	public function get_out_values($id) {
-		//défini dans des classes filles
+	    //Récupération des valeurs stockées
+	    if(!isset(self::$out_values[$id])){
+	        if ((!$this->no_special_fields)&&($id)) {
+	            $this->values = array() ;
+	            $requete="select ".$this->prefix."_custom_champ,".$this->prefix."_custom_origine,".$this->prefix."_custom_small_text, ".$this->prefix."_custom_text, ".$this->prefix."_custom_integer, ".$this->prefix."_custom_date, ".$this->prefix."_custom_float, ".$this->prefix."_custom_order from ".$this->prefix."_custom_values join ".$this->prefix."_custom on idchamp=".$this->prefix."_custom_champ where ".$this->prefix."_custom_origine=".$id;
+	            $resultat=pmb_mysql_query($requete);
+	            while ($r=pmb_mysql_fetch_array($resultat)) {
+	                $this->values[$this->t_fields[$r[$this->prefix."_custom_champ"]]["NAME"]]['label'] = $this->t_fields[$r[$this->prefix."_custom_champ"]]["TITRE"];
+	                $this->values[$this->t_fields[$r[$this->prefix."_custom_champ"]]["NAME"]]['id'] = $r[$this->prefix."_custom_champ"];
+	                $format_value=$this->get_formatted_output(array($r[$this->prefix."_custom_".$this->t_fields[$r[$this->prefix."_custom_champ"]]["DATATYPE"]]),$r[$this->prefix."_custom_champ"],true);
+	                $this->values[$this->t_fields[$r[$this->prefix."_custom_champ"]]["NAME"]]['values'][] = array(
+	                    'value' => $r[$this->prefix."_custom_".$this->t_fields[$r[$this->prefix."_custom_champ"]]["DATATYPE"]],
+	                    'format_value' => 	$format_value,
+	                    'order' => $r[$this->prefix."_custom_order"]
+	                );
+	                if(!isset($this->values[$this->t_fields[$r[$this->prefix."_custom_champ"]]["NAME"]]['all_format_values'])) {
+	                    $this->values[$this->t_fields[$r[$this->prefix."_custom_champ"]]["NAME"]]['all_format_values'] = '';
+	                }
+	                $this->values[$this->t_fields[$r[$this->prefix."_custom_champ"]]["NAME"]]['all_format_values'].=$format_value.' ';
+	            }
+	            $this->sort_out_values();
+	        } else $this->values=array();
+	        self::$out_values[$id] = $this->values;
+	    }else {
+	        $this->values = self::$out_values[$id];
+	    }
+	    return self::$out_values[$id];
 	}
 	
 	//Suppression de la base des valeurs d'un emprunteur ou autre...
 	public function delete_values($id) {
 		$requete = "DELETE FROM ".$this->prefix."_custom_values where ".$this->prefix."_custom_origine=$id";
+		$res = pmb_mysql_query($requete);
+		$requete = "DELETE FROM ".$this->prefix."_custom_dates where ".$this->prefix."_custom_origine=$id";
 		$res = pmb_mysql_query($requete);
 	}
 	
@@ -836,7 +874,7 @@ class parametres_perso {
 
 		$values=array();
 		reset($this->t_fields);
-		while (list($key,$val)=each($this->t_fields)) {
+		foreach ($this->t_fields as $key => $val) {
 			if($val['NAME'] == $name) {
 				switch ($val['TYPE']) {
 					case 'list' :
@@ -947,7 +985,7 @@ class parametres_perso {
 					}else{
 						//Ajout dans _custom_list
 						if($datatype=='integer' || $datatype=='float'){
-							if (!sizeof($tab)) {
+							if (empty($tab)) {
 								$val = 1;
 							} else {
 								$val = max($tab)+1;
@@ -1016,7 +1054,7 @@ class parametres_perso {
 		$perso=array();
 		$check_scripts="";
 		reset($this->t_fields);
-		while (list($key,$val)=each($this->t_fields)) {
+		foreach ($this->t_fields as $key => $val) {
 			if($this->t_fields[$key]["SEARCH"]) {
 				$t=array();
 				$t["NAME"]=$val["NAME"];
@@ -1053,7 +1091,7 @@ class parametres_perso {
 		
 		$perso=array();
 		reset($this->t_fields);
-		while (list($key,$val)=each($this->t_fields)) {
+		foreach ($this->t_fields as $key => $val) {
 			if($this->t_fields[$key]["SEARCH"]) {
 				$t=array();
 				$t["DATATYPE"]=$val["DATATYPE"];
@@ -1092,7 +1130,7 @@ class parametres_perso {
 		global $msg;
 		
 		$main_fields = array();
-		while (list($key,$val)=each($this->t_fields)) {
+		foreach ($this->t_fields as $key => $val) {
 			$field = $this->t_fields[$key];
 			$main_fields[] = array(
 					'var' => $field['NAME'],

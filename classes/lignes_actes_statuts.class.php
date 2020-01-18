@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lignes_actes_statuts.class.php,v 1.6 2017-02-20 19:04:07 dgoron Exp $
+// $Id: lignes_actes_statuts.class.php,v 1.9 2019-07-04 09:06:45 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -67,14 +67,13 @@ class lgstat{
 	public static function getList($x='ARRAY_ALL') {
 		
 		global $dbh;
-		$res='';
+		$res = array();
 		
 		$q = "select * from lignes_actes_statuts order by libelle ";
 		
 		switch ($x) {
 			case 'QUERY' :
-				$res=$q;
-				break;
+				return $q;
 			case 'ARRAY_VALUES' :
 				$r = pmb_mysql_query($q, $dbh);
 				$res = array();
@@ -124,6 +123,7 @@ class lgstat{
 				}
 			}
 			$sel.=">";
+			$sel.="<option value='0' ".(!count($selected) || in_array(0,$selected) ? "selected='selected'" : "").">".htmlentities($msg['acquisition_lgstat_all'],ENT_QUOTES,$charset)."</option>";
 			foreach($res as $id=>$val){
 				$sel.="<option value='".$id."'";
 				if(in_array($id,$selected)) $sel.=" selected='selected'";
@@ -156,6 +156,10 @@ class lgstat{
 		$r = pmb_mysql_query($q);
 		return pmb_mysql_result($r, 0, 0);
 
+	}
+	
+	public static function getLabelFromId($id) {
+		return lgstat::getList()[$id][0];
 	}
 
 

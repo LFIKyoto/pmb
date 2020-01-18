@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_account_types.class.php,v 1.4 2016-10-26 08:27:54 ngantier Exp $
+// $Id: rent_account_types.class.php,v 1.5 2019-08-20 09:18:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -155,8 +155,9 @@ class rent_account_types {
 
 	public static function get_request_type_pref_account($key) {
 		global $acquisition_request_type_pref_account;
-		$param=(array) json_decode($acquisition_request_type_pref_account);
-		return $param[$key]; 
+		$param = (array) json_decode($acquisition_request_type_pref_account);
+		if (isset($param[$key])) return $param[$key];
+		return ''; 
 	}
 	
 	public function get_request_type_pref_account_list() {

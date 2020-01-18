@@ -2,17 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: avis.tpl.php,v 1.16 2017-10-19 14:42:59 dgoron Exp $
+// $Id: avis.tpl.php,v 1.17 2019-05-27 13:47:15 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
+global $avis_tpl_menu, $avis_tpl_form1, $pmb_avis_note_display_mode, $pmb_javascript_office_editor, $id, $avis_tpl_form1_script, $avis_detail_note_msg, $base_path, $msg;
+
 if(!isset($id)) $id = 0;
-
-global $avis_tpl_menu;
-global $avis_tpl_form1;
-
-global $pmb_avis_note_display_mode;
-global $pmb_javascript_office_editor;
 
 $avis_tpl_menu = "
 <h1>".$msg['titre_avis']." <span>> <!--!!sous_menu_choisi!! --></span></h1>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lehmanns.class.php,v 1.9 2017-07-12 15:15:02 tsamson Exp $
+// $Id: lehmanns.class.php,v 1.15 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,7 +10,7 @@ global $class_path,$base_path, $include_path;
 require_once($class_path."/connecteurs.class.php");
 
 if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
-	if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "0");
+    if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "0");
 	require_once($include_path.'/xslt-php4-to-php5.inc.php');
 }
 
@@ -43,7 +43,7 @@ class xml_dom_lehmanns {
 	/**
 	 * \protected
 	 */
-	function close_node() {
+	public function close_node() {
 		$this->last_elt[$this->depth-1]["CHILDS"][]=$this->cur_elt;
 		$this->last_char=false;
 		$this->cur_elt=$this->last_elt[$this->depth-1];
@@ -53,7 +53,7 @@ class xml_dom_lehmanns {
 	/**
 	 * \protected
 	 */
-	function startElement($parser,$name,$attribs) {
+	public function startElement($parser,$name,$attribs) {
 		if ($this->last_char) $this->close_node();
 		$this->last_elt[$this->depth]=$this->cur_elt;
 		$this->cur_elt=array();
@@ -67,7 +67,7 @@ class xml_dom_lehmanns {
 	/**
 	 * \protected
 	 */
-	function endElement($parser,$name) {
+	public function endElement($parser,$name) {
 		if ($this->last_char) $this->close_node();
 		$this->close_node();
 	}
@@ -75,7 +75,7 @@ class xml_dom_lehmanns {
 	/**
 	 * \protected
 	 */
-	function charElement($parser,$char) {
+	public function charElement($parser,$char) {
 		if ($this->last_char) $this->close_node();
 		$this->last_char=true;
 		$this->last_elt[$this->depth]=$this->cur_elt;
@@ -92,7 +92,7 @@ class xml_dom_lehmanns {
 	 * @param string $xml XML a manipuler
 	 * @param string $charset Charset du document XML
 	 */
-	function xml_dom_lehmanns($xml,$charset="iso-8859-1") {
+	public function __construct($xml,$charset="iso-8859-1") {
 		$this->charset=$charset;
 		$this->cur_elt=array("NAME"=>"document","TYPE"=>"0");
 		
@@ -140,8 +140,8 @@ class xml_dom_lehmanns {
 	 Les attributs ne peuvent être cités que sur le noeud final.
 	 \endverbatim
 	 */
-	function get_node($path,$node="") {
-		if ($node=="") $node=&$this->tree;
+	public function get_node($path,$node = array()) {
+		if (empty($node)) $node = &$this->tree;
 		$paths=explode("/",$path);
 		for ($i=0; $i<count($paths); $i++) {
 			if ($i==count($paths)-1) {
@@ -202,9 +202,9 @@ class xml_dom_lehmanns {
 	 a/b/id@c	Tous les noeuds éléments c fils de a/b. L'attribut est ignoré
 	 \endverbatim
 	 */
-	function get_nodes($path,$node="") {
+	public function get_nodes($path,$node="") {
 		$n=0;
-		$nodes="";
+		$nodes=[];
 		while ($nod=$this->get_node($path."[$n]",$node)) {
 			$nodes[]=$nod;
 			$n++;
@@ -222,7 +222,7 @@ class xml_dom_lehmanns {
 	 * @param bool $force_entities true : les données sont renvoyées avec les entités xml, false : les données sont renvoyées sans entités
 	 * @return string données sérialisées du noeud élément
 	 */
-	function get_datas($node,$force_entities=false) {
+	public function get_datas($node,$force_entities=false) {
 		$char="";
 		if ($node["TYPE"]!=1) return false;
 		//Recherche des fils et vérification qu'il n'y a que du texte !
@@ -260,7 +260,7 @@ class xml_dom_lehmanns {
 	 * @param noeud $node Noeud élément duquel on veut les attributs
 	 * @return mixed Tableau des attributs Nom => Valeur ou false si ce n'est pas un noeud de type 1
 	 */
-	function get_attributes($node) {
+	public function get_attributes($node) {
 		if ($node["TYPE"]!=1) return false;
 		return $node["ATTRIBUTES"];
 	}
@@ -292,7 +292,7 @@ class xml_dom_lehmanns {
 	 a/b/id@c[3]	Renvoie : "2"
 	 \endverbatim
 	 */
-	function get_value($path,$node="") {
+	public function get_value($path,$node="") {
 		$elt=$this->get_node($path,$node);
 		if ($elt) {
 			$paths=explode("/",$path);
@@ -351,7 +351,7 @@ class xml_dom_lehmanns {
 	 a/b/id@c	Renvoie : [0]=>"0",[1]=>"1",[2]=>"2"
 	 \endverbatim
 	 */
-	function get_values($path,$node="") {
+	public function get_values($path,$node="") {
 		$n=0;
 		while ($elt=$this->get_node($path."[$n]",$node)) {
 			$elts[$n]=$elt;
@@ -421,7 +421,7 @@ class lehmanns extends connector {
 	}
     
     public function source_get_property_form($source_id) {
-    	global $charset;
+        global $charset, $max_return, $themes;
     	
     	$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {

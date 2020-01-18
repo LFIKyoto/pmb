@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fluxrss.class.php,v 1.1 2018-05-04 10:01:53 ngantier Exp $
+// $Id: fluxrss.class.php,v 1.2 2019-06-11 06:53:05 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -197,11 +197,11 @@ class fluxrss extends connector {
 	 			'|[\x00-\x7F][\x80-\xBF]+'.
 	 			'|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*'.
 	 			'|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})'.
-	 			'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
+	 			'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/',
 	 			'?', $xml);	 
 	 	} else {			
-			$xml = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]/S', '', $xml);
-			$xml = preg_replace('/[\x91\x92]/S', '\x27', $xml);
+			$xml = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]/', '', $xml);
+			$xml = preg_replace('/[\x91\x92]/', '\x27', $xml);
 		} 
  	
 	 	$xslt = new XSLTProcessor();

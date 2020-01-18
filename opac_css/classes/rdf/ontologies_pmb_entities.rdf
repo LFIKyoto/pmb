@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- $Id: ontologies_pmb_entities.rdf,v 1.31 2018-12-19 13:05:02 apetithomme Exp $ -->
+<!-- $Id: ontologies_pmb_entities.rdf,v 1.36 2019-08-08 14:52:42 tsamson Exp $ -->
 
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
          xmlns:dct="http://purl.org/dc/terms/"
@@ -34,6 +34,7 @@
         <rdfs:isDefinedBy rdf:resource="http://www.pmbservices.fr/ontology#" />
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
         <rdfs:subClassOf rdf:resource="http://www.pmbservices.fr/ontology#Class"/>
+        <rdfs:subClassOf rdf:nodeID="contribution_comment_0-1"/>
         <pmb:name>entity</pmb:name>
     </rdf:Description>
     
@@ -118,8 +119,8 @@
         <rdfs:subClassOf rdf:resource="http://www.pmbservices.fr/ontology#record"/>
         <pmb:displayLabel rdf:resource="http://www.pmbservices.fr/ontology#label"/>
         <pmb:name>bulletin</pmb:name>
-	<pmb:bibliographical_lvl>b</pmb:bibliographical_lvl>
-	<pmb:hierarchical_lvl>2</pmb:hierarchical_lvl>
+		<pmb:bibliographical_lvl>b</pmb:bibliographical_lvl>
+		<pmb:hierarchical_lvl>2</pmb:hierarchical_lvl>
     </rdf:Description>
     
     <!-- Document numérique PMB -->
@@ -161,6 +162,7 @@
         <rdfs:subClassOf rdf:resource="http://www.pmbservices.fr/ontology#authority"/>
         <rdfs:subClassOf rdf:resource="http://www.pmbservices.fr/ontology#entity"/>
         <pmb:displayLabel rdf:resource="http://www.pmbservices.fr/ontology#author_name"/>
+        <pmb:displayLabel rdf:resource="http://www.pmbservices.fr/ontology#author_first_name"/>
         <pmb:name>author</pmb:name>
         <pmb:flag>pmb_entity</pmb:flag>
         <rdfs:subClassOf rdf:nodeID="author_type_1-1"/>
@@ -460,7 +462,7 @@
         <rdfs:subClassOf rdf:nodeID="owner_1-1"/>
         <rdfs:subClassOf rdf:nodeID="docs_section_1-1"/>
         <pmb:name>expl</pmb:name>
-		<pmb:displayLabel rdf:resource="http://www.pmbservices.fr/ontology#cb"/>
+		<pmb:displayLabel rdf:resource="http://www.pmbservices.fr/ontology#has_record"/>
         <pmb:flag>pmb_entity</pmb:flag>
     </rdf:Description>
     
@@ -548,21 +550,25 @@
     <rdf:Description rdf:nodeID="list_item_bibliographical_lvl_m">
         <rdfs:label xml:lang='fr'>Monographie</rdfs:label>
         <pmb:identifier>m</pmb:identifier>
+        <pmb:msg_code></pmb:msg_code>
     </rdf:Description>
     
     <rdf:Description rdf:nodeID="list_item_bibliographical_lvl_a">
         <rdfs:label xml:lang='fr'>Article</rdfs:label>
         <pmb:identifier>a</pmb:identifier>
+        <pmb:msg_code></pmb:msg_code>
     </rdf:Description>
     
     <rdf:Description rdf:nodeID="list_item_bibliographical_lvl_s">
         <rdfs:label xml:lang='fr'>Périodique</rdfs:label>
         <pmb:identifier>s</pmb:identifier>
+        <pmb:msg_code></pmb:msg_code>
     </rdf:Description>
     
     <rdf:Description rdf:nodeID="list_item_bibliographical_lvl_b">
         <rdfs:label xml:lang='fr'>Bulletin</rdfs:label>
         <pmb:identifier>b</pmb:identifier>
+        <pmb:msg_code></pmb:msg_code>
     </rdf:Description>
         
     <!-- Niveau hiérarchique PMB -->
@@ -583,16 +589,19 @@
     <rdf:Description rdf:nodeID="list_item_hierarchical_lvl_0">
         <rdfs:label xml:lang='fr'>0</rdfs:label>
         <pmb:identifier>0</pmb:identifier>
+        <pmb:msg_code></pmb:msg_code>
     </rdf:Description>
     
     <rdf:Description rdf:nodeID="list_item_hierarchical_lvl_1">
         <rdfs:label xml:lang='fr'>1</rdfs:label>
         <pmb:identifier>1</pmb:identifier>
+        <pmb:msg_code></pmb:msg_code>
     </rdf:Description>
     
     <rdf:Description rdf:nodeID="list_item_hierarchical_lvl_2">
         <rdfs:label xml:lang='fr'>2</rdfs:label>
         <pmb:identifier>2</pmb:identifier>
+        <pmb:msg_code></pmb:msg_code>
     </rdf:Description>
         
     <!-- Type de document PMB -->
@@ -1267,16 +1276,19 @@
     <rdf:Description rdf:nodeID="list_item_author_type_physical_person">
         <rdfs:label xml:lang='fr'>Personne physique</rdfs:label>
         <pmb:identifier>70</pmb:identifier>
+        <pmb:msg_code>selector_author_type_pp</pmb:msg_code>
     </rdf:Description>
     
     <rdf:Description rdf:nodeID="list_item_author_type_collectivity">
         <rdfs:label xml:lang='fr'>Collectivité</rdfs:label>
         <pmb:identifier>71</pmb:identifier>
+        <pmb:msg_code>selector_author_type_coll</pmb:msg_code>
     </rdf:Description>
     
     <rdf:Description rdf:nodeID="list_item_author_type_congress">
         <rdfs:label xml:lang='fr'>Congrès</rdfs:label>
         <pmb:identifier>72</pmb:identifier>
+        <pmb:msg_code>selector_author_type_congres</pmb:msg_code>
     </rdf:Description>
     
     <!-- Element d'entrée ou nom PMB -->
@@ -1792,16 +1804,19 @@
     <rdf:Description rdf:nodeID="list_item_intended_termination_default">
         <rdfs:label xml:lang='fr'>--</rdfs:label>
         <pmb:identifier>0</pmb:identifier>
+        <pmb:msg_code>perio_a2z_filtre_all</pmb:msg_code>
     </rdf:Description>
     
     <rdf:Description rdf:nodeID="list_item_intended_termination_finished_work">
         <rdfs:label xml:lang='fr'>Oeuvre finie</rdfs:label>
         <pmb:identifier>1</pmb:identifier>
+        <pmb:msg_code>aut_oeuvre_form_completude_finished</pmb:msg_code>
     </rdf:Description>
     
     <rdf:Description rdf:nodeID="list_item_intended_termination_infinite_work">
         <rdfs:label xml:lang='fr'>Oeuvre infinie</rdfs:label>
         <pmb:identifier>2</pmb:identifier>
+        <pmb:msg_code>aut_oeuvre_form_completude_infinite</pmb:msg_code>
     </rdf:Description>
     
     <!-- Public visé PMB -->
@@ -1979,6 +1994,7 @@
     <rdf:Description rdf:nodeID="list_item_location_default">
         <rdfs:label xml:lang='fr'>Toutes les localisations</rdfs:label>
         <pmb:identifier>-1</pmb:identifier>
+        <pmb:msg_code>all_location</pmb:msg_code>
     </rdf:Description>
     
        <!-- Propriétaire PMB -->
@@ -2264,6 +2280,18 @@
         <pmb:datatype rdf:resource="http://www.pmbservices.fr/ontology#list"/>
         <pmb:name>expl_codestat</pmb:name>
         <pmb:list_query>SELECT idcode as id, codestat_libelle as value FROM docs_codestat ORDER BY value</pmb:list_query>
+    </rdf:Description>
+    
+    <!-- Commentaire de contribution PMB -->
+    <rdf:Description rdf:about="http://www.pmbservices.fr/ontology#contribution_comment">
+        <rdfs:label xml:lang='fr'>Commentaire de contribution</rdfs:label>
+        <rdfs:comment>Relie à un commentaire de contribution</rdfs:comment>
+        <rdfs:isDefinedBy rdf:resource="http://www.pmbservices.fr/ontology#" />
+        <rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"/>
+        <rdfs:domain rdf:resource="http://www.pmbservices.fr/ontology#entity"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2000/01/rdf-schema#Literal"/>
+        <pmb:datatype rdf:resource="http://www.pmbservices.fr/ontology#text"/>
+        <pmb:name>contribution_comment</pmb:name>
     </rdf:Description>
     
     <!-- DATATYPES -->
@@ -3057,6 +3085,12 @@
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
         <owl:onProperty rdf:resource="http://www.pmbservices.fr/ontology#docs_section"/>
         <owl:minCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minCardinality>
+        <owl:maxCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:maxCardinality>
+    </rdf:Description>
+    
+    <rdf:Description rdf:nodeID="contribution_comment_0-1">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+        <owl:onProperty rdf:resource="http://www.pmbservices.fr/ontology#contribution_comment"/>
         <owl:maxCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:maxCardinality>
     </rdf:Description>
 </rdf:RDF>

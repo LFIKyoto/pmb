@@ -2,9 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: factures.tpl.php,v 1.33 2018-05-26 06:51:25 dgoron Exp $
+// $Id: factures.tpl.php,v 1.36 2019-05-27 12:11:00 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $id_bibli, $id_cde, $id_fac, $id_exercice, $faclist_form, $current_module, $msg, $charset, $fact_modif_form, $acquisition_gestion_tva, $frame_modif, $frame_row;
+global $frame_row_fa_header, $frame_row_fa, $frame_row_fa_arc, $select_typ, $select_rub, $frame_show_from_cde, $frame_show, $bt_sup_lig, $no_bt_sup_lig, $bt_sup, $bt_enr, $bt_pay;
+global $bt_audit, $form_search, $retour_liste;
 
 if(!isset($id_bibli)) $id_bibli = 0;
 if(!isset($id_cde)) $id_cde = 0;
@@ -268,15 +272,26 @@ $fact_modif_form.= "
 				<th style='width:3%'>&nbsp;</th>
 				<th style='width:12%'>".htmlentities($msg['acquisition_act_tab_code'], ENT_QUOTES, $charset)."</th>
 				<th style='width:25%'>".htmlentities($msg['acquisition_act_tab_lib'], ENT_QUOTES, $charset)."</th>";
-if ($acquisition_gestion_tva){
-	$fact_modif_form.= "<th style='width:8%'>".htmlentities($msg['acquisition_act_tab_priht'], ENT_QUOTES, $charset)."</th>
-						<th style='width:20%'>".htmlentities($msg['acquisition_act_tab_typ'], ENT_QUOTES, $charset).'<br />'.htmlentities($msg['acquisition_tva'], ENT_QUOTES, $charset).' / '.htmlentities($msg['acquisition_remise'], ENT_QUOTES, $charset)."</th>";
-} else {
-	$fact_modif_form.= "<th style='width:8%'>".htmlentities($msg['acquisition_act_tab_prittc'], ENT_QUOTES, $charset)."</th>
-						<th style='width:20%'>".htmlentities($msg['acquisition_act_tab_typ'], ENT_QUOTES, $charset).'<br />'.htmlentities($msg['acquisition_remise'], ENT_QUOTES, $charset)."</th>";
+switch ($acquisition_gestion_tva) {
+	case '1' :
+		$fact_modif_form.= "
+						<th style='width:8%'>".htmlentities($msg['acquisition_act_tab_priht'], ENT_QUOTES, $charset)."</th>
+						<th style='width:20%'>".htmlentities($msg['acquisition_act_tab_typ'], ENT_QUOTES, $charset)."<br />".htmlentities($msg['acquisition_tva'], ENT_QUOTES, $charset)." / ".htmlentities($msg['acquisition_remise'], ENT_QUOTES, $charset)."</th>";
+		break;
+	case '2' :
+		$fact_modif_form.= "
+						<th style='width:8%'>".htmlentities($msg['acquisition_act_tab_prittc'], ENT_QUOTES, $charset)."</th>
+						<th style='width:20%'>".htmlentities($msg['acquisition_act_tab_typ'], ENT_QUOTES, $charset)."<br />".htmlentities($msg['acquisition_tva'], ENT_QUOTES, $charset)." / ".htmlentities($msg['acquisition_remise'], ENT_QUOTES, $charset)."</th>";
+		break;
+	default :
+		$fact_modif_form.= "
+						<th style='width:8%'>".htmlentities($msg['acquisition_act_tab_prittc'], ENT_QUOTES, $charset)."</th>
+						<th style='width:20%'>".htmlentities($msg['acquisition_act_tab_typ'], ENT_QUOTES, $charset)."<br />".htmlentities($msg['acquisition_remise'], ENT_QUOTES, $charset)."</th>";
+		break;
 }
 $fact_modif_form.= "
 				<th style='width:18%'>".htmlentities($msg['acquisition_act_tab_bud'], ENT_QUOTES, $charset)."</th>
+				<th style='width:7%'>".htmlentities($msg['acquisition_lgstat'], ENT_QUOTES, $charset)."</th>
 				<th style='width:7%'>".htmlentities($msg['acquisition_act_tab_solfac'], ENT_QUOTES, $charset)."</th>
 				<th style='width:7%'>".htmlentities($msg['acquisition_act_tab_fac'], ENT_QUOTES, $charset)."</th>
 			</tr>
@@ -414,6 +429,10 @@ $frame_row = "
 	<td style='width:18%; vertical-align:top'>
 		<!-- select_bud -->
 	</td>
+	<td style='width:7%; vertical-align:top'>
+		<!-- select_lgstat -->
+		<input type='hidden' id='id_lgstat[!!no!!]' name='id_lgstat[!!no!!]' value='!!id_lgstat!!' />
+	</td>
 	<td style='width:7%'>
 		<input id='sol[!!no!!]' name='sol[!!no!!]' class='saisie-10emd' style='text-align:right;width:95%' type='text'  readonly='readonly' tabindex='-1' value='!!sol!!' />
 	</td>
@@ -450,6 +469,10 @@ $frame_row_fa = "
 		<!-- select_bud -->
 	</td>
 	<td style='width:7%; vertical-align:top'>
+		<!-- select_lgstat -->
+		<input type='hidden' id='id_lgstat[!!no!!]' name='id_lgstat[!!no!!]' value='!!id_lgstat!!' />
+	</td>
+	<td style='width:7%; vertical-align:top'>
 		&nbsp;
 	</td>
 	<td style='width:7%; vertical-align:top'>
@@ -479,6 +502,10 @@ $frame_row_fa_arc="
 	</td>
 	<td style='width:18%; vertical-align:top'>
 		<!-- select_bud -->
+	</td>
+	<td style='width:7%; vertical-align:top'>
+		<!-- select_lgstat -->
+		<input type='hidden' id='id_lgstat[!!no!!]' name='id_lgstat[!!no!!]' value='!!id_lgstat!!' />
 	</td>
 	<td style='width:7%; vertical-align:top'>
 		&nbsp;

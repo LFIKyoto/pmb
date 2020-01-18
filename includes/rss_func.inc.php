@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rss_func.inc.php,v 1.10 2017-10-19 14:06:21 ngantier Exp $
+// $Id: rss_func.inc.php,v 1.11 2019-07-15 13:42:25 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -91,8 +91,10 @@ function affiche_rss_from_url($url_fichier="") {
 		//Parse du fichier
 		$param=_parser_text_no_function_($content);
 		if (is_array($param)) {
-			list($forme,$val)=each($param);
-			$param=$val[0];
+			$forme = key($param);
+			$val = current($param);
+			next($param);
+			$param = $val[0];
 			for ($j=0; $j<count($param["CHANNEL"]); $j++) {
 				$current=$param["CHANNEL"][$j];
 				$articles.="<div class='row'>";
@@ -122,8 +124,10 @@ function affiche_rss_from_fichier($fichier="") {
 	//Parse du fichier
 	$param=_parser_text_no_function_($content);
 	if (is_array($param)) {
-		list($forme,$val)=each($param);
-		$param=$val[0];
+		$forme = key($param);
+		$val = current($param);
+		next($param);
+		$param = $val[0];
 		for ($j=0; $j<count($param["CHANNEL"]); $j++) {
 			$current=$param["CHANNEL"][$j];
 			$articles.="<div class='row'>";

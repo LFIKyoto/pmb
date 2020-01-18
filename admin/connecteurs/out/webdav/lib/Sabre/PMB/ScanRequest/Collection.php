@@ -2,18 +2,18 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Collection.php,v 1.7 2017-07-07 14:14:48 arenou Exp $
+// $Id: Collection.php,v 1.9 2019-07-05 13:25:14 btafforeau Exp $
 namespace Sabre\PMB\ScanRequest;
 
 use Sabre\DAV;
 use Sabre\PMB;
-use Sabre\PMB\Music;
 
 class Collection extends PMB\Collection {
 	
 	protected $scan_requests = array();
 	
-	function get_code_from_name($name){
+	public function get_code_from_name($name){
+	    global $matches;
 		$val="";
 		if(preg_match("/\(([ERNBPSMI][0-9]{1,})\)$/i",$name,$matches)){
 			$val=$matches[1];
@@ -23,9 +23,7 @@ class Collection extends PMB\Collection {
 		return $val;
 	}
 	
-	function getChildren(){
-		global $tdoc;
-		
+	public function getChildren(){
 		$children = array();
 		$children_type = "";
 		if($this->type == "rootNode"){
@@ -78,7 +76,7 @@ class Collection extends PMB\Collection {
 		return $children;
 	}
 	
-	function getChild($name){
+	public function getChild($name){
 		switch($name){
 			case "[Demandes]" :
 				$child = new ScanRequests($this->getScanRequests(),$this->config);
@@ -113,11 +111,11 @@ class Collection extends PMB\Collection {
 							break;
 						//Manifestation
 						case "M" :
-							$child = new Music\Manifestation("(".$code.")", $this->config);
+						    $child = new PMB\Music\Manifestation("(".$code.")", $this->config);
 							break;
 						//Manifestation
 						case "I" :
-							$child = new Music\SubManifestation("(".$code.")", $this->config);
+						    $child = new PMB\Music\SubManifestation("(".$code.")", $this->config);
 							break;
 						default :
 							throw new DAV\Exception\BadRequest('Bad Request: ' . $name);
@@ -134,7 +132,7 @@ class Collection extends PMB\Collection {
 						$row = pmb_mysql_fetch_object($result);
 						$child = new PMB\Explnum("(E".$row->explnum_id.")");
 					}else{
-						throw new DAV\Exception\FileNotFound('File not found: ' . $name);
+					    throw new DAV\Exception\NotFound('File not found: ' . $name);
 					}
 					break;
 				}
@@ -143,7 +141,7 @@ class Collection extends PMB\Collection {
 	}
 	
 	
-	function childExists($name){
+	public function childExists($name){
 		//pour les besoin des tests, on veut passer par la méthode de création...
 		return false;
 		switch($name){
@@ -181,11 +179,11 @@ class Collection extends PMB\Collection {
 		}
 	}
 	
-	function getName(){
+	public function getName(){
 		//must be defined
 	}
 	
-	function createFile($name, $data = null) {
+	public function createFile($name, $data = null) {
 		if($this->check_write_permission()){
 			global $base_path;
 			global $id_rep;
@@ -210,7 +208,7 @@ class Collection extends PMB\Collection {
 			if(!file_exists($filename)){
 				//Erreur de copie du fichier
 				unlink($filename);
-				throw new Sabre_DAV_Exception_FileNotFound('Empty file (filename ' . $filename . ')');
+				throw new DAV\Exception\NotFound('Empty file (filename ' . $filename . ')');
 			}
 			if(!filesize($filename)){
 				//Premier PUT d'un client Windows...
@@ -250,11 +248,11 @@ class Collection extends PMB\Collection {
 		}
     }
     
-    function update_scan_request_infos($scan_request_id){
+    public function update_scan_request_infos($scan_request_id){
     	//must be defined
     }
     
-    function filterScanRequests($query){
+    public function filterScanRequests($query){
     	//on remonte d'abord les parents...
     	$current = $this;
     	$parents = array();
@@ -267,7 +265,6 @@ class Collection extends PMB\Collection {
     		$parent->getScanRequests();
     	}
     	
-    	global $gestion_acces_active,$gestion_acces_user_notice,$gestion_acces_empr_notice,$gestion_acces_empr_docnum;
 		global $webdav_current_user_id;
  		switch($this->config['authentication']){
 			case "gestion" :
@@ -305,12 +302,12 @@ class Collection extends PMB\Collection {
 		$this->restricted_objects = implode(",",$this->scan_requests);
     }
     
-    function getScanRequests(){
+    public function getScanRequests(){
     	return array();
     }
     
-    function getQueryFilterNotices($query){
-    	global $gestion_acces_active,$gestion_acces_user_notice,$gestion_acces_empr_notice,$gestion_acces_empr_docnum;
+    public function getQueryFilterNotices($query){
+    	global $gestion_acces_active,$gestion_acces_user_notice,$gestion_acces_empr_notice;
     	global $webdav_current_user_id;
     	switch($this->config['authentication']){
     		case "gestion" :
@@ -360,8 +357,8 @@ class Collection extends PMB\Collection {
     	return $query;
     }
     
-    function getQueryFilterBulletins($query){
-    	global $gestion_acces_active,$gestion_acces_user_notice,$gestion_acces_empr_notice,$gestion_acces_empr_docnum;
+    public function getQueryFilterBulletins($query){
+    	global $gestion_acces_active,$gestion_acces_user_notice,$gestion_acces_empr_notice;
     	global $webdav_current_user_id;
     	switch($this->config['authentication']){
     		case "gestion" :

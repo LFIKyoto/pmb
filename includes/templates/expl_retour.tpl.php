@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // ? 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl_retour.tpl.php,v 1.21 2018-08-03 10:28:07 dgoron Exp $
+// $Id: expl_retour.tpl.php,v 1.22 2019-05-27 10:24:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $script_antivol_rfid, $confirmation_retour_tpl, $retour_ok_tpl, $retour_intouvable_tpl, $form_retour_tpl, $rfid_retour_script, $rfid_js_header, $current_module, $msg;
 
 $script_antivol_rfid="
 <script language='javascript' type='text/javascript'>

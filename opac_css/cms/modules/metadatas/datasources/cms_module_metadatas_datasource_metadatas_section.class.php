@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_metadatas_datasource_metadatas_section.class.php,v 1.3 2018-08-23 15:09:39 tsamson Exp $
+// $Id: cms_module_metadatas_datasource_metadatas_section.class.php,v 1.3.6.2 2019-10-03 11:56:44 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -33,16 +33,16 @@ class cms_module_metadatas_datasource_metadatas_section extends cms_module_metad
 		if($selector){
 			$section_id = $selector->get_value();
 			$section_ids = $this->filter_datas("sections",array($section_id));
-			if($section_ids[0]){
+			if (!empty($section_ids[0])) {
 				$group_metadatas = parent::get_group_metadatas();
 				
 				$datas = array();
 				$section = cms_provider::get_instance("section",$section_ids[0]);
 				$datas = $section->format_datas();
-				$datas["details"] = $datas;
-				$datas = array_merge($datas,parent::get_datas());
-				$datas['link'] = $this->get_constructed_link("section",$section_ids[0]);
-				$datas['logo_url'] = $datas["logo"]["big"];
+				$datas->details = $datas;
+				$datas = parent::get_object_datas($datas);
+				$datas->link = $this->get_constructed_link("section",$section_ids[0]);
+				$datas->logo_url = $datas->logo["big"];
 				foreach ($group_metadatas as $i=>$metadatas) {
 					if (is_array($metadatas["metadatas"])) {
 						foreach ($metadatas["metadatas"] as $key=>$value) {

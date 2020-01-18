@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: genes.inc.php,v 1.13 2015-04-03 11:16:16 jpermanne Exp $
+// $Id: genes.inc.php,v 1.15.4.1 2019-10-15 09:59:04 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -38,11 +38,11 @@ function search_other_function_clause() {
 		$from .= ",exemplaires";
 		$where .= " and notices.notice_id=exemplaires.expl_notice and expl_location=$cnl_bibli";
 	}
-	$t_n=array();
-	while (list($key,$val)=each($typ_notice)) {
-		$t_n[]=$key;
+	$t_n_tab=array();
+	foreach ($typ_notice as $key => $val) {
+	    $t_n_tab[]=$key;
 	}
-	$t_n=implode("','",$t_n);
+	$t_n=implode("','",$t_n_tab);
 	if ($t_n) {
 		$t_n="'".$t_n."'";
 		$where .= " and niveau_biblio in (".$t_n.")";
@@ -103,7 +103,7 @@ function search_other_function_human_query($n) {
 		$r.="pour les types de notices ";
 		reset($typ_notice);
 		$t_l=array();
-		while (list($key,$val)=each($typ_notice)) {
+		foreach ($typ_notice as $key => $val) {
 			$t_l[]=$notices_t[$key];
 		}
 		$r.=implode(", ",$t_l);
@@ -116,8 +116,8 @@ function search_other_function_human_query($n) {
 }
 
 function search_other_function_post_values() {
-	global $cnl_bibli;
-	return "<input type=\"hidden\" name=\"cnl_bibli\" value=\"$cnl_bibli\">\n";
+	global $cnl_bibli, $charset;
+	return "<input type=\"hidden\" name=\"cnl_bibli\" value=\"".htmlentities($cnl_bibli, ENT_QUOTES, $charset)."\">\n";
 }
 
 ?>

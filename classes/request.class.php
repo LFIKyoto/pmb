@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: request.class.php,v 1.6 2017-06-30 14:32:20 dgoron Exp $
+// $Id: request.class.php,v 1.7 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -21,7 +21,7 @@ class request {
 	public $autorisations = array();	//autorisation d'utilisation de la procedure
 	public $parameters = '';			//parametres d'execution de la procedure
 	public $num_classement = 0;		//Classement de la procedure
-	public $p_mode = REQ_MOD_FRE;		//mode de procedure
+	public $p_mode = 'REQ_MOD_FRE';		//mode de procedure
 	public $p_form = '';				//formulaire XML de description de la procedure
 	
 	

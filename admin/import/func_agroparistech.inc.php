@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_agroparistech.inc.php,v 1.11 2017-11-27 16:01:42 jpermanne Exp $
+// $Id: func_agroparistech.inc.php,v 1.12 2019-01-17 13:44:06 dgoron Exp $
 
 /*
  *  ATTENTION CE FICHIER EST EN UTF-8
@@ -700,46 +700,5 @@ function traite_exemplaires () {
 
 // fonction spécifique d'export de la zone 995
 function export_traite_exemplaires ($ex=array()) {
-	
-	$subfields["a"] = $ex -> lender_libelle;
-	$subfields["c"] = $ex -> lender_libelle;
-	$subfields["f"] = $ex -> expl_cb;
-	$subfields["k"] = $ex -> expl_cote;
-	$subfields["u"] = $ex -> expl_note;
-
-	if ($ex->statusdoc_codage_import) $subfields["o"] = $ex -> statusdoc_codage_import;
-	if ($ex -> tdoc_codage_import) $subfields["r"] = $ex -> tdoc_codage_import;
-		else $subfields["r"] = "uu";
-	if ($ex -> sdoc_codage_import) $subfields["q"] = $ex -> sdoc_codage_import;
-		else $subfields["q"] = "u";
-	
-	global $export996 ;
-	$export996['f'] = $ex -> expl_cb ;
-	$export996['k'] = $ex -> expl_cote ;
-	$export996['u'] = $ex -> expl_note ;
-
-	$export996['m'] = substr($ex -> expl_date_depot, 0, 4).substr($ex -> expl_date_depot, 5, 2).substr($ex -> expl_date_depot, 8, 2) ;
-	$export996['n'] = substr($ex -> expl_date_retour, 0, 4).substr($ex -> expl_date_retour, 5, 2).substr($ex -> expl_date_retour, 8, 2) ;
-
-	$export996['a'] = $ex -> lender_libelle;
-	$export996['b'] = $ex -> expl_owner;
-
-	$export996['v'] = $ex -> location_libelle;
-	$export996['w'] = $ex -> ldoc_codage_import;
-
-	$export996['x'] = $ex -> section_libelle;
-	$export996['y'] = $ex -> sdoc_codage_import;
-
-	$export996['e'] = $ex -> tdoc_libelle;
-	$export996['r'] = $ex -> tdoc_codage_import;
-
-	$export996['1'] = $ex -> statut_libelle;
-	$export996['2'] = $ex -> statusdoc_codage_import;
-	$export996['3'] = $ex -> pret_flag;
-	
-	global $export_traitement_exemplaires ;
-	$export996['0'] = $export_traitement_exemplaires ;
-	
-	return 	$subfields ;
-
-	}	
+	return import_expl::export_traite_exemplaires($ex);
+}

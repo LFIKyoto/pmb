@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: stemming.class.php,v 1.3 2017-07-10 13:46:57 ngantier Exp $
+// $Id: stemming.class.php,v 1.4 2019-07-15 14:24:31 btafforeau Exp $
 
 
 class stemming {
@@ -62,31 +62,33 @@ class stemming {
 	protected function get_clean_word(){
 		$clean_word = strtolower($this->word);
 		
-		for($i=0; $i<strlen($clean_word) ; $i++){
-			switch($clean_word[$i]){
+		for ($i = 0; $i < strlen($clean_word); $i++) {
+		    $letter_to_search = substr($clean_word, $i, 1);
+		    $letter = substr($this->clean_word, $i-1, 1);
+		    switch ($letter_to_search) {
 				case "i" :
-					if(in_array($this->clean_word[$i-1],$this->vowels) && in_array($clean_word[$i+1],$this->vowels)){
-						$this->clean_word.= strtoupper($clean_word[$i]);
-					}else{
-						$this->clean_word.= $clean_word[$i];
+					if (in_array($letter, $this->vowels) && in_array(substr($clean_word, $i+1, 1), $this->vowels)) {
+						$this->clean_word .= strtoupper($letter_to_search);
+					} else {
+						$this->clean_word .= $letter_to_search;
 					}
 					break;
 				case "u" :
-					if($this->clean_word[$i-1] == "q" || (in_array($this->clean_word[$i-1],$this->vowels) && in_array($clean_word[$i+1],$this->vowels))){
-						$this->clean_word.= strtoupper($clean_word[$i]);
-					}else{
-						$this->clean_word.= $clean_word[$i];
+					if ($letter == "q" || (in_array($letter, $this->vowels) && in_array(substr($clean_word, $i+1, 1), $this->vowels))) {
+						$this->clean_word .= strtoupper($letter_to_search);
+					} else {
+						$this->clean_word .= $letter_to_search;
 					}
 					break;
 				case "y" :
-					if(in_array($this->clean_word[$i-1],$this->vowels) || in_array($clean_word[$i+1],$this->vowels)){
-						$this->clean_word.= strtoupper($clean_word[$i]);
-					}else{
-						$this->clean_word.= $clean_word[$i];
+					if (in_array($letter, $this->vowels) || in_array(substr($clean_word, $i+1, 1), $this->vowels)) {
+						$this->clean_word .= strtoupper($letter_to_search);
+					} else {
+						$this->clean_word .= $letter_to_search;
 					}
 					break;
 				default :
-					$this->clean_word.= $clean_word[$i];
+					$this->clean_word .= $letter_to_search;
 					break;
 			}
 		}
@@ -101,13 +103,13 @@ class stemming {
 			return $this->rv;
 		}
 		//le mot commence par une double voyelle...
-		if(in_array($this->clean_word[0],$this->vowels) && in_array($this->clean_word[1],$this->vowels)){
+		if(in_array(substr($this->clean_word, 0, 1), $this->vowels) && in_array(substr($this->clean_word, 1, 1), $this->vowels)){
 			$this->rv = substr($this->clean_word,3);
 			return $this->rv;
 		}
 		//dans le cas général c'est après la première voyelle dans le mot...
 		for($i=1;$i<strlen($this->clean_word) ; $i++){
-			if(in_array($this->clean_word[$i],$this->vowels)){
+			if(in_array(substr($this->clean_word, $i, 1), $this->vowels)){
 				$this->rv = substr($this->clean_word,$i+1);
 				return $this->rv;
 			}
@@ -119,7 +121,7 @@ class stemming {
 	
 	protected function get_r1(){
 		for($i=1 ; $i<strlen($this->clean_word) ; $i++){
-			if(in_array($this->clean_word[$i-1],$this->vowels) && !in_array($this->clean_word[$i],$this->vowels)){
+			if(in_array(substr($this->clean_word, $i-1, 1), $this->vowels) && !in_array(substr($this->clean_word, $i, 1), $this->vowels)){
 				$this->r1 = substr($this->clean_word,$i+1);
 				return $this->r1;
 			}
@@ -130,7 +132,7 @@ class stemming {
 	
 	protected function get_r2(){
 		for($i=1 ; $i<strlen($this->r1) ; $i++){
-			if(in_array($this->r1[$i-1],$this->vowels) && !in_array($this->r1[$i],$this->vowels)){
+			if(in_array(substr($this->r1, $i-1, 1), $this->vowels) && !in_array(substr($this->r1, $i, 1), $this->vowels)){
 				$this->r2 = substr($this->r1,$i+1);
 				return $this->r2;
 			}
@@ -448,12 +450,12 @@ class stemming {
 	protected function unaccent(){
 		$no_vowels = false;
 		for($i=(strlen($this->stem)-1) ; $i>=0 ; $i--){
-			if(!in_array($this->stem[$i],$this->vowels)){
+			if(!in_array(substr($this->stem, $i, 1), $this->vowels)){
 				$no_vowels=true;
 				continue;
 			}else{
-				if($no_vowels && $this->stem[$i] == "é" || $this->stem[$i] == "è"){
-					$this->stem = substr($this->stem,0,strrpos($this->stem,$this->stem[$i]))."e".substr($this->stem,strrpos($this->stem,$this->stem[$i]));
+				if($no_vowels && substr($this->stem, $i, 1) == "é" || substr($this->stem, $i, 1) == "è"){
+					$this->stem = substr($this->stem,0,strrpos($this->stem, substr($this->stem, $i, 1)))."e".substr($this->stem,strrpos($this->stem,substr($this->stem, $i, 1)));
 				}
 				break;
 			}

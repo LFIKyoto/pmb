@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_categories.inc.php,v 1.19 2017-07-12 15:15:01 tsamson Exp $
+// $Id: notice_categories.inc.php,v 1.21 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -111,21 +111,24 @@ function get_notice_langues($notice=0, $quelle_langues=0) {
 	$rqt = "select code_langue from notices_langues where num_notice='$notice' and type_langue=$quelle_langues order by ordre_langue ";
 	$res_sql = pmb_mysql_query($rqt, $dbh);
 	while ($notice=pmb_mysql_fetch_object($res_sql)) {
-		if ($notice->code_langue)
+	    if ($notice->code_langue && isset($marc_liste_langues->table[$notice->code_langue])) {
 			$langues[] = array( 
 				'lang_code' => $notice->code_langue,
 				'langue' => $marc_liste_langues->table[$notice->code_langue]
-				) ;
-		}
+				);
+	    }
+	}
 	return $langues;
 }
 
 function construit_liste_langues($tableau) {
 	$langues = "";
-	for ($i = 0 ; $i < sizeof($tableau) ; $i++) {
-		if ($langues) $langues.=" ";
+	$nb_langues = count($tableau);
+	for ($i = 0; $i < $nb_langues; $i++) {
+	    if (!empty($langues)) {
+	        $langues .= " ";
+	    }
 		$langues .= $tableau[$i]["langue"]." (<i>".$tableau[$i]["lang_code"]."</i>)";
-		}
+	}
 	return $langues;
 }
-

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_searcher.class.php,v 1.15 2018-03-07 09:55:20 dgoron Exp $
+// $Id: sel_searcher.class.php,v 1.17 2019-08-20 09:18:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -366,7 +366,7 @@ class sel_searcher_notice_mono extends sel_searcher {
 		global $elt_query;
 		global $results_show_all;
 		
-		$research .= '<b>'.htmlentities($msg['selector_lib_noti'],ENT_QUOTES,$charset).'</b>&nbsp;'.htmlentities(stripslashes($elt_query),ENT_QUOTES,$charset);
+		$research = '<b>'.htmlentities($msg['selector_lib_noti'],ENT_QUOTES,$charset).'</b>&nbsp;'.htmlentities(stripslashes($elt_query),ENT_QUOTES,$charset);
 	
 		$this->show_form();
 		if ($this->nbresults) {
@@ -384,7 +384,8 @@ class sel_searcher_notice_mono extends sel_searcher {
 					</div>";
 			print "<form name='searcher_results_check_form'>";
 			// on lance la requête
-			while(($nz=pmb_mysql_fetch_object($this->t_query))) {
+			$list = '';
+			while ($nz = pmb_mysql_fetch_object($this->t_query)) {
 				// notice de monographie
 				$mono = new sel_mono_display($nz->notice_id,$this->base_url,'sel_searcher_select_');
 				$mono->action=$this->action;
@@ -400,7 +401,7 @@ class sel_searcher_notice_mono extends sel_searcher {
 			print $list;
 			// fin de liste
 			print "</form>";
-			print $this->elt_e_liste;
+			print $this->elt_e_list;
 			print $this->back_script;
 			print $this->back_script_show_all;
 		} else {
@@ -417,13 +418,13 @@ class sel_searcher_notice_article extends sel_searcher {
 	
 	
 	public function make_first_search() {
-
-		global $msg,$dbh;
+		global $msg;
 		global $elt_query;		
 		global $notice_statut_query, $doctype_query;
 		global $nb_per_page, $nb_per_page_select;
 		global $results_show_all;
 		
+		$suite_rqt = "";
 		if (!$nb_per_page) {
 			$nb_per_page=$nb_per_page_select; 
 		}
@@ -442,10 +443,9 @@ class sel_searcher_notice_article extends sel_searcher {
 			$this->show_form();
 			error_message($msg["searcher_syntax_error"],sprintf($msg["searcher_syntax_error_desc"],$aq->current_car,$aq->input_html,$aq->error_message));
 		} else {
-			
 			$q_members = $aq->get_query_members("notices","index_wew","index_sew","notice_id");			
 			$q_count = "select count(*) from notices where ".$restrict." and (".$q_members["where"]." ".$suite_rqt.")";
-			$r_count = pmb_mysql_query($q_count, $dbh);
+			$r_count = pmb_mysql_query($q_count);
 			$n_count = pmb_mysql_result($r_count,0,0);
 			$this->nbresults = $n_count;
 			
@@ -453,7 +453,7 @@ class sel_searcher_notice_article extends sel_searcher {
 			if(!$results_show_all){
 				$q_list.=" limit ".$this->page*$nb_per_page.", ".$nb_per_page." "; 
 			}
-			$r_list = pmb_mysql_query($q_list,$dbh);
+			$r_list = pmb_mysql_query($q_list);
 			$this->t_query=$r_list;
 			if(!$results_show_all){
 				$this->nbepage=ceil($this->nbresults/$nb_per_page);
@@ -485,7 +485,7 @@ class sel_searcher_notice_article extends sel_searcher {
 		global $elt_query;
 		global $results_show_all;
 		
-		$research .= '<b>'.htmlentities($msg['selector_lib_noti'],ENT_QUOTES,$charset).'</b>&nbsp;'.htmlentities(stripslashes($elt_query),ENT_QUOTES,$charset);
+		$research = '<b>'.htmlentities($msg['selector_lib_noti'],ENT_QUOTES,$charset).'</b>&nbsp;'.htmlentities(stripslashes($elt_query),ENT_QUOTES,$charset);
 	
 		$this->show_form();
 		if ($this->nbresults) {
@@ -519,7 +519,7 @@ class sel_searcher_notice_article extends sel_searcher {
 			print $list;
 			// fin de liste
 			print "</form>";
-			print $this->elt_e_liste;
+			print $this->elt_e_list;
 			print $this->back_script;
 			print $this->back_script_show_all;
 		} else {
@@ -639,7 +639,7 @@ class sel_searcher_bulletin extends sel_searcher {
 		global $elt_query;
 		global $results_show_all;
 		
-		$research .= '<b>'.htmlentities($msg['771'],ENT_QUOTES,$charset).'</b>&nbsp;'.htmlentities(stripslashes($elt_query),ENT_QUOTES,$charset);
+		$research = '<b>'.htmlentities($msg['771'],ENT_QUOTES,$charset).'</b>&nbsp;'.htmlentities(stripslashes($elt_query),ENT_QUOTES,$charset);
 	
 		$this->show_form();
 		if ($this->nbresults) {
@@ -649,7 +649,7 @@ class sel_searcher_bulletin extends sel_searcher {
 			}
 			$this->aut_b_list = str_replace('!!research!!', $research, $this->aut_b_list);
 			print $this->aut_b_list;
-
+			$list = '';
 			// on lance la requete
 			while(($nz=pmb_mysql_fetch_object($this->t_query))) {
 				// notice de perio
@@ -666,7 +666,7 @@ class sel_searcher_bulletin extends sel_searcher {
 			print $list;
 			print $this->back_script_show_all;
 			// fin de liste
-			print $this->aut_e_liste;
+			print $this->aut_e_list;
 		} else {
 			error_message_history($msg[357], $msg[1915], 1);
 		}
@@ -713,7 +713,7 @@ class sel_searcher_bulletin extends sel_searcher {
 			print $list;
 			// fin de liste
 			print "</form>";
-			print $this->elt_e_liste;
+			print $this->elt_e_list;
 			print $this->back_script;
 			$this->back_script_show_all = str_replace('!!base_url!!',$this->base_url,$this->back_script_show_all);
 			$this->back_script_show_all = str_replace('!!cur_typ_query!!',$this->cur_typ_query,$this->back_script_show_all);
@@ -812,7 +812,7 @@ class sel_searcher_frais extends sel_searcher {
 			print $list;
 			// fin de liste
 			print "</form>";
-			print $this->elt_e_liste;
+			print $this->elt_e_list;
 			print $this->back_script;
 			print $this->back_script_show_all;
 		} else {
@@ -983,8 +983,9 @@ class sel_searcher_abt extends sel_searcher {
 		global $elt_query;
 		global $results_show_all;
 		global $specific_order;
+		global $pmb_serialcirc_active;
 
-		$research .= '<b>'.htmlentities($msg['selector_lib_abt'],ENT_QUOTES,$charset).'</b>&nbsp;'.htmlentities(stripslashes($elt_query),ENT_QUOTES,$charset);
+		$research = '<b>'.htmlentities($msg['selector_lib_abt'],ENT_QUOTES,$charset).'</b>&nbsp;'.htmlentities(stripslashes($elt_query),ENT_QUOTES,$charset);
 	
 		$this->show_form();
 		if ($this->nbresults) {
@@ -1013,7 +1014,6 @@ class sel_searcher_abt extends sel_searcher {
 							<b><a href='javascript:specific_order(".$specific_order_new.")'>".htmlentities($msg['selector_lib_abt'],ENT_QUOTES,$charset)."</a></b>
 						</div>
 				   </div>";
-			print "<div class='colonne10'>&nbsp;</div>";
 			if ($specific_order==3) {
 				$specific_order_new = 4;
 			} else {
@@ -1024,8 +1024,18 @@ class sel_searcher_abt extends sel_searcher {
 							<b><a href='javascript:specific_order(".$specific_order_new.")'>".htmlentities($msg['acquisition_abt_ech'],ENT_QUOTES,$charset)."</a></b>
 						</div>
 					</div>";
+			if($pmb_serialcirc_active) {
+    			print "<div class='colonne10'>
+    						<div class='notice-parent'>
+    							<b>".htmlentities($msg['acquisition_nb_recipients'],ENT_QUOTES,$charset)."</b>
+    						</div>
+    					</div>";
+			} else {
+			    print "<div class='colonne10'>&nbsp;</div>";
+			}
 			print "</div>";
 			print $this->back_script_order;
+			$list = '';
 			// on lance la requête 
 			while(($nz=pmb_mysql_fetch_object($this->t_query))) {
 				// abonnement
@@ -1043,7 +1053,7 @@ class sel_searcher_abt extends sel_searcher {
 			print $list;
 			// fin de liste
 			print "</form>";
-			print $this->elt_e_liste;
+			print $this->elt_e_list;
 			print $this->back_script;
 			print $this->back_script_show_all;
 		} else {

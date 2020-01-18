@@ -2,15 +2,18 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: douchette_ajax.inc.php,v 1.3 2016-09-13 15:31:42 dgoron Exp $
+// $Id: douchette_ajax.inc.php,v 1.6 2019-07-31 07:16:57 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $idcaddie, $action, $form_cb_expl, $msg;
 
 $param = new stdClass();
 if($idcaddie) {
 	$myCart = new caddie($idcaddie);
 	switch ($action) {
 		case 'add_item':
+		    $form_cb_expl=trim($form_cb_expl);
 			$param = $myCart->get_item_info_from_expl_cb($form_cb_expl, 1);
 			$param->form_cb_expl=$form_cb_expl;
 			$res_ajout = $myCart->pointe_item($param->expl_id,"EXPL", $form_cb_expl, "EXPL_CB" );
@@ -21,13 +24,13 @@ if($idcaddie) {
 					$param->message_ajout_expl = $msg["caddie_".$myCart->type."_pointe"];					
 				}
 				if ($res_ajout==CADDIE_ITEM_NULL) {
-					$param->message_ajout_expl = $msg[caddie_item_null];
+					$param->message_ajout_expl = $msg['caddie_item_null'];
 				}
 				if ($res_ajout==CADDIE_ITEM_IMPOSSIBLE_BULLETIN) {
-					$param->message_ajout_expl = $msg[caddie_pointe_item_impossible_bulletin];
+					$param->message_ajout_expl = $msg['caddie_pointe_item_impossible_bulletin'];
 				}	
 				if ($res_ajout==CADDIE_ITEM_INEXISTANT) {
-					$param->message_ajout_expl = $msg[caddie_pointe_inconnu_panier];
+					$param->message_ajout_expl = $msg['caddie_pointe_inconnu_panier'];
 				}	
 			} 			
 			break;

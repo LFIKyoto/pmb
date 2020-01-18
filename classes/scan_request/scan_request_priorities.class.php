@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_request_priorities.class.php,v 1.5 2018-12-06 12:27:17 dgoron Exp $
+// $Id: scan_request_priorities.class.php,v 1.6 2019-07-05 13:25:15 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -50,7 +50,7 @@ class scan_request_priorities {
 		return $options;
 	}
 	
-	static function get_options($selected=0){
+	public static function get_options($selected=0){
 		global $charset;
 		$options = '';
 		$query = "select * from scan_request_priorities order by scan_request_priority_weight, scan_request_priority_label asc";

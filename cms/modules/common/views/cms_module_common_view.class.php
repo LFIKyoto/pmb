@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view.class.php,v 1.18 2018-01-29 15:15:00 vtouchard Exp $
+// $Id: cms_module_common_view.class.php,v 1.19 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,7 +13,7 @@ class cms_module_common_view extends cms_module_root{
 	private $dojo_theme="tundra";
 	
 	public function __construct($id=0){
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 		parent::__construct();
 	}
 	
@@ -25,9 +25,9 @@ class cms_module_common_view extends cms_module_root{
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				$row = pmb_mysql_fetch_object($result);
-				$this->id = $row->id_cadre_content+0;
+				$this->id = (int) $row->id_cadre_content;
 				$this->hash = $row->cadre_content_hash;
-				$this->cadre_parent = $row->cadre_content_num_cadre+0;
+				$this->cadre_parent = (int) $row->cadre_content_num_cadre;
 				$this->unserialize($row->cadre_content_data);
 			}	
 		}
@@ -65,7 +65,7 @@ class cms_module_common_view extends cms_module_root{
 	}
 	
 	public function set_cadre_parent($id){
-		$this->cadre_parent = $id+0;
+	    $this->cadre_parent = (int) $id;
 	}
 	
 	/*

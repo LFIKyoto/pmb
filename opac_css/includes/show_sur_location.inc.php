@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: show_sur_location.inc.php,v 1.9 2017-11-07 15:48:18 ngantier Exp $
+// $Id: show_sur_location.inc.php,v 1.10 2019-05-29 10:07:20 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -13,8 +13,8 @@ print "<div id=\"location\">";
 print "<h3><span>".$msg["l_browse_title"]."</span></h3>";
 print "<div id='location-container'>";
 
-if ($surloc) {
-	$surloc+=0;
+if (!empty($surloc)) {
+    $surloc = intval($surloc);
 	if($opac_view_filter_class){
 		// =surloc_num and idlocation
 		$requete="select idlocation, location_libelle, location_pic, css_style from docs_location where location_visible_opac=1 and surloc_num='$surloc'

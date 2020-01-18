@@ -2,20 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Tree.php,v 1.9 2017-06-13 10:18:06 arenou Exp $
+// $Id: Tree.php,v 1.11 2019-07-05 13:25:14 btafforeau Exp $
 
 namespace Sabre\PMB;
 
 use Sabre\DAV;
-use Sabre\PMB;
 
-class Tree extends DAV\ObjectTree {
+class Tree extends DAV\Tree {
 	private $id_thesaurus;
 	private $only_with_notices;
 	protected $restricted_objects = "";
 	
 
-	function __construct($config) {
+	public function __construct($config) {
 		$this->config = $config;
   		$this->id_thesaurus = $config['used_thesaurus'];
 		$this->only_with_notices = $config['only_with_notices'];
@@ -23,11 +22,11 @@ class Tree extends DAV\ObjectTree {
 		$this->getRootNode();
 	}
 	
-	function getRootNode(){
+	public function getRootNode(){
 		$this->rootNode = new RootNode($this->config);
 	}
 	
-    function get_restricted_objects($restrict_sets){
+    public function get_restricted_objects($restrict_sets){
     	
     	if($this->restricted_objects == ""){
     		if(count($restrict_sets)){
@@ -67,7 +66,7 @@ class Tree extends DAV\ObjectTree {
             if ($pathPart=='.' || $pathPart=='') continue;
 
             if (!($currentNode instanceof DAV\ICollection))
-                throw new DAV\Exception\FileNotFound('Could not find node at path: ' . $path);
+                throw new DAV\Exception\NotFound('Could not find node at path: ' . $path);
 			$parent = $currentNode;	
            	$currentNode = $currentNode->getChild($pathPart);
            	$currentNode->set_parent($parent);

@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: move.js,v 1.32 2018-05-17 07:42:00 vtouchard Exp $
+// $Id: move.js,v 1.33 2019-07-29 12:12:29 dgoron Exp $
 
 down=false;
 down_parent=false;
@@ -724,6 +724,7 @@ function move_parse_dom(rel) {
 			if (!relp) {
 				movables[i].style.border="#999 2px solid";
 				movables[i].style.background="#DDD";
+				movables[i].style.width='100%';
 			} else {
 				movables[i].style.border="";
 				movables[i].style.background="";

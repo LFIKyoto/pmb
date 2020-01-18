@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_ui.class.php,v 1.7 2017-06-22 10:19:48 dgoron Exp $
+// $Id: onto_ui.class.php,v 1.8 2019-07-05 13:25:15 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -42,7 +42,7 @@ class onto_ui {
 	 * @param string $default_display_label
 	 * @param onto_param $params
 	 */
-	function __construct($ontology_filepath, $onto_store, $onto_store_config, $data_store_type, $data_store_config, $tab_namespaces, $default_display_label, $params){
+	public function __construct($ontology_filepath, $onto_store, $onto_store_config, $data_store_type, $data_store_config, $tab_namespaces, $default_display_label, $params){
 		$this->params=$params;
 		
 		$this->handler = new onto_handler($ontology_filepath, $onto_store, $onto_store_config, $data_store_type, $data_store_config, $tab_namespaces, $default_display_label);

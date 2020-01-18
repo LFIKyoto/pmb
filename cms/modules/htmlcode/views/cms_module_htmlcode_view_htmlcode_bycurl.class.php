@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_htmlcode_view_htmlcode_bycurl.class.php,v 1.5 2016-01-21 14:27:47 dbellamy Exp $
+// $Id: cms_module_htmlcode_view_htmlcode_bycurl.class.php,v 1.6 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,7 +12,7 @@ class cms_module_htmlcode_view_htmlcode_bycurl extends cms_module_common_view{
 	protected $cadre_parent;
 
 	public function __construct($id=0){
-		parent::__construct($id+0);
+	    parent::__construct((int) $id);
 	}
 
 	public function get_form(){

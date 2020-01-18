@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_request_status.class.php,v 1.6 2016-02-15 16:36:30 vtouchard Exp $
+// $Id: scan_request_status.class.php,v 1.7 2019-06-21 15:28:06 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -18,7 +18,9 @@ class scan_request_status {
 
 	protected $infos_editable;
 	
-	protected $cancelable;	
+	protected $cancelable;
+	
+	protected $is_closed;
 	
 	protected $workflow;	
 	
@@ -45,6 +47,7 @@ class scan_request_status {
 				$this->opac_show = $row->scan_request_status_opac_show;
 				$this->infos_editable = $row->scan_request_status_infos_editable;
 				$this->cancelable = $row->scan_request_status_cancelable;
+				$this->is_closed = $row->scan_request_status_is_closed;
 
 				$rqt_workflow = "select scan_request_status.scan_request_status_label, scan_request_status_workflow.scan_request_status_workflow_to_num from scan_request_status join scan_request_status_workflow on scan_request_status.id_scan_request_status = scan_request_status_workflow.scan_request_status_workflow_to_num and scan_request_status_workflow.scan_request_status_workflow_from_num=".$this->id;
 				$res_workflow = pmb_mysql_query($rqt_workflow);
@@ -93,6 +96,10 @@ class scan_request_status {
 	
 	public function is_cancelable() {
 		return $this->cancelable;
+	}
+	
+	public function is_closed() {
+	    return $this->is_closed;
 	}
 	
 	public function get_id(){

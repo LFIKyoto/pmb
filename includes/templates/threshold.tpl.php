@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: threshold.tpl.php,v 1.2 2016-08-04 10:00:47 dgoron Exp $
+// $Id: threshold.tpl.php,v 1.3 2019-05-27 10:34:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $threshold_form_tpl, $msg, $current_module, $base_path, $charset, $pmb_gestion_devise;
 
 $threshold_form_tpl = "
 <script type='text/javascript'>

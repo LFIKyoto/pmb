@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_rss.class.php,v 1.14 2018-05-26 09:31:48 dgoron Exp $
+// $Id: cms_module_common_datasource_rss.class.php,v 1.15 2019-06-04 08:50:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -66,7 +66,7 @@ class cms_module_common_datasource_rss extends cms_module_common_datasource{
 	public function get_datas(){
 		//on commence par récupérer l'identifiant retourné par le sélecteur...
 		if($this->parameters['selector'] != ""){
-			$informations = '';
+			$informations = array();
 			for($i=0 ; $i<count($this->selectors) ; $i++){
 				if($this->selectors[$i]['name'] == $this->parameters['selector']){
 					$selector = new $this->parameters['selector']($this->selectors[$i]['id']);

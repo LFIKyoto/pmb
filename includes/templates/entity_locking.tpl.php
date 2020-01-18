@@ -2,10 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entity_locking.tpl.php,v 1.6 2018-09-25 07:45:41 vtouchard Exp $
+// $Id: entity_locking.tpl.php,v 1.7 2019-05-27 14:27:42 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
 global $entity_locked_form, $entity_unload_script, $save_error_message;
+global $entity_polling_script, $msg, $current_module, $base_path, $charset;
 
 $timer_lock_script = "
     require(['dojo/topic', 'dojo/dom'], function(topic, dom) {

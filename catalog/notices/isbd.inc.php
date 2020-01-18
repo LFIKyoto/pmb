@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: isbd.inc.php,v 1.75 2018-08-30 14:09:07 apetithomme Exp $
+// $Id: isbd.inc.php,v 1.77 2019-06-19 07:03:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -66,11 +66,11 @@ if ($acces_l==0) {
 	
 	if ($current!==false) {
 		$print_action = "&nbsp;<a href='#' onClick=\"openPopUp('./print.php?current_print=$current&notice_id=".$id."&action_print=print_prepare','print'); w.focus(); return false;\"><img src='".get_url_icon('print.gif')."' border='0' class='center' alt=\"".$msg["histo_print"]."\" title=\"".$msg["histo_print"]."\"/></a>";
-	}	
+	}
 	$visualise_click_notice="
 		<script type=\"text/javascript\" src='./javascript/select.js'></script>
 		
-		<a href='#' onClick='show_frame(\"$pmb_opac_url"."notice_view.php?id=$id\")'><img src='".get_url_icon('search.gif')."' class='align_middle' title=\"${msg["noti_see_gestion"]}\" name='imEx'  border='0' /></a>";   
+		<a href='#' onClick='show_frame(\"$pmb_url_base"."opac_css/notice_view.php?id=$id\")'><img src='".get_url_icon('search.gif')."' class='align_middle' title=\"${msg["noti_see_gestion"]}\" name='imEx'  border='0' /></a>";   
 	    
 	print pmb_bidi("<h1 class='section-title'>".$msg['record_see_title']."</h1>");
 	
@@ -90,9 +90,9 @@ if ($acces_l==0) {
 		
 	$boutons .= "<input type='button' class='bouton' value='$msg[notice_duplicate_bouton]' onclick='document.location=\"./catalog.php?categ=duplicate&id=".$id."\"' />&nbsp;";
 	$boutons .= "<input type='button' class='bouton' value='$msg[notice_child_bouton]' onclick='document.location=\"./catalog.php?categ=create_form&id=0&notice_parent=".$id."\"' />&nbsp;";
-	if ($pmb_use_uniform_title) {	
-		$boutons.= form_mapper::get_action_button('notice', $id);
-	}
+
+	$boutons.= form_mapper::get_action_button('notice', $id);
+
 	if($acquisition_active) {
 		$boutons .= "<input type='button' class='bouton' value='".$msg["acquisition_sug_do"]."' onclick='document.location=\"./catalog.php?categ=sug&action=modif&id_bibli=0&id_notice=".$id."\"' />";
 	}

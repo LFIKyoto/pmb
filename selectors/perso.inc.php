@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: perso.inc.php,v 1.23 2017-11-21 13:38:21 dgoron Exp $
+// $Id: perso.inc.php,v 1.25 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $recherche;
 
 $base_url = "./select.php?what=perso&caller=$caller&p1=$p1&p2=$p2&perso_id=$perso_id&custom_prefixe=".$custom_prefixe."&dyn=$dyn&perso_name=$perso_name";
 
@@ -70,10 +72,11 @@ if ($type=="list") {
 			}
 			foreach($alphabet as $dummykey=>$char) {
 				$present = pmb_preg_grep("/^$char/i", $marclist_type->table);
-				if(sizeof($present) && strcasecmp($letter, $char))
-						print "<a href='$base_url&letter=$char'>$char</a> ";
-				else if(!strcasecmp($letter, $char))
-						print "<strong><u>$char</u></strong> ";
+				if (!empty($present) && strcasecmp($letter, $char)) {
+					print "<a href='$base_url&letter=$char'>$char</a> ";
+				} else if (!strcasecmp($letter, $char)) {
+					print "<strong><u>$char</u></strong> ";
+				}
 			}
 			print "</div><hr />";
 

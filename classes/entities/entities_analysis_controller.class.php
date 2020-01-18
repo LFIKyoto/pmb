@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entities_analysis_controller.class.php,v 1.7 2017-12-14 16:40:34 arenou Exp $
+// $Id: entities_analysis_controller.class.php,v 1.8 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -146,10 +146,10 @@ class entities_analysis_controller extends entities_records_controller {
 	}
 	
 	public function set_serial_id($serial_id=0) {
-		$this->serial_id = $serial_id+0;
+	    $this->serial_id = (int) $serial_id;
 	}
 	
 	public function set_bulletin_id($bulletin_id=0) {
-		$this->bulletin_id = $bulletin_id+0;
+	    $this->bulletin_id = (int) $bulletin_id;
 	}
 }

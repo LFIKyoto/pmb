@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: connecteurs.class.php,v 1.53 2018-11-26 14:32:02 dgoron Exp $
+// $Id: connecteurs.class.php,v 1.57 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -259,6 +259,10 @@ class connector {
 	public function del_source($source_id) {
 		//suppression des documents numériques intégrés en tant que fichiers
 		$this->del_explnums($source_id);
+		pmb_mysql_query("DELETE FROM external_count WHERE source_id = '".$source_id."'");
+		pmb_mysql_query("DELETE FROM source_sync where source_id=".$source_id);
+		$sql = "DELETE FROM connectors_categ_sources WHERE num_source = ".$source_id;
+		pmb_mysql_query($sql);
 		$table_entrepot_sql = "DROP TABLE `entrepot_source_$source_id`;";
 		pmb_mysql_query($table_entrepot_sql);
 		
@@ -467,12 +471,12 @@ class connector {
 			if (substr($ufield,0,3)=="id:") {
 				$ufield=substr($ufield,3);
 			}
-			if (!$fields[$ufield]["TITLE"])
-				$fields[$ufield]["TITLE"]=$values["TITLE"];
-			else {
+			if (empty($fields[$ufield]["TITLE"])) {
+				$fields[$ufield]["TITLE"] = $values["TITLE"];
+			} else {
 				foreach($values["TITLE"] as $key=>$title) {
 					if (array_search($title,$fields[$ufield]["TITLE"])===false) {
-						$fields[$ufield]["TITLE"][]=$title;
+						$fields[$ufield]["TITLE"][] = $title;
 					}
 				}
 			}
@@ -584,6 +588,19 @@ class connector {
 		pmb_mysql_query($query);
 	}
 	
+        protected function insert_content_into_entrepot_multiple($records) {
+            $query = "insert into entrepot_source_".$records[0]["source_id"]." (connector_id,source_id,ref,date_import,ufield,usubfield,field_order,subfield_order,value,i_value,recid, search_id) values";
+            for ($i=0; $i<count($records);$i++) {
+                $record=$records[$i];
+                if ($i>0) $query.=","; 
+                $query.="(
+                                '".addslashes($this->get_id())."',".$record["source_id"].",'".addslashes($record["ref"])."','".addslashes($record["date_import"])."',
+                                '".addslashes($record["ufield"])."','".addslashes($record["usubfield"])."',".$record["field_order"].",".$record["subfield_order"].",'".addslashes($record["value"])."',
+                                ' ".addslashes(strip_empty_words($record["value"]))." ',".$record["recid"].", '".$record["search_id"]."')";
+            }
+            pmb_mysql_query($query);
+        }
+        
 	protected function insert_origine_into_entrepot($source_id, $ref, $date_import, $recid, $search_id = '') {
 		$query = "select count(*) from entrepot_source_".$source_id." where ref = '".$ref."' and ufield='801' and usubfield='b'";
 		$result = pmb_mysql_query($query);
@@ -1089,7 +1106,7 @@ class connecteurs {
 					);
 				}else{
 					$type = $elem;
-					if(!$type['label']){
+					if (empty($type['label']) && !empty($type_labels[$type['code']])) {
 						$type['label'] = $msg[substr($type_labels[$type['code']],4)];
 					}
 				}		
@@ -1155,6 +1172,34 @@ class connecteurs {
 			static::$instance = new connecteurs();
 		}
 		return static::$instance;
+	}
+	
+	public static function get_id_connector_from_source_id($source_id=0) {
+		$id_connector = 0;
+		$source_id = intval($source_id);
+		$query = "select id_connector from connectors_sources where source_id=".$source_id;
+		$result = pmb_mysql_query($query);
+		if(pmb_mysql_num_rows($result)) {
+			$id_connector = pmb_mysql_result($result, 0, 0);
+		}
+		return $id_connector;
+	}
+	
+	public static function get_connector_instance_from_source_id($source_id=0) {
+		global $base_path;
+		
+		$contrs = static::get_instance();
+		$id_connector = static::get_id_connector_from_source_id($source_id);
+		$catalog_id = 0;
+		foreach ($contrs->catalog as $indice=>$catalog) {
+			if($catalog['NAME'] == $id_connector) {
+				$catalog_id = $indice;
+				break;
+			}
+		}
+		require_once($base_path."/admin/connecteurs/in/".$contrs->catalog[$catalog_id]["PATH"]."/".$contrs->catalog[$catalog_id]["NAME"].".class.php");
+		eval("\$conn=new ".$contrs->catalog[$catalog_id]["NAME"]."(\"".$base_path."/admin/connecteurs/in/".$contrs->catalog[$catalog_id]["PATH"]."\");");
+		return $conn;
 	}
 }
 ?>

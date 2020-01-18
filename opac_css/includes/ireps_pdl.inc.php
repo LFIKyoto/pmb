@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ireps_pdl.inc.php,v 1.11 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: ireps_pdl.inc.php,v 1.11.14.1 2019-10-15 09:59:04 btafforeau Exp $
 
 function search_other_function_filters() { //OK
 	global $charset,$ireps_ss_type,$ireps_location,$ireps_public,$ireps_expertise, $ireps_indexint;
@@ -408,12 +408,12 @@ function search_other_function_human_query($n) { //OK
 
 
 function search_other_function_post_values() { //OK
-	global $ireps_ss_type,$ireps_location,$ireps_public,$ireps_expertise, $ireps_indexint;
-	$retour ="<input type=\"hidden\" name=\"ireps_ss_type\" value=\"$ireps_ss_type\">\n";
-	$retour.="<input type=\"hidden\" name=\"ireps_location\" value=\"$ireps_location\">\n";
-	$retour.="<input type=\"hidden\" name=\"ireps_public\" value=\"$ireps_public\">\n";
-	$retour.="<input type=\"hidden\" name=\"ireps_expertise\" value=\"$ireps_expertise\">\n";
-	$retour.="<input type=\"hidden\" name=\"ireps_indexint\" value=\"$ireps_indexint\">\n";
+	global $ireps_ss_type,$ireps_location,$ireps_public,$ireps_expertise, $ireps_indexint, $charset;
+	$retour ="<input type=\"hidden\" name=\"ireps_ss_type\" value=\"".htmlentities($ireps_ss_type, ENT_QUOTES, $charset)."\">\n";
+	$retour.="<input type=\"hidden\" name=\"ireps_location\" value=\"".htmlentities($ireps_location, ENT_QUOTES, $charset)."\">\n";
+	$retour.="<input type=\"hidden\" name=\"ireps_public\" value=\"".htmlentities($ireps_public, ENT_QUOTES, $charset)."\">\n";
+	$retour.="<input type=\"hidden\" name=\"ireps_expertise\" value=\"".htmlentities($ireps_expertise, ENT_QUOTES, $charset)."\">\n";
+	$retour.="<input type=\"hidden\" name=\"ireps_indexint\" value=\"".htmlentities($ireps_indexint, ENT_QUOTES, $charset)."\">\n";
 	
 	return $retour;
 }

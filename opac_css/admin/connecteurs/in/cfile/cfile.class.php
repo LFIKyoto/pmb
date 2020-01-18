@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cfile.class.php,v 1.7 2017-07-12 15:15:02 tsamson Exp $
+// $Id: cfile.class.php,v 1.9 2019-07-01 12:08:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,7 +13,7 @@ require_once ("$include_path/parser.inc.php");
 require_once($base_path."/admin/convert/xml_unimarc.class.php");
 
 if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
-	if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "0");
+    if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "0");
 	require_once($include_path.'/xslt-php4-to-php5.inc.php');
 }
 
@@ -363,7 +363,7 @@ class cfile extends connector {
 			}	
 		}
 		if (!isset($xslt_exemplaire))
-			$xslt_exemplaire = "";
+			$xslt_exemplaire = array();
 		
 		$file_type = "iso_2709";
 		//Récupérons le nom du fichier
@@ -419,7 +419,7 @@ class cfile extends connector {
 				$xmlunimarc=new xml_unimarc();
 				$nxml=$xmlunimarc->iso2709toXML_notice($row["notice"]);
 				$xmlunimarc->notices_xml_[0] = '<?xml version="1.0" encoding="'.$charset.'"?>'.$xmlunimarc->notices_xml_[0];
-				if ($xslt_exemplaire) {
+				if (!empty($xslt_exemplaire)) {
 					$xmlunimarc->notices_xml_[0] = $this->apply_xsl_to_xml($xmlunimarc->notices_xml_[0], $xslt_exemplaire["content"]);
 				}
 				if ($nxml==1) {
@@ -467,7 +467,7 @@ class cfile extends connector {
 			while ($row = pmb_mysql_fetch_assoc($res)) {
 				$xmlunimarc = '<?xml version="1.0" encoding="'.$charset.'"?>'.$row["notice"];
 				
-				if ($xslt_exemplaire) {
+				if (!empty($xslt_exemplaire)) {
 					$xmlunimarc = $this->apply_xsl_to_xml($xmlunimarc, $xslt_exemplaire["content"]);
 				}
 				
@@ -534,7 +534,7 @@ class cfile extends connector {
 		$pb_fini="";
 		$txt="";
 		while ( ($i<=strlen($contents)) && ($pb_fini=="") ) {
-			$car_lu=substr($contents,$i,1) ;
+			$car_lu = $contents[$i];
 			$i++;
 			if ($i<=strlen($contents)) {
 				if ($car_lu != chr(0x1d)) {

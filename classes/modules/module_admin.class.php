@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: module_admin.class.php,v 1.11 2018-12-19 14:49:39 dgoron Exp $
+// $Id: module_admin.class.php,v 1.12 2019-02-14 08:17:39 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -147,6 +147,7 @@ class module_admin extends module{
 			case 'file':
 				switch($action){
 					case 'get_form':
+						header('Content-type: text/html;charset=utf-8');
 						$misc_file = misc_files::get_model_instance($path, $filename);
 						print encoding_normalize::utf8_normalize($misc_file->get_form());
 						break;
@@ -156,6 +157,7 @@ class module_admin extends module{
 						if(is_writable($path)) {
 							$is_writable_dir = 1;
 						}
+						header('Content-type: application/json;charset=utf-8');
 						print encoding_normalize::json_encode(array('contents' => $misc_file->get_contents(), 'is_writable_dir' => $is_writable_dir));
 						break;
 					case 'save_contents':

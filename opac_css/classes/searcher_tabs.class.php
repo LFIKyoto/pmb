@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_tabs.class.php,v 1.6 2018-12-20 14:00:06 mbertin Exp $
+// $Id: searcher_tabs.class.php,v 1.9 2019-06-20 08:37:22 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -50,7 +50,7 @@ class searcher_tabs {
     			else
     				$q['VISIBILITY']=false;
     			$v=array();
-    			if(is_array($element['VAR'][$j]['VALUE'])) {
+    			if(isset($element['VAR'][$j]['VALUE']) && is_array($element['VAR'][$j]['VALUE'])) {
 	    			for ($k=0; $k<count($element['VAR'][$j]['VALUE']); $k++) {
 	    				if ($element['VAR'][$j]['VALUE'][$k]['VISIBILITY']=="yes")
 	    					$v[$element['VAR'][$j]['VALUE'][$k]['value']] = true ;
@@ -454,7 +454,7 @@ class searcher_tabs {
 				if($field["INPUT_OPTIONS"]["RESTRICTQUERY"][0]["ALLCHOICE"] == "yes"){
 					$display .= "<option value=''>".htmlentities(get_msg_to_display($field["INPUT_OPTIONS"]["RESTRICTQUERY"][0]["TITLEALLCHOICE"]), ENT_QUOTES, $charset)."</option>";
 				}
-				while (list($key,$val)=each($options->table)) {
+				foreach ($options->table as $key => $val) {
 					if ($existrestrict && array_search($key,$restrictqueryarray)!==false) {
 						$display .= "<option value='".htmlentities($key,ENT_QUOTES,$charset)."' ";
 						$as=array_search($key,$values);
@@ -666,7 +666,7 @@ class searcher_tabs {
     	global $page, $nb_per_page;
     	$values = $this->get_values_from_form();
     	$searcher_entities_tab = $this->get_instance_entities_tab($values);
-    	$this->objects_ids = $searcher_entities_tab->get_sorted_result("default",$page*$nb_per_page,$nb_per_page);
+    	$this->objects_ids = $searcher_entities_tab->get_sorted_result("default", intval($page) * intval($nb_per_page), $nb_per_page);
     	$this->search_nb_results = $searcher_entities_tab->get_nb_results();
     }
     

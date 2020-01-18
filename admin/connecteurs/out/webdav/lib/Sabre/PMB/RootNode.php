@@ -2,18 +2,18 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: RootNode.php,v 1.14 2017-10-05 11:02:10 jpermanne Exp $
+// $Id: RootNode.php,v 1.17 2019-08-01 13:16:35 btafforeau Exp $
 namespace Sabre\PMB;
 
 class RootNode extends Collection {
 	public $config;
 	
-	function __construct($config){
+	public function __construct($config){
 		parent::__construct($config);
 		$this->type = "rootNode";
 	}
 	
-	function getName() {
+	public function getName() {
 		return "";	
 	}
 	
@@ -26,7 +26,7 @@ class RootNode extends Collection {
 	 * @param $filename : chemin complet du fichier
 	 * @return integer notice_id l'identifiant de la notice
 	 */
-	function get_notice_by_meta($name,$filename){
+	public function get_notice_by_meta($name,$filename){
 		
 		//construction de la notice standard en fonction des métadonnées
 		$entry=array();
@@ -150,7 +150,7 @@ class RootNode extends Collection {
 	 *)
 	 *	 
 	 */
-	static function buildEntry($metas,$name){
+	public static function buildEntry($metas,$name){
 		global $pmb_keyword_sep;
 		
 		$entry=array();
@@ -256,11 +256,11 @@ class RootNode extends Collection {
 		}
 		
 		//Champs personnalisés
-		if($metas['Format']){
-			foreach (preg_split('/\s?\-{2}\s?/', $metas['Format']) as $id=>$ligne){
-				$ligne=preg_split('/\=/',$ligne,2);
-				if(sizeof($ligne)==2){
-					$entry['cp'][$id]=array('field'=>$ligne[0],'value'=>$ligne[1]);
+		if ($metas['Format']) {
+			foreach (preg_split('/\s?\-{2}\s?/', $metas['Format']) as $id => $ligne) {
+				$ligne = preg_split('/\=/', $ligne, 2);
+				if (count($ligne) == 2) {
+					$entry['cp'][$id] = array('field' => $ligne[0], 'value' => $ligne[1]);
 				}
 			}
 		}
@@ -283,17 +283,16 @@ class RootNode extends Collection {
 				//article ou bulletin
 				if(($metas['Date'] || $metas['Identifier']) && $metas['Relation']){
 					//j'ai une date et/ou un numéro de bulletin, et un titre de pério pour une notice en a2
-					if($metas['Date']){
-						$entry['bulletin']['date_date']=self::checkDate($metas['Date']);
-						$entry['date_parution']=$entry['bulletin']['date_date'];
-						$entry['year']=substr($entry['date_parution'], 0,4);
-						
-						$tmp=array();
-						$tmp=preg_split('/\-/', $entry['bulletin']['date_date']);
-						if(sizeof($tmp)==3){
-							$entry['bulletin']['mention_date']=$tmp[2].'/'.$tmp[1].'/'.$tmp[0];
-						}else{
-							$entry['bulletin']['mention_date']='0000-00-00';
+					if ($metas['Date']) {
+						$entry['bulletin']['date_date'] = self::checkDate($metas['Date']);
+						$entry['date_parution'] = $entry['bulletin']['date_date'];
+						$entry['year'] = substr($entry['date_parution'], 0, 4);
+						$tmp = array();
+						$tmp = preg_split('/\-/', $entry['bulletin']['date_date']);
+						if (count($tmp) == 3) {
+							$entry['bulletin']['mention_date'] = $tmp[2].'/'.$tmp[1].'/'.$tmp[0];
+						} else {
+							$entry['bulletin']['mention_date'] = '0000-00-00';
 						}
 					}
 					if($metas['Identifier']){
@@ -322,8 +321,8 @@ class RootNode extends Collection {
 					self::buildPublisher($entry,$metas['Publisher']);
 				}
 				//Collection
-				if($metas['Relation'] && sizeof($entry['ed1_id'])){
-					$entry['collections']=array('name'=>trim($metas['Relation']));
+				if (!empty($metas['Relation']) && !empty($entry['ed1_id'])) {
+					$entry['collections'] = array('name' => trim($metas['Relation']));
 				}
 				//numéro dans la collection
 				if($metas['Identifier']){
@@ -340,7 +339,7 @@ class RootNode extends Collection {
 	 * @param $filename : file name with path
 	 * @return Array : le tableau des métadonnées du fichier
 	 */
-	static function getMetadata($filename,$name){
+	public static function getMetadata($filename,$name){
 		\create_tableau_mimetype();
 		$mimetype = \trouve_mimetype($filename,extension_fichier($name));
 		
@@ -370,7 +369,7 @@ class RootNode extends Collection {
 	 * Dédoublonne et ajoute le périodique en fonction des informations de périodique présent dans un bulletin ou un article
 	 * !! Ne sert pas à l'ajout d'un $entry de type périodique !!
 	 */
-	static function doPeriodique(&$entry){
+	public static function doPeriodique(&$entry){
 		
 		//On test si le perio existe
 		$query = 'SELECT notice_id FROM notices WHERE tit1="'.addslashes($entry['periodique']['tit1']).'" AND niveau_biblio="'.addslashes($entry['periodique']['niveau_biblio']).'" AND niveau_hierar="'.addslashes($entry['periodique']['niveau_hierar']).'"';
@@ -410,7 +409,7 @@ class RootNode extends Collection {
 	 * Si l'entry est de type bulletin, relie la notice au périodique dans notices_relation 
 	 * et insert dans la tables bulletins, le champ num_notice avec l'identifiant de l'entry en cours
 	 */
-	static function buildBulletin(&$entry){
+	public static function buildBulletin(&$entry){
 		
 		if(!$entry['notice_id']){
 		//on ajoute dans un premier temps la notice
@@ -461,7 +460,7 @@ class RootNode extends Collection {
 	 * Dédoublonne et ajoute si besoin le bulletin
 	 * Insert le lien dans la table [analysis]
 	 */
-	static function buildAnalysis(&$entry){
+	public static function buildAnalysis(&$entry){
 		if(!$entry['notice_id']){
 			//on ajoute dans un premier temps la notice
 			self::buildNotice($entry);
@@ -489,7 +488,7 @@ class RootNode extends Collection {
 	 * Ajoute les tables annexes [responsability], [notices_categories] et [notices_langues]
 	 * Met à jours l'indexation de la notice
 	 */
-	static function buildNotice(&$entry){
+	public static function buildNotice(&$entry){
 		global $pmb_type_audit;
 		global $webdav_current_user_name,$webdav_current_user_id;
 		
@@ -533,25 +532,24 @@ class RootNode extends Collection {
 			}
 			$query.=' WHERE notice_id="'.addslashes($entry['notice_id']).'"';
 			pmb_mysql_query($query) or die('echec de la requete : '.$query.'<br/>'.pmb_mysql_error()."\n");
-		}else{
-		
+		} else {
 			//les éditeurs
-			if(sizeof($entry['publishers'])){
-				foreach($entry['publishers'] as $id=>$publisher){
-					if($id<2){
-						if($id===0){
-							$entry['ed1_id']=\editeur::import($publisher);
-						}elseif($id===1){
-							$entry['ed2_id']=\editeur::import($publisher);
+			if (!empty($entry['publishers'])) {
+				foreach ($entry['publishers'] as $id => $publisher) {
+					if ($id < 2) {
+						if ($id === 0) {
+							$entry['ed1_id'] = \editeur::import($publisher);
+						} elseif ($id === 1) {
+							$entry['ed2_id'] = \editeur::import($publisher);
 						}
 					}
 				}
 			}
 			
 			//la collection 
-			if(sizeof($entry['collections']) && $entry['ed1_id']){
-				$entry['collections']['parent']=$entry['ed1_id'];
-				$entry['coll_id']=\collection::import($entry['collections']);
+			if (!empty($entry['collections']) && !empty($entry['ed1_id'])) {
+				$entry['collections']['parent'] = $entry['ed1_id'];
+				$entry['coll_id'] = \collection::import($entry['collections']);
 			}
 			
 			$first=true;
@@ -576,67 +574,67 @@ class RootNode extends Collection {
 		}
 		
 		//les champs persos
-		if(sizeof($entry['cp'])){
-			foreach($entry['cp'] as $cp){
-				\parametres_perso::import($entry['notice_id'],$cp['field'],$cp['value'],'notices');
-			}	
+		if (!empty($entry['cp'])) {
+			foreach ($entry['cp'] as $cp) {
+				\parametres_perso::import($entry['notice_id'], $cp['field'], $cp['value'], 'notices');
+			}
 		}
 		
 		//ajout dans les tables annexes a la notice
-		if(sizeof($entry['annexes'])){
-			foreach($entry['annexes'] as $typeAnnexe=>$annexes){
-				foreach($annexes as $id=>$annexe){
-					switch ($typeAnnexe){
+		if (!empty($entry['annexes'])) {
+			foreach ($entry['annexes'] as $typeAnnexe => $annexes) {
+				foreach ($annexes as $id => $annexe) {
+					switch ($typeAnnexe) {
 						case 'responsability':
 							//Import et récupération des identifiants auteurs
-							$entry['annexes'][$typeAnnexe][$id]['responsability_author']=\auteur::import($entry['annexes'][$typeAnnexe][$id]['authors']);
+							$annexe['responsability_author']=\auteur::import($annexe['authors']);
 							
-							$entry['annexes'][$typeAnnexe][$id]['responsability_notice']=$entry['notice_id'];
+							$annexe['responsability_notice']=$entry['notice_id'];
 							
 							break;
 						case 'notices_categories':
 							//Import et récupération des identifiants catégories
-							$query='SELECT num_noeud FROM categories WHERE libelle_categorie="'.addslashes(trim($entry['annexes'][$typeAnnexe][$id]['categories']['libelle_categorie'])).'" AND num_thesaurus='.$entry['annexes'][$typeAnnexe][$id]['categories']['num_thesaurus'].' AND langue="'.$entry['annexes'][$typeAnnexe][$id]['categories']['langue'].'"';
+							$query='SELECT num_noeud FROM categories WHERE libelle_categorie="'.addslashes(trim($annexe['categories']['libelle_categorie'])).'" AND num_thesaurus='.$annexe['categories']['num_thesaurus'].' AND langue="'.$annexe['categories']['langue'].'"';
 							$result=pmb_mysql_query($query) or die('Echec d\'execution de la requete '.$query.'  : '.pmb_mysql_error());
 							if(pmb_mysql_num_rows($result)){
 								//le noeud existe déjà
-								$entry['annexes'][$typeAnnexe][$id]['num_noeud']=pmb_mysql_result($result, 0,0);
+								$annexe['num_noeud']=pmb_mysql_result($result, 0,0);
 							}else{
 								//le noeud n'existe pas, on cherche le parent non classé
-								$query='SELECT id_noeud FROM noeuds WHERE autorite="NONCLASSES" AND num_thesaurus='.$entry['annexes'][$typeAnnexe][$id]['categories']['num_thesaurus'];
+								$query='SELECT id_noeud FROM noeuds WHERE autorite="NONCLASSES" AND num_thesaurus='.$annexe['categories']['num_thesaurus'];
 								$result=pmb_mysql_query($query) or die('Echec d\'execution de la requete '.$query.'  : '.pmb_mysql_error());
 								if(pmb_mysql_num_rows($result)){
 									//on ajoute le noeud
-									$query='INSERT INTO noeuds SET num_parent='.pmb_mysql_result($result,0,0).', visible=1, num_thesaurus='.$entry['annexes'][$typeAnnexe][$id]['categories']['num_thesaurus'];
+									$query='INSERT INTO noeuds SET num_parent='.pmb_mysql_result($result,0,0).', visible=1, num_thesaurus='.$annexe['categories']['num_thesaurus'];
 									pmb_mysql_query($query) or die('Echec d\'execution de la requete '.$query.'  : '.pmb_mysql_error());
 									$entry['annexes']['notices_categories'][$id]['num_noeud']=pmb_mysql_insert_id();
 									//on ajoute la catégorie
-									$categorie=new \categories($entry['annexes'][$typeAnnexe][$id]['num_noeud'],$entry['annexes'][$typeAnnexe][$id]['categories']['langue']);
-									$categorie->libelle_categorie=trim($entry['annexes'][$typeAnnexe][$id]['categories']['libelle_categorie']);
+									$categorie=new \categories($annexe['num_noeud'],$annexe['categories']['langue']);
+									$categorie->libelle_categorie=trim($annexe['categories']['libelle_categorie']);
 									$categorie->save();
 								}
 							}
 							
-							$entry['annexes'][$typeAnnexe][$id]['notcateg_notice']=$entry['notice_id'];
+							$annexe['notcateg_notice']=$entry['notice_id'];
 							
 							break;
 						case 'notices_langues':
-							$entry['annexes'][$typeAnnexe][$id]['num_notice']=$entry['notice_id'];
+							$annexe['num_notice']=$entry['notice_id'];
 							break;
 						case 'notices_authorities_sources':
-							$entry['annexes'][$typeAnnexe][$id]['num_notice']=$entry['notice_id'];
+							$annexe['num_notice']=$entry['notice_id'];
 							break;
 						case 'notices_relations':
-							$entry['annexes'][$typeAnnexe][$id]['num_notice']=$entry['notice_id'];
+							$annexe['num_notice']=$entry['notice_id'];
 							break;
 						case 'notices_titres_uniformes':
-							$entry['annexes'][$typeAnnexe][$id]['ntu_num_notice']=$entry['notice_id'];
+							$annexe['ntu_num_notice']=$entry['notice_id'];
 							break;
 					}
 					
 					$first=true;
 					$query='INSERT IGNORE INTO '.$typeAnnexe.' SET ';
-					foreach($entry['annexes'][$typeAnnexe][$id] as $fieldName=>$value){
+					foreach($annexe as $fieldName=>$value){
 						if(!is_array($value) && $value!=''){
 							if(!$first){
 								$query.=',';
@@ -660,12 +658,12 @@ class RootNode extends Collection {
 	 * 
 	 * Fonction de nettoyage d'une date
 	 */
-	static function checkDate($date){
-		$date=preg_split('/\s/', $date);
-		$date[0]=preg_replace('/\:/', '-', $date[0]);
-		if(sizeof($date)>1){
+	public static function checkDate($date) {
+		$date = preg_split('/\s/', $date);
+		$date[0] = preg_replace('/\:/', '-', $date[0]);
+		if (count($date) > 1) {
 			return implode(' ', $date);
-		}else{
+		} else {
 			return $date[0];
 		}
 	}
@@ -677,7 +675,7 @@ class RootNode extends Collection {
 	 * Découpe la chaine de caractère et importe l'éditeur
 	 * Ajoute au tableau $entry l'information ed1_id et ed2_id 
 	 */
-	static function buildPublisher(&$entry,$stringPublishers){
+	public static function buildPublisher(&$entry,$stringPublishers){
 		foreach(preg_split('/\,\s/', $stringPublishers) as $id=>$ligne){
 			$entry['publishers'][$id]=array('name'=>trim($ligne));
 		}
@@ -690,19 +688,18 @@ class RootNode extends Collection {
 	 * Découpe les catégories et formate le tableau de responsabilité
 	 * Ajoute au tableau [annexes] les informations de catégories dans [notices_categories]
 	 */
-	static function buildCategories(&$entry,$stringCategories){
+	public static function buildCategories(&$entry, $stringCategories) {
 		global $thesaurus_defaut;
 		
-		foreach(preg_split('/\s?\-{2}\s?/', $stringCategories) as $ligne){
-			if(sizeof($entry['annexes']['notices_categories'])){
-				$id=max(array_keys($entry['annexes']['notices_categories']))+1;
-			}else{
-				$id=0;
+		foreach (preg_split('/\s?\-{2}\s?/', $stringCategories) as $ligne) {
+			if (!empty($entry['annexes']['notices_categories'])) {
+				$id = max(array_keys($entry['annexes']['notices_categories'])) + 1;
+			} else {
+				$id = 0;
 			}
-			
-			$entry['annexes']['notices_categories'][$id]['categories']['libelle_categorie']=trim($ligne);
-			$entry['annexes']['notices_categories'][$id]['categories']['langue']='fr_FR';
-			$entry['annexes']['notices_categories'][$id]['categories']['num_thesaurus']=$thesaurus_defaut;
+			$entry['annexes']['notices_categories'][$id]['categories']['libelle_categorie'] = trim($ligne);
+			$entry['annexes']['notices_categories'][$id]['categories']['langue'] = 'fr_FR';
+			$entry['annexes']['notices_categories'][$id]['categories']['num_thesaurus'] = $thesaurus_defaut;
 		}
 	}
 	
@@ -714,40 +711,37 @@ class RootNode extends Collection {
 	 * Découpe la chaine de caractère et formate le tableau de responsabilité
 	 * Ajoute au tableau [annexes] les informations de responsabilité dans [responsability]
 	 */
-	static function buildAuthors(&$entry,$stringAuthors,$secondary=false){
-		$tmp=array();
-		if($secondary){
-			$tmp=preg_split('/\,\s/', $stringAuthors);
-		}else{
-			$tmp=preg_split('/\s?\-{2}\s?/', $stringAuthors);
+	public static function buildAuthors(&$entry, $stringAuthors, $secondary = false) {
+		$tmp = array();
+		if (!empty($secondary)) {
+			$tmp = preg_split('/\,\s/', $stringAuthors);
+		} else {
+			$tmp = preg_split('/\s?\-{2}\s?/', $stringAuthors);
 		}
-		
-		foreach($tmp as $ligne){
-			$author=array();
-			if(sizeof($entry['annexes']['responsability'])){
-				$id=max(array_keys($entry['annexes']['responsability']))+1;
-			}else{
-				$id=0;
+		foreach ($tmp as $ligne) {
+			$author = array();
+			if (!empty($entry['annexes']['responsability'])) {
+				$id = max(array_keys($entry['annexes']['responsability'])) + 1;
+			} else {
+				$id = 0;
 			}
-			
-			$ligne=preg_split('/\s?\|\s?/', $ligne);
-			$author['name']=$ligne[0];
-			if($ligne[1]){
-				$author['rejete']=$ligne[1];
-				$author['type']='70';
-			}else{
+			$ligne = preg_split('/\s?\|\s?/', $ligne);
+			$author['name'] = $ligne[0];
+			if (!empty($ligne[1])) {
+				$author['rejete'] = $ligne[1];
+				$author['type'] = '70';
+			} else {
 				//$author['type']='71';
-				$author['type']='70'; //Modif CG 06
+				$author['type'] = '70'; //Modif CG 06
 			}
-			$entry['annexes']['responsability'][$id]['authors']=$author;
-			
-			if($secondary){
-				$entry['annexes']['responsability'][$id]['responsability_type']='2';
-			}else{
-				if($id===0){
-					$entry['annexes']['responsability'][$id]['responsability_type']='0';
-				}else{
-					$entry['annexes']['responsability'][$id]['responsability_type']='1';
+			$entry['annexes']['responsability'][$id]['authors'] = $author;
+			if (!empty($secondary)) {
+				$entry['annexes']['responsability'][$id]['responsability_type'] = '2';
+			} else {
+				if ($id === 0) {
+					$entry['annexes']['responsability'][$id]['responsability_type'] = '0';
+				} else {
+					$entry['annexes']['responsability'][$id]['responsability_type'] = '1';
 				}
 			}
 		}

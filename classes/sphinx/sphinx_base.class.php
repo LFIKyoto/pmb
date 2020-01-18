@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sphinx_base.class.php,v 1.11 2018-08-02 15:33:48 vtouchard Exp $
+// $Id: sphinx_base.class.php,v 1.12 2019-01-10 13:39:32 arenou Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php"))
 	die("no access");
 class sphinx_base {
@@ -176,7 +176,6 @@ class sphinx_base {
 							}
 							break;
 						default :
-							continue;
 							break; // useless
 					}
 				} else {

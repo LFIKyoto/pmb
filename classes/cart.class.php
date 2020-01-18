@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cart.class.php,v 1.12 2017-04-20 16:25:28 dgoron Exp $
+// $Id: cart.class.php,v 1.13 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -38,7 +38,7 @@ class cart {
 		if($xml_file) {
 			$this->file = $this->path.$xml_file;
 			$this->get_cart();
-			$this->nb_items = sizeof($this->entry);
+			$this->nb_items = count($this->entry);
 		} else {
 			$this->create_cart();
 		}
@@ -115,17 +115,19 @@ class cart {
 		if(!(int)$item || in_array($item, $this->entry))
 			return;
 		$this->entry[] = $item;
-		$this->nb_items = sizeof($this->entry);
+		$this->nb_items = count($this->entry);
 	}
 
 
 	// suppression d'un item
 
-	public function del_item($item=0) {
-		if(!(int)$item)
+	public function del_item($item = 0) {
+	    if (!(int)$item) {
 			return;
-		for($i=0 ; $i < sizeof($this->entry); $i++) {
-			if( (int) $this->entry[$i] == $item) {
+	    }
+		$nb_entries = count($this->entry);
+		for ($i = 0; $i < $nb_entries; $i++) {
+			if ((int) $this->entry[$i] == $item) {
 				$this->entry[$i] = 0;
 				$this->nb_items--;
 			}
@@ -149,24 +151,26 @@ class cart {
 	// sauvegarde du panier
 
 	public function save_cart() {
-		if($fp = @fopen($this->file, 'w')) {
+		if ($fp = @fopen($this->file, 'w')) {
 			$header = "";
-			$header .= "\n<!DOCTYPE cart SYSTEM \"".$this->dtd_path."\">";
-			$header .= "\n<cart name=\"".$this->name;
-			$header .= "\" description=\"".$this->description."\">";
-			fputs($fp, $header);
+			$header .= "\n<!DOCTYPE cart SYSTEM \"$this->dtd_path\">";
+			$header .= "\n<cart name=\"$this->name";
+			$header .= "\" description=\"$this->description\">";
+			fwrite($fp, $header);
 			// élimination des valeurs nulles
 			$this->entry = array_filter($this->entry, 'array_clean');
-			for($i=0 ; $i < sizeof($this->entry); $i++) {
-				if( (int) $this->entry[$i])
-					fputs($fp, "\n\t<item>".$this->entry[$i]."</item>");
+			$nb_entries = count($this->entry);
+			for ($i = 0; $i < $nb_entries; $i++) {
+			    if ((int) $this->entry[$i]) {
+					fwrite($fp, "\n\t<item>$this->entry[$i]</item>");
+			    }
 			}
 			$footer = "\n</cart>\n";
-			fputs($fp, $footer);
+			fwrite($fp, $footer);
 			fflush($fp);
 			fclose($fp);
 		} else {
-			die( "<strong>PMB cart parser error</strong>&nbsp;: can't store datas in ".$this->file);
+			die("<strong>PMB cart parser error</strong>&nbsp;: can't store datas in $this->file");
 		}
 		
 	}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: statut.inc.php,v 1.19 2018-10-12 14:44:49 dgoron Exp $
+// $Id: statut.inc.php,v 1.21 2019-06-17 14:38:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -87,11 +87,23 @@ function statut_form($id=0, $gestion_libelle="", $opac_libelle="", $visible_opac
 
 	print confirmation_delete("./admin.php?categ=notices&sub=statut&action=del&id=");
 	print $admin_notice_statut_form;
+}
 
-	}
-
+$id = intval($id);
 switch($action) {
-	case 'update':
+    case 'update':
+        if(empty($form_visible_opac)) $form_visible_opac = '';
+        if(empty($form_visu_expl)) $form_visu_expl = '';
+        if(empty($form_visu_abon)) $form_visu_abon = '';
+        if(empty($form_expl_visu_abon)) $form_expl_visu_abon = '';
+        if(empty($form_explnum_visu_abon)) $form_explnum_visu_abon = '';
+        if(empty($form_scan_request_opac)) $form_scan_request_opac = '';
+        if(empty($form_scan_request_opac_abon)) $form_scan_request_opac_abon = '';
+        if(empty($form_visible_gestion)) $form_visible_gestion = '';
+        if(empty($form_gestion_libelle)) $form_gestion_libelle = '';
+        if(empty($form_opac_libelle)) $form_opac_libelle = '';
+        if(empty($form_class_html)) $form_class_html = '';
+        if(empty($form_explnum_visu)) $form_explnum_visu = '';
 		if ($id) {
 			if ($id==1) $visu=", notice_visible_gestion=1, notice_visible_opac='$form_visible_opac', expl_visible_opac='$form_visu_expl', notice_visible_opac_abon='$form_visu_abon', expl_visible_opac_abon='$form_expl_visu_abon', explnum_visible_opac='$form_explnum_visu', explnum_visible_opac_abon='$form_explnum_visu_abon', notice_scan_request_opac='".$form_scan_request_opac."', notice_scan_request_opac_abon='".$form_scan_request_opac_abon."' ";
 				else $visu=", notice_visible_gestion='$form_visible_gestion', notice_visible_opac='$form_visible_opac', expl_visible_opac='$form_visu_expl', notice_visible_opac_abon='$form_visu_abon', expl_visible_opac_abon='$form_expl_visu_abon', explnum_visible_opac='$form_explnum_visu', explnum_visible_opac_abon='$form_explnum_visu_abon', notice_scan_request_opac='".$form_scan_request_opac."', notice_scan_request_opac_abon='".$form_scan_request_opac_abon."' "; 
@@ -131,10 +143,12 @@ switch($action) {
 				$requete = "OPTIMIZE TABLE notice_statut ";
 				$res = pmb_mysql_query($requete, $dbh);
 				show_statut($dbh);
-				} else {
-					error_message(	$msg["noti_statut_noti"], $msg["noti_statut_used"], 1, 'admin.php?categ=notices&sub=statut&action=');
-				}
-			} else show_statut($dbh);
+			} else {
+				error_message(	$msg["noti_statut_noti"], $msg["noti_statut_used"], 1, 'admin.php?categ=notices&sub=statut&action=');
+			}
+		} else {
+		    error_message(	$msg["noti_statut_noti"], $msg["noti_statut_delete_forbidden"], 1, 'admin.php?categ=notices&sub=statut&action=');
+		}
 		break;
 	default:
 		show_statut($dbh);

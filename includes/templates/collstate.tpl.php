@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: collstate.tpl.php,v 1.17 2017-11-21 12:00:58 dgoron Exp $
+// $Id: collstate.tpl.php,v 1.18 2019-05-27 14:03:25 ngantier Exp $
 
 // templates pour gestion des autorités collections
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $base_path, $collstate_form, $msg, $current_module, $location_field, $statut_field, $emplacement_field, $support_field, $tpl_collstate_liste_form, $collstate_list_header, $collstate_list_footer, $tpl_collstate_liste, $tpl_collstate_liste_line, $tpl_collstate_surloc_liste, $tpl_collstate_surloc_liste_line, $tpl_collstate_bulletins_list_th, $tpl_collstate_bulletins_list_td, $collstate_advanced_form, $collstate_expl_list_form, $charset, $tpl_collstate_bulletins_list_page; 
 
 require_once($base_path."/javascript/misc.inc.php");
 

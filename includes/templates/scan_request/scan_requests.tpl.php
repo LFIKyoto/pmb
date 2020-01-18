@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_requests.tpl.php,v 1.17 2017-09-05 08:37:29 vtouchard Exp $
+// $Id: scan_requests.tpl.php,v 1.18 2019-05-27 10:35:11 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $scan_requests_list, $msg, $current_module, $pmb_scan_request_location_activate;
 
 $scan_requests_list = "
 <h1>".$msg["scan_request_list"]."</h1>		

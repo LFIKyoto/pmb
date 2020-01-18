@@ -2,18 +2,25 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: print_docnum.inc.php,v 1.8 2018-12-13 16:46:16 dgoron Exp $
+// $Id: print_docnum.inc.php,v 1.11 2019-04-03 13:34:40 ngantier Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 //gestion des droits
 require_once($class_path."/acces.class.php");
 require_once($class_path."/notice_affichage.class.php");
+require_once($include_path."/etagere_func.inc.php");
+require_once($class_path."/liste_lecture.class.php");
 
 switch($sub){
 	case 'get_list':	
 		if($number && $select_noti){
 			$id_notices = explode(",",$select_noti);
-		} else $id_notices=$_SESSION["cart"];	
+		} elseif(!empty($id_etagere)) {
+			$id_notices = array_keys(get_etagere_notices($id_etagere));
+		} elseif (!empty($id_liste)) {
+		    $liste = new liste_lecture($id_liste*1);
+		    $id_notices = $liste->notices;
+		} else $id_notices=$_SESSION["cart"];
 		ajax_http_send_response( doc_num_get_list($id_notices) );
 		break;
 }
@@ -22,9 +29,9 @@ function doc_num_get_list($id_notices){
 	$cpt_doc_num=0;
 	foreach($id_notices as $notice_id){
 		
-		$query = "SELECT explnum_id from explnum where explnum_statut=0 and explnum_notice=$notice_id and explnum_mimetype IN ('application/pdf','application/x-pdf') ";
+		$query = "SELECT explnum_id from explnum where explnum_notice=$notice_id and explnum_mimetype IN ('application/pdf','application/x-pdf') ";
 		$query .= " union ";
-		$query .= " select explnum_id from explnum ,bulletins where explnum_statut=0 and explnum_bulletin=bulletin_id and num_notice=$notice_id and explnum_mimetype IN ('application/pdf','application/x-pdf')";
+		$query .= " select explnum_id from explnum ,bulletins where explnum_bulletin=bulletin_id and num_notice=$notice_id and explnum_mimetype IN ('application/pdf','application/x-pdf')";
 		$result = pmb_mysql_query($query,$dbh);
 		$nb_result = pmb_mysql_num_rows($result) ;
 		if (!$nb_result)	continue;		

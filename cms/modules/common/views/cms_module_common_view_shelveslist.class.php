@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_shelveslist.class.php,v 1.13 2018-05-25 12:05:27 dgoron Exp $
+// $Id: cms_module_common_view_shelveslist.class.php,v 1.14 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -65,7 +65,7 @@ class cms_module_common_view_shelveslist extends cms_module_common_view_django{
 		global $cms_module_common_view_shelveslist_nb_notices;
 		global $cms_module_common_view_shelveslist_django_directory;
 		$this->save_constructor_link_form("shelve");
-		$this->parameters['nb_notices'] = $cms_module_common_view_shelveslist_nb_notices+0;
+		$this->parameters['nb_notices'] = (int) $cms_module_common_view_shelveslist_nb_notices;
 		$this->parameters['django_directory'] = $cms_module_common_view_shelveslist_django_directory;
 		return parent::save_form();
 	}

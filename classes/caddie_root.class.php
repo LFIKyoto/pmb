@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: caddie_root.class.php,v 1.34 2018-12-18 13:14:03 dgoron Exp $
+// $Id: caddie_root.class.php,v 1.40.4.1 2019-10-23 12:47:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -32,9 +32,11 @@ class caddie_root {
 	public $nb_item = 0		;	// nombre d'enregistrements dans le panier
 	public $nb_item_pointe = 0		;	// nombre d'enregistrements pointés dans le panier
 	public $autorisations = ""		;	// autorisations accordées sur ce panier
+	public $autorisations_all = 0	;	// autorisations accordées à tous sur ce panier
 	public $classementGen = ""		;	// classement
 	public $liaisons = array(); // Liaisons associées à un panier
 	public $acces_rapide = 0;		//accès rapide au panier en résultat de recherche notcies
+	public $favorite_color = '';	// couleur associée
 	public $creation_user_name = '';		//Créateur du panier
 	public $creation_date = '';		//Date de création du panier
 	public static $table_name = '';
@@ -49,8 +51,10 @@ class caddie_root {
 		$this->nb_item	= 0;
 		$this->nb_item_pointe = 0;
 		$this->autorisations	= "";
+		$this->autorisations_all	= 0;
 		$this->classementGen	= "";
 		$this->acces_rapide	= 0;
+		$this->favorite_color = '';
 		$this->creation_user_name = '';
 		$this->creation_date = '0000-00-00 00:00:00';
 	}
@@ -84,7 +88,7 @@ class caddie_root {
 	}
 	
 	// formulaire
-	public function get_form($form_action="", $form_cancel="") {
+	public function get_form($form_action="", $form_cancel="", $form_duplicate="") {
 		global $msg, $charset;
 		global $PMBuserid;
 		
@@ -98,17 +102,22 @@ class caddie_root {
 			$form = str_replace ( '!!title!!', $msg['edit_cart'], $form);
 			$form = str_replace('!!autorisations_users!!', users::get_form_autorisations($this->autorisations,0), $form);
 			$form = str_replace('!!infos_creation!!', "<br />".$this->get_info_creation(), $form);
+			$button_duplicate = "&nbsp;<input type='button' class='bouton' value=' ".$msg['duplicate']." ' onClick=\"document.location='".$form_duplicate."'\" />";
+			$form = str_replace('!!button_duplicate!!', $button_duplicate, $form);
 		} else {
 			$form = str_replace ( '!!title!!', $msg['new_cart'], $form);
 			$form = str_replace('!!autorisations_users!!', users::get_form_autorisations("",1), $form);
 			$form = str_replace('!!infos_creation!!', "", $form);
+			$form = str_replace('!!button_duplicate!!', "", $form);
 		}
 		$form = str_replace('!!name!!', htmlentities($this->name,ENT_QUOTES, $charset), $form);
 		$form = str_replace('!!comment!!', htmlentities($this->comment,ENT_QUOTES, $charset), $form);
+		$form = str_replace('!!autorisations_all!!', ($this->autorisations_all ? "checked='checked'" : ""), $form);
 		$classementGen = new classementGen(static::get_table_name(), $this->get_idcaddie());
 		$form = str_replace("!!object_type!!",$classementGen->object_type,$form);
 		$form = str_replace("!!classements_liste!!",$classementGen->getClassementsSelectorContent($PMBuserid,$classementGen->libelle),$form);
 		$form = str_replace("!!acces_rapide!!",($this->acces_rapide?"checked='checked'":""),$form);
+		$form = str_replace("!!favorite_color!!", $this->favorite_color,$form);
 		$memo_contexte = "";
 		if($clause) {
 			$memo_contexte .= "<input type='hidden' name='clause' value=\"".htmlentities(stripslashes($clause), ENT_QUOTES, $charset)."\">";
@@ -126,18 +135,22 @@ class caddie_root {
 	
 	public function set_properties_from_form() {
 		global $autorisations;
+		global $autorisations_all;
 		global $cart_name;
 		global $cart_comment;
 		global $acces_rapide;
-	
+		global $favorite_color;
+		
 		if (is_array($autorisations)) {
 			$this->autorisations=implode(" ",$autorisations);
 		} else {
 			$this->autorisations="1";
 		}
+		$this->autorisations_all = $autorisations_all+0;
 		$this->name = stripslashes($cart_name);
 		$this->comment = stripslashes($cart_comment);
 		$this->acces_rapide = (isset($acces_rapide)?1:0);
+		$this->favorite_color = $favorite_color;
 	}
 	
 	protected static function get_order_cart_list() {
@@ -155,13 +168,13 @@ class caddie_root {
 		if($item) {
 			$query .= " JOIN ".static::get_table_content_name()." ON ".static::get_table_content_name().".".static::get_field_content_name()." = ".static::get_table_name().".".static::get_field_name()." AND ".static::get_table_content_name().".object_id = ".$item;  
 		}
-		if ($restriction_panier=="" || (get_called_class() == 'empr_caddie')) {
+		if ($restriction_panier=="" || (static::class == 'empr_caddie')) {
 			$query .= " where 1 ";
 		} else {
 			$query .= " where type='$restriction_panier' ";
 		}
 		if ($PMBuserid!=1) {
-			$query.=" and (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid') ";
+			$query.=" and (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid' or autorisations_all=1) ";
 		}
 		if ($acces_rapide) {
 			$query .= " and acces_rapide=1";
@@ -265,7 +278,7 @@ class caddie_root {
 		}
 		if(pmb_mysql_num_rows($result_selection)) {
 			while ($obj_selection = pmb_mysql_fetch_object($result_selection)) {
-				if(get_called_class() == 'empr_caddie') {
+				if(static::class == 'empr_caddie') {
 					$this->pointe_item($obj_selection->object_id);
 				} else {
 					$this->pointe_item($obj_selection->object_id,$obj_selection->object_type);
@@ -301,7 +314,7 @@ class caddie_root {
 		$nb_element_a_ajouter = 0;
 		$line = pmb_split("\n", $final_query);
 		$nb_element_avant = $this->nb_item;
-		while(list($cle, $valeur)= each($line)) {
+		foreach ($line as $cle => $valeur) {
 			if ($valeur != '') {
 				if ( (pmb_strtolower(pmb_substr($valeur,0,6))=="select") || (pmb_strtolower(pmb_substr($valeur,0,6))=="create")) {
 				} else {
@@ -325,7 +338,7 @@ class caddie_root {
 					$nb_element_a_ajouter += pmb_mysql_num_rows($result_selection);
 					if(pmb_mysql_num_rows($result_selection)) {
 						while ($obj_selection = pmb_mysql_fetch_object($result_selection))
-							if(get_called_class() == 'empr_caddie') {
+							if(static::class == 'empr_caddie') {
 								$this->add_item($obj_selection->object_id);
 							} else {
 								$this->add_item($obj_selection->object_id,$obj_selection->object_type);
@@ -511,10 +524,10 @@ class caddie_root {
 			<!--	Contenu du form	-->
 			<div class='form-contenu'>
 				<div class='row'>
-					<input type='checkbox' name='elt_flag' value='1' ".($elt_flag ? "checked='checked'" : "").">".$msg['caddie_item_marque']."
+					<input type='checkbox' name='elt_flag' id='elt_flag' value='1' ".($elt_flag ? "checked='checked'" : "")."><label for='elt_flag'>".$msg['caddie_item_marque']."</label>
 				</div>
 				<div class='row'>
-					<input type='checkbox' name='elt_no_flag' value='1' ".($elt_no_flag ? "checked='checked'" : "").">".$msg['caddie_item_NonMarque']."
+					<input type='checkbox' name='elt_no_flag' id='elt_no_flag' value='1' ".($elt_no_flag ? "checked='checked'" : "")."><label for='elt_no_flag'>".$msg['caddie_item_NonMarque']."</label>
 				</div>
 				<div class='row'>
 					&nbsp;
@@ -539,13 +552,13 @@ class caddie_root {
 		<div id='cart_".$this->get_idcaddie()."_nb_items' name='cart_".$this->get_idcaddie()."_nb_items'>
 			<div class='row'>
 				<div class='colonne3'>".$msg['caddie_contient']."</div>
-				<div class='colonne3' class='center'>".$msg['caddie_contient_total']."</div>
-				<div class='colonne_suite' class='center'>".$msg['caddie_contient_nb_pointe']."</div>
+				<div class='colonne3 center'>".$msg['caddie_contient_total']."</div>
+				<div class='colonne_suite center'>".$msg['caddie_contient_nb_pointe']."</div>
 			</div>
 			<div class='row'>
 				<div class='colonne3 align_right'>".$msg['caddie_contient_total']."</div>
-				<div class='colonne3' class='center'><b>".$this->nb_item."</b></div>
-				<div class='colonne_suite' class='center'><b>".$this->nb_item_pointe."</b></div>
+				<div class='colonne3 center'><b>".$this->nb_item."</b></div>
+				<div class='colonne_suite center'><b>".$this->nb_item_pointe."</b></div>
 			</div>
 		</div>
 		<br />";
@@ -600,10 +613,11 @@ class caddie_root {
 		global $PMBuserid;
 	
 		if ($id) {
-			$query = "SELECT autorisations FROM ".static::get_table_name()." WHERE ".static::get_field_name()."='$id' ";
+			$query = "SELECT autorisations, autorisations_all FROM ".static::get_table_name()." WHERE ".static::get_field_name()."='$id' ";
 			$result = @pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)) {
 				$temp = pmb_mysql_fetch_object($result);
+				if($temp->autorisations_all) return $id;
 				$rqt_autorisation=explode(" ",$temp->autorisations);
 				if (array_search ($PMBuserid, $rqt_autorisation)!==FALSE || $PMBuserid == 1) return $id ;
 			}
@@ -615,7 +629,7 @@ class caddie_root {
 		global $msg;
 		
 		$pb=new progress_bar($msg['caddie_situation_reindex_encours'],count($liste),5);
-		while(list($cle, $object) = each($liste)) {
+		foreach ($liste as $cle => $object) {
 			$this->reindex_object($object);
 			$pb->progress();
 		}

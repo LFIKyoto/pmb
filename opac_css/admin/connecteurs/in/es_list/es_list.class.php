@@ -2,14 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: es_list.class.php,v 1.11 2017-07-12 15:15:01 tsamson Exp $
+// $Id: es_list.class.php,v 1.13 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
 require_once($class_path."/connecteurs.class.php");
 require_once($class_path."/curl.class.php");
-require_once($class_path."/nusoap/nusoap.php");
 require_once($include_path."/notice_affichage.inc.php");
 
 class es_list extends connector {
@@ -191,7 +190,7 @@ class es_list extends connector {
 								$enrichment[$type]['content'].= aff_notice_unimarc($row->recid);
 							}
 						}else{
-							$enrichment[type]['content'] = $query."<span>".$this->msg["es_list_no_preview"]."</span>";
+							$enrichment['type']['content'] = $query."<span>".$this->msg["es_list_no_preview"]."</span>";
 						}
 					}else{
 						$enrichment[$type]['content'] ="<span>".$this->msg["es_list_no_preview"]."</span>";

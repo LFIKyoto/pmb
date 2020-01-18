@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: view_log.inc.php,v 1.10 2017-11-21 12:01:00 dgoron Exp $
+// $Id: view_log.inc.php,v 1.12 2019-08-01 13:16:36 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -60,16 +60,14 @@ if($fp=fopen($logfile, 'r')) {
 	$str=fread($fp, filesize($logfile));
 	fclose($fp);
 
-
-
 	// récupération du tableau des entrées
 	$entry = parselog($str);
 
-	if(sizeof($entry) && filesize($logfile) > 0) {
+	if (!empty($entry) && filesize($logfile) > 0) {
 		$entry = array_reverse($entry);
 		print "<a href='./admin.php?categ=log&del=1'>vider le journal</a>";
 		print "<table border='0' cellspacing='1'>";
-		while(list($cle, $valeur) = each($entry)) {
+		foreach ($entry as $cle => $valeur) {
 
 			switch($valeur['errornum']) {
 				case E_CORE_ERROR:

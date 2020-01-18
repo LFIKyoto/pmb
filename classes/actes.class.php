@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: actes.class.php,v 1.45 2018-04-23 13:25:26 dgoron Exp $
+// $Id: actes.class.php,v 1.46.2.1 2019-12-04 08:12:16 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -75,26 +75,28 @@ class actes{
 	public function load(){
 		$q = "select * from actes where id_acte = '".$this->id_acte."' ";
 		$r = pmb_mysql_query($q) ;
-		$obj = pmb_mysql_fetch_object($r);
-		$this->date_acte = $obj->date_acte;
-		$this->numero = $obj->numero;
-		$this->nom_acte = $obj->nom_acte;
-		$this->type_acte = $obj->type_acte;
-		$this->statut = $obj->statut;
-		$this->date_paiement = $obj->date_paiement;
-		$this->num_paiement = $obj->num_paiement;
-		$this->num_entite = $obj->num_entite;
-		$this->num_fournisseur = $obj->num_fournisseur;
-		$this->num_contact_livr = $obj->num_contact_livr;
-		$this->num_contact_fact = $obj->num_contact_fact;
-		//TODO Voir suppression num_exercice
-		$this->num_exercice = $obj->num_exercice;
-		$this->commentaires = $obj->commentaires;
-		$this->reference = $obj->reference;
-		$this->commentaires_i = $obj->commentaires_i;
-		$this->devise = $obj->devise;
-		$this->date_ech = $obj->date_ech;
-		$this->date_valid = $obj->date_valid;
+		if(pmb_mysql_num_rows($r)) {
+		    $obj = pmb_mysql_fetch_object($r);
+		    $this->date_acte = $obj->date_acte;
+		    $this->numero = $obj->numero;
+		    $this->nom_acte = $obj->nom_acte;
+		    $this->type_acte = $obj->type_acte;
+		    $this->statut = $obj->statut;
+		    $this->date_paiement = $obj->date_paiement;
+		    $this->num_paiement = $obj->num_paiement;
+		    $this->num_entite = $obj->num_entite;
+		    $this->num_fournisseur = $obj->num_fournisseur;
+		    $this->num_contact_livr = $obj->num_contact_livr;
+		    $this->num_contact_fact = $obj->num_contact_fact;
+		    //TODO Voir suppression num_exercice
+		    $this->num_exercice = $obj->num_exercice;
+		    $this->commentaires = $obj->commentaires;
+		    $this->reference = $obj->reference;
+		    $this->commentaires_i = $obj->commentaires_i;
+		    $this->devise = $obj->devise;
+		    $this->date_ech = $obj->date_ech;
+		    $this->date_valid = $obj->date_valid;
+		}
 	}
 	
 	// enregistre un acte en base.
@@ -136,7 +138,7 @@ class actes{
 			$q.= "devise = '".$this->devise."', ";
 			$q.= "date_ech = '".$this->date_ech."', ";
 			$q.= "date_valid = '".$this->date_valid."', ";
-			$q.= "index_acte = ' ".$this->numero." ".strip_empty_words($fou)." ".strip_empty_words($this->commentaires)." ".strip_empty_words($this->reference)." ' "; 
+			$q.= "index_acte = ' ".$this->numero." ".strip_empty_words($fou)." ".strip_empty_words($this->commentaires)." ".strip_empty_words($this->reference)." ".strip_empty_words($this->nom_acte)." ' "; 
 			$q.= "where id_acte = '".$this->id_acte."' ";
 			$r = pmb_mysql_query($q);
 			audit::insert_modif(AUDIT_ACQUIS, $this->id_acte);		
@@ -165,7 +167,7 @@ class actes{
 			$q.= "devise = '".$this->devise."', ";
 			$q.= "date_ech = '".$this->date_ech."', ";
 			$q.= "date_valid = '".$this->date_valid."', ";
-			$q.= "index_acte = ' ".strip_empty_words($this->numero)." ".strip_empty_words($fou)." ".strip_empty_words($this->commentaires)." ".strip_empty_words($this->reference)." ' "; 
+			$q.= "index_acte = ' ".strip_empty_words($this->numero)." ".strip_empty_words($fou)." ".strip_empty_words($this->commentaires)." ".strip_empty_words($this->reference)." ".strip_empty_words($this->nom_acte)." ' "; 
 			$r = pmb_mysql_query($q);
 			$this->id_acte = pmb_mysql_insert_id();
 			audit::insert_creation(AUDIT_ACQUIS, $this->id_acte);	

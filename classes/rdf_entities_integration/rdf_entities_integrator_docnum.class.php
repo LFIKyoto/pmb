@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rdf_entities_integrator_docnum.class.php,v 1.10 2018-02-26 16:16:28 apetithomme Exp $
+// $Id: rdf_entities_integrator_docnum.class.php,v 1.12 2019-05-23 12:31:03 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -129,12 +129,22 @@ class rdf_entities_integrator_docnum extends rdf_entities_integrator {
 				$req_mime = "update explnum set explnum_vignette='" . addslashes($contenu_vignette) . "' where explnum_id='" . $this->entity_id . "'";
 				pmb_mysql_query($req_mime);
 			}
+			$indexation_docnum = new indexation_docnum($this->entity_id);
+			$indexation_docnum->indexer();
+			
 			if($fullname) {			
 				$finfo = finfo_open(FILEINFO_MIME_TYPE);
 				$mimetype = finfo_file($finfo, $fullname);
-				finfo_close($finfo);			
+				finfo_close($finfo);
+				$size = filesize($fullname);
 				if(!$mimetype) $mimetype = "application/data";
-				$query = 'UPDATE explnum set explnum_mimetype = "'.$mimetype.'"	 WHERE explnum_id = '.$this->entity_id;
+				$query = 'UPDATE explnum set explnum_mimetype = "'.$mimetype.'", 
+                    explnum_update_date=sysdate(),
+                    explnum_file_size = '.intval($size).' ';
+				if ($this->integration_type == 1) {
+				    $query .= ', explnum_create_date=sysdate() ';
+				}
+				$query .= 'WHERE explnum_id = '.$this->entity_id;
 				pmb_mysql_query($query);
 			}
 			

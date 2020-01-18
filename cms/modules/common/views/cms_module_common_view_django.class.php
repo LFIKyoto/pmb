@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_django.class.php,v 1.34 2018-10-31 17:46:06 dgoron Exp $
+// $Id: cms_module_common_view_django.class.php,v 1.37.4.1 2019-10-23 13:32:54 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/h2o/h2o.php");
@@ -11,7 +11,7 @@ class cms_module_common_view_django extends cms_module_common_view{
 	protected $cadre_parent;
 
 	public function __construct($id=0){
-		parent::__construct($id+0);
+	    parent::__construct((int) $id);
 	}
 
 	public function get_form(){
@@ -101,6 +101,10 @@ class cms_module_common_view_django extends cms_module_common_view{
 	}
 
 	public function render($datas){
+	    
+	    if(!isset($datas) || !is_array($datas)){
+	    	$datas=array();
+	    }
 		if(!isset($datas['id']) || !$datas['id']){
 			$datas['id'] = $this->get_module_dom_id();
 		}
@@ -112,6 +116,7 @@ class cms_module_common_view_django extends cms_module_common_view{
 		}
 		try{
 			$html = H2o::parseString($this->parameters['active_template'])->render($datas);
+			if (!empty($datas['css'])) $html.= '<style>'.$datas['css'].'</style>';
 		}catch(Exception $e){
 			$html = $this->msg["cms_module_common_view_error_template"];
 		}
@@ -360,7 +365,11 @@ class cms_module_common_view_django extends cms_module_common_view{
 				array(
 						'var' => "env_vars.browser",
 						'desc' => $this->msg['cms_module_common_view_django_session_vars_browser_desc'],
-				)
+				),
+			    array(
+			        'var' => "env_vars.server_addr",
+			        'desc' => $this->msg['cms_module_common_view_django_session_vars_server_addr_desc'],
+			    )
 			)
 		);
 		return $format_datas;

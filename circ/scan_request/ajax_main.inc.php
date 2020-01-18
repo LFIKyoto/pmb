@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_main.inc.php,v 1.4 2017-02-28 11:43:27 dgoron Exp $
+// $Id: ajax_main.inc.php,v 1.5 2019-06-20 10:12:38 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,7 +17,15 @@ if(isset($num_bulletin)) $num_bulletin += 0;
 else $num_bulletin = 0;
 if(isset($num_record)) $num_record += 0;
 else $num_record = 0;
-$num_request+=0;
+if(isset($num_request)) $num_request += 0;
+else $num_request = 0;
+
+switch($action) {
+    case "list":
+        require_once($class_path.'/list/lists_controller.class.php');
+        lists_controller::proceed_ajax($object_type, 'scan_requests');
+        break;
+}
 
 if($num_request == 0 || ($num_bulletin && $num_record)) return;
 if($num_request>0){

@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_search.tpl.php,v 1.26 2017-01-26 16:07:10 dgoron Exp $
+// $Id: notice_search.tpl.php,v 1.27 2019-05-27 13:47:15 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $option_show_notice_fille, $option_show_expl, $layout_begin, $layout_end, $menu_search_commun, $msg, $pmb_use_uniform_title, $pmb_map_activate, $menu_search_tpl;
+global $pmb_allow_external_search, $menu_search, $other_search_form, $current_module, $nb_per_page_a_search;
 
 if(!isset($option_show_notice_fille)) $option_show_notice_fille = 0;
 if(!isset($option_show_expl)) $option_show_expl = 0;

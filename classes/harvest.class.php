@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: harvest.class.php,v 1.8 2018-07-13 09:26:03 dgoron Exp $
+// $Id: harvest.class.php,v 1.9 2019-01-16 15:48:39 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -155,7 +155,10 @@ class harvest {
     	global $charset, $class_path,$include_path,$base_path; 
 		global $dbh,$msg;
 		
-		global $search;				
+		global $search;
+		if(empty($search)) {
+			$search = array();
+		}
     	$search[]="s_2";
 		
 		global $op_0_s_2;

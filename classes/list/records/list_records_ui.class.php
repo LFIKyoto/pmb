@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_records_ui.class.php,v 1.1 2018-12-28 13:15:31 dgoron Exp $
+// $Id: list_records_ui.class.php,v 1.1.6.2 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,10 +12,6 @@ require_once($class_path."/analyse_query.class.php");
 class list_records_ui extends list_ui {
 		
 	protected $aq_members;
-	
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	protected function _get_query_base() {
 		$aq_members = $this->get_aq_members();
@@ -31,10 +27,7 @@ class list_records_ui extends list_ui {
 	 * Initialisation du tri par défaut appliqué
 	 */
 	protected function init_default_applied_sort() {
-		$this->applied_sort = array(
-				'by' => 'pert',
-				'asc_desc' => 'desc'
-		);
+	    $this->add_applied_sort('pert', 'desc');
 	}
 	
 	/**
@@ -132,12 +125,12 @@ class list_records_ui extends list_ui {
 	
 	/**
 	 * Fonction de callback
-	 * @param account $a
-	 * @param account $b
+	 * @param object $a
+	 * @param object $b
 	 */
 	protected function _compare_objects($a, $b) {
-		if($this->applied_sort['by']) {
-			$sort_by = $this->applied_sort['by'];
+	    if($this->applied_sort[0]['by']) {
+		    $sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				default :
 					return parent::_compare_objects($a, $b);

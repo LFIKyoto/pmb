@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pnb.class.php,v 1.12 2018-08-23 15:09:39 tsamson Exp $
+// $Id: pnb.class.php,v 1.12.6.1 2019-11-12 14:42:09 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -175,6 +175,20 @@ class pnb {
 			$result['message'] = $msg[$result['message']];
 		}
 		print encoding_normalize::json_encode($result);
+	}
+	
+	public function return_book($empr_id,$expl_id) {
+		global $opac_pnb_param_webservice_url;
+		global $pmb_pnb_param_ws_user_name, $pmb_pnb_param_ws_user_password;
+	
+	    $jsonRPC = new jsonRPCClient(stripslashes($opac_pnb_param_webservice_url));
+	    $jsonRPC->setUser(stripslashes($pmb_pnb_param_ws_user_name));
+	    $jsonRPC->setPwd(stripslashes($pmb_pnb_param_ws_user_password));
+	    $result = $jsonRPC->pmbesPNB_returnBook($empr_id, $expl_id);
+	    if(isset($result['message'])){
+	        $result['message'] = $msg[$result['message']];
+	    }
+	    return encoding_normalize::json_encode($result);
 	}
 	
 	public function get_loan_form(){

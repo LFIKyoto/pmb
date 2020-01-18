@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lettre_invoice_PDF.class.php,v 1.2 2018-08-07 15:13:33 dgoron Exp $
+// $Id: lettre_invoice_PDF.class.php,v 1.5 2019-08-09 10:49:04 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
+global $class_path;
 require_once("$class_path/pdf/accounting/lettre_accounting_PDF.class.php");
 
 class lettre_invoice_PDF extends lettre_accounting_PDF {
@@ -48,10 +49,8 @@ class lettre_invoice_PDF extends lettre_accounting_PDF {
 	
 	public $prix = '';
 	
-	protected function get_parameter_value($name) {
-		$parameter_name = 'acquisition_pdffac_'.$name;
-		global $$parameter_name;
-		return $$parameter_name;
+	protected static function get_parameter_prefix() {
+	    return 'acquisition_pdffac';
 	}
 	
 	protected function _init_pos_num() {
@@ -65,6 +64,8 @@ class lettre_invoice_PDF extends lettre_accounting_PDF {
 	
 	protected function _init_pos_tot() {
 		$pos_tot = explode(',', $this->get_parameter_value('pos_tot'));
+		//Insertion de la valeur 0 pour la position Y inexistant dans le paramétrage
+		array_splice($pos_tot, 1, 0, array('0'));
 		$this->_init_position('tot', $pos_tot);
 	}
 	

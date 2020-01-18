@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_custom_fields_custom_ui.class.php,v 1.2 2018-04-25 09:12:24 dgoron Exp $
+// $Id: list_custom_fields_custom_ui.class.php,v 1.2.6.1 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -20,10 +20,6 @@ class list_custom_fields_custom_ui extends list_custom_fields_ui {
 	
 	public static function set_num_type($num_type) {
 		static::$num_type = $num_type;
-	}
-	
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
 	}
 	
 	protected function _get_query_base() {

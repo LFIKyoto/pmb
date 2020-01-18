@@ -2,7 +2,9 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_ajax.inc.php,v 1.1 2012-06-27 15:35:24 arenou Exp $
+// $Id: search_ajax.inc.php,v 1.2 2019-06-07 08:05:39 btafforeau Exp $
+
+global $class_path, $include_path, $sc;
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 require_once($class_path."/search.class.php");

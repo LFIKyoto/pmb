@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: XMLlist.class.php,v 1.36 2018-11-26 12:51:15 dgoron Exp $
+// $Id: XMLlist.class.php,v 1.39 2019-06-28 15:12:24 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -112,26 +112,32 @@ class XMLlist {
 	}
 	
 	public function finBalise($parser, $nom) {
+	    global $check_messages;
+	    
 		// ICI pour affichage des codes des messages en dur
-		if(isset($_SESSION["CHECK-MESSAGES"])) {
-			if ($_SESSION["CHECK-MESSAGES"]==1 && strpos($this->fichierXml, "messages"))
+	    $check_messages = intval($check_messages);
+	    if(isset($_SESSION["CHECK-MESSAGES"]) || $check_messages) {
+	        if (($_SESSION["CHECK-MESSAGES"]==1 || $check_messages==1) && strpos($this->fichierXml, "messages"))
 				$this->table[$this->current] = "__".$this->current."##".$this->table[$this->current]."**";
 		}
 		$this->current = '';
 		$this->js_group = "";
-		}
+	}
 
 	public function finBaliseSubst($parser, $nom) {
-		// ICI pour affichage des codes des messages en dur 
-		if(isset($_SESSION["CHECK-MESSAGES"])) {
-			if ($_SESSION["CHECK-MESSAGES"]==1 && strpos($this->fichierXml, "messages"))
+	    global $check_messages;
+	    
+		// ICI pour affichage des codes des messages en dur
+	    $check_messages = intval($check_messages);
+	    if(isset($_SESSION["CHECK-MESSAGES"]) || $check_messages) {
+	        if (($_SESSION["CHECK-MESSAGES"]==1 || $check_messages==1) && strpos($this->fichierXml, "messages"))
 				$this->table[$this->current] = "__".$this->current."##".$this->table[$this->current]."**";
 		}
 		if ((!$this->flag_elt) && ($nom=='ENTRY')) unset($this->table[$this->current]) ;
 		$this->current = '';
 		$this->js_group = "";
 		$this->flag_fav =  false;
-		}
+	}
 	
 	public function texte($parser, $data) {
 		global $_starttag; 
@@ -180,8 +186,10 @@ class XMLlist {
  	{
  		global $charset, $KEY_CACHE_FILE_XML;
  		global $base_path, $class_path;
+ 		global $check_messages;
+ 		
 		if (!($fp = @fopen($this->fichierXml, "r"))) {
-			die("impossible d'ouvrir le fichier XML $this->fichierXml");
+			die(htmlentities("impossible d'ouvrir le fichier XML $this->fichierXml", ENT_QUOTES, $charset));
 		}
  		//vérification fichier pseudo-cache dans les temporaires
 		$fileInfo = pathinfo($this->fichierXml);
@@ -194,9 +202,14 @@ class XMLlist {
 			$with_subst=false;
 		}
 		$dejaParse = false;
-		
 		if (!$this->no_cache){
-			$cache_php=cache_factory::getCache();
+		    $cache_php=cache_factory::getCache();
+		    if($check_messages == 1 || $check_messages == -1) {
+		        if(is_object($cache_php) && get_class($cache_php) == 'cache_apcu') {
+		            $cache_php->clearCache();
+		            $cache_php=false;
+		        }
+		    }
 			$key_file="";
 			if ($cache_php) {
 				$key_file=getcwd().$fileName.filemtime($this->fichierXml);
@@ -235,6 +248,9 @@ class XMLlist {
 							$dejaParse = true;
 						}
 					}
+				}
+				if($check_messages == 1 || $check_messages == -1) {
+				    $dejaParse = false;
 				}
 				if($dejaParse){
 					$tmp = fopen($tempFile, "r");

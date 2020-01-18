@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: record_display.class.php,v 1.83 2018-12-28 16:34:30 dgoron Exp $
+// $Id: record_display.class.php,v 1.94.2.9 2019-11-28 10:52:27 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -17,6 +17,7 @@ require_once($class_path."/acces.class.php");
 require_once($base_path.'/includes/bul_list_func.inc.php');
 require_once($base_path.'/includes/notice_affichage.inc.php');
 require_once($include_path."/notice_authors.inc.php");
+require_once($class_path."/record_datas_unimarc.class.php");
 
 /**
  * Classe d'affichage d'une notice
@@ -29,6 +30,12 @@ class record_display {
 	 * @var record_datas
 	 */
 	static private $records_datas = array();
+	
+	/**
+	 * Tableau d'instances de notice_affichage_unimarc
+	 * @var notice_affichage_unimarc
+	 */
+	static private $records_unimarc_datas = array();
 	static private $special;
 	
 	public static $linked_permalink;
@@ -67,7 +74,12 @@ class record_display {
 			
 			if (!$return) {
 				// On va chercher dans record_datas
-				$record_datas = static::get_record_datas($notice_id);
+			    $unimarc = $object->getVariable('unimarc');
+			    if ($unimarc === true) {
+			        $record_datas = static::get_record_unimarc_datas($notice_id);
+			    } else {
+			        $record_datas = static::get_record_datas($notice_id);
+			    }
 				$return = static::look_for_attribute_in_class($record_datas, $attributes[1]);
 			}
 			
@@ -93,7 +105,7 @@ class record_display {
 				for ($i = 1; $i < count($attributes); $i++) {
 					// On regarde si c'est un tableau ou un objet
 					if (is_array($return)) {
-						$return = $return[$attributes[$i]];
+					    $return = (!empty($return[$attributes[$i]]) ? $return[$attributes[$i]] : null);
 					} else if (is_object($return)) {
 						$return = static::look_for_attribute_in_class($return, $attributes[$i]);
 					} else {
@@ -119,10 +131,10 @@ class record_display {
 		return null;
 	}
 	
-	static private function render($notice_id, $tpl) {
+	static private function render($notice_id, $tpl, $unimarc = false) {
 		$h2o = H2o_collection::get_instance($tpl);
 		H2o_collection::addLookup("record_display::lookup");
-		return $h2o->render(array('notice_id' => $notice_id));
+		return $h2o->render(array('notice_id' => $notice_id, 'unimarc' => $unimarc));
 	}
 	
 	/**
@@ -183,9 +195,15 @@ class record_display {
 	
 	static public function get_display_column($label='', $expl=array()) {
 		global $msg, $charset;
-	
+		global $memo_p_perso_expl;
+		
 		$column = '';
-		if (($label == "location_libelle") && $expl['num_infopage']) {
+		if (strstr($label, "#")) {
+		    if (!$memo_p_perso_expl->no_special_fields) {
+		        $id=substr($label,1);
+		        $column .="<td class='".htmlentities($memo_p_perso_expl->t_fields[$id]['NAME'],ENT_QUOTES, $charset)."'>".htmlentities($expl[$label], ENT_QUOTES, $charset)."</td>";
+		    }
+		} elseif (($label == "location_libelle") && $expl['num_infopage']) {
 			if ($expl['surloc_id'] != "0") $param_surloc="&surloc=".$expl['surloc_id'];
 			else $param_surloc="";
 			$column .="<td class='".$label."'><a href=\"".static::get_parameter_value('url_base')."index.php?lvl=infopages&pagesid=".$expl['num_infopage']."&location=".$expl['expl_location'].$param_surloc."\" title=\"".$msg['location_more_info']."\">".htmlentities($expl[$label], ENT_QUOTES, $charset)."</a></td>";
@@ -248,13 +266,13 @@ class record_display {
 		$nb_expl_visible = 0;
 		$nb_expl_autre_loc=0;
 		$nb_perso_aff=0;
-
+        
 		$record_datas = static::get_record_datas($notice_id);
 		
 		$type = $record_datas->get_niveau_biblio();
 		$id = $record_datas->get_id();
 		$bull = $record_datas->get_bul_info();
-		$bull_id = $bull['bulletin_id'];
+		$bull_id = (isset($bull['bulletin_id']) ? $bull['bulletin_id'] : "");
 		
 		// les dépouillements ou périodiques n'ont pas d'exemplaire
 		if (($type=="a" && !$opac_show_exemplaires_analysis) || $type=="s") return "" ;
@@ -266,13 +284,22 @@ class record_display {
 		$expl_list_header_deb="";
 		if (isset($expls_datas['colonnesarray']) && is_array($expls_datas['colonnesarray'])) {
     		foreach ($expls_datas['colonnesarray'] as $colonne) {
-    			$expl_list_header_deb .= "<th class='expl_header_".$colonne."'>".htmlentities($msg['expl_header_'.$colonne],ENT_QUOTES, $charset)."</th>";
+    		    if (strstr($colonne, "#")) {
+    		        if (!$memo_p_perso_expl->no_special_fields) {
+    		            $id=substr($colonne,1);
+    		            $expl_list_header_deb .= "<th class='expl_header_".$memo_p_perso_expl->t_fields[$id]['NAME']."'>".htmlentities($memo_p_perso_expl->t_fields[$id]['TITRE'],ENT_QUOTES, $charset)."</th>";
+    		        }
+    		    } else {
+    		        $expl_list_header_deb .= "<th class='expl_header_".$colonne."'>".htmlentities($msg['expl_header_'.$colonne],ENT_QUOTES, $charset)."</th>";
+    		    }
     		}
 		}
 		$expl_list_header_deb.="<th class='expl_header_statut'>".$msg['statut']."</th>";
-		$expl_liste="";
+		$expl_liste = "";
+		$expl_liste_all = "";
+		$header_perso_aff = "";
 		
-		if(count($expls_datas['expls'])) {
+		if(is_array($expls_datas['expls']) && count($expls_datas['expls'])) {
 			foreach ($expls_datas['expls'] as $expl) {
 				$expl_liste .= "<tr>";
 		
@@ -307,7 +334,7 @@ class record_display {
 					$perso_=$memo_p_perso_expl->show_fields($expl['expl_id']);
 					for ($i=0; $i<count($perso_["FIELDS"]); $i++) {
 						$p=$perso_["FIELDS"][$i];
-						if ($p['OPAC_SHOW'] ) {
+						if ($p['OPAC_SHOW'] && !in_array('#'.$p['ID'], $expls_datas['colonnesarray'])) {
 							if(!$header_found_p_perso) {
 								$header_perso_aff.="<th class='expl_header_tdoc_libelle'>".$p["TITRE_CLEAN"]."</th>";
 								$nb_perso_aff++;
@@ -401,7 +428,14 @@ class record_display {
 			$expls_datas = $record_datas->get_expls_datas();
 			$expl_list_header_deb="<tr class='thead'>";
 			foreach ($expls_datas['colonnesarray'] as $colonne) {
-				$expl_list_header_deb .= "<th class='expl_header_".$colonne."'>".htmlentities($msg['expl_header_'.$colonne],ENT_QUOTES, $charset)."</th>";
+			    if (strstr($colonne, "#")) {
+			        if (!$memo_p_perso_expl->no_special_fields) {
+			            $id=substr($colonne,1);
+			            $expl_list_header_deb .= "<th class='expl_header_".$memo_p_perso_expl->t_fields[$id]['NAME']."'>".htmlentities($memo_p_perso_expl->t_fields[$id]['TITRE'],ENT_QUOTES, $charset)."</th>";
+			        }
+			    } else {
+			        $expl_list_header_deb .= "<th class='expl_header_".$colonne."'>".htmlentities($msg['expl_header_'.$colonne],ENT_QUOTES, $charset)."</th>";
+			    }
 			}
 			$expl_list_header_deb.="<th class='expl_header_statut'>".$msg['statut']."</th>";
 			$expl_liste="";
@@ -409,11 +443,29 @@ class record_display {
 			$header_perso_aff="";
 			
 			if(count($expls_datas['expls'])) {
+				$customization_expl_columns = array();
+				$special = static::get_special($notice_id);
+				if(!empty($special)) {
+					$customization_expl_columns = $special->get_customization_expl_columns();
+				}
 				foreach ($expls_datas['expls'] as $expl) {
 					$expl_liste .= "<tr class='item_expl !!class_statut!!'>";
 			
 					foreach ($expls_datas['colonnesarray'] as $colonne) {
-						if (($colonne == "location_libelle") && $expl['num_infopage']) {
+						if(isset($customization_expl_columns[$colonne])) {
+							$expl_liste .="<td class='".htmlentities($msg['expl_header_'.$colonne],ENT_QUOTES, $charset)."'>";
+							if(isset($customization_expl_columns[$colonne]['htmlentities']) && $customization_expl_columns[$colonne]['htmlentities'] == false) {
+								$expl_liste .=strip_tags($expl[$colonne], $customization_expl_columns[$colonne]['keep_tags']);
+							} else {
+								$expl_liste .=htmlentities($expl[$colonne],ENT_QUOTES, $charset);
+							}
+							$expl_liste .="</td>";
+						} elseif (strstr($colonne, "#")) {
+						    if (!$memo_p_perso_expl->no_special_fields) {
+						        $id=substr($colonne,1);
+						        $expl_liste .="<td class='".htmlentities($memo_p_perso_expl->t_fields[$id]['NAME'],ENT_QUOTES, $charset)."'>".htmlentities($expl[$colonne], ENT_QUOTES, $charset)."</td>";
+						    }
+						} elseif (($colonne == "location_libelle") && $expl['num_infopage']) {
 							if ($expl['surloc_id'] != "0") {
 								$param_surloc="&surloc=".$expl['surloc_id'];
 							} else {
@@ -425,7 +477,6 @@ class record_display {
 						} else {
 							$expl_liste .="<td class='".htmlentities($msg['expl_header_'.$colonne],ENT_QUOTES, $charset)."'>".htmlentities($expl[$colonne],ENT_QUOTES, $charset)."</td>";
 						}
-			
 					}
 						
 					if ($expl['flag_resa']) {
@@ -454,8 +505,8 @@ class record_display {
 					if (!$memo_p_perso_expl->no_special_fields) {
 						$perso_=$memo_p_perso_expl->show_fields($expl['expl_id']);
 						for ($i=0; $i<count($perso_["FIELDS"]); $i++) {
-							$p=$perso_["FIELDS"][$i];
-							if ($p['OPAC_SHOW'] ) {
+						    $p=$perso_["FIELDS"][$i];
+						    if ($p['OPAC_SHOW'] && !in_array('#'.$p['ID'], $expls_datas['colonnesarray'])) {
 								if(!$header_found_p_perso) {
 									$header_perso_aff.="<th class='expl_header_tdoc_libelle'>".$p["TITRE_CLEAN"]."</th>";
 									$nb_perso_aff++;
@@ -631,9 +682,9 @@ class record_display {
 
 	/**
 	 * Ajoute l'image
-	 * @param unknown $notice_id Identifiant de la notice
-	 * @param unknown $entree Contenu avant l'ajout
-	 * @param unknown $depliable 
+	 * @param integer $notice_id Identifiant de la notice
+	 * @param object $entree Contenu avant l'ajout
+	 * @param integer $depliable 
 	 */
 	static public function do_image($notice_id, &$entree,$depliable) {
 		global $charset;
@@ -839,13 +890,11 @@ class record_display {
 	
 	/**
 	 * Retourne l'affichage étendu d'une notice
-	 * @param unknown $notice_id Identifiant de la notice
+	 * @param integer $notice_id Identifiant de la notice
 	 * @param string $django_directory Répertoire Django à utiliser
 	 * @return string Code html d'affichage de la notice
 	 */
 	static public function get_display_extended($notice_id, $django_directory = "") {
-		global $include_path;
-		
 		$record_datas = static::get_record_datas($notice_id);
 		
 		$template = static::get_template("record_extended_display", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
@@ -860,8 +909,6 @@ class record_display {
 	 * @return string Code html d'affichage de la notice
 	 */
 	static public function get_display_in_result($notice_id, $django_directory = "") {
-		global $include_path;
-		
 		$record_datas = static::get_record_datas($notice_id);
 		
 		$template = static::get_template("record_in_result_display", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
@@ -877,8 +924,6 @@ class record_display {
 	 * @return string Code html d'affichage de la notice
 	 */
 	static public function get_display_for_printer_short($notice_id, $django_directory = "", $parameters = '') {
-		global $include_path;
-	
 		$record_datas = static::get_record_datas($notice_id);
 		$record_datas->set_external_parameters($parameters);
 		$template = static::get_template("record_for_printer_short", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
@@ -894,8 +939,6 @@ class record_display {
 	 * @return string Code html d'affichage de la notice
 	 */
 	static public function get_display_for_printer_extended($notice_id, $django_directory = "", $parameters = '') {
-		global $include_path;
-	
 		$record_datas = static::get_record_datas($notice_id);
 		$record_datas->set_external_parameters($parameters);
 		$template = static::get_template("record_for_printer_extended", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
@@ -911,8 +954,6 @@ class record_display {
 	 * @return string Code html d'affichage de la notice
 	 */
 	static public function get_display_for_pdf_short($notice_id, $django_directory = "", $parameters = '') {
-		global $include_path;
-	
 		$record_datas = static::get_record_datas($notice_id);
 		$record_datas->set_external_parameters($parameters);
 		$template = static::get_template("record_for_pdf_short", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
@@ -928,13 +969,41 @@ class record_display {
 	 * @return string Code html d'affichage de la notice
 	 */
 	static public function get_display_for_pdf_extended($notice_id, $django_directory = "", $parameters = '') {
-		global $include_path;
-	
 		$record_datas = static::get_record_datas($notice_id);
 		$record_datas->set_external_parameters($parameters);
 		$template = static::get_template("record_for_pdf_extended", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
 	
 		return static::render($notice_id, $template);
+	}
+	
+	/**
+	 * Retourne l'affichage du titre de la notice sur un flux RSS
+	 * @param int $notice_id Identifiant de la notice
+	 * @param string $django_directory Répertoire Django à utiliser
+	 * @param array $parameters Permet un affichage dynamique en fonction de champs de formulaire par exemple
+	 * @return string Code html d'affichage de la notice
+	 */
+	static public function get_display_for_rss_title($notice_id, $django_directory = "", $parameters = '') {
+	    $record_datas = static::get_record_datas($notice_id);
+	    $record_datas->set_external_parameters($parameters);
+	    $template = static::get_template("record_for_rss_title", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
+	    
+	    return static::render($notice_id, $template);
+	}
+	
+	/**
+	 * Retourne l'affichage de la description d'une notice sur un flux RSS
+	 * @param int $notice_id Identifiant de la notice
+	 * @param string $django_directory Répertoire Django à utiliser
+	 * @param array $parameters Permet un affichage dynamique en fonction de champs de formulaire par exemple
+	 * @return string Code html d'affichage de la notice
+	 */
+	static public function get_display_for_rss_description($notice_id, $django_directory = "", $parameters = '') {
+	    $record_datas = static::get_record_datas($notice_id);
+	    $record_datas->set_external_parameters($parameters);
+	    $template = static::get_template("record_for_rss_description", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
+	    
+	    return static::render($notice_id, $template);
 	}
 	
 	/**
@@ -945,11 +1014,32 @@ class record_display {
 	 * @param string $django_directory Répertoire Django à utiliser (paramètre opac_notices_format_django_directory par défaut)
 	 * @return string Nom du template à appeler
 	 */
-	static public function get_template($template_name, $niveau_biblio, $typdoc, $django_directory = "") {
+	static public function get_template($template_name, $niveau_biblio, $typdoc, $django_directory = "", $connector_id = "", $source_id = "") {
 		global $include_path;
 		
 		if (!$django_directory) $django_directory = static::get_parameter_value('notices_format_django_directory');
 		
+		if (file_exists($include_path."/templates/record/".$django_directory."/".$template_name."_".$source_id."_".$niveau_biblio.$typdoc.".tpl.html")) {
+			return $include_path."/templates/record/".$django_directory."/".$template_name."_".$source_id."_".$niveau_biblio.$typdoc.".tpl.html";
+		}
+		if (file_exists($include_path."/templates/record/".$django_directory."/".$template_name."_".$connector_id."_".$niveau_biblio.$typdoc.".tpl.html")) {
+			return $include_path."/templates/record/".$django_directory."/".$template_name."_".$connector_id."_".$niveau_biblio.$typdoc.".tpl.html";
+		}
+		if (file_exists($include_path."/templates/record/".$django_directory."/".$template_name."_".$source_id."_".$niveau_biblio.".tpl.html")) {
+			return $include_path."/templates/record/".$django_directory."/".$template_name."_".$source_id."_".$niveau_biblio.".tpl.html";
+		}
+		if (file_exists($include_path."/templates/record/".$django_directory."/".$template_name."_".$connector_id."_".$niveau_biblio.".tpl.html")) {
+			return $include_path."/templates/record/".$django_directory."/".$template_name."_".$connector_id."_".$niveau_biblio.".tpl.html";
+		}
+		if (file_exists($include_path."/templates/record/".$django_directory."/".$template_name."_".$source_id.".tpl.html")) {
+			return $include_path."/templates/record/".$django_directory."/".$template_name."_".$source_id.".tpl.html";
+		}
+		if (file_exists($include_path."/templates/record/".$django_directory."/".$template_name."_".$connector_id.".tpl.html")) {
+			return $include_path."/templates/record/".$django_directory."/".$template_name."_".$connector_id.".tpl.html";
+		}
+		if (file_exists($include_path."/templates/record/".$django_directory."/".$template_name."_".$niveau_biblio.$typdoc.".tpl.html")) {
+			return $include_path."/templates/record/".$django_directory."/".$template_name."_".$niveau_biblio.$typdoc.".tpl.html";
+		}
 		if (file_exists($include_path."/templates/record/".$django_directory."/".$template_name."_".$niveau_biblio.$typdoc.".tpl.html")) {
 			return $include_path."/templates/record/".$django_directory."/".$template_name."_".$niveau_biblio.$typdoc.".tpl.html";
 		}
@@ -961,7 +1051,7 @@ class record_display {
 		}
 		if (file_exists($include_path."/templates/record/common/".$template_name."_".$niveau_biblio.".tpl.html")) {
 			return $include_path."/templates/record/common/".$template_name."_".$niveau_biblio.".tpl.html";
-		}
+		}		
 		if (file_exists($include_path."/templates/record/".$django_directory."/".$template_name.".tpl.html")) {
 			return $include_path."/templates/record/".$django_directory."/".$template_name.".tpl.html";
 		}
@@ -1133,11 +1223,17 @@ class record_display {
 	
 	static public function get_special($notice_id) {
 		global $include_path;
-		$classpath = $include_path."/templates/record/".static::get_parameter_value('notices_format_django_directory')."/special/".static::get_parameter_value('notices_format_django_directory')."_special.class.php";
+		
+		$directory = static::get_parameter_value('notices_format_django_directory');
+		if (!$directory) {
+			$directory = 'common';
+		}
+		
+		$classpath = $include_path."/templates/record/".$directory."/special/".$directory."_special.class.php";
 		$class = "";
 		if(file_exists($classpath)){
 			require_once $classpath;
-			$class = static::get_parameter_value('notices_format_django_directory')."_special";
+			$class = $directory."_special";
 		}
 		if(!class_exists($class)){
 			return null;
@@ -1150,10 +1246,12 @@ class record_display {
 	
 	static public function get_display_scan_request($notice_id) {
 		global $msg;
-
+		global $opac_scan_request_activate, $allow_scan_request;
+		
 		$html = "";
 		$record_datas = static::get_record_datas($notice_id);
-		if(is_null($record_datas->get_dom_2()) && $record_datas->is_visu_scan_request() && (!$record_datas->is_visu_scan_request_abon() || ($record_datas->is_visu_scan_request_abon() && $_SESSION["user_code"])) || ($record_datas->get_rights() & 32)) {
+		if($opac_scan_request_activate && $_SESSION['id_empr_session'] && $allow_scan_request
+		    && is_null($record_datas->get_dom_2()) && $record_datas->is_visu_scan_request() && (!$record_datas->is_visu_scan_request_abon() || ($record_datas->is_visu_scan_request_abon() && $_SESSION["user_code"])) || ($record_datas->get_rights() & 32)) {
 			$scan_request = new scan_request();
 			if($record_datas->get_niveau_biblio() == 'b') {
 				$bul_infos = $record_datas->get_bul_info();
@@ -1246,7 +1344,7 @@ class record_display {
 		global $opac_show_links_invisible_docnums;
 		global $gestion_acces_active, $gestion_acces_empr_notice, $gestion_acces_empr_docnum;
 		global $opac_bull_results_per_page;
-		global $opac_fonction_affichage_liste_bull;
+		global $opac_fonction_affichage_liste_bull, $charset;
 		
 		$notice_id = $notice_id*1;
 		
@@ -1304,13 +1402,17 @@ class record_display {
 		$fin_value = str_replace("-","",$bull_date_end);
 		$date_deb_value = ($deb_value ? formatdate($deb_value) : '...');
 		$date_fin_value = ($fin_value ? formatdate($fin_value) : '...');
-		$date_debut = "<input type='text' style='width: 10em;' name='bull_date_start' id='bull_date_start' 
+		$date_debut = "<div id='inputs_bull_date_start'>
+		    <input type='text' style='width: 10em;' name='bull_date_start' id='bull_date_start' 
 				data-dojo-type='dijit/form/DateTextBox' required='false' value='".$bull_date_start."' />
 			<input type='button' class='bouton' name='del' value='X' onclick=\"empty_dojo_calendar_by_id('bull_date_start');\" />
+			</div>
 		";
-		$date_fin = "<input type='text' style='width: 10em;' name='bull_date_end' id='bull_date_end' 
+		$date_fin = "<div id='inputs_bull_date_end'>
+		    <input type='text' style='width: 10em;' name='bull_date_end' id='bull_date_end' 
 				data-dojo-type='dijit/form/DateTextBox' required='false' value='".$bull_date_end."' />
 			<input type='button' class='bouton' name='del' value='X' onclick=\"empty_dojo_calendar_by_id('bull_date_end');\" />
+			</div>
 		";
 		
 		$tableau = "
@@ -1321,8 +1423,8 @@ class record_display {
 			<script src='./includes/javascript/ajax.js'></script>
 			<form name=\"form_values\" action='#tab_bulletin' method=\"post\" onsubmit=\"if (document.getElementById('onglet_isbd".$notice_id."').className=='isbd_public_active') document.form_values.premier.value='ISBD'; else document.form_values.premier.value='PUBLIC';document.form_values.page.value=1;\">\n
 				<input type=\"hidden\" name=\"premier\" value=\"\">\n
-				<input type=\"hidden\" name=\"page\" value=\"".$page."\">\n
-				<input type=\"hidden\" name=\"nb_per_page_custom\" value=\"".$nb_per_page_custom."\">\n
+				<input type=\"hidden\" name=\"page\" value=\"".htmlentities($page, ENT_QUOTES, $charset)."\">\n
+				<input type=\"hidden\" name=\"nb_per_page_custom\" value=\"".htmlentities($nb_per_page_custom, ENT_QUOTES, $charset)."\">\n
 				<table>
 					<tr>
 						<td class='align_left' rowspan=2><strong>".$msg["search_bull"]."&nbsp;:&nbsp;</strong></td>
@@ -1419,8 +1521,10 @@ class record_display {
 		$url_page = "javascript:if (document.getElementById(\"onglet_isbd".$notice_id."\")) if (document.getElementById(\"onglet_isbd".$notice_id."\").className==\"isbd_public_active\") document.form_values.premier.value=\"ISBD\"; else document.form_values.premier.value=\"PUBLIC\"; document.form_values.page.value=!!page!!; document.form_values.submit()";
 		$nb_per_page_custom_url = "javascript:document.form_values.nb_per_page_custom.value=!!nb_per_page_custom!!";
 		$action = "javascript:if (document.getElementById(\"onglet_isbd".$notice_id."\")) if (document.getElementById(\"onglet_isbd".$notice_id."\").className==\"isbd_public_active\") document.form_values.premier.value=\"ISBD\"; else document.form_values.premier.value=\"PUBLIC\"; document.form_values.page.value=document.form.page.value; document.form_values.submit()";
-		if ($count) $form = "<div class='row'></div><div id='navbar'><br />\n<div style='text-align:center'>".printnavbar($page, $count1, $opac_bull_results_per_page, $url_page, $nb_per_page_custom_url, $action)."</div></div>";
-		$html.= pmb_bidi($form);
+		
+		if ($count) {
+		    $html.= pmb_bidi("<div class='row'></div><div id='navbar'><br />\n<div style='text-align:center'>".printnavbar($page, $count1, $opac_bull_results_per_page, $url_page, $nb_per_page_custom_url, $action)."</div></div>");
+		}
 		return $html;
 	}
 	
@@ -1527,41 +1631,94 @@ class record_display {
 		return $links_for_serials;
 	}
 	
-	static public function get_display_pnb_loan_button($notice_id) {
-		global $msg;
-		global $charset;
-		return '<div id="zone_exemplaires">
-					<h3>'.htmlentities($msg['pnb_digital_expl'], ENT_QUOTES, $charset).'</h3> 
-					<a id="pnb_loan_book_' . $notice_id . '" href="#" >' . htmlentities($msg['empr_bt_checkout'], ENT_QUOTES, $charset).'</a>
-					<script type="text/javascript">
-						require(["dojo/dom", "dojo/on", "dojo/_base/lang", "dojox/widget/DialogSimple", "dijit/registry"], function(dom, on, lang, Dialog, registry){
-							on(dom.byId("pnb_loan_book_' . $notice_id . '"), "click", lang.hitch(this, function(){
-								var dialog = new Dialog({
-							        title: "'.htmlentities($msg['empr_bt_checkout'], ENT_QUOTES, $charset).'",
-							        href: "./ajax.php?module=ajax&categ=pnb&action=get_loan_form&notice_id='.$notice_id.'",
-							        id: "loan_popup",
-            						executeScripts: true,
-							    });
-								dialog.show();
-							    var oldHide = dialog.hide;
-							    dialog.hide = lang.hitch(dialog, function(){
-							    	oldHide();
-							       	dialog.destroyRecursive();
-					        		var standby = registry.byId("standby_loan");
-									if(standby){
-					        			standby.destroy();
-					        		}
-							    });
-							}));
-						});
-					</script>
-							
-				</div>';
+	public static function get_locations_list($notice_id, $property) {
+	    $record_datas = static::get_record_datas($notice_id);
+	    
+	    $data = $record_datas->get_locations();
+	    $return_data = [];
+	    foreach ($data as $infos) {
+	        if (!empty($infos[$property])) {
+	            $return_data[] = $infos[$property];
+	        }
+	    }
+	    $return_data = array_unique($return_data);
+	    return $return_data;
+	}
+	
+	public static function get_lenders_list($notice_id, $property) {
+	    $record_datas = static::get_record_datas($notice_id);
+	    
+	    $data = $record_datas->get_lenders();
+	    $return_data = [];
+	    foreach ($data as $infos) {
+	        if (!empty($infos[$property])) {
+	            $return_data[] = $infos[$property];
+	        }
+	    }
+	    $return_data = array_unique($return_data);
+	    return $return_data;
 	}
 	
 	static protected function get_parameter_value($name) {
 		$parameter_name = 'opac_'.$name;
 		global ${$parameter_name};
 		return ${$parameter_name};
+	}
+	
+	/**
+	 * Retourne l'affichage étendu d'une notice externe
+	 * @param integer $notice_id Identifiant de la notice
+	 * @param string $django_directory Répertoire Django à utiliser
+	 * @return string Code html d'affichage de la notice
+	 */
+	static public function get_display_unimarc($notice_id, $django_directory = "") {
+	    global $include_path;
+	    
+	    $record_unimarc_datas = static::get_record_unimarc_datas($notice_id);
+	    
+	    $template = static::get_template("record_unimarc_display", $record_unimarc_datas->get_niveau_biblio(), $record_unimarc_datas->get_typdoc(), $django_directory, $record_unimarc_datas->get_connector_id(), $record_unimarc_datas->get_source_id());
+	    
+	    return static::render($notice_id, $template, true);
+	}
+	
+	/**
+	 * Retourne une instance de notice_affichage_unimarc
+	 * @param int $notice_id Identifiant de la notice
+	 * @return notice_affichage_unimarc
+	 */
+	static public function get_record_unimarc_datas($notice_id, $entrepots_localisations = array()) {
+	    if (!isset(self::$records_unimarc_datas[$notice_id])) {
+	        self::$records_unimarc_datas[$notice_id] = new record_datas_unimarc($notice_id, $entrepots_localisations);
+	    }
+	    return self::$records_unimarc_datas[$notice_id];
+	}
+	
+	/**
+	 * Retourne l'affichage d'une notice externe dans un résultat de recherche
+	 * @param int $notice_id Identifiant de la notice
+	 * @param string $django_directory Répertoire Django à utiliser
+	 * @return string Code html d'affichage de la notice
+	 */
+	static public function get_display_unimarc_in_result($notice_id, $django_directory = "", $entrepots_localisations = array()) {
+	    global $include_path;
+	    
+	    $record_unimarc_datas = static::get_record_unimarc_datas($notice_id, $entrepots_localisations);
+	    
+	    $template = static::get_template("record_unimarc_in_result_display", $record_unimarc_datas->get_niveau_biblio(), $record_unimarc_datas->get_typdoc(), $django_directory, $record_unimarc_datas->get_connector_id(), $record_unimarc_datas->get_source_id());
+	    
+	    return static::render($notice_id, $template, true);
+	}
+	
+	
+	/**
+	 * Retourne l'affichage d'une notice dans un formulaire de contribution
+	 * @param int $notice_id Identifiant de la notice
+	 * @param string $django_directory Répertoire Django à utiliser
+	 * @return string Code html d'affichage de la notice
+	 */
+	static public function get_display_in_contribution($notice_id, $django_directory = "") {
+	    $record_datas = static::get_record_datas($notice_id);
+	    $template = static::get_template("record_in_contribution_display", $record_datas->get_niveau_biblio(), $record_datas->get_typdoc(), $django_directory);
+	    return static::render($notice_id, $template);
 	}
 }

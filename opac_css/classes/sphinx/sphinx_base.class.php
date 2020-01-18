@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sphinx_base.class.php,v 1.4 2018-10-15 12:28:13 arenou Exp $
+// $Id: sphinx_base.class.php,v 1.5.6.1 2019-09-20 09:42:04 arenou Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php"))
 	die("no access");
 class sphinx_base {
@@ -123,9 +123,6 @@ class sphinx_base {
 							) 
 					);
 				}
-				if (! isset($this->datatypes[$params["FIELD"][$i]['DATATYPE']])){
-				    $this->datatypes[$params["FIELD"][$i]['DATATYPE']] = array();
-				}
 				// Pas d'infos viables, on ne perd de temps...
 				if (! isset($params["FIELD"][$i]['TABLE'])) {
 					continue;
@@ -154,6 +151,9 @@ class sphinx_base {
 									// $attributes[] = $field.'_'.$pperso_id;
 									$this->insert_index[$field . '_' . str_pad($pperso_id, 2, "0", STR_PAD_LEFT)] = $params["FIELD"][$i]['INDEX_NAME'];
 									$this->fields_pond[$field . '_' . str_pad($pperso_id, 2, "0", STR_PAD_LEFT)] = $pperso_infos['POND'] * $this->multiple;
+									if($params["FIELD"][$i]['DATATYPE']){
+									    $this->datatypes[$params["FIELD"][$i]['DATATYPE']][]=$field . '_' . str_pad($pperso_id, 2, "0", STR_PAD_LEFT);
+									}
 								}
 							}
 							break;
@@ -168,13 +168,14 @@ class sphinx_base {
 										// $attributes[] = $field.'_'.str_pad($authperso_info['fields'][$j]['id'], 2,"0",STR_PAD_LEFT);
 										$this->insert_index[$field . '_' . str_pad($authperso_info['fields'][$j]['id'], 2, "0", STR_PAD_LEFT)] = $params["FIELD"][$i]['INDEX_NAME'];
 										$this->fields_pond[$field . '_' . str_pad($authperso_info['fields'][$j]['id'], 2, "0", STR_PAD_LEFT)] = $authperso_info['fields'][$j]['pond'] * $this->multiple;
-										$this->datatypes[$params["FIELD"][$i]['DATATYPE']][] =  $field . '_' . str_pad($authperso_info['fields'][$j]['id'], 2, "0", STR_PAD_LEFT);
+									}
+									if($params["FIELD"][$i]['DATATYPE']){
+									    $this->datatypes[$params["FIELD"][$i]['DATATYPE']][]=$field . '_' . str_pad($authperso_info['fields'][$j]['id'], 2, "0", STR_PAD_LEFT);
 									}
 								}
 							}
 							break;
 						default :
-							continue;
 							break; // useless
 					}
 				} else {
@@ -199,14 +200,16 @@ class sphinx_base {
 							} else if (isset($params["FIELD"][$i]['POND'])) {
 								$this->fields_pond[$field . '_' . $params["FIELD"][$i]['TABLE'][$j]['TABLEFIELD'][$k]['ID']] = $params["FIELD"][$i]['POND'] * $this->multiple;
 							}
+							if(isset($params["FIELD"][$i]['DATATYPE'])){
+							    $this->datatypes[$params["FIELD"][$i]['DATATYPE']][]= $field . '_' . $params["FIELD"][$i]['TABLE'][$j]['TABLEFIELD'][$k]['ID'];
+							}
 						}
 					}
-					if (isset($params["FIELD"][$i]['ISBD']) && $params["FIELD"][$i]['ISBD']) {
+					if (!empty($params["FIELD"][$i]['ISBD'])) {
 						$attributes[] = $field . '_' . $params["FIELD"][$i]['ISBD'][0]['ID'];
 						$this->insert_index[$field . '_' . $params["FIELD"][$i]['ISBD'][0]['ID']] = $params["FIELD"][$i]['INDEX_NAME'];
 					}
 				}
-				$this->datatypes[$params["FIELD"][$i]['DATATYPE']] =  array_unique(array_merge($this->datatypes[$params["FIELD"][$i]['DATATYPE']], $fields));
 				$this->indexes[$params["FIELD"][$i]['INDEX_NAME']]['fields'] = array_unique(array_merge($this->indexes[$params["FIELD"][$i]['INDEX_NAME']]['fields'], $fields));
 				$this->indexes[$params["FIELD"][$i]['INDEX_NAME']]['attributes'] = array_unique(array_merge($this->indexes[$params["FIELD"][$i]['INDEX_NAME']]['attributes'], $attributes));
 			}
@@ -215,16 +218,21 @@ class sphinx_base {
                 $this->indexes[$this->default_index]['attributes'][] = $this->filters[$i];
             }
 		}
-		
 	}
-	
-	public function getDatatypes(){
-	    return $this->datatypes;
-	}
-	
+
 	public function get_fields_pond() {
 		$this->parse_file();
-		
 		return $this->fields_pond;
+	}
+	
+	public function get_datatypes(){
+	    return $this->datatypes;
+	}
+	public function get_datatype_indexes_from_mode($mode){
+	    switch($mode){
+	        case 'titres_uniformes':
+	            return $this->datatypes['uniformtitle'];
+	    }
+	    return array();
 	}
 }

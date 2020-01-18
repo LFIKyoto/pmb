@@ -1,8 +1,8 @@
 <?php
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum.inc.php,v 1.123 2018-11-27 13:17:36 dgoron Exp $
+// $Id: explnum.inc.php,v 1.125.2.1 2019-09-10 16:14:46 dbellamy Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -35,7 +35,9 @@ function create_tableau_mimetype() {
 	global $include_path,$base_path;
 	global $_mimetypes_bymimetype_, $_mimetypes_byext_ ;
 	
-	if (!empty($_mimetypes_bymimetype_) && sizeof($_mimetypes_bymimetype_)) return;
+	if (!empty($_mimetypes_bymimetype_)) {
+	    return;
+	}
 	$_mimetypes_bymimetype_ = array();
 	$_mimetypes_byext_ = array();
 
@@ -66,9 +68,9 @@ function create_tableau_mimetype() {
 			
 	}else{
 		if (file_exists($tempFile) ) {
-			//Le fichier XML original a-t-il été modifié ultérieurement ?
+			//Le fichier XML original a-t-il ï¿½tï¿½ modifiï¿½ ultï¿½rieurement ?
 			if (filemtime($fic_mime_types) > filemtime($tempFile)) {
-				//on va re-générer le pseudo-cache
+				//on va re-gï¿½nï¿½rer le pseudo-cache
 				unlink($tempFile);
 			} else {
 				$dejaParse = true;
@@ -150,19 +152,22 @@ function icone_mimetype ($mimetype, $ext) {
 	return "unknown.gif" ;
 }
 
-function trouve_mimetype ($fichier, $ext='') {
-	
-	global $_mimetypes_byext_ ;
-	
-	if ($ext!='') {
-		// chercher le mimetype associe a l'extension : si trouvee nickel, sinon : ""
-		if ($_mimetypes_byext_[$ext]["mimetype"]) return $_mimetypes_byext_[$ext]["mimetype"] ;
-	}
-	if (extension_loaded('mime_magic')) {
-		$mime_type = mime_content_type($fichier) ;
-		if ($mime_type) return $mime_type ;
-	}
-	return '';
+function trouve_mimetype($fichier, $ext = '') {
+    global $_mimetypes_byext_;
+    
+    if ($ext != '') {
+        // chercher le mimetype associe a l'extension : si trouvee nickel, sinon : ""
+        if (!empty($_mimetypes_byext_[$ext]["mimetype"])) {
+            return $_mimetypes_byext_[$ext]["mimetype"];
+        }
+    }
+    if (extension_loaded('fileinfo') && is_file($fichier)) {
+        $mime_type = mime_content_type($fichier);
+        if (!empty($mime_type)) {
+            return $mime_type ;
+        }
+    }
+    return '';
 }
 
 function reduire_image ($userfile_name) {
@@ -224,7 +229,7 @@ function reduire_image ($userfile_name) {
 			$img->setImageBackgroundColor('white');
 			$img = $img->flattenImages();
 			
-			if(($img->getImageWidth() > $pmb_vignette_x) || ($img->getImageHeight() > $pmb_vignette_y)){// Si l'image est trop grande on la réduit
+			if(($img->getImageWidth() > $pmb_vignette_x) || ($img->getImageHeight() > $pmb_vignette_y)){// Si l'image est trop grande on la rï¿½duit
 				$img->thumbnailimage($pmb_vignette_x,$pmb_vignette_y,true);
 			}
 			$img->setImageFormat( "png" );
@@ -381,7 +386,7 @@ function explnum_update($f_explnum_id, $f_notice, $f_bulletin, $f_nom, $f_url, $
 		// modification
 		// si $userfile_name est vide on ne fera pas la maj du data
 		if (($scanned_image)||($userfile_name)) {
-			//Avant tout, y-a-t-il une image extérieure ?
+			//Avant tout, y-a-t-il une image extï¿½rieure ?
 			if ($scanned_image) {
 				//Si oui !
 				$tmpid=str_replace(" ","_",microtime());
@@ -508,7 +513,7 @@ function explnum_update($f_explnum_id, $f_notice, $f_bulletin, $f_nom, $f_url, $
 		fclose ($fp) ;
 	}
 	
-	//Dans le cas d'une modification, on regarde si il y a eu un déplacement du stockage
+	//Dans le cas d'une modification, on regarde si il y a eu un dï¿½placement du stockage
 	if ($f_explnum_id){	
 		$explnum = new explnum($f_explnum_id);		
 		if($explnum->isEnBase() && ($up_place && $path)){
@@ -641,7 +646,7 @@ function explnum_add_from_url($f_notice_id, $f_bulletin_id, $f_nom, $f_url, $ove
 	} else {
 		$new_filename=$tmp_filename;
 	}
-	//copie en répertoire temporaire
+	//copie en rï¿½pertoire temporaire
 	$r=false;
 	if (file_exists($f_url) && filesize($f_url)) {	//document en repertoire
 		$r = copy($f_url, $base_path.'/temp/'.$tmp_filename);
@@ -660,7 +665,7 @@ function explnum_add_from_url($f_notice_id, $f_bulletin_id, $f_nom, $f_url, $ove
 		create_tableau_mimetype();
 		$mimetype = trouve_mimetype("$base_path/temp/".$tmp_filename, $extension);	
 		
-		//si la source du connecteur est précisée, on regarde si on a pas un répertoire associé
+		//si la source du connecteur est prï¿½cisï¿½e, on regarde si on a pas un rï¿½pertoire associï¿½
 		$rep_upload=0;
 		if ($source_id){
 			$check_rep = "select rep_upload from connectors_sources where source_id = ".$source_id;
@@ -742,7 +747,7 @@ function explnum_add_from_url($f_notice_id, $f_bulletin_id, $f_nom, $f_url, $ove
 		$mimetype = trouve_mimetype("$base_path/temp/".$afilename, $afilename_ext);
 		$extension = strrchr($afilename, '.');
 		
-		//si la source du connecteur est précisée, on regarde si on a pas un répertoire associé
+		//si la source du connecteur est prï¿½cisï¿½e, on regarde si on a pas un rï¿½pertoire associï¿½
 		if ($source_id){
 			$check_rep = "select rep_upload from connectors_sources where source_id = ".$source_id;
 			$res = pmb_mysql_query($check_rep);
@@ -938,7 +943,7 @@ function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='',$param_
 			} else {
 				$expl_liste_obj .= htmlentities($expl->explnum_nom,ENT_QUOTES, $charset);
 			}
-			// Régime de licence
+			// Rï¿½gime de licence
 			$expl_liste_obj.= explnum_licence::get_explnum_licence_picto($expl->explnum_id);
 			
 			$expl_liste_obj.= "<div class='explnum_type'>".htmlentities($explmime_nom,ENT_QUOTES, $charset)."</div>";
@@ -1028,16 +1033,16 @@ function extract_metas($filename,$mimetype,$tmp = false){
 					break;
 					
 				case "text" :
-					//pas de métas pertinantes sur une fichier texte...
+					//pas de mï¿½tas pertinantes sur une fichier texte...
 					break;
 				default :
 					if(!extension_fichier(basename($filename))){
-						$new_name=basename($filename)."temp";//Pour éviter que si pas d'extension on perde le fichier
+						$new_name=basename($filename)."temp";//Pour ï¿½viter que si pas d'extension on perde le fichier
 					}else{
 						$new_name = str_replace(extension_fichier(basename($filename)),"pdf",basename($filename));
 					}
 					$new_path = dirname($filename)."/".$new_name;
-					exec("curl http://localhost:8080/converter/converted/".$new_name." -F \"inputDocument=@$filename\" > ".$new_path);//Ne doit marcher que dans un cas très précis, pas vrai Arnaud
+					exec("curl http://localhost:8080/converter/converted/".$new_name." -F \"inputDocument=@$filename\" > ".$new_path);//Ne doit marcher que dans un cas trï¿½s prï¿½cis, pas vrai Arnaud
 					$metas = extract_metas($new_path,"application/pdf",true);
 					break;
 			}
@@ -1048,7 +1053,7 @@ function extract_metas($filename,$mimetype,$tmp = false){
 	return $metas;
 }
 
-// fonction qui permet de savoir si les exemplaires numériques pour une notice ou un bulletin donné sont affichable à l'OPAC
+// fonction qui permet de savoir si les exemplaires numï¿½riques pour une notice ou un bulletin donnï¿½ sont affichable ï¿½ l'OPAC
 function explnum_allow_opac($no_notice, $no_bulletin) {
 	// params :
 	global $dbh;

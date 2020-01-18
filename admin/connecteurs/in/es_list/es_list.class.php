@@ -2,14 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: es_list.class.php,v 1.6 2017-07-12 15:15:02 tsamson Exp $
+// $Id: es_list.class.php,v 1.8 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
 require_once($class_path."/connecteurs.class.php");
 require_once($class_path."/curl.class.php");
-require_once($class_path."/nusoap/nusoap.php");
 
 class es_list extends connector {
 	//Variables internes pour la progression de la récupération des notices
@@ -133,7 +132,8 @@ class es_list extends connector {
 		return $header;
 	}
 	
-	public function getTypeOfEnrichment($source_id){		
+	public function getTypeOfEnrichment($source_id){
+	    global $libelle, $infobulle;
 		$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
 			//Affichage du formulaire avec $params["PARAMETERS"]

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: budgets.inc.php,v 1.42 2017-04-19 12:37:02 dgoron Exp $
+// $Id: budgets.inc.php,v 1.43 2019-08-20 09:18:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -618,18 +618,16 @@ function autorisations($id_rub=0, $id_parent=0, $id_bud=0) {
 
 //Vérification qu'un exercice actif existe pour création budget
 function verif_exercice($id_bibli) {
-	
 	global $charset;
 	global $msg;
-	global $dbh;
 	
 	$q = entites::getCurrentExercices($id_bibli);
-	$r = pmb_mysql_query($q, $dbh);
+	$r = pmb_mysql_query($q);
 	
 	if (pmb_mysql_num_rows($r)) return; 
 
 	//Pas d'exercice actif pour la bibliothèque
-	$error_msg.= htmlentities($msg["acquisition_err_exer"],ENT_QUOTES, $charset)."<div class='row'></div>";	
+	$error_msg = htmlentities($msg["acquisition_err_exer"], ENT_QUOTES, $charset)."<div class='row'></div>";	
 	error_message($msg[321], $error_msg.htmlentities($msg["acquisition_err_par"],ENT_QUOTES, $charset), '1', './admin.php?categ=acquisition');
 	die;
 }

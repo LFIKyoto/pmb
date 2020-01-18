@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: selector_authperso.class.php,v 1.9 2018-05-15 09:48:16 dgoron Exp $
+// $Id: selector_authperso.class.php,v 1.10 2019-06-07 10:28:11 ngantier Exp $
   
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -30,7 +30,7 @@ class selector_authperso extends selector_authorities {
 					$mode = (1000+$authperso_id);
 				}
 				$searcher_tabs->set_current_mode($mode);
-				if(!count($searcher_tabs->get_tab($mode))) {
+				if(empty($searcher_tabs->get_tab($mode))) {
 					$searcher_tabs->build_default_tab($mode, 'authperso');
 				}
 				print encoding_normalize::utf8_normalize($this->get_simple_search_form());
@@ -42,7 +42,7 @@ class selector_authperso extends selector_authorities {
 					$mode = (1000+$authperso_id);
 				}
 				$searcher_tabs->set_current_mode($mode);
-				if(!count($searcher_tabs->get_tab($mode))) {
+				if(empty($searcher_tabs->get_tab($mode))) {
 					$searcher_tabs->build_default_tab($mode, 'authperso');
 				}
 				ob_start();

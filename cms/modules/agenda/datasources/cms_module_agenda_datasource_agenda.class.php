@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_agenda_datasource_agenda.class.php,v 1.10 2017-03-02 17:00:02 dgoron Exp $
+// $Id: cms_module_agenda_datasource_agenda.class.php,v 1.12.2.4 2019-11-04 10:54:54 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -28,6 +28,8 @@ class cms_module_agenda_datasource_agenda extends cms_module_common_datasource{
 	public function get_datas(){
 		$datas = array();
 		$selector = $this->get_selected_selector();
+		$today = time();
+		$date_time = date('Y-m-d', $today);
 
 		switch($this->parameters['selector']){
 			//devrait être le seul survivant...
@@ -40,7 +42,18 @@ class cms_module_agenda_datasource_agenda extends cms_module_common_datasource{
 					if(pmb_mysql_num_rows($result)){
 						$box = pmb_mysql_result($result,0,0);
 						$infos =unserialize($box);
-						$calendars = $selector->get_value();
+						
+						//On test s'il s'agit du nouveau format de calendrier comportant les paramètres old_event ou futur_event
+						$module_parameters = $selector->get_value();
+						if (!isset($module_parameters['old_event'])) {
+						    $old_event = false;
+						    $futur_event = true;
+						    $calendars = $module_parameters;
+						} else {
+						    $old_event = $module_parameters['old_event'];
+						    $futur_event = $module_parameters['futur_event'];
+						    $calendars = $module_parameters['calendars'];
+						}
 						foreach($calendars as $calendar){
 							$elem = $infos['module']['calendars'][$calendar];
 							$query="select id_article from cms_articles where article_num_type = '".($elem['type']*1)."'";
@@ -54,23 +67,52 @@ class cms_module_agenda_datasource_agenda extends cms_module_common_datasource{
 								foreach($articles as $article){
 									$art = new cms_article($article);
 									$event = $art->format_datas();
-									foreach($event['fields_type'] as $field){
+									foreach($event->fields_type as $field){
 										if($field['id'] == $elem['start_date']){
-											$event['event_start'] = $field['values'][0];
-											$event['event_start']['time'] = mktime(0,0,0,substr($field['values'][0]['value'],5,2),substr($field['values'][0]['value'],8,2),substr($field['values'][0]['value'],0,4));
+											$event->event_start = $field['values'][0];
+											$event->event_start['time'] = mktime(0,0,0,substr($field['values'][0]['value'],5,2),substr($field['values'][0]['value'],8,2),substr($field['values'][0]['value'],0,4));
 										}
 										if($field['id'] == $elem['end_date']){
-											$event['event_end'] = $field['values'][0];
-											$event['event_end']['time'] = mktime(0,0,0,substr($field['values'][0]['value'],5,2),substr($field['values'][0]['value'],8,2),substr($field['values'][0]['value'],0,4));
+											$event->event_end = $field['values'][0];
+											$event->event_end['time'] = mktime(0,0,0,substr($field['values'][0]['value'],5,2),substr($field['values'][0]['value'],8,2),substr($field['values'][0]['value'],0,4));
 										}
 									}
-									$event['id_type'] = $elem['type'];
-									$event['color'] = $elem['color'];
-									$event['calendar'] = $elem['name'];
-									$events[] = $event;
+									$event->id_type = $elem['type'];
+									$event->color = $elem['color'];
+									$event->calendar = $elem['name'];
+								
+									//Evenement sur une période
+									if (!empty($event->event_start) && !empty($event->event_end)) {
+									    if($event->event_start['value']<=$date_time && $event->event_end['value']>=$date_time) {
+									        $current_events[] = $event;
+									    } elseif ($event->event_start['value']<$date_time && $event->event_end['value']<$date_time) {
+									        $old_events[] = $event;
+									    } elseif ($event->event_start['value']>$date_time && $event->event_end['value']>$date_time) {
+									        $futur_events[] = $event;
+									    }
+									    //Evenement ponctuel
+									} elseif (!empty($event->event_start)) {
+									    if($event->event_start['value']==$date_time) {
+									        $current_events[] = $event;
+									    } elseif ($event->event_start['value']<$date_time) {
+									        $old_events[] = $event;
+									    } elseif ($event->event_start['value']>$date_time) {
+									        $futur_events[] = $event;
+									    }
+									}
 								}
 							}
 						}
+					}
+					//On conditionne l'ajout des évènements en fonction des paramêtres
+					if ($old_event && !empty($old_events)) {
+					    $events = array_merge($events,$old_events);
+					}
+					if (!empty($current_events)){
+					    $events = array_merge($events,$current_events);
+					}
+					if ($futur_event && !empty($futur_events)) {
+					    $events = array_merge($events,$futur_events);
 					}
 					usort($events,array($this,"sort_event"));
 					return array('events'=>$events);
@@ -88,19 +130,19 @@ class cms_module_agenda_datasource_agenda extends cms_module_common_datasource{
 						$infos =unserialize($box);
 						foreach($infos['module']['calendars'] as $calendar){
 							if($calendar['type'] == $art->num_type){
-								foreach($event['fields_type'] as $field){
+								foreach($event->fields_type as $field){
 									if($field['id'] == $calendar['start_date']){
-										$event['event_start'] = $field['values'][0];
-										$event['event_start']['time'] = mktime(0,0,0,substr($field['values'][0]['value'],5,2),substr($field['values'][0]['value'],8,2),substr($field['values'][0]['value'],0,4));
+										$event->event_start = $field['values'][0];
+										$event->event_start['time'] = mktime(0,0,0,substr($field['values'][0]['value'],5,2),substr($field['values'][0]['value'],8,2),substr($field['values'][0]['value'],0,4));
 									}
 									if($field['id'] == $calendar['end_date']){
-										$event['event_end'] = $field['values'][0];
-										$event['event_end']['time'] = mktime(0,0,0,substr($field['values'][0]['value'],5,2),substr($field['values'][0]['value'],8,2),substr($field['values'][0]['value'],0,4));
+										$event->event_end = $field['values'][0];
+										$event->event_end['time'] = mktime(0,0,0,substr($field['values'][0]['value'],5,2),substr($field['values'][0]['value'],8,2),substr($field['values'][0]['value'],0,4));
 									}
 								}
-								$event['id_type'] = $calendar['type'];
-								$event['color'] = $calendar['color'];	
-								$event['calendar'] = $calendar['name'];
+								$event->id_type = $calendar['type'];
+								$event->color = $calendar['color'];	
+								$event->calendar = $calendar['name'];
 								break;
 							}
 						}
@@ -110,13 +152,32 @@ class cms_module_agenda_datasource_agenda extends cms_module_common_datasource{
 				break;
 			case "cms_module_agenda_selector_calendars_date" :
 				if($selector){
+				    $events = array();
 					$query = "select managed_module_box from cms_managed_modules join cms_cadres on id_cadre = '".($this->cadre_parent*1)."' and cadre_object = managed_module_name";
 					$result = pmb_mysql_query($query);
 					if(pmb_mysql_num_rows($result)){
 						$box = pmb_mysql_result($result,0,0);
 						$infos =unserialize($box);
-						$datas = $selector->get_value();
-						$time = mktime(0,0,0,substr($datas['date'],5,2),substr($datas['date'],8,2),substr($datas['date'],0,4));
+						
+						//On test s'il s'agit du nouveau format de calendrier comportant les paramètres old_event ou futur_event
+						$module_parameters = $selector->get_value();
+                		if (!isset($module_parameters['calendars']['old_event'])) {
+                		    $old_event = false;
+                		    $futur_event = true;
+                		    $datas = $module_parameters;
+                		} else {
+    						$old_event = $module_parameters['calendars']['old_event'];
+                		    $futur_event = $module_parameters['calendars']['futur_event'];
+                		    $datas = $module_parameters['calendars'];
+                		    $datas['date'] = $module_parameters['date'];
+                		}
+                        $time = $today;            
+                        $selected_date = false;
+						if(!empty($datas['date'])){
+        					$time = mktime(0,0,0,substr($datas['date'],5,2),substr($datas['date'],8,2),substr($datas['date'],0,4));						    
+                            $selected_date = true;
+						}
+        			    $date_time = date('Y-m-d', $time);
 						foreach($datas['calendars'] as $calendar){
 							$elem = $infos['module']['calendars'][$calendar];
 							$query="select id_article from cms_articles where article_num_type = '".($elem['type']*1)."'";
@@ -131,26 +192,57 @@ class cms_module_agenda_datasource_agenda extends cms_module_common_datasource{
 									foreach($articles as $article){
 										$art = new cms_article($article);
 										$event = $art->format_datas();
-										foreach($event['fields_type'] as $field){
+										foreach($event->fields_type as $field){
 											if($field['id'] == $elem['start_date']){
-												$event['event_start'] = $field['values'][0];
-												$event['event_start']['time'] = mktime(0,0,0,substr($field['values'][0]['value'],5,2),substr($field['values'][0]['value'],8,2),substr($field['values'][0]['value'],0,4));
+												$event->event_start = $field['values'][0];
+												$event->event_start['time'] = mktime(0,0,0,substr($field['values'][0]['value'],5,2),substr($field['values'][0]['value'],8,2),substr($field['values'][0]['value'],0,4));
 											}
 											if($field['id'] == $elem['end_date']){
-												$event['event_end'] = $field['values'][0];
-												$event['event_end']['time'] = mktime(0,0,0,substr($field['values'][0]['value'],5,2),substr($field['values'][0]['value'],8,2),substr($field['values'][0]['value'],0,4));
+												$event->event_end = $field['values'][0];
+												$event->event_end['time'] = mktime(0,0,0,substr($field['values'][0]['value'],5,2),substr($field['values'][0]['value'],8,2),substr($field['values'][0]['value'],0,4));
 											}
 										}
-										$event['id_type'] = $elem['type'];
-										$event['color'] = $elem['color'];
-										$event['calendar'] = $elem['name'];
-										if($event['event_start']['time']>=$time || ($event['event_start'] && $event['event_end'] && $event['event_end']['time']>=$time)){
-											$events[] = $event;
+										$event->id_type = $elem['type'];
+										$event->color = $elem['color'];
+										$event->calendar = $elem['name'];
+
+										//Evenement sur une période 
+										if (!empty($event->event_start) && !empty($event->event_end)) {
+										    if($event->event_start['value']<=$date_time && $event->event_end['value']>=$date_time) {
+										       $current_events[] = $event;
+										    } elseif ($event->event_start['value']<$date_time && $event->event_end['value']<$date_time) {
+										       $old_events[] = $event;
+										    } elseif ($event->event_start['value']>$date_time && $event->event_end['value']>$date_time) {
+										       $futur_events[] = $event;
+										    }
+										//Evenement ponctuel
+										} elseif (!empty($event->event_start)) {
+										    if($event->event_start['value']==$date_time) {
+										        $current_events[] = $event;
+										    } elseif ($event->event_start['value']<$date_time) {
+										        $old_events[] = $event;
+										    } elseif ($event->event_start['value']>$date_time) {
+										        $futur_events[] = $event;
+										    }
 										}
 									}
 								}
 							}
 						}
+					}
+					//On modifie l'état du flag old_event si une date est passée en paramètres Get
+					if ($selected_date) {
+					    $old_event = false;
+					}
+					//On conditionne l'ajout des évènements en fonction des paramêtres
+					if ($old_event && !empty($old_events)) {
+					    $events = array_merge($events,$old_events);
+					} 
+					if (!empty($current_events)){
+					    $events = array_merge($events,$current_events);
+					}
+					if ($futur_event && !empty($futur_events)) {
+					    $events = array_merge($events,$futur_events);
 					}
 					usort($events,array($this,"sort_event"));
 					return array('events'=>$events);
@@ -161,10 +253,10 @@ class cms_module_agenda_datasource_agenda extends cms_module_common_datasource{
 	
 	
 	public static function sort_event($a,$b){
-		if(isset($a['event_start']) && ($a['event_start']['time'] > $b['event_start']['time'])){
+		if(isset($a->event_start) && ($a->event_start['time'] > $b->event_start['time'])){
 			return 1;
-		}else if(isset($a['event_start']) && ($a['event_start']['time'] == $b['event_start']['time'])){
-			if(isset($a['event_end']) && ($a['event_end']['time'] > $b['event_end']['time'])){
+		}else if(isset($a->event_start) && ($a->event_start['time'] == $b->event_start['time'])){
+			if(isset($a->event_end) && ($a->event_end['time'] > $b->event_end['time'])){
 				return 1;
 			}else{
 				return -1;

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: launch_search.inc.php,v 1.11 2017-09-29 14:28:37 apetithomme Exp $
+// $Id: launch_search.inc.php,v 1.12 2019-06-07 08:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $reinit_facettes_external, $param_delete_facette, $check_facette, $source, $flag_found, $msg, $op_0_s_2, $field_0_s_2, $notice_id, $notice_id_info;
 
 if (!isset($reinit_facettes_external)) $reinit_facettes_external = 0;
 if($reinit_facettes_external) {
@@ -52,7 +54,6 @@ if ($_SESSION["ext_type"]=="simple") {
 		$_SESSION["checked_sources"] = $source;
 	}
 } elseif ($_SESSION["ext_type"]=="multi") {
-	global $field_0_s_2;
 	if (is_array($field_0_s_2) && count($field_0_s_2)){
 		$_SESSION["checked_sources"] = $field_0_s_2;
 	}

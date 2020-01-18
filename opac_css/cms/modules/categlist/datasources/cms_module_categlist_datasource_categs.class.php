@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_categlist_datasource_categs.class.php,v 1.2 2015-09-22 13:34:21 vtouchard Exp $
+// $Id: cms_module_categlist_datasource_categs.class.php,v 1.3 2019-07-11 13:01:58 btafforeau Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
     die("no access");
 
@@ -114,13 +114,13 @@ class cms_module_categlist_datasource_categs extends cms_module_common_datasourc
     {
         global $opac_allow_term_troncat_search; // Variable globale définissant si la troncature automatique a droite est activée ou non
         if ($opac_allow_term_troncat_search) {
-            if ($word[(strlen($word) - 1)] != '*') {
+            if (substr($word, strlen($word)-1, 1) != '*') {
                 $word = $word . '*';
             }
         }
         if (strpos($word, '*') !== false) { // troncature à réaliser
-            $word = ($word[0] == '*') ? preg_replace('/\*/', '%', $word, 1) : '% ' . $word;
-            $word = ($word[(strlen($word) - 1)] == '*') ? preg_replace('/\*/', '%', $word, 1) : $word . ' %';
+            $word = (substr($word, 0, 1) == '*') ? preg_replace('/\*/', '%', $word, 1) : '% ' . $word;
+            $word = (substr($word, strlen($word)-1, 1) == '*') ? preg_replace('/\*/', '%', $word, 1) : $word . ' %';
         } else {
             $word = '% ' . $word . ' %';
         }

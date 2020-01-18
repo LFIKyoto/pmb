@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: semantic.tpl.php,v 1.2 2016-03-29 15:31:33 arenou Exp $
+// $Id: semantic.tpl.php,v 1.3 2019-05-27 12:59:00 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $semantic_layout, $semantic_layout_end, $msg;
 
 $semantic_menu = "
 	<div id='menu'>

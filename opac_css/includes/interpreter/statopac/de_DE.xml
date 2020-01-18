@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id: de_DE.xml,v 1.18 2018-06-22 10:00:09 ngantier Exp $ -->
+<!-- $Id: de_DE.xml,v 1.19 2019-07-19 08:02:14 dgoron Exp $ -->
 <XMLlist>
 <!-- Types de page  -->
 <entry code="1">Search</entry>
@@ -139,6 +139,7 @@
 <entry code="1901">Phototheque</entry>
 <entry code="2001">Téléchargement d'un document numérique</entry>
 <entry code="2002">Affichage d'un document numérique</entry>
+<entry code="2003">Téléchargement d'un document numérique du portfolio</entry>
 <entry code="2101">Autorités personnalisées</entry>
 <entry code="2201">Navigateur de périodiques</entry>
 <entry code="2301">Bannettes</entry>

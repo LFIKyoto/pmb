@@ -29,7 +29,7 @@ class NodeList extends H2o_Node implements IteratorAggregate  {
 	}
 	
     public function append($node) {
-        array_push($this->list, $node);
+        $this->list[] = $node;
     }
 
     public function extend($nodes) {

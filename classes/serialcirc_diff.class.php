@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_diff.class.php,v 1.34 2017-10-18 13:12:41 jpermanne Exp $
+// $Id: serialcirc_diff.class.php,v 1.37 2019-07-11 10:24:50 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -38,6 +38,7 @@ class serialcirc_diff {
 	public $expl_statut_circ=0;
 	public $expl_statut_circ_after=0;
 	public $sort_diff='';
+	public $diffusion_nb_recipients=0;
 	
 	public function __construct($id_serialcirc=0,$num_abt=0 ) {
 		$id_serialcirc+=0;
@@ -107,6 +108,7 @@ class serialcirc_diff {
 				$this->tpl=$r->serialcirc_tpl;
 				$this->expl_statut_circ_after=$r->serialcirc_expl_statut_circ_after;
 				$this->sort_diff=$r->serialcirc_sort_diff;
+				$this->diffusion_nb_recipients=0;
 				
 				// liste des lecteurs et groupes de lecteur
 				$requete="select * from serialcirc_diff where num_serialcirc_diff_serialcirc=".$this->id." order by serialcirc_diff_order";
@@ -133,10 +135,12 @@ class serialcirc_diff {
 							$this->diffusion[$r_empr->id_serialcirc_diff]['group'][$cpt_empr_group]['responsable']=$r_group_empr->serialcirc_group_responsable;						
 							$this->diffusion[$r_empr->id_serialcirc_diff]['group'][$cpt_empr_group]['empr']=$this->empr_info($r_group_empr->num_serialcirc_group_empr);	
 							$cpt_empr_group++;
+							$this->diffusion_nb_recipients++;
 						}							
 					} else{
 						// c'est un emprunteur physique
 						$this->diffusion[$r_empr->id_serialcirc_diff]['empr']=$this->empr_info($this->diffusion[$r_empr->id_serialcirc_diff]['num_empr']);
+						$this->diffusion_nb_recipients++;
 					}
 				}
 			}
@@ -191,9 +195,7 @@ class serialcirc_diff {
 		return $info;
 	}	
 	
-	public function update_serialcirc($data=''){
-		global $dbh;
-		
+	public function update_serialcirc($data = array()){
 		if(!$data){
 			$data['circ_type']=0;
 			$data['virtual_circ']=0;
@@ -244,26 +246,26 @@ class serialcirc_diff {
 		
 		if(!$this->id){	
 			$req="INSERT INTO serialcirc SET ".$req;	
-			pmb_mysql_query($req, $dbh);
-			$this->id = pmb_mysql_insert_id($dbh);
+			pmb_mysql_query($req);
+			$this->id = pmb_mysql_insert_id();
 		}else{
 			if ($this->expl_in_circ($this->num_abt)) {
 				// Un exemplaire est en cours de circulation, on garde le paramétrage actuel, on crée une nouvelle liste
 				$query = 'UPDATE serialcirc SET num_serialcirc_abt = 0 WHERE id_serialcirc = '.$this->id;
-				pmb_mysql_query($query, $dbh);
+				pmb_mysql_query($query);
 				$query = "INSERT INTO serialcirc SET ".$req.",
 				serialcirc_piedpage='".$this->piedpage."',
 				serialcirc_tpl='".$this->tpl."'";
-				pmb_mysql_query($query, $dbh);
-				$new_id = pmb_mysql_insert_id($dbh);
+				pmb_mysql_query($query);
+				$new_id = pmb_mysql_insert_id();
 				// On rattache les diffusions
 				$query = "update serialcirc_diff set num_serialcirc_diff_serialcirc = ".$new_id." where num_serialcirc_diff_serialcirc = ".$this->id;
-				pmb_mysql_query($query, $dbh);
+				pmb_mysql_query($query);
 				
 				$this->id = $new_id;
 			} else {
 				$req = "UPDATE serialcirc SET ".$req." WHERE id_serialcirc = ".$this->id;
-				pmb_mysql_query($req, $dbh);
+				pmb_mysql_query($req);
 			}
 		}
 		$this->fetch_data(); 
@@ -696,7 +698,7 @@ class serialcirc_diff {
 		
 		$form=$serialcirc_diff_form_ficheformat;
 		
-		if ($this->tpl+0 > 0) $selected = $this->tpl;
+		if (intval($this->tpl) > 0) $selected = $this->tpl;
 		else $selected = 0;
 		$select_tpl=serialcirc_tpl::gen_tpl_select("form_serialcirc_tpl", $selected, "serialcirc_print_change_fields();");
 		$form=str_replace('!!fiche_tpl_field_sel!!', $select_tpl, $form);

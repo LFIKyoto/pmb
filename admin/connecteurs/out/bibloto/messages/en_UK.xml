@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: en_UK.xml,v 1.4 2018-10-19 10:21:25 vtouchard Exp $ -->
+$Id: en_UK.xml,v 1.7 2019-08-01 13:52:00 dgoron Exp $ -->
 
 <XMLlist>
 <entry code="bibloto_service_endpoint">Address of the webservice</entry>
@@ -24,6 +24,9 @@ $Id: en_UK.xml,v 1.4 2018-10-19 10:21:25 vtouchard Exp $ -->
 <entry code="bibloto_resa_activate">Show the reservations</entry>
 <entry code="bibloto_resa_activate_yes">Yes</entry>
 <entry code="bibloto_resa_activate_no">No</entry>
+<entry code="bibloto_email_activate">Show the email button</entry>
+<entry code="bibloto_email_activate_yes">Yes</entry>
+<entry code="bibloto_email_activate_no">No</entry>
 <entry code="bibloto_printer_activate">Printing of the loan ticket</entry>
 <entry code="bibloto_printer_activate_yes">Yes</entry>
 <entry code="bibloto_printer_activate_no">No</entry>
@@ -63,6 +66,8 @@ $Id: en_UK.xml,v 1.4 2018-10-19 10:21:25 vtouchard Exp $ -->
 <entry code="bibloto_msg_checkin_button_value">Return</entry>
 <entry code="bibloto_msg_resa_button">Label of the reservation button</entry>
 <entry code="bibloto_msg_resa_button_value">Reservations</entry>
+<entry code="bibloto_msg_email_button">Label of the email button</entry>
+<entry code="bibloto_msg_email_button_value">Email</entry>
 <entry code="bibloto_msg_printer_button">Label of the button to print the loan ticket</entry>
 <entry code="bibloto_msg_exit_button">Label of the button to return to the home page</entry>
 <entry code="bibloto_msg_exit_button_value">Déconnexion</entry>
@@ -86,7 +91,9 @@ $Id: en_UK.xml,v 1.4 2018-10-19 10:21:25 vtouchard Exp $ -->
 <entry code="bibloto_msg_dialog_checkout_possible_value">Empruntable</entry>
 <entry code="bibloto_msg_dialog_checkout_ok">Message of loan made</entry>
 <entry code="bibloto_msg_dialog_checkout_ok_value">Prêt effectué</entry>
-<entry code="bibloto_msg_dialog_checkout_no">Message of loan error</entry>
+<entry code="bibloto_msg_dialog_checkout_no">Message of loan error, for all errors ? </entry>
+<entry code="bibloto_msg_dialog_checkout_no_yes">Yes</entry>
+<entry code="bibloto_msg_dialog_checkout_no_no">No</entry>
 <entry code="bibloto_msg_dialog_checkout_no_value">Vous ne pouvez pas emprunter ce document !</entry>
 <entry code="bibloto_msg_dialog_checkin_ok">Message of document returned</entry>
 <entry code="bibloto_msg_dialog_checkin_ok_value">Retour effectué</entry>
@@ -109,4 +116,25 @@ $Id: en_UK.xml,v 1.4 2018-10-19 10:21:25 vtouchard Exp $ -->
 <entry code="bibloto_msg_no_user_found_value">No user found with this search</entry>
 <entry code="bibloto_msg_search_title">Message displayed as search title</entry>
 <entry code="bibloto_msg_search_title_value">Search for your name to login</entry>
+<entry code="pmb_username">Username to authenticate</entry>
+<entry code="pmb_password">Password to authenticate</entry>
+<entry code="pmb_connexion_phrase">Phrase de connexion utilisée pour l'authentification</entry>
+<entry code="bibloto_css">CSS</entry>
+<entry code="bibloto_msg_resa_date_title">Libellé date de la liste des réservations</entry>
+<entry code="bibloto_msg_resa_confirme_title">Libellé 'confirmé' de la liste des réservations</entry>
+<entry code="bibloto_msg_expl_title">Libellé du titre des exemplaires</entry>
+<entry code="bibloto_msg_expl_statut">Libellé du statut des exemplaires</entry>
+<entry code="bibloto_msg_expl_date_checkout">Libellé de la date de prêt des exemplaires</entry>
+<entry code="bibloto_msg_expl_date_checkin">Libellé de la date de retour des exemplaires</entry>
+<entry code="bibloto_msg_expl_rendu">Libellé du l'état 'rendu' des exemplaires</entry>
+<entry code="bibloto_msg_expl_checkout_list_title">Libellé de la liste de prêts</entry>
+<entry code="bibloto_nb_jours_retard">Nombre de jours avant d'afficher l'alerte d'un retour de prêt en retard</entry>
+<entry code="bibloto_msg_resa_date_title_value">Mes réservations</entry>
+<entry code="bibloto_msg_resa_confirme_title_value">Confirmé</entry>
+<entry code="bibloto_msg_expl_checkout_list_title_value">Titre</entry>
+<entry code="bibloto_msg_msg_expl_statut_value">Statut</entry>
+<entry code="bibloto_msg_expl_date_checkout_value">Date de prêt</entry>
+<entry code="bibloto_msg_expl_date_checkin_value">Date de retour</entry>
+<entry code="bibloto_msg_expl_rendu_value">Rendu</entry>
+<entry code="bibloto_msg_expl_title_value">Titre</entry>
 </XMLlist>

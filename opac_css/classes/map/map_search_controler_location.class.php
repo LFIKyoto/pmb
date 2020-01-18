@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_search_controler_location.class.php,v 1.2 2017-10-18 15:08:25 dgoron Exp $
+// $Id: map_search_controler_location.class.php,v 1.3 2019-02-26 13:48:41 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -36,8 +36,5 @@ class map_search_controler_location extends map_search_controler {
 			//la recherche n'est pas encore enregistré...
 			$this->ajax = true;
 		}
-	
 	}
-	
-	
 }

@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: make_sugg.inc.php,v 1.19 2018-12-28 16:28:41 dgoron Exp $
+// $Id: make_sugg.inc.php,v 1.20.2.1 2019-10-09 13:33:49 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $empr_mail, $base_path, $msg, $charset, $opac_show_help, $form_action, $id_notice, $opac_sugg_categ, $opac_sugg_categ_default;
+global $acquisition_sugg_categ, $opac_sugg_localises;
 
 require_once($base_path.'/classes/suggestions_categ.class.php');
 require_once($base_path.'/classes/docs_location.class.php');
@@ -69,7 +72,7 @@ $sug_form .= "
 		<tr>
 			<td class='align_right'>".htmlentities($msg["empr_sugg_datepubli"], ENT_QUOTES, $charset)."</td>
 			<td>
-				<input type='text' id='date_publi' name='date_publi'>
+                <input type='text' id=\"date_publi\" name=\"date_publi\" value=\"".($sugg->date_publi != '0000-00-00' ? $sugg->date_publi : '')."\" size=\"50\" placeholder=\"".htmlentities($msg['format_date_input_text_placeholder'], ENT_QUOTES, $charset)."\">
 				<input type='button' class='bouton' id='date_publi_sug' name='date_publi_sug' value='...' onClick=\"window.open('./select.php?what=calendrier&caller=empr_sugg&param1=date_publi&param2=date_publi&auto_submit=NO&date_anterieure=YES', 'date_publi', 'toolbar=no, dependent=yes, width=250,height=250, resizable=yes')\"/>
 			</td>
 		</tr>		
@@ -97,7 +100,7 @@ if($id_notice){
 	FROM notices LEFT JOIN responsability ON responsability_notice=notice_id 
 	LEFT JOIN authors ON responsability_author=author_id LEFT JOIN publishers ON ed1_id=ed_id
 	WHERE notice_id=".$id_notice;
-	$result = pmb_mysql_query($requete,$dbh);
+	$result = pmb_mysql_query($requete);
 	while($sug=pmb_mysql_fetch_object($result)){
 		if(!$sug->titre) $sug->titre='';
 		$sug_form = str_replace('!!titre_sugg!!',htmlentities($sug->titre,ENT_QUOTES,$charset),$sug_form);
@@ -172,7 +175,7 @@ if($_SESSION["id_empr_session"]) {
 
 //Affichage du selecteur de source
 	$req = "select * from suggestions_source order by libelle_source";
-	$res= pmb_mysql_query($req,$dbh);
+	$res= pmb_mysql_query($req);
 	$option = "<option value='0' selected>".htmlentities($msg['empr_sugg_no_src'],ENT_QUOTES,$charset)."</option>";
 	while(($src=pmb_mysql_fetch_object($res))){
 		$option .= "<option value='".$src->id_source."'>".htmlentities($src->libelle_source,ENT_QUOTES,$charset)."</option>";

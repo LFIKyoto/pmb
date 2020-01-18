@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: acquisitions.inc.php,v 1.8 2017-11-22 11:07:34 dgoron Exp $
+// $Id: acquisitions.inc.php,v 1.8.6.1 2019-12-04 08:12:16 dgoron Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
@@ -97,7 +97,7 @@ switch ($index_quoi) {
 		
 		print "<br /><br /><h2 class='center'>".htmlentities($msg["nettoyage_reindex_act"], ENT_QUOTES, $charset)."</h2>";
 		
-		$query = pmb_mysql_query("SELECT actes.id_acte, actes.numero, entites.raison_sociale, actes.commentaires, actes.reference FROM actes, entites where num_fournisseur=id_entite LIMIT ".$start.", ".$lot." ");
+		$query = pmb_mysql_query("SELECT actes.id_acte, actes.numero, entites.raison_sociale, actes.commentaires, actes.reference, actes.nom_acte FROM actes, entites where num_fournisseur=id_entite LIMIT ".$start.", ".$lot." ");
 		if(pmb_mysql_num_rows($query)) {
 			print netbase::get_display_progress($start, $count);
 			
@@ -105,7 +105,7 @@ switch ($index_quoi) {
 				
 				// index acte
 				$req_update = "UPDATE actes ";
-				$req_update.= "SET index_acte = ' ".$row->numero." ".strip_empty_words($row->raison_sociale)." ".strip_empty_words($row->commentaires)." ".strip_empty_words($row->reference)." ' ";
+				$req_update.= "SET index_acte = ' ".$row->numero." ".strip_empty_words($row->raison_sociale)." ".strip_empty_words($row->commentaires)." ".strip_empty_words($row->reference)." ".strip_empty_words($row->nom_acte)." ' ";
 				$req_update.= "WHERE id_acte = ".$row->id_acte." ";
 				$update = pmb_mysql_query($req_update);
 				

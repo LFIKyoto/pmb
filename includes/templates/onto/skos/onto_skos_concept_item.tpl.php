@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_skos_concept_item.tpl.php,v 1.17 2018-03-26 13:30:44 ngantier Exp $
+// $Id: onto_skos_concept_item.tpl.php,v 1.20 2019-07-04 12:12:55 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $ontology_tpl, $pmb_form_authorities_editables, $PMBuserid,$what, $select_concept_prop;
+global $ontology_tpl, $pmb_form_authorities_editables, $PMBuserid,$what, $select_concept_prop, $PMBuserid, $current_module, $msg;
 
 $ontology_tpl['form_body']="";
 if($what!="ontology"){
@@ -50,6 +50,7 @@ $ontology_tpl['form_body'].= '
 		<div id="zone-container" class="row">
 			!!onto_form_content!!
 		</div>
+		<!-- map -->
 		<!-- aut_link -->
 		<!-- aut_pperso -->
 	</div>
@@ -59,6 +60,7 @@ $ontology_tpl['form_body'].= '
 			!!onto_form_submit!!
 			!!onto_form_submit_continue!!
 			!!onto_form_replace!!
+	        !!onto_form_merge!!
 			!!onto_form_duplicate!!
 			!!onto_form_audit!!
 		</div>
@@ -359,5 +361,31 @@ $ontology_tpl['form_replace'] = '
 <script type="text/javascript">
 	ajax_parse_dom();
 	document.forms["concept_replace"].elements["concept_display_label"].focus();
+</script>
+';
+
+$ontology_tpl['form_merge'] = '
+	<script src="javascript/ajax.js"></script>
+<form class="form-'.$current_module.'" name="concept_merge" method="post" action="!!onto_action!!" onSubmit="return false;" >
+<h3>'.$msg['merge'].' !!old_concept_libelle!! </h3>
+<div class="form-contenu">
+	<div class="row">
+		<label class="etiquette" for="concept_display_label">'.$msg['with'].'</label>
+	</div>
+	<div class="row">
+		<input type="text" class="saisie-80emr" id="concept_display_label" name="concept_display_label" completion="onto" att_id_filter="http://www.w3.org/2004/02/skos/core#Concept" autfield="by" autocomplete="off"/>
+		<input type="button" class="bouton" value="'.$msg["parcourir"].'" onclick="openPopUp(\'select.php?what=ontology&caller=concept_merge&objs=&element=concept&param1=by&param2=concept_display_label&deb_rech=\', \'select_concept\', 700, 500, -2, -2, \''.$select_concept_prop.'\')" />
+		<input type="button" class="bouton" value="'.$msg['raz'].'" onclick="this.form.concept_display_label.value=\'\'; this.form.by.value=\'0\'; " />
+		<input type="hidden" name="by" id="by" value="">
+	</div>
+</div>
+<div class="row">
+	<input type="button" class="bouton" value="'.$msg['76'].'" onClick="history.go(-1);" />
+	<input type="button" class="bouton" value="'.$msg['merge'].'" onClick="this.form.submit();" />
+</div>
+</form>
+<script type="text/javascript">
+	ajax_parse_dom();
+	document.forms["concept_merge"].elements["concept_display_label"].focus();
 </script>
 ';

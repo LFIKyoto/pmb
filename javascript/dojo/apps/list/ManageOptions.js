@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ManageOptions.js,v 1.5 2018-11-13 09:32:58 dgoron Exp $
+// $Id: ManageOptions.js,v 1.6 2019-05-17 10:59:17 dgoron Exp $
 
 define([
         "dojo/_base/declare",
@@ -12,8 +12,9 @@ define([
         "dojo/dom-attr",
         "dojo/dom",
         "dojo/dom-style",
+        "dojo/request/xhr",
         "dojo/ready"
-], function(declare, lang, request, query, on, domAttr, dom, domStyle, ready){
+], function(declare, lang, request, query, on, domAttr, dom, domStyle, xhr, ready){
 	return declare(null, {
 		selectorAvailableColumns:null,
 		selectorSelectedColumns:null,
@@ -29,6 +30,13 @@ define([
 			on(dom.byId(this.objects_type+'_options_move_option_top'), 'click', lang.hitch(this, this.moveOptionTop));
 			on(dom.byId(this.objects_type+'_options_move_option_bottom'), 'click', lang.hitch(this, this.moveOptionBottom));
 			on(dom.byId(this.objects_type+'_options_move_option_last'), 'click', lang.hitch(this, this.moveOptionLast));
+			on(dom.byId(this.objects_type+'_options_applied_group_more'), 'click', lang.hitch(this, this.appliedGroupMore));
+			var nodes = document.querySelectorAll("."+this.objects_type+"_options_applied_group_delete");
+			if(nodes.length) {
+				for(var i=1; i<=nodes.length; i++) {
+					on(dom.byId(this.objects_type+'_options_applied_group_delete_'+i), 'click', lang.hitch(this, this.appliedGroupDelete, i));
+				}
+			}
 			if(dom.byId(this.objects_type+'_search_form')) {
 				on(dom.byId(this.objects_type+'_search_form'), 'submit', lang.hitch(this, this.selectAll));
 			}
@@ -112,6 +120,30 @@ define([
 	        for (var i = 0; i < selectedColumns.options.length; i++) { 
 	        	selectedColumns.options[i].selected = true; 
 	        }
+		},
+		appliedGroupMore: function() {
+			var domNode = dom.byId(this.objects_type+'_options_applied_group_more_content');
+			var number = domAttr.get(domNode, 'data-applied-group-number');
+			// Limitons à 3 critères pour le moment
+			if(number >= 3) {
+				alert(pmbDojo.messages.getMessage('list', 'list_ui_options_group_by_max_reached'));
+				return;
+			}
+			xhr('./ajax.php?module=ajax&categ=list&sub=options&action=get_applied_group_selector&objects_type='+this.objects_type+'&id='+number, {
+				sync: false,
+			}).then(lang.hitch(this, 
+					function(response){
+						var domNode = dom.byId(this.objects_type+'_options_applied_group_more_content');
+						var number = domAttr.get(domNode, 'data-applied-group-number');
+						domNode.innerHTML += response;
+						number++;
+						domAttr.set(domNode, 'data-applied-group-number', number); 
+					})
+			);
+		},
+		appliedGroupDelete: function(ind) {
+			var domNode = dom.byId(this.objects_type+'_options_applied_group_'+ind);
+			domNode.innerHTML = '';
 		}
 	});
 });

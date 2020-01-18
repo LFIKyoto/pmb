@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fichier_gestion.inc.php,v 1.6 2017-04-20 16:25:28 dgoron Exp $
+// $Id: fichier_gestion.inc.php,v 1.7 2019-08-26 15:09:21 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -26,7 +26,7 @@ switch($mode){
 		break;
 	case 'reindex':
 		$fiche = new fiche();
-		switch($act){
+		switch($sub){
 			case 'run':
 				$fiche->reindex_all();
 				break;

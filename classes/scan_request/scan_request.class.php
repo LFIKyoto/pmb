@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_request.class.php,v 1.36 2018-10-18 10:08:16 mbertin Exp $
+// $Id: scan_request.class.php,v 1.40.2.1 2019-11-27 13:29:35 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -325,7 +325,7 @@ class scan_request {
 		global $scan_request_form;
 		global $record_id;
 		global $bulletin_id;
-		global $scan_request_concept_part;
+		global $thesaurus_concepts_active, $scan_request_concept_part;
 		global $deflt_docs_location;
 		global $pmb_scan_request_location_activate;
 		
@@ -371,7 +371,7 @@ class scan_request {
 			$form = str_replace("!!all_explnum_datas!!",encoding_normalize::json_encode(array_merge($final_records_inputs,$final_bulletin_inputs)),$form);
 			$form = str_replace("!!scan_request_status_editable!!",$this->status->is_infos_editable(),$form);
 			$form = str_replace("!!id!!",$this->id,$form);
-			if($this->status->is_cancelable()){
+			if($this->status->is_cancelable() || $this->status->is_closed()){
 				$form = str_replace("!!bouton_supprimer!!",	"<input type='button' class='bouton' value=' ".$msg[63]." ' onclick='confirmation_delete(\"&action=delete&id=".$this->id."\",\"".htmlentities($this->title,ENT_QUOTES,$charset)."\")'/>",$form);
 				$form.= confirmation_delete($url);
 			}else{
@@ -428,15 +428,19 @@ class scan_request {
 		if($event->get_template_content()){
 			$form = str_replace("!!scan_request_concept_part!!", $event->get_template_content(),$form);
 		}else{
-			if($this->concept_uri){
-				$concept = new concept(0,$this->concept_uri);
-				$scan_request_concept_part = str_replace("!!scan_request_concept_label!!", htmlentities($concept->get_display_label(),ENT_QUOTES,$charset),$scan_request_concept_part);
-				$scan_request_concept_part = str_replace("!!scan_request_concept_uri_value!!", htmlentities($this->concept_uri,ENT_QUOTES,$charset),$scan_request_concept_part);
-			}else{
-				$scan_request_concept_part = str_replace("!!scan_request_concept_label!!", '',$scan_request_concept_part);
-				$scan_request_concept_part = str_replace("!!scan_request_concept_uri_value!!", '',$scan_request_concept_part);
-			}
-			$form = str_replace("!!scan_request_concept_part!!", $scan_request_concept_part, $form);
+		    if($thesaurus_concepts_active == 1){
+		        if($this->concept_uri){
+		            $concept = new concept(0,$this->concept_uri);
+		            $scan_request_concept_part = str_replace("!!scan_request_concept_label!!", htmlentities($concept->get_display_label(),ENT_QUOTES,$charset),$scan_request_concept_part);
+		            $scan_request_concept_part = str_replace("!!scan_request_concept_uri_value!!", htmlentities($this->concept_uri,ENT_QUOTES,$charset),$scan_request_concept_part);
+		        }else{
+		            $scan_request_concept_part = str_replace("!!scan_request_concept_label!!", '',$scan_request_concept_part);
+		            $scan_request_concept_part = str_replace("!!scan_request_concept_uri_value!!", '',$scan_request_concept_part);
+		        }
+		        $form = str_replace("!!scan_request_concept_part!!", $scan_request_concept_part, $form);
+		    } else {
+		        $form = str_replace("!!scan_request_concept_part!!", "", $form);
+		    }
 		}
 
 		$form = str_replace("!!cancel_action!!",$cancel_action,$form);
@@ -683,12 +687,11 @@ class scan_request {
 		$this->send_mail($creation_for_send_mail);
 	}
 	
-	public function delete(){
-		global $dbh;
-		if($this->status->is_cancelable()){
+	public function delete($force=false){
+		if($this->status->is_cancelable() || $this->status->is_closed() || $force){
 			$this->purge_linked_elts();
 			$query = "delete from scan_requests where id_scan_request= ".$this->id;
-			$result = pmb_mysql_query($query,$dbh);
+			$result = pmb_mysql_query($query);
 			$this->id = 0;
 		}
 	}
@@ -1073,13 +1076,19 @@ class scan_request {
 	}
 	
 	protected function get_file(){
+		global $charset;
 		global $fnc;
 		global $num_record;
 		global $num_bul;
 		global $pmb_scan_request_explnum_folder;
 		global $id_rep;
 		global $concept_uri;
+		global $deflt_scan_request_explnum_status;
+		
 		$headers = getallheaders();
+		if($charset == 'utf-8') {
+			$headers['X-File-Name'] = utf8_encode($headers['X-File-Name']);
+		}
 		$protocol = $_SERVER["SERVER_PROTOCOL"];
 		
 		if (!isset($headers['Content-Length'])) {
@@ -1098,7 +1107,8 @@ class scan_request {
 		if (isset($headers['X-File-Size'], $headers['X-File-Name'])) {
 	
 			$file = new stdClass();
-			$file->name = preg_replace('/[^ \.\w_\-]*/', '', basename($headers['X-File-Name']));
+			$file->name = basename($headers['X-File-Name']);
+			$file->filename = preg_replace('/[^ \.\w_\-]*/', '', basename(reg_diacrit($headers['X-File-Name'])));
 			$file->size = preg_replace('/\D*/', '', $headers['X-File-Size']);
 				
 			$maxUpload = $this->getBytes(ini_get('upload_max_filesize')); // can only be set in php.ini and not by ini_set()
@@ -1111,12 +1121,12 @@ class scan_request {
 			}
 				
 			$i=1;
-			$this->fileName = $file->name;
-			while(file_exists("./temp/".$file->name)){
+			$this->fileName = $file->filename;
+			while(file_exists("./temp/".$file->filename)){
 				if($i==1){
-					$file->name = substr($file->name,0,strrpos($file->name,"."))."_".$i.substr($file->name,strrpos($file->name,"."));
+					$file->filename = substr($file->filename,0,strrpos($file->filename,"."))."_".$i.substr($file->filename,strrpos($file->filename,"."));
 				}else{
-					$file->name = substr($file->name,0,strrpos($file->name,($i-1).".")).$i.substr($file->name,strrpos($file->name,"."));
+					$file->filename = substr($file->filename,0,strrpos($file->filename,($i-1).".")).$i.substr($file->filename,strrpos($file->filename,"."));
 				}
 				$i++;
 			}
@@ -1126,7 +1136,7 @@ class scan_request {
 				header($protocol.' 403 Forbidden');
 				return false;
 			}
-			$this->numWrittenBytes = file_put_contents("./temp/".$file->name, $file->content);
+			$this->numWrittenBytes = file_put_contents("./temp/".$file->filename, $file->content);
 			if ($this->numWrittenBytes !== false) {
 				header($protocol.' 201 Created');
 				$returned_num_record = 0;
@@ -1151,7 +1161,10 @@ class scan_request {
 					}
 				}
 				$id_rep = $pmb_scan_request_explnum_folder;
-				$explnum->get_file_from_temp("./temp/".$file->name, $file->name, true);
+				$explnum->get_file_from_temp("./temp/".$file->filename, $file->name, true);
+				if($deflt_scan_request_explnum_status) {
+				    $this->params["statut"] = $deflt_scan_request_explnum_status;
+				}
 				$explnum->update(false);
 				if($concept_uri){
 					$concept = new \concept(0,$concept_uri);
@@ -1256,7 +1269,7 @@ class scan_request {
 				break;
 			case 'a' :
 				$displaying_class = new serial_display($record_id, 0, '', '', '', '', '', 0, 0, 0, 0, false, 0, 1, '', true, 0, 0, 0);
-				$displaying_class->header_texte.=$this->header." in ".$displaying_class->parent_title." (".$displaying_class->parent_numero." ".($displaying_class->parent_date?$displaying_class->parent_date:$displaying_class->parent_aff_date_date).")";
+				$displaying_class->header_texte.=$displaying_class->header." in ".$displaying_class->parent_title." (".$displaying_class->parent_numero." ".($displaying_class->parent_date?$displaying_class->parent_date:$displaying_class->parent_aff_date_date).")";
 				break;
 		}
 		return $displaying_class->header_texte;

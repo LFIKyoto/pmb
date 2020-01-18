@@ -2,10 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export_form.tpl.php,v 1.9 2017-10-18 15:26:29 ngantier Exp $
+// $Id: export_form.tpl.php,v 1.10 2019-05-27 12:57:01 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 require_once("$include_path/templates/export_param.tpl.php");
+
+global $form, $msg, $current_module;
 
 // template pour le formulaire d'export
 $form="

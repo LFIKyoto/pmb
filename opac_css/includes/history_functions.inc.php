@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: history_functions.inc.php,v 1.7 2018-06-08 15:05:19 dgoron Exp $
+// $Id: history_functions.inc.php,v 1.8 2019-06-19 08:17:07 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -18,7 +18,7 @@ function suppr_histo($id_suppr,$tableau_suppr) {
 				get_history($i);
 				global $search;
 				$bool=false;
-				for ($j=0;$j<=count($search);$j++) {
+				for ($j=0;$j<count($search);$j++) {
 					if ($search[$j]=="s_1") {
 						$field_="field_0_".$search[$j];
     					global ${$field_};

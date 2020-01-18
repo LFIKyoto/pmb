@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: section.inc.php,v 1.24 2018-10-12 11:59:35 dgoron Exp $
+// $Id: section.inc.php,v 1.25 2019-06-07 12:42:43 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -83,7 +83,7 @@ switch($action) {
 				$res = pmb_mysql_query($requete, $dbh);
 				$id = pmb_mysql_insert_id();
 			}
-			if (!$num_locations) $num_locations=array();
+			if (!isset($num_locations)) $num_locations=array();
 			$requete="SELECT num_location FROM docsloc_section WHERE num_section='".$id."'";
 			$res=pmb_mysql_query($requete, $dbh);
 			if(pmb_mysql_num_rows($res)){
@@ -125,6 +125,7 @@ switch($action) {
 				$row=pmb_mysql_fetch_object($res);
 				$rqtloc = "select num_location from docsloc_section where num_section='$id' " ;
 				$resloc = pmb_mysql_query($rqtloc, $dbh);
+				$num_locations = array();
 				while ($loc=pmb_mysql_fetch_object($resloc)) $num_locations[]=$loc->num_location ;
 				section_form($row->section_libelle, $row->sdoc_codage_import, $row->sdoc_owner, $id, $row->section_pic, $row->section_visible_opac, $num_locations );
 			} else {

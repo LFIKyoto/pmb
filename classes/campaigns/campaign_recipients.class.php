@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: campaign_recipients.class.php,v 1.3 2018-03-06 17:06:08 dgoron Exp $
+// $Id: campaign_recipients.class.php,v 1.4 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,7 +13,7 @@ class campaign_recipients{
 	protected $recipients;
 	
 	public function __construct($num_campaign=0) {
-		$this->num_campaign = $num_campaign+0;		
+	    $this->num_campaign = (int) $num_campaign;		
 		$this->fetch_data();
 	}
 	

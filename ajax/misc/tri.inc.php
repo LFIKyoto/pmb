@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tri.inc.php,v 1.7 2016-12-13 10:54:34 jpermanne Exp $
+// $Id: tri.inc.php,v 1.8 2019-05-29 12:03:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $quoifaire, $notices_relations_ids;
 
 require_once($class_path."/notice_relations.class.php");
 

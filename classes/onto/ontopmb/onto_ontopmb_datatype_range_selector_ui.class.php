@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_ontopmb_datatype_range_selector_ui.class.php,v 1.5 2017-05-30 13:30:17 vtouchard Exp $
+// $Id: onto_ontopmb_datatype_range_selector_ui.class.php,v 1.6 2019-08-14 08:02:58 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -80,7 +80,7 @@ class onto_ontopmb_datatype_range_selector_ui extends onto_common_datatype_ui {
 		global $msg,$charset,$ontology_tpl;
 
 		$form=$ontology_tpl['form_row'];
-		$form=str_replace("!!onto_row_label!!",htmlentities($property->label ,ENT_QUOTES,$charset) , $form);
+		$form=str_replace("!!onto_row_label!!",htmlentities($property->get_label() ,ENT_QUOTES,$charset) , $form);
 		$form=str_replace("!!onto_new_order!!","0" , $form);
 		$options = "";
 
@@ -139,7 +139,7 @@ class onto_ontopmb_datatype_range_selector_ui extends onto_common_datatype_ui {
 		
 		$display='<div id="'.$instance_name.'_'.$property->pmb_name.'">';
 		$display.='<p>';
-		$display.=$property->label.' : ';
+		$display.=$property->get_label().' : ';
 		foreach($datas as $data){
 			$display.=$data->get_formated_value();
 		}
@@ -152,7 +152,7 @@ class onto_ontopmb_datatype_range_selector_ui extends onto_common_datatype_ui {
 	public static function get_validation_js($item_uri,$property, $restrictions,$datas, $instance_name,$flag){
 		global $msg;
 		return '{
-			"message": "'.addslashes($property->label).'",
+			"message": "'.addslashes($property->get_label()).'",
 			"valid" : true,
 			"error": "",
 			"values": new Array(),
@@ -190,7 +190,7 @@ class onto_ontopmb_datatype_range_selector_ui extends onto_common_datatype_ui {
 						this.message = "'.addslashes($msg['onto_error_only_literal']).'";
 						break;
  				}
-				this.message = this.message.replace("%s","'.addslashes($property->label).'");
+				this.message = this.message.replace("%s","'.addslashes($property->get_label()).'");
 				return this.message;
 			}
 		}';

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestion_import.class.php,v 1.6 2017-01-26 15:50:56 dgoron Exp $
+// $Id: suggestion_import.class.php,v 1.7 2019-02-18 08:53:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -82,12 +82,12 @@ class suggestion_import{
 		_parser_($fic_catal,array("ITEM"=>"_item_"),"CATALOG");		
 		//Création de la liste des types d'import
 		$select_import="<select name=\"import_type\">\n";
+		$select_import .= "<option value='uni'>".$msg['acquisition_import_sugg_uni']."</option>";
 		for ($i=0; $i<count($catalog); $i++) {
 			if ($catalog_import[$i]=="yes" && $catalog[$i]) {
 			   $select_import.="<option value=\"$i\">".$catalog[$i]."</option>\n";
 			}
 		}
-		$select_import .= "<option value='uni'>".$msg['acquisition_import_sugg_uni']."</option>";
 		$select_import.="</select>";
 		$import_sug_form = str_replace('!!liste_import!!',$select_import,$import_sug_form);
 		print $import_sug_form;

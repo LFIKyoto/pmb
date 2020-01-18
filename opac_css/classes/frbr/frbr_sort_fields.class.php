@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_sort_fields.class.php,v 1.5 2018-09-19 10:23:46 tsamson Exp $
+// $Id: frbr_sort_fields.class.php,v 1.6.4.1 2019-09-19 10:35:30 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -52,11 +52,13 @@ class frbr_sort_fields extends frbr_fields {
 				$r.="</td>";
 				$r.="<td><span class='field_critere'>";//Colonne 2
 				if ($f[0]=="f") {
-					if($f[2]) {
+				    if($f[2] && isset(self::$fields[$this->type]["FIELD"][$f[1]]["TABLE"]) && isset($msg[self::$fields[$this->type]["FIELD"][$f[1]]["TABLE"][0]["TABLEFIELD"][$f[2]]["NAME"]])) {
 						$r.=htmlentities($msg[self::$fields[$this->type]["FIELD"][$f[1]]["TABLE"][0]["TABLEFIELD"][$f[2]]["NAME"]],ENT_QUOTES,$charset);
-					} else {
+				    } elseif (isset($msg[self::$fields[$this->type]["FIELD"][$f[1]]["NAME"]])) {
 						$r.=htmlentities($msg[self::$fields[$this->type]["FIELD"][$f[1]]["NAME"]],ENT_QUOTES,$charset);
-					}
+				    } else {
+				        $r.=htmlentities(self::$fields[$this->type]["FIELD"][$f[1]]["NAME"],ENT_QUOTES,$charset);
+				    }
 				} elseif(array_key_exists($f[0],static::$pp)) {
 					$r.=htmlentities(static::$pp[$f[0]]->t_fields[$f[2]]["TITRE"],ENT_QUOTES,$charset);
 				}
@@ -90,7 +92,6 @@ class frbr_sort_fields extends frbr_fields {
 	
 	public function unformat_fields($to_unformat) {
 		global $fields;
-
 		$fields=array();
 		for ($i=0; $i<count($to_unformat); $i++) {
 			$fields[$i] = $to_unformat[$i]["NAME"];
@@ -131,7 +132,7 @@ class frbr_sort_fields extends frbr_fields {
 		if($f[2]) {
 			$query .= " and code_ss_champ = ".$f[2];
 		}
-		$query .= " and ".$this->field_keyName." IN (".implode(',', $datas).") order by value";
+		$query .= " and ".$this->field_keyName." IN (".implode(",",$datas).") order by value";
 		
 		//cas particulier des autorites indexees avec l'id d'autorite
 		if ($this->field_tableName == "authorities_fields_global_index") {
@@ -143,7 +144,11 @@ class frbr_sort_fields extends frbr_fields {
 		    if($f[2]) {
 		        $query .= " AND code_ss_champ = ".$f[2];
 		    }
-		    $query .= " AND num_object IN (".implode(',', $datas).") AND type_object = ".AUT_TABLE_AUTHPERSO." ORDER BY value";
+		    $query .= " AND num_object IN (".implode(",",$datas).")";
+		    if ($this->sub_type) {
+		        $query .= " AND type_object = ".$this->sub_type;
+		    }
+		    $query .= " ORDER BY value";
 		}
 		//
 		//On met le tout dans une table temporaire
@@ -164,18 +169,30 @@ class frbr_sort_fields extends frbr_fields {
 // 		$requete .= " AND ".$this->params["REFERENCE"].".".$this->params["REFERENCEKEY"]."=".$temporary_table_name.".".$this->params["REFERENCEKEY"];
 		$requete .= " AND ".$temporary_table_name."_update.value IS NOT NULL";
 		$requete .= " AND ".$temporary_table_name."_update.value != ''";
+			
 		pmb_mysql_query($requete);
 	}
 	
 	public function sort_datas($datas=array()) {
 		global $fields;
 		
-		$temporary_table_name = "tempo_".str_replace([" ","."],"_",microtime());
-		$query = "CREATE TEMPORARY TABLE ".$temporary_table_name." ENGINE=MyISAM (select distinct ".$this->field_keyName." from ".$this->field_tableName." where ".$this->field_keyName." IN (".implode(',', $datas)."))";
-		pmb_mysql_query($query);
-		$query = "ALTER TABLE " . $temporary_table_name . " ADD PRIMARY KEY (" . $this->field_keyName.")";
-		pmb_mysql_query($query);
+		$sub_query="";
+		if (count($datas)) {
+		    switch ($this->type) {
+		        case "authorities":
+		            $sub_query ="SELECT DISTINCT num_object AS ".$this->field_keyName." FROM authorities WHERE num_object in (".implode(",",$datas).") AND type_object = ".$this->sub_type;
+		            break;
+		        default:
+		            $sub_query = "SELECT DISTINCT ".$this->field_keyName." FROM ".$this->field_tableName." WHERE ".$this->field_keyName." IN (".implode(",",$datas).")";
+		            break;
+		    }
+		}
 		
+		$temporary_table_name = "tempo_".str_replace([" ","."],"_",microtime());
+		$query = "CREATE TEMPORARY TABLE $temporary_table_name ENGINE=MyISAM ($sub_query)";
+		pmb_mysql_query($query);
+		$query = "ALTER TABLE $temporary_table_name ADD PRIMARY KEY (" . $this->field_keyName.")";
+		pmb_mysql_query($query);
 		$orderby = '';
 		for ($i=0; $i<count($fields); $i++) {
 			$asc_desc = $this->get_global_value("asc_desc_".$i."_".$fields[$i]);

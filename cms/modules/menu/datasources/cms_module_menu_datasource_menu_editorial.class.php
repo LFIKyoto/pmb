@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_menu_datasource_menu_editorial.class.php,v 1.11 2016-09-20 10:25:41 apetithomme Exp $
+// $Id: cms_module_menu_datasource_menu_editorial.class.php,v 1.12 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -46,7 +46,7 @@ class cms_module_menu_datasource_menu_editorial extends cms_module_menu_datasour
 
 	public function save_form(){
 		global $cms_module_menu_datasource_menu_editorial_max_depth;
-		$this->parameters['max_depth'] = $cms_module_menu_datasource_menu_editorial_max_depth+0;
+		$this->parameters['max_depth'] = (int) $cms_module_menu_datasource_menu_editorial_max_depth;
 		$this->save_constructor_link_form("section");	
 		return parent::save_form();
 	}

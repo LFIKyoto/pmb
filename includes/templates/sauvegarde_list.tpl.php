@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sauvegarde_list.tpl.php,v 1.11 2017-10-19 07:59:09 ngantier Exp $
+// $Id: sauvegarde_list.tpl.php,v 1.12 2019-05-27 14:55:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $form, $msg;
 
 $form='<h1>'.$msg["sauv_list_titre"].'</h1>
 <form name="sauvegarde_list" method="post" action="admin.php?categ=sauvegarde&sub=list">

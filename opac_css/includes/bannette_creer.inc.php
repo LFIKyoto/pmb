@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannette_creer.inc.php,v 1.34 2018-02-09 11:33:39 dgoron Exp $
+// $Id: bannette_creer.inc.php,v 1.35 2019-01-22 11:27:51 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -47,7 +47,9 @@ if ($equation) {
 
 		$rqt_bannette_equation = "INSERT INTO bannette_equation (num_bannette, num_equation) VALUES (".$bannette->id_bannette.", $instance_equation->id_equation)" ;
 		pmb_mysql_query($rqt_bannette_equation);
-
+		// mise à jour de l'instance bannette_equations de classe bannette
+		$bannette->set_bannette_equations();
+		
 		$rqt_bannette_abon = "INSERT INTO bannette_abon (num_bannette, num_empr, actif) VALUES (".$bannette->id_bannette.", $id_empr, 0)" ;
 		pmb_mysql_query($rqt_bannette_abon);
 

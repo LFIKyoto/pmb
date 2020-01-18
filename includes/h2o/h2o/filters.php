@@ -4,26 +4,26 @@ class FilterCollection {};
 
 
 class CoreFilters extends FilterCollection {
-    static function first($value) {
+    public static function first($value) {
         return $value[0];
     }
     
-    static function last($value) {
+    public static function last($value) {
         return $value[count($value) - 1];
     }
     
-    static function join($value, $delimiter = ', ') {
+    public static function join($value, $delimiter = ', ') {
         return join($delimiter, $value);
     }
     
-    static function length($value) {
+    public static function length($value) {
         if(is_string($value)){
             return strlen($value);
         }
     	return count($value);
     }
     
-    static function urlencode($data) {
+    public static function urlencode($data) {
     	global $charset;
         if (is_array($data)) {
             $result;
@@ -37,13 +37,13 @@ class CoreFilters extends FilterCollection {
         }
     }
     
-    static function hyphenize ($string) {
+    public static function hyphenize ($string) {
         $rules = array('/[^\w\s-]+/'=>'','/\s+/'=>'-', '/-{2,}/'=>'-');
         $string = preg_replace(array_keys($rules), $rules, trim($string));
         return $string = trim(strtolower($string));
     }
  
-	static function urlize( $string, $truncate = false ) {
+	public static function urlize( $string, $truncate = false ) {
 		$reg_exUrl = "/(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?/";
 		preg_match_all($reg_exUrl, $string, $matches);
 		$usedPatterns = array();
@@ -65,65 +65,65 @@ class CoreFilters extends FilterCollection {
 		return $string;
 	}
 
-    static function set_default($object, $default) {
+    public static function set_default($object, $default) {
         return !$object ? $default : $object;
     }
 }
 
 class StringFilters extends FilterCollection {
 
-    static function humanize($string) {
+    public static function humanize($string) {
         $string = preg_replace('/\s+/', ' ', trim(preg_replace('/[^A-Za-z0-9()!,?$]+/', ' ', $string)));
         return capfirst($string);
     }
     
-    static function capitalize($string) {
+    public static function capitalize($string) {
         return ucwords(strtolower($string)) ;
     }
     
-    static function titlize($string) {
+    public static function titlize($string) {
         return self::capitalize($string);
     }
     
-    static function capfirst($string) {
+    public static function capfirst($string) {
         $string = strtolower($string);
         return strtoupper($string{0}). substr($string, 1, strlen($string));
     }
     
-    static function tighten_space($value) {
+    public static function tighten_space($value) {
         return preg_replace("/\s{2,}/", ' ', $value);
     }
     
-    static function escape($value, $attribute = false) {
+    public static function escape($value, $attribute = false) {
     	global $charset;
         return htmlspecialchars($value, $attribute ? ENT_QUOTES : ENT_NOQUOTES,$charset);
     }
     
-    static function escapejson($value) {
+    public static function escapejson($value) {
     	// The standard django escapejs converts all non-ascii characters into hex codes.
     	// This function encodes the entire data structure, and strings get quotes around them.
     	return json_encode($value);
     }
     
-    static function force_escape($value, $attribute = false) {
+    public static function force_escape($value, $attribute = false) {
     	return self::escape($value, $attribute);
     }
     
-    static function e($value, $attribute = false) {
+    public static function e($value, $attribute = false) {
         return self::escape($value, $attribute);
     }
     
-    static function safe($value) {
+    public static function safe($value) {
     	return $value;
     }
     
-	static function truncate ($string, $max = 50, $ends = '...') {
+	public static function truncate ($string, $max = 50, $ends = '...') {
 		return (strlen($string) > $max ? substr($string, 0, $max).$ends : $string);
     }
     
-    static function limitwords($text, $limit = 50, $ends = '...') {
+    public static function limitwords($text, $limit = 50, $ends = '...') {
         if (strlen($text) > $limit) {
-            $words = str_word_count($text, 2);
+            $words = str_word_count(convert_diacrit($text), 2);
             $pos = array_keys($words);
 
             if (isset($pos[$limit])) {
@@ -135,20 +135,46 @@ class StringFilters extends FilterCollection {
 }
 
 class NumberFilters extends FilterCollection {
-    static function filesize ($bytes, $round = 1) {
-        if ($bytes === 0)
-            return '0 bytes';
-        elseif ($bytes === 1)
-            return '1 byte';
-    
-        $units = array(
-            'bytes' => pow(2, 0), 'kB' => pow(2, 10),
-            'BM' => pow(2, 20), 'GB' => pow(2, 30),
-            'TB' => pow(2, 40), 'PB' => pow(2, 50),
-            'EB' => pow(2, 60), 'ZB' => pow(2, 70)
-        );
+	public static function filesize ($bytes, $round = 1) {
+        global $lang;
+        
+    	if ($bytes === 0) {
+        	switch ($lang) {
+				case 'fr_FR':
+	            	return '0 octets';
+				default:
+					return '0 bytes';
+        	}
+        } elseif ($bytes === 1) {
+        	switch ($lang) {
+        		case 'fr_FR':
+        			return '1 octet';
+        		default:
+        			return '1 byte';
+        	}
+    	}
+		switch ($lang) {
+			case 'fr_FR':
+				$units = array(
+						'octets' => pow(2, 0), 'Ko' => pow(2, 10),
+						'Mo' => pow(2, 20), 'Go' => pow(2, 30),
+						'To' => pow(2, 40), 'Po' => pow(2, 50),
+						'Eo' => pow(2, 60), 'Zo' => pow(2, 70)
+				);
+				$lastUnit = 'octets';
+				break;
+			default:
+				$units = array(
+						'bytes' => pow(2, 0), 'kB' => pow(2, 10),
+						'MB' => pow(2, 20), 'GB' => pow(2, 30),
+						'TB' => pow(2, 40), 'PB' => pow(2, 50),
+						'EB' => pow(2, 60), 'ZB' => pow(2, 70)
+				);
+				$lastUnit = 'bytes';
+				break;
+		}
 
-        $lastUnit = 'bytes';
+        
         foreach ($units as $unitName => $unitFactor) {
             if ($bytes >= $unitFactor) {
                 $lastUnit = $unitName;
@@ -159,7 +185,7 @@ class NumberFilters extends FilterCollection {
         }
     }
 
-    static function currency($amount, $currency = 'USD', $precision = 2, $negateWithParentheses = false) {
+    public static function currency($amount, $currency = 'USD', $precision = 2, $negateWithParentheses = false) {
         $definition = array(
             'EUR' => array('�','.',','), 'GBP' => '�', 'JPY' => '�', 
             'USD'=>'$', 'AU' => '$', 'CAN' => '$'
@@ -203,58 +229,58 @@ class NumberFilters extends FilterCollection {
 }
 
 class HtmlFilters extends FilterCollection {
-    static function base_url($url, $options = array()) {
+    public static function base_url($url, $options = array()) {
         return $url;
     }
     
-    static function asset_url($url, $options = array()) {
+    public static function asset_url($url, $options = array()) {
         return self::base_url($url, $options);
     }
     
-    static function image_tag($url, $options = array()) {
+    public static function image_tag($url, $options = array()) {
         $attr = self::htmlAttribute(array('alt','width','height','border'), $options);
         return sprintf('<img src="%s" %s/>', $url, $attr);
     }
 
-    static function css_tag($url, $options = array()) {
+    public static function css_tag($url, $options = array()) {
         $attr = self::htmlAttribute(array('media'), $options);
         return sprintf('<link rel="stylesheet" href="%s" type="text/css" %s />', $url, $attr);
     }
 
-    static function script_tag($url) {
+    public static function script_tag($url) {
         return sprintf('<script src="%s" type="text/javascript"></script>', $url);
     }
     
-    static function links_to($text, $url, $options = array()) {
+    public static function links_to($text, $url, $options = array()) {
         $attrs = self::htmlAttribute(array('ref'), $options);
         $url = self::base_url($url, $options);
         return sprintf('<a href="%s" %s>%s</a>', $url, $attrs, $text);
     }
     
-    static function links_with ($url, $text, $options = array()) {
+    public static function links_with ($url, $text, $options = array()) {
         return self::links_to($text, $url, $options);
     }
     
-    static function strip_tags($text) {
+    public static function strip_tags($text) {
         $text = preg_replace(array('/</', '/>/'), array(' <', '> '),$text);
         return strip_tags($text);
     }
 
-	static function linebreaks($value, $format = 'p') {
+	public static function linebreaks($value, $format = 'p') {
         if ($format === 'br')
             return HtmlFilters::nl2br($value);
         return HtmlFilters::nl2pbr($value);
     }
     
-    static function nl2br($value) {
+    public static function nl2br($value) {
         return str_replace("\n", "<br />\n", $value);
     }
     
-	static function nl2pbr($value) {
+	public static function nl2pbr($value) {
         $result = array();
         $parts = preg_split('/(\r?\n){2,}/m', $value);
         foreach ($parts as $part) {
-            array_push($result, '<p>' . HtmlFilters::nl2br($part) . '</p>');
+            $result[] = '<p>' . HtmlFilters::nl2br($part) . '</p>';
         }
         return implode("\n", $result);
     }
@@ -280,7 +306,7 @@ class HtmlFilters extends FilterCollection {
 }
 
 class DatetimeFilters extends FilterCollection {
-    static function date($time, $format = 'jS F Y H:i') {
+    public static function date($time, $format = 'jS F Y H:i') {
         if ($time instanceof DateTime) 
             $time  = (int) $time->format('U');
         if (!is_numeric($time)) 
@@ -289,7 +315,7 @@ class DatetimeFilters extends FilterCollection {
         return date($format, $time);
     }
 
-    static function relative_time($timestamp, $format = 'g:iA') {
+    public static function relative_time($timestamp, $format = 'g:iA') {
         if ($timestamp instanceof DateTime) 
             $timestamp = (int) $timestamp->format('U');
 
@@ -321,7 +347,7 @@ class DatetimeFilters extends FilterCollection {
         return "$string ago";
     }
 
-    static function relative_date($time) {
+    public static function relative_date($time) {
         if ($time instanceof DateTime) 
             $time = (int) $time->format('U');
 
@@ -351,7 +377,7 @@ class DatetimeFilters extends FilterCollection {
             return date('l, F j, Y',$time ? $time : time());
     }
     
-    static function relative_datetime($time) {
+    public static function relative_datetime($time) {
         $date = self::relative_date($time);
         
         if ($date === 'today')

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: harvest_profil_import.tpl.php,v 1.3 2017-11-07 15:34:41 ngantier Exp $
+// $Id: harvest_profil_import.tpl.php,v 1.4 2019-05-27 14:36:24 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $harvest_list_tpl, $msg, $charset, $harvest_list_line_tpl, $harvest_form_tpl, $current_module, $harvest_form_elt_tpl;
 
 $harvest_list_tpl="	
 <h1>".htmlentities($msg["admin_harvest_profil_title"], ENT_QUOTES, $charset)."</h1>			

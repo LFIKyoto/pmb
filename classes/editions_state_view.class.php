@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: editions_state_view.class.php,v 1.3 2017-02-22 11:11:39 jpermanne Exp $
+// $Id: editions_state_view.class.php,v 1.4 2019-06-05 06:41:21 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-require_once ($class_path."/spreadsheet.class.php");
+require_once ($class_path."/spreadsheetPMB.class.php");
 
 class editions_state_view {
 	public $datas =array();		//tableau de données
@@ -68,7 +68,7 @@ class editions_state_view {
 	}
 	
 	public function render_xls_file($name="state"){
-		$worksheet = new spreadsheet();
+	    $worksheet = new spreadsheetPMB();
 		for($i=0 ; $i<count($this->datas) ; $i++){
 			for($j=0 ; $j<count($this->datas[$i]) ; $j++){
 				$worksheet->write($i,$j,$this->datas[$i][$j]);

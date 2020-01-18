@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_request_statuses.class.php,v 1.4 2017-01-25 16:43:50 dgoron Exp $
+// $Id: scan_request_statuses.class.php,v 1.5 2019-07-05 13:25:15 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -33,7 +33,7 @@ class scan_request_statuses {
 		}
 	}
 
-	static function get_options($selected=0){
+	public static function get_options($selected=0){
 		global $charset,$dbh;
 
 		$options = '';

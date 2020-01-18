@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: de_DE.xml,v 1.898 2019-01-02 14:09:10 ngantier Exp $ -->
+$Id: de_DE.xml,v 1.970.2.25 2019-12-04 10:15:21 dgoron Exp $ -->
 
 <XMLlist>
 <entry code="demo">Demo</entry>
@@ -4389,7 +4389,7 @@ $Id: de_DE.xml,v 1.898 2019-01-02 14:09:10 ngantier Exp $ -->
 <entry code="dsi_ban_form_select_notice_tpl">Record template</entry>
 <entry code="resa_confirm_suppr">Do you really want to delete selected holds ? </entry>
 <entry code="param_rfid_activate">RFID activation for reading barcode</entry>
-<entry code="acquisition_import_sugg_uni">MARC ISO2709</entry>
+<entry code="acquisition_import_sugg_uni">UNIMARC ISO2709</entry>
 <entry code="demandes_menu_title">Requests</entry>
 <entry code="demandes_menu">Requests</entry>
 <entry code="admin_demandes">Requests</entry>
@@ -7723,6 +7723,8 @@ $Id: de_DE.xml,v 1.898 2019-01-02 14:09:10 ngantier Exp $ -->
 <entry js="carto" code="carto_create_form_point">Création d'un point</entry>
 <entry js="carto" code="carto_create_form_polygon">Création d'un polygone</entry>
 <entry js="carto" code="carto_create_form_path">Création d'une ligne</entry>
+<entry js="carto" code="carto_research_label">Rechercher</entry>
+<entry js="carto" code="carto_research_no_result">Aucun résultat pour cette recherche.</entry>
 <entry code="notice_is_new_gestion">Nouveauté</entry>
 <entry code="notice_is_new_gestion_no">Non</entry>
 <entry code="notice_is_new_gestion_yes">Oui</entry>
@@ -8908,11 +8910,11 @@ $Id: de_DE.xml,v 1.898 2019-01-02 14:09:10 ngantier Exp $ -->
 
 <entry code="empr_fiche_tel">Tél. :</entry>
 <entry code="acquisition_action_check_line">Actions sur les lignes cochées : </entry>
-<entry code="acquisition_action_check_line_duplicate">Dupliquer</entry>
-<entry code="acquisition_action_check_line_transfer">Transférer</entry>
-<entry code="selector_commande">Sélection d'une commande</entry>
-<entry code="acquisition_action_no_checked_line">Aucune ligne de cochée !</entry>
-<entry code="acquisition_action_confirm_toggle_acte">Voulez-vous basculer sur la commande sélectionnée ?</entry>
+<entry code="acquisition_action_check_line_duplicate">Dupliquer vers une autre commande</entry>
+<entry code="acquisition_action_check_line_transfer">Transférer vers une autre commande</entry>
+<entry code="selector_cde_aval">Sélection d'une commande à valider</entry>
+<entry code="acquisition_action_no_checked_line">Aucune ligne n'est cochée !</entry>
+<entry code="acquisition_action_confirm_toggle_acte">Vous allez basculer sur la commande sélectionnée.</entry>
 <entry code="cms_build_toolkits">Toolkits</entry>
 <entry code="cms_toolkit_active">Activer :</entry>
 <entry code="cms_toolkit_activated">Activé</entry>
@@ -8955,7 +8957,7 @@ $Id: de_DE.xml,v 1.898 2019-01-02 14:09:10 ngantier Exp $ -->
 <entry code="dsi_docwatch_datasource_boolean_expression">Filtrer les nouveaux éléments avec une expression booléènne</entry>
 <entry code="dsi_docwatch_datasource_monitoring_website">Surveillance de sites web</entry>
 <entry code="dsi_docwatch_datasource_monitoring_website_mode_creation_items">Mode de création des nouveaux éléments</entry>
-<entry code="dsi_docwatch_datasource_monitoring_website_xpath_expressions">Expressions XPath pour cibler des éléments dans la page</entry>
+<entry code="dsi_docwatch_datasource_monitoring_website_xpath_expressions">Expressions XPath pour cibler le résumé des nouveaux éléments</entry>
 <entry code="dsi_docwatch_datasource_monitoring_website_mode_creation_items_by_change">Pour chaque modification de texte dans la page</entry>
 <entry code="dsi_docwatch_datasource_monitoring_website_mode_creation_items_all_change">Pour toutes les modifications de texte dans la page</entry>
 <entry code="dsi_docwatch_datasource_monitoring_website_mode_creation_items_all_links">Pour tous les nouveaux liens de la page</entry>
@@ -9287,7 +9289,7 @@ $Id: de_DE.xml,v 1.898 2019-01-02 14:09:10 ngantier Exp $ -->
 <entry code="frbr_entity_common_datasource_desc_custom_fields_values_format_value">Valeur formatée du champ</entry>
 <entry code="frbr_entity_common_datasource_desc_custom_fields_values_value">Valeur brute du champ</entry>
 <entry code="frbr_page_order">Priorité</entry>
-<entry code="frbr_page_backbone_choice">Choisissez une condition d'affichage</entry>
+<entry code="frbr_page_backbone_choice">Critères à remplir pour l'affichage</entry>
 
 <entry code="bannette_tpl_gerer_vos_alertes">Gérer vos alertes</entry>
 <entry code="search_record_contributor">Contributeur de la notice</entry>
@@ -9838,7 +9840,7 @@ $Id: de_DE.xml,v 1.898 2019-01-02 14:09:10 ngantier Exp $ -->
 <entry code="edit_pnb_order_notice">Notice</entry>
 <entry code="edit_pnb_order_loan_max_duration">Durée maximum</entry>
 <entry code="edit_pnb_order_nb_loans">Nombre de prêts</entry>
-<entry code="edit_pnb_order_nb_simultaneous_loans">Nombre de prêts simultanés</entry>
+<entry code="edit_pnb_order_nb_simultaneous_loans">Nombre de prêts simultanés restants</entry>
 <entry code="edit_pnb_order_nb_consult_in_situ">Nombre de consultations sur place</entry>
 <entry code="edit_pnb_order_nb_consult_ex_situ">Nombre de consultations à distance</entry>
 <entry code="edit_pnb_order_offer_date">Date d'acquisition</entry>
@@ -10061,6 +10063,239 @@ $Id: de_DE.xml,v 1.898 2019-01-02 14:09:10 ngantier Exp $ -->
 <entry code="transaction_payment_method_form_name_no">Le libellé du mode de paiement est obligatoire</entry>
 <entry code="authperso_oeuvres_event">Oeuvres de l'évènement</entry>
 <entry code="empr_environment">Environnement du lecteur</entry>
-<entry  js="chat" code="chat_users_list_expand">Voir la liste de chats</entry>
-<entry  js="chat" code="chat_close">Fermer le chat</entry>
+<entry js="chat" code="chat_users_list_expand">Voir la liste de chats</entry>
+<entry js="chat" code="chat_close">Fermer le chat</entry>
+<entry code="deflt_opac_visible_bulletinage">Activer par défaut l'option du bulletinage en OPAC en création de périodique ?</entry>
+<entry js="empr" code="loan_see_all">Souhaitez-vous afficher tous les prêts ?</entry> 
+<entry code="export_map">Exporter les emprises cartographiques</entry>
+<entry js="contribution_area" code="contribution_area_computed_fields_entity_creation">Création</entry>
+<entry js="contribution_area" code="contribution_area_computed_fields_entity_selection">Sélection</entry>
+<entry code="import_notice_existing_replace">En cas de doublon sur ISBN, remplacer la notice existante par la notice du fichier d'import</entry>
+<entry code="import_notice_existing_replace_message">Attention, tous les champs de la notice existante seront remplacés par ceux de la notice importée</entry>
+<entry code="import_notice_replace_only_one"><![CDATA[<br />(%s notice déjà présente dans la base a été remplacée depuis le début du traitement)]]></entry>
+<entry code="import_notice_replace_many"><![CDATA[<br />(%s notices déjà présentes dans la base ont été remplacées depuis le début du traitement)]]></entry>
+<entry code="import_notice_replaced">Notice : remplacée</entry>
+<entry code="print_concepts">Imprimer un schéma</entry>
+<entry code="print_concepts_title">Impression de concepts</entry>
+<entry code="print_concepts_titre_arbo">Liste arborescente</entry>
+<entry code="print_concepts_titre_alph">Liste à plat</entry>
+<entry code="print_concepts_options">Options d'impression de concepts</entry>
+<entry code="print_concepts_option_libelle">Imprimer le libellé</entry>
+<entry code="print_concepts_option_uri">Imprimer l'URI</entry>
+<entry code="print_concepts_option_isbd">Imprimer l'ISBD</entry>
+<entry code="print_concepts_option_detail">Imprimer le détail</entry>
+<entry code="calendrier_initialization">Réinitialiser</entry>
+
+<entry code="import_advanced_form">Options avancées</entry>
+<entry code="import_choix_caddie_noti">Ajouter les notices importées au panier :</entry>
+<entry code="import_choix_caddie_expl">Ajouter les exemplaires importés  au panier :</entry>
+<entry code="import_choix_caddie_bull">Ajouter les bulletins importés au panier :</entry>
+<entry code="import_added_caddie_noti">Lien vers le panier de notices :</entry>
+<entry code="import_added_caddie_expl">Lien vers le panier d'exemplaires :</entry>
+<entry code="import_added_caddie_bull">Lien vers le panier de bulletins :</entry>
+<entry code="onto_contribution_delete_in_progress">Suppression en cours...</entry>
+<entry code="cashdesk_edition_transac_payment_method">Mode de paiement</entry>
+<entry code="admin_contribution_area_form_comment">Commentaire</entry>
+<entry code="list_ui_add_filter">Ajouter un filtre</entry>
+<entry code="list_ui_filter_date_start">Après le</entry>
+<entry code="list_ui_filter_date_end">Avant le</entry>
+<entry code="dsi_flux_link">Lien du flux</entry>
+<entry code="pclassement_locations">Visible dans les localisations :</entry>
+<entry code="dsi_ban_senders">Expéditeur (Choix par défaut = utilisateur qui déclenche la diffusion)</entry>
+<entry code="dsi_ban_senders_default">Choix par défaut</entry>
+<entry code="caddie_autorisations_all">Visible pour tous</entry>
+<entry code="procs_autorisations_all">Visible pour tous</entry>
+<entry code="caddie_favorite_color">Couleur associée</entry>
+<entry code="acquisition_adr_fac_resume">Reprendre comme adresse de facturation</entry>
+<entry code="acquisition_adr_liv_resume">Reprendre comme adresse de livraison</entry>
+<entry code="expl_header_nb_prets">Nombre de prêts</entry>
+<entry code="acquisition_action_unsaved_lines">Certaines lignes ne sont pas enregistrées !</entry>
+<entry code="acquisition_action_transfer_not_all_lines">Il n'est pas possible de transférer l'ensemble des lignes !</entry>
+<entry code="expl_price">Prix</entry>
+<entry code="print_concepts_option_alter_hidden">Imprimer les libellés alternatifs et cachés</entry>
+<entry  code="acquisition_act_apply_budget_to_checked">Affecter le budget :</entry>
+<entry  code="acquisition_act_apply_type_to_checked">Affecter le type de produit : </entry>
+<entry code="readerlist_dateexpiration_days">Nombre de jours par rapport à la fin d'adhésion</entry>
+<entry code="selvars_empr_nb_days_before_expiration">Nombre de jours avant fin d'adhésion</entry>
+<entry code="selvars_empr_auth_opac_subscribe_link">Lien de réabonnement</entry>
+<entry code="empr_renewal_form">Formulaire de modification du compte lecteur</entry>
+<entry code="empr_renewal_form_fields">Champs de l'emprunteur</entry>
+<entry code="empr_renewal_form_display">Afficher</entry>
+<entry code="empr_renewal_form_mandatory">Obligatoire</entry>
+<entry code="empr_renewal_form_alterable">Modifiable</entry>
+<entry code="empr_renewal_form_explanation">Texte explicatif</entry>
+<entry js="carto" code="carto_address">Adresse</entry>
+<entry code="search_extended_map_address">Adresse</entry>
+<entry code="less_than_days_query">Il y a moins de</entry>
+<entry code="more_than_days_query">Il y a plus de</entry>
+<entry code="days">jour(s)</entry>
+<entry code="this_week_query">Cette semaine</entry>
+<entry code="last_week_query">La semaine dernière</entry>
+<entry code="this_month_query">Ce mois-ci</entry>
+<entry code="last_month_query">Le mois dernier</entry>
+<entry code="this_year_query">Cette année</entry>
+<entry code="selector_connectors">Sélection d'un set de donnée</entry>
+<entry js="dsi" code="docwatch_watch_filter_items">Filtrer les items</entry>
+<entry code="dsi_docwatch_datasource_duplicate">Dupliquer</entry>
+<entry js="dsi" code="dsi_js_docwatch_duplicate_source">Dupliquer une source</entry>
+<entry code="dsi_docwatch_source_form_watch_parent">Veille parente</entry>
+<entry code='search_extended_record_id'>Identifiant de la notice</entry>
+<entry js="date" code="date_begin">Début:</entry>
+<entry js="date" code="date_end">Fin:</entry>
+<entry code='caddie_menu_remplir'>Remplir</entry>
+<entry code='caddie_classement_created_from_search'>Créés depuis une recherche</entry>
+<entry code='caddie_creation_in_progress'>Création du panier en cours...</entry>
+<entry code='caddie_shortaction_tooltip_title'>Si aucune case n'est cochée, l'action s'appliquera à tout le résultat de recherche</entry>
+<entry code="composed_vedettes_grammars">Grammaires</entry>
+<entry code="composed_vedettes_schemes_by_entity">Définition du schéma à utiliser en fonction du type d'entité PMB</entry>
+<entry code="clean_records_thumbnail">Déplacer les vignettes de notices enregistrées en base vers le répertoire d'upload</entry>
+<entry code="cleaning_records_thumbnail">Déplacement des vignettes de notices enregistrées en base vers le répertoire d'upload</entry>
+<entry code="notice_title_basket">Ajouter à votre panier</entry>
+<entry code="notice_title_basket_exist">Cette notice est présente dans votre panier !</entry>
+<entry code="aut_link_comment">Commentaire</entry>
+<entry code="aut_link_duration_date">Date</entry>
+<entry code="aut_link_duration_entre">Entre</entry>
+<entry code="aut_link_duration_et">et</entry>
+<entry code="gen_aut_link">Générer les liens entre autorités</entry>
+<entry code="gen_aut_link_title">Génération des liens entre autorités</entry>
+<entry code="gen_net_base_aut_link_error">La création de la nouvelle structure de la table aut_link est impossible ! Les fichiers subst de includes/marc_tables/fr_FR/aut_link.xml, de opac_css/includes/marc_tables/fr_FR/aut_link.xml et de toutes les langues, doivent être créés avec l'ajout des codes de liens : </entry>
+<entry code="aut_link_reciproque_title">Réciproque si cochée</entry>
+<entry code="notice_create_manifestation_fille">Créer une manifestation fille</entry>
+<entry code="clean_cache_temporary_files">Vider le cache des fichiers temporaires</entry>
+<entry code="cleaning_cache_temporary_files">Purge du cache des fichiers temporaires</entry>
+<entry code="cms_module_charte_accept_button">J'ai lu et j'accepte les conditions</entry>
+<entry code="list_ui_options_group_by_then">Puis par</entry>
+<entry js="list" code="list_ui_options_group_by_max_reached">Vous avez atteint la limite autorisée.</entry>
+<entry code="resa_planning_to_validate">Prévisions à valider</entry>
+<entry js="carto" code="carto_postcode">Code postal</entry>
+<entry js="carto" code="carto_city">Ville</entry>
+<entry code="dsi_bannette_type">Type</entry>
+<entry code="dsi_all_types">TOUTES</entry>
+<entry code="bannettes_ui_form_title">Recherche emprunteur</entry>
+<entry code="noti_statut_delete_forbidden">Vous ne pouvez pas supprimer ce statut car il est nécessaire au bon fonctionnement de PMB (Identifiants 1 et 2).</entry>
+<entry code="dsi_flux_form_metadata">Flux accessible par un agrégateur de flux RSS</entry>
+<entry js="acquisition" code="acquisition_act_tab_checked_empty">Vous devez sélectionner une ou plusieurs lignes</entry>
+<entry code="special_search_openurl">OpenURL</entry>
+<entry code="caddie_menu_action_supprbase">Suppr de la base</entry>
+<entry code="admin_noti_map_echelle_modification">Modifier l'échelle</entry>
+<entry code="admin_noti_map_projection_modification">Modifier la projection</entry>
+<entry code="admin_noti_map_ref_modification">Modifier la référence</entry>
+<entry code="fetch_empr_adhesion_renouv_proche">Fin d'abonnement proche</entry>
+<entry code="fetch_empr_adhesion_renouv_depassee">Abonnement dépassé</entry>
+<entry code="bibloto_sendMailPret">Le mail est envoyé</entry>
+<entry code="bibloto_sendMailPret_failed">Echec(s) de l'envoi par mail</entry>
+<entry code="prolongation_ok">Prolongation effectuée</entry>
+<entry code="noteq_query"><![CDATA[!=]]></entry>
+<entry code="nomenclature_search_by_number_of_instruments">Par nombre d'instruments</entry>
+<entry code="nomenclature_search_by_number_of_voices">Par nombre de voix</entry>
+<entry code="nomenclature_search_voices">Voix</entry>
+<entry code="acquisition_copy_chk_lig">Dupliquer</entry>
+<entry code="move_top_arrow">Déplacer vers le haut</entry>
+<entry code="move_bottom_arrow">Déplacer vers le bas</entry>
+<entry code="merge">Fusionner</entry>
+<entry code="with">Avec</entry>
+<entry code="cms_module_common_datasource_desc_last_update_sql_date">Date de dernière mise à jour (Format SQL)</entry>
+<entry code="acquisition_nb_recipients">Nombre de destinataires</entry>
+<entry code="admin_ExpSupports">Supports des documents</entry>
+<entry code="search_perso_opac_views">Vues Opac</entry>
+<entry code="search_perso_opac_view_empty">Pas de vue Opac</entry>
+<entry code="search_perso_opac_view_select">Pour toutes les vues</entry>
+<entry code="acquisition_recept_update_sug_err">Une erreur est survenue lors du changement d'état de la suggestion.</entry>
+<entry code="acquisition_recept_update_sug_ok">Le changement d'état de la suggestion est enregistré.</entry>
+<entry code='thesaurus'>Thésaurus</entry>
+<entry js="grid" code="category_change_thesaurus_confirm">Le changement du thésaurus va entraîner la perte des données des champs associés. Voulez-vous continuer ?</entry>
+<entry code="abonnements_nom_opac_abonnement">Nom OPAC de l'abonnement</entry>
+<entry js="acquisition" code="acquisition_relance_already_confirm">Une relance sélectionnée a déjà été réalisée ce jour. Etes-vous sûr de vouloir en faire une autre ?</entry>
+<entry code="notice_integre_serie_use_existing">Utiliser un titre de série existant</entry>
+<entry code="notice_integre_serie_new">Insérer un nouveau titre de série</entry>
+<entry code="admin_opac_renewal_activate">Activer l'onglet de modification de profil à l'OPAC</entry>
+<entry code="empr_msg">Message</entry>
+<entry code="print_mail">Impression / Mail</entry>
+<entry code="cote_border_size">taille de la bordure</entry>
+<entry code="acquisition_frais_add_to_new_order">Ajout automatique aux nouvelles commandes</entry>
+<entry code="acquisition_frais_add_to_new_order_enable">Activer</entry>
+<entry code="acquisition_frais_add_to_new_order_enabled">Activé</entry>
+<entry code="acquisition_frais_add_to_new_order_disabled">Désactivé</entry>
+
+<entry code="planificateur_task_statut_active">Active</entry>
+<entry code="planificateur_task_statut_inactive">Désactivée</entry>
+<entry code="concept_use_cant_delete">Ce concept est utilisé dans d'autres autorités. Impossible de le supprimer.</entry>
+<entry code="caddie_shortaction_confirmation">Aucun élément sélectioné. L'action va être réalisée sur l'ensemble des résultats de recherche. Voulez-vous continuer ?</entry>
+<entry code="authperso">Autorités personnalisées</entry>
+<entry code="dsi_form_unvalid">Aucune bannette sélectionnée</entry>
+<entry code="search_segment_delete_set">Supprimer jeu de données</entry>
+<entry code="dsi_flux_form_no_active_tri">Aucun tri défini pour ce flux RSS</entry>
+<entry code="extexplnum_lender_num_lender">Nom du propriétaire</entry>
+<entry code="extnum_location">Localisation</entry>
+<entry code="lenders_all">Tous les propriétaires</entry>
+<entry code="recherche_exemplaires_bulletin_notice">Notice de bulletin associée</entry>
+<entry code="admin_opac_contact_form_object_message">Corps du message</entry>
+<entry code="empr_validated_subscription">Inscription validée</entry>
+<entry code="planificateur_alert_perio">Planification de la périodicité incorrecte !</entry>
+<entry code="planificateur_catalog_opac_maintenance">Page de maintenance OPAC</entry>
+<entry code="search_extended_predefined_search">Recherches prédéfinies</entry>
+<entry code="predefined_search_choice">Choisissez une recherche prédéfinie</entry>
+<entry code="predefined_search_empty">Aucune recherche prédéfinie</entry>
+<entry code="search_perso_expl_menu">Prédéfinies exemplaires</entry>
+<entry code="search_perso_expl_title">Recherches prédéfinies exemplaires > Toutes les recherches</entry>
+<entry code="search_perso_delete_used_by_equations">Impossible de supprimer cette recherche prédéfinie car elle est utilisée par une ou plusieurs équations.</entry>
+<entry code="search_perso_delete_used_by_search_perso">Impossible de supprimer cette recherche prédéfinie car elle est utilisée par une ou plusieurs recherches prédéfinies.</entry>
+<entry code="search_perso_delete_used_by_opac_views">Impossible de supprimer cette recherche prédéfinie car elle est utilisée par une ou plusieurs vues OPAC.</entry>
+<entry code="expl_champs_perso">Champs personnalisés (Exemplaires)</entry>
+<entry code="explnum_champs_perso">Champs personnalisés (Documents numériques)</entry>
+<entry code="cms_module_common_datasource_desc_last_update_sql_date">Date de dernière mise à jour (Format SQL)</entry>
+<entry code="cms_module_charte_accept_button">J'ai compris</entry>
+<entry js="dsi" code="docwatch_watch_purge">Purger</entry>
+<entry js="dsi" code="docwatch_watch_purge_items_mark_as_deleted">Purger les items supprimés</entry>
+<entry js="dsi" code="docwatch_watch_purge_items_mark_as_deleted_confirm">Vous allez purger les items supprimés. Cette action est irréversible! Voulez-vous vraiment continuer?</entry>
+<entry code="cart_include_bulletin_notice">Ajouter aussi les notices de bulletins</entry>
+<entry code="cart_include_analysis">Ajouter aussi les dépouillements</entry>
+<entry code="cms_module_item_datasource_desc_concepts">Tableau des concepts</entry>
+<entry code="admin_opac_contact_form_parameter_email_object_free_entry">Autoriser la saisie libre dans l'objet ?</entry>
+<entry code="admin_opac_contact_form_recipients_email_object_free_entry">Email pour un objet en saisie libre</entry>
+<entry code="pnb_admin_import_expl">Exemplaires</entry>
+<entry code="pnb_admin_import_expl_codestat">Code statistique</entry>
+<entry code="pnb_admin_import_expl_statut">Statut</entry>
+<entry code="pnb_admin_import_expl_typedoc">Support</entry>
+<entry code="cote_character_line_break">retour à la ligne sur le caractère</entry>
+<entry code="groupe_comment_gestion">Commentaire de gestion</entry>
+<entry code="groupe_comment_opac">Commentaire OPAC</entry>
+<entry code="alerte_transferts_depart">Départ</entry>
+<entry code="empr_groups_comments">Message de groupe</entry>
+<entry code="admin_opac_contact_form_parameter_attachments">Pièce(s) jointe(s) :</entry>
+<entry code="empr_subscribe_form">Formulaire d'inscription</entry>
+<entry code="empr_account">Compte lecteur</entry>
+<entry code="search_universe_id">Identifiant</entry>
+<entry code="search_universe_url">Permalien</entry>
+<entry code="search_segment_id">Identifiant</entry>
+<entry code="search_segment_url">Permalien</entry>
+<entry code="adresse_resa_concerne">Réservation(s) de %s</entry>
+<entry code="dsi_flux_form_format_flux_items">Format des notices présentes dans le flux</entry>
+<entry code="dsi_flux_form_format_flux_item_title">Titre</entry>
+<entry code="dsi_flux_form_format_flux_item_description">Description</entry>
+<entry code="acquisition_action_check_line_increase_rate">Appliquer une augmentation de : </entry>
+<entry code="acquisition_action_check_line_increase_rate_percent">%</entry>
+<entry code="empr_resp_group_location">Localisation du responsable</entry>
+<entry code="lettres_mails_relance_groupe">Imprimer/Envoyer toutes les lettres de relance des groupes cochés</entry>
+<entry code="mails_relance_groupe">Envoyer toutes les lettres de relance des groupes cochés</entry>
+<entry code="imprimer_envoyer_liste_prets_groupes">Imprimer/Envoyer la liste des prêts des groupes cochés</entry>
+<entry code="envoyer_liste_prets_groupes">Envoyer la liste des prêts des groupes cochés</entry>
+<entry code="acquisition_invoices_select_unselect">Tout cocher / Tout décocher</entry>
+<entry code="list_ui_sort_by_then">Puis par</entry>
+<entry js="list" code="list_ui_sort_by_max_reached">Vous avez atteint la limite autorisée.</entry>
+<entry code="docs_section_libelle_opac">Libellé en OPAC</entry>
+<entry code="deflt_scan_request_explnum_status">Statut par défaut en création de document numérique sur une demande de numérisation</entry>
+<entry code="group_lettre_resa">Adresser les lettres de réservation individuelles au responsable de ce groupe ?</entry>
+<entry code="group_lettre_resa_show_nomgroup">Imprimer le nom de ce groupe sur les lettres de réservation individuelles ?</entry>
+<entry code="group_mail_resa">Adresser les mails de réservation individuels au responsable de ce groupe ?</entry>
+<entry code="combine_expl_explnum">Exemplaires / Documents numériques</entry>
+<entry code="combine_expl_explnum_location">Localisation</entry>
+<entry code="combine_expl_explnum_lender">Nom du propriétaire</entry>
+<entry code="mail_retard_unknown_mail"><![CDATA[Aucune adresse mail de référence pour le lecteur %s]]></entry>
+<entry code="acquisition_affect_fou_to_all_etab">Associer ce fournisseur à tous les établissements</entry>
+<entry code="acquisition_coord_all_in_parenthesis"> (Tous établissements)</entry>
+<entry code="bulletin_move_bouton">Déplacer</entry>
+<entry code="bulletin_move">Déplacement d'un bulletin</entry>
+<entry code="bulletin_move_sel_perio">Sélection du périodique</entry>
+<entry code="bulletin_move_sel_perio_choose">Veuillez sélectionner un périodique</entry>
 </XMLlist>

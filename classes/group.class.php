@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: group.class.php,v 1.21 2018-04-23 11:31:36 dgoron Exp $
+// $Id: group.class.php,v 1.23.2.2 2019-11-27 09:02:53 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -23,7 +23,12 @@ class group {
 	public $lettre_rappel = 0 ;
 	public $mail_rappel = 0 ;
 	public $lettre_rappel_show_nomgroup = 0 ;
-
+    public $comment_gestion = '';
+    public $comment_opac = '';
+    public $lettre_resa = 0 ;
+    public $mail_resa = 0 ;
+    public $lettre_resa_show_nomgroup = 0 ;
+    
 	// constructeur
 	public function __construct($id=0) {
 		$this->id = $id+0;
@@ -46,6 +51,11 @@ class group {
 			$this->lettre_rappel=$row->lettre_rappel;
 			$this->mail_rappel=$row->mail_rappel;
 			$this->lettre_rappel_show_nomgroup=$row->lettre_rappel_show_nomgroup;
+			$this->comment_gestion = $row->comment_gestion;
+			$this->comment_opac = $row->comment_opac;
+			$this->lettre_resa=$row->lettre_resa;
+			$this->mail_resa=$row->mail_resa;
+			$this->lettre_resa_show_nomgroup=$row->lettre_resa_show_nomgroup;
 			// récupération id et libelle du responsable
 			if($row->resp_groupe) {
 			  	$this->id_resp = $row->resp_groupe;
@@ -80,8 +90,16 @@ class group {
 		else $group_form = str_replace('!!mail_rappel!!', "", $group_form);
 		if ($this->lettre_rappel_show_nomgroup) $group_form = str_replace('!!lettre_rappel_show_nomgroup!!', "checked", $group_form);
 		else $group_form = str_replace('!!lettre_rappel_show_nomgroup!!', "", $group_form);
-	 	$group_form = str_replace('!!group_name!!', htmlentities($this->libelle,ENT_QUOTES, $charset), $group_form);
+		if ($this->lettre_resa) $group_form = str_replace('!!lettre_resa!!', "checked", $group_form);
+		else $group_form = str_replace('!!lettre_resa!!', "", $group_form);
+		if ($this->mail_resa) $group_form = str_replace('!!mail_resa!!', "checked", $group_form);
+		else $group_form = str_replace('!!mail_resa!!', "", $group_form);
+		if ($this->lettre_resa_show_nomgroup) $group_form = str_replace('!!lettre_resa_show_nomgroup!!', "checked", $group_form);
+		else $group_form = str_replace('!!lettre_resa_show_nomgroup!!', "", $group_form);
+		$group_form = str_replace('!!group_name!!', htmlentities($this->libelle,ENT_QUOTES, $charset), $group_form);
 		$group_form = str_replace('!!nom_resp!!', $this->libelle_resp, $group_form);
+		$group_form = str_replace('!!comment_gestion!!', $this->comment_gestion, $group_form);
+		$group_form = str_replace('!!comment_opac!!', $this->comment_opac, $group_form);
 		$group_form = str_replace('!!groupID!!', $this->id, $group_form);
 		$group_form = str_replace('!!respID!!', $this->id_resp, $group_form);
 		if($this->id) {
@@ -97,12 +115,17 @@ class group {
 	}
       
 	// affectation de nouvelles valeurs
-	public function set($group_name, $respID=0, $lettre_rappel=0, $mail_rappel=0, $lettre_rappel_show_nomgroup=0) {
+	public function set($group_name, $respID=0, $lettre_rappel=0, $mail_rappel=0, $lettre_rappel_show_nomgroup=0, $comment_gestion='', $comment_opac='') {
 		if ($group_name) $this->libelle = $group_name;
 		$this->id_resp = $respID;
 		$this->lettre_rappel=$lettre_rappel;
 		$this->mail_rappel=$mail_rappel;
 		$this->lettre_rappel_show_nomgroup=$lettre_rappel_show_nomgroup;
+		$this->comment_gestion = stripslashes($comment_gestion);
+		$this->comment_opac = stripslashes($comment_opac);
+		$this->lettre_resa=$lettre_resa;
+		$this->mail_resa=$mail_resa;
+		$this->lettre_resa_show_nomgroup=$lettre_resa_show_nomgroup;
 		return;
 	}
 
@@ -128,7 +151,7 @@ class group {
 		 					'id_abt' => $mb->id_abt);
 			}
 		}
-		$this->nb_members = sizeof($this->members);
+		$this->nb_members = count($this->members);
 		return;
 	}
 
@@ -185,6 +208,11 @@ class group {
 			$requete .= ", lettre_rappel='".$this->lettre_rappel."'";
 			$requete .= ", mail_rappel='".$this->mail_rappel."'";
 			$requete .= ", lettre_rappel_show_nomgroup='".$this->lettre_rappel_show_nomgroup."'";
+			$requete .= ", comment_gestion='".addslashes($this->comment_gestion)."'";
+			$requete .= ", comment_opac='".addslashes($this->comment_opac)."'";
+			$requete .= ", lettre_resa='".$this->lettre_resa."'";
+			$requete .= ", mail_resa='".$this->mail_resa."'";
+			$requete .= ", lettre_resa_show_nomgroup='".$this->lettre_resa_show_nomgroup."'";
 			$requete .= " WHERE id_groupe=".$this->id." LIMIT 1";
 			$res = pmb_mysql_query($requete, $dbh);
 		} else {
@@ -198,6 +226,11 @@ class group {
 			$requete .= ", lettre_rappel='".$this->lettre_rappel."'";
 			$requete .= ", mail_rappel='".$this->mail_rappel."'";
 			$requete .= ", lettre_rappel_show_nomgroup='".$this->lettre_rappel_show_nomgroup."'";
+			$requete .= ", comment_gestion='".addslashes($this->comment_gestion)."'";
+			$requete .= ", comment_opac='".addslashes($this->comment_opac)."'";
+			$requete .= ", lettre_resa='".$this->lettre_resa."'";
+			$requete .= ", mail_resa='".$this->mail_resa."'";
+			$requete .= ", lettre_resa_show_nomgroup='".$this->lettre_resa_show_nomgroup."'";
 			$result = pmb_mysql_query($requete, $dbh);
 			$this->id = pmb_mysql_insert_id();
 		}
@@ -220,7 +253,7 @@ class group {
 	
 		if($this->id) {
 			if($this->nb_members) {
-				while(list($cle, $membre) = each($this->members)) {
+			    foreach ($this->members as $cle => $membre) {
 					$date_prolong = "form_expiration_".$membre['id'];
 					global ${$date_prolong};
 					if (${$date_prolong} != "") {

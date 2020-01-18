@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: EntityTree.js,v 1.10 2018-04-05 14:55:12 vtouchard Exp $
+// $Id: EntityTree.js,v 1.11 2019-03-29 16:16:25 tsamson Exp $
 
 
 define(["dojo/_base/declare", 
@@ -47,6 +47,12 @@ define(["dojo/_base/declare",
 					break;
 				case 'checkChildrenToDelete':
 					this.checkChildrenToDelete(evtArgs);
+					break;
+				case 'expandAll':
+					this.expandAll();
+					break;
+				case 'collapseAll':
+					this.collapseAll();
 					break;
 			}
 		},

@@ -2,9 +2,15 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_logo.tpl.php,v 1.5 2017-11-23 10:29:08 dgoron Exp $
+// $Id: cms_logo.tpl.php,v 1.7 2019-05-27 11:55:30 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $cms_logo_form_tpl;
+global $cms_logo_form_exist_obj_tpl;
+global $cms_logo_form_new_obj_tpl;
+global $cms_logo_field_tpl;
+global $cms_new_logo_field_tpl, $msg, $charset;
 
 $cms_logo_form_tpl ="
 	<div id='el1Child_0' class='row' movable='yes' title=\"".htmlentities($msg['cms_editorial_form_logo'], ENT_QUOTES, $charset)."\">

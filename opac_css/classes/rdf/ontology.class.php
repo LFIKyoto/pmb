@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ontology.class.php,v 1.3 2017-01-06 16:10:52 tsamson Exp $
+// $Id: ontology.class.php,v 1.4 2019-05-09 10:35:37 ngantier Exp $
 
 
 if (stristr ($_SERVER['REQUEST_URI'], ".class.php"))
@@ -77,7 +77,7 @@ class ontology_parser {
 
 		global $charset;
 		
-		$xml=file_get_contents ($this->ontology_file, "r") or die ("Can't find XML file $this->ontology_file");
+		$xml=file_get_contents ($this->ontology_file, "r") or die (htmlentities("Can't find XML file $this->ontology_file", ENT_QUOTES, $charset));
 		
 		$this->parser=xml_parser_create ('utf-8');
 		xml_set_object ($this->parser, $this);

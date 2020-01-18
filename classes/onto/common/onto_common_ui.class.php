@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_ui.class.php,v 1.27 2018-11-29 13:58:12 apetithomme Exp $
+// $Id: onto_common_ui.class.php,v 1.30 2019-05-27 08:21:47 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -48,7 +48,7 @@ class onto_common_ui extends onto_root_ui{
 			$add_msg = sprintf($msg['onto_common_add'], $controler->get_label($params->sub));
 		}
 		$form = str_replace('!!search_form_user_input!!',stripslashes(htmlentities($params->user_input,ENT_QUOTES,$charset)),$form);
-		$form = str_replace('!!search_form_add_value_onclick!!','document.location=\'./'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&id=&action=edit&concept_scheme='.$params->concept_scheme.'&parent_id='.$params->parent_id.'\'', $form);
+		$form = str_replace('!!search_form_add_value_onclick!!','document.location=\'./'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&id=&action=edit&concept_scheme='.implode(",",$params->concept_scheme).'&parent_id='.$params->parent_id.'\'', $form);
 		$form = str_replace('!!search_form_add_value!!',htmlentities($add_msg,ENT_QUOTES,$charset), $form);
 		
 		return $form;
@@ -159,12 +159,9 @@ class onto_common_ui extends onto_root_ui{
 				$item_label = (isset($item[$lang]) ? $item[$lang] : $item['default']);
 				$current_element_form = str_replace("!!item_libelle!!", htmlentities($item_label,ENT_QUOTES,$charset), $current_element_form);
 				if($multiple_range){
-					$item = "[".$controler->get_class_label($element)."] ".$item_label;
-				}else{
-					$item = $item_label;
-				}		
-				
-				$current_element_form = str_replace("!!item!!", addslashes($item), $current_element_form);
+				    $item_label = "[".$controler->get_class_label($element)."] ".$item_label;
+				}
+				$current_element_form = str_replace("!!item!!", addslashes($item_label), $current_element_form);
 				$elements_form.= $current_element_form;
 			}
 			$list = str_replace("!!elements_form!!", $elements_form, $list);
@@ -217,7 +214,7 @@ class onto_common_ui extends onto_root_ui{
 	 * @param onto_common_controler $controler
 	 * @param array $errors
 	 */
-	public static function display_errors($controler,$errors){
+	public static function display_errors($controler,$errors, $return_messages = false){
 		global $msg;
 		
 		$messages = array();
@@ -242,6 +239,9 @@ class onto_common_ui extends onto_root_ui{
 						break;
 				}
 			}
+		}
+		if ($return_messages) {
+		    return $messages;
 		}
 		error_message($msg['540'], implode("<br/>",$messages), 1);
 	}

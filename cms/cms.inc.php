@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms.inc.php,v 1.10 2017-03-30 13:57:49 dgoron Exp $
+// $Id: cms.inc.php,v 1.11 2019-06-06 09:56:29 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "0");
+if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "0");
 
 require_once ("$include_path/cms/cms.inc.php");
 require_once($class_path."/cms/cms_editorial.class.php");

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_build.tpl.php,v 1.83 2018-07-25 09:51:12 dgoron Exp $
+// $Id: cms_build.tpl.php,v 1.84.6.2 2019-11-26 07:48:39 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
+
+global $cms_url_base_cms_build, $pmb_opac_url, $cms_edit_css, $msg, $cms_objet_type_selection, $cms_edit_objet, $opac_url_base, $cms_build_cadres_in_page_tpl, $cms_build_cadres_not_in_page_tpl, $cms_build_cadres_not_in_cms_tpl, $cms_build_cadre_tpl_item, $cms_build_cadre_tpl_not_in_page_item, $cms_build_cadre_tpl_not_in_cms_item, $cms_build_pages_tpl, $cms_build_pages_tpl_item, $cms_build_pages_ajax_tpl, $cms_build_modules_tpl, $cms_build_versions_tpl, $cms_build_versions_tpl_item,  $cms_build_versions_ajax_tpl, $cms_build_version_form_ajax_tpl, $cms_build_version_del_button_tpl, $cms_build_version_tags_item, $cms_edit_toolkits, $cms_build_block_tpl, $cms_active_toolkits, $cms_build_cadre_tpl_filter; 
 
 if($cms_url_base_cms_build){
 	$build_url=$cms_url_base_cms_build;
@@ -289,8 +291,8 @@ $cms_edit_objet="
 			if(n>0)url=url.substring(0,n);
 		 
 			var n=url.lastIndexOf('/')+1;
-			var url='".$opac_url_base."'+url.substring(n);
-					
+			var url='".$build_url."'+url.substring(n);
+			
 			document.getElementById('cms_navig_information').innerHTML=url;
 			document.getElementById('navbar_opac').value=url;
 		}
@@ -376,9 +378,12 @@ $cms_build_cadre_tpl_item="
 				<a onclick=\"cms_unchain_cadre(!!id_cadre!!);\" href='#' >
 		    		<i class='fa fa-chain-broken' aria-hidden='true' title='".$msg["cms_build_cadre_action_unchain"]."' alt='".$msg["cms_build_cadre_action_unchain"]."'></i>	
 				</a>&nbsp;	
-				<a onclick=\"cms_build_load_module('!!cadre_object!!','get_form_duplicate',!!id_cadre!!);\" href='#' >
-		    		<i class='fa fa-files-o' aria-hidden='true' title='".$msg["cms_editorial_form_duplicate"]."' alt='".$msg["cms_editorial_form_duplicate"]."'></i>	
-				</a>	
+                ".''
+                //TODO : refaire la mécanique de dupliquation de cadre en s'inspirant de celle existante dans le cadre
+				//<a onclick=\"cms_build_load_module('!!cadre_object!!','get_form_duplicate',!!id_cadre!!);\" href='#' >
+		    		//<i class='fa fa-files-o' aria-hidden='true' title='".$msg["cms_editorial_form_duplicate"]."' alt='".$msg["cms_editorial_form_duplicate"]."'></i>	
+				//</a>
+                ."	
 				<hr />			
 		    	<label class='etiquette' for='cadre_classement_list'>".$msg['cms_build_cadre_classement_list']."</label>
 		   		<br />
@@ -408,10 +413,14 @@ $cms_build_cadre_tpl_not_in_page_item="
 		        <br />
 				<a onclick=\"cms_unchain_cadre(!!id_cadre!!);\" href='#' >
 		    		<i class='fa fa-chain-broken' aria-hidden='true' title='".$msg["cms_build_cadre_action_unchain"]."' alt='".$msg["cms_build_cadre_action_unchain"]."'></i>	
-		    	</a>	
-				<a onclick=\"cms_build_load_module('!!cadre_object!!','get_form_duplicate',!!id_cadre!!);\" href='#' >
-		    		<i class='fa fa-files-o' aria-hidden='true' title='".$msg["cms_editorial_form_duplicate"]."' alt='".$msg["cms_editorial_form_duplicate"]."'></i>	
-				</a>&nbsp;		
+		    	</a>
+				".''
+				//TODO : refaire la mécanique de dupliquation de cadre en s'inspirant de celle existante dans le cadre
+                //<a onclick=\"cms_build_load_module('!!cadre_object!!','get_form_duplicate',!!id_cadre!!);\" href='#' >
+		    		//<i class='fa fa-files-o' aria-hidden='true' title='".$msg["cms_editorial_form_duplicate"]."' alt='".$msg["cms_editorial_form_duplicate"]."'></i>	
+				//</a>
+                ."
+                &nbsp;		
 				<hr />			
 		    	<label class='etiquette' for='cadre_classement_list'>".$msg['cms_build_cadre_classement_list']."</label>
 		   		<br />
@@ -437,13 +446,16 @@ $cms_build_cadre_tpl_not_in_cms_item="
 		<div data-dojo-type='dijit/form/DropDownButton' style='float:right'>
 		    <span></span>
 		    <!-- The dialog portion -->
-		    <div data-dojo-type='dijit/TooltipDialog' id='ttDialog_!!id_cadre!!'>
-		    	<label class='etiquette'>".$msg['cms_build_cadre_actions']."</label>
-		        <br />
-				<a onclick=\"cms_build_load_module('!!cadre_object!!','get_form_duplicate',!!id_cadre!!);\" href='#' >
-		    		<i class='fa fa-files-o' aria-hidden='true' title='".$msg["cms_editorial_form_duplicate"]."' alt='".$msg["cms_editorial_form_duplicate"]."'></i>	
-				</a>		
-				<hr />			
+ 		    <div data-dojo-type='dijit/TooltipDialog' id='ttDialog_!!id_cadre!!'>
+				".''
+// 		    	<label class='etiquette'>".$msg['cms_build_cadre_actions']."</label>
+// 		        <br />
+				//TODO : refaire la mécanique de dupliquation de cadre en s'inspirant de celle existante dans le cadre
+				//<a onclick=\"cms_build_load_module('!!cadre_object!!','get_form_duplicate',!!id_cadre!!);\" href='#' >
+		    		//<i class='fa fa-files-o' aria-hidden='true' title='".$msg["cms_editorial_form_duplicate"]."' alt='".$msg["cms_editorial_form_duplicate"]."'></i>	
+				//</a>
+// 				<hr />			
+				."
 		    	<label class='etiquette' for='cadre_classement_list'>".$msg['cms_build_cadre_classement_list']."</label>
 		   		<br />
 				<select data-dojo-type='dijit/form/ComboBox' id='classement_!!id_cadre!!' name='classement_!!id_cadre!!'>
@@ -905,7 +917,18 @@ $cms_build_block_tpl="
 	}
 				
 	function go_opac_url(){
-		var url=document.getElementById('navbar_opac').value;
+	     	
+        var url=document.getElementById('navbar_opac').value;
+
+        /*
+        Cas de l'url modifié (pour celui de l'opac par exemple)
+        */
+        var url_is_true_build_url = url.startsWith('". $build_url ."');
+        if (!url_is_true_build_url) {
+            var params_of_request = url.substring(url.indexOf('?'));
+            url = '".$build_url."'+'index.php'+params_of_request;
+        }
+        
 		if(!url)return;
 
 		parent.frames['opac_frame'].location=url;

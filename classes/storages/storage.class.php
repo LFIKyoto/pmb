@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: storage.class.php,v 1.7 2018-10-18 10:08:16 mbertin Exp $
+// $Id: storage.class.php,v 1.9 2019-05-28 10:16:49 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -132,7 +132,12 @@ class storage {
  	}
  	
  	protected function get_file(){
+ 		global $charset;
+ 		
  		$headers = getallheaders();
+ 		if($charset == 'utf-8') {
+ 			$headers['X-File-Name'] = utf8_encode($headers['X-File-Name']);
+ 		}
  		$protocol = $_SERVER["SERVER_PROTOCOL"];
  		
  	 	if (!isset($headers['Content-Length'])) {
@@ -155,7 +160,7 @@ class storage {
  			// Enable writing to disk at your own risk! Special care needs to be taken, that only the right person can
  			// save/append a file. Also the type is not checked, a user can upload anything!
  			$file = new stdClass();
- 			$file->name = preg_replace('/[^ \.\w_\-]*/', '', basename($headers['X-File-Name']));
+ 			$file->name = preg_replace('/[^ \.\w_\-]*/', '', basename(reg_diacrit($headers['X-File-Name'])));
  			$file->size = preg_replace('/\D*/', '', $headers['X-File-Size']);
  			// php://input bypasses the ini settings, we have to limit the file size ourselves:
  			// Find smallest init setting and set upload limit accordingly.
@@ -213,17 +218,17 @@ class storage {
  		if(isset($_FILES)){
  			foreach($_FILES[$field_name]['name'] as $key => $name){
  				$i = 1;
- 				$name = $name['value'];
- 				while(file_exists("./temp/".$name)){
+ 				$file_name = $name['value'];
+ 				while(file_exists("./temp/".$file_name)){
  					if($i == 1){
- 						$name = substr($name,0,strrpos($name,"."))."_".$i.substr($name,strrpos($name,"."));
+ 					    $file_name = substr($file_name,0,strrpos($file_name,"."))."_".$i.substr($file_name,strrpos($file_name,"."));
  					}else{
- 						$name = substr($name,0,strrpos($name,($i-1).".")).$i.substr($name,strrpos($name,"."));
+ 					    $file_name = substr($file_name,0,strrpos($file_name,($i-1).".")).$i.substr($file_name,strrpos($file_name,"."));
  					}
  					$i++;
  				}
- 				move_uploaded_file($_FILES[$field_name]['tmp_name'][$key]['value'], './temp/'.$name);
- 				$file_names[] = $this->add($name);
+ 				move_uploaded_file($_FILES[$field_name]['tmp_name'][$key]['value'], './temp/'.$file_name);
+ 				$file_names[] = $this->add($file_name);
  			}
  		}
  		return $file_names;

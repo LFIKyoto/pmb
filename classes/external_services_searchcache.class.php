@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external_services_searchcache.class.php,v 1.20 2017-07-12 15:15:00 tsamson Exp $
+// $Id: external_services_searchcache.class.php,v 1.21 2019-06-10 10:05:02 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -60,7 +60,7 @@ class external_services_searchcache {
 				$this->source_ids = array_values($m[1]);
 			$search_realm = substr($search_realm, 0, strpos($search_realm, '|'));
 		}
-		array_walk($this->source_ids, create_function('&$a', '$a+=0;'));
+		array_walk($this->source_ids, function(&$a) {$a = intval($a);});
 		$this->source_ids = array_unique($this->source_ids);
 		if ($this->source_ids) {
 			$this->external_search = true;

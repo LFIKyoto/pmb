@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_build.class.php,v 1.83 2018-10-24 12:34:04 ngantier Exp $
+// $Id: cms_build.class.php,v 1.87.4.1 2019-09-17 09:59:20 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "0");
+if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "0");
 
 require_once($class_path."/autoloader.class.php");
 $autoloader = new autoloader();
@@ -37,7 +37,7 @@ class cms_build{
 		'|[\x00-\x7F][\x80-\xBF]+'.
 		'|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*'.
 		'|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})'.
-		'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
+		'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/',
 		'?', $html );
 
 		$pageid+=0;
@@ -97,7 +97,7 @@ class cms_build{
 					$this->fixed_cadres[$row_zones->build_parent] = $ordered_cadres;
 					foreach($ordered_cadres as $cadre){
 						$this->apply_change($cadre,$cache_cadre_object);
-						if($cadre->build_div){
+						if(!empty($cadre->build_div)){
 							$this->add_div($cadre->build_obj);
 						}
 					}
@@ -444,11 +444,11 @@ class cms_build{
 			}
 			return array($todo=>true,"value"=>"");
 		}
-		
 		$elems = explode("_",$build_object_name);
 		$id = array_pop($elems);
 		$id+=0;
 		$cadre_name = implode("_",$elems);
+		
 		$my_hash_cadre = call_user_func(array($cadre_name,"get_hash_cache"), $build_object_name,$id);
 		//il est possible que la méthode ne nous retourne pas de cache, cela signifie que l'on ne doit pas cacher les éléments associés
 		if(!$my_hash_cadre){
@@ -507,14 +507,16 @@ class cms_build{
 			}
 		}
 		// on perd le fil, on reprend les valeurs sures, les éléments fixe
-		for($i=0 ; $i<count($this->fixed_cadres[$zone]) ; $i++){
-			foreach($cadres as $key => $cadre){
-				if($cadre->build_child_before != "" && $cadre->build_child_before == $this->fixed_cadres[$zone][$i]->build_obj){
-					$next = $cadre;
-					unset($cadres[$key]);
-					return $next;
-				}
-			}
+		if (!empty($this->fixed_cadres[$zone])) {
+    		for($i=0 ; $i<count($this->fixed_cadres[$zone]) ; $i++){
+    			foreach($cadres as $key => $cadre){
+    			    if(!empty($cadre->build_child_before) && !empty($this->fixed_cadres[$zone][$i]->build_obj) &&$cadre->build_child_before == $this->fixed_cadres[$zone][$i]->build_obj){
+    					$next = $cadre;
+    					unset($cadres[$key]);
+    					return $next;
+    				}
+    			}
+    		}
 		}
 		return $next;
 	}

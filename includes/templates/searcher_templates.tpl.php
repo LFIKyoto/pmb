@@ -2,16 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_templates.tpl.php,v 1.44 2018-01-05 16:28:03 dgoron Exp $
+// $Id: searcher_templates.tpl.php,v 1.47 2019-05-27 13:06:42 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $include_path, $search_ed, $search_indexint, $search_tu, $search_authperso, $search_subject, $search_indexint_id, $thesaurus_concepts_active, $pmb_rfid_activate;
+global $pmb_show_notice_id, $param_rfid_activate, $pmb_rfid_serveur_url, $rfid_tpl, $rfid_js_header, $NOTICE_author_query, $msg, $current_module, $search_form_categ, $charset;
+global $browser, $search_form_editeur, $browser_editeur, $search_form_titre_uniforme, $browser_titre_uniforme, $search_form_authperso, $browser_authperso, $search_form_map;
 
 require_once($include_path."/rfid_config.inc.php");
 
 if(!isset($search_ed)) $search_ed = '';
 if(!isset($search_indexint)) $search_indexint = '';
 if(!isset($search_tu)) $search_tu = '';
-if(!isset($search_indexint)) $search_indexint = '';
 if(!isset($search_authperso)) $search_authperso = '';
 if(!isset($search_subject)) $search_subject = '';
 if(!isset($search_indexint_id)) $search_indexint_id = 0;
@@ -136,7 +139,7 @@ $NOTICE_author_query.= "
 	<div class='row'>
 		<label for='typdoc-query'>$msg[17]$msg[1901]</label>
 	</div>
-	<select id='typdoc-query' name='typdoc_query'>
+	<select id='typdoc-query' name='typdoc_query[]' multiple>
 		!!typdocfield!!
 	</select>
 </div>
@@ -144,7 +147,7 @@ $NOTICE_author_query.= "
 	<div class='row'>
 		<label for='statut-query'>$msg[noti_statut_noti]</label>
 	</div>
-	<select id='statut-query' name='statut_query'>
+	<select id='statut-query' name='statut_query[]' multiple>
 		!!statutfield!!
 	</select>
 </div>
@@ -417,7 +420,7 @@ $search_form_categ = "
 		<div class='row'>
 			<label for='typdoc-query'>$msg[17]$msg[1901]</label>
 		</div>
-		<select id='typdoc-query' name='typdoc_query'>
+		<select id='typdoc-query' name='typdoc_query[]' multiple>
 		!!typdocfield!!
 		</select>
 	</div>
@@ -425,7 +428,7 @@ $search_form_categ = "
 		<div class='row'>
 			<label for='statut-query'>$msg[noti_statut_noti]</label>
 		</div>
-		<select id='statut-query' name='statut_query'>
+		<select id='statut-query' name='statut_query[]' multiple>
 		!!statutfield!!
 		</select>
 	</div>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id: en_UK.xml,v 1.27 2018-05-23 14:19:48 dgoron Exp $ -->
+<!-- $Id: en_UK.xml,v 1.30 2019-07-19 08:02:14 dgoron Exp $ -->
 <XMLlist>
 <!-- Types de page  -->
 <entry code="1">Search</entry>
@@ -36,6 +36,7 @@
 <entry code="33">Pixel blanc</entry>
 <entry code="34">Univers</entry>
 <entry code="35">Segment</entry>
+<entry code="36">PNB</entry>
 
 <!-- Sous-Types de page  -->
 <entry code="101">Quick Search</entry>
@@ -138,6 +139,7 @@
 <entry code="1901">Photo library</entry>
 <entry code="2001">Download of a digital document</entry>
 <entry code="2002">Display of a digital document</entry>
+<entry code="2003">Téléchargement d'un document numérique du portfolio</entry>
 <entry code="2101">Custom authorities</entry>
 <entry code="2201">Periodical browser</entry>
 <entry code="2301">SDI basket</entry>
@@ -150,8 +152,11 @@
 <entry code="2903">Display of an issue in a search result</entry>
 <entry code="2904">Display of an article in a search result</entry>
 <entry code="3001">External url</entry>
-<entry code="3301">Recherche univers</entry>
-<entry code="3401">Recherche segment</entry>
+<entry code="3401">Recherche univers</entry>
+<entry code="3501">Recherche segment</entry>
+<entry code="3601">Prêts numérique en cours</entry>
+<entry code="3602">Mes périphériques de lecture</entry>
+<entry code="3603">Paramètres</entry>
 <!-- Types d'url cliquées  -->
 <entry code="external_url_notice">Url sur la notice</entry>
 <entry code="external_url_autor">Url sur l'autorité</entry>

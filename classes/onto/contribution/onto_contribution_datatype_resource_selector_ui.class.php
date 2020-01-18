@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_contribution_datatype_resource_selector_ui.class.php,v 1.9 2018-12-12 16:26:40 apetithomme Exp $
+// $Id: onto_contribution_datatype_resource_selector_ui.class.php,v 1.12 2019-08-14 08:02:58 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -31,7 +31,7 @@ class onto_contribution_datatype_resource_selector_ui extends onto_common_dataty
 		global $msg,$charset,$ontology_tpl, $ontology_contribution_tpl;
 		
 		$form=$ontology_tpl['form_row'];
-		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->label, 'utf-8') ,ENT_QUOTES,$charset) , $form);
+		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->get_label(), 'utf-8') ,ENT_QUOTES,$charset) , $form);
 		
 		/** traitement initial du range ?!*/
 		$range_for_form = ""; 
@@ -48,11 +48,11 @@ class onto_contribution_datatype_resource_selector_ui extends onto_common_dataty
 		
 		$content='';
 		$content.=$ontology_contribution_tpl['form_row_content_input_sel'];
-		if($restrictions->get_max()<sizeof($datas)|| $restrictions->get_max()===-1){
+		if ($restrictions->get_max() < count($datas) || $restrictions->get_max() === -1) {
 			$content.=$ontology_tpl['form_row_content_input_add_ressource_selector'];
 		}
 		$content = str_replace("!!property_name!!", rawurlencode($property->pmb_name), $content);
-		if(sizeof($datas)){		
+		if (!empty($datas)) {
 			$i=1;
 			$first=true;
 			$new_element_order=max(array_keys($datas));
@@ -90,9 +90,9 @@ class onto_contribution_datatype_resource_selector_ui extends onto_common_dataty
 					$input.=$ontology_tpl['form_row_content_input_del'];
 				}
 				
-				if (!empty($property->has_linked_form && $first)) {
+				if (!empty($property->has_linked_form) && $first) {
 					$input .= $ontology_tpl['form_row_content_linked_form'];
-					$url = './ajax.php?module=ajax&categ=contribution&sub='.$property->linked_form['form_type'].'&area_id='.$property->linked_form['area_id'].'&id='.onto_common_uri::get_id($data->get_value()).'&sub_form=1&form_id='.$property->linked_form['form_id'].'&form_uri='.urlencode($property->linked_form['form_id_store']);
+					$url = './ajax.php?module=ajax&categ=contribution&sub='.$property->linked_form['form_type'].'&area_id='.$property->linked_form['area_id'].'&id='.onto_common_uri::get_id($data->get_raw_value()).'&sub_form=1&form_id='.$property->linked_form['form_id'].'&form_uri='.urlencode($property->linked_form['form_id_store']);
 					$input = str_replace("!!url_linked_form!!", $url, $input);
 					$input = str_replace("!!linked_form_title!!", $property->linked_form['form_title'], $input);
 				}

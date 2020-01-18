@@ -2,20 +2,21 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lettre-livraison.inc.php,v 1.17 2018-08-07 15:13:33 dgoron Exp $
+// $Id: lettre-livraison.inc.php,v 1.19 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $id_liv, $acquisition_pdfliv_print, $class_path;
+
 // popup d'impression PDF pour bon de livraison
 // reçoit : id_liv
-
 
 if (!$id_liv) {print "<script> self.close(); </script>" ; die;}
 
 //Footer personalisé
 class PDF extends FPDF
 {
-	function Footer() {
+	public function Footer() {
 		
 		global $msg;
 		global $y_footer, $fs_footer;

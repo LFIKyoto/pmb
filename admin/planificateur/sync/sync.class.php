@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sync.class.php,v 1.14 2018-09-28 12:51:28 mbertin Exp $
+// $Id: sync.class.php,v 1.15.6.1 2019-09-27 09:52:23 dgoron Exp $
 
 global $class_path;
 require_once($class_path."/scheduler/scheduler_task.class.php");
@@ -44,56 +44,66 @@ class sync extends scheduler_task {
 
 			$this->id_source = $source_entrepot;
 			if ($this->id_source) {
-				$rqt = "select id_connector, name from connectors_sources where source_id=".$this->id_source;
-				$res = pmb_mysql_query($rqt);
-				$path = pmb_mysql_result($res,0,"id_connector");
-				$name = pmb_mysql_result($res,0,"name");
-				for ($i=0; $i<count($param["ITEM"]); $i++) {
-					$item=$param["ITEM"][$i];
-					if ($item["PATH"] == $path) {
-						if ($item["ID"]) {
-							$this->id_connector = $item["ID"];
-							$result = array();
-							$this->add_section_report($this->msg["report_sync"]." : ".$name);
-							if (method_exists($this->proxy, "pmbesSync_doSync")) {
-								if($form_radio == 'last_sync') {
-									$date_start = $this->get_sync_last_date();
-									if($date_start && (isset($sync_empty) && $sync_empty) && !empty($sync_last_date)){
-										$date_start = $sync_last_date;
-									}
-									$date_end = '';
-								} else {
-									$date_start = $form_from;
-									$date_end = $form_until;
-								}
-								if(isset($sync_empty) && $sync_empty) {
-									if (method_exists($this->proxy, "pmbesSync_emptySource")) {
-										if($this->proxy->pmbesSync_emptySource($this->id_connector, $this->id_source)) {
-											$this->add_content_report($this->msg['planificateur_sync_empty_success']);
-										} else {
-											$this->add_content_report($this->msg['planificateur_sync_empty_failed']);
-										}
-									} else {
-										$this->add_function_rights_report("emptySource","pmbesSync");
-									}
-								}
-								$result[] = $this->proxy->pmbesSync_doSync($this->id_connector, $this->id_source, $auto_import, $this->id_tache, array(&$this, "listen_commande"), array(&$this, "traite_commande"), $auto_delete, $not_in_notices_externes, $date_start, $date_end);
-								$this->update_param_sync_last_date();
-								if ($result) {
-									foreach ($result as $lignes) {
-										foreach ($lignes as $ligne) {
-											if ($ligne != '') {
-												$this->add_content_report($ligne);
-											}
-										}
-									}
-								}
-							} else {
-								$this->add_function_rights_report("doSync","pmbesSync");
-							}	
-						}
-					}
-				}
+			    $this->listen_commande(array(&$this,"traite_commande"));
+			    if($this->statut == WAITING) {
+			        $this->send_command(RUNNING);
+			    }
+			    if ($this->statut == RUNNING) {
+    			    $rqt = "select id_connector, name from connectors_sources where source_id=".$this->id_source;
+    				$res = pmb_mysql_query($rqt);
+    				$path = pmb_mysql_result($res,0,"id_connector");
+    				$name = pmb_mysql_result($res,0,"name");
+    				for ($i=0; $i<count($param["ITEM"]); $i++) {
+    					$item=$param["ITEM"][$i];
+    					if ($item["PATH"] == $path) {
+    						if ($item["ID"]) {
+    							$this->id_connector = $item["ID"];
+    							$result = array();
+    							$this->add_section_report($this->msg["report_sync"]." : ".$name);
+    							if (method_exists($this->proxy, "pmbesSync_doSync")) {
+    								if($form_radio == "all_notices") {
+    									$date_start = '';
+    									$date_end = '';
+    								} else if($form_radio == 'last_sync') {
+    									$date_start = $this->get_sync_last_date();
+    									if($date_start && (isset($sync_empty) && $sync_empty) && !empty($sync_last_date)){
+    										$date_start = $sync_last_date;
+    									}
+    									$date_end = '';
+    								} else {
+    									$date_start = $form_from;
+    									$date_end = $form_until;
+    								}
+    								if(isset($sync_empty) && $sync_empty) {
+    									if (method_exists($this->proxy, "pmbesSync_emptySource")) {
+    										if($this->proxy->pmbesSync_emptySource($this->id_connector, $this->id_source)) {
+    											$this->add_content_report($this->msg['planificateur_sync_empty_success']);
+    										} else {
+    											$this->add_content_report($this->msg['planificateur_sync_empty_failed']);
+    										}
+    									} else {
+    										$this->add_function_rights_report("emptySource","pmbesSync");
+    									}
+    								}
+    								$result[] = $this->proxy->pmbesSync_doSync($this->id_connector, $this->id_source, $auto_import, $this->id_tache, array(&$this, "listen_commande"), array(&$this, "traite_commande"), $auto_delete, $not_in_notices_externes, $date_start, $date_end);
+    								$this->update_param_sync_last_date();
+    								if ($result) {
+    									foreach ($result as $lignes) {
+    										foreach ($lignes as $ligne) {
+    											if ($ligne != '') {
+    												$this->add_content_report($ligne);
+    											}
+    										}
+    									}
+    								}
+    								$this->update_progression(100);
+    							} else {
+    								$this->add_function_rights_report("doSync","pmbesSync");
+    							}	
+    						}
+    					}
+    				}
+			    }
 			} else {
 				$this->add_section_report($this->msg["report_sync"]." : ".$this->msg["report_sync_false"]);
 				$this->add_content_report($this->msg["error_parameters"]);

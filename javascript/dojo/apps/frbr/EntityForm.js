@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: EntityForm.js,v 1.13 2017-09-20 09:41:18 vtouchard Exp $
+// $Id: EntityForm.js,v 1.13.6.1 2019-09-26 13:47:22 tsamson Exp $
 
 
 define([
@@ -136,13 +136,16 @@ define([
 			if(evt && evt.target.value){
 				params.elem = evt.target.value;
 			}
+			//filtre sur les autorites perso
+			var authperso_num = dom.byId("datanode_authperso_num");
 			request.post('./ajax.php?module=cms&categ=frbr_entities&elem='+params.elem+'&action=get_form&id='+params.id, {
 				data : {
 					frbr_entity_class: this.className,
 					dom_node_id: params.domId,
 					num_page: (params.numPage ? params.numPage : ''),
 					filter_refresh : (params.filterRefresh == "1" ? "1" : "0"),
-					sort_refresh : (params.sortRefresh == "1" ? "1" : "0")
+					sort_refresh : (params.sortRefresh == "1" ? "1" : "0"),
+					authperso_num : (authperso_num && authperso_num.value ? authperso_num.value : "0"),
 				},
 			}).then(lang.hitch(this, function(data){
 				try{

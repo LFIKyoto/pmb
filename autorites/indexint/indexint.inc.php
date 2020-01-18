@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: indexint.inc.php,v 1.18 2017-08-04 07:23:56 dgoron Exp $
+// $Id: indexint.inc.php,v 1.19 2019-06-03 07:04:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $id_pclass, $class_path, $msg, $id, $id_pclass;
 
 if(!isset($id_pclass)) $id_pclass = '';
 

@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_rameau_categ.inc.php,v 1.16 2016-09-07 08:35:37 mbertin Exp $
+// $Id: func_rameau_categ.inc.php,v 1.19 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -16,28 +16,27 @@ global $thesaurus_defaut;
 //Attention, dans le multithesaurus, le thesaurus dans lequel on importe est le thesaurus par defaut
 $thes = new thesaurus($thesaurus_defaut);
 
-function traite_categories_enreg($notice_retour,$categories,$thesaurus_traite=0) {
-
-	global $dbh;
-	
+function traite_categories_enreg($notice_retour, $categories, $thesaurus_traite = 0) {
 	// si $thesaurus_traite fourni, on ne delete que les catégories de ce thesaurus, sinon on efface toutes
 	//  les indexations de la notice sans distinction de thesaurus
-	if (!$thesaurus_traite) $rqt_del = "delete from notices_categories where notcateg_notice='$notice_retour' ";
-	else $rqt_del = "delete from notices_categories where notcateg_notice='$notice_retour' and num_noeud in (select id_noeud from noeuds where num_thesaurus='$thesaurus_traite' and id_noeud=notices_categories.num_noeud) ";
-	$res_del = @pmb_mysql_query($rqt_del, $dbh);
-	
+    if (empty($thesaurus_traite)) {
+        $rqt_del = "delete from notices_categories where notcateg_notice='$notice_retour' ";
+    } else {
+        $rqt_del = "delete from notices_categories where notcateg_notice='$notice_retour' and num_noeud in (select id_noeud from noeuds where num_thesaurus='$thesaurus_traite' and id_noeud=notices_categories.num_noeud) ";
+    }
+	$res_del = @pmb_mysql_query($rqt_del);
 	$rqt_ins = "insert into notices_categories (notcateg_notice, num_noeud, ordre_categorie) VALUES ";
-	
-	for($i=0 ; $i< sizeof($categories) ; $i++) {
-		$id_categ=$categories[$i]['categ_id'];
-		if ($id_categ) {
-			$rqt = $rqt_ins . " ('$notice_retour','$id_categ', $i) " ; 
-			$res_ins = @pmb_mysql_query($rqt, $dbh);
+	$nb_categories = count($categories);
+	for ($i = 0; $i < $nb_categories; $i++) {
+		$id_categ = $categories[$i]['categ_id'];
+		if (!empty($id_categ)) {
+			$rqt = $rqt_ins . " ('$notice_retour','$id_categ', $i) "; 
+			$res_ins = @pmb_mysql_query($rqt);
 		}
 	}
 }
 
-function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602="",$tableau_605="",$tableau_606="",$tableau_607="",$tableau_608="") {
+function traite_categories_for_form($tableau_600 = array(), $tableau_601 = array(), $tableau_602 = array(), $tableau_605 = array(), $tableau_606 = array(), $tableau_607 = array(), $tableau_608 = array()) {
 	
 	global $charset, $pmb_keyword_sep, $rameau;
 	$info_606_a = $tableau_606["info_606_a"] ;
@@ -47,22 +46,22 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 	$info_606_z = $tableau_606["info_606_z"] ;
 	
 	$champ_rameau="";
-	for ($a=0; $a<sizeof($info_606_a); $a++) {
+	for ($a=0; $a<count($info_606_a); $a++) {
 		$libelle_final="";
 		$libelle_j="";
-		for ($j=0; $j<sizeof($info_606_j[$a]); $j++) {
+		for ($j=0; $j<count($info_606_j[$a]); $j++) {
 			if (!$libelle_j) $libelle_j .= trim($info_606_j[$a][$j]) ;
 				else $libelle_j .= " $pmb_keyword_sep ".trim($info_606_j[$a][$j]) ;
 		}
 		if (!$libelle_j) $libelle_final = trim($info_606_a[$a][0]) ; else $libelle_final = trim($info_606_a[$a][0])." $pmb_keyword_sep ".$libelle_j ;
 		if (!$libelle_final) break ;
-		for ($j=0; $j<sizeof($info_606_x[$a]); $j++) {
+		for ($j=0; $j<count($info_606_x[$a]); $j++) {
 			$libelle_final .= " $pmb_keyword_sep ".trim($info_606_x[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_606_y[$a]); $j++) {
+		for ($j=0; $j<count($info_606_y[$a]); $j++) {
 			$libelle_final .= " $pmb_keyword_sep ".trim($info_606_y[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_606_z[$a]); $j++) {
+		for ($j=0; $j<count($info_606_z[$a]); $j++) {
 			$libelle_final .= " $pmb_keyword_sep ".trim($info_606_z[$a][$j]) ;
 		}
 		if ($champ_rameau) $champ_rameau.=" $pmb_keyword_sep ";
@@ -77,7 +76,7 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 
 	return array(
 		"form" => "<input type='hidden' name='rameau' value='".htmlentities($rameau_form,ENT_QUOTES,$charset)."' />",
-		"message" => "Rameau sera intégré sous forme d'arborescence multiple : \$a \$x deviennent Recherche par terme > TG > TS, \$y devient Recherche géographique > TS, \$z devient Recherche chronologique > TS : <b>".htmlentities($champ_rameau,ENT_QUOTES,$charset)."</b>"
+		"message" => "Rameau sera int&eacute;gr&eacute; sous forme d'arborescence multiple : \$a \$x deviennent Recherche par terme > TG > TS, \$y devient Recherche g&eacute;ographique > TS, \$z devient Recherche chronologique > TS : <b>".htmlentities($champ_rameau,ENT_QUOTES,$charset)."</b>"
 	);
 }
 
@@ -114,8 +113,8 @@ function traite_categories_from_form() {
 	
 	// ici récupération du code de admin/import/func_cnl.inc.php puis modif pour création du tableau des catégories, ce qui doit être retourné par la fonction
 	$libelle_j = "" ;
-		for ($a=0; $a<sizeof($info_606_a); $a++) {
-			for ($j=0; $j<sizeof($info_606_j[$a]); $j++) {
+		for ($a=0; $a<count($info_606_a); $a++) {
+			for ($j=0; $j<count($info_606_j[$a]); $j++) {
 				if (!$libelle_j) $libelle_j .= trim($info_606_j[$a][$j]) ;
 					else $libelle_j .= " ** ".trim($info_606_j[$a][$j]) ;
 			}
@@ -130,7 +129,7 @@ function traite_categories_from_form() {
 			}
 			// récup des sous-categ en cascade sous $a
 			$categ_parent =  $categid_a ;
-			for ($x=0 ; $x < sizeof($info_606_x[$a]) ; $x++) {
+			for ($x=0 ; $x < count($info_606_x[$a]) ; $x++) {
 				$res_x = categories::searchLibelle(addslashes(trim($info_606_x[$a][$x])), $thes->id_thesaurus, 'fr_FR', $categ_parent);
 				if ($res_x) {
 					$categ_parent = $res_x;
@@ -145,7 +144,7 @@ function traite_categories_from_form() {
 			
 			// récup des categ géo à loger sous la categ géo principale
 			$categ_parent =  $id_rech_geo ;
-			for ($y=0 ; $y < sizeof($info_606_y[$a]) ; $y++) {
+			for ($y=0 ; $y < count($info_606_y[$a]) ; $y++) {
 				$res_y = categories::searchLibelle(addslashes(trim($info_606_y[$a][$y])), $thes->id_thesaurus, 'fr_FR', $categ_parent);
 				if ($res_y) {
 					$categ_parent = $res_y;
@@ -160,7 +159,7 @@ function traite_categories_from_form() {
 			
 			// récup des categ chrono à loger sous la categ chrono principale
 			$categ_parent =  $id_rech_chrono ;
-			for ($z=0 ; $z < sizeof($info_606_z[$a]) ; $z++) {
+			for ($z=0 ; $z < count($info_606_z[$a]) ; $z++) {
 				$res_z = categories::searchLibelle(addslashes(trim($info_606_z[$a][$z])), $thes->id_thesaurus, 'fr_FR', $categ_parent);
 				if ($res_z) {
 					$categ_parent = $res_z;

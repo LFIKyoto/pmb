@@ -2,13 +2,17 @@
 // +-------------------------------------------------+
 // Â© 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution_area_equation.tpl.php,v 1.4 2018-01-09 10:48:40 vtouchard Exp $
+// $Id: contribution_area_equation.tpl.php,v 1.5 2019-05-27 10:30:59 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 //*******************************************************************
 // Définition des templates pour les listes en edition
 //*******************************************************************
+
+global $tpl_contribution_area_equation_liste_tableau, $msg, $tpl_contribution_area_equation_liste_tableau_ligne;
+global $tpl_contribution_area_equation_form, $current_module;
+
 $tpl_contribution_area_equation_liste_tableau = "
 
 <hr />

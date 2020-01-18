@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_state.tpl.php,v 1.6 2017-11-21 12:00:59 dgoron Exp $
+// $Id: serialcirc_state.tpl.php,v 1.8 2019-05-27 16:55:44 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $serialcirc_state_list, $msg, $charset, $serialcirc_state_list_line, $serialcirc_state_filters_form, $current_module;
 
 $serialcirc_state_list = "
 	!!filters_form!!

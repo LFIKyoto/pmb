@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_instrument_admin.class.php,v 1.14 2017-11-21 12:00:59 dgoron Exp $
+// $Id: nomenclature_instrument_admin.class.php,v 1.15.2.1 2019-09-05 12:10:07 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+global $include_path;
 
 require_once($include_path."/templates/nomenclature_instrument_admin.tpl.php");
 
@@ -70,7 +72,6 @@ class nomenclature_instrument_admin {
 			if($this->info['standard'])$checked="checked"; else $checked="";
 		}else{ 
 			$tpl=str_replace('!!msg_title!!',$msg['admin_nomenclature_instrument_form_add'],$tpl);
-			$tpl_objet="";
 			$tpl=str_replace('!!delete!!',"",$tpl);
 			$name="";
 			$code="";
@@ -80,11 +81,11 @@ class nomenclature_instrument_admin {
 		$tpl=str_replace('!!code!!',htmlentities($code, ENT_QUOTES, $charset),$tpl);		
 		$tpl=str_replace('!!checked!!',$checked, $tpl);
 
-		$req="select id_musicstand, concat(musicstand_name,' ( ',family_name,' )')as label from nomenclature_musicstands,nomenclature_families where musicstand_famille_num=id_family order by musicstand_name";
-		$musicstand=gen_liste($req, "id_musicstand", "label", "id_musicstand", "", $this->info['musicstand']['id'], 
-				0,$msg["admin_nomenclature_instrument_form_musicstand_no"], 0, $msg["admin_nomenclature_instrument_form_musicstand_no_sel"]);		
-		$tpl=str_replace('!!musicstand!!',$musicstand,$tpl);
-		$tpl=str_replace('!!id!!',$this->id,$tpl);
+		$req = "select id_musicstand, concat(musicstand_name,' ( ',family_name,' )')as label from nomenclature_musicstands,nomenclature_families where musicstand_famille_num=id_family order by musicstand_name";
+		$selected = (isset($this->info['musicstand']['id'])) ? $this->info['musicstand']['id'] : '';
+		$musicstand = gen_liste($req, "id_musicstand", "label", "id_musicstand", "", $selected, 0, $msg["admin_nomenclature_instrument_form_musicstand_no"], 0, $msg["admin_nomenclature_instrument_form_musicstand_no_sel"]);		
+		$tpl = str_replace('!!musicstand!!', $musicstand, $tpl);
+		$tpl = str_replace('!!id!!', $this->id, $tpl);
 		 
 		return $tpl;
 	}
@@ -94,69 +95,63 @@ class nomenclature_instrument_admin {
 	}
 	
 	public function save() {
-		global $dbh;
-		global $msg;
-		global $name;
-		global $code;
-		global $id_musicstand;
-		global $standard;
-		global $force;
-		
-		if($id_musicstand && $standard){
-			if($this->id) $restrict=" and id_instrument!=".$this->id;
-			$req="select * from nomenclature_instruments where instrument_musicstand_num=$id_musicstand and instrument_standard=1 $restrict ";
-			$res_instruments=pmb_mysql_query($req,$dbh);
-			$count_instrument=0;
+	    global $msg, $name, $code, $id_musicstand, $standard, $force, $current_module;
+	    $code = preg_replace('/\s+/', '', $code);
+		if ($id_musicstand && $standard) {
+		    if ($this->id) {
+		        $restrict = " and id_instrument!=".$this->id;
+		    }
+			$req = "select * from nomenclature_instruments where instrument_musicstand_num=$id_musicstand and instrument_standard=1 $restrict ";
+			$res_instruments = pmb_mysql_query($req);
 			if (pmb_mysql_num_rows($res_instruments)) {
-				if($r_instrument=pmb_mysql_fetch_object($res_instruments)){		
-					if($force){
-						$req="UPDATE nomenclature_instruments SET instrument_standard=0 where id_instrument=".$r_instrument->id_instrument;
-						pmb_mysql_query($req, $dbh);
-					}else return "
-					<br />
-					<div class='erreur'>$msg[540]</div>
-					<div class='row'>
-						<div class='colonne10'>
-							<img src='".get_url_icon('error.gif')."' class='align_left'>
-						</div>
-						<div class='colonne80'>
-							<strong>".$msg["admin_nomenclature_instrument_form_musicstand_standard_error"].$r_instrument->instrument_code." ( ".$r_instrument->instrument_name ." )</strong>
-						</div>
-					</div>					
-					<div class='row'>
-						<form class='form-$current_module' name='dummy' method=\"post\" action='./admin.php?categ=instrument&sub=instrument&action=save&force=1'>				
-							<input type='hidden' name='code' value='$code'/>
-							<input type='hidden' name='name' value='$name'/>
-							<input type='hidden' name='standard' value='$standard'/>
-							<input type='hidden' name='id_musicstand' value='$id_musicstand'/>	
-							<input type='hidden' name='id' value='".$this->id."'/>		
-							<input type='submit' name='ok' class='bouton' value='". $msg["admin_nomenclature_instrument_form_musicstand_standard_force"] ."' >
-							<input type='button' name='retour' class='bouton' value=' $msg[76] ' onClick=\"history.go(-1); return false;\"'>
-						</form>								
-						<script type='text/javascript'>
-							document.forms['dummy'].elements['ok'].focus();
-						</script>
-					</div>
-					";	
+				if ($r_instrument = pmb_mysql_fetch_object($res_instruments)) {
+					if ($force) {
+						$req = "UPDATE nomenclature_instruments SET instrument_standard=0 where id_instrument=".$r_instrument->id_instrument;
+						pmb_mysql_query($req);
+					} else {
+					    return "<br />
+    					<div class='erreur'>$msg[540]</div>
+    					<div class='row'>
+    						<div class='colonne10'>
+    							<img src='".get_url_icon('error.gif')."' class='align_left'>
+    						</div>
+    						<div class='colonne80'>
+    							<strong>".$msg["admin_nomenclature_instrument_form_musicstand_standard_error"].$r_instrument->instrument_code." ( ".$r_instrument->instrument_name ." )</strong>
+    						</div>
+    					</div>
+    					<div class='row'>
+    						<form class='form-$current_module' name='dummy' method=\"post\" action='./admin.php?categ=instrument&sub=instrument&action=save&force=1'>				
+    							<input type='hidden' name='code' value='$code'/>
+    							<input type='hidden' name='name' value='$name'/>
+    							<input type='hidden' name='standard' value='$standard'/>
+    							<input type='hidden' name='id_musicstand' value='$id_musicstand'/>	
+    							<input type='hidden' name='id' value='".$this->id."'/>		
+    							<input type='submit' name='ok' class='bouton' value='". $msg["admin_nomenclature_instrument_form_musicstand_standard_force"] ."' >
+    							<input type='button' name='retour' class='bouton' value=' $msg[76] ' onClick=\"history.go(-1); return false;\"'>
+    						</form>
+    						<script type='text/javascript'>
+    							document.forms['dummy'].elements['ok'].focus();
+    						</script>
+    					</div>
+    					";
+					}
 				}
 			}
 		}
-		$fields="
-			instrument_code='".$code."',
-			instrument_name='".$name."',
-			instrument_musicstand_num='".$id_musicstand."',
-			instrument_standard='".$standard."'
-		";		
-		if(!$this->id){ // Ajout
-			$req="INSERT INTO nomenclature_instruments SET $fields ";	
-			pmb_mysql_query($req, $dbh);
-			$this->id = pmb_mysql_insert_id($dbh);
-			print display_notification($msg['account_types_success_saved']);
+		$fields = "
+			instrument_code='$code',
+			instrument_name='$name',
+			instrument_musicstand_num='$id_musicstand',
+			instrument_standard='$standard'";
+		if (!$this->id) { // Ajout
+			$req = "INSERT INTO nomenclature_instruments SET $fields ";	
+			pmb_mysql_query($req);
+			$this->id = pmb_mysql_insert_id();
 		} else {
-			$req="UPDATE nomenclature_instruments SET $fields where id_instrument=".$this->id;
-			pmb_mysql_query($req, $dbh);
-			print display_notification($msg['account_types_success_saved']);
-		}	
+			$req = "UPDATE nomenclature_instruments SET $fields where id_instrument=".$this->id;
+			pmb_mysql_query($req);
+		}
+		print display_notification($msg['account_types_success_saved']);
 		$this->fetch_data();
 	}	
 	
@@ -170,8 +165,6 @@ class nomenclature_instrument_admin {
 
 } //nomenclature_instrument_admin class end
 
-
-
 class nomenclature_instrument_admins {	
 	public $info=array();
 	
@@ -179,7 +172,7 @@ class nomenclature_instrument_admins {
 		$this->fetch_data();
 	}
 	
-	function fetch_data() {
+	public function fetch_data() {
 		global $dbh;
 		$this->info=array();
 		$i=0;
@@ -194,35 +187,35 @@ class nomenclature_instrument_admins {
 	}
 				
 	public function get_list() {
-		global $nomenclature_instrument_list_tpl,$nomenclature_instrument_list_line_tpl,$msg;
+		global $nomenclature_instrument_list_tpl, $nomenclature_instrument_list_line_tpl;
 		
-		$tpl=$nomenclature_instrument_list_tpl;
-		$tpl_list="";
-		$odd_even="odd";
-		foreach($this->info as $elt){
-			$tpl_elt=$nomenclature_instrument_list_line_tpl;
-			if($odd_even=='odd')$odd_even="even"; else $odd_even="odd";		
-			
-			$tpl_elt=str_replace('!!odd_even!!',$odd_even, $tpl_elt);	
-			$tpl_elt=str_replace('!!name!!',$elt->info['name'], $tpl_elt);
-			$tpl_elt=str_replace('!!code!!',$elt->info['code'], $tpl_elt);
-			$musicstand="";		
-			$family="";
-			if($elt->info['musicstand']['display']){
-				$musicstand=$elt->info['musicstand']['display'];
-				$family=$elt->info['musicstand']['family']['display'];
+		$tpl = $nomenclature_instrument_list_tpl;
+		$tpl_list = "";
+		$odd_even = "odd";
+		foreach ($this->info as $elt) {
+			$tpl_elt = $nomenclature_instrument_list_line_tpl;
+			if ($odd_even == 'odd') {
+			    $odd_even = "even";
+			} else {
+			    $odd_even = "odd";
 			}
-			$tpl_elt=str_replace('!!musicstand!!',$musicstand, $tpl_elt);	
-			$tpl_elt=str_replace('!!family!!',$family, $tpl_elt);			
-			if($elt->info['standard'])$standard="x"; else $standard="";
-			$tpl_elt=str_replace('!!standard!!',$standard, $tpl_elt);
-			$tpl_elt=str_replace('!!id!!',$elt->info['id'], $tpl_elt);	
-			$tpl_list.=$tpl_elt;	
+			$tpl_elt = str_replace('!!odd_even!!', $odd_even, $tpl_elt);	
+			$tpl_elt = str_replace('!!name!!', $elt->info['name'], $tpl_elt);
+			$tpl_elt = str_replace('!!code!!', $elt->info['code'], $tpl_elt);
+			$musicstand = "";
+			$family = "";
+			if (!empty($elt->info['musicstand']['display'])) {
+				$musicstand = $elt->info['musicstand']['display'];
+				$family = $elt->info['musicstand']['family']['display'];
+			}
+			$tpl_elt = str_replace('!!musicstand!!', $musicstand, $tpl_elt);	
+			$tpl_elt = str_replace('!!family!!', $family, $tpl_elt);			
+			$standard = (!empty($elt->info['standard']) ? 'x' : '');
+			$tpl_elt = str_replace('!!standard!!', $standard, $tpl_elt);
+			$tpl_elt = str_replace('!!id!!', $elt->info['id'], $tpl_elt);	
+			$tpl_list .= $tpl_elt;
 		}
-		$tpl=str_replace('!!list!!',$tpl_list, $tpl);
+		$tpl = str_replace('!!list!!', $tpl_list, $tpl);
 		return $tpl;
 	}	
-
-    	
 } // nomenclature_instrument_admins class end
-	

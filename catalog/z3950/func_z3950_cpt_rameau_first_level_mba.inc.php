@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_z3950_cpt_rameau_first_level_mba.inc.php,v 1.7 2017-07-12 15:15:00 tsamson Exp $
+// $Id: func_z3950_cpt_rameau_first_level_mba.inc.php,v 1.10 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -28,7 +28,7 @@ function traite_categories_enreg($notice_retour,$categories,$thesaurus_traite=0)
 	
 	$rqt_ins = "insert into notices_categories (notcateg_notice, num_noeud, ordre_categorie) VALUES ";
 	
-	for($i=0 ; $i< sizeof($categories) ; $i++) {
+	for($i=0 ; $i< count($categories) ; $i++) {
 		$id_categ=$categories[$i]['categ_id'];
 		if ($id_categ) {
 			$rqt = $rqt_ins . " ('$notice_retour','$id_categ', $i) " ; 
@@ -38,7 +38,7 @@ function traite_categories_enreg($notice_retour,$categories,$thesaurus_traite=0)
 }
 
 
-function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602="",$tableau_605="",$tableau_606="",$tableau_607="",$tableau_608="") {
+function traite_categories_for_form($tableau_600 = array(), $tableau_601 = array(), $tableau_602 = array(), $tableau_605 = array(), $tableau_606 = array(), $tableau_607 = array(), $tableau_608 = array()) {
 	global $charset, $rameau,$pmb_keyword_sep;
 	$champ_rameau="";
 	if(!$pmb_keyword_sep){
@@ -53,10 +53,10 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 	$info_600_x = $tableau_600["info_600_x"] ;
 	$info_600_y = $tableau_600["info_600_y"] ;
 	$info_600_z = $tableau_600["info_600_z"] ;
-	for ($a=0; $a<sizeof($info_600_a); $a++) {
+	for ($a=0; $a<count($info_600_a); $a++) {
 		$libelle_final="";
 		$libelle_j="";
-		for ($j=0; $j<sizeof($info_600_j[$a]); $j++) {
+		for ($j=0; $j<count($info_600_j[$a]); $j++) {
 			if (!$libelle_j) $libelle_j .= trim($info_600_j[$a][$j]) ;
 				else $libelle_j .= " ** ".trim($info_600_j[$a][$j]) ;
 		}
@@ -65,13 +65,13 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 		
 		if (!$libelle_j) $libelle_final = trim($info_600_a[$a][0]).$libelle_final ; else $libelle_final = trim($info_600_a[$a][0]).$libelle_final." ** ".$libelle_j ;
 		if (!$libelle_final) break ;
-		for ($j=0; $j<sizeof($info_600_x[$a]); $j++) {
+		for ($j=0; $j<count($info_600_x[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_600_x[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_600_y[$a]); $j++) {
+		for ($j=0; $j<count($info_600_y[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_600_y[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_600_z[$a]); $j++) {
+		for ($j=0; $j<count($info_600_z[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_600_z[$a][$j]) ;
 		}
 		//if($info_600_3[$a][0])$libelle_final.=" @@3 ".trim($info_600_3[$a][0]);		
@@ -85,22 +85,22 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 	$info_601_x = $tableau_601["info_601_x"] ;
 	$info_601_y = $tableau_601["info_601_y"] ;
 	$info_601_z = $tableau_601["info_601_z"] ;
-	for ($a=0; $a<sizeof($info_601_a); $a++) {
+	for ($a=0; $a<count($info_601_a); $a++) {
 		$libelle_final="";
 		$libelle_j="";
-		for ($j=0; $j<sizeof($info_601_j[$a]); $j++) {
+		for ($j=0; $j<count($info_601_j[$a]); $j++) {
 			if (!$libelle_j) $libelle_j .= trim($info_601_j[$a][$j]) ;
 				else $libelle_j .= " ** ".trim($info_601_j[$a][$j]) ;
 		}
 		if (!$libelle_j) $libelle_final = trim($info_601_a[$a][0]) ; else $libelle_final = trim($info_601_a[$a][0])." ** ".$libelle_j ;
 		if (!$libelle_final) break ;
-		for ($j=0; $j<sizeof($info_601_x[$a]); $j++) {
+		for ($j=0; $j<count($info_601_x[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_601_x[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_601_y[$a]); $j++) {
+		for ($j=0; $j<count($info_601_y[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_601_y[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_601_z[$a]); $j++) {
+		for ($j=0; $j<count($info_601_z[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_601_z[$a][$j]) ;
 		}
 		//if($info_601_3[$a][0])$libelle_final.=" @@3 ".trim($info_601_3[$a][0]);
@@ -114,22 +114,22 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 	$info_606_x = $tableau_606["info_606_x"] ;
 	$info_606_y = $tableau_606["info_606_y"] ;
 	$info_606_z = $tableau_606["info_606_z"] ;
-	for ($a=0; $a<sizeof($info_606_a); $a++) {
+	for ($a=0; $a<count($info_606_a); $a++) {
 		$libelle_final="";
 		$libelle_j="";
-		for ($j=0; $j<sizeof($info_606_j[$a]); $j++) {
+		for ($j=0; $j<count($info_606_j[$a]); $j++) {
 			if (!$libelle_j) $libelle_j .= trim($info_606_j[$a][$j]) ;
 				else $libelle_j .= " ** ".trim($info_606_j[$a][$j]) ;
 		}
 		if (!$libelle_j) $libelle_final = trim($info_606_a[$a][0]) ; else $libelle_final = trim($info_606_a[$a][0])." ** ".$libelle_j ;
 		if (!$libelle_final) break ;
-		for ($j=0; $j<sizeof($info_606_x[$a]); $j++) {
+		for ($j=0; $j<count($info_606_x[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_606_x[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_606_y[$a]); $j++) {
+		for ($j=0; $j<count($info_606_y[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_606_y[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_606_z[$a]); $j++) {
+		for ($j=0; $j<count($info_606_z[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_606_z[$a][$j]) ;
 		}
 		//if($info_606_3[$a][0])$libelle_final.=" @@3 ".trim($info_606_3[$a][0]);
@@ -143,22 +143,22 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 	$info_607_x = $tableau_607["info_607_x"] ;
 	$info_607_y = $tableau_607["info_607_y"] ;
 	$info_607_z = $tableau_607["info_607_z"] ;
-	for ($a=0; $a<sizeof($info_607_a); $a++) {
+	for ($a=0; $a<count($info_607_a); $a++) {
 		$libelle_final="";
 		$libelle_j="";
-		for ($j=0; $j<sizeof($info_607_j[$a]); $j++) {
+		for ($j=0; $j<count($info_607_j[$a]); $j++) {
 			if (!$libelle_j) $libelle_j .= trim($info_607_j[$a][$j]) ;
 				else $libelle_j .= " ** ".trim($info_607_j[$a][$j]) ;
 		}
 		if (!$libelle_j) $libelle_final = trim($info_607_a[$a][0]) ; else $libelle_final = trim($info_607_a[$a][0])." ** ".$libelle_j ;
 		if (!$libelle_final) break ;
-		for ($j=0; $j<sizeof($info_607_x[$a]); $j++) {
+		for ($j=0; $j<count($info_607_x[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_607_x[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_607_y[$a]); $j++) {
+		for ($j=0; $j<count($info_607_y[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_607_y[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_607_z[$a]); $j++) {
+		for ($j=0; $j<count($info_607_z[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_607_z[$a][$j]) ;
 		}
 		//if($info_607_3[$a][0])$libelle_final.=" @@3 ".trim($info_607_3[$a][0]);
@@ -172,22 +172,22 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 	$info_608_x = $tableau_608["info_608_x"] ;
 	$info_608_y = $tableau_608["info_608_y"] ;
 	$info_608_z = $tableau_608["info_608_z"] ;
-	for ($a=0; $a<sizeof($info_608_a); $a++) {
+	for ($a=0; $a<count($info_608_a); $a++) {
 		$libelle_final="";
 		$libelle_j="";
-		for ($j=0; $j<sizeof($info_608_j[$a]); $j++) {
+		for ($j=0; $j<count($info_608_j[$a]); $j++) {
 			if (!$libelle_j) $libelle_j .= trim($info_608_j[$a][$j]) ;
 				else $libelle_j .= " ** ".trim($info_608_j[$a][$j]) ;
 		}
 		if (!$libelle_j) $libelle_final = trim($info_608_a[$a][0]) ; else $libelle_final = trim($info_608_a[$a][0])." ** ".$libelle_j ;
 		if (!$libelle_final) break ;
-		for ($j=0; $j<sizeof($info_608_x[$a]); $j++) {
+		for ($j=0; $j<count($info_608_x[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_608_x[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_608_y[$a]); $j++) {
+		for ($j=0; $j<count($info_608_y[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_608_y[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_608_z[$a]); $j++) {
+		for ($j=0; $j<count($info_608_z[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_608_z[$a][$j]) ;
 		}
 	//	if($info_608_3[$a][0])$libelle_final.=" @@3 ".trim($info_608_3[$a][0]);
@@ -202,7 +202,7 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 
 	return array(
 		"form" => "<input type='hidden' name='rameau' value='".htmlentities($champ_rameau,ENT_QUOTES,$charset)."' />",
-		"message" => "<br />Rameau sera intégré en zone d'indexation libre (Mots-clés) : ".htmlentities($champ_rameau,ENT_QUOTES,$charset)
+		"message" => "<br />Rameau sera int&eacute;gr&eacute; en zone d'indexation libre (Mots-cl&eacute;s) : ".htmlentities($champ_rameau,ENT_QUOTES,$charset)
 	);
 }
 

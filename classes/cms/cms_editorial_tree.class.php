@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_tree.class.php,v 1.13 2018-05-25 07:49:21 dgoron Exp $
+// $Id: cms_editorial_tree.class.php,v 1.14.6.1 2019-10-25 06:52:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -91,23 +91,25 @@ class cms_editorial_tree {
 		return $cms_editorial_tree_layout;
 	}
 	
+	public static function set_tree_selected_item($item_id=0, $item_type='article'){
+	    global $cms_editorial_tree_selected_item;
+	    
+	    $tree_selected_item = $cms_editorial_tree_selected_item;
+	    $tree_selected_item = str_replace('!!item_id!!', $item_id, $tree_selected_item);
+	    $tree_selected_item = str_replace('!!item_type!!', $item_type, $tree_selected_item);
+	    return $tree_selected_item;
+	}
+	
 	public static function get_tree(){
-		global $cms_editorial_tree_content,$dbh,$msg,$base_path,$cms_active_image_cache;
+		global $cms_editorial_tree_content,$msg,$base_path,$cms_active_image_cache;
 		
 		//Un article ou une rubrique plus récent que le cache ?
-		$rqt = "SELECT count(*) FROM cms_cache_cadres";
-		$res = pmb_mysql_query($rqt,$dbh);
-		if(pmb_mysql_result($res, 0)){
-			$cms_editorial_tree_content = str_replace('!!cms_editorial_clean_cache_button!!', '<div data-dojo-type=\'dijit/form/Button\' data-dojo-props=\'id:"clean_cache_button",title:"'.cms_cache::get_cache_formatted_last_date().'",onclick:"if(confirm(\"'.$msg['cms_clean_cache_confirm'].'\")){document.location=\"'.$base_path.'/cms.php?categ=editorial&sub=list&action=clean_cache\";}"\'>'.$msg['cms_clean_cache'].'</div>', $cms_editorial_tree_content);
-		}else{
-			$cms_editorial_tree_content = str_replace("!!cms_editorial_clean_cache_button!!", "", $cms_editorial_tree_content);
-		}
+		$cms_editorial_tree_content = str_replace('!!cms_editorial_clean_cache_button!!', '<div data-dojo-type=\'dijit/form/Button\' data-dojo-props=\'id:"clean_cache_button",title:"'.cms_cache::get_cache_formatted_last_date().'",onclick:"if(confirm(\"'.$msg['cms_clean_cache_confirm'].'\")){document.location=\"'.$base_path.'/cms.php?categ=editorial&sub=list&action=clean_cache\";}"\'>'.$msg['cms_clean_cache'].'</div>', $cms_editorial_tree_content);
 		if($cms_active_image_cache == 1){
 			$cms_editorial_tree_content = str_replace("!!cms_editorial_clean_cache_img!!", '<div data-dojo-type=\'dijit/form/Button\' data-dojo-props=\'id:"clean_cache_button_img",onclick:"if(confirm(\"'.$msg['cms_clean_cache_confirm_img'].'\")){document.location=\"'.$base_path.'/cms.php?categ=editorial&sub=list&action=clean_cache_img\";}"\'>'.$msg['cms_clean_cache_img'].'</div>', $cms_editorial_tree_content);
 		}else{
 			$cms_editorial_tree_content = str_replace("!!cms_editorial_clean_cache_img!!", "", $cms_editorial_tree_content);
 		}
-		
 		return $cms_editorial_tree_content;
 	}
 	

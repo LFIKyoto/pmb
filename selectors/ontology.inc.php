@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ontology.inc.php,v 1.22 2017-10-20 15:38:14 vtouchard Exp $
+// $Id: ontology.inc.php,v 1.23 2019-01-14 15:34:20 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -22,7 +22,12 @@ if (!isset($page)) $page = 1;
 if(isset($parent_id) && $parent_id){
 	$deb_rech= "";
 }
-
+global $concept_scheme;
+if(!is_array($concept_scheme) && $concept_scheme != ''){
+    $concept_scheme = explode(",",$concept_scheme);
+}else{
+    $concept_scheme = [];
+}
 $base_url = selector_ontology::get_base_url();
 
 require_once($class_path."/autoloader.class.php");

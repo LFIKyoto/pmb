@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scheduler_chklnk.class.php,v 1.3 2017-10-26 15:16:13 dgoron Exp $
+// $Id: scheduler_chklnk.class.php,v 1.4 2019-06-13 15:26:51 btafforeau Exp $
 
 require_once($class_path."/scheduler/scheduler_task.class.php");
 require_once($base_path."/admin/planificateur/chklnk/scheduler_chklnk_planning.class.php");
@@ -12,7 +12,7 @@ class scheduler_chklnk extends scheduler_task {
 	protected function execution_parameter($parameter, $method_name) {
 		if (method_exists($this->proxy, 'pmbesChklnk_'.$method_name)) {
 			if(isset($parameter['ajt']) && $parameter['ajt']) {
-				$idcaddie = $parameter['idcaddie']+0;
+			    $idcaddie = (int) $parameter['idcaddie'];
 			} else {
 				$idcaddie = 0;
 			}

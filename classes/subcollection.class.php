@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: subcollection.class.php,v 1.92 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: subcollection.class.php,v 1.96 2019-08-06 09:53:27 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -94,7 +94,7 @@ class subcollection {
 				$editeur = authorities_collection::get_authority(AUT_TABLE_PUBLISHERS, $parent->parent);
 				$this->editeur_libelle = $editeur->name;
 				$this->editor_isbd = $editeur->get_isbd();
-				$this->issn ? $this->isbd_entry = $this->parent_libelle.'.&nbsp;'.$this->name.', ISSN '.$this->issn : $this->isbd_entry = $this->parent_libelle.'.&nbsp;'.$this->name ;
+				$this->issn ? $this->isbd_entry = $this->parent_libelle.'. '.$this->name.', ISSN '.$this->issn : $this->isbd_entry = $this->parent_libelle.'. '.$this->name ;
 				$this->display = $this->parent_libelle.'. '.$this->name.' ('.$this->editeur_libelle.')';
 				// Ajoute un lien sur la fiche sous-collection si l'utilisateur à accès aux autorités
 				if (SESSrights & AUTORITES_AUTH) {
@@ -274,10 +274,6 @@ class subcollection {
 		$requete .= ", subcoll_id=$by WHERE subcoll_id=".$this->id;
 		$res = pmb_mysql_query($requete, $dbh);
 	
-		// b) suppression de la collection
-		$requete = "DELETE FROM sub_collections WHERE sub_coll_id=".$this->id;
-		$res = pmb_mysql_query($requete, $dbh);
-		
 		//nettoyage d'autorities_sources
 		$query = "select * from authorities_sources where num_authority = ".$this->id." and authority_type = 'subcollection'";
 		$result = pmb_mysql_query($query);
@@ -295,7 +291,10 @@ class subcollection {
 					pmb_mysql_query($query);
 				}
 			}
-		}	
+		}			
+		// nettoyage indexation concepts
+		$index_concept = new index_concept($this->id, TYPE_SUBCOLLECTION);
+		$index_concept->delete();
 		
 		//Remplacement dans les champs persos sélecteur d'autorité
 		aut_pperso::replace_pperso(AUT_TABLE_SUB_COLLECTIONS, $this->id, $by);
@@ -308,6 +307,10 @@ class subcollection {
 		// effacement de l'identifiant unique d'autorité
 		$authority = new authority(0, $this->id, AUT_TABLE_SUB_COLLECTIONS);
 		$authority->delete();
+		
+		// b) suppression de la collection
+		$requete = "DELETE FROM sub_collections WHERE sub_coll_id=".$this->id;
+		$res = pmb_mysql_query($requete, $dbh);
 		
 		subcollection::update_index($by);
 	
@@ -417,6 +420,7 @@ class subcollection {
 		$sub_coll_rep_form=str_replace('!!id!!', $this->id, $sub_coll_rep_form);
 		$sub_coll_rep_form=str_replace('!!subcoll_name!!', $this->display, $sub_coll_rep_form);
 		$sub_coll_rep_form=str_replace('!!controller_url_base!!', static::format_url(), $sub_coll_rep_form);
+		$sub_coll_rep_form=str_replace('!!cancel_action!!', static::format_back_url(), $sub_coll_rep_form);
 		print $sub_coll_rep_form;
 	}
 	
@@ -561,7 +565,7 @@ class subcollection {
 		global $dbh;
 	
 		// check sur le type de  la variable passée en paramètre
-		if(!sizeof($data) || !is_array($data)) {
+		if (!is_array($data) || empty($data)) {
 			// si ce n'est pas un tableau ou un tableau vide, on retourne 0
 			return 0;
 		}

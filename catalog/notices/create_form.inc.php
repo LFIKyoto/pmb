@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: create_form.inc.php,v 1.15 2017-08-08 14:06:21 dgoron Exp $
+// $Id: create_form.inc.php,v 1.16 2019-06-07 08:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $saisieISBN, $code, $code10, $temp_nb_notice, $id, $msg, $acces_m, $gestion_acces_active, $gestion_acces_user_notice, $class_path;
+global $PMBuserid, $notice;
 
 // page de création d'une notice
 
@@ -36,7 +39,7 @@ if(isset($saisieISBN) && $saisieISBN) {
 		}
 	}
 	$requete = "SELECT notice_id FROM notices WHERE (".($code?"code='$code'":"").(($code&&$code10)?" or ":"").($code10?"code='$code10'":"").")";
-	$myQuery = pmb_mysql_query($requete, $dbh);
+	$myQuery = pmb_mysql_query($requete);
 	$temp_nb_notice = pmb_mysql_num_rows($myQuery) ;
 } else {
 	$code = '';

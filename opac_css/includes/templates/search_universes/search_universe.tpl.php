@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_universe.tpl.php,v 1.14 2018-10-05 08:26:39 vtouchard Exp $
+// $Id: search_universe.tpl.php,v 1.15 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $base_path, $msg;
 global $search_universe_form;
 global $search_universe_segment_list;
 global $search_universe_segments_form_row;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serie.class.php,v 1.85 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: serie.class.php,v 1.87 2019-08-05 11:46:08 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -280,7 +280,15 @@ class serie {
 		while ($r=pmb_mysql_fetch_object($r_notice)) {
 			$rq_serie="update notices, series set notices.index_serie=serie_index, notices.index_wew=concat(serie_name,' ',tit1,' ',tit2,' ',tit3,' ',tit4),notices.index_sew=concat(' ',serie_index,' ','".addslashes(strip_empty_words($r->tit1." ".$r->tit2." ".$r->tit3." ".$r->tit4))."',' ') where notice_id=".$r->notice_id." and serie_id=tparent_id";
 			pmb_mysql_query($rq_serie);
-			}
+		}
+		
+		// nettoyage indexation concepts
+		$index_concept = new index_concept($this->s_id, TYPE_SERIE);
+		$index_concept->delete();
+		
+		// effacement de l'identifiant unique d'autorité
+		$authority = new authority(0, $this->s_id, AUT_TABLE_SERIES);
+		$authority->delete();
 		
 		// b) suppression du titre de série à remplacer
 		$requete = "DELETE FROM series WHERE serie_id=".$this->s_id;
@@ -291,13 +299,9 @@ class serie {
 		
 		audit::delete_audit (AUDIT_SERIE, $this->s_id);
 			
-			// nettoyage indexation
-			indexation_authority::delete_all_index($this->s_id, "authorities", "id_authority", AUT_TABLE_SERIES);
-			
-			// effacement de l'identifiant unique d'autorité
-			$authority = new authority(0, $this->s_id, AUT_TABLE_SERIES);
-			$authority->delete();
-			
+		// nettoyage indexation
+		indexation_authority::delete_all_index($this->s_id, "authorities", "id_authority", AUT_TABLE_SERIES);
+		
 		serie::update_index($by);
 	
 		return FALSE;
@@ -332,7 +336,7 @@ class serie {
 				$rqt_notice="select notice_id,tit1,tit2,tit3,tit4 from notices where tparent_id=".$this->s_id;
 				$r_notice=pmb_mysql_query($rqt_notice);
 				while ($r=pmb_mysql_fetch_object($r_notice)) {
-					$rq_serie="update notices, series set notices.index_serie=serie_index, notices.index_wew=concat(serie_name,' ',tit1,' ',tit2,' ',tit3,' ',tit4),notices.index_sew=concat(' ',serie_index,' ','".addslashes(strip_empty_words($r->tit1." ".$r->tit2." ".$r->tit3." ".$r->tit4))."',' ') where notice_id=".$r->notice_id." and serie_id=tparent_id";
+					$rq_serie="update notices, series set  notices.update_date = notices.update_date, notices.index_serie=serie_index, notices.index_wew=concat(serie_name,' ',tit1,' ',tit2,' ',tit3,' ',tit4),notices.index_sew=concat(' ',serie_index,' ','".addslashes(strip_empty_words($r->tit1." ".$r->tit2." ".$r->tit3." ".$r->tit4))."',' ') where notice_id=".$r->notice_id." and serie_id=tparent_id";
 					pmb_mysql_query($rq_serie);
 				}
 				

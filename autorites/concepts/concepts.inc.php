@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: concepts.inc.php,v 1.2 2013-08-14 15:47:58 dbellamy Exp $
+// $Id: concepts.inc.php,v 1.3 2019-06-03 07:04:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $include_path, $aut_concepts_menu, $msg, $sub, $page, $limit, $object_uri, $uri, $action;
 
 require_once("$class_path/rdf/ontology.class.php");
 require_once("$include_path/templates/concepts.tpl.php");

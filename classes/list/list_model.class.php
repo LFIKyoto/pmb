@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_model.class.php,v 1.6 2018-11-13 09:32:58 dgoron Exp $
+// $Id: list_model.class.php,v 1.7 2019-02-08 09:33:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -59,6 +59,12 @@ class list_model {
 	protected $pager;
 	
 	/**
+	 * Filtres sélectionnés
+	 * @var array
+	 */
+	protected $selected_filters;
+	
+	/**
 	 * Liste des autorisations
 	 * @var array
 	 */
@@ -97,6 +103,7 @@ class list_model {
 		$this->applied_group = array();
 		$this->applied_sort = array();
 		$this->pager = array();
+		$this->selected_filters = array();
 		$this->autorisations = array($PMBuserid);
 		$this->default_selected = 0;
 		$this->order = 0;
@@ -112,6 +119,7 @@ class list_model {
 			$this->applied_group = encoding_normalize::json_decode($row->list_applied_group, true);
 			$this->applied_sort = encoding_normalize::json_decode($row->list_applied_sort, true);
 			$this->pager = encoding_normalize::json_decode($row->list_pager, true);
+			$this->selected_filters = encoding_normalize::json_decode($row->list_selected_filters, true);
 			$this->autorisations = explode(' ', $row->list_autorisations);
 			$this->default_selected = $row->list_default_selected;
 			$this->order = $row->list_order;
@@ -134,6 +142,8 @@ class list_model {
 		$this->applied_sort = $this->list_ui->get_applied_sort();
 		$this->list_ui->set_pager_from_form();
 		$this->pager = $this->list_ui->get_pager();
+		$this->list_ui->set_selected_filters_from_form();
+		$this->selected_filters = $this->list_ui->get_selected_filters();
 		if (is_array($autorisations)) {
 			$this->autorisations = $autorisations;
 		} else {
@@ -161,6 +171,7 @@ class list_model {
 			list_applied_group = '".addslashes(json_encode($this->applied_group))."',
 			list_applied_sort = '".addslashes(json_encode($this->applied_sort))."',
 			list_pager = '".addslashes(json_encode($this->pager))."',
+			list_selected_filters = '".addslashes(json_encode($this->selected_filters))."',
 			list_autorisations = '".implode(' ', $this->autorisations)."',
 			list_default_selected = ".$this->default_selected.",
 			list_order = ".$this->order."
@@ -221,6 +232,10 @@ class list_model {
 		return $this->pager;
 	}
 	
+	public function get_selected_filters() {
+		return $this->selected_filters;
+	}
+	
 	public function get_autorisations() {
 		return $this->autorisations;
 	}
@@ -247,6 +262,10 @@ class list_model {
 	
 	public function set_applied_group($applied_group) {
 		$this->applied_group = $applied_group;
+	}
+	
+	public function set_selected_filters($selected_filters) {
+		$this->selected_filters = $selected_filters;
 	}
 	
 	public function set_list_ui($list_ui) {

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: XMLlist_links.class.php,v 1.8 2017-06-22 13:23:54 mbertin Exp $
+// $Id: XMLlist_links.class.php,v 1.10 2019-07-23 09:30:38 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -99,7 +99,7 @@ class XMLlist_links extends XMLlist {
  		global $charset;
  		global $base_path, $KEY_CACHE_FILE_XML;
 		if (!($fp = @fopen($this->fichierXml, "r"))) {
-			die("impossible d'ouvrir le fichier XML $this->fichierXml");
+		    die(htmlentities("impossible d'ouvrir le fichier XML $this->fichierXml", ENT_QUOTES, $charset));
 		}
  		//vérification fichier pseudo-cache dans les temporaires
 		$fileInfo = pathinfo($this->fichierXml);
@@ -227,11 +227,11 @@ class XMLlist_links extends XMLlist {
 				}
 				foreach($this->table as $sens => $links){
 					if (!$this->flag_order) {
-						$tmp[$sens] = array_map("convert_diacrit",$this->table[$sens]); //On enlève les accents
+						$tmp[$sens] = array_map("convert_diacrit",$links); //On enlève les accents
 						$tmp[$sens]=array_map("strtoupper",$tmp[$sens]);//On met en majuscule
 						asort($tmp[$sens]);//Tri sur les valeurs en majuscule sans accent
 						foreach ( $tmp[$sens] as $key => $value ) {
-							$tmp[$sens][$key]= $this->table[$sens][$key];
+							$tmp[$sens][$key]= $links[$key];
 						}
 					} else {
 						$tmp[$sens] = array();
@@ -241,7 +241,7 @@ class XMLlist_links extends XMLlist {
 								unset($this->table[$sens][$key]);
 							}
 						}
-						$tmp[$sens] = $tmp[$sens] + $this->table[$sens];
+						$tmp[$sens] = $tmp[$sens] + $links;
 					}
 				}
 				$this->table=$tmp;

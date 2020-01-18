@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice.inc.php,v 1.38 2017-10-19 14:04:50 ngantier Exp $
+// $Id: notice.inc.php,v 1.38.6.1 2019-11-19 08:58:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -10,6 +10,10 @@ if(!isset($typdoc_query)) $typdoc_query = '';
 if(!isset($callback)) $callback = '';
 if(!isset($id_restrict)) $id_restrict = '';
 
+if(empty($param1) && empty($param2)) {
+    if(!empty($p1)) $param1 = $p1;
+    if(!empty($p2)) $param2 = $p2;
+}
 // la variable $caller, passée par l'URL, contient le nom du form appelant
 $base_url = "./select.php?what=notice&caller=$caller&param1=$param1&param2=$param2&no_display=$no_display&bt_ajouter=$bt_ajouter&callback=$callback&infield=$infield&typdoc_query=$typdoc_query&id_restrict=$id_restrict";
 if(isset($niveau_biblio) && $niveau_biblio){ 

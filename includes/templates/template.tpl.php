@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: template.tpl.php,v 1.1 2018-01-05 15:32:18 dgoron Exp $
+// $Id: template.tpl.php,v 1.2 2019-05-27 13:44:11 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 global $template_liste;
 global $template_liste_ligne;
-global $template_form;
+global $template_form, $msg, $current_module;
 
 $template_liste = "
 <table width='100%'>

@@ -2,11 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dsi.tpl.php,v 1.91 2018-12-19 10:15:21 dgoron Exp $
+// $Id: dsi.tpl.php,v 1.95.2.2 2019-11-15 09:50:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-require_once("$include_path/templates/export_param.tpl.php");
+global $include_path, $msg, $current_module;
+
+require_once $include_path."/templates/export_param.tpl.php";
+
+global $dsi_menu, $dsi_layout, $dsi_search_tmpl, $dsi_search_bannette_tmpl, $dsi_search_equation_tmpl, $dsi_list_tmpl, $dsi_desc_field, $dsi_desc_first_desc;
+global $dsi_desc_other_desc, $dsi_bannette_form, $dsi_bannette_form_abo, $dsi_classement_form, $dsi_equation_form, $dsi_bannette_equation_assoce, $dsi_ban_list_diff; 
+global $dsi_search_flux_tmpl, $dsi_flux_form, $dsi_bannette_form_selvars;
 
 $dsi_menu = "
 <div id='menu'>
@@ -248,24 +254,27 @@ function confirm_delete() {
 	<div class='colonne_suite'>
 		<div class='row'>
 			<label class='etiquette' for='num_classement'>$msg[dsi_ban_form_classement]</label>
-			</div>
+		</div>
 		<div class='row'>
 			!!num_classement!!
-			</div>
 		</div>
 	</div>
+</div>
 <div class='row'>
 	<label for='comment_gestion' class='etiquette'>$msg[dsi_ban_form_com_gestion]</label>
-	</div>
+</div>
 <div class='row'>
 	<textarea id='comment_gestion' name='comment_gestion' cols='120' rows='2' wrap='virtual'>!!comment_gestion!!</textarea>
-	</div>
+</div>
 <div class='row'>
 	<label for='comment_public' class='etiquette'>$msg[dsi_ban_form_com_public]</label>
-	</div>
+</div>
+<div class='row'>
+	!!comment_public_info_empr!!
+</div>
 <div class='row'>
 	<textarea id='comment_public' name='comment_public' cols='120' rows='2' wrap='virtual'>!!comment_public!!</textarea>
-	</div>
+</div>
 <div class='row'></div>
 <div class='row'>
 	<label for='comment_public' class='etiquette'>$msg[dsi_ban_form_tpl]</label>
@@ -380,6 +389,10 @@ function confirm_delete() {
 		<label for='associated_campaign' class='etiquette'>".$msg["dsi_ban_associated_campaign"]."</label>
 		<input type='checkbox' name='associated_campaign' !!associated_campaign!! value=\"1\" />
 	</div>
+</div>
+<div class='row'>
+	<label for='num_sender' class='etiquette'>".$msg['dsi_ban_senders']."</label>
+	!!senders!!
 </div>
 <div class='row'><hr /></div>
 
@@ -932,13 +945,23 @@ $dsi_flux_form = "
 		}
 		return true;
 	}
-function confirm_delete() {
+    function confirm_delete() {
         result = confirm(\"".$msg['confirm_suppr']."\");
         if(result)
             document.location='./dsi.php?categ=fluxrss&suite=delete&id_rss_flux=!!id_rss_flux!!';
         else
             document.forms['saisie_rss_flux'].elements['nom_rss_flux'].focus();
     }
+    function getSort(id,name){
+		document.forms.saisie_rss_flux.id_tri_rss_flux.value=id;
+		var name = document.createTextNode(name);
+		var span = document.getElementById('rss_flux_sort');
+		while(span.firstChild){
+			span.removeChild(span.firstChild);
+		}
+		span.appendChild(name);
+		
+	}
 -->
 </script>
 <form class='form-$current_module' id='saisie_rss_flux' name='saisie_rss_flux' method='post' action='!!action!!'>
@@ -947,29 +970,36 @@ function confirm_delete() {
 	<div class='colonne2'>
 		<div class='row'>
 			<label class='etiquette' for='nom_rss_flux'>$msg[dsi_flux_form_nom]</label>
-			</div>
+		</div>
 		<div class='row'>
 			<input type='text' class='saisie-50em' name='nom_rss_flux' value=\"!!nom_rss_flux!!\" />
-			</div>
 		</div>
+	</div>
 
 	<div class='colonne_suite'>
 		<div class='row'>
 			<label class='etiquette' for='link_rss_flux'>$msg[dsi_flux_form_link]</label>
-			</div>
+		</div>
 		<div class='row'>
 			<input type='text' class='saisie-50em' name='link_rss_flux' value=\"!!link_rss_flux!!\" />
-			</div>
 		</div>
+	</div>
 
 	<div class='row'>
 		<div class='row'>
 			<label class='etiquette' for='descr_rss_flux'>$msg[dsi_flux_form_descr]</label>
-			</div>
+		</div>
 		<div class='row'>
 			<input type='text' class='saisie-80em' name='descr_rss_flux' value=\"!!descr_rss_flux!!\" />
-			</div>
 		</div>
+	</div>
+
+	<div class='row'>
+		<div class='row'>
+			<input type='checkbox' name='metadata_rss_flux' !!metadata_rss_flux!! value='1' />
+            <label class='etiquette' for='metadata_rss_flux'>$msg[dsi_flux_form_metadata]</label>
+		</div>
+	</div>
 
 <div class='row'><hr /></div>
 	<div class='colonne4'>
@@ -1042,32 +1072,38 @@ function confirm_delete() {
 		</div>
 <div class='row'><hr /></div>
 <div class='row'>
-	<div class='colonne2'>
-		<div class='row'>
-			<label class='etiquette' for='type_export'>$msg[dsi_flux_form_format_flux]</label>
-		</div>
-		<div class='row'>
-			<input type='radio' name='type_export' onclick='disableTemplateChoice()' value='tpl' id='tpl_rss_flux' !!tpl_rss_flux!! />
-			!!sel_notice_tpl!!
-		</div>
-	</div>
-	<div class='colonne_suite'>	
-		<div class='row'>
+	<label class='etiquette'>$msg[dsi_flux_form_format_flux_items]</label>
+</div>
+<div class='row'>
+	&nbsp;
+</div>
+<div class='row'>
+	<label class='etiquette'>$msg[dsi_flux_form_format_flux_item_title]</label>
+</div>
+<div class='row'>
+	!!sel_notice_title_tpl!!
+</div>
+<div class='row'>
+	&nbsp;
+</div>
+<div class='row'>
+	<label class='etiquette'>$msg[dsi_flux_form_format_flux_item_description]</label>
+</div>
+<div class='row'>
+	<input type='radio' name='type_export' onclick='disableTemplateChoice()' value='tpl' id='tpl_rss_flux' !!tpl_rss_flux!! />
+	!!sel_notice_tpl!!
+    <div id='rss_flux_default_format' class='row'>
+        <div class='row'>
 			<label class='etiquette' for='format_flux'>$msg[dsi_flux_form_format_flux_default]</label>
 		</div>
-		<div class='row'>
-			!!format_flux_default!!
-		</div>
+		<div class='row'>    			
+            !!format_flux_default!!
+        </div>
 	</div>
 </div>
-
 <div class='row'>
-	<div class='colonne2'>
-		<div class='row'>
-			<input type='radio' name='type_export' onclick='disableTemplateChoice()' value='export_court' id='export_court_flux' !!export_court!! />
-			<label class='etiquette' for='export_court_flux'>$msg[dsi_flux_form_short_export]</label>
-		</div>
-	</div>	
+	<input type='radio' name='type_export' onclick='disableTemplateChoice()' value='export_court' id='export_court_flux' !!export_court!! />
+	<label class='etiquette' for='export_court_flux'>$msg[dsi_flux_form_short_export]</label>
 </div>
 
 <div class='row'><hr /></div>
@@ -1084,6 +1120,16 @@ function confirm_delete() {
 	</div>
 <div class='row'><hr /></div>
 
+</div>
+<div class='row'>
+    <a href=# onClick=\"document.getElementById('history').src='./sort.php?action=0&caller=rss_flux'; document.getElementById('history').style.display='';return false;\" alt=\"".$msg['tris_dispos']."\" title=\"".$msg['tris_dispos']."\">
+		<img src='".get_url_icon('orderby_az.gif')."' class='align_middle' hspace='3'>
+	</a>
+	<input type='hidden' value='!!tri!!' name='id_tri_rss_flux'/>
+	<span id='rss_flux_sort'>
+		!!tri_name!!
+	</span>
+	<div class='row'><hr /></div>
 </div>
 <div class='row'>
 	<div class='left'>
@@ -1108,11 +1154,19 @@ function confirm_delete() {
 			document.forms['saisie_rss_flux'].elements['format_flux'].disabled='';
 		}
 	}
+    function changeTemplateChoice(){
+        if(document.getElementById('notice_tpl').value == '0'){
+            document.getElementById('rss_flux_default_format').style.display = 'block';
+		}else {
+			document.getElementById('rss_flux_default_format').style.display = 'none';
+		}
+    }
+    addLoadEvent(function() {changeTemplateChoice();});
 </script>
 ";
 
 $dsi_bannette_form_selvars="
-<select name='selvars_id' id='selvars_id'>
+<select name='!!selector_name!!' id='!!selector_name!!'>
 	<option value=!!empr_name!!>".$msg["selvars_empr_name"]."</option>
 	<option value=!!empr_first_name!!>".$msg["selvars_empr_first_name"]."</option>
 	<option value=!!empr_sexe!!>".$msg["selvars_empr_civilite"]."</option>
@@ -1126,10 +1180,10 @@ $dsi_bannette_form_selvars="
 	<option value=!!date!!>".$msg["selvars_date"]."</option>
 	<option value=!!equation!!>".$msg["selvars_equation"]."</option>
 </select>
-<input type='button' class='bouton' value=\" ".$msg["admin_mailtpl_form_selvars_insert"]." \" onClick=\"insert_vars(document.getElementById('selvars_id'), document.getElementById('entete_mail')); return false; \" />
+<input type='button' class='bouton' value=\" ".$msg["admin_mailtpl_form_selvars_insert"]." \" onClick=\"insert_vars_!!selector_name!!(document.getElementById('!!selector_name!!'), document.getElementById('!!dest_dom_node!!')); return false; \" />
 <script type='text/javascript'>
 
-	function insert_vars(theselector,dest){
+	function insert_vars_!!selector_name!!(theselector,dest){
 		var selvars='';
 		for (var i=0 ; i< theselector.options.length ; i++){
 			if (theselector.options[i].selected){
@@ -1139,7 +1193,7 @@ $dsi_bannette_form_selvars="
 		}
 		if(!selvars) return ;
 
-		if(typeof(tinyMCE)== 'undefined'){
+		if(typeof(tinyMCE)== 'undefined' || dest.id == 'comment_public'){
 			var start = dest.selectionStart;
 		    var start_text = dest.value.substring(0, start);
 		    var end_text = dest.value.substring(start);

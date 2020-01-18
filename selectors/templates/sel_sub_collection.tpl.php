@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_sub_collection.tpl.php,v 1.30 2018-03-21 12:25:55 dgoron Exp $
+// $Id: sel_sub_collection.tpl.php,v 1.31 2019-01-03 09:52:17 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -34,12 +34,17 @@ if($selfrom=="rmc") {
 		<!--
 		function set_parent(f_caller, idSubColl, libelleSubColl, callback, idParent, idLibelleParent, idEd, libelleEd)
 		{
-			set_parent_value(f_caller, '".$p1."', idEd);
-			set_parent_value(f_caller, '".$p2."', libelleEd ? reverse_html_entities(libelleEd) : '');
-			set_parent_value(f_caller, '".$p3."', idParent);
-			set_parent_value(f_caller, '".$p4."', idLibelleParent ? reverse_html_entities(idLibelleParent) : '');
-			set_parent_value(f_caller, '".$p5."', idSubColl);
-			set_parent_value(f_caller, '".$p6."', libelleSubColl ? reverse_html_entities(libelleSubColl) : '');
+            if(callback == 'vedette_composee_callback') {
+    			set_parent_value(f_caller, '".$p1."', idSubColl);
+    			set_parent_value(f_caller, '".$p2."', libelleSubColl ? reverse_html_entities(libelleSubColl) : '');
+			} else {
+    			set_parent_value(f_caller, '".$p1."', idEd);
+    			set_parent_value(f_caller, '".$p2."', libelleEd ? reverse_html_entities(libelleEd) : '');
+    			set_parent_value(f_caller, '".$p3."', idParent);
+    			set_parent_value(f_caller, '".$p4."', idLibelleParent ? reverse_html_entities(idLibelleParent) : '');
+    			set_parent_value(f_caller, '".$p5."', idSubColl);
+    			set_parent_value(f_caller, '".$p6."', libelleSubColl ? reverse_html_entities(libelleSubColl) : '');
+            }
 			closeCurrentEnv();
 		}
 		-->

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: audit.php,v 1.12 2017-05-18 14:40:04 ngantier Exp $
+// $Id: audit.php,v 1.14 2019-08-19 12:50:37 mbertin Exp $
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
@@ -12,13 +12,14 @@ $base_title = "\$msg[audit_titre]";
 require_once ("$base_path/includes/init.inc.php");  
 require_once($class_path.'/audit.class.php');
 
+$all = array();
 switch($pmb_type_audit) {
 	case '1':
 		$audit = new audit($type_obj, $object_id) ;
 		$audit->get_all();
 		if(count($audit->all_audit) == 1){
 			$all[0] =  $audit->get_creation() ;
-		} else {
+        } elseif(count($audit->all_audit) > 1){
 			$all[0] =  $audit->get_creation() ;
 			$all[1] =  $audit->get_last() ;
 		}		
@@ -37,37 +38,39 @@ switch($pmb_type_audit) {
 $audit_list = "<script type='text/javascript' src='./javascript/sorttable.js'></script>
 <table class='sortable' ><tr><th>".$msg['demandes_demandeur']."<th>".$msg['audit_col_nom']."</th><th>".$msg['audit_col_username'].
 "</th><th>".$msg['audit_col_type_action']."</th><th>".$msg['audit_col_date_heure']."</th><th>".$msg['audit_comment']."</th></tr>";
-while(list($cle, $valeur) = each($all)) {
-	//user_id, user_name, type_modif, quand, concat(prenom, ' ', nom) as prenom_nom
-	$info=json_decode($valeur->info);
-	$info_display="";
-	if(is_object($info)){
-		if($info->comment)$info_display.=$info->comment."<br>";
-		if(count($info->fields)){
-			foreach($info->fields as $fieldname => $values){
-				if(is_object($values)){
-					$info_display.=$fieldname." : ".$values->old." => ".$values->new."<br>";
-				}
-			}
-		}
-	}else $info_display=$valeur->info;
-	
-	$type_user_libelle='';
-	if($valeur->type_user == 1) {
-		$type_user_libelle = $msg['empr_nom_prenom'];
-	}else {
-		$type_user_libelle = $msg[86];
+if(count($all)){
+    foreach ($all as $cle => $valeur) {
+    	//user_id, user_name, type_modif, quand, concat(prenom, ' ', nom) as prenom_nom
+    	$info=json_decode($valeur->info);
+    	$info_display="";
+    	if(is_object($info)){
+    		if($info->comment)$info_display.=$info->comment."<br>";
+    		if(count($info->fields)){
+    			foreach($info->fields as $fieldname => $values){
+    				if(is_object($values)){
+    					$info_display.=$fieldname." : ".$values->old." => ".$values->new."<br>";
+    				}
+    			}
+    		}
+    	}else $info_display=$valeur->info;
+    	
+    	$type_user_libelle='';
+    	if($valeur->type_user == 1) {
+    		$type_user_libelle = $msg['empr_nom_prenom'];
+    	}else {
+    		$type_user_libelle = $msg[86];
+    	}
+    	$audit_list .= "
+    		<tr>
+    			<td>".$type_user_libelle." (".$valeur->user_id.")</td>
+    			<td>$valeur->prenom_nom</td>
+    			<td>$valeur->user_name</td>
+    			<td>".$msg['audit_type'.$valeur->type_modif]."</td>
+    			<td>$valeur->aff_quand</td>
+    			<td>".$info_display."</td>
+    			</tr>";
 	}
-	$audit_list .= "
-		<tr>
-			<td>".$type_user_libelle." (".$valeur->user_id.")</td>
-			<td>$valeur->prenom_nom</td>
-			<td>$valeur->user_name</td>
-			<td>".$msg['audit_type'.$valeur->type_modif]."</td>
-			<td>$valeur->aff_quand</td>
-			<td>".$info_display."</td>
-			</tr>";
-		}
+}
 $audit_list .= "</table>";
 
 echo $audit_list ;

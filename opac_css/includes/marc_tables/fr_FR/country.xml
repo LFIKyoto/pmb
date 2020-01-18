@@ -2,7 +2,7 @@
 <!DOCTYPE XMLlist SYSTEM "../../XMLlist.dtd">
 
 <!-- liste des codes pays en UNIMARC (français)
-$Id: country.xml,v 1.2 2009-04-10 15:29:34 bencze Exp $ -->
+$Id: country.xml,v 1.4 2019-03-29 10:23:27 dgoron Exp $ -->
 
 <XMLlist>
 	<entry code="AF">Afghanistan</entry>
@@ -100,7 +100,7 @@ $Id: country.xml,v 1.2 2009-04-10 15:29:34 bencze Exp $ -->
 	<entry code="GW">Guinée-Bissau</entry>
 	<entry code="GQ">Guinée-équatoriale</entry>
 	<entry code="GY">Guyana</entry>
-	<entry code="GF">Guyanne française</entry>
+	<entry code="GF">Guyane française</entry>
 	<entry code="GE">Géorgie</entry>
 	<entry code="GS">Géorgie du Sud</entry>
 	<entry code="HT">Haïti</entry>
@@ -203,6 +203,7 @@ $Id: country.xml,v 1.2 2009-04-10 15:29:34 bencze Exp $ -->
 	<entry code="WS">Samoa</entry>
 	<entry code="AS">Samoa orientales</entry>
 	<entry code="ST">Sao Tome et Principe</entry>
+	<entry code="RS">Serbie</entry>
 	<entry code="SC">Seychelles</entry>
 	<entry code="SL">Sierra Leone</entry>
 	<entry code="SG">Singapour</entry>

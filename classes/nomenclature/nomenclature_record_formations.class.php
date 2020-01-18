@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_record_formations.class.php,v 1.22 2018-03-21 15:42:14 apetithomme Exp $
+// $Id: nomenclature_record_formations.class.php,v 1.24 2019-07-03 15:35:48 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -30,6 +30,10 @@ class nomenclature_record_formations{
 	public $record_formations;
 	
 	protected $id;
+	
+	protected static $instruments_index_data = array();
+	
+	protected static $voices_index_data = array();
 		
 	/**
 	 * Constructeur
@@ -160,5 +164,73 @@ class nomenclature_record_formations{
 				$rank++;
 			}
 		}
+	}
+	
+	protected static function get_instruments_index_data($notice_id){
+	    if (empty(static::$instruments_index_data[$notice_id])) {
+    	    $formations = new nomenclature_record_formations($notice_id);
+    	    $nb = count($formations->record_formations);
+    	    $index_data = [];
+    	    $data = [];
+    	    for($i=0 ; $i<$nb ; $i++){
+    	        if ($formations->record_formations[$i]->get_nature() == 0) {
+    	        	$data = $formations->record_formations[$i]->get_instruments_index_data();
+    	        	for($j=0 ; $j<count($data) ; $j++){
+    	            	$index = [];
+    	            	foreach($data[$j] as $info => $value){
+    	                	$index[$info] =$value;
+    	            	}
+    	            	$index_data[] =	 $index;
+    	        	}
+    	    	}
+    	    }
+    	    static::$instruments_index_data[$notice_id] = $index_data;
+	    }
+	    return static::$instruments_index_data[$notice_id];
+	}
+	
+	public static function get_instruments_index($notice_id, $property, $family) {
+	    $data = static::get_instruments_index_data($notice_id);
+	    $return_data = [];
+	    foreach ($data as $infos) {
+	        if (!empty($infos[$property]) && $infos["family"] == $family) {
+	            $return_data[] = $infos[$property];
+	        }
+	    }
+	    return $return_data;
+	}
+	
+	protected static function get_voices_index_data($notice_id){
+	    if (empty(static::$voices_index_data[$notice_id])) {
+	        $formations = new nomenclature_record_formations($notice_id);
+	        $nb = count($formations->record_formations);
+	        $index_data = [];
+	        $data = [];
+	        for($i=0 ; $i<$nb ; $i++){
+	            if ($formations->record_formations[$i]->get_nature() == 1) {
+    	            $data = $formations->record_formations[$i]->get_voices_index_data();
+    	            for($j=0 ; $j<count($data) ; $j++){
+    	                $index = [];
+    	                foreach($data[$j] as $info => $value){
+    	                    $index[$info] =$value;
+    	                }
+    	                $index_data[] =	 $index;
+    	            }
+	            }
+	        }
+	        static::$voices_index_data[$notice_id] = $index_data;
+	    }
+	    return static::$voices_index_data[$notice_id];
+	}
+	
+	public static function get_voices_index($notice_id, $property) {
+	    $data = static::get_voices_index_data($notice_id);
+	    $return_data = [];
+	    foreach ($data as $infos) {
+	        if (!empty($infos[$property])) {
+	            $return_data[] = $infos[$property];
+	        }
+	    }
+	    return $return_data;
 	}
 } // end of nomenclature_record_formations

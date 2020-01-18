@@ -2,13 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_tagcloud_datasource_tagcloud_records.class.php,v 1.7 2018-11-26 14:32:02 dgoron Exp $
+// $Id: cms_module_tagcloud_datasource_tagcloud_records.class.php,v 1.9 2019-07-10 06:44:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-require_once("$class_path/search.class.php");
-require_once("$class_path/translation.class.php");
-require_once("$class_path/XMLlist.class.php");
+require_once "$class_path/search.class.php";
+require_once "$class_path/translation.class.php";
+require_once "$class_path/XMLlist.class.php";
+require_once "$include_path/misc.inc.php";
 
 class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagcloud_datasource_tagcloud{
 	
@@ -447,7 +448,7 @@ class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagclou
 		$url=$pmb_opac_url."includes/messages/$lang.xml";
 		$fichier_xml=$base_path."/temp/opac_lang.xml";
 	
-		static::curl_load_file($url,$fichier_xml);
+		curl_load_opac_file($url,$fichier_xml);
 		$messages = new XMLlist("$base_path/temp/opac_lang.xml", 0);
 		$messages->analyser();
 		$msg = $messages->table;
@@ -455,40 +456,13 @@ class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagclou
 		$url=$pmb_opac_url."includes/search_queries/search_fields.xml";
 		$fichier_xml="$base_path/temp/search_fields_opac.xml";
 	
-		static::curl_load_file($url,$fichier_xml);
+		curl_load_opac_file($url,$fichier_xml);
 		$my_search=new search(false,"search_fields_opac","$base_path/temp/");
 		$form= $my_search->show_form("./admin.php?categ=opac&sub=search_persopac&section=liste&action=build",
 				"","","./cms.php?categ=manage&sub=tagcloud&quoi=datasources&elem=cms_module_tagcloud_datasource_tagcloud_records&cms_store=new&action=get_form&type=rmc");
 		
 		$msg=$save_msg;
 		return $form;
-	}
-	
-	protected static function curl_load_file($url, $filename) {
-		global $opac_curl_available, $msg ;
-		if (!$opac_curl_available) die("PHP Curl must be available");
-		//Calcul du subst
-		$url_subst=str_replace(".xml","_subst.xml",$url);
-		$curl = curl_init();
-		curl_setopt ($curl, CURLOPT_URL, $url_subst);
-		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-		$filename_subst=str_replace(".xml","_subst.xml",$filename);
-		$fp = fopen($filename_subst, "w+");
-		curl_setopt($curl, CURLOPT_FILE, $fp);
-	
-		if(curl_exec ($curl)) {
-			fclose($fp);
-			if (curl_getinfo($curl,CURLINFO_HTTP_CODE)=="404") {
-				unset($fp);
-				@unlink($filename_subst);
-			}
-			curl_setopt ($curl, CURLOPT_URL, $url);
-			$fp = fopen($filename, "w+");
-			curl_setopt($curl, CURLOPT_FILE, $fp);
-			if(!curl_exec ($curl)) die($msg["search_perso_error_param_opac_url"]);
-		} else die($msg["search_perso_error_param_opac_url"]);
-		curl_close ($curl);
-		fclose($fp);
 	}
 	
 	protected function get_managed_form_end(){
@@ -502,7 +476,7 @@ class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagclou
 	}	
 	
 //recuperation de champs_base.xml
-	function fields_array(){
+	public function fields_array(){
 		global $include_path,$msg;
 		global $dbh, $champ_base;
 		
@@ -521,7 +495,7 @@ class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagclou
 		return $champ_base;
 	}	
 	
-	function array_sort(){
+	public function array_sort(){
 		global $msg;
 		
 		$array_sort = array();
@@ -541,7 +515,7 @@ class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagclou
 		return $array_sort;		
 	}
 		
-	function array_subfields($id){
+	public function array_subfields($id){
 		global $msg,$charset;
 		$array = $this->fields_array;
 		$array_subfields = array();
@@ -576,7 +550,7 @@ class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagclou
 	}
 	
 //creation de la liste des criteres principaux
-	function create_list_fields(){
+	public function create_list_fields(){
 		global $msg;
 		//recuperation du fichier xml de configuration
 		$array = $this->array_sort();
@@ -595,7 +569,7 @@ class cms_module_tagcloud_datasource_tagcloud_records extends cms_module_tagclou
 	}
 	
 //liste liee => sous champs
-	function create_list_subfields($id,$id_ss_champs=0,$suffixe_id=0){
+	public function create_list_subfields($id,$id_ss_champs=0,$suffixe_id=0){
 		global $msg,$charset;
 		$array = $this->array_subfields($id);
 		$tab_ss_champs = array();

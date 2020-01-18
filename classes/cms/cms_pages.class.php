@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_pages.class.php,v 1.6 2017-07-12 15:15:01 tsamson Exp $
+// $Id: cms_pages.class.php,v 1.7 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -87,7 +87,7 @@ class cms_page {
 	public $vars= array();	// Variables d'environnement
 	
 	public function __construct($id=""){
-		$this->id= $id+0;		
+	    $this->id= (int) $id;		
 		if($this->id){
 			$this->fetch_data();
 		}
@@ -176,11 +176,11 @@ class cms_page {
 		global $description;	
 		global $var_count;	
 			
-		$this->id = $id+0;
+		$this->id = (int) $id;
 		$this->name = stripslashes($name);
 		$this->description = stripslashes($description);
 		$this->vars= array();	
-		$var_count+0;	
+		(int) $var_count;	
 		for($i=0; $i<$var_count; $i++){
 			$cpt=$i+1;
 			$name="var_name_".$cpt;

@@ -15,7 +15,14 @@
 {% endblock %} 
 
 {% block details %}
-	{{ authority.narrowers_list }} 
-	{{ authority.details_list }}
-	{{ authority.authoritieslist }}
+	<div class="concept_narrowersList">{{ authority.narrowers_list }}</div>
+	<div class="concept_detailsList">{{ authority.details_list }}</div>
+	<div class="concept_authoritiesList">{{ authority.authoritieslist }}</div>
+{% endblock %}
+{% block map %}
+	{% if authority.map.map %}
+		<div class="map_notice">
+			{{ authority.map.map }}
+		</div>
+	{% endif %}
 {% endblock %}

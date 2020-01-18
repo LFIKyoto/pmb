@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sort.class.php,v 1.58 2018-12-12 13:01:10 dgoron Exp $
+// $Id: sort.class.php,v 1.60.2.4 2019-11-20 08:57:06 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -244,6 +244,43 @@ class dataSort {
 		}
 	}
 	
+	public function applyTri($id) {
+	    if(($id) && !(isset($_GET["sort"]))) {
+	        //Le tri est défini en gestion, on l'ajoute aux tris dispos en OPAC si nécessaire
+	        $res_tri = pmb_mysql_query("SELECT * FROM tris WHERE id_tri=".$id);
+	        if (pmb_mysql_num_rows($res_tri)) {
+	            $last = "";
+	            $row_tri = pmb_mysql_fetch_object($res_tri);
+	            if ($_SESSION["nb_sort".$this->sortName]<=0) {
+	                $_SESSION["sort".$this->sortName.$_SESSION["nb_sort".$this->sortName]]=$row_tri->tri_par;
+	                if ($row_tri->nom_tri) {
+	                    $_SESSION["sortname".$this->sortName.$_SESSION["nb_sort".$this->sortName]]=$row_tri->nom_tri;
+	                }
+	                $last = 0;
+	                $_SESSION["nb_sort".$this->sortName]++;
+	            } else {
+	                $bool=false;
+	                for ($i=0;$i<$_SESSION["nb_sort".$this->sortName];$i++) {
+	                    if ($_SESSION["sort".$this->sortName.$i] == $row_tri->tri_par) {
+	                        $bool=true;
+	                        $last = $i;
+	                    }
+	                }
+	                if (!$bool) {
+	                    $_SESSION["sort".$this->sortName.$_SESSION["nb_sort".$this->sortName]] = $row_tri->tri_par;
+	                    if ($row_tri->nom_tri) {
+	                        $_SESSION["sortname".$this->sortName.$_SESSION["nb_sort".$this->sortName]] = $row_tri->nom_tri;
+	                    }
+	                    $last = $_SESSION["nb_sort".$this->sortName];
+	                    $_SESSION["nb_sort".$this->sortName]++;
+	                }
+	            }
+	            $_SESSION["last_sort".$this->sortName]="$last";
+	        }
+	    }elseif(isset($_GET["sort"])){
+	        $_SESSION["last_sort".$this->sortName]=$_GET["sort"];
+	    }
+	}
 }
 
 
@@ -296,6 +333,7 @@ class sort {
 		global $show_tris_form;
 		global $ligne_tableau_tris;
 		global $ligne_tableau_tris_etagere;
+		global $ligne_tableau_tris_rss_flux;
 		global $msg,$charset;
 
 		if ($this->dSort->initParcoursTris($this) == 0 ) { 
@@ -321,6 +359,9 @@ class sort {
 				if($this->caller == "etagere"){
 					$tristemp = str_replace("!!id_tri!!", $result['id_tri'], $ligne_tableau_tris_etagere);	
 					
+				}elseif($this->caller == "rss_flux"){
+				    $tristemp = str_replace("!!id_tri!!", $result['id_tri'], $ligne_tableau_tris_rss_flux);
+				    
 				}else {
 					$tristemp = str_replace("!!id_tri!!", $result['id_tri'], $ligne_tableau_tris);
 				}
@@ -336,6 +377,7 @@ class sort {
 		$tris_form = str_replace("!!caller!!", $this->caller, $show_tris_form);
 		switch ($this->caller){
 			case "etagere" :
+			case "rss_flux" :
 				$callback="parent.document.getElementById('history').style.display='none';parent.window.getSort(0,''); return false;";
 				break;
 			default :
@@ -395,6 +437,21 @@ class sort {
 		return $visibility;
 	}
 
+	protected function _compare_labels($a, $b) {
+	    global $msg;
+	    
+	    if(!empty($a["LABEL"])) $cmp_a = $a["LABEL"];
+	    else $cmp_a = $msg[$a["NAME"]];
+	    if(!empty($b["LABEL"])) $cmp_b = $b["LABEL"];
+	    else $cmp_b = $msg[$b["NAME"]];
+	    return strcmp(strtolower(convert_diacrit($cmp_a)), strtolower(convert_diacrit($cmp_b)));
+	}
+	
+	protected function _sort_fields($fields) {
+	    usort($fields, array($this, '_compare_labels'));
+	    return $fields;
+	}
+	
 	/**
 	 * Affiche l'écran de sélection des criteres de tri
 	 */
@@ -405,7 +462,8 @@ class sort {
 
 		//les champs de tris possible
 		$fields = $this->params["FIELD"];
-
+        $fields = $this->_sort_fields($fields);
+        
 		//initialisation des variables
 		$liste_selectionnes = "";
 		$nom_du_tri = "";
@@ -511,7 +569,8 @@ class sort {
 		global $opac_nb_max_criteres_tri;
 
 		$fields = $this->params["FIELD"];
-
+		$fields = $this->_sort_fields($fields);
+		
 		$liste_criteres = '';
     	for ($i=0;$i<count($fields);$i++) {
     		if ($this->visibility($fields[$i])) {
@@ -612,6 +671,17 @@ class sort {
 				
 	}
 	
+	public function ajoutTriForUniqueRender($trier_par) {
+	    switch ($this->dSort->sortName) {
+	        case 'notices':
+	            if(!in_array('c_text_1', $trier_par)) {
+	                $trier_par[] = 'c_text_1';
+	            }
+	            break;
+	    }
+	    return $trier_par;
+	}
+	
 	/**
 	 * Applique le tri sélectionner
 	 * Renvoi la requete finale utilisant les criteres de tri
@@ -633,6 +703,7 @@ class sort {
 		pmb_mysql_query($cmd_table);	
 
 		//récupération de la description du tri
+		$result = [];
 		if (is_array($idTri_orTri)) {
 			$result = $idTri_orTri;
 		}
@@ -640,7 +711,8 @@ class sort {
 			$result = $this->dSort->recupTriParId($idTri_orTri);
 		}
 		$trier_par = explode(",",$result['tri_par']);
-
+		$trier_par = $this->ajoutTriForUniqueRender($trier_par);
+		
 		//parcours des champs sur lesquels trier
 		$orderby = '';
 		for ($j = 0; $j < count($trier_par); $j++) {
@@ -704,6 +776,22 @@ class sort {
 							}
 							
 							break;
+						case "authority":
+						    //le nom du champ on ajoute tb pour corriger le probleme des noms numeriques
+						    $nomChamp = "tb".$fields[$i]["NAME"];
+						    
+						    //on ajoute la colonne au orderby
+						    $orderby .= $this->ajoutOrder($nomChamp,$temp[0]) . ",";
+						    
+						    //on ajoute la colonne à la table temporaire
+						    $this->ajoutColonneTableTempo($tableEnCours, $nomChamp, $temp[1]);
+						    
+						    //on a aussi des champs persos maitenant...
+						    if(isset($fields[$i]['SOURCE']) && $fields[$i]['SOURCE'] == "cp"){
+						        $requete = $this->generateRequeteCPAuthorityUpdate($fields[$i], $tableEnCours, $nomChamp);
+						        pmb_mysql_query($requete);
+						    }
+						    break;
 
 					} //switch
 				} //if ($fields[$i]["ID"] == $temp[2]) {
@@ -756,6 +844,7 @@ class sort {
 			$result = $this->dSort->recupTriParId($idTri_orTri);
 		}
 		$trier_par = explode(",",$result['tri_par']);
+		$trier_par = $this->ajoutTriForUniqueRender($trier_par);
 		//parcours des champs sur lesquels trier
 		$orderby = '';
 		for ($j = 0; $j < count($trier_par); $j++) {
@@ -811,7 +900,23 @@ class sort {
 								pmb_mysql_query($requete);
 							}
 							break;
-	
+						case "authority":
+						    //le nom du champ on ajoute tb pour corriger le probleme des noms numeriques
+						    $nomChamp = "tb".$fields[$i]["NAME"];
+						    //on ajoute la colonne au orderby
+						    if($orderby!="") $orderby.=",";
+						    //on ajoute la colonne au orderby
+						    $orderby .= $this->ajoutOrder($nomChamp,$temp[0]);
+						    
+						    //on ajoute la colonne à la table temporaire
+						    $this->ajoutColonneTableTempo($tableEnCours, $nomChamp, $temp[1]);
+						    
+						    //on a aussi des champs persos maitenant...
+						    if(isset($fields[$i]['SOURCE']) && $fields[$i]['SOURCE'] == "cp"){
+						        $requete = $this->generateRequeteCPAuthorityUpdate($fields[$i], $tableEnCours, $nomChamp);
+						        pmb_mysql_query($requete);
+						    }
+						    break;
 					} //switch
 				} //if ($fields[$i]["ID"] == $temp[2]) {
 			} //for ($i = 0; $i < count($fields); $i++) {
@@ -1083,7 +1188,11 @@ class sort {
 				$this->error_message = "Can't open definition file";
 			}
 		}
-				
+		
+		if (empty($this->params['PPERSOPREFIX'])) {
+		    return;
+		}
+		
 		//tri perso
 		$p_perso = new parametres_perso("notices");
 		
@@ -1182,6 +1291,20 @@ left join ".$tablename." on ".$p_perso->prefix."_custom_".$t_field['DATATYPE']."
 where ".$p_perso->prefix."_custom_values.".$p_perso->prefix."_custom_champ ='".$key."' ".$groupby 
 					);
 					break;
+				case "query_auth" :
+				    $p_tri = array(
+				    	'SOURCE' => "cp",
+				    	'TYPEFIELD' => "authority",
+				    	'ID' => "cp".$key,
+				    	'TYPE' => "text",
+				    	'NAME' => $t_field['NAME'],
+				    	'LABEL' => $t_field['TITRE'],
+				    	'REQ_SUITE' => "left join ".$p_perso->prefix."_custom_values on notices.notice_id = ".$p_perso->prefix."_custom_values.".$p_perso->prefix."_custom_origine
+where ".$p_perso->prefix."_custom_values.".$p_perso->prefix."_custom_champ ='".$key."' ",
+						'PREFIX' => $p_perso->prefix,
+						'T_FIELD' => $t_field
+				    );
+				    break;
 				default : 
 					$p_tri =array();
 					break;
@@ -1218,6 +1341,53 @@ where ".$p_perso->prefix."_custom_values.".$p_perso->prefix."_custom_champ ='".$
 		$requete .= " AND ".$nomTable."_update.".$nomChp." != ''";
 
 		return $requete;
+	}
+	
+	public function generateRequeteCPAuthorityUpdate($field, $nomTable, $nomChp){
+	    $requete = "
+			SELECT
+				".$this->params['REFERENCE'].'.'.$this->params['REFERENCEKEY']." AS tbCPId,
+				".$field['PREFIX']."_custom_".$field['T_FIELD']['DATATYPE']." AS tbCPAuthority
+			FROM ".$nomTable." LEFT JOIN ".$this->params['REFERENCE']." ON (".$this->params['REFERENCE'].".".$this->params['REFERENCEKEY']." = ".$nomTable.".".$this->params['REFERENCEKEY'].")
+				".$field['REQ_SUITE'];
+	    $result = pmb_mysql_query($requete);
+	    $objects_ids = array();
+	    if(pmb_mysql_num_rows($result)) {
+	        while ($row = pmb_mysql_fetch_object($result)) {
+	            $objects_ids[$row->tbCPId] = get_authority_isbd_from_field($field['T_FIELD'], $row->tbCPAuthority);
+	        }
+	    }
+	    
+	    //On met le tout dans une table temporaire
+	    $sql = "DROP TEMPORARY TABLE IF EXISTS ".$nomTable."_update";
+	    pmb_mysql_query($sql);
+	    $temporary2_sql = "CREATE TEMPORARY TABLE ".$nomTable."_update (
+            ".$this->params['REFERENCEKEY']." INTEGER,
+            ".$nomChp." TEXT
+        ) ENGINE=MyISAM";
+	    pmb_mysql_query($temporary2_sql);
+	    pmb_mysql_query("alter table ".$nomTable."_update add index(".$this->params['REFERENCEKEY'].")");
+	    
+	    foreach ($objects_ids as $object_id=>$authority_value) {
+	        $query = "INSERT INTO ".$nomTable."_update
+                SET ".$this->params['REFERENCEKEY']." = ".$object_id.",
+                ".$nomChp . " = '" .addslashes($authority_value)."'";
+	        pmb_mysql_query($query);
+	    }
+	    
+	    //
+	    //Et on rempli la table tri_tempo avec les éléments de la table temporaire
+	    //
+	    $requete = "UPDATE ".$nomTable.", ".$nomTable."_update";
+	    $requete .= " SET " . $nomTable.".".$nomChp . " = " . $nomTable."_update.".$nomChp;
+	    
+	    //le lien vers la table de tri temporaire
+	    $requete .= " WHERE " . $nomTable.".".$this->params["REFERENCEKEY"];
+	    $requete .= "=" . $nomTable."_update.".$this->params["REFERENCEKEY"];
+	    $requete .= " AND ".$nomTable."_update.".$nomChp." IS NOT NULL";
+	    $requete .= " AND ".$nomTable."_update.".$nomChp." != ''";
+	    
+	    return $requete;
 	}
 }
 ?>

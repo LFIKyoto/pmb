@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: affichage.class.php,v 1.12 2017-05-10 17:16:13 arenou Exp $
+// $Id: affichage.class.php,v 1.13 2019-07-10 06:44:08 btafforeau Exp $
 
 class affichage {
 	public $doc;				//le document numérique à afficher
@@ -52,7 +52,7 @@ class affichage {
     	return false;
     }
 
-	function checkAllowedFunction($method){
+	public function checkAllowedFunction($method){
     	return in_array($method,$this->allowedFunction);
 	}
 	

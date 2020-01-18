@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entity_graph.inc.php,v 1.2 2018-07-09 15:56:36 arenou Exp $
+// $Id: entity_graph.inc.php,v 1.3 2019-05-29 12:03:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $sub, $type, $id;
 
 require_once($class_path."/entity_graph.class.php");
 require_once($class_path."/notice.class.php");

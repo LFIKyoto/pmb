@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: oai_protocol.class.php,v 1.11 2018-09-06 14:54:54 dgoron Exp $
+// $Id: oai_protocol.class.php,v 1.14 2019-07-18 12:47:43 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -66,7 +66,7 @@ class oai_record {
 	public $error_message;
 	public $charset;
 	
-	public function __construct($record,$charset="iso-8859-1",$base_path="",$prefix="",$xslt_transform="",$sets_names="") {
+	public function __construct($record,$charset="iso-8859-1",$base_path="",$prefix="",$xslt_transform="",$sets_names = array()) {
 		$this->srecord=$record;
 		$this->charset=$charset;
 		$this->prefix=$prefix;
@@ -310,7 +310,7 @@ class oai_parser {
 	
 	public function __construct($rcallback="",$charset="iso-8859-1") {
 		$this->depth=0;
-		$this->rtoken="";
+		$this->rtoken = array();
 		$this->rec_callback=$rcallback;
 		$this->charset=$charset;
 	}
@@ -373,7 +373,7 @@ class oai_protocol {
     	//remise à zero des enregistrements
     	if ($url!=$this->next_request) $this->records=array();
     	$this->next_request="";
-    	$this->rtoken="";
+    	$this->rtoken = array();
     	
     	//Initialisation de la ressource
     	$ch = curl_init();
@@ -441,9 +441,11 @@ class oai_protocol {
 		$this->response_date=$c?utf8_decode($s->tree[1][0]["CHAR"]):$s->tree[1][0]["CHAR"];
 		$this->url_base=$c?utf8_decode($s->tree[1][1]["CHAR"]):$s->tree[1][1]["CHAR"];
 		$this->request["URL_BASE"]=$c?utf8_decode($s->tree[1][1]["CHAR"]):$s->tree[1][1]["CHAR"];
-		foreach ($s->tree[1][1]["ATTRIB"] as $key=>$val) {
-			if ($key!="resumptionToken")
-				$this->request["ATTRIBS"][$key]=$c?utf8_decode($val):$val;
+		if(isset($s->tree[1][1]["ATTRIB"]) && is_array($s->tree[1][1]["ATTRIB"])) {
+			foreach ($s->tree[1][1]["ATTRIB"] as $key=>$val) {
+				if ($key!="resumptionToken")
+					$this->request["ATTRIBS"][$key]=$c?utf8_decode($val):$val;
+			}
 		}
 		$this->verb=$c?utf8_decode($s->tree[1][1]["ATTRIB"]["verb"]):$s->tree[1][1]["ATTRIB"]["verb"];
 		$this->rtoken=$s->rtoken;
@@ -560,7 +562,7 @@ class oai20 {
 		$this->error_oai_code="";
 	}
 	
-	public function send_request($url,$callback="",$callback_progress="") {
+	public function send_request($url,$callback="",$callback_progress = array()) {
 		$this->last_query=$url;
 		$this->prt->analyse_response($url,$callback);
 		while ((!$this->prt->error)&&($this->prt->next_request)) {
@@ -599,7 +601,7 @@ class oai20 {
 		return $found;
 	}
 	
-	public function list_sets($callback="",$callback_progress="") {
+	public function list_sets($callback="",$callback_progress = array()) {
 		$this->clear_error();
 		$this->send_request($this->url_base."?verb=ListSets",$callback,$callback_progress);
 		$this->sets=array();
@@ -635,7 +637,7 @@ class oai20 {
 		return $this->sets;
 	}
 	
-	public function list_metadata_formats($identifier="",$callback="",$callback_progress="") {
+	public function list_metadata_formats($identifier="",$callback="",$callback_progress = array()) {
 		$this->clear_error();
 		$url=$this->url_base."?verb=ListMetadataFormats";
 		if ($identifier) $url.="&identifier=".rawurlencode($identifier);
@@ -659,7 +661,7 @@ class oai20 {
 		return $metadatas;
 	}
 	
-	public function list_records($from,$until,$set,$metadata_prefix,$callback="",$callback_progress="") {
+	public function list_records($from,$until,$set,$metadata_prefix,$callback="",$callback_progress = array()) {
 		$this->clear_error();
 		$records=array();
 		//Conversion des from et until en fonction de la granularité
@@ -687,7 +689,7 @@ class oai20 {
 		if (!$callback) return $records;
 	}
 	
-	public function list_identifiers($from,$until,$set,$metadata_prefix,$callback="",$callback_progress="") {
+	public function list_identifiers($from,$until,$set,$metadata_prefix,$callback="",$callback_progress = array()) {
 		$this->clear_error();
 		$records=array();
 		//Conversion des from et until en fonction de la granularité
@@ -715,7 +717,7 @@ class oai20 {
 		if (!$callback) return $records;
 	}
 	
-	public function get_record($identifier,$metadata_prefix,$callback="",$callback_progress="") {
+	public function get_record($identifier,$metadata_prefix,$callback="",$callback_progress = array()) {
 		$this->clear_error();
 		$record="";
 		//Vérification du préfixe

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rfid.tpl.php,v 1.13 2012-12-04 10:33:08 ngantier Exp $
+// $Id: rfid.tpl.php,v 1.14 2019-05-27 13:23:17 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $pmb_rfid_driver, $rfid_programmer_tmpl, $msg, $current_module, $rfid_effacer_tmpl, $rfid_lire_tmpl;
 
 // templates pour la gestion rfid
 

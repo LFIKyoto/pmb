@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.7 2018-09-14 10:25:50 dgoron Exp $
+// $Id: search.class.php,v 1.9 2019-07-30 12:08:11 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -84,7 +84,7 @@ class facette_search {
 	    				break;
 	    			default:
 			    		if(!$k){
-				  			$req_table_tempo = "INSERT INTO ".$table_name." SELECT DISTINCT id_notice FROM notices_fields_global_index WHERE code_champ = ".($filter_field+0)." AND code_ss_champ = ".($filter_subfield+0)." AND (";
+			    		    $req_table_tempo = "INSERT INTO ".$table_name." SELECT DISTINCT id_notice FROM notices_fields_global_index WHERE code_champ = ".(int) $filter_field." AND code_ss_champ = ".(int) $filter_subfield." AND (";
 					  		foreach ($filter_value as $k2=>$v2) {
 					  			if ($k2) {
 					  				$req_table_tempo .= " OR ";
@@ -93,7 +93,7 @@ class facette_search {
 					  		}
 				  			$req_table_tempo .= ")";
 			    		}else{
-			    			$req_table_tempo = "DELETE FROM ".$table_name." WHERE notice_id NOT IN (SELECT DISTINCT id_notice FROM notices_fields_global_index WHERE code_champ = ".($filter_field+0)." AND code_ss_champ = ".($filter_subfield+0)." AND (";
+			    		    $req_table_tempo = "DELETE FROM ".$table_name." WHERE notice_id NOT IN (SELECT DISTINCT id_notice FROM notices_fields_global_index WHERE code_champ = ".(int) $filter_field." AND code_ss_champ = ".(int) $filter_subfield." AND (";
 					  		foreach ($filter_value as $k2=>$v2) {
 					  			if ($k2) {
 					  				$req_table_tempo .= " OR ";
@@ -104,7 +104,7 @@ class facette_search {
 			    		}
 			    		break;
 	    		}
-	  			$req = pmb_mysql_query($req_table_tempo,$dbh) or die (mysql_error());
+	  			$req = pmb_mysql_query($req_table_tempo,$dbh);
 	  		}
   		}
   		 	

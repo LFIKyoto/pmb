@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contact_form_recipients.class.php,v 1.3 2018-12-06 09:45:26 dgoron Exp $
+// $Id: contact_form_recipients.class.php,v 1.4.2.1 2019-10-30 08:15:37 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -81,6 +81,21 @@ class contact_form_recipients {
 		";
 	}
 	
+	protected function _get_display_lines_email_object_free_entry() {
+	    global $msg, $charset;
+	    
+	    $display = "
+			<tr id='recipient_".$this->mode."_0'>
+				<td colspan='2'>
+					<table>
+						<tr><th colspan='2'>".htmlentities($msg['admin_opac_contact_form_recipients_email_object_free_entry'], ENT_QUOTES, $charset)."</th></tr>";
+	    $display .= $this->_get_recipients_lines(0);
+	    $display .= "</table>
+						</td>
+					</tr>";
+	    return $display;
+	}
+	
 	protected function _get_display_content_list_by_objects() {
 		$display = "";
 		$contact_form_objects=new contact_form_objects();
@@ -107,7 +122,7 @@ class contact_form_recipients {
 		$result = pmb_mysql_query($query);
 		while($row = pmb_mysql_fetch_object($result)) {
 			$display .= "
-				<tr id='recipient_".$this->mode."_".$id."'>
+				<tr id='recipient_".$this->mode."_" . $row->idlocation . "'>
 					<td colspan='2'>
 						<table>
 							<tr><th colspan='2'>".$row->location_libelle."</th></tr>";
@@ -145,15 +160,14 @@ class contact_form_recipients {
 	 * Liste des destinataires par mode
 	 */
 	public function get_display_content_list() {
-		global $msg, $charset;
-		
 		$display = "";
 		switch ($this->mode) {
 			case 'by_persons':
 				$display .= $this->_get_display_content_list_by_persons();
 				break;
 			case 'by_objects':
-				$display .= $this->_get_display_content_list_by_objects();
+			    $display .= $this->_get_display_lines_email_object_free_entry();
+			    $display .= $this->_get_display_content_list_by_objects();
 				break;
 			case 'by_locations':
 				$display .= $this->_get_display_content_list_by_locations();

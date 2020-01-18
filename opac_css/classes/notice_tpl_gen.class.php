@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_tpl_gen.class.php,v 1.14 2018-10-10 12:15:10 dgoron Exp $
+// $Id: notice_tpl_gen.class.php,v 1.15 2019-07-10 06:44:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -32,7 +32,7 @@ class notice_tpl_gen {
 	// ---------------------------------------------------------------
 	//		getData() : récupération infos 
 	// ---------------------------------------------------------------
-	function getData($data) {
+	public function getData($data) {
 		global $dbh;
 
 		$this->name = '';			
@@ -121,7 +121,7 @@ class notice_tpl_gen {
 		return $css_style;
 	}
 	
-	static public function gen_tpl_select($select_name="notice_tpl", $selected_id=0, $onchange="",$no_affempty=0,$no_aff_defaut=0) {		
+	public static function gen_tpl_select($select_name="notice_tpl", $selected_id=0, $onchange="",$no_affempty=0,$no_aff_defaut=0) {		
 		global $msg,$dbh;
 		// 
 		$requete = "SELECT notpl_id, if(notpl_comment!='',concat(notpl_name,'. ',notpl_comment),notpl_name) as nom FROM notice_tpl where notpl_show_opac=1 ORDER BY notpl_name ";

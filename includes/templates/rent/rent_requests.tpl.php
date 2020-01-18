@@ -2,13 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_requests.tpl.php,v 1.7 2017-09-28 09:23:37 dgoron Exp $
+// $Id: rent_requests.tpl.php,v 1.8 2019-05-27 09:52:12 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 //	------------------------------------------------------------------------------
 //	$rent_requests_search_form_tpl : template de recherche pour les demandes de location
 //	------------------------------------------------------------------------------
+global $rent_requests_search_form_tpl, $msg, $current_module, $base_path, $charset;
 
 $rent_requests_search_form_tpl = "
 <script src='javascript/pricing_systems.js'></script>

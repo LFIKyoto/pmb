@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.9 2017-05-06 12:03:22 dgoron Exp $
+// $Id: main.inc.php,v 1.10 2019-06-05 09:04:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $quoi, $catalog_layout, $msg, $baseLink, $categ, $action;
 
 require_once("$class_path/classementGen.class.php") ;
 

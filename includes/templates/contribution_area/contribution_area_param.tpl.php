@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution_area_param.tpl.php,v 1.5 2018-06-20 14:49:33 apetithomme Exp $
+// $Id: contribution_area_param.tpl.php,v 1.6 2019-05-27 09:56:54 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $contribution_area_param_form, $current_module, $msg, $contribution_area_quick_param_form;
 
 $contribution_area_param_form = 
 "<form class='form-".$current_module."' id='contribution_area' name='contribution_area'  method='post' action=\"modelling.php?categ=contribution_area&sub=param&action=save\" >

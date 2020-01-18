@@ -4,39 +4,39 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_livrjeun.inc.php,v 1.6 2017-07-12 15:15:00 tsamson Exp $
+// $Id: func_livrjeun.inc.php,v 1.8 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $include_path;
 
 // enregistrement de la notices dans les catégories
 require_once "$include_path/misc.inc.php" ;
 
-function traite_categories_enreg($notice_retour,$categories,$thesaurus_traite=0) {
-
-	global $dbh;
-	
+function traite_categories_enreg($notice_retour, $categories, $thesaurus_traite = 0) {
 	// si $thesaurus_traite fourni, on ne delete que les catégories de ce thesaurus, sinon on efface toutes
 	//  les indexations de la notice sans distinction de thesaurus
-	if (!$thesaurus_traite) $rqt_del = "delete from notices_categories where notcateg_notice='$notice_retour' ";
-	else $rqt_del = "delete from notices_categories where notcateg_notice='$notice_retour' and num_noeud in (select id_noeud from noeuds where num_thesaurus='$thesaurus_traite' and id_noeud=notices_categories.num_noeud) ";
-	$res_del = @pmb_mysql_query($rqt_del, $dbh);
-		
+    if (empty($thesaurus_traite)) {
+        $rqt_del = "delete from notices_categories where notcateg_notice='$notice_retour' ";
+    } else {
+        $rqt_del = "delete from notices_categories where notcateg_notice='$notice_retour' and num_noeud in (select id_noeud from noeuds where num_thesaurus='$thesaurus_traite' and id_noeud=notices_categories.num_noeud) ";
+    }
+	$res_del = @pmb_mysql_query($rqt_del);
 	$rqt_ins = "insert into notices_categories (notcateg_notice, num_noeud, ordre_categorie) VALUES ";
-	
-	for($i=0 ; $i< sizeof($categories) ; $i++) {
-		$id_categ=$categories[$i]['categ_id'];
-		if ($id_categ) {
-			$rqt = $rqt_ins . " ('$notice_retour','$id_categ', $i) " ; 
-			$res_ins = @pmb_mysql_query($rqt, $dbh);
+	$nb_categories = count($categories);
+	for($i = 0; $i < $nb_categories; $i++) {
+		$id_categ = $categories[$i]['categ_id'];
+		if (!empty($id_categ)) {
+			$rqt = $rqt_ins . " ('$notice_retour','$id_categ', $i) "; 
+			$res_ins = @pmb_mysql_query($rqt);
 		}
 	}
 	// on ignore ce qui suit pour l'import livrjeun
 	$rqt_maj = "update notices set lien='', eformat='', indexint=0 where notice_id='$notice_retour' " ;
-	pmb_mysql_query($rqt_maj, $dbh);
+	pmb_mysql_query($rqt_maj);
 }
 
-
-function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602="",$tableau_605="",$tableau_606="",$tableau_607="",$tableau_608="") {
+function traite_categories_for_form($tableau_600 = array(), $tableau_601 = array(), $tableau_602 = array(), $tableau_605 = array(), $tableau_606 = array(), $tableau_607 = array(), $tableau_608 = array()) {
 	global $charset, $rameau;
 	global $pmb_keyword_sep ;
 	global $index_sujets ;
@@ -49,12 +49,12 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 	$info_600_x = $tableau_600["info_600_x"] ;
 	$info_600_y = $tableau_600["info_600_y"] ;
 	$info_600_z = $tableau_600["info_600_z"] ;
-	for ($a=0; $a<sizeof($info_600_a); $a++) {
+	for ($a=0; $a<count($info_600_a); $a++) {
 		if ($info_600_a[$a][0]) $mots_cles[] = $info_600_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_600_j[$a]); $j++) if ($info_600_j[$a][$j]) $mots_cles[] = $info_600_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_x[$a]); $j++) if ($info_600_x[$a][$j]) $mots_cles[] = $info_600_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_y[$a]); $j++) if ($info_600_y[$a][$j]) $mots_cles[] = $info_600_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_z[$a]); $j++) if ($info_600_z[$a][$j]) $mots_cles[] = $info_600_z[$a][$j] ;
+		for ($j=0; $j<count($info_600_j[$a]); $j++) if ($info_600_j[$a][$j]) $mots_cles[] = $info_600_j[$a][$j] ;
+		for ($j=0; $j<count($info_600_x[$a]); $j++) if ($info_600_x[$a][$j]) $mots_cles[] = $info_600_x[$a][$j] ;
+		for ($j=0; $j<count($info_600_y[$a]); $j++) if ($info_600_y[$a][$j]) $mots_cles[] = $info_600_y[$a][$j] ;
+		for ($j=0; $j<count($info_600_z[$a]); $j++) if ($info_600_z[$a][$j]) $mots_cles[] = $info_600_z[$a][$j] ;
 		}
 
 	$info_600_a = $tableau_601["info_601_a"] ;
@@ -62,12 +62,12 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 	$info_600_x = $tableau_601["info_601_x"] ;
 	$info_600_y = $tableau_601["info_601_y"] ;
 	$info_600_z = $tableau_601["info_601_z"] ;
-	for ($a=0; $a<sizeof($info_600_a); $a++) {
+	for ($a=0; $a<count($info_600_a); $a++) {
 		if ($info_600_a[$a][0]) $mots_cles[] = $info_600_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_600_j[$a]); $j++) if ($info_600_j[$a][$j]) $mots_cles[] = $info_600_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_x[$a]); $j++) if ($info_600_x[$a][$j]) $mots_cles[] = $info_600_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_y[$a]); $j++) if ($info_600_y[$a][$j]) $mots_cles[] = $info_600_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_z[$a]); $j++) if ($info_600_z[$a][$j]) $mots_cles[] = $info_600_z[$a][$j] ;
+		for ($j=0; $j<count($info_600_j[$a]); $j++) if ($info_600_j[$a][$j]) $mots_cles[] = $info_600_j[$a][$j] ;
+		for ($j=0; $j<count($info_600_x[$a]); $j++) if ($info_600_x[$a][$j]) $mots_cles[] = $info_600_x[$a][$j] ;
+		for ($j=0; $j<count($info_600_y[$a]); $j++) if ($info_600_y[$a][$j]) $mots_cles[] = $info_600_y[$a][$j] ;
+		for ($j=0; $j<count($info_600_z[$a]); $j++) if ($info_600_z[$a][$j]) $mots_cles[] = $info_600_z[$a][$j] ;
 		}
 		
 	$info_600_a = $tableau_606["info_606_a"] ;
@@ -75,12 +75,12 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 	$info_600_x = $tableau_606["info_606_x"] ;
 	$info_600_y = $tableau_606["info_606_y"] ;
 	$info_600_z = $tableau_606["info_606_z"] ;
-	for ($a=0; $a<sizeof($info_600_a); $a++) {
+	for ($a=0; $a<count($info_600_a); $a++) {
 		if ($info_600_a[$a][0]) $mots_cles[] = $info_600_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_600_j[$a]); $j++) if ($info_600_j[$a][$j]) $mots_cles[] = $info_600_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_x[$a]); $j++) if ($info_600_x[$a][$j]) $mots_cles[] = $info_600_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_y[$a]); $j++) if ($info_600_y[$a][$j]) $mots_cles[] = $info_600_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_z[$a]); $j++) if ($info_600_z[$a][$j]) $mots_cles[] = $info_600_z[$a][$j] ;
+		for ($j=0; $j<count($info_600_j[$a]); $j++) if ($info_600_j[$a][$j]) $mots_cles[] = $info_600_j[$a][$j] ;
+		for ($j=0; $j<count($info_600_x[$a]); $j++) if ($info_600_x[$a][$j]) $mots_cles[] = $info_600_x[$a][$j] ;
+		for ($j=0; $j<count($info_600_y[$a]); $j++) if ($info_600_y[$a][$j]) $mots_cles[] = $info_600_y[$a][$j] ;
+		for ($j=0; $j<count($info_600_z[$a]); $j++) if ($info_600_z[$a][$j]) $mots_cles[] = $info_600_z[$a][$j] ;
 		}
 
 	$info_600_a = $tableau_607["info_607_a"] ;
@@ -88,12 +88,12 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 	$info_600_x = $tableau_607["info_607_x"] ;
 	$info_600_y = $tableau_607["info_607_y"] ;
 	$info_600_z = $tableau_607["info_607_z"] ;
-	for ($a=0; $a<sizeof($info_600_a); $a++) {
+	for ($a=0; $a<count($info_600_a); $a++) {
 		if ($info_600_a[$a][0]) $mots_cles[] = $info_600_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_600_j[$a]); $j++) if ($info_600_j[$a][$j]) $mots_cles[] = $info_600_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_x[$a]); $j++) if ($info_600_x[$a][$j]) $mots_cles[] = $info_600_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_y[$a]); $j++) if ($info_600_y[$a][$j]) $mots_cles[] = $info_600_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_z[$a]); $j++) if ($info_600_z[$a][$j]) $mots_cles[] = $info_600_z[$a][$j] ;
+		for ($j=0; $j<count($info_600_j[$a]); $j++) if ($info_600_j[$a][$j]) $mots_cles[] = $info_600_j[$a][$j] ;
+		for ($j=0; $j<count($info_600_x[$a]); $j++) if ($info_600_x[$a][$j]) $mots_cles[] = $info_600_x[$a][$j] ;
+		for ($j=0; $j<count($info_600_y[$a]); $j++) if ($info_600_y[$a][$j]) $mots_cles[] = $info_600_y[$a][$j] ;
+		for ($j=0; $j<count($info_600_z[$a]); $j++) if ($info_600_z[$a][$j]) $mots_cles[] = $info_600_z[$a][$j] ;
 		}
 		
 	$champ_rameau = implode($pmb_keyword_sep, $mots_cles);

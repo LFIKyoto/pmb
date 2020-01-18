@@ -2,17 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_filter_fields.class.php,v 1.9 2018-09-19 10:23:46 tsamson Exp $
+// $Id: frbr_filter_fields.class.php,v 1.11 2019-07-24 15:04:54 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/frbr/frbr_fields.class.php");
 
 class frbr_filter_fields extends frbr_fields {
-	
+
 	protected function get_field($i, $n, $field) {
 		global $charset;
-		
+
 		//Champ
 		$v=$this->get_global_value("field_".$i."_".$field);
 		if ($v=="") $v=array('');
@@ -22,7 +22,7 @@ class frbr_filter_fields extends frbr_fields {
 			</span>";
 		return $field;
 	}
-	
+
 	public function get_already_selected() {
 		global $msg, $charset;
 		global $add_field;
@@ -51,15 +51,19 @@ class frbr_filter_fields extends frbr_fields {
 				$r.="</td>";
 				$r.="<td><span class='field_critere'>";//Colonne 3
 				if ($f[0]=="f") {
-					if($f[2]) {
+					if($f[2] && $this->type != 'skos') {
 						$r.=htmlentities($msg[self::$fields[$this->type]["FIELD"][$f[1]]["TABLE"][0]["TABLEFIELD"][$f[2]]["NAME"]],ENT_QUOTES,$charset);
 					} else {
-						$r.=htmlentities($msg[self::$fields[$this->type]["FIELD"][$f[1]]["NAME"]],ENT_QUOTES,$charset);
+					    if(isset($msg[self::$fields[$this->type]["FIELD"][$f[1]]["NAME"]])) {
+						  $r.=htmlentities($msg[self::$fields[$this->type]["FIELD"][$f[1]]["NAME"]],ENT_QUOTES,$charset);
+					    } else {
+					        $r.=htmlentities(self::$fields[$this->type]["FIELD"][$f[1]]["NAME"],ENT_QUOTES,$charset);
+					    }
 					}
 				} elseif(array_key_exists($f[0],static::$pp)) {
 					$r.=htmlentities(static::$pp[$f[0]]->t_fields[$f[2]]["TITRE"],ENT_QUOTES,$charset);
 				}
-				
+
 				$r.="</span></td>";
 				//Recherche des operateurs possibles
 				$r.="<td>";//Colonne 4
@@ -82,10 +86,10 @@ class frbr_filter_fields extends frbr_fields {
 		$r.="</table>";
 		return $r;
 	}
-	
+
 	public function format_fields() {
 		global $fields;
-	
+
 		$to_format=array();
 		for ($i=0; $i<count($fields); $i++) {
 			$to_format[$i]["NAME"]=$fields[$i];
@@ -95,7 +99,7 @@ class frbr_filter_fields extends frbr_fields {
 		}
 		return $to_format;
 	}
-	
+
 	public function unformat_fields($to_unformat) {
 		global $fields;
 
@@ -107,27 +111,27 @@ class frbr_filter_fields extends frbr_fields {
 			$this->set_global_value("inter_".$i."_".$to_unformat[$i]["NAME"], $to_unformat[$i]["INTER"]);
 		}
 	}
-	
+
 	public function filter_datas($datas=array()) {
 		global $fields;
 		global $opac_multi_search_operator;
-		
+
 		$main = "";
 		$last_table = "";
 		$prefixe = "tempo_".str_replace([" ","."],"_",microtime());
 		for ($i=0; $i<count($fields); $i++) {
 			$f=explode("_",$fields[$i]);
-			
+
 			$op = $this->get_global_value("op_".$i."_".$fields[$i]);
 			$field = $this->get_global_value("field_".$i."_".$fields[$i]);
 			$inter = $this->get_global_value("inter_".$i."_".$fields[$i]);
-			
+
 			//Choix du moteur
 			$this->current_engine = 'MyISAM';
-			
+
 			$last_main_table="";
 // 			$prefixe="";
-			
+
 			//Pour chaque valeur du champ
 			for ($j=0; $j<count($field); $j++) {
 				$operator = ($opac_multi_search_operator?$opac_multi_search_operator:"or");
@@ -137,16 +141,16 @@ class frbr_filter_fields extends frbr_fields {
 				}
 				switch ($op) {
 					case "BOOLEAN" :
-						$main .= " and value like ' ".$field[$j]." '";
+					    $main .= " and value like ' ".addslashes($field[$j])." '";
 						break;
 					case "STARTWITH" :
-						$main .= " and value like '".$field[$j]."%'";
+					    $main .= " and value like '".addslashes($field[$j])."%'";
 						break;
 					case "ENDWITH" :
-						$main .= " and value like '%".$field[$j]."'";
+					    $main .= " and value like '%".addslashes($field[$j])."'";
 						break;
 					case "EXACT" :
-						$main .= " and value like '".$field[$j]."'";
+					    $main .= " and value like '".addslashes($field[$j])."'";
 						break;
 					case "ISEMPTY" :
 						$main .= " and ".$this->field_keyName." NOT IN (select ".$this->field_keyName." from ".$this->field_tableName." where code_champ = ".$f[1];
@@ -171,7 +175,7 @@ class frbr_filter_fields extends frbr_fields {
 						} else {
 							$this->gen_temporary_table("mf_".$j, $main);
 						}
-				
+
 						if ($last_main_table) {
 							if ($prefixe) {
 								$requete="insert ignore into ".$prefixe."mf_".$j." select ".$last_main_table.".* from ".$last_main_table;
@@ -193,7 +197,7 @@ class frbr_filter_fields extends frbr_fields {
 						} else {
 							$this->gen_temporary_table("mf_".$j, $main);
 						}
-				
+
 						if ($last_main_table) {
 							if($j>1){
 								$search_table=$last_main_table;
@@ -235,7 +239,7 @@ class frbr_filter_fields extends frbr_fields {
 				$requete="drop table ".$last_main_table;
 				pmb_mysql_query($requete);
 			}
-			
+
 			if ($prefixe) {
 				$requete="create temporary table ".$prefixe."t".$i." ENGINE=".$this->current_engine." ";
 			} else {
@@ -312,7 +316,7 @@ class frbr_filter_fields extends frbr_fields {
 					$isfirst_criteria=true;
 					$requete.="select * from ".$table;
 					pmb_mysql_query($requete);
-			
+
 					$requete="alter table ".$prefixe."t".$i." add idiot int(1)";
 					pmb_mysql_query($requete);
 					$requete="alter table ".$prefixe."t".$i." add unique(".$this->field_keyName.")";
@@ -361,7 +365,7 @@ class frbr_filter_fields extends frbr_fields {
 		$datas = array_intersect($datas, $ids);
 		return $datas;
 	}
-	
+
 	public static function get_operators() {
 		return array(
 				"BOOLEAN" => "msg:expr_bool_query",

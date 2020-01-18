@@ -2,10 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: visits_statistics.tpl.php,v 1.3 2017-03-16 15:45:30 apetithomme Exp $
+// $Id: visits_statistics.tpl.php,v 1.4 2019-05-27 09:10:38 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
-
+global $visits_statistics_form, $visits_statistics_main_line, $visits_statistics_service_line, $visits_statistics_form_counter, $visits_statistics_shortcut_button, $msg;
 $visits_statistics_form = '
 		<div class="row" id="visits_statistics">
 			<div class="!!module!!">

@@ -2,17 +2,19 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannette_facettes.class.php,v 1.9 2018-02-09 11:00:41 dgoron Exp $
+// $Id: bannette_facettes.class.php,v 1.11.2.1 2019-11-06 08:53:41 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/notice_tpl_gen.class.php");
+require_once ($class_path."/record_display.class.php") ;
 
 class bannette_facettes{
 	public $id=0;// $id bannette
 	public $facettes=array(); // facettes associées à la bannette
 	public $environement=array(); // affichage des notices
 	public $noti_tpl_document=0; // template de notice
+	public $noti_django_directory = '';
 	public $bannette_display_notice_in_every_group=0;
 	public $bannette_document_group=0;
 	public $sommaires=array(); // donnée du document à générer par un templatze
@@ -35,7 +37,9 @@ class bannette_facettes{
 				$this->facettes[$i] = new stdClass();
 				$this->facettes[$i]->critere=$r->ban_facette_critere;
 				$this->facettes[$i]->ss_critere= $r->ban_facette_ss_critere;
-				$this->facettes[$i]->order_sort= $r->ban_facette_order;
+				$this->facettes[$i]->order= $r->ban_facette_order;
+				$this->facettes[$i]->order_sort= $r->ban_facette_order_sort;
+				$this->facettes[$i]->datatype_sort= $r->ban_facette_datatype_sort;
 				
 				if(!$this->bannette_display_notice_in_every_group){
 					$this->bannette_display_notice_in_every_group=$r->display_notice_in_every_group;
@@ -57,9 +61,9 @@ class bannette_facettes{
 	
 	public function save(){
 		global $max_facette;
-	
+		
 		$this->delete();
-	
+		
 		$order=0;
 		for($i=0;$i<$max_facette;$i++){
 			$critere = 'list_crit_'.$i;
@@ -67,12 +71,22 @@ class bannette_facettes{
 			if(${$critere} > 0){
 				$ss_critere = 'list_ss_champs_'.$i;
 				global ${$ss_critere};
-	
-				$rqt = "insert into bannette_facettes set num_ban_facette = '".$this->id."', ban_facette_critere = '".${$critere}."', ban_facette_ss_critere='".${$ss_critere}."', ban_facette_order='".$order."' ";
+				$order_sort = 'order_sort_'.$i;
+				global ${$order_sort};
+				$datatype_sort = 'datatype_sort_'.$i;
+				global ${$datatype_sort};
+								
+				$rqt = "insert into bannette_facettes 
+                    set num_ban_facette = '".$this->id."', 
+                    ban_facette_critere = '".${$critere}."', 
+                    ban_facette_ss_critere='".${$ss_critere}."', 
+                    ban_facette_order='".$order."',
+                    ban_facette_order_sort='".${$order_sort}."',
+                    ban_facette_datatype_sort='".${$datatype_sort}."' ";
 				pmb_mysql_query($rqt);
-				$order++;
-			}
-		}
+				$order++;				
+			}			
+		}		
 	}
 	
 	public function build_notice($notice_id, $id_bannette = 0){
@@ -81,10 +95,11 @@ class bannette_facettes{
 		global $use_dsi_diff_mode; $use_dsi_diff_mode=1;
 		global $opac_notice_affichage_class;
 		
+		$tpl_document='';
 		if($this->noti_tpl_document) {
-			$tpl_document=$this->noti_tpl_document->build_notice($notice_id, $deflt2docs_location, false, $id_bannette);
-		} else {
-			$tpl_document='';
+			$tpl_document .= $this->noti_tpl_document->build_notice($notice_id, $deflt2docs_location, false, $id_bannette);
+		} elseif($this->noti_django_directory) {
+		    $tpl_document .= record_display::get_display_in_result($notice_id, $this->noti_django_directory);
 		}
 		if(!$tpl_document) {
 			if (!$opac_notice_affichage_class) $opac_notice_affichage_class="notice_affichage";
@@ -108,15 +123,28 @@ class bannette_facettes{
 			
 		$critere= $facettes_list[0]->critere;
 		$ss_critere= $facettes_list[0]->ss_critere;
+		$order_sort= intval($facettes_list[0]->order_sort);
+		$datatype_sort= $facettes_list[0]->datatype_sort;
 	
+		$order_by = 'ORDER BY ';
+		if ($datatype_sort == 'date') {
+		    $order_by .= " STR_TO_DATE(value,'".$msg['format_date']."')";
+		} else {
+		    $order_by .= " value";
+		}
+		if($order_sort == 0){
+		    $order_by .= " asc";
+		} else {
+		    $order_by .= " desc";
+		}
 		if ($dsi_bannette_notices_order) {
 			$req = "SELECT * FROM notices_fields_global_index LEFT JOIN notices on (id_notice=notice_id)
 			WHERE id_notice IN (".$notices.")
-			AND code_champ = ".$critere."	AND code_ss_champ = ".$ss_critere." AND lang in ('','".$lang."') order by value,".$dsi_bannette_notices_order;
+			AND code_champ = ".$critere."	AND code_ss_champ = ".$ss_critere." AND lang in ('','".$lang."') ".$order_by.",".$dsi_bannette_notices_order;
 		} else {
 			$req = "SELECT * FROM notices_fields_global_index
 			WHERE id_notice IN (".$notices.")
-			AND code_champ = ".$critere."	AND code_ss_champ = ".$ss_critere." AND lang in ('','".$lang."') order by value ";
+			AND code_champ = ".$critere."	AND code_ss_champ = ".$ss_critere." AND lang in ('','".$lang."') ".$order_by;
 		}	
 		
 		//		print $req."<br>";
@@ -308,7 +336,7 @@ class bannette_facettes{
 				}elseif(isset($contens["folder"]) && count($contens["folder"])){
 						
 					foreach($contens['folder'] as $folder2=>$values2){
-						if(!sizeof($already_printed) || sizeof(array_diff($values2["values"],$already_printed))){
+						if(!sizeof($already_printed) || sizeof(array_diff($values2["values"],$already_printed)) || !empty($values2['folder'])){
 							$this->index++;
 							$this->sommaires[$this->index]['title']=$folder;
 							$this->sommaires[$this->index]['level']=$rang;						

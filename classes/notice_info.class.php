@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_info.class.php,v 1.73 2018-12-27 16:06:03 dgoron Exp $
+// $Id: notice_info.class.php,v 1.75.2.2 2019-11-07 10:49:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -21,6 +21,7 @@ require_once("$class_path/map_info.class.php");
 require_once($class_path."/avis_records.class.php");
 require_once($class_path."/notice_relations_collection.class.php");
 require_once($class_path."/thumbnail.class.php");
+require_once($class_path."/caddie.class.php");
 
 if (!isset($tdoc)) $tdoc = marc_list_collection::get_instance('doctype');
 
@@ -110,6 +111,7 @@ class notice_info {
 	protected $memo_bulletinage;
 	protected $memo_article_bulletinage;
 	
+	protected $memo_explnum;
 	protected $memo_explnum_assoc;
 	protected $memo_explnum_assoc_number;
 	
@@ -468,7 +470,9 @@ class notice_info {
 			if ($as!== FALSE && $as!== NULL) {
 				$auteur_0 = $this->responsabilites["auteurs"][$as] ;
 				$auteur = new auteur($auteur_0["id"]);
-				$auteur->fonction = $fonction_auteur[$auteur_0["fonction"]];
+				if (!empty($auteur_0["fonction"])) {
+    				$auteur->fonction = $fonction_auteur[$auteur_0["fonction"]];
+				}
 				$this->authors[]=$auteur;
 				if ($this->print_mode) $mention_resp_lib = $auteur->get_isbd();
 				//else $mention_resp_lib = '';
@@ -483,7 +487,9 @@ class notice_info {
 				$indice = $as[$i] ;
 				$auteur_1 = $this->responsabilites["auteurs"][$indice] ;
 				$auteur = new auteur($auteur_1["id"]);
-				$auteur->fonction = $fonction_auteur[$auteur_1["fonction"]];
+				if ($auteur_1["fonction"] != '0' && !empty($auteur_1["fonction"])) {
+    				$auteur->fonction = $fonction_auteur[$auteur_1["fonction"]];
+				}
 				$this->authors[]=$auteur;
 				if ($this->print_mode) $mention_resp_lib = $auteur->get_isbd();
 				//else $mention_resp_lib = '';
@@ -503,7 +509,9 @@ class notice_info {
 				$indice = $as[$i] ;
 				$auteur_2 = $this->responsabilites["auteurs"][$indice] ;
 				$auteur = new auteur($auteur_2["id"]);
-				$auteur->fonction = $fonction_auteur[$auteur_2["fonction"]];
+				if ($auteur_2["fonction"] != '0' && !empty($auteur_2["fonction"])) {
+    				$auteur->fonction = $fonction_auteur[$auteur_2["fonction"]];
+				}
 				$this->authors[]=$auteur;
 				if ($this->print_mode) $mention_resp_lib = $auteur->get_isbd();
 				//else $mention_resp_lib = '';
@@ -910,10 +918,53 @@ class notice_info {
 					}
 				}
 				$ex->parametres_perso=$parametres_perso;
+				$ex->caddies=array();
+				$caddies = caddie::get_cart_list_from_item('EXPL', 0, $ex->expl_id);
+				if(sizeof($caddies)) {
+				    foreach ($caddies as $caddie) {
+				        $ex->caddies[]= $caddie['idcaddie'];
+				    }
+				}
 				$this->memo_exemplaires[]=$ex;
 			}
 		}
 		return $this->memo_exemplaires;
+	}
+	
+	//Traitement des exemplaires
+	public function get_memo_explnum() {
+		global $pmb_explnum_order;
+		
+		if(!isset($this->memo_explnum)) {
+			$this->memo_explnum=array();
+			$requete = "SELECT explnum_id, explnum_notice, explnum_bulletin, explnum_nom, explnum_mimetype, explnum_url, explnum_vignette, explnum_nomfichier, explnum_extfichier, explnum_docnum_statut
+				FROM explnum WHERE explnum_notice='".$this->notice_id."'
+				UNION SELECT explnum_id, explnum_notice, explnum_bulletin, explnum_nom, explnum_mimetype, explnum_url, explnum_vignette, explnum_nomfichier, explnum_extfichier, explnum_docnum_statut
+				FROM explnum, bulletins
+				WHERE bulletin_id = explnum_bulletin
+				AND bulletins.num_notice='".$this->notice_id."'";
+			if($pmb_explnum_order) $requete .= " order by ".$pmb_explnum_order;
+			else $requete .= " order by explnum_mimetype, explnum_id ";
+			$resultat = pmb_mysql_query($requete);
+			while($explnum = pmb_mysql_fetch_object($resultat)) {
+				//Champs perso de documents numériques
+				$parametres_perso=array();
+				$mes_pp=new parametres_perso("explnum");
+				if (!$mes_pp->no_special_fields) {
+					$mes_pp->get_values($explnum->explnum_id);
+					$values = $mes_pp->values;
+					foreach ( $values as $field_id => $vals ) {
+						$parametres_perso[$mes_pp->t_fields[$field_id]["NAME"]]["TITRE"]=$mes_pp->t_fields[$field_id]["TITRE"];
+						foreach ( $vals as $value ) {
+							$parametres_perso[$mes_pp->t_fields[$field_id]["NAME"]]["VALUE"][]=$mes_pp->get_formatted_output(array($value),$field_id);
+						}
+					}
+				}
+				$explnum->parametres_perso=$parametres_perso;
+				$this->memo_explnum[]=$explnum;
+			}
+		}
+		return $this->memo_explnum;
 	}
 	
 	//Descripteurs
@@ -991,8 +1042,8 @@ class notice_info {
 			$this->memo_notice_mere_relation_type = array();
 			foreach ($notice_relations->get_parents() as $relation_type=>$relations) {
 				foreach ($relations as $rank=>$relation) {
-					$this->memo_notice_mere[$rank]=$relation->get_linked_notice();
-					$this->memo_notice_mere_relation_type[$rank]=$relation_type;
+				    $this->memo_notice_mere[$relation_type."_".$rank]=$relation->get_linked_notice();
+				    $this->memo_notice_mere_relation_type[$relation_type."_".$rank]=$relation_type;
 				}
 			}
 		}
@@ -1015,8 +1066,8 @@ class notice_info {
 			$this->memo_notice_fille_relation_type = array();
 			foreach ($notice_relations->get_childs() as $relation_type=>$relations) {
 				foreach ($relations as $rank=>$relation) {
-					$this->memo_notice_fille[$rank]=$relation->get_linked_notice();
-					$this->memo_notice_fille_relation_type[$rank]=$relation_type;
+				    $this->memo_notice_fille[$relation_type."_".$rank]=$relation->get_linked_notice();
+				    $this->memo_notice_fille_relation_type[$relation_type."_".$rank]=$relation_type;
 				}
 			}
 		}
@@ -1039,8 +1090,8 @@ class notice_info {
 			$this->memo_notice_horizontale_relation_type = array();
 			foreach ($notice_relations->get_pairs() as $relation_type=>$relations) {
 				foreach ($relations as $rank=>$relation) {
-					$this->memo_notice_horizontale[$rank]=$relation->get_linked_notice();
-					$this->memo_notice_horizontale_relation_type[$rank]=$relation_type;
+				    $this->memo_notice_horizontale[$relation_type."_".$rank]=$relation->get_linked_notice();
+				    $this->memo_notice_horizontale_relation_type[$relation_type."_".$rank]=$relation_type;
 				}
 			}
 		}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesOPACGeneric.class.php,v 1.10 2017-09-18 13:20:21 dgoron Exp $
+// $Id: pmbesOPACGeneric.class.php,v 1.14 2019-08-28 06:48:51 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,7 +10,7 @@ require_once($class_path."/external_services.class.php");
 
 class pmbesOPACGeneric extends external_services_api_class{
 
-	function list_shelves($OPACUserId) {
+	public function list_shelves($OPACUserId) {
 		global $dbh;
 
 		global $opac_etagere_order ;
@@ -33,7 +33,7 @@ class pmbesOPACGeneric extends external_services_api_class{
 		return $tableau_etagere;
 	}
 	
-	function retrieve_shelf_content($shelf_id, $OPACUserId) {
+	public function retrieve_shelf_content($shelf_id, $OPACUserId) {
 		global $dbh;
 
 		$shelf_id+=0;
@@ -66,7 +66,7 @@ class pmbesOPACGeneric extends external_services_api_class{
 		return $results;
 	}
 	
-	function list_locations() {
+	public function list_locations() {
 		global $dbh;
 		$results = array();
 		$sql = "SELECT idlocation, location_libelle FROM docs_location WHERE location_visible_opac = 1";
@@ -81,7 +81,7 @@ class pmbesOPACGeneric extends external_services_api_class{
 		return $results;
 	}
 	
-	function list_sections($location) {
+	public function list_sections($location) {
 		global $dbh;
 		$results = array();
 		$location+=0;
@@ -99,12 +99,12 @@ class pmbesOPACGeneric extends external_services_api_class{
 		return $results;
 	}
 	
-	function is_also_borrowed_enabled() {
+	public function is_also_borrowed_enabled() {
 		global $opac_autres_lectures_tri;
 		return $opac_autres_lectures_tri ? true : false;
 	}
 	
-	function also_borrowed ($notice_id=0,$bulletin_id=0) {
+	public function also_borrowed ($notice_id=0,$bulletin_id=0) {
 		global $dbh, $msg;
 		global $opac_autres_lectures_tri;
 		global $opac_autres_lectures_nb_mini_emprunts;
@@ -162,7 +162,7 @@ class pmbesOPACGeneric extends external_services_api_class{
 			
 			while (($data=pmb_mysql_fetch_array($res_autres_lectures))) { // $inotvisible<=$opac_autres_lectures_nb_maxi
 				$requete = "SELECT  1  ";
-				$requete .= " FROM notices $acces_j $statut_j  WHERE notice_id='".$data[not_id]."' $statut_r ";
+				$requete .= " FROM notices $acces_j $statut_j  WHERE notice_id='".$data['not_id']."' $statut_r ";
 				$myQuery = pmb_mysql_query($requete, $dbh);
 				if (pmb_mysql_num_rows($myQuery) && $inotvisible<=$opac_autres_lectures_nb_maxi) { // pmb_mysql_num_rows($myQuery)
 					$inotvisible++;
@@ -206,7 +206,7 @@ class pmbesOPACGeneric extends external_services_api_class{
 		return $results;
 		}
 	
-	function get_location_information($location_id) {
+	public function get_location_information($location_id) {
 		global $dbh;
 		$result = array();
 		
@@ -225,14 +225,14 @@ class pmbesOPACGeneric extends external_services_api_class{
 		return $result;
 	}
 	
-	function get_location_information_and_sections($location_id) {
+	public function get_location_information_and_sections($location_id) {
 		return array(
 			"location" => $this->get_location_information($location_id),
 			"sections" => $this->list_sections($location_id)
 		);
 	}
 	
-	function get_section_information($section_id) {
+	public function get_section_information($section_id) {
 		global $dbh;
 		$result = array();
 		$section_id+=0;
@@ -250,7 +250,7 @@ class pmbesOPACGeneric extends external_services_api_class{
 		return $result;
 	}
 	
-	function get_all_locations_and_sections() {
+	public function get_all_locations_and_sections() {
 		
 		global $dbh;
 		$results = array();
@@ -283,27 +283,32 @@ class pmbesOPACGeneric extends external_services_api_class{
 		return $results;
 	}
 	
-	function get_infopage($infopage_id,$js_subst="",$encoding){
-		global $dbh,$charset,$opac_url_base;
+	public function get_infopage($infopage_id, $js_subst = "", $encoding ="") {
+		global $charset, $opac_url_base;
 		
 		$requete = "SELECT content_infopage FROM infopages WHERE id_infopage = $infopage_id";
-		$result = pmb_mysql_query($requete,$dbh);
-		if (pmb_mysql_num_rows($result)){
-			$infopage = pmb_mysql_result($result,0,0);
-			if($js_subst){
-				$infopage = str_replace($opac_url_base."index.php?lvl=infopages&amp;pagesid=","!!INFOPAGE_URL!!",$infopage);
-				preg_match_all("/!!INFOPAGE_URL!!([0-9]+)/",$infopage,$tab);
-				for ($i = 0; $i<sizeof($tab[0]);$i++){
-					$infopage= preg_replace("/".$tab[0][$i]."/","#\" onclick=\"".str_replace("!!id!!",$tab[1][$i],$js_subst).";return false;",$infopage);	
+		$result = pmb_mysql_query($requete);
+		if (pmb_mysql_num_rows($result)) {
+			$infopage = pmb_mysql_result($result, 0, 0);
+			if (!empty($js_subst)) {
+				$infopage = str_replace($opac_url_base."index.php?lvl=infopages&amp;pagesid=", "!!INFOPAGE_URL!!", $infopage);
+				preg_match_all("/!!INFOPAGE_URL!!([0-9]+)/", $infopage, $tab);
+				$nb_tabs = count($tab[0]);
+				for ($i = 0; $i < $nb_tabs; $i++) {
+					$infopage = preg_replace("/".$tab[0][$i]."/", "#\" onclick=\"".str_replace("!!id!!", $tab[1][$i], $js_subst).";return false;", $infopage);	
 				}
 			}
-			if(($encoding == "utf-8") && ($charset!= "utf-8"))return utf8_encode($infopage);
-			elseif(($encoding != "utf-8") && ($charset== "utf-8")) return utf8_decode($infopage);
-			else return $infopage;
+			if ($encoding == "utf-8" && $charset != "utf-8") {
+			    return utf8_encode($infopage);
+			} elseif ($encoding != "utf-8" && $charset == "utf-8") {
+			    return utf8_decode($infopage);
+			} else {
+			    return $infopage;
+			}
 		}
 	}
 	
-	function get_marc_table($type){
+	public function get_marc_table($type){
 		global $charset;
 		$marc_list = new marc_list($type);
 		if ($charset != "utf-8"){

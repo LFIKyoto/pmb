@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice.inc.php,v 1.16 2017-09-20 08:15:36 dgoron Exp $
+// $Id: notice.inc.php,v 1.17.6.1 2019-10-30 08:15:48 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $item, $msg, $action, $idcaddie, $include_child, $include_bulletin_notice, $include_analysis, $current_print;
 
 if($item) {
 	print "<h1>".$msg["400"]."</h1>";
@@ -25,6 +27,22 @@ switch($action) {
 					$myCart->add_item($notice_id,"NOTI");					
 				}		
 			} else	$myCart->add_item($item,"NOTI");
+			if($include_bulletin_notice) {
+			    $tab_list_child=notice::get_list_bulletin_notice($item);
+			    if(count($tab_list_child)) {
+			        foreach ($tab_list_child as $notice_id) {
+			            $myCart->add_item($notice_id,"NOTI");
+			        }
+			    }
+			}
+			if($include_analysis) {
+			    $tab_list_child=notice::get_list_analysis($item);
+			    if(count($tab_list_child)) {
+			        foreach ($tab_list_child as $notice_id) {
+			            $myCart->add_item($notice_id,"NOTI");
+			        }
+			    }
+			}
 			$myCart->compte_items();
 		}
 		print "<script type='text/javascript'>window.close();</script>"; 

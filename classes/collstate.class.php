@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: collstate.class.php,v 1.28 2018-06-21 16:22:38 dgoron Exp $
+// $Id: collstate.class.php,v 1.30 2019-06-07 08:54:57 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -43,7 +43,7 @@ class collstate {
 
 	// constructeur
 	public function __construct($id=0,$serial_id=0,$bulletin_id=0) {
-		$id = $id*1;
+		$id = intval($id);
 		$serial_id = $serial_id*1;
 		$bulletin_id = $bulletin_id*1;
 		// si id, allez chercher les infos dans la base
@@ -647,7 +647,7 @@ class collstate {
 			}
 			if ($aff_bulletins_restrict_date) {
 				$aff_bulletins_restrict_date_traite = str_replace("*","%",$aff_bulletins_restrict_date) ;
-				$tab_bulletins_restrict_date = explode ($msg[format_date_input_separator],$aff_bulletins_restrict_date_traite) ;
+				$tab_bulletins_restrict_date = explode ($msg['format_date_input_separator'],$aff_bulletins_restrict_date_traite) ;
 				if(count($tab_bulletins_restrict_date)==3)$aff_bulletins_restrict_date_traite = $tab_bulletins_restrict_date[2]."-".$tab_bulletins_restrict_date[1]."-".$tab_bulletins_restrict_date[0];
 				if(count($tab_bulletins_restrict_date)==2)$aff_bulletins_restrict_date_traite = $tab_bulletins_restrict_date[1]."-".$tab_bulletins_restrict_date[0];
 				if(count($tab_bulletins_restrict_date)==1)$aff_bulletins_restrict_date_traite = $tab_bulletins_restrict_date[0];

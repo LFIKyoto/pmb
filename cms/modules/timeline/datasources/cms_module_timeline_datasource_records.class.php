@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_timeline_datasource_records.class.php,v 1.3 2017-10-17 10:22:10 apetithomme Exp $
+// $Id: cms_module_timeline_datasource_records.class.php,v 1.4 2019-01-07 12:40:18 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -66,6 +66,7 @@ class cms_module_timeline_datasource_records extends cms_module_timeline_datasou
 
 			if(!empty($this->parameters['timeline_fields'])){
 				foreach($this->parameters['timeline_fields'] as $field_name => $field_value){
+				    if (!$field_value) continue;
 					if(strpos($field_value, 'c_perso') !== false){
 						$field_value = explode('c_perso_', $field_value)[1];
 						$event[$field_name] = $this->get_cp_value($field_value, $id);

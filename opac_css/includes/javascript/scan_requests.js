@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_requests.js,v 1.6 2018-12-06 12:27:17 dgoron Exp $
+// $Id: scan_requests.js,v 1.6.6.2 2019-11-27 08:55:21 dgoron Exp $
 
 function show_scan_request(record_id, record_type) {
 	var ajax_scan_request = new http_request();
@@ -12,7 +12,9 @@ function show_scan_request(record_id, record_type) {
    		for(var i=0;i<tags.length;i++){
 			window.eval(tags[i].text);
     	}
-   		document.body.className = 'tundra';
+   		if(document.body.className.indexOf('tundra') === -1) {
+   			document.body.className += ' tundra';
+   		}
 		dojo.parser.parse(document.getElementById('frame_notice_preview'));
 	},0,0);
 }
@@ -30,6 +32,7 @@ function kill_scan_request_frame() {
 function create_scan_request_in_record(id_suffix, record_type, record_id) {
 	var title = document.getElementById('scan_request_title' + id_suffix).value;
 	var desc = document.getElementById('scan_request_desc' + id_suffix).value;
+	var nb_scanned_pages = document.getElementById('scan_request_nb_scanned_pages' + id_suffix).value;
 	var num_location = 0;
 	if(document.getElementById('scan_request_num_location' + id_suffix)) {
 		num_location = document.getElementById('scan_request_num_location' + id_suffix).value;
@@ -43,6 +46,7 @@ function create_scan_request_in_record(id_suffix, record_type, record_id) {
 	
 	var params = '&scan_request_title='+title
 		+'&scan_request_desc='+desc
+		+'&scan_request_nb_scanned_pages='+nb_scanned_pages
 		+'&scan_request_num_location='+num_location
 		+'&scan_request_priority='+priority
 		+'&scan_request_date='+date

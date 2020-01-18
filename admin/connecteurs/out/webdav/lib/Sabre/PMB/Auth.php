@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Auth.php,v 1.6 2015-06-02 13:48:57 dgoron Exp $
+// $Id: Auth.php,v 1.7 2019-06-14 10:25:47 btafforeau Exp $
 namespace Sabre\PMB;
 
 use Sabre\DAV;
@@ -50,7 +50,9 @@ class Auth extends DAV\Auth\Backend\AbstractDigest {
 	protected $mode;
 	
 	public function __construct($mode){
+	    global $pmb_url_base;
 		$this->mode = $mode;
+		$this->realm = md5($pmb_url_base);
 	}
 	
     public function getDigestHash($realm,$username) {

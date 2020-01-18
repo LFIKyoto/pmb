@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export.inc.php,v 1.16 2018-07-10 06:42:45 dgoron Exp $
+// $Id: export.inc.php,v 1.17 2019-06-24 08:17:28 btafforeau Exp $
 
 require_once("$class_path/marc_table.class.php");
 require_once("$class_path/category.class.php");
@@ -336,7 +336,8 @@ function _export_($id,$keep_expl) {
 			$categ=new categories($categ_id,'fr_FR');
 			$list_categ=categories::listAncestors($categ_id,'fr_FR');
 			reset($list_categ);
-			list($id,$libelle)=each($list_categ);
+			$id = key($list_categ);
+			$libelle = $list_categ[$id];
 			switch ($libelle["autorite"]) {
 				case "GO":
 					$go[]=$categ->libelle_categorie;

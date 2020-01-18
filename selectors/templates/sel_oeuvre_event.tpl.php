@@ -3,7 +3,7 @@
 
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_oeuvre_event.tpl.php,v 1.5 2018-12-11 07:58:46 dgoron Exp $
+// $Id: sel_oeuvre_event.tpl.php,v 1.7 2019-05-21 09:12:35 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -18,6 +18,8 @@ if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 * $add_field : nom de la fonction permettant de rajouter un champ
 *
 */
+global $base_url;
+
 if ($dyn==3) {
 	$jscript ="
 <script type='text/javascript'>
@@ -73,6 +75,9 @@ if ($dyn==3) {
 			if (i==n_aut_link) w.parent.add_aut_link();
 			
 			var selObj = w.parent.document.getElementById('f_aut_link_table_list');
+            if (!selObj) {
+                selObj = w.parent.document.getElementById('f_aut_link_table_list_' + i);
+            }
 			var selIndex=selObj.selectedIndex;
 			w.parent.document.getElementById('f_aut_link_table'+i).value= selObj.options[selIndex].value;
 			

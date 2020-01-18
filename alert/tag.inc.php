@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tag.inc.php,v 1.5 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: tag.inc.php,v 1.6 2019-05-29 12:12:29 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $aff_alerte, $msg;
 
 $temp_aff = alerte_tag() . alerte_avis() ;
 

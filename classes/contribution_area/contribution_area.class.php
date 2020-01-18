@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution_area.class.php,v 1.16 2018-12-28 16:27:30 tsamson Exp $
+// $Id: contribution_area.class.php,v 1.18 2019-02-18 16:05:11 tsamson Exp $
 if (stristr($_SERVER ['REQUEST_URI'], ".class.php"))
 	die("no access");
 
@@ -928,12 +928,26 @@ class contribution_area {
 	
 	public function get_computed_form() {
 		global $contribution_area_computed_form;
-		$form = str_replace ("!!area_title!!", $this->title, $contribution_area_computed_form);
-		$form = str_replace ("!!available_entities_data!!",encoding_normalize::json_encode(encoding_normalize::utf8_decode(contribution_area_forms_controller::get_store_data())),$form);
-		$form = str_replace ("!!environment_fields!!",encoding_normalize::json_encode(computed_field::get_environment_fields()),$form);
-		$form = str_replace ("!!graph_data_store!!",encoding_normalize::json_encode($this->get_graph_store_data()),$form);
-		$form = str_replace ("!!computed_fields!!",encoding_normalize::json_encode(computed_field::get_area_computed_fields_num($this->id)),$form);
-		$form = str_replace ("!!id!!",$this->id,$form);
+		$form = $contribution_area_computed_form;
+		$search = array(
+				"!!area_title!!",
+				"!!available_entities_data!!",
+				"!!environment_fields!!",
+				"!!empr_fields!!",
+				"!!graph_data_store!!",
+				"!!computed_fields!!",
+				"!!id!!"
+		);
+		$replace = array(
+				$this->title,
+				encoding_normalize::json_encode(encoding_normalize::utf8_decode(contribution_area_forms_controller::get_store_data())),
+				encoding_normalize::json_encode(computed_field::get_environment_fields()),
+				encoding_normalize::json_encode(computed_field::get_empr_fields()),
+				encoding_normalize::json_encode($this->get_graph_store_data()),
+				encoding_normalize::json_encode(computed_field::get_area_computed_fields_num($this->id)),
+				$this->id
+		);
+		$form = str_replace($search, $replace, $form);
 		return $form;
 	}
 	

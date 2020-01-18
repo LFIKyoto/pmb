@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: collstate.class.php,v 1.26 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: collstate.class.php,v 1.27 2019-05-29 09:17:21 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -102,7 +102,7 @@ class collstate {
 		$this->location_libelle=$mylocation->location_libelle;
 		$this->num_infopage=$mylocation->num_infopage;
 		
-		if ($opac_sur_location_activate) {
+		if ($opac_sur_location_activate && $this->surloc_id) {
 			$this->surloc_id = $mylocation->surloc_num;
 			$myQuery = pmb_mysql_query("select surloc_libelle from sur_location where surloc_id='".$this->surloc_id."' LIMIT 1", $dbh);
 			$mysurloc = pmb_mysql_fetch_object($myQuery);

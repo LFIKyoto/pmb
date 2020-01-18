@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index.inc.php,v 1.48 2018-04-18 10:04:48 dgoron Exp $
+// $Id: index.inc.php,v 1.50 2019-05-29 09:12:29 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -40,7 +40,7 @@ if ($search_type == "simple_search") {
 	// affichage catégories
 	if ($opac_show_categ_browser) {
 		$opac_show_categ_browser_tab=explode(" ",$opac_show_categ_browser);
-		if ($opac_show_categ_browser_tab[1]) 
+		if (!empty($opac_show_categ_browser_tab[1])) 
 			$opac_show_categ_browser_home_id_thes=$opac_show_categ_browser_tab[1];
 		require_once ($base_path.'/classes/categorie.class.php');
 		require_once ($base_path.'/includes/templates/categories.tpl.php');
@@ -54,7 +54,7 @@ if ($search_type == "simple_search") {
 			!!diffusion!!
 		</div>
 		";
-		$aff = pmb_bidi(affiche_bannette ("", $opac_bannette_nb_liste, "./empr.php?lvl=bannette&id_bannette=!!id_bannette!!","bannettes_private-container_2", ""));
+		$aff = pmb_bidi(affiche_bannettes($opac_bannette_nb_liste, "./empr.php?lvl=bannette&id_bannette=!!id_bannette!!","bannettes_private-container_2", ""));
 		if($aff){
 			$bannettes= "<div id='bannettes_subscribed'>\n";
 			$bannettes.= "<h3><span>".$msg['accueil_bannette_privee']."</span></h3>";
@@ -73,7 +73,7 @@ if ($search_type == "simple_search") {
 		<div class='bannette' id='banette_!!id_bannette!!'>
  			!!diffusion!!
  		</div>";
- 		$aff = pmb_bidi(affiche_bannette ("", $opac_bannette_nb_liste, "./index.php?lvl=bannette_see&id_bannette=!!id_bannette!!","bannettes-public-container_2", "",true));
+ 		$aff = pmb_bidi(affiche_bannettes($opac_bannette_nb_liste, "./index.php?lvl=bannette_see&id_bannette=!!id_bannette!!","bannettes-public-container_2", "",true));
  		if($aff){
  			$bannettes= "<div id='bannettes_public'>\n";
  			$bannettes.= "<h3><span>".$msg['accueil_bannette_public']."</span></h3>";

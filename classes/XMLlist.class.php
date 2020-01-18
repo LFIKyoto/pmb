@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: XMLlist.class.php,v 1.45 2018-11-26 12:51:14 dgoron Exp $
+// $Id: XMLlist.class.php,v 1.48 2019-06-28 15:12:24 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -110,20 +110,26 @@ class XMLlist {
 	}
 	
 	public function finBalise($parser, $nom) {
-		// ICI pour affichage des codes des messages en dur 
-		if(defined('SESSname') && isset($_COOKIE[SESSname."-CHECK-MESSAGES"])) {
-			if ($_COOKIE[SESSname."-CHECK-MESSAGES"]==1 && strpos($this->fichierXml, "messages")) {
+	    global $check_messages;
+	    
+		// ICI pour affichage des codes des messages en dur
+	    $check_messages = intval($check_messages);
+	    if(defined('SESSname') && (isset($_COOKIE[SESSname."-CHECK-MESSAGES"]) || $check_messages)) {
+	        if (($_COOKIE[SESSname."-CHECK-MESSAGES"]==1 || $check_messages==1) && strpos($this->fichierXml, "messages")) {
 				$this->table[$this->current] = "__".$this->current."**".$this->table[$this->current];
 			}
 		}
 		$this->current = '';
 		$this->js_group = "";
-		}
+	}
 
 	public function finBaliseSubst($parser, $nom) {
+	    global $check_messages;
+	    
 		// ICI pour affichage des codes des messages en dur
-		if(defined(SESSname) && isset($_COOKIE[SESSname."-CHECK-MESSAGES"])) {
-			if ($_COOKIE[SESSname."-CHECK-MESSAGES"]==1 && strpos($this->fichierXml, "messages")) {
+	    $check_messages = intval($check_messages);
+	    if(defined('SESSname') && (isset($_COOKIE[SESSname."-CHECK-MESSAGES"]) || $check_messages)) {
+		    if (($_COOKIE[SESSname."-CHECK-MESSAGES"]==1 || $check_messages==1) && strpos($this->fichierXml, "messages")) {
 				$this->table[$this->current] = "__".$this->current."**".$this->table[$this->current];
 			}
 		}
@@ -131,7 +137,7 @@ class XMLlist {
 		$this->current = '';
 		$this->js_group = "";
 		$this->flag_fav =  false;
-		}
+	}
 	
 	public function texte($parser, $data) {
 		global $_starttag; 
@@ -180,6 +186,8 @@ class XMLlist {
  	{
  		global $charset;
  		global $base_path, $class_path, $KEY_CACHE_FILE_XML;
+ 		global $check_messages;
+ 		
 		if (!($fp = @fopen($this->fichierXml, "r"))) {
 			die("impossible d'ouvrir le fichier XML $this->fichierXml");
 		}
@@ -196,6 +204,12 @@ class XMLlist {
 		$dejaParse = false;
 
 		$cache_php=cache_factory::getCache();
+		if($check_messages == 1 || $check_messages == -1) {
+		    if(is_object($cache_php) && get_class($cache_php) == 'cache_apcu') {
+		        $cache_php->clearCache();
+		        $cache_php=false;
+		    }
+		}
 		$key_file="";
 		if ($cache_php) {
 			$key_file=getcwd().$fileName.filemtime($this->fichierXml);
@@ -234,6 +248,9 @@ class XMLlist {
 						$dejaParse = true;
 					}
 				}
+			}
+			if($check_messages == 1 || $check_messages == -1) {
+			    $dejaParse = false;
 			}
 			if($dejaParse){
 				$tmp = fopen($tempFile, "r");

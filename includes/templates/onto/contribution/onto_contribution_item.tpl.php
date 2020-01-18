@@ -2,14 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_contribution_item.tpl.php,v 1.2 2018-11-07 16:22:44 apetithomme Exp $
+// $Id: onto_contribution_item.tpl.php,v 1.3 2019-03-21 16:19:24 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 global $ontology_tpl,$ontology_contribution_tpl,$msg,$base_path,$ontology_id, $pmb_form_authorities_editables, $PMBuserid;
 
 $ontology_tpl['form_body'] = '
-<script type="text/javascript" src="./includes/javascript/ajax.js"></script>    
+<script type="text/javascript" src="./javascript/ajax.js"></script>    
 	<form id="!!onto_form_id!!" name="!!onto_form_name!!" method="POST" action="!!onto_form_action!!" class="form-autorites" onSubmit="return false;" >
 		<input type="hidden" id="item_uri" name="item_uri" value="!!uri!!"/>	
 		<input type="hidden" id="prefix_uri" name="prefix_uri" value="!!prefix_uri!!"/>	

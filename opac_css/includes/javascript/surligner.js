@@ -1,7 +1,16 @@
 // +-------------------------------------------------+
 // � 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: surligner.js,v 1.4 2018-08-01 10:34:05 dgoron Exp $
+// $Id: surligner.js,v 1.7 2019-05-29 10:59:42 ccraig Exp $
+var surlignage_reg_exp = {};
+
+function surlignage_get_regexp(mot){
+	if(typeof surlignage_reg_exp[mot] != "undefined"){
+		return surlignage_reg_exp[mot];
+	}
+	surlignage_reg_exp[mot] = new RegExp(mot+' *','gi');
+	return surlignage_reg_exp[mot];
+}
 
 function trouver_mots_f(obj,mot,couleur,litteral,onoff) {
 	var i;
@@ -14,9 +23,10 @@ function trouver_mots_f(obj,mot,couleur,litteral,onoff) {
 			mot=remplacer_carac(reverse_html_entities(mot));
 		}
 		
+		var reg_mot = surlignage_get_regexp(mot);	
 		for (i=0; i<childs.length; i++) {
-			
-			if (childs[i].nodeType==3) {
+		
+			if (childs[i].nodeType==3 && childs[i].data.trim() !== "") {
 				if (litteral==0){
 					chaine=childs[i].data.toLowerCase();
 					chaine=remplacer_carac(chaine);
@@ -24,8 +34,7 @@ function trouver_mots_f(obj,mot,couleur,litteral,onoff) {
 					chaine=childs[i].data;
 					chaine=remplacer_carac(chaine);
 				}
-				 
-				var reg_mot = new RegExp(mot+' *','gi');	
+
 				if (chaine.match(reg_mot)) {
 					var elt_found = chaine.match(reg_mot);
 					var chaine_display = childs[i].data;
@@ -62,7 +71,7 @@ function trouver_mots_f(obj,mot,couleur,litteral,onoff) {
 						}
 					}
 				}
-			} else if (childs[i].nodeType==1){
+			} else if (childs[i].nodeType==1 && (childs[i].nodeName != "SCRIPT" && childs[i].nodeName != "IMG")){
 				trouver_mots_f(childs[i],mot,couleur,litteral,onoff);
 			}
 		}

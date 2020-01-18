@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: IndexationInfos.js,v 1.7 2018-10-17 18:58:55 arenou Exp $
+// $Id: IndexationInfos.js,v 1.8 2019-02-18 14:17:23 tsamson Exp $
 
 
 define(["dojo/_base/declare",
@@ -30,7 +30,7 @@ define(["dojo/_base/declare",
 				}).then(lang.hitch(this, function(response){
 					var container =  dom.byId('indexation_infos');
 					domConstruct.empty(container);
-					if(response){
+					if(Object.keys(response).length){
 						domConstruct.create('h2', {'class': 'indexation_title', innerHTML: pmbDojo.messages.getMessage('indexation', 'indexation_in_progress')}, container);
 						for(var key in response){
 							domConstruct.create('label', {'class': 'indexation_entity_label', innerHTML: response[key].label}, container);

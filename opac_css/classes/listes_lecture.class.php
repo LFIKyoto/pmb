@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: listes_lecture.class.php,v 1.14 2018-12-26 13:13:23 ngantier Exp $
+// $Id: listes_lecture.class.php,v 1.19 2019-06-17 10:32:24 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -29,13 +29,28 @@ class listes_lecture {
 		$query .= ' order by tag, nom_liste';
 		$result = pmb_mysql_query($query);
 		if (pmb_mysql_num_rows($result)) {
+		    $i = 0;
 			while($row = pmb_mysql_fetch_object($result)) {
 				if($row->tag == '') {
 					$tag_label = $msg['list_lecture_tag_no_ranking'];
 				} else {
 					$tag_label = $row->tag;
 				}
-				$this->listes_lecture[$tag_label][] = $row;
+				$this->listes_lecture[$tag_label][$i] = $row;
+				$notices = array();
+				$notices_create_date = array();
+				$query_notices = "select * from opac_liste_lecture_notices where opac_liste_lecture_num=" . $row->id_liste;
+				$result_notices = pmb_mysql_query($query_notices);
+				if (pmb_mysql_num_rows($result_notices)) {
+				    while ($row_notices = pmb_mysql_fetch_object($result_notices)) {
+				        $notices[] = $row_notices->opac_liste_lecture_notice_num;
+				        $notices_create_date[$row_notices->opac_liste_lecture_notice_num] = $row_notices->opac_liste_lecture_create_date;
+				    }
+				}
+				$this->listes_lecture[$tag_label][$i]->notices_associees = implode(',', $notices);
+				$this->listes_lecture[$tag_label][$i]->notices = $notices;
+				$this->listes_lecture[$tag_label][$i]->notices_create_date = $notices_create_date;
+				$i++;
 			}
 		}
 	}
@@ -137,12 +152,13 @@ class listes_lecture {
 		global $msg;
 		global $liste_lecture_prive;
 		
+		$my_reading_lists = "
+			<form name='my_list' method='post' action='empr.php' >
+				<input type='hidden' id='lvl' name='lvl' />
+				<input type='hidden' id='sub' name='sub' value='my_list' />
+				<input type='hidden' id='act' name='act' />";
 		if(count($this->listes_lecture)) {
-			$my_reading_lists = "
-				<form name='my_list' method='post' action='empr.php' >
-					<input type='hidden' id='lvl' name='lvl' />
-					<input type='hidden' id='sub' name='sub' value='my_list' />
-					<input type='hidden' id='act' name='act' />
+			$my_reading_lists.= "
 					<div id='list_cadre' style='border: 1px solid rgb(204, 204, 204); overflow: auto; height: 200px;padding:2px;'>";
 			foreach ($this->listes_lecture as $tag => $listes_lecture) {
 				$my_reading_lists .= "<div class='row'><span class='liste_tag'>".$tag."</span></div>";
@@ -152,13 +168,13 @@ class listes_lecture {
 			}
 			$my_reading_lists .= "</div><br />";
 			$my_reading_lists .= $this->get_display_buttons_reading_lists();
-			$my_reading_lists .= "</form>";
 		} else {
-			$my_reading_lists = "
+			$my_reading_lists.= "
 				<div class='row'>
 					<label>".$msg['list_lecture_no_mylist']."</label>
 				</div>";
 		}
+		$my_reading_lists .= "</form>";
 		$display = str_replace('!!current_shared!!', '', $liste_lecture_prive);
 		$display = str_replace('!!my_current!!', 'current', $display);
 		$display = str_replace('!!my_list_checked!!','checked=checked', $display);
@@ -183,7 +199,7 @@ class listes_lecture {
 		$display .= "
 			<div id='liste_".$liste->id_liste."'>
 				<input type='checkbox' class='checkbox' id='cb".$liste->id_liste."' name='list_ck[]' value='".$liste->id_liste."'/>
-				&nbsp;<span><a ".$div_action." href='./index.php?lvl=show_list&sub=consultation&id_liste=".$liste->id_liste."'>".htmlentities($liste->nom_liste,ENT_QUOTES,$charset)."</a><label for='cb".$liste->id_liste."' > ".htmlentities("( ".$liste->empr_prenom." ".$liste->empr_nom." )",ENT_QUOTES,$charset)." </label></span>".$div_description."
+				&nbsp;<span><a ".$div_action." href='./index.php?lvl=show_list&sub=consultation&id_liste=".$liste->id_liste."'>".htmlentities($liste->nom_liste,ENT_QUOTES,$charset)."</a><label for='cb".$liste->id_liste."' > ".htmlentities("(".$liste->empr_prenom." ".$liste->empr_nom.")",ENT_QUOTES,$charset)." </label></span>".$div_description."
 			</div>
 		";
 		return $display;
@@ -194,14 +210,15 @@ class listes_lecture {
 	 */
 	protected function get_display_shared_reading_lists() {
 		global $msg;
-		global $liste_lecture_prive;
+		global $liste_lecture_prive;		
 		
+		$shared_reading_lists = "
+			<form name='myshared_list' method='post' action='empr.php' >
+				<input type='hidden' id='lvl' name='lvl' />
+				<input type='hidden' id='sub' name='sub' value='shared_list' />
+				<input type='hidden' id='act' name='act' />";
 		if(count($this->listes_lecture)) {
-			$shared_reading_lists = "
-				<form name='myshared_list' method='post' action='empr.php' >	
-					<input type='hidden' id='lvl' name='lvl' />
-					<input type='hidden' id='sub' name='sub' value='shared_list' />
-					<input type='hidden' id='act' name='act' />
+			$shared_reading_lists.= "
 					<div id='list_cadre' style='border: 1px solid rgb(204, 204, 204); overflow: auto; height: 200px;padding:2px;'>";
 			foreach ($this->listes_lecture as $tag => $listes_lecture) {
 				$shared_reading_lists .= "<span class='liste_tag'>".$tag."</span>";
@@ -211,13 +228,13 @@ class listes_lecture {
 			}
 			$shared_reading_lists .= "</div><br />";
 			$shared_reading_lists .= $this->get_display_buttons_reading_lists();
-			$shared_reading_lists .= "</form>";
 		} else {
-			$shared_reading_lists = "
+			$shared_reading_lists.= "
 				<div class='row'>
 					<label>".$msg['list_lecture_no_myshared']."</label>
 				</div>";
-		}
+		}		
+		$shared_reading_lists.= "</form>";
 		$display = str_replace('!!current_shared!!', 'current', $liste_lecture_prive);
 		$display = str_replace('!!my_list_checked!!','', $display);
 		$display = str_replace('!!my_current!!', '', $display);
@@ -274,9 +291,9 @@ class listes_lecture {
 		$display .= "<div id='liste_".$liste->id_liste."' ".$ajax.">
 			<input type='checkbox' class='checkbox' id='cb".$liste->id_liste."' name='list_ck[]' value='".$liste->id_liste."' ".$check." ".$disable." />";
 		if($confidential) {
-			$display .= "&nbsp;<span><a ".$div_action." href='#' onclick='return false;'>".htmlentities($liste->nom_liste,ENT_QUOTES,$charset)."</a>$font<label for='cb".$liste->id_liste."' > ".htmlentities("( ".$liste->empr_prenom." ".$liste->empr_nom." )",ENT_QUOTES,$charset)." </label>".$font_end."</span>".$div_description;
+			$display .= "&nbsp;<span><a ".$div_action." href='#' onclick='return false;'>".htmlentities($liste->nom_liste,ENT_QUOTES,$charset)."</a>$font<label for='cb".$liste->id_liste."' > ".htmlentities("(".$liste->empr_prenom." ".$liste->empr_nom.")",ENT_QUOTES,$charset)." </label>".$font_end."</span>".$div_description;
 		} else {
-			$display .=	"&nbsp;<span><a ".$div_action." href='./index.php?lvl=show_list&sub=consultation&id_liste=".$liste->id_liste."'>".htmlentities($liste->nom_liste,ENT_QUOTES,$charset)."</a>".$font."<label for='cb".$liste->id_liste."' > ".htmlentities("( ".$liste->empr_prenom." ".$liste->empr_nom." )",ENT_QUOTES,$charset)." </label>".$font_end."</span>".$div_description;
+			$display .=	"&nbsp;<span><a ".$div_action." href='./index.php?lvl=show_list&sub=consultation&id_liste=".$liste->id_liste."'>".htmlentities($liste->nom_liste,ENT_QUOTES,$charset)."</a>".$font."<label for='cb".$liste->id_liste."' > ".htmlentities("(".$liste->empr_prenom." ".$liste->empr_nom.")",ENT_QUOTES,$charset)." </label>".$font_end."</span>".$div_description;
 		}	
 		if($icone) $display .= "<span><img style='border:0px' class='align_top' src='".get_url_icon($icone, 1)."' title=\"".$title."\" id='img_confi_".$liste->id_liste."' /></span>";
 		if($liste->read_only){
@@ -294,17 +311,18 @@ class listes_lecture {
 		global $msg;
 		global $liste_lecture_prive;
 		
+		$private_reading_lists = "
+			<form name='myshared_list' method='post' action='empr.php' >
+				<input type='hidden' id='lvl' name='lvl' />
+				<input type='hidden' id='act' name='act' />";
 		if(count($this->listes_lecture)) {
-			$private_reading_lists = "
-				<form name='myshared_list' method='post' action='empr.php' >
-					<input type='hidden' id='lvl' name='lvl' />
-					<input type='hidden' id='act' name='act' />
+			$private_reading_lists.= "				
 					<div id='list_cadre' style='border: 1px solid rgb(204, 204, 204); overflow: auto; height: 200px;padding:2px;'>";
 			foreach ($this->listes_lecture as $tag => $listes_lecture) {
 				$private_reading_lists .= "<span class='liste_tag'>".$tag."</span>";
 				foreach ($listes_lecture as $liste_lecture) {
 					if($liste_lecture->num_empr == $_SESSION['id_empr_session']) {
-						$private_reading_lists .= $this->get_display_my_reading_list($liste_lecture, false);
+						$private_reading_lists .= $this->get_display_my_reading_list($liste_lecture);
 					} else {
 						$private_reading_lists .= $this->get_display_shared_reading_list($liste_lecture);
 					}
@@ -312,13 +330,13 @@ class listes_lecture {
 			}
 			$private_reading_lists .= "</div><br />";
 			$private_reading_lists .= $this->get_display_buttons_reading_lists();
-			$private_reading_lists .= "</form>";
 		} else {
-			$private_reading_lists = "
+			$private_reading_lists.= "
 				<div class='row'>
 					<label>".$msg['list_lecture_no_myshared']."</label>
 				</div>";
 		}
+		$private_reading_lists.= "</form>";
 		$display = str_replace('!!current_shared!!', 'current', $liste_lecture_prive);
 		$display = str_replace('!!my_list_checked!!','', $display);
 		$display = str_replace('!!my_current!!', '', $display);
@@ -335,14 +353,12 @@ class listes_lecture {
 		
 		$public_reading_lists = '';
 		if(count($this->listes_lecture)) {
-			$public_reading_lists .= "<div id='list_cadre' style='border: 1px solid rgb(204, 204, 204); overflow: auto; height: 200px;padding:2px;'>";
 			foreach ($this->listes_lecture as $tag=>$listes_lecture) {
 				$public_reading_lists .= "<span class='liste_tag'>".$tag."</span>";
 				foreach ($listes_lecture as $liste_lecture) {
 					$public_reading_lists .= $this->get_display_public_reading_list($liste_lecture);
 				}
 			}
-			$public_reading_lists .= "</div><br />";
 			$public_reading_lists .= $this->get_display_buttons_reading_lists();
 		} else {
 			$public_reading_lists = "
@@ -366,7 +382,6 @@ class listes_lecture {
 					<div class='row'>
 						<input type='submit' class='bouton' id='share_btn' name='share_btn' value=\"".$msg['list_lecture_share']."\" onclick='this.form.lvl.value=\"private_list\"; this.form.act.value=\"share_list\";'/>
 						<input type='submit' class='bouton' id='unshare_btn' name='unshare_btn' value=\"".$msg['list_lecture_unshare']."\" onclick='this.form.lvl.value=\"private_list\"; this.form.act.value=\"unshare_list\";'/>
-						<input type='submit' class='bouton' id='add_btn' name='add_btn' value=\"".$msg['list_lecture_add_list']."\" onclick='this.form.lvl.value=\"private_list\"; this.form.act.value=\"add_list\";'/>
 						<input type='submit' class='bouton' id='suppr_btn' name='suppr_btn' value=\"".$msg['list_lecture_suppr']."\" onclick='this.form.lvl.value=\"private_list\"; if(confirm_delete())this.form.act.value=\"suppr_list\";'/>
 					</div>";
 				break;
@@ -375,7 +390,6 @@ class listes_lecture {
 				$display .= "
 					<div class='row'>
 						<input type='submit' class='bouton' id='unshare_btn' name='unshare_btn' value=\"".$msg['list_lecture_quit_acces']."\" onclick='this.form.lvl.value=\"private_list\"; this.form.act.value=\"suppr_acces\";'/>
-						<input type='submit' class='bouton' id='add_btn' name='add_btn' value=\"".$msg['list_lecture_add_list']."\" onclick='this.form.lvl.value=\"private_list\"; this.form.act.value=\"add_list\";'/>					
                     </div>";
 				break;
 			case 'public_reading_lists' :

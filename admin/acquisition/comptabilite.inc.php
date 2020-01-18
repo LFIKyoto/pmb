@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: comptabilite.inc.php,v 1.21 2018-05-18 12:24:50 dgoron Exp $
+// $Id: comptabilite.inc.php,v 1.22 2019-08-20 09:18:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $include_path, $action, $ent, $id, $libelle, $msg, $date_deb, $date_fin, $def;
 
 // gestion des exercices comptables
 require_once("$class_path/entites.class.php");
@@ -17,14 +19,14 @@ function show_list_biblio() {
 
 	//Récupération de l'utilisateur
   	$requete_user = "SELECT userid FROM users where username='".SESSlogin."' limit 1 ";
-	$res_user = pmb_mysql_query($requete_user, $dbh);
+	$res_user = pmb_mysql_query($requete_user);
 	$row_user=pmb_mysql_fetch_row($res_user);
 	$user_userid=$row_user[0];
 
 	//Affichage de la liste des etablissements auxquels a acces l'utilisateur
 	$aff = "<table>";
 	$q = entites::list_biblio($user_userid);
-	$res = pmb_mysql_query($q, $dbh);
+	$res = pmb_mysql_query($q);
 	$nbr = pmb_mysql_num_rows($res);
 
 	$error = false;
@@ -74,7 +76,7 @@ function show_list_exer($id_entite) {
 	</tr>";
 
 	$q = exercices::listByEntite($id_entite);
-	$res = pmb_mysql_query($q, $dbh);
+	$res = pmb_mysql_query($q);
 	$nbr = pmb_mysql_num_rows($res);
 
 	$parity=1;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_ui.class.php,v 1.21 2018-09-21 12:14:57 apetithomme Exp $
+// $Id: onto_common_datatype_ui.class.php,v 1.23 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -98,14 +98,14 @@ abstract class onto_common_datatype_ui extends onto_root_ui{
 		return $combobox;
 	}
 	
-	public static function get_hidden_fields($item_uri,$property, $restrictions,$datas, $instance_name,$flag) {
+	public static function get_hidden_fields($item_uri,$property, $restrictions,$datas, $instance_name,$flag = false) {
 		global $msg,$charset,$ontology_tpl;
 	
 		$form=$ontology_tpl['form_row_hidden'];
 	
 		$content='';
 	
-		if(sizeof($datas)){
+		if (!empty($datas)) {
 			$new_element_order=max(array_keys($datas));
 				
 			$form=str_replace("!!onto_new_order!!",$new_element_order , $form);

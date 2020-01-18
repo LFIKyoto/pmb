@@ -2,9 +2,13 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: integre_notices.inc.php,v 1.16 2018-06-29 09:03:35 dgoron Exp $
+// $Id: integre_notices.inc.php,v 1.17 2019-06-07 08:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $z3950_import_modele, $base_path, $msg, $current_module, $serialized_search, $charset, $page, $external_notice_to_integer;
+global $infos, $biblio_notice, $pmb_notice_controle_doublons, $signature, $nb_per_page_search, $maxAffiche, $notice_display, $enCours, $recid;
+global $retour, $notice_id, $url_view;
 
 require_once($class_path."/notice_doublon.class.php");
 require_once($class_path.'/elements_list/elements_records_list_ui.class.php');

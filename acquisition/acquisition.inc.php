@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: acquisition.inc.php,v 1.22 2017-01-26 15:36:34 dgoron Exp $
+// $Id: acquisition.inc.php,v 1.24 2019-06-06 11:52:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $acquisition_no_html, $database_window_title, $msg, $categ, $charset, $acquisition_gestion_tva, $sub, $plugin, $acquisition_sugg_to_cde, $error_msg;
 
 require_once("$class_path/entites.class.php");
 require_once("$class_path/paiements.class.php");
@@ -15,7 +17,7 @@ require_once("$class_path/tva_achats.class.php");
 
 //Recherche des etablissements auxquels a acces l'utilisateur
 $q = entites::list_biblio(SESSuserid);
-$list_bib = pmb_mysql_query($q,$dbh);
+$list_bib = pmb_mysql_query($q);
 $nb_bib=pmb_mysql_num_rows($list_bib);
 $tab_bib=array();
 while ($row=pmb_mysql_fetch_object($list_bib)) {

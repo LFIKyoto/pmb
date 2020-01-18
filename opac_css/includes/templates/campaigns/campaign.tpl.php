@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: campaign.tpl.php,v 1.1 2018-03-01 16:56:03 dgoron Exp $
+// $Id: campaign.tpl.php,v 1.2 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $campaign_view_tpl, $msg, $base_path;
 
 $campaign_view_tpl = "
 <h3>!!title!!</h3>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: author.class.php,v 1.47 2018-10-16 09:50:56 dgoron Exp $
+// $Id: author.class.php,v 1.48 2019-03-21 14:31:10 dgoron Exp $
 
 // définition de la classe de gestion des 'auteurs'
 
@@ -46,6 +46,12 @@ class auteur {
 	 * @var string
 	 */
 	protected $author_see;
+	
+	/**
+	 * Détail des renvois d'auteur
+	 * @var string
+	 */
+	protected $author_see_details;
 	
 	/**
 	 * Rendu HTML des documents numériques auxquels l'auteur est associé
@@ -562,6 +568,28 @@ class auteur {
 			$this->author_see.= ', ('.$author->get_isbd().')';
 		}
 		return $this->author_see;
+	}
+	
+	public function get_author_see_details() {
+		if (isset($this->author_see_details)) {
+			return $this->author_see_details;
+		}
+	
+		$this->author_see_details = array();
+		$this->get_author_ids();
+		foreach ($this->author_ids as $author_id) {
+			if ($author_id == $this->id) {
+				continue;
+			}
+			$authority = new authority(0, $author_id, AUT_TABLE_AUTHORS);
+			/* @var $author auteur */
+			$author = $authority->get_object_instance();
+			$this->author_see_details[] = array(
+					'id' => $author_id,
+					'isbd' => $author->get_isbd()
+			);
+		}
+		return $this->author_see_details;
 	}
 	
 	/**

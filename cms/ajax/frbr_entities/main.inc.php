@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.26 2017-09-20 09:41:18 vtouchard Exp $
+// $Id: main.inc.php,v 1.28.2.1 2019-09-26 13:47:22 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -14,12 +14,27 @@ require_once($class_path."/autoloader.class.php");
 $autoloader = new autoloader();
 $autoloader->add_register("frbr_entities",true);
 
+$object_id = 0;
+if(!empty($id_element)){
+    $object_id = intval($id_element);
+} else if (!empty($id)) {
+    $object_id = intval($id);
+}
+if (!empty($elem)) {
+    //cas particulier des autorites perso
+    if (strpos($elem, "authperso")) {
+        $authperso =  preg_split("#_([\d]+)#", $elem, 0 ,PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+        $element = new $authperso[0]($object_id);
+        if (!empty($authperso[1])) {
+            $element->set_authperso_id($authperso[1]);
+        }
+    } else {
+        $element = new $elem($object_id);
+    }
+}
+
 switch($action){
 	case "save_form" :
-		if(!isset($id_element)){
-			$id_element = 0;
-		}
-		$element = new $elem($id_element);
 		$element->set_properties_from_form();
 		$status = $element->save();
 		$response = encoding_normalize::json_encode(array('tree_data' => ($element->get_type() == "page" ? $element->get_dojo_tree() : $element->get_page()->get_dojo_tree()), 'status' => $status, 'type' => $element->get_type()));
@@ -42,9 +57,8 @@ switch($action){
 		$response = encoding_normalize::json_encode(array('tree_data' => $frbr_page->get_dojo_tree(), 'status' => $status, 'type' => $type));
 		break;	
  	case "ajax" :
- 		$element = new $elem($id_element);
- 		$response = $element->execute_ajax();
- 		ajax_http_send_response($response['content'],$response['content-type']);
+ 		$response_array = $element->execute_ajax();
+ 		ajax_http_send_response($response_array['content'], $response_array['content-type']);
  		break;	
 	case "get_form" :
 		switch($type){
@@ -102,7 +116,6 @@ switch($action){
 				if(!isset($callback)) $callback = "";
 				if(!isset($cancel_callback) || !$cancel_callback) $cancel_callback = "";
 				if(!isset($delete_callback)) $delete_callback = "";
-				$element = new $elem($id);
 				if(isset($frbr_entity_class) && $frbr_entity_class){
 					$element->set_entity_class_name($frbr_entity_class);
 				}
@@ -115,7 +128,11 @@ switch($action){
 				if(isset($frbr_indexation_path)) {
 					$element->set_indexation_path($frbr_indexation_path);
 				}
-				$form = $element->get_form(true);
+				if (isset($dom_node_id) && $dom_node_id == "sub_datasource_form") {
+				    $form = $element->get_sub_form();
+				} else {
+				    $form = $element->get_form(true);
+				}
 				if(isset($filter_refresh) && $filter_refresh && isset($sort_refresh) && $sort_refresh) {
 					if($element->get_entity_type()){
 						$entity_class_name = "frbr_entity_".$element->get_entity_type()."_datanode";
@@ -149,23 +166,18 @@ switch($action){
 		$response = $frbr_page->get_dojo_tree();
 		break;
 	case 'get_already_selected_filters' :
-		$element = new $elem($id_element);
 		$response = $element->get_already_selected_fields('filters');
 		break;
 	case 'get_already_selected_sorting' :
-		$element = new $elem($id_element);
 		$response = $element->get_already_selected_fields('sorting');
 		break;
 	case 'get_already_selected_backbones' :
-		$element = new $elem($id_element);
 		$response = $element->get_already_selected_fields('backbones');
 		break;
 	case "get_manage_form" :
-		$element = new $elem($id_element);
 		$response = $element->get_manage_forms();
 		break;
 	case "save_manage_form" :
-		$element = new $elem($id_element);
 		$status = $element->save_manage_forms();
 
 		$name = '';
@@ -244,7 +256,6 @@ switch($action){
 		if(!isset($callback)) $callback = "";
 		if(!isset($cancel_callback) || !$cancel_callback) $cancel_callback = "";
 		if(!isset($delete_callback)) $delete_callback = "";
-		$element = new $elem($id_element);
 		$response = $element->get_form(true,$callback,$cancel_callback,$delete_callback);
 		break;
 }

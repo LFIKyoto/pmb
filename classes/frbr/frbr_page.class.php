@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_page.class.php,v 1.19 2017-09-21 09:55:18 dgoron Exp $
+// $Id: frbr_page.class.php,v 1.20 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -56,7 +56,7 @@ class frbr_page {
 	protected $cadre_opac_types;
 	
 	public function __construct($id=0) {
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 		$this->fetch_data();
 	}
 	

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr_caddie_controller.class.php,v 1.9 2018-12-20 11:00:19 mbertin Exp $
+// $Id: empr_caddie_controller.class.php,v 1.12 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -134,7 +134,7 @@ class empr_caddie_controller extends caddie_root_controller {
 	}
 	
 	public static function proceed_selection($idcaddie=0, $sub='', $quelle='', $moyen = '') {
-		global $msg;
+		global $msg, $charset;
 		global $action;
 		global $id;
 		global $elt_flag, $elt_no_flag;
@@ -166,6 +166,8 @@ class empr_caddie_controller extends caddie_root_controller {
 					}
 					break;
 				case 'pointe_item':
+					$model_class_name = static::get_model_class_name();
+					print $model_class_name::show_actions($idcaddie);
 					if (empr_caddie_procs::check_rights($id)) {
 						$hp = new parameters ($id,"empr_caddie_procs") ;
 						$hp->get_final_query();
@@ -175,6 +177,8 @@ class empr_caddie_controller extends caddie_root_controller {
 					print pmb_bidi($myCart->aff_cart_nb_items());
 					break;
 				case 'add_item':
+					$model_class_name = static::get_model_class_name();
+					print $model_class_name::show_actions($idcaddie);
 					//C'est ici qu'on fait une action
 					if (empr_caddie_procs::check_rights($id)) {
 						$hp = new parameters ($id,"empr_caddie_procs") ;
@@ -191,8 +195,10 @@ class empr_caddie_controller extends caddie_root_controller {
 					}
 					print $myCart->aff_cart_nb_items();
 					if($sub == 'action') {
-						echo "<hr /><input type='button' class='bouton' value='".$msg["caddie_menu_action_suppr_panier"]."' onclick='document.location=&quot;./circ.php?categ=caddie&amp;sub=action&amp;quelle=supprpanier&amp;action=choix_quoi&amp;idemprcaddie=".$idcaddie."&amp;item=&amp;elt_flag=".$elt_flag."&amp;elt_no_flag=".$elt_no_flag."&quot;' />";
-						echo "&nbsp;<input type='button' class='bouton' value='".$msg["caddie_menu_action_edit_panier"]."' onclick=\"document.location='./circ.php?categ=caddie&sub=gestion&quoi=panier&action=edit_cart&idemprcaddie=".$idcaddie."&item=0'\" />";
+						echo "<hr /><input type='button' class='bouton' value='".$msg["caddie_menu_action_suppr_panier"]."' onclick='document.location=&quot;./circ.php?categ=caddie&amp;sub=action&amp;quelle=supprpanier&amp;action=choix_quoi&amp;idemprcaddie=".$idcaddie."&amp;item=&amp;elt_flag=".$elt_flag."&amp;elt_no_flag=".$elt_no_flag."&quot;' />",
+						"&nbsp;<input type='button' class='bouton' value='".$msg["caddie_menu_action_edit_panier"]."' onclick=\"document.location='./circ.php?categ=caddie&sub=gestion&quoi=panier&action=edit_cart&idemprcaddie=".$idcaddie."&item=0'\" />",
+						"&nbsp;<input type='button' class='bouton' value='".$msg["caddie_supprimer"]."' onclick=\"confirmation_delete(".$myCart->get_idcaddie().",'".htmlentities(addslashes($myCart->name),ENT_QUOTES, $charset)."')\" />",
+						confirmation_delete("./circ.php?categ=caddie&action=del_cart&idemprcaddie=");
 					}
 					break;
 				default:
@@ -262,7 +268,7 @@ class empr_caddie_controller extends caddie_root_controller {
 						}
 						$liste= array_merge($liste_0,$liste_1);
 						if($liste) {
-							while(list($cle, $object) = each($liste)) {
+						    foreach ($liste as $cle => $object) {
 								$myCart_selected->pointe_item($object);
 							}
 						}
@@ -317,13 +323,13 @@ class empr_caddie_controller extends caddie_root_controller {
 						print $myCart->aff_cart_nb_items();
 						if ($elt_flag) {
 							$liste = $myCartOrigine->get_cart("FLAG") ;
-							while(list($cle, $object) = each($liste)) {
+							foreach ($liste as $cle => $object) {
 								$myCart->add_item($object) ;
 							}
 						}
 						if ($elt_no_flag) {
 							$liste = $myCartOrigine->get_cart("NOFLAG") ;
-							while(list($cle, $object) = each($liste)) {
+							foreach ($liste as $cle => $object) {
 								$myCart->add_item($object) ;
 							}
 						}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: indexation_docnum.class.php,v 1.36 2018-11-28 15:45:28 arenou Exp $
+// $Id: indexation_docnum.class.php,v 1.37 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -41,7 +41,7 @@ class indexation_docnum {
 	/**
 	 * Constructeur
 	 */
-	function __construct($id, $texte=''){
+	public function __construct($id, $texte=''){
 		$this->id_explnum = $id;
 		if(!$texte){
 			$this->fetch_data();
@@ -57,7 +57,7 @@ class indexation_docnum {
 	/**
 	 * Parcours des données de la table explnum
 	 */
-	function fetch_data(){
+	public function fetch_data(){
 		global $dbh;
 		
                 $explnum = new explnum($this->id_explnum);
@@ -75,7 +75,7 @@ class indexation_docnum {
 	/**
 	 * Pour avoir la taille en octets
 	 */
-	function return_bytes($val) {
+	public function return_bytes($val) {
 	    $val = trim($val);
 	    $last = strtolower($val[strlen($val)-1]);
 	    switch($last) {
@@ -92,7 +92,7 @@ class indexation_docnum {
 	/**
 	 * Exécution du processus d'indexation
 	 */
-	function run_index(){
+	public function run_index(){
 		if($this->mimetype == 'URL'){
 			//récupération par cURL
 			$this->get_file_from_curl($this->file_url);
@@ -147,7 +147,7 @@ class indexation_docnum {
 	/**
 	 * On récupère le nom de la classe de traitement en fonction du  mimetype
 	 */
-	function parse_xml(){
+	public function parse_xml(){
 		global $base_path;
 		
 		$parse = new XMLlist("$base_path/catalog/explnum/index_docnum/index_doc.xml");	
@@ -165,7 +165,7 @@ class indexation_docnum {
 	/**
 	 * On récupère le texte du document numérique grâce à la bonne classe
 	 */
-	function choose_class($class_name){
+	public function choose_class($class_name){
 		if($class_name){
 			$index_class = new $class_name($this->fichier,$this->mimetype,$this->ext);
 			$this->texte = $index_class->get_text($this->fichier);
@@ -175,7 +175,7 @@ class indexation_docnum {
 	/**
 	 * On récupère le contenu du fichier qui est en base
 	 */
-	function get_file($filecontent){
+	public function get_file($filecontent){
 		global $base_path;
 		
 		//On définit un nom unique dans le dossier temporaire
@@ -193,7 +193,7 @@ class indexation_docnum {
 	/**
 	 * On récupère le contenu du fichier à distance
 	 */
-	function get_file_from_curl($f_url){
+	public function get_file_from_curl($f_url){
 		global $base_path;
 		
 		//On définit un nom unique dans le dossier temporaire
@@ -211,7 +211,7 @@ class indexation_docnum {
 	/**
 	 * On indexe le document numérique
 	 */
-	function indexer(){
+	public function indexer(){
 		global $dbh;
 		global $sphinx_active; 
 		
@@ -231,7 +231,7 @@ class indexation_docnum {
 	/**
 	 * On supprime l'index du document numérique
 	 */
-	function desindexer(){
+	public function desindexer(){
 		global $dbh;
 		
 		$rqt = " update explnum set explnum_index_sew='', explnum_index_wew='' where explnum_id='".$this->id_explnum."'";

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_segment.tpl.php,v 1.8 2018-07-26 09:45:31 tsamson Exp $
+// $Id: search_segment.tpl.php,v 1.8.6.3 2019-11-08 15:18:08 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -11,6 +11,7 @@ global $search_segment_form_definition;
 global $charset, $msg;
 
 $search_segment_content_form = "
+!!segment_id_field!!
 <div class='row'>
 	<label class='etiquette' for='segment_label'>".$msg['search_segment_label']."</label>
 </div>
@@ -34,6 +35,7 @@ $search_segment_content_form = "
 <div class='row'>
 	<textarea name='segment_description' id='segment_description' rows='5' data-translation-fieldname='segment_description'>!!segment_description!!</textarea>
 </div>
+!!segment_permalink_field!!
 <div class='row'> 
 </div>
 <div class='row'>

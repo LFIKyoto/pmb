@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.21 2018-09-14 10:25:50 dgoron Exp $
+// $Id: search.class.php,v 1.22 2019-07-30 08:09:50 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -113,7 +113,7 @@ class facette_search {
 	                    }
 	                    break;
 	            }
-	            $rs = pmb_mysql_query($qs, $dbh) or die (mysql_error());
+	            $rs = pmb_mysql_query($qs, $dbh) ;
 	            
 	            $t_ids=array();
 	            
@@ -132,10 +132,10 @@ class facette_search {
 //         $t_ids = array_slice($t_ids, 0, 5);
         $last_table = 'table_facette_temp_'.$this->n_ligne.'_'.md5(microtime());
         $qc_last_table = 'create temporary table '.$last_table.' ('.$tempo_key_name.' int, index i_'.$prefix.'_id('.$tempo_key_name.'))';
-        pmb_mysql_query($qc_last_table,$dbh) or die ();
+        pmb_mysql_query($qc_last_table,$dbh);
         if(count($t_ids)) {
             $qi_last_table = 'insert ignore into '.$last_table.' values ('.implode('),(', $t_ids).')';
-            pmb_mysql_query($qi_last_table,$dbh) or die ();
+            pmb_mysql_query($qi_last_table,$dbh);
         }
         unset($t_ids);
         return $last_table;

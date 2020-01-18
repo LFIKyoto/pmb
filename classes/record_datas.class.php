@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: record_datas.class.php,v 1.17 2018-12-07 15:10:23 dgoron Exp $
+// $Id: record_datas.class.php,v 1.21.2.1 2019-11-28 10:52:27 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -24,6 +24,7 @@ require_once($class_path."/expl.class.php");
 require_once($base_path."/admin/connecteurs/in/cairn/cairn.class.php");
 require_once($base_path."/admin/connecteurs/in/odilotk/odilotk.class.php");
 require_once($class_path."/notice.class.php");
+require_once($class_path."/emprunteur.class.php");
 
 global $tdoc;
 if (empty($tdoc)) $tdoc = new marc_list('doctype');
@@ -492,9 +493,7 @@ class record_datas {
 	private $source;
 	
 	public function __construct($id) {
-		global $to_print;
-
-		$this->id = $id*1;
+		$this->id = (int) $id;
 
 		if (!$this->id) return;
 
@@ -618,6 +617,7 @@ class record_datas {
 	 * Charge les données de carthographie
 	 */
 	private function fetch_map() {
+	    $ids = array();
 		$this->map=new stdClass();
 		$this->map_info=new stdClass();
 		if($this->get_parameter_value('map_activate')==1 || $this->get_parameter_value('map_activate')==2){
@@ -1287,7 +1287,7 @@ class record_datas {
 
 	/**
 	 * Retourne tous les états de collection
-	 * @return collstate_list
+	 * @return collstate
 	 */
 	public function get_collstate_list() {
 		if (!$this->collstate_list) {	
@@ -1671,8 +1671,10 @@ class record_datas {
 			if (isset($expls_datas['expls']) && count($expls_datas['expls'])) {
 				foreach ($expls_datas['expls'] as $expl) {
 					if ($expl['pret_flag']) { // Pretable
-						if ($expl['flag_resa'] && !$next_return) { // Réservé
-							$availability = "reserved";
+						if ($expl['flag_resa']) { // Réservé
+							if(!$next_return) {
+								$availability = "reserved";
+							}
 						} else if ($expl['pret_retour']) { // Sorti
 							if (!$next_return || ($next_return > $expl['pret_retour'])) {
 								$next_return = $expl['pret_retour'];
@@ -1918,7 +1920,7 @@ class record_datas {
 			
 			$notice_relations = notice_relations_collection::get_object_instance($this->id);
 			$parents = $notice_relations->get_parents();
-			foreach ($parents as $rel_type=>$parents_relations) {
+			foreach ($parents as $parents_relations) {
 				foreach ($parents_relations as $parent) {
 					if (!isset($this->relations_up[$parent->get_relation_type()]['label'])){
 						$this->relations_up[$parent->get_relation_type()]['label'] = notice_relations::$liste_type_relation['up']->table[$parent->get_relation_type()];
@@ -1958,7 +1960,7 @@ class record_datas {
 			
 			$notice_relations = notice_relations_collection::get_object_instance($this->id);
 			$childs = $notice_relations->get_childs();
-			foreach ($childs as $rel_type=>$childs_relations) {
+			foreach ($childs as $childs_relations) {
 				foreach ($childs_relations as $child) {
 					if (!isset($this->relations_down[$child->get_relation_type()]['label'])){
 						$this->relations_down[$child->get_relation_type()]['label'] = notice_relations::$liste_type_relation['down']->table[$child->get_relation_type()];
@@ -1998,7 +2000,7 @@ class record_datas {
 				
 			$notice_relations = notice_relations_collection::get_object_instance($this->id);
 			$pairs = $notice_relations->get_pairs();
-			foreach ($pairs as $rel_type=>$pairs_relations) {
+			foreach ($pairs as $pairs_relations) {
 				foreach ($pairs_relations as $pair) {
 					if (!isset($this->relations_both[$pair->get_relation_type()]['label'])){
 						$this->relations_both[$pair->get_relation_type()]['label'] = notice_relations::$liste_type_relation['both']->table[$pair->get_relation_type()];
@@ -2258,7 +2260,7 @@ class record_datas {
 	
 	/**
 	 * Retourne la date de création de la notice
-	 * @return date
+	 * @return string
 	 */
 	public function get_create_date() {
 		return formatdate($this->notice->create_date);
@@ -2266,10 +2268,25 @@ class record_datas {
 	
 	/**
 	 * Retourne la date de mise à jour de la notice
-	 * @return date
+	 * @return string
 	 */
 	public function get_update_date() {
 		return formatdate($this->notice->update_date);
+	}
+	
+	public function get_contributor() {
+		$contributor = new stdClass();
+		$query = "SELECT id_empr
+			FROM empr
+			JOIN audit ON user_id = id_empr
+			JOIN notices ON object_id = notice_id AND type_obj=1 AND type_modif=1 AND type_user=1
+			WHERE notice_id = ".$this->id;
+		$result = pmb_mysql_query($query);
+		if(pmb_mysql_num_rows($result)) {
+			$id_empr = pmb_mysql_result($result, 0, 'id_empr');
+			$contributor = new emprunteur($id_empr);
+		}
+		return $contributor;
 	}
 	
 	public function get_coins() {
@@ -2297,7 +2314,7 @@ class record_datas {
 				$coins['rft.atitle'] = $this->get_tit1();
 				$coins['rft.jtitle'] = $parent['title'];
 				if ($parent['numero']) {
-					$coins['rft.volume'] = $parent['numero'];
+				    $coins['rft.issue'] = $parent['numero'];
 				}
 	
 				if($parent['date']){
@@ -2462,6 +2479,52 @@ class record_datas {
 		return $id;
 	}
 	
+	public function get_locations() {
+	    $locations = array();
+	    
+	    //Localisations des exemplaires
+	    $query = "SELECT distinct location_libelle FROM exemplaires JOIN docs_location ON docs_location.idlocation = exemplaires.expl_location WHERE expl_notice = '".$this->id."'";
+	    $query .= " AND docs_location.location_visible_opac=1";
+	    $result = pmb_mysql_query($query);
+	    while ($row = pmb_mysql_fetch_object($result)) {
+	        $locations[] = array(
+	            'label' => $row->location_libelle
+	        );
+	    }
+	    //Localisations des documents numériques
+	    $query = "SELECT distinct location_libelle FROM explnum JOIN explnum_location ON explnum_location.num_explnum = explnum.explnum_id JOIN docs_location ON docs_location.idlocation = explnum_location.num_location WHERE explnum_notice = '".$this->id."'";
+	    $query .= " AND docs_location.location_visible_opac=1";
+	    $result = pmb_mysql_query($query);
+	    while ($row = pmb_mysql_fetch_object($result)) {
+	        $locations[] = array(
+	            'label' => $row->location_libelle
+	        );
+	    }
+	    return $locations;
+	}
+	
+	public function get_lenders() {
+	    $lenders = array();
+	    
+	    //Localisations des exemplaires
+	    $query = "SELECT distinct lender_libelle FROM exemplaires JOIN lenders ON lenders.idlender = exemplaires.expl_owner WHERE expl_notice = '".$this->id."'";
+	    $result = pmb_mysql_query($query);
+	    while ($row = pmb_mysql_fetch_object($result)) {
+	        $lenders[] = array(
+	            'label' => $row->lender_libelle
+	        );
+	    }
+	    //Localisations des documents numériques
+	    $query = "SELECT distinct lender_libelle FROM explnum JOIN explnum_lenders ON explnum_lenders.explnum_lender_num_explnum = explnum.explnum_id JOIN lenders ON lenders.idlender = explnum_lenders.explnum_lender_num_lender WHERE explnum_notice = '".$this->id."'";
+	    $result = pmb_mysql_query($query);
+	    while ($row = pmb_mysql_fetch_object($result)) {
+	        $lenders[] = array(
+	            'label' => $row->location_libelle
+	        );
+	    }
+	    return $lenders;
+	}
+	
 	private function look_for_attribute_in_class($class, $attribute, $parameters = array()) {
 		if (is_object($class) && isset($class->{$attribute})) {
 			return $class->{$attribute};
@@ -2536,7 +2599,7 @@ class record_datas {
 	
 	protected function get_parameter_value($name) {
 		$parameter_name = 'pmb_'.$name;
-		global $$parameter_name;
-		return $$parameter_name;
+		global ${$parameter_name};
+		return ${$parameter_name};
 	}
 }

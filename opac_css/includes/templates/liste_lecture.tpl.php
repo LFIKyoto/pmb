@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: liste_lecture.tpl.php,v 1.40 2018-10-05 08:44:39 vtouchard Exp $
+// $Id: liste_lecture.tpl.php,v 1.46.6.1 2019-11-08 09:12:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -17,11 +17,12 @@ global $opac_allow_multiple_sugg;
 global $liste_lecture_consultation;
 global $opac_avis_allow;
 global $allow_avis;
+global $msg;
 
 $liste_lecture_prive = "
 <script>
 	function confirm_delete() {
-		result = confirm(\"".$msg['list_lecture_confirm_suppr']."\");
+		result = confirm(pmbDojo.messages.getMessage('opac', 'list_lecture_confirm_suppr'));
 		if(result) {
 			return true;
 		} else {
@@ -45,7 +46,6 @@ $liste_lecture_prive = "
 				<br /><input class='text_query' type='text' size='65' name='field_1_f_42[]' id='user_query' value=''>
 				".($opac_avis_allow && $allow_avis ? "<input id='avis_search' type='checkbox' value='1' name='avis_search' > <label for='avis_search'>".$msg['list_lecture_avis_search']."</label>" : "")."
 			</div>
-			<div class='row'>&nbsp;</div>
 			<div class='row'>
 				<input name='search[]' value='s_7' type='hidden'>
 				<input name='op_0_s_7' value='EQ' type='hidden'>
@@ -69,10 +69,8 @@ $liste_lecture_prive = "
 	</div>		
 </form>	
 <script type='text/javascript'>document.getElementById('user_query').focus();</script>
-<div class='row'>&nbsp;</div>
 <div class='row'>
-	<input id='my_list' type='checkbox' value='1' !!my_list_checked!! name='my_list' onclick=\"liste_lecture_restrict(this);\" > 
-	<label for='my_list'>".$msg['list_lecture_created_by_me']."</label>
+	<input id='my_list' type='checkbox' value='1' !!my_list_checked!! name='my_list' onclick=\"liste_lecture_restrict(this);\" > <label for='my_list'>".$msg['list_lecture_created_by_me']."</label>
 </div>
 <div class='row' id='div_mylist'>
 	!!listes!!
@@ -83,7 +81,7 @@ $liste_lecture_public = "
 <script type='text/javascript' src='./includes/javascript/liste_lecture.js'></script>
 <script type='text/javascript'>
 	function demandeEnCours(){
-		alert(\"".$msg['list_lecture_already_requested']."\");
+		alert(pmbDojo.messages.getMessage('opac', 'list_lecture_already_requested'));
 	}
 </script>
 <h3><span>".$msg['list_lecture_public']."</span></h3>
@@ -131,7 +129,7 @@ $liste_gestion = "
 		if (elts_cnt) {
 			for (var i = 0; i < elts_cnt; i++) { 		
 				if (elts[i].checked) {
-					res = confirm('".$msg['list_lecture_confirm_delete']."');
+					res = confirm(pmbDojo.messages.getMessage('opac', 'list_lecture_confirm_delete'));
 					if(res) 
 						return true;
 					else 
@@ -140,7 +138,7 @@ $liste_gestion = "
 			}
 		} 
 		if(!is_check){
-			alert('".$msg['list_lecture_no_ck']."');
+			alert(pmbDojo.messages.getMessage('opac', 'list_lecture_no_ck'));
 			return false;
 		}
         
@@ -149,7 +147,7 @@ $liste_gestion = "
 	
 	function test_form(form){
 		if(form.list_name.value.length == 0){
-			alert(\"$msg[list_lecture_name_dont_filled]\");
+			alert(pmbDojo.messages.getMessage('opac', 'list_lecture_name_dont_filled'));
 			return false;
 		}  else {
 			var action = new http_request();
@@ -157,7 +155,7 @@ $liste_gestion = "
 			action.request(url, true, 'id_liste='+document.getElementById('id_liste').value+'&nom_liste='+document.getElementById('list_name').value);
 			if(action.get_status() == 0){
 				if(action.get_text()!='0') {
-					alert(\"$msg[list_lecture_name_exists]\");
+					alert(pmbDojo.messages.getMessage('opac', 'list_lecture_name_exists'));
 					return false;
 				}
 			}				
@@ -166,7 +164,7 @@ $liste_gestion = "
 	}
 	
 	function confirm_delete() {
-		result = confirm(\"".$msg['list_lecture_confirm_suppr']."\");
+		result = confirm(pmbDojo.messages.getMessage('opac', 'list_lecture_confirm_suppr'));
 		if(result) {
 			return true;
 		} else
@@ -187,6 +185,8 @@ $liste_gestion = "
 	<input type='hidden' id='act' name='act' />
 	<input type='hidden' id='notice_filtre' name='notice_filtre' value='!!notice_filtre!!' />
 	<input type='hidden' id='id_liste' name='id_liste' value='!!id_liste!!' />
+	<input type='hidden' id='page' name='page' value='!!page!!' />
+    <input type='hidden' id='nb_per_page_custom' name='nb_per_page_custom' value='!!nb_per_page_custom!!' />
 	<div class='row'>
 		<input type='button' class='bouton' name='cancel' onclick='document.location=\"./empr.php?tab=lecture&lvl=private_list\";' value='".$msg['list_lecture_back']."' />					
 		!!print_btn!!
@@ -196,27 +196,24 @@ $liste_gestion = "
 		!!liste_lecture_gestion_boutons!!	
 	</div>
 	<div class='row'>			
-	</div>
-	
+	</div>	
 	<div class='form-contenu'>
 	    <div class='reading_list_container'>
             <h3><span>!!titre_liste!!</span></h3>
         	<div class='row'>
     			<div class='colonne2'>
     				<div class='row'>
-    					<label class='etiquette'>".$msg['list_lecture_name']." &nbsp;</label>
+    					<label class='etiquette'>".$msg['list_lecture_name']."</label>
     				</div>
     				<div class='row'>
     					<input type='text' class='saisie-20em' id='list_name' name='list_name' value='!!name_list!!' />
     				</div>
-    				<br />
     				<div class='row'>
-    					<label class='etiquette'>".$msg['list_lecture_comment']." &nbsp;</label>
+    					<label class='etiquette'>".$msg['list_lecture_comment']."</label>
     				</div>
     				<div class='row'>
     					<textarea name='list_comment' rows='2' cols='50'>!!list_comment!!</textarea>
     				</div>
-    				<br />
     				<div class='row reading_list_share_and_confidential'>
     					<input type='checkbox' id='cb_share' name='cb_share' !!checked!! onclick=\"activerConfidentiel()\" /><label for='cb_share'>".$msg['list_lecture_share_with_users']."</label>
     					( <input type='checkbox' id='cb_confidential' name='cb_confidential' !!disabled_conf!! !!checked_conf!! /><label id='lab_conf' style=\"color:!!color_conf!!\" for='cb_confidential'>".$msg['list_lecture_confidential']."</label> ) 
@@ -224,38 +221,33 @@ $liste_gestion = "
     				<div class='row reading_list_readonly'>
     					<input type='checkbox' id='cb_readonly' name='cb_readonly' !!checked_only!!  /><label for='cb_readonly'>".$msg['list_lecture_readonly']."</label> 
     				</div>
-    				<br />
-    				<div class='row'>
-    					<label class='etiquette'>".$msg['list_lecture_tag']." &nbsp;</label>
-    				</div>
-    				<div class='row'>
-    					<select data-dojo-type='dijit/form/ComboBox' id='list_tag' name='list_tag'>
-    						!!list_tag!!
-    					</select>
-    				</div>
-    				<br />
-    				<div class='row'>
-    					<input type='submit' class='bouton' name='save_list' onclick='this.form.act.value=\"save\";this.form.action=\"empr.php?tab=lecture&lvl=private_list\";return test_form(this.form);' value='".$msg['list_lecture_save']."' />
-    				</div>	
+    				<div class='reading_list_tag'>
+        				<div class='row'>
+        					<label class='etiquette'>".$msg['list_lecture_tag']."</label>
+        				</div>
+        				<div class='row'>
+        					<select data-dojo-type='dijit/form/ComboBox' id='list_tag' name='list_tag'>
+        						!!list_tag!!
+        					</select>
+        				</div>
+        			</div>
     			</div>
     			<div class='colonne2'>
     				!!add_empr!!
     				!!inscrit_list!!							
     			</div>
-    			<div class='row'>&nbsp;</div>					
+				<div class='row'>
+					<input type='submit' class='bouton' name='save_list' onclick='this.form.act.value=\"save\";this.form.action=\"empr.php?tab=lecture&lvl=private_list\";return test_form(this.form);' value='".$msg['list_lecture_save']."' />
+				</div>	
+    			<div class='row'></div>					
     		</div>
         </div>
 		<hr />
-        <div class='reading_list_search_container'>
-    		<div class='row'>&nbsp;</div>
-    		!!search!!
-    		<div class='row'>&nbsp;</div>
-        </div>
-		<div class='row'>
-			!!liste_notice!!
-		</div>			
+        !!search!!
+		!!liste_notice!!			
 	</div>
 </form>
+!!navbar!!
 <script type='text/javascript'>ajax_parse_dom();</script>
 ";
 
@@ -275,6 +267,8 @@ $liste_lecture_consultation="
 	<input type='hidden' id='act' name='act' />
 	<input type='hidden' id='notice_filtre' name='notice_filtre' value='!!notice_filtre!!' />
 	<input type='hidden' id='id_liste' name='id_liste' value='!!id_liste!!' />
+    <input type='hidden' id='page' name='page' value='!!page!!' />
+    <input type='hidden' id='nb_per_page_custom' name='nb_per_page_custom' value='!!nb_per_page_custom!!' />
 	<div class='row'>
 		<input type='button' class='bouton' name='cancel' onclick='document.location=\"./empr.php?tab=lecture&lvl=private_list\";' value='".$msg['list_lecture_back']."' />
 		!!print_btn!!
@@ -293,14 +287,8 @@ $liste_lecture_consultation="
 				<label><strong>!!liste_comment!!</strong></label>
 			</div>
 		</div>
-		<div class='row'>&nbsp;</div>
 		!!search!!
-		<div class='row'>&nbsp;</div>
-		<br />
-		<div class='row'>
-		   !!liste_notice!!
-		</div>
-		<br />
+		!!liste_notice!!
 	</div>		
 </form>	
 <script type='text/javascript'>document.getElementById('user_query').focus();</script>				

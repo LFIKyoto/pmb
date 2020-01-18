@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_reservations_ui.class.php,v 1.1 2018-12-27 10:32:05 dgoron Exp $
+// $Id: list_reservations_ui.class.php,v 1.1.6.3 2019-12-04 08:20:26 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,10 +13,6 @@ require_once($class_path."/notice.class.php");
 require_once($class_path."/expl.class.php");
 
 class list_reservations_ui extends list_ui {
-		
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	protected function _get_query_base() {
 		$query = "SELECT resa_idempr, resa_idnotice, resa_idbulletin, resa_cb
@@ -31,22 +27,13 @@ class list_reservations_ui extends list_ui {
 		$this->objects[] = new reservation($row->resa_idempr, $row->resa_idnotice, $row->resa_idbulletin, $row->resa_cb);
 	}
 	
-	protected function fetch_data() {
-		$this->objects = array();
-		
-		$query = $this->_get_query_base();
-		$query .= $this->_get_query_filters();
-		$query .= $this->_get_query_order();
-		$query .= "  
+	protected function _get_query() {
+	    $query = $this->_get_query_base();
+	    $query .= $this->_get_query_filters();
+	    $query .= $this->_get_query_order();
+	    $query .= "
 			group by resa_idnotice, resa_idbulletin, resa_idempr";
-		$result = pmb_mysql_query($query);
-		if (pmb_mysql_num_rows($result)) {
-			while($row = pmb_mysql_fetch_object($result)) {				
-				$this->add_object($row);
-			}
-			$this->pager['nb_results'] = count($this->objects);
-		}
-		$this->messages = "";
+	    return $query;
 	}
 		
 	/**
@@ -89,9 +76,9 @@ class list_reservations_ui extends list_ui {
 	 */
 	protected function _get_query_order() {
 	
-		if($this->applied_sort['by']) {
+	    if($this->applied_sort[0]['by']) {
 			$order = '';
-			$sort_by = $this->applied_sort['by'];
+			$sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				case 'cote' :
 					$order .= 'expl_cote';
@@ -102,7 +89,7 @@ class list_reservations_ui extends list_ui {
 			}
 			if($order) {
 				$this->applied_sort_type = 'SQL';
-				return " order by ".$order." ".$this->applied_sort['asc_desc'];
+				return " order by ".$order." ".$this->applied_sort[0]['asc_desc'];
 			} else {
 				return "";
 			}
@@ -187,12 +174,12 @@ class list_reservations_ui extends list_ui {
 	
 	/**
 	 * Fonction de callback
-	 * @param account $a
-	 * @param account $b
+	 * @param object $a
+	 * @param object $b
 	 */
 	protected function _compare_objects($a, $b) {
-		if($this->applied_sort['by']) {
-			$sort_by = $this->applied_sort['by'];
+	    if($this->applied_sort[0]['by']) {
+	        $sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				case 'cote':
 					return strcmp($a->get_exemplaire()->{$sort_by}, $b->get_exemplaire()->{$sort_by});

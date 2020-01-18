@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: statut.inc.php,v 1.6 2018-09-28 12:21:35 dgoron Exp $
+// $Id: statut.inc.php,v 1.7 2019-06-07 13:36:26 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -125,22 +125,21 @@ function statut_form($id=0, $gestion_libelle="", $opac_libelle="", $visible_opac
 	print confirmation_delete("./admin.php?categ=docnum&sub=statut&action=del&id=");
 	print $admin_docnum_statut_form;
 
-	}
-	
+}
+
+$id = intval($id);
 switch($action) {
-	case 'update':
-		if(!isset($form_visible_opac_abon)){
-			$form_visible_opac_abon = 0;
-		}
-		if(!isset($form_consult_opac_abon)){
-			$form_consult_opac_abon = 0;
-		}
-		if(!isset($form_download_opac_abon)){
-			$form_download_opac_abon = 0;
-		}
-		if(!isset($form_thumbnail_visible_opac_override)){
-			$form_thumbnail_visible_opac_override = 0;
-		}
+    case 'update':
+        if(empty($form_visible_opac)) $form_visible_opac = 0;
+        if(empty($form_gestion_libelle)) $form_gestion_libelle = 0;
+        if(empty($form_opac_libelle)) $form_opac_libelle = 0;
+        if(empty($form_class_html)) $form_class_html = 0;
+        if(empty($form_consult_opac)) $form_consult_opac = 0;
+        if(empty($form_download_opac)) $form_download_opac = 0;
+        if(empty($form_visible_opac_abon)) $form_visible_opac_abon = 0;
+        if(empty($form_consult_opac_abon)) $form_consult_opac_abon = 0;
+        if(empty($form_download_opac_abon)) $form_download_opac_abon = 0;
+        if(empty($form_thumbnail_visible_opac_override)) $form_thumbnail_visible_opac_override = 0;
 		if ($id) {
 			$requete = 'UPDATE explnum_statut SET 
 						gestion_libelle="'.$form_gestion_libelle.'", 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesDSI.class.php,v 1.6 2018-06-14 10:17:43 dgoron Exp $
+// $Id: pmbesDSI.class.php,v 1.7 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -75,7 +75,8 @@ class pmbesDSI extends external_services_api_class {
 				
 			if (!$lst_bannettes) $lst_bannettes = array() ;
 			$action_diff_aff="";
-			for ($iba=0 ; $iba < sizeof($lst_bannettes) ; $iba++) {
+			$nb_bannettes = count($lst_bannettes);
+			for ($iba = 0; $iba < $nb_bannettes; $iba++) {
 				$bannette = new bannette($lst_bannettes[$iba]) ;
 				$action_diff_aff .= $msg['dsi_dif_vidage'].": ".$bannette->nom_bannette."<br />" ; 
 				if(!$bannette->limite_type) $action_diff_aff .= $bannette->vider();

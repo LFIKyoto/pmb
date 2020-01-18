@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: author.class.php,v 1.163 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: author.class.php,v 1.171 2019-08-07 09:06:04 dgoron Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
 	die("no access");
 	
@@ -395,9 +395,6 @@ if (! defined('AUTEUR_CLASS')) {
 			$aut_link = new aut_link(AUT_TABLE_AUTHORS, $this->id);
 			$author_form = str_replace('<!-- aut_link -->', $aut_link->get_form('saisie_auteur'), $author_form);
 			
-			$aut_link = new aut_link(AUT_TABLE_AUTHORS, $this->id);
-			$author_form = str_replace('<!-- aut_link -->', $aut_link->get_form('saisie_auteur'), $author_form);
-			
 			$aut_pperso = new aut_pperso("author", $this->id);
 			$author_form = str_replace('!!aut_pperso!!', $aut_pperso->get_form(), $author_form);
 			
@@ -596,7 +593,7 @@ if (! defined('AUTEUR_CLASS')) {
 				$nbr_lignes = pmb_mysql_result($res, 0, 0);
 				if ($nbr_lignes) {
 					// Cet auteur est utilisé dans des tirres uniformes, impossible de le supprimer
-					$message.= '<strong>' .$this->display ."</strong><br />${msg[tu_dont_del_author]}";
+					$message.= '<strong>' .$this->display ."</strong><br />${msg['tu_dont_del_author']}";
 				}
 				
 				$attached_vedettes = vedette_composee::get_vedettes_built_with_element($this->id, TYPE_AUTHOR);
@@ -680,6 +677,10 @@ if (! defined('AUTEUR_CLASS')) {
 			}
 			$aut_link->delete();
 			
+			// remplacement des renvoi voir (Forme retenue)
+		    $requete = "UPDATE authors SET author_see='" .$by ."'  WHERE author_see='".$this->id."' ";
+		    @pmb_mysql_query($requete, $dbh);
+			    
 			vedette_composee::replace(TYPE_AUTHOR, $this->id, $by);
 			
 			// remplacement dans les responsabilités
@@ -695,10 +696,6 @@ if (! defined('AUTEUR_CLASS')) {
 			@pmb_mysql_query($requete, $dbh);
 			$requete = "DELETE FROM responsability_tu WHERE responsability_tu_author_num='$this->id' ";
 			@pmb_mysql_query($requete, $dbh);
-			
-			// effacement dans la table des auteurs
-			$requete = "DELETE FROM authors WHERE author_id='$this->id' ";
-			pmb_mysql_query($requete, $dbh);
 			
 			// nettoyage d'autorities_sources
 			$query = "select * from authorities_sources where num_authority = " .$this->id ." and authority_type = 'author'";
@@ -719,6 +716,10 @@ if (! defined('AUTEUR_CLASS')) {
 				}
 			}
 			
+			// nettoyage indexation concepts
+			$index_concept = new index_concept($this->id, TYPE_AUTHOR);
+			$index_concept->delete();
+			
 			//Remplacement dans les champs persos sélecteur d'autorité
 			aut_pperso::replace_pperso(AUT_TABLE_AUTHORS, $this->id, $by);
 			
@@ -730,6 +731,10 @@ if (! defined('AUTEUR_CLASS')) {
 			// effacement de l'identifiant unique d'autorité
 			$authority = new authority(0, $this->id, AUT_TABLE_AUTHORS);
 			$authority->delete();
+			
+			// effacement dans la table des auteurs
+			$requete = "DELETE FROM authors WHERE author_id='$this->id' ";
+			pmb_mysql_query($requete, $dbh);
 			
 			auteur::update_index($by);
 			
@@ -793,55 +798,42 @@ if (! defined('AUTEUR_CLASS')) {
 			$value['subdivision'] = clean_string($value['subdivision']);
 			$value['numero'] = clean_string($value['numero']);
 			
-			if (! $force) {
-				if ($this->id) {
-					// s'assurer que l'auteur n'existe pas déjà
-					switch ($value['type']) {
-						case 71 : // Collectivité
-							$and_dedoublonnage = " and author_subdivision ='" .$value['subdivision'] ."' and author_lieu='" .$value['lieu'] ."' and author_ville = '" .$value['ville'] ."' and author_pays = '" .$value['pays'] ."' and author_numero ='" .$value['numero'] ."' ";
-							break;
-						case 72 : // Congrès
-							$and_dedoublonnage = " and author_subdivision ='" .$value['subdivision'] ."' and author_lieu='" .$value['lieu'] ."' and author_ville = '" .$value['ville'] ."' and author_pays = '" .$value['pays'] ."' and author_numero ='" .$value['numero'] ."' ";
-							break;
-						default :
-							$and_dedoublonnage = '';
-							break;
-					}
-					
-					$binary = '';
-					if ($pmb_controle_doublons_diacrit) {
-					    $binary = 'BINARY';
-					} 
-					$dummy = "SELECT * FROM authors WHERE author_type='" .$value['type'] ."' AND " . $binary . " author_name='" .$value['name'] ."'";
-					$dummy .= " AND " . $binary . " author_rejete='" .$value['rejete'] ."' ";
-					$dummy .= "AND author_date='" .$value['date'] ."' and author_id!='" .$this->id ."' $and_dedoublonnage ";
-
-                    $check = pmb_mysql_query($dummy, $dbh);
-					if (pmb_mysql_num_rows($check)) {
-						$auteur_exists = new auteur(pmb_mysql_result($check, 0, "author_id"));
-						print $this->warning_author_exist($msg[200], htmlentities($msg[220] ." -> " .$auteur_exists->display, ENT_QUOTES, $charset), $value);
-						
-						return FALSE;
-					}
-				} else {
-					// s'assurer que l'auteur n'existe pas déjà
-					if ($id_auteur_exists = auteur::check_if_exists($value)) {
-						$auteur_exists = new auteur($id_auteur_exists);
-						print $this->warning_author_exist($msg[200], htmlentities($msg[220] ." -> " .$auteur_exists->display, ENT_QUOTES, $charset), $value);
-						
-						return FALSE;
-					}
-				}
-				
-				// s'assurer que la forme_retenue ne pointe pas dans les deux sens
-				if ($this->id) {
-					$dummy = "SELECT * FROM authors WHERE author_id='" .$value['voir_id'] ."' and  author_see='" .$this->id ."'";
-					$check = pmb_mysql_query($dummy, $dbh);
-					if (pmb_mysql_num_rows($check)) {
-						print $this->warning_author_exist($msg[200], htmlentities($msg['author_forme_retenue_error'] ." -> " .$auteur_exists->display, ENT_QUOTES, $charset), $value);
-						return FALSE;
-					}
-				}
+			if (!$force) {
+			    // s'assurer que l'auteur n'existe pas déjà
+			    $and_dedoublonnage = '';
+			    switch ($value['type']) {
+			        case 71 : // Collectivité
+			            $and_dedoublonnage = " and author_subdivision ='" .$value['subdivision'] ."' and author_lieu='" .$value['lieu'] ."' and author_ville = '" .$value['ville'] ."' and author_pays = '" .$value['pays'] ."' and author_numero ='" .$value['numero'] ."' ";
+			            break;
+			        case 72 : // Congrès
+			            $and_dedoublonnage = " and author_subdivision ='" .$value['subdivision'] ."' and author_lieu='" .$value['lieu'] ."' and author_ville = '" .$value['ville'] ."' and author_pays = '" .$value['pays'] ."' and author_numero ='" .$value['numero'] ."' ";
+			            break;
+			    }
+			    $binary = '';
+			    if ($pmb_controle_doublons_diacrit) {
+			        $binary = 'BINARY';
+			    }
+			    if ($this->id) {
+			        $and_dedoublonnage.= " and author_id!='" .$this->id ."' ";
+			    }
+			    $dummy = "SELECT author_id FROM authors WHERE author_type='" . $value['type'] ."' AND " . $binary . " author_name='" . $value['name'] ."'
+                            AND " . $binary . " author_rejete='" . $value['rejete'] ."'
+                            AND author_date='" . $value['date'] . "' $and_dedoublonnage";			    
+			    $check = pmb_mysql_query($dummy, $dbh);
+			    if (pmb_mysql_num_rows($check)) {			        
+			        $auteur_exists = new auteur(pmb_mysql_result($check, 0, "author_id"));
+			        print $this->warning_author_exist($msg[200], htmlentities($msg[220] ." -> " .$auteur_exists->display, ENT_QUOTES, $charset), $value);
+			        return FALSE;
+			    }
+			    // s'assurer que la forme_retenue ne pointe pas dans les deux sens
+			    if ($this->id) {
+			        $dummy = "SELECT * FROM authors WHERE author_id='" .$value['voir_id'] ."' and  author_see='" .$this->id ."'";
+			        $check = pmb_mysql_query($dummy, $dbh);
+			        if (pmb_mysql_num_rows($check)) {
+			            print $this->warning_author_exist($msg[200], htmlentities($msg['author_forme_retenue_error'] ." -> " .$auteur_exists->display, ENT_QUOTES, $charset), $value);
+			            return FALSE;
+			        }
+			    }
 			}
 			$requete = 'SET author_type="'.$value['type'].'", ';
 			$requete .= 'author_name="'.$value['name'].'", ';
@@ -983,7 +975,7 @@ if (! defined('AUTEUR_CLASS')) {
 			global $pmb_controle_doublons_diacrit;
 			
 			// check sur le type de la variable passée en paramètre
-			if (! sizeof($data) ||! is_array($data)) {
+			if ((empty($data) && !is_array($data)) || !is_array($data)) {
 				// si ce n'est pas un tableau ou un tableau vide, on retourne 0
 				return 0;
 			}
@@ -1138,7 +1130,7 @@ if (! defined('AUTEUR_CLASS')) {
 			$user_query = str_replace('!!action!!', static::format_url('&sub=reach&id='), $user_query);
 			$user_query = str_replace('!!add_auth_msg!!', $libelleBtn, $user_query);
 			$user_query = str_replace('!!add_auth_act!!', static::format_url('&sub=author_form&type_autorite=' .$type_autorite), $user_query);
-			$user_query = str_replace('<!-- lien_derniers -->', "<a href='".static::format_url('&sub=author_last')."'>$msg[1310]</a>", $user_query);
+			$user_query = str_replace('<!-- lien_derniers -->', "<a href='".static::format_url('&sub=last')."'>$msg[1310]</a>", $user_query);
 			$user_query = str_replace("!!user_input!!", htmlentities(stripslashes($user_input), ENT_QUOTES, $charset), $user_query);
 			print pmb_bidi($user_query);
 		}
@@ -1265,8 +1257,8 @@ if (! defined('AUTEUR_CLASS')) {
 		    global $dbh;
 		    global $pmb_controle_doublons_diacrit;
 		    
-			if (! sizeof($data) ||! is_array($data)) {
-				// si ce n'est pas un tableau ou un tableau vide, on retourne 0
+		    if ((empty($data) && !is_array($data)) || !is_array($data)) {
+		        // si ce n'est pas un tableau ou un tableau vide, on retourne 0
 				return 0;
 			}
 			// check sur les éléments du tableau (data['name'] ou data['rejete'] est requis).
@@ -1352,7 +1344,7 @@ if (! defined('AUTEUR_CLASS')) {
 			return 0;
 		}
 		
-		function get_id_bnf($id) {
+		public function get_id_bnf($id) {
 			// autre moyen de récuperer authority_number?
 			global $dbh;
 			// ---------------------------------------------------------------
@@ -1928,13 +1920,15 @@ if (! defined('AUTEUR_CLASS')) {
 		}
 		
 		protected function create_hidden_field($name, $var) {
+		    global $charset;
+		    
 		    $html = "";
 		    if (is_array($var)) {
 		        foreach($var as $key => $value) {
 		            $html .= $this->create_hidden_field($name."[".$key."]", $value);
 		        }
 		    } else {
-		        $html .= "<input type='hidden' name='".$name."' value='".$var."'/>";
+		        $html .= "<input type='hidden' name='".$name."' value='" . htmlentities(stripslashes($var), ENT_QUOTES, $charset) . "'/>";
 		    }
 		    return $html;
 		}

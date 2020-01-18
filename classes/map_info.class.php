@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_info.class.php,v 1.7 2017-08-24 14:08:06 ngantier Exp $
+// $Id: map_info.class.php,v 1.8 2019-07-16 09:32:18 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -114,6 +114,7 @@ class map_info {
 		$form_map="";
 		
 		$map_edition_tpl="
+		        <div id='map_extended_fields'>
 					<div class='row'>
 						<label class='etiquette' for='f_map_echelle'>".$msg["map_echelle"]."</label>
 					</div>
@@ -138,6 +139,10 @@ class map_info {
 					<div class='row'>
 						<input id='f_map_equinoxe' class='saisie-80em' type='text' value='!!map_equinoxe_value!!' name='f_map_equinoxe'>
 					</div>
+				</div>
+				<div class='row'>
+					<input id='f_polygon_address_0' name='f_polygon_address_0' type='hidden'>
+				</div>
 				";
 				
 		$form_map=$map_edition_tpl;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pnb_record_orders.class.php,v 1.4 2018-06-20 10:02:30 tsamson Exp $
+// $Id: pnb_record_orders.class.php,v 1.4.6.1 2019-11-08 11:28:01 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,13 +15,9 @@ require_once($class_path.'/encoding_normalize.class.php');
 
 class pnb_record_orders {
 	
-	/**
-	 * 
-	 * @var dilicom
-	 */
-	protected static $dilicom;
 	protected $record_id;
 	protected $pnb_orders;
+	private static $loans_infos= [];
 	
 	public function __construct($record_id = 0){
 		$record_id += 0;
@@ -29,7 +25,6 @@ class pnb_record_orders {
 			$this->record_id = $record_id;
 		}
 		$this->fetch_data();
-		$this->init_dilicom_instance();
 	}
 	
 	protected function fetch_data() {
@@ -64,8 +59,8 @@ class pnb_record_orders {
 			$line = str_replace('!!order_id!!', $order->get_order_id(), $line);
 			$line = str_replace('!!line_id!!', $order->get_line_id(), $line);
 			$line = str_replace('!!loan_max_duration!!', $order->get_loan_max_duration(), $line);
-			$line = str_replace('!!nb_loans!!',  ' / ' .$order->get_nb_loans(), $line);
-			$line = str_replace('!!nb_simultaneous_loans!!', $order->get_nb_simultaneous_loans(), $line);
+			$line = str_replace('!!nb_loans!!',  $this->get_loans_completed_number($order->get_line_id()). ' / ' .$order->get_nb_loans(), $line);
+			$line = str_replace('!!nb_simultaneous_loans!!', $this->get_loans_in_progress($order->get_line_id())." / ".$order->get_nb_simultaneous_loans(), $line);
 			$line = str_replace('!!nb_consult_in_situ!!', $order->get_nb_consult_in_situ(), $line);
 			$line = str_replace('!!nb_consult_ex_situ!!', $order->get_nb_consult_ex_situ(), $line);
 			$line = str_replace('!!offer_date!!', $order->get_offer_formated_date(), $line);
@@ -82,21 +77,22 @@ class pnb_record_orders {
 	}
 	
 	public function get_loans_completed_number($line_id) {
-		$infos = static::$dilicom->get_loan_status(array($line_id));
-		if (isset($infos['loanResponseLine'][0]['nta'])) {
-		    return $infos['loanResponseLine'][0]['nta']; 
+	    if(!isset(self::$loans_infos[$line_id] )){
+	        self::$loans_infos[$line_id] = dilicom::get_instance()->get_loan_status(array($line_id));
+	    }
+		if (isset(self::$loans_infos[$line_id] ['loanResponseLine'][0]['nta'])) {
+		    return self::$loans_infos[$line_id] ['loanResponseLine'][0]['nta']; 
 		}
 		return '';
 	}
 	
 	protected function get_loans_in_progress($line_id) {
-		
-	}
-	
-	protected function init_dilicom_instance() {
-		if (!isset(static::$dilicom)) {
-			static::$dilicom = new dilicom();
-		}
-		return static::$dilicom;
+	    if(!isset(self::$loans_infos[$line_id] )){
+	        self::$loans_infos[$line_id] = dilicom::get_instance()->get_loan_status(array($line_id));
+	    }
+	    if (isset(self::$loans_infos[$line_id] ['loanResponseLine'][0]['nus1'])) {
+	        return self::$loans_infos[$line_id] ['loanResponseLine'][0]['nus1'];
+	    }
+	    return '0';
 	}
 }

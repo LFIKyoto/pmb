@@ -2,7 +2,9 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: z_frame.php,v 1.10 2015-11-22 18:32:44 Alexandre Exp $
+// $Id: z_frame.php,v 1.11 2019-06-06 15:04:28 btafforeau Exp $
+
+global $clause, $bibli, $msg, $selection_bib, $crit1, $crit2, $val1, $val2, $bool1, $limite_notices, $id_notice;
 
 if ( ($clause=="") && (count($bibli)==0) ) {
 	echo "<h1>$msg[z3950_progr_rech]</h1>";

@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: circ.tpl.php,v 1.54 2018-07-13 06:58:05 dgoron Exp $
+// $Id: circ.tpl.php,v 1.56 2019-07-05 12:43:13 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 // $circ_menu : menu page circulation
+
+global $categ, $circ_menu, $pmb_serialcirc_active, $pmb_pret_groupement, $empr_show_caddie, $msg, $pmb_rfid_activate, $pmb_rfid_serveur_url, $pmb_resa_planning, $pmb_gestion_financiere, $pmb_gestion_amende, $acquisition_active, $pmb_transferts_actif, $transferts_regroupement_depart, $transferts_validation_actif, $pmb_scan_request_activate, $empr_menu_panier_gestion, $empr_menu_panier_collecte, $empr_menu_panier_pointage, $empr_menu_panier_action, $circ_layout, $circ_layout_end;
 
 if ((SESSrights & RESTRICTCIRC_AUTH) && ($categ!="pret") && ($categ!="pretrestrict") ) {
 	$circ_menu = '';
@@ -22,7 +24,7 @@ if ((SESSrights & RESTRICTCIRC_AUTH) && ($categ!="pret") && ($categ!="pretrestri
 		<li id='circ_menu_msgcirc_doc_a_traiter'><a href='./circ.php?categ=ret_todo'>".$msg["circ_doc_a_traiter"]."</a></li>
 		<li id='circ_menu_msg903'><a href='./circ.php?categ=groups'>$msg[903]</a></li>
 		<li id='circ_menu_msg15'><a href='./circ.php?categ=empr_create'>$msg[15]</a></li>
-		<li id='circ_menu_msg17'><a href='./circ.php?categ=serialcirc'>".$msg["serialcirc_circ_menu"]."</a></li>
+		".($pmb_serialcirc_active ? "<li id='circ_menu_msg17'><a href='./circ.php?categ=serialcirc'>".$msg["serialcirc_circ_menu"]."</a></li>" : "")."
 		$menu_groupexpl
 		<li id='circ_menu_search_perso'><a href='./circ.php?categ=search_perso'>".$msg["search_perso_menu"]."</a></li>
 	</ul>";

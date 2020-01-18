@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesItems.class.php,v 1.20 2017-12-11 13:39:07 plmrozowski Exp $
+// $Id: pmbesItems.class.php,v 1.22.2.1 2019-10-31 14:41:32 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -86,6 +86,7 @@ class pmbesItems extends external_services_api_class {
 				$expl_return["statut"] = utf8_normalize($row["statut_libelle"]);
 				$expl_return["situation"] = utf8_normalize(strip_tags($situation));
 				$expl_return["codestat"] = utf8_normalize($row["codestat_libelle"]);
+				$expl_return["pnb_flag"] = $row["expl_pnb_flag"];
 			}
 			
 			$result[] = $expl_return;
@@ -102,7 +103,7 @@ class pmbesItems extends external_services_api_class {
 		if (!$notice_ids)
 			throw new Exception("Missing parameter: notice_ids");
 
-		array_walk($notice_ids, create_function('&$a', '$a+=0;'));	//Virons ce qui n'est pas entier
+		array_walk($notice_ids, function(&$a) {$a = intval($a);});	//Virons ce qui n'est pas entier
 		$notice_ids = array_unique($notice_ids);
 
 		//Je filtre les notices en fonction des droits
@@ -169,6 +170,7 @@ class pmbesItems extends external_services_api_class {
 				$expl_return["statut"] = utf8_normalize($row["statut_libelle"]);
 				$expl_return["situation"] = utf8_normalize(strip_tags($situation));
 				$expl_return["codestat"] = utf8_normalize($row["codestat_libelle"]);
+				$expl_return["pnb_flag"] = $row["expl_pnb_flag"];				
 			}
 			
 			$current_items[] = $expl_return;
@@ -192,7 +194,7 @@ class pmbesItems extends external_services_api_class {
 		if (!$bulletin_ids)
 			throw new Exception("Missing parameter: bulletin_ids");
 
-		array_walk($bulletin_ids, create_function('&$a', '$a+=0;'));	//Virons ce qui n'est pas entier
+		array_walk($bulletin_ids, function(&$a) {$a = intval($a);});	//Virons ce qui n'est pas entier
 		$bulletin_ids = array_unique($bulletin_ids);
 
 		//Je filtre les bulletins en fonction des droits de visibilité
@@ -261,6 +263,7 @@ class pmbesItems extends external_services_api_class {
 				$expl_return["statut"] = utf8_normalize($row["statut_libelle"]);
 				$expl_return["situation"] = utf8_normalize(strip_tags($situation));
 				$expl_return["codestat"] = utf8_normalize($row["codestat_libelle"]);
+				$expl_return["pnb_flag"] = $row["expl_pnb_flag"];				
 			}else{
 				// L'exemplaire n'est pas dans une sur_localisation / localisation / section visible à l'OPAC
 			}
@@ -381,6 +384,7 @@ class pmbesItems extends external_services_api_class {
 			$expl_return["statut"] = utf8_normalize($row["statut_libelle"]);
 			$expl_return["situation"] = utf8_normalize($situation);
 			$expl_return["codestat"] = utf8_normalize($row["codestat_libelle"]);
+			$expl_return["pnb_flag"] = $row["expl_pnb_flag"];				
 		}
 		
 		return $expl_return;
@@ -461,6 +465,7 @@ class pmbesItems extends external_services_api_class {
 		}
 		$expl_return=array();		
 		
+		$expl_return['icondoc'] = $this->get_icondoc($isbd->notice->niveau_biblio, $isbd->notice->typdoc);
 		if($this->expl_visible_opac($row["expl_id"])){
 			$expl = new exemplaire('', $row["expl_id"]);
 	
@@ -495,7 +500,20 @@ class pmbesItems extends external_services_api_class {
 			$expl_return["statut_libelle"] = utf8_normalize($row["statut_libelle"]);
 			$expl_return["situation"] = utf8_normalize($situation);
 			$expl_return["codestat"] = utf8_normalize($row["codestat_libelle"]);
+			$expl_return["pnb_flag"] = $row["expl_pnb_flag"];				
 		}	
 		return $expl_return;
+	}	
+	
+	public function get_icondoc($niveau_biblio, $typdoc) {
+	    global $opac_url_base;
+	    
+	    //Icone type de Document
+	    $icon_doc = marc_list_collection::get_instance('icondoc');
+	    $icon = (!empty($icon_doc->table[$niveau_biblio.$typdoc]) ? $icon_doc->table[$niveau_biblio.$typdoc] : '');
+	    if ($icon) {
+	        return "<img class='align_top' src='" . $opac_url_base . "images/$icon '>";
+	    }
+	    return '';
 	}
 }

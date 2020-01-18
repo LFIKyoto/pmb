@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // Â© 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_nomenclature.class.php,v 1.17 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: nomenclature_nomenclature.class.php,v 1.21 2019-09-05 08:43:22 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -50,6 +50,11 @@ class nomenclature_nomenclature {
 	protected $other_instrument;
 	protected $musicstand_part=0;
 	protected $indefinite_character = "~";
+	protected $voice_definition_in_progress;
+	protected $voices;
+	protected $current_voice;
+	protected $current_voice_effective;
+	protected $current_voice_code;
 	/**
 	 * Constructeur
 	 *
@@ -195,22 +200,41 @@ class nomenclature_nomenclature {
 
 	protected function finalize_current_other_instrument(){
 		if($this->other_instrument_definition_in_progress){
+		    if($this->other_instrument->get_id() === 0){
+		        $query ="select id_instrument, instrument_name from nomenclature_instruments where instrument_code = '".$this->other_instrument->get_code()."'";
+		        $result = pmb_mysql_query($query);
+		        if(pmb_mysql_num_rows($result)){
+		            $row = pmb_mysql_fetch_object($result);
+		            $this->other_instrument->set_name($row->instrument_name);
+		            $this->other_instrument->set_id($row->id_instrument);
+		        }
+		    }
 			$this->instrument->add_other_instrument($this->other_instrument);
 			$this->other_instrument = null;
 			$this->other_instrument_definition_in_progress = false;
+		}
+	}
+
+	protected function finalize_current_no_standard_instrument(){
+		if($this->no_standard_instrument_definition_in_progress){
+		    if($this->instrument->get_id() === 0){
+		        $query ="select id_instrument, instrument_name from nomenclature_instruments where instrument_code = '".$this->instrument->get_code()."'";
+		        $result = pmb_mysql_query($query);
+		        if(pmb_mysql_num_rows($result)){
+		            $row = pmb_mysql_fetch_object($result);
+		            $this->instrument->set_name($row->instrument_name);
+		            $this->instrument->set_id($row->id_instrument);
+		        }
+		    }
+		    $this->no_standard_instrument_definition_in_progress = false;
 		}
 	}
 	
 	protected function finalize_current_instrument(){
 		if($this->instrument_definition_in_progress){
 			$this->finalize_current_other_instrument();
+			$this->finalize_current_no_standard_instrument();
 			$this->families[$this->current_family]->get_musicstand($this->current_musicstand)->add_instrument($this->instrument,true);
-// 			var_dump("Famille ".$this->current_family." (". $this->families[$this->current_family]->get_name().
-// 			") => Pupitre ".$this->current_musicstand." (".
-// 			$this->families[$this->current_family]->get_musicstand($this->current_musicstand)->get_name().
-// 			") => ".
-// 			count($this->families[$this->current_family]->get_musicstand($this->current_musicstand)->get_instruments()));
-// 			var_dump($this->families[$this->current_family]->get_musicstand($this->current_musicstand));
 			$this->instrument = null;
 			$this->instrument_definition_in_progress = false;
 		}else if($this->musicstand_effective > 0){
@@ -237,10 +261,23 @@ class nomenclature_nomenclature {
 		//réinitialisation
 		$this->family_definition_in_progress = false;
 	}
+	
+	protected function finalize_current_voice() {
+	    if ($this->current_voice['effective_indefinite']) {
+	        $this->current_voice['effective'] = 'nd';
+	    }
+	    $this->voices[] = $this->current_voice;
+	    $this->current_voice = array(
+	        'effective' => '',
+	        'effective_indefinite' => '',
+	        'code' => ''
+	    );
+        $this->voice_definition_in_progress = false;
+	}
 		
 	public function analyze(){
 		global $msg;
-		$this->family_definition_in_progress = $this->musicstand_definition_in_progress = $this->instrument_definition_in_progress = $this->other_instrument_definition_in_progress = false;
+		$this->family_definition_in_progress = $this->musicstand_definition_in_progress = $this->instrument_definition_in_progress = $this->other_instrument_definition_in_progress = $this->no_standard_instrument_definition_in_progress = false;
 		$state = "START";
 		for($i=0 ; $i<strlen($this->abbreviation) ;$i++){
 			$c = $this->abbreviation[$i];
@@ -328,7 +365,11 @@ class nomenclature_nomenclature {
 								$state = "MUSICSTAND";
 								$this->musicstand_part=0;
 							}
-						}else{
+						} else if ($c == $this->indefinite_character) {
+						    $this->musicstand_effective = 'nd';
+						    $this->get_next_musicstand();
+						    $state = "MUSICSTAND";
+						} else {
 							$state = "ERROR";
 							$error = array('position'=> $i,'msg' => $msg["nomenclature_js_nomenclature_error_analyze_no_numeric"]);
 						}
@@ -341,8 +382,14 @@ class nomenclature_nomenclature {
 						$error = array('position'=> $i,'msg' => $msg["nomenclature_js_nomenclature_error_analyze_already_instrument_def"]);
 					}else{
 						// un chiffre ? alors c'est un instrument standard
-						if($c === "0"  || $c*1 > 0 ){							
-							if($this->families[$this->current_family]->get_musicstand($this->current_musicstand)->get_divisable()){
+						if ($c === "0" || $c * 1 > 0) {
+						    if (preg_match('/^[A-Za-z]+$/', $this->abbreviation[$i+1])) {
+						        // HACK: Si le caractère suivant est une lettre, alors on a un instrument non standard dans les cordes
+						        $this->no_standard_instrument_definition_in_progress = true;
+						        $this->instrument = $this->get_no_standard_instrument();
+						        $state = "INSTRUMENT_NO_STANDARD"; 
+						        break;
+						    } elseif (isset($this->instrument) && $this->families[$this->current_family]->get_musicstand($this->current_musicstand)->get_divisable()) {
 								$this->instrument->set_effective($c);
 								$this->musicstand_part++;
 								$this->instrument->set_part($this->musicstand_part);								
@@ -359,10 +406,15 @@ class nomenclature_nomenclature {
 									$state = "ERROR";
 									$error = array('position'=> $i,'msg' => $msg["nomenclature_js_nomenclature_error_analyze"]);
 									break;
+								case $this->indefinite_character:
+								    $this->instrument->set_effective('nd');
+								    break;
 								default :
+								    $this->no_standard_instrument_definition_in_progress = true;
 									$this->instrument = $this->get_no_standard_instrument();
 									$this->instrument->set_code($c);
-									$state = "INSTRUMENT_NO_STANDARD"; 
+									$state = "INSTRUMENT_NO_STANDARD";
+									break;
 							}
 						}
 					}
@@ -383,7 +435,7 @@ class nomenclature_nomenclature {
 								case "-" :
 									$state = "ERROR";
 									$error = array('position'=> $i,'msg' => $msg["nomenclature_js_nomenclature_error_analyze_close_musicstand_detail"]);
-								break;
+									break;
 								case "." :
 									$this->finalize_current_instrument();
 									$state = "NEW_INSTRUMENT";
@@ -392,8 +444,11 @@ class nomenclature_nomenclature {
 									$state = "MUSICSTAND";
 									break;
 								case "/" :
+								    $this->finalize_current_instrument();
 									$state = "NEW_OTHER_INSTRUMENT";
 									break;
+								default:
+								    break;
 							}
 						}
 					}
@@ -413,9 +468,11 @@ class nomenclature_nomenclature {
 								$state = "NEW_INSTRUMENT";
 								break;
 							case "]" :
+							    $this->finalize_current_no_standard_instrument();
 								$state = "MUSICSTAND";
 								break;
 							case "/" :
+							    $this->finalize_current_no_standard_instrument();
 								$state = "NEW_OTHER_INSTRUMENT";
 								break;
 							default : 
@@ -479,7 +536,6 @@ class nomenclature_nomenclature {
 					break;
  				case "ERROR" :
 				default:
-					continue;
 					break;
 			}
 		}
@@ -591,6 +647,124 @@ class nomenclature_nomenclature {
 			$tree[] = $instrument->get_tree_informations();
 		}
 		return $tree;
+	}
+	
+	public function is_letter($char){
+	    if(preg_match('/[a-z\s]/i', $char)){
+	        return true;
+	    }
+	    return false;
+	}
+	
+	public function analyze_voices() {
+	    global $msg;
+	    $state = "START";
+	    $error = array();
+	    $this->current_voice = array(
+	        'effective' => '',
+	        'effective_indefinite' => '',
+	        'code' => ''
+	    );
+
+	    for($i=0 ; $i<strlen($this->abbreviation) ; $i++){
+	        $c = $this->abbreviation[$i];
+	        switch($state){
+	            case "START":
+	                $this->current_voice['effective_indefinite'] = true;
+	                if($c === "0"  || $c*1 > 0 ){
+	                    $this->current_voice['effective'] = $c;
+	                    $this->current_voice['effective_indefinite'] = false;
+	                    $state = "VOICE_EFFECTIVE";
+	                }else if($this->is_letter($c)){
+	                    $this->current_voice['code']=$c;
+	                    $this->voice_definition_in_progress = true;
+	                    $state = "VOICE";
+	                }else if($c == $this->indefinite_character){
+	                    $this->voice_definition_in_progress = true;
+	                    $state = "VOICE";
+	                }else{
+	                    $state = "ERROR";
+	                    $error = array('position'=> $i,'msg' => $msg["nomenclature_js_nomenclature_voices_error_analyze_invalid_char"]);
+	                }
+	                break;
+	            case "NEW_VOICE":
+	                $this->current_voice['effective_indefinite'] = true;
+	                if($c === "0"  || $c*1 > 0 ){
+	                    $this->current_voice['effective'].=$c;
+	                    $this->current_voice['effective_indefinite'] = false;
+	                    $state = "VOICE_EFFECTIVE";
+	                }else if($this->is_letter($c)){
+	                    $this->current_voice['code']=$c;
+	                    $this->voice_definition_in_progress = true;
+	                    $state = "VOICE";
+	                }else{
+	                    $state = "ERROR";
+	                    $error = array('position'=> $i,'msg' => $msg["nomenclature_js_nomenclature_voices_error_analyze_invalid_char"]);
+	                }
+	                break;
+	            case "VOICE":
+	                if($this->voice_definition_in_progress){
+	                    if($this->is_letter($c)){
+	                        $this->current_voice['code'].=$c;
+	                    }else{
+	                        switch($c){
+	                            case ".":
+	                                $this->finalize_current_voice();
+	                                if(!$this->voice_definition_in_progress){
+	                                    $state = "NEW_VOICE";
+	                                }else{
+	                                    $state = "ERROR";
+	                                    $error = array('position'=> $i,'msg' => $msg["nomenclature_js_nomenclature_voices_error_analyze_incorrect_effective"]);
+	                                }
+	                                break;
+	                            default:
+	                                $state = "ERROR";
+	                                $error = array('position'=> $i,'msg' => $msg["nomenclature_js_nomenclature_voices_error_analyze_invalid_char"]);
+	                                break;
+	                        }
+	                    }
+	                }else{
+	                    $state = "ERROR";
+	                    $error = array('position'=> $i,'msg' => $msg["nomenclature_js_nomenclature_voices_error_analyze_no_voice_in_def"]);
+	                }
+	                break;
+	            case "VOICE_EFFECTIVE":
+	                if($c === "0"  || $c*1 > 0 ){
+	                    $this->current_voice['effective'].=$c;
+	                }else if($this->is_letter($c)){
+	                    $this->current_voice['code'].=$c;
+	                    $this->voice_definition_in_progress = true;
+	                    $state = "VOICE";
+	                }else{
+	                    $state = "ERROR";
+	                    $error = array('position'=> $i,'msg' => $msg["nomenclature_js_nomenclature_voices_error_analyze_letter_needed"]);
+	                }
+	                break;
+
+	            case "ERROR":
+	            default:
+	                break;
+	        }
+	    }
+	    
+	    if($state == "ERROR"){
+	        for($i=0 ; $i<strlen($this->abbreviation) ;$i++){
+	            if($error['position'] == $i){
+	                print "<b>";
+	            }
+	            print $this->abbreviation[$i];
+	            if($error['position'] == $i){
+	                print "</b>";
+	            }
+	        }
+	        var_dump($error['msg']);
+	    }else{
+	        $this->finalize_current_voice();
+	    }
+	}
+	
+	public function get_voices() {
+	    return $this->voices;
 	}
 	
 } // end of nomenclature_nomenclature

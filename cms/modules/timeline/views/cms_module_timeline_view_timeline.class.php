@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_timeline_view_timeline.class.php,v 1.3 2017-10-10 08:29:37 apetithomme Exp $
+// $Id: cms_module_timeline_view_timeline.class.php,v 1.3.6.1 2019-10-25 12:45:25 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -20,6 +20,11 @@ class cms_module_timeline_view_timeline extends cms_module_common_view {
 	
 	public function get_form(){
 		if(!isset($this->parameters['height'])) $this->parameters['height'] = '500';
+		if(!isset($this->parameters['last_event'])) $this->parameters['last_event'] = 0;
+		$last_event_checked = '';
+		if ($this->parameters['last_event']) {
+		    $last_event_checked = 'checked';
+		}
 		$form = parent::get_form();
 		$form.="
 			<div class='row'>
@@ -29,6 +34,14 @@ class cms_module_timeline_view_timeline extends cms_module_common_view {
 				<div class='colonne-suite'>
 					<input type='text' name='".$this->get_form_value_name('height')."' value='".$this->parameters['height']."'/>
 				</div>
+			</div>			
+            <div class='row'>
+				<div class='colonne3'>
+					<label for='".$this->get_form_value_name('last_event')."'>".$this->format_text($this->msg['cms_module_timeline_view_timeline_last_event'])."</label>
+				</div>
+				<div class='colonne-suite'>
+					<input type='checkbox' name='".$this->get_form_value_name('last_event')."' value='1' $last_event_checked/>
+				</div>
 			</div>";
 		return $form;
 	}
@@ -37,6 +50,11 @@ class cms_module_timeline_view_timeline extends cms_module_common_view {
 		$this->parameters['height'] = $this->get_value_from_form('height')*1;
 		if($this->parameters['height'] == 0){
 			$this->parameters['height'] = 500;
+		}
+		if ($this->get_value_from_form('last_event')) {
+    		$this->parameters['last_event'] = $this->get_value_from_form('last_event');
+		} else {
+    		$this->parameters['last_event'] = 0;
 		}
 		return parent::save_form();
 	}
@@ -70,7 +88,8 @@ class cms_module_timeline_view_timeline extends cms_module_common_view {
 		$html = '<div id="'.$this->get_module_dom_id().'_timeline" style="height:'.$this->parameters['height'].'px;"></div>';
 		$html.= "<script type='text/javascript'>
 		var timeline = new TL.Timeline('".$this->get_module_dom_id()."_timeline', ".encoding_normalize::json_encode($json).", {
-			language : 'fr',
+			start_at_end : ".($this->parameters['last_event']? 'true': 'false' ) .",
+            language : 'fr',
 			width: 800,
 			height: 750
 		});

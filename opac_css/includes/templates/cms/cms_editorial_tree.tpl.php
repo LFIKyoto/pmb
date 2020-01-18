@@ -2,10 +2,10 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_tree.tpl.php,v 1.5 2017-08-18 09:24:12 mbertin Exp $
+// $Id: cms_editorial_tree.tpl.php,v 1.6 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
-global $base_path;
+global $base_path, $cms_editorial_tree_layout, $cms_editorial_tree_content, $msg;
 		
 $cms_editorial_tree_layout= "
 		<script type='text/javascript' src='./javascript/cms/cms_tree_dnd.js'></script>

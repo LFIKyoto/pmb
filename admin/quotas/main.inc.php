@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.14 2017-02-01 15:19:03 dgoron Exp $
+// $Id: main.inc.php,v 1.15 2019-06-07 12:25:23 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -18,6 +18,7 @@ if ($sub) $qt=new quota($sub); else quota::parse_quotas();
 $admin_menu_quotas = "
 <h1>".$msg["admin_quotas"]." <span> !!menu_sous_rub!!</span></h1>\n
 <div class=\"hmenu\">";
+$menu_sous_rub = '';
 for ($i=0; $i<count($_quotas_types_); $i++) {	
 	if($pmb_pret_restriction_prolongation!=2 && $_quotas_types_[$i]['NAME']=='PROLONG_NMBR_QUOTA' ) continue;
 	if($pmb_pret_restriction_prolongation!=2 && $_quotas_types_[$i]['NAME']=='PROLONG_TIME_QUOTA') continue;

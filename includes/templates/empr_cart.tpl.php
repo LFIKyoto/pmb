@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr_cart.tpl.php,v 1.29 2018-05-11 14:20:08 plmrozowski Exp $
+// $Id: empr_cart.tpl.php,v 1.32.6.1 2019-10-23 12:47:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 // templates pour la gestion des paniers
+
+global $empr_cart_form, $msg, $current_module, $liaison_tpl, $empr_cart_choix_quoi, $empr_cart_choix_quoi_edition;
 
 // template pour le formulaire d'un panier
 $empr_cart_form = "
@@ -39,6 +41,10 @@ $empr_cart_form = "
 			<input type='text' class='saisie-80em' id='cart_comment' name='cart_comment' value='!!comment!!' />
 		</div>
 		<div class='row'>
+			<label class='etiquette' for='autorisations_all'>".$msg["caddie_autorisations_all"]."</label>
+			<input type='checkbox' id='autorisations_all' name='autorisations_all' value='1' !!autorisations_all!! />
+		</div>
+		<div class='row'>
 			<label class='etiquette' for='form_type'>".$msg['caddie_autorisations']."</label>
 			<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);'>
 			<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);'>
@@ -57,6 +63,9 @@ $empr_cart_form = "
 		<div id='div_acces_rapide' class='row'>
 			<label class='etiquette' for='acces_rapide'>".$msg["caddie_fast_access"]."</label>&nbsp;<input type='checkbox' id='acces_rapide' name='acces_rapide' !!acces_rapide!! >
 		</div>
+		<div id='div_favorite_color' class='row'>
+			<label class='etiquette' for='favorite_color'>".$msg["caddie_favorite_color"]."</label>&nbsp;<input type='color' id='favorite_color' name='favorite_color' value='!!favorite_color!!'>
+		</div>
 	</div>
 	<!-- liaisons -->
 	<!--	boutons	-->
@@ -64,6 +73,7 @@ $empr_cart_form = "
 		<div class='left'>
 			<input type='button' class='bouton' value='$msg[76]' onClick=\"!!formulaire_annuler!!\">&nbsp;
 			<input type='submit' value='$msg[77]' class='bouton' onClick=\"return test_form(this.form)\" />
+            !!button_duplicate!!
 			<input type='hidden' name='form_actif' value='1'>
 		</div>
 		<div class='right'>
@@ -97,11 +107,11 @@ $empr_cart_choix_quoi = "
 	<!--	Contenu du form	-->
 	<div class='form-contenu'>
 		<div class='row'>
-			<input type='checkbox' name='elt_flag' value='1' !!elt_flag_checked!!>$msg[caddie_item_marque]
+			<input type='checkbox' name='elt_flag' id='elt_flag' value='1' !!elt_flag_checked!!><label for='elt_flag'>$msg[caddie_item_marque]</label>
 		</div>
 		<div class='row'>&nbsp;</div>
 		<div class='row'>
-			<input type='checkbox' name='elt_no_flag' value='1' !!elt_no_flag_checked!!>$msg[caddie_item_NonMarque]
+			<input type='checkbox' name='elt_no_flag' id='elt_no_flag' value='1' !!elt_no_flag_checked!!><label for='elt_no_flag'>$msg[caddie_item_NonMarque]</label>
 		</div>
 	</div>
 	<!-- Boutons -->
@@ -120,10 +130,10 @@ $empr_cart_choix_quoi_edition = "
 	<!--	Contenu du form	-->
 	<div class='form-contenu'>
 		<div class='row'>
-			<input type='checkbox' name='elt_flag' value='1'>$msg[caddie_item_marque]
+			<input type='checkbox' name='elt_flag' id='elt_flag' value='1'><label for='elt_flag'>$msg[caddie_item_marque]</label>
 		</div>
 		<div class='row'>
-			<input type='checkbox' name='elt_no_flag' value='1'>$msg[caddie_item_NonMarque]
+			<input type='checkbox' name='elt_no_flag' id='elt_no_flag' value='1'><label for='elt_no_flag'>$msg[caddie_item_NonMarque]</label>
 		</div>
 	</div>
 	<!-- Boutons -->

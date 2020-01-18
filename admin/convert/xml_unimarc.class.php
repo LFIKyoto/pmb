@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: xml_unimarc.class.php,v 1.29 2018-11-05 14:09:15 mbertin Exp $
+// $Id: xml_unimarc.class.php,v 1.29.6.1 2019-10-15 14:52:09 btafforeau Exp $
 
 //Classe de conversion unimarc/xml ou xml/unimarc
 
@@ -388,7 +388,7 @@ class xml_unimarc {
 		}
 	}
     
-    public function XMLtoiso2709_notice($notice,$encoding) {
+    public function XMLtoiso2709_notice($notice,$encoding = '') {
     	global $charset;
  		$this->n_traitees=0;
 		$this->n_valid=0;

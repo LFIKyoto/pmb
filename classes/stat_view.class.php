@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: stat_view.class.php,v 1.23 2017-11-21 12:00:59 dgoron Exp $
+// $Id: stat_view.class.php,v 1.24 2019-08-20 09:18:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -190,7 +190,7 @@ class stat_view {
 			while(($vue = pmb_mysql_fetch_object($res))){
 				$min_date='';
 				$max_date='';
-				$view_scope = htmlentities($msg['stat_view_no_scope'],ENT_QUOTES,$charset);
+				$view_scope = htmlentities($msg['stat_no_scope'],ENT_QUOTES,$charset);
 				$min_date=$vue->date_debut_log;
 				$max_date=$vue->date_fin_log;
 				if ($min_date!='0000-00-00 00:00:00' && $max_date!='0000-00-00 00:00:00') {

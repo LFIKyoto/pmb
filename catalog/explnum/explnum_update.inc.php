@@ -2,9 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_update.inc.php,v 1.24 2017-11-21 12:01:00 dgoron Exp $
+// $Id: explnum_update.inc.php,v 1.26 2019-06-05 09:04:42 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $acces_m, $gestion_acces_active, $gestion_acces_user_notice, $class_path, $PMBuserid, $f_notice, $f_explnum_id, $charset, $forcage;
+global $ret_url, $retour, $nberrors, $msg, $pmb_explnum_controle_doublons, $base_path, $current_module, $signature, $nb_per_page_search;
+global $enCours, $record_link, $record_title, $conservervignette, $f_statut_chk, $book_lender_id, $f_bulletin, $f_nom, $f_url;
+global $f_explnum_statut, $f_url_vignette;
 
 //verification des droits de modification notice
 $acces_m=1;
@@ -65,6 +70,7 @@ if ($acces_m==0) {
 	}
 	
 	$explnum = new explnum($f_explnum_id);
+	$explnum->set_p_perso($p_perso);
 	if(!$forcage && ($pmb_explnum_controle_doublons != 0) ) {
 		//Si controle de dedoublonnage active
 		if (file_exists($base_path.'/temp/explnum_doublon_'.$f_notice)) {
@@ -77,7 +83,7 @@ if ($acces_m==0) {
 			$signature = $explnum->gen_signature($_FILES['f_fichier']['tmp_name']);
 			if ($signature) {
 				$query = "select explnum_id, explnum_notice, explnum_bulletin, explnum_nom from explnum where explnum_signature = '".$signature."'";
-				$result = pmb_mysql_query($query, $dbh);
+				$result = pmb_mysql_query($query);
 				if ($dbls = pmb_mysql_num_rows($result)) {
 					
 					$new_name = $base_path.'/temp/explnum_doublon_'.$f_notice;
@@ -156,6 +162,4 @@ if ($acces_m==0) {
 		$book_lender_id = array();
 	}
 	$explnum->mise_a_jour($f_notice, $f_bulletin, $f_nom, $f_url, $retour, $conservervignette, $f_statut_chk, $f_explnum_statut, $book_lender_id, $forcage, $f_url_vignette);
-
-	$p_perso->rec_fields_perso($explnum->explnum_id);
 }

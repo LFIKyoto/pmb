@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggest.class.php,v 1.13 2017-03-08 12:40:04 jpermanne Exp $
+// $Id: suggest.class.php,v 1.16 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
 	die("no access");
@@ -71,7 +71,7 @@ class suggest {
 				$xml=fread($fp,filesize($file));
 			}
 			fclose($fp);
-			$champ_base=_parser_text_no_function_($xml,"INDEXATION");
+			$champ_base=_parser_text_no_function_($xml,"INDEXATION",$file);
 		}
 		if(!count($this->tbChampBase)) {
 			foreach($champ_base["FIELD"] as $k=>$v){
@@ -117,7 +117,7 @@ class suggest {
 // ---------------------------------------------------------------------------------------------------
 	public function findWords() {
 		$this->cleanInputString = $this->cleanString($this->inputString);
-		$this->arrayWords = str_word_count($this->cleanInputString,1);
+		$this->arrayWords = str_word_count($this->cleanInputString,1,"0123456789");
 		//on nettoie les doublons éventuels
 		$this->arrayWords = array_values(array_unique($this->arrayWords));
 		//on limite le nombre de mots cherchés
@@ -242,7 +242,7 @@ class suggest {
 		asort ($sort_values);
 		reset ($sort_values);
 
-		while (list ($arr_key, $arr_val) = each ($sort_values)) {
+		foreach ($sort_values as $arr_key => $arr_val) {
 			$sorted_arr[] = $this->arrayResults[$arr_key];
 		}
 		$this->arrayResults = $sorted_arr;

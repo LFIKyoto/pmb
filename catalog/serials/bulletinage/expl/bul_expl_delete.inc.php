@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bul_expl_delete.inc.php,v 1.24 2017-08-04 07:24:04 dgoron Exp $
+// $Id: bul_expl_delete.inc.php,v 1.25 2019-07-12 10:25:27 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -58,5 +58,3 @@ if ($acces_m==0) {
 
 }
 ?>
-		
-

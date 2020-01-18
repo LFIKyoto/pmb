@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_accounts.class.php,v 1.30 2017-12-11 09:21:03 dgoron Exp $
+// $Id: rent_accounts.class.php,v 1.30.6.1 2019-11-22 14:55:58 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,10 +16,6 @@ require_once($class_path."/editor.class.php");
 require_once($include_path."/templates/rent/rent_accounts.tpl.php");
 
 class rent_accounts extends rent_root {
-		
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	protected function fetch_data() {
 		
@@ -282,12 +278,12 @@ class rent_accounts extends rent_root {
 		
 	/**
 	 * Fonction de callback
-	 * @param account $a
-	 * @param account $b
+	 * @param object $a
+	 * @param object $b
 	 */
 	protected function _compare_objects($a, $b) {
-		if($this->applied_sort['by']) {
-			$sort_by = $this->applied_sort['by'];
+	    if($this->applied_sort[0]['by']) {
+	        $sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				case 'num_user' :
 					return strcmp($a->get_user()->prenom.' '.$a->get_user()->nom, $b->get_user()->prenom.' '.$b->get_user()->nom);
@@ -361,17 +357,17 @@ class rent_accounts extends rent_root {
 	
 	/**
 	 * Construction dynamique des cellules du header 
-	 * @param unknown $name
+	 * @param string $name
 	 */
 	protected function _get_cell_header($name) {
 		global $msg, $charset;
 		
-		$data_sorted = ($this->applied_sort['asc_desc'] ? $this->applied_sort['asc_desc'] : 'asc');
+		$data_sorted = ($this->applied_sort[0]['asc_desc'] ? $this->applied_sort[0]['asc_desc'] : 'asc');
 		$icon_sorted = ($data_sorted == 'asc' ? '<i class="fa fa-sort-desc"></i>' : '<i class="fa fa-sort-asc"></i>');
 		return "
-		<th onclick=\"".$this->objects_type."_sort_by('".$name."', this.getAttribute('data-sorted'));\" data-sorted='".($this->applied_sort['by'] == $name ? $data_sorted : '')."'>
+		<th onclick=\"".$this->objects_type."_sort_by('".$name."', this.getAttribute('data-sorted'));\" data-sorted='".($this->applied_sort[0]['by'] == $name ? $data_sorted : '')."'>
 				".htmlentities($msg['acquisition_account_'.$name],ENT_QUOTES,$charset)."
-				".($this->applied_sort['by'] == $name ? $icon_sorted : '<i class="fa fa-sort"></i>')."
+				".($this->applied_sort[0]['by'] == $name ? $icon_sorted : '<i class="fa fa-sort"></i>')."
 		</th>";
 	}
 	

@@ -1,4 +1,4 @@
-<!-- $Id: scan_request.tpl.html,v 1.6 2017-10-27 14:10:57 ngantier Exp $ -->
+<!-- $Id: scan_request.tpl.html,v 1.6.6.1 2019-11-27 08:55:21 dgoron Exp $ -->
 <div class='row scan_request_title'>
 	<h3>{{ scan_request.title }}</h3>
 </div>
@@ -10,6 +10,16 @@
 		</div>
 		<div class='colonne'>
 			{{ scan_request.desc | escape true | nl2br }}
+		</div>
+	</div>
+{% endif %}
+{% if scan_request.nb_scanned_pages %}
+	<div class='row scan_request_nb_scanned_pages'>
+		<div class='colonne25'>
+			{{ msg.scan_request_nb_scanned_pages }} :
+		</div>
+		<div class='colonne'>
+			{{ scan_request.nb_scanned_pages }}
 		</div>
 	</div>
 {% endif %}

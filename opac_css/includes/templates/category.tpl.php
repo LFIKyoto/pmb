@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: category.tpl.php,v 1.1 2018-10-11 08:08:20 vtouchard Exp $
+// $Id: category.tpl.php,v 1.2 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $include_path, $categ_browser, $msg, $current_module, $charset;
 global $category_form;
 global $add_see_also;
 global $categ0, $categ1;

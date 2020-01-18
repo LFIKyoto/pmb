@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bibloto.class.php,v 1.31 2018-10-19 10:21:25 vtouchard Exp $
+// $Id: bibloto.class.php,v 1.36 2019-08-01 13:52:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -41,6 +41,9 @@ class bibloto extends connecteur_out {
 		$param['biblio']['town'] =$biblio_town;
 		$param['biblio']['phone'] =$biblio_phone;
 		$param['biblio']['email'] =$opac_biblio_email;
+		if (!empty($param['auth_password'])) {
+		  $param['auth_password'] = md5($param['auth_password']);
+		}		
 		echo encoding_normalize::json_encode($param);
 		return;
 	}
@@ -57,15 +60,19 @@ class bibloto_source extends connecteur_out_source {
 		
 		$result = parent::get_config_form();
 		if(!$this->id){
-			$this->config['pmb_ws_url'] = "http://...pmb/ws/connector_out.php?source_id=1";
+			$this->config['pmb_ws_url'] = "http://...pmb/ws/connector_out.php?source_id=1";			
+			$this->config['auth_login'] = "";
+			$this->config['auth_password'] = "";
+			$this->config['auth_connexion_phrase'] = "";
 			$this->config['style_url'] = "styles/bibloto.css";
 			$this->config['checkout_activate'] = 1;
 			$this->config['auto_checkout'] = 1;
 			$this->config['checkin_activate'] = 1;
-			$this->config['resa_activate'] = 0;
+			$this->config['resa_activate'] = 1;
+			$this->config['email_activate'] = 1;
 			$this->config['default_action'] = 1;
 			$this->config['default_action_end'] = 1;
-			$this->config['rfid_activate'] = 1;
+			$this->config['rfid_activate'] = 0;
 			$this->config['rfid_driver'] = "3m";
 			$this->config['rfid_activate_empr'] = 1;
 			$this->config['rfid_activate_expl'] = 1;
@@ -77,11 +84,14 @@ class bibloto_source extends connecteur_out_source {
 			$this->config['trombinoscope_enabled'] = 0;
 			$this->config['thumbnail_url'] = 'http://website/thumbnails/!!empr_cb!!.jpg';
 			$this->config['rfid_security_activate'] = 1;	
-			$this->config['printer_activate'] = 0;		
+			$this->config['printer_activate'] = 0;
+			$this->config['nb_jours_retard'] = 7;			
+			$this->config['css'] = "";
+			$this->config['msg_dialog_checkout_no_all'] = 1;			
 			$this->config['home_tpl']="
 <div class='templateContent'>
     <div class='TitleContent'>
-        <h1>Automate de pr&egrave;t</h1>
+        <h1>Automate de pr&ecirc;t</h1>
         <p><img border='0' class='align_middle' src='images/carte_adherent.jpg'></p>
         <p class='IntroMsg'>Placez votre carte de lecteur</p>
     </div>
@@ -121,11 +131,24 @@ Emprunteur:
 			$this->config['msg_checkout_valid_button'] = $this->msg['bibloto_msg_checkout_valid_button_value'];
 			$this->config['msg_checkin_button'] = $this->msg['bibloto_msg_checkin_button_value'];
 			$this->config['msg_resa_button'] = $this->msg['bibloto_msg_resa_button_value'];
+			$this->config['msg_email_button'] = $this->msg['bibloto_msg_email_button_value'];
 			$this->config['msg_exit_button'] = $this->msg['bibloto_msg_exit_button_value'];
 			$this->config['msg_action_title'] = $this->msg['bibloto_msg_action_title_value'];
 			$this->config['msg_checkout_title'] = $this->msg['bibloto_msg_checkout_title_value'];
 			$this->config['msg_checkin_title'] = $this->msg['bibloto_msg_checkin_title_value'];
 			$this->config['msg_resa_title'] = $this->msg['bibloto_msg_resa_title_value'];
+			$this->config['msg_resa_date_title'] = $this->msg['bibloto_msg_resa_date_title_value'];
+			$this->config['msg_resa_confirme_title'] = $this->msg['bibloto_msg_resa_confirme_title_value'];
+			
+			$this->config['msg_expl_checkout_list_title'] = $this->msg['bibloto_msg_expl_checkout_list_title_value'];
+			$this->config['msg_expl_title'] = $this->msg['bibloto_msg_expl_title_value'];
+			$this->config['msg_expl_statut'] = $this->msg['bibloto_msg_msg_expl_statut_value'];
+			$this->config['msg_expl_date_checkout'] = $this->msg['bibloto_msg_expl_date_checkout_value'];
+			$this->config['msg_expl_date_checkin'] = $this->msg['bibloto_msg_expl_date_checkin_value'];
+			$this->config['msg_expl_rendu'] = $this->msg['bibloto_msg_expl_rendu_value'];
+			
+			
+			
 			$this->config['msg_dialog_place_item_checkout'] = $this->msg['bibloto_msg_dialog_place_item_checkout_value'];
 			$this->config['msg_dialog_place_item_checkin'] = $this->msg['bibloto_msg_dialog_place_item_checkin_value'];
 			$this->config['msg_dialog_too_many_items'] = $this->msg['bibloto_msg_dialog_too_many_items_value'];
@@ -176,7 +199,19 @@ Emprunteur:
 		<div class='row'>
 			<label class='etiquette' for='pmb_ws_url'>".htmlentities($this->msg['bibloto_pmb_ws_url'],ENT_QUOTES,$charset)."</label><br />			
 			<input type='text' class='saisie-80em' id='pmb_ws_url' name='pmb_ws_url' value='".$this->config['pmb_ws_url']."' />		
-		</div>				
+		</div>
+		<div class='row'>			
+			<label for=''>".$this->msg["pmb_username"]."</label><br />
+			<input type='text' name='auth_login' id='auth_login' value='".htmlentities($this->config['auth_login'],ENT_QUOTES,$charset)."' />
+		</div>
+		<div class='row'>
+			<label for=''>".$this->msg["pmb_password"]."</label><br />
+			<input type='text' name='auth_password' id='auth_password' value='".htmlentities($this->config['auth_password'],ENT_QUOTES,$charset)."' />
+		</div>
+        <div class='row'>
+			<label for=''>".$this->msg["pmb_connexion_phrase"]."</label><br />
+			<input type='text' name='auth_connexion_phrase' id='auth_connexion_phrase' class='saisie-80em' value='".htmlentities($this->config['auth_connexion_phrase'],ENT_QUOTES,$charset)."' />
+		</div>
 		<div class='row'>&nbsp;</div>
 		<div class='row'>
 			<label class='etiquette' for='style_url'>".htmlentities($this->msg['bibloto_style_url'],ENT_QUOTES,$charset)."</label><br />			
@@ -208,6 +243,12 @@ Emprunteur:
 		</div>		
 		<div class='row'>&nbsp;</div>
 		<div class='row'>
+			<label class='etiquette'>".htmlentities($this->msg['bibloto_email_activate'],ENT_QUOTES,$charset)."</label><br />			
+			<span>".htmlentities($this->msg['bibloto_email_activate_yes'],ENT_QUOTES,$charset)."&nbsp;<input type='radio' name='email_activate' value='1' ".($this->config["email_activate"] == "1" ? "checked='checked' ": "")."style='vertical-align:bottom;' /></span>
+			<span>".htmlentities($this->msg['bibloto_email_activate_no'],ENT_QUOTES,$charset)." &nbsp;<input type='radio' name='email_activate' value='0' ".(!$this->config["email_activate"] ? "checked='checked' ": "")."style='vertical-align:bottom;' /></span>	
+		</div>		
+		<div class='row'>&nbsp;</div>
+		<div class='row'>
 			<label class='etiquette'>".htmlentities($this->msg['bibloto_default_action'],ENT_QUOTES,$charset)."</label><br />			
 			<span>".htmlentities($this->msg['bibloto_default_action_default'],ENT_QUOTES,$charset)."&nbsp;<input type='radio' name='default_action' value='0' ".(!$this->config["default_action"] ? "checked='checked' ": "")."style='vertical-align:bottom;' /></span>
 			<span>".htmlentities($this->msg['bibloto_default_action_checkout'],ENT_QUOTES,$charset)." &nbsp;<input type='radio' name='default_action' value='1' ".($this->config["default_action"] == "1" ? "checked='checked' ": "")."style='vertical-align:bottom;' /></span>	
@@ -236,6 +277,11 @@ Emprunteur:
         <div class='row'>
 			<label class='etiquette' for='thumbnail_url'>".htmlentities($this->msg['bibloto_thumbnail_folder'],ENT_QUOTES,$charset)."</label><br />			
 			<input type='text' id='thumbnail_url' name='thumbnail_url' value='".$this->config['thumbnail_url']."' />		
+		</div>
+        <div class='row'>&nbsp;</div>
+        <div class='row'>
+			<label class='etiquette' for='nb_jours_retard'>".htmlentities($this->msg['bibloto_nb_jours_retard'],ENT_QUOTES,$charset)."</label><br />			
+			<input type='text' id='nb_jours_retard' name='nb_jours_retard' value='".$this->config['nb_jours_retard']."' />		
 		</div>
 		<div class='row'>&nbsp;</div>
         <div class='row'>
@@ -301,7 +347,12 @@ Emprunteur:
 		<div class='row'>
 			<label class='etiquette' for='empr_tpl'>".htmlentities($this->msg['bibloto_empr_tpl'],ENT_QUOTES,$charset)."</label><br />			
 			<textarea id='empr_tpl' class='saisie-80em' wrap='virtual' rows='8' cols='62' name='empr_tpl'>".$this->config['empr_tpl']."</textarea>
-		</div>				
+		</div>
+        <div class='row'>
+			<label class='etiquette' for='css'>".htmlentities($this->msg['bibloto_css'],ENT_QUOTES,$charset)."</label><br />			
+			<textarea id='css' class='saisie-80em' wrap='virtual' rows='8' cols='62' name='css'>".$this->config['css']."</textarea>
+		</div>			
+		<div class='row'>&nbsp;</div>				
         <hr/>
 		<div class='row'>&nbsp;</div>
 		<div class='row'>
@@ -322,6 +373,11 @@ Emprunteur:
 		<div class='row'>
 			<label class='etiquette' for='msg_resa_button'>".htmlentities($this->msg['bibloto_msg_resa_button'],ENT_QUOTES,$charset)."</label><br />			
 			<input type='text' id='msg_resa_button' name='msg_resa_button' value='".htmlentities($this->config['msg_resa_button'],ENT_QUOTES,$charset)."' />		
+		</div>	
+		<div class='row'>&nbsp;</div>
+		<div class='row'>
+			<label class='etiquette' for='msg_email_button'>".htmlentities($this->msg['bibloto_msg_email_button'],ENT_QUOTES,$charset)."</label><br />			
+			<input type='text' id='msg_email_button' name='msg_email_button' value='".htmlentities($this->config['msg_email_button'],ENT_QUOTES,$charset)."' />		
 		</div>	
 		<div class='row'>&nbsp;</div>
 		<div class='row'>
@@ -347,7 +403,51 @@ Emprunteur:
 		<div class='row'>
 			<label class='etiquette' for='msg_resa_title'>".htmlentities($this->msg['bibloto_msg_resa_title'],ENT_QUOTES,$charset)."</label><br />			
 			<input type='text'  class='saisie-80em' id='msg_resa_title' name='msg_resa_title' value='".htmlentities($this->config['msg_resa_title'],ENT_QUOTES,$charset)."' />		
+		</div>		
+		<div class='row'>&nbsp;</div>
+		<div class='row'>
+			<label class='etiquette' for='msg_resa_date_title'>".htmlentities($this->msg['bibloto_msg_resa_date_title'],ENT_QUOTES,$charset)."</label><br />			
+			<input type='text'  class='saisie-80em' id='msg_resa_date_title' name='msg_resa_date_title' value='".htmlentities($this->config['msg_resa_date_title'],ENT_QUOTES,$charset)."' />		
 		</div>	
+		<div class='row'>&nbsp;</div>
+		<div class='row'>
+			<label class='etiquette' for='msg_resa_confirme_title'>".htmlentities($this->msg['bibloto_msg_resa_confirme_title'],ENT_QUOTES,$charset)."</label><br />			
+			<input type='text'  class='saisie-80em' id='msg_resa_confirme_title' name='msg_resa_confirme_title' value='".htmlentities($this->config['msg_resa_confirme_title'],ENT_QUOTES,$charset)."' />		
+		</div>	
+		<div class='row'>&nbsp;</div>
+		<div class='row'>
+			<label class='etiquette' for='msg_expl_checkout_list_title'>".htmlentities($this->msg['bibloto_msg_expl_checkout_list_title'],ENT_QUOTES,$charset)."</label><br />			
+			<input type='text'  class='saisie-80em' id='msg_expl_checkout_list_title' name='msg_expl_checkout_list_title' value='".htmlentities($this->config['msg_expl_checkout_list_title'],ENT_QUOTES,$charset)."' />		
+		</div>	
+		<div class='row'>&nbsp;</div>
+		<div class='row'>
+			<label class='etiquette' for='msg_expl_title'>".htmlentities($this->msg['bibloto_msg_expl_title'],ENT_QUOTES,$charset)."</label><br />			
+			<input type='text'  class='saisie-80em' id='msg_expl_title' name='msg_expl_title' value='".htmlentities($this->config['msg_expl_title'],ENT_QUOTES,$charset)."' />		
+		</div>	
+		<div class='row'>&nbsp;</div>
+		<div class='row'>
+			<label class='etiquette' for='msg_expl_statut'>".htmlentities($this->msg['bibloto_msg_expl_statut'],ENT_QUOTES,$charset)."</label><br />			
+			<input type='text'  class='saisie-80em' id='msg_expl_statut' name='msg_expl_statut' value='".htmlentities($this->config['msg_expl_statut'],ENT_QUOTES,$charset)."' />		
+		</div>
+		<div class='row'>&nbsp;</div>
+		<div class='row'>
+			<label class='etiquette' for='msg_expl_date_checkout'>".htmlentities($this->msg['bibloto_msg_expl_date_checkout'],ENT_QUOTES,$charset)."</label><br />			
+			<input type='text'  class='saisie-80em' id='msg_expl_date_checkout' name='msg_expl_date_checkout' value='".htmlentities($this->config['msg_expl_date_checkout'],ENT_QUOTES,$charset)."' />		
+		</div>	
+		<div class='row'>&nbsp;</div>
+		<div class='row'>
+			<label class='etiquette' for='msg_expl_date_checkin'>".htmlentities($this->msg['bibloto_msg_expl_date_checkin'],ENT_QUOTES,$charset)."</label><br />			
+			<input type='text'  class='saisie-80em' id='msg_expl_date_checkin' name='msg_expl_date_checkin' value='".htmlentities($this->config['msg_expl_date_checkin'],ENT_QUOTES,$charset)."' />		
+		</div>
+
+
+		<div class='row'>&nbsp;</div>
+		<div class='row'>
+			<label class='etiquette' for='msg_expl_rendu'>".htmlentities($this->msg['bibloto_msg_expl_rendu'],ENT_QUOTES,$charset)."</label><br />			
+			<input type='text'  class='saisie-80em' id='msg_expl_rendu' name='msg_expl_rendu' value='".htmlentities($this->config['msg_expl_rendu'],ENT_QUOTES,$charset)."' />		
+		</div>
+
+
 		<div class='row'>&nbsp;</div>
 		<div class='row'>
 			<label class='etiquette' for='msg_dialog_place_item_checkout'>".htmlentities($this->msg['bibloto_msg_dialog_place_item_checkout'],ENT_QUOTES,$charset)."</label><br />			
@@ -380,7 +480,9 @@ Emprunteur:
 		</div>	
 		<div class='row'>&nbsp;</div>
 		<div class='row'>
-			<label class='etiquette' for='msg_dialog_checkout_no'>".htmlentities($this->msg['bibloto_msg_dialog_checkout_no'],ENT_QUOTES,$charset)."</label><br />			
+			<label class='etiquette' for='msg_dialog_checkout_no'>".htmlentities($this->msg['bibloto_msg_dialog_checkout_no'],ENT_QUOTES,$charset)."</label>	
+			<span>".htmlentities($this->msg['bibloto_msg_dialog_checkout_no_yes'],ENT_QUOTES,$charset)."&nbsp;<input type='radio' name='msg_dialog_checkout_no_all' value='1' ".($this->config["msg_dialog_checkout_no_all"] == "1" ? "checked='checked' ": "")."style='vertical-align:bottom;' /></span>
+			<span>".htmlentities($this->msg['bibloto_msg_dialog_checkout_no_no'],ENT_QUOTES,$charset)." &nbsp;<input type='radio' name='msg_dialog_checkout_no_all' value='0' ".(!$this->config["msg_dialog_checkout_no_all"] ? "checked='checked' ": "")."style='vertical-align:bottom;' /></span><br />					
 			<input type='text' class='saisie-80em' id='msg_dialog_checkout_no' name='msg_dialog_checkout_no' value='".htmlentities($this->config['msg_dialog_checkout_no'],ENT_QUOTES,$charset)."' />		
 		</div>	
 		<div class='row'>&nbsp;</div>
@@ -427,17 +529,22 @@ Emprunteur:
 	public function update_config_from_form() {
 		global $dbh;
 		global $pmb_ws_url;
+		global $auth_login;
+		global $auth_password;
+		global $auth_connexion_phrase;
 		global $style_url;
 		global $checkout_activate;
 		global $auto_checkout;
 		global $checkin_activate;
 		global $resa_activate;
+		global $email_activate;
 		global $printer_activate;
 		global $printer_name;
 		global $printer_tpl;
 		global $sound_activate;
 		global $trombinoscope_enabled;
 		global $thumbnail_url;
+		global $nb_jours_retard;
 		global $rfid_activate;
 		global $rfid_driver;
 		global $rfid_activate_empr ;
@@ -451,17 +558,27 @@ Emprunteur:
 		global $msg_checkout_valid_button;
 		global $msg_checkin_button;
 		global $msg_resa_button;
+		global $msg_email_button;
 		global $msg_exit_button;
 		global $msg_action_title;
 		global $msg_checkout_title;
 		global $msg_checkin_title;
 		global $msg_resa_title;
+		global $msg_resa_date_title;
+		global $msg_resa_confirme_title;
+		global $msg_expl_checkout_list_title;
+		global $msg_expl_title;
+		global $msg_expl_statut;
+		global $msg_expl_date_checkout;
+		global $msg_expl_date_checkin;
+		global $msg_expl_rendu;		
 		global $msg_dialog_place_item_checkout;
 		global $msg_dialog_place_item_checkin;
 		global $msg_dialog_too_many_items;
 		global $msg_dialog_item_cb_unknown;
 		global $msg_dialog_checkout_possible;
 		global $msg_dialog_checkout_no;
+		global $msg_dialog_checkout_no_all;
 		global $msg_dialog_checkout_ok;
 		global $msg_dialog_checkin_ok;
 		global $msg_dialog_checkin_no_checkout;
@@ -475,15 +592,20 @@ Emprunteur:
 		global $empr_tpl;
 		global $default_action;
 		global $default_action_end;
+		global $css;
 		
 		parent::update_config_from_form();
 
 		$this->config['pmb_ws_url'] = $pmb_ws_url;
+		$this->config['auth_login'] = $auth_login;
+		$this->config['auth_password'] = $auth_password;
+		$this->config['auth_connexion_phrase'] = stripslashes($auth_connexion_phrase);
 		$this->config['style_url'] = $style_url;
 		$this->config['checkout_activate'] = $checkout_activate;
 		$this->config['auto_checkout'] = $auto_checkout;
 		$this->config['checkin_activate'] = $checkin_activate;
 		$this->config['resa_activate'] = $resa_activate;
+		$this->config['email_activate'] = $email_activate;
 		$this->config['printer_activate'] = $printer_activate;
 		$this->config['printer_name'] = stripslashes($printer_name);
 		$this->config['printer_tpl'] = stripslashes($printer_tpl);
@@ -492,6 +614,7 @@ Emprunteur:
 		$this->config['sound_activate'] = $sound_activate;
 		$this->config['trombinoscope_enabled'] = $trombinoscope_enabled;
 		$this->config['thumbnail_url'] = $thumbnail_url;
+		$this->config['nb_jours_retard'] = $nb_jours_retard;
 		$this->config['rfid_activate'] = $rfid_activate;
 		$this->config['rfid_driver'] = $rfid_driver;
 		$this->config['rfid_activate_empr'] = $rfid_activate_empr;
@@ -508,12 +631,24 @@ Emprunteur:
 		$this->config['msg_checkout_valid_button'] = stripslashes($msg_checkout_valid_button);
 		$this->config['msg_checkin_button'] = stripslashes($msg_checkin_button);
 		$this->config['msg_resa_button'] = stripslashes($msg_resa_button);
+		$this->config['msg_email_button'] = stripslashes($msg_email_button);
 		$this->config['msg_printer_button'] = stripslashes($msg_printer_button);
 		$this->config['msg_exit_button'] = stripslashes($msg_exit_button);
 		$this->config['msg_action_title'] = stripslashes($msg_action_title);
 		$this->config['msg_checkout_title'] = stripslashes($msg_checkout_title);
 		$this->config['msg_checkin_title'] = stripslashes($msg_checkin_title);
 		$this->config['msg_resa_title'] = stripslashes($msg_resa_title);
+		$this->config['msg_resa_date_title'] = stripslashes($msg_resa_date_title);
+		$this->config['msg_resa_confirme_title'] = stripslashes($msg_resa_confirme_title);		
+		
+		$this->config['msg_expl_checkout_list_title'] = stripslashes($msg_expl_checkout_list_title);	
+		$this->config['msg_expl_title'] = stripslashes($msg_expl_title);
+		$this->config['msg_expl_statut'] = stripslashes($msg_expl_statut);
+		$this->config['msg_expl_date_checkout'] = stripslashes($msg_expl_date_checkout);
+		$this->config['msg_expl_date_checkin'] = stripslashes($msg_expl_date_checkin);
+		$this->config['msg_expl_rendu'] = stripslashes($msg_expl_rendu);
+		
+		
 		$this->config['msg_dialog_place_item_checkout'] = stripslashes($msg_dialog_place_item_checkout);
 		$this->config['msg_dialog_place_item_checkin'] = stripslashes($msg_dialog_place_item_checkin);
 		$this->config['msg_dialog_too_many_items'] = stripslashes($msg_dialog_too_many_items);
@@ -521,6 +656,7 @@ Emprunteur:
 		$this->config['msg_dialog_checkout_possible'] = stripslashes($msg_dialog_checkout_possible);
 		$this->config['msg_dialog_checkout_ok'] = stripslashes($msg_dialog_checkout_ok);
 		$this->config['msg_dialog_checkout_no'] = stripslashes($msg_dialog_checkout_no);
+		$this->config['msg_dialog_checkout_no_all'] = stripslashes($msg_dialog_checkout_no_all);
 		$this->config['msg_dialog_checkin_ok'] = stripslashes($msg_dialog_checkin_ok);
 		$this->config['msg_dialog_checkin_no_checkout'] = stripslashes($msg_dialog_checkin_no_checkout);
 		$this->config['msg_dialog_antivol_error'] = stripslashes($msg_dialog_antivol_error);
@@ -528,6 +664,7 @@ Emprunteur:
 		$this->config['msg_no_user_found'] = stripslashes($msg_no_user_found);
 		$this->config['msg_search_title'] = stripslashes($msg_search_title);
 		$this->config['timeout_disconnect'] = $timeout_disconnect;
+		$this->config['css'] = $css;
 		return;
 	}
 }

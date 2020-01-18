@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_property.class.php,v 1.1 2017-01-06 16:10:51 tsamson Exp $
+// $Id: onto_common_property.class.php,v 1.3.2.1 2019-09-18 09:12:22 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -87,6 +87,12 @@ class onto_common_property extends onto_common_root {
 	 * @access public
 	 */
 	public $inverse_of;
+	
+	/**
+	 * Options de champ perso en json
+	 * @var string
+	 */
+	public $cp_options;
 		
 	
 	public function __construct($uri,$ontology) {
@@ -139,6 +145,10 @@ class onto_common_property extends onto_common_root {
 		$this->pmb_list_query = $pmb_list_query;
 	}
 	
+	public function set_cp_options($cp_options) {
+		$this->cp_options = $cp_options;
+	}
+	
 	public function get_pmb_datatype_label($datatype)
 	{
 		global $msg;
@@ -172,6 +182,11 @@ class onto_common_property extends onto_common_root {
 	
 	public function get_pmb_extended() {
 		return $this->pmb_extended;
+	}
+	
+	public function get_label() {
+	    $this->label = onto_common_ui::get_message($this->label);
+	    return $this->label;
 	}
 	
 	

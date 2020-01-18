@@ -2,7 +2,9 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: print_cart.php,v 1.23 2017-07-03 13:07:32 tsamson Exp $
+// $Id: print_cart.php,v 1.25 2019-06-24 08:18:23 btafforeau Exp $
+
+global $base_path, $base_auth, $base_title, $class_path, $authorities_caddie, $idcaddie_new, $footer;
 
 //Ajout aux paniers
 
@@ -16,9 +18,9 @@ require_once($class_path."/caddie/caddie_controller.class.php");
 require_once($class_path."/caddie/authorities_caddie_controller.class.php");
 
 if (isset($authorities_caddie)) {
-	authorities_caddie_controller::process_print();
+    authorities_caddie_controller::process_print($idcaddie_new);
 } else {
-	caddie_controller::process_print();
+    caddie_controller::process_print($idcaddie_new);
 }
 print $footer;
 ?>

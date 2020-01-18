@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_list.class.php,v 1.3 2018-12-06 09:34:14 dgoron Exp $
+// $Id: cms_module_common_datasource_list.class.php,v 1.4 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -71,7 +71,7 @@ class cms_module_common_datasource_list extends cms_module_common_datasource{
 			$this->parameters['sort_order'] = '';
 		}
 		if ($this->limitable) {
-			$this->parameters['nb_max_elements'] = $cms_module_common_datasource_list_limit+0;
+		    $this->parameters['nb_max_elements'] = (int) $cms_module_common_datasource_list_limit;
 		} else {
 			$this->parameters['nb_max_elements'] = '';
 		}

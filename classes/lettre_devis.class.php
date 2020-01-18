@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lettre_devis.class.php,v 1.7 2018-08-07 12:42:34 dgoron Exp $
+// $Id: lettre_devis.class.php,v 1.9 2019-08-09 10:49:03 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -17,11 +17,9 @@ class lettreDevis_PDF extends lettre_accounting_PDF {
 	public $x_qte = '';
 	public $w_qte = '';
 	public $filename='devis.pdf';
-		
-	protected function get_parameter_value($name) {
-		$parameter_name = 'acquisition_pdfdev_'.$name;
-		global $$parameter_name;
-		return $$parameter_name;
+	
+	protected static function get_parameter_prefix() {
+	    return 'acquisition_pdfdev';
 	}
 	
 	protected function _init_pos_num() {

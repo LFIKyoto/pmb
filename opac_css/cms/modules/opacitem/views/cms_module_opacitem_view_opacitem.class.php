@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_opacitem_view_opacitem.class.php,v 1.7 2017-11-14 13:50:24 dgoron Exp $
+// $Id: cms_module_opacitem_view_opacitem.class.php,v 1.8 2019-01-16 10:45:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -139,7 +139,7 @@ class cms_module_opacitem_view_opacitem extends cms_module_common_view{
 				!!diffusion!!
 				</div>
 				";
-				$aff = pmb_bidi(affiche_bannette ("", $opac_bannette_nb_liste, "./empr.php?lvl=bannette&id_bannette=!!id_bannette!!","bannettes_private-container_2", "")) ;
+				$aff = pmb_bidi(affiche_bannettes($opac_bannette_nb_liste, "./empr.php?lvl=bannette&id_bannette=!!id_bannette!!","bannettes_private-container_2", "")) ;
 				if($aff){	
 					$bannettes= "<div id='bannettes_subscribed'>\n";
 					$bannettes.= "<h3><span>".$msg['accueil_bannette_privee']."</span></h3>";
@@ -161,7 +161,7 @@ class cms_module_opacitem_view_opacitem extends cms_module_common_view{
 				!!diffusion!!
 				</div>
 				";
-				$aff = pmb_bidi(affiche_bannette ("", $opac_bannette_nb_liste, "./index.php?lvl=bannette_see&id_bannette=!!id_bannette!!","bannettes-public-container_2", "",true)) ;
+				$aff = pmb_bidi(affiche_bannettes($opac_bannette_nb_liste, "./index.php?lvl=bannette_see&id_bannette=!!id_bannette!!","bannettes-public-container_2", "",true)) ;
 				if($aff){
 					$bannettes= "<div id='bannettes_public'>\n";
 					$bannettes.= "<h3><span>".$msg['accueil_bannette_public']."</span></h3>";

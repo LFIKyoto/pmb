@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: impr_cote.inc.php,v 1.8 2018-08-10 08:54:15 dgoron Exp $
+// $Id: impr_cote.inc.php,v 1.9 2019-06-05 09:04:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $pmb_label_construct_script, $idcaddie, $action, $msg;
 
 require_once($class_path."/sticks_sheet/sticks_sheets.class.php");
 

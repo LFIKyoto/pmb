@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: categ_see.inc.php,v 1.111 2017-05-18 15:25:29 dgoron Exp $
+// $Id: categ_see.inc.php,v 1.113 2019-05-29 13:24:55 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -10,7 +10,10 @@ require_once ($class_path . "/categories.class.php");
 
 require_once($class_path."/authorities/page/authority_page_category.class.php");
 
-$id += 0;
+if (!isset($id)) $id = 0;
+$id = intval($id);
+if (!isset($main)) $main = 0;
+$main = intval($main);
 if ($id) {
 	//recuperation du thesaurus session
 	if (!isset($id_thes) || !$id_thes) {

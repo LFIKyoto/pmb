@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial.class.php,v 1.47 2018-11-26 14:32:02 dgoron Exp $
+// $Id: cms_editorial.class.php,v 1.48 2019-07-05 11:52:52 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -932,7 +932,11 @@ class cms_editorial extends cms_root {
 		$main_fields[] = array(
 			'var' => "last_update_date",
 			'desc' => $msg['cms_module_common_datasource_desc_last_update_date']
-		);	
+		);
+		$main_fields[] = array(
+		    'var' => "last_update_sql_date",
+		    'desc' => $msg['cms_module_common_datasource_desc_last_update_sql_date']
+		);
 		
 		$main_fields[] = array(
 			'var' => "permalink",

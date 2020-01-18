@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_recordslist_view_carousel.class.php,v 1.19 2017-07-27 14:50:32 tsamson Exp $
+// $Id: cms_module_recordslist_view_carousel.class.php,v 1.21 2019-08-08 06:42:15 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -55,7 +55,7 @@ class cms_module_recordslist_view_carousel extends cms_module_carousel_view_caro
 					}
 					$notice_class = new $opac_notice_affichage_class($row->notice_id,"");
 					$notice_class->do_header();
-					if($this->parameters['used_template']){
+					if (isset($this->parameters['used_template']) && $this->parameters['used_template']) {
 						$tpl = notice_tpl_gen::get_instance($this->parameters['used_template']);
 						$content = $tpl->build_notice($row->notice_id);
 					}else{
@@ -78,7 +78,7 @@ class cms_module_recordslist_view_carousel extends cms_module_carousel_view_caro
 			}
 		}
 		$datas = array(
-			'title' => $records['title'],
+			'title' => (!empty($records['title'])) ? $records['title'] : '',
 			'records' => $datas,
 			'add_to_cart_link' => $add_to_cart_link
 		);

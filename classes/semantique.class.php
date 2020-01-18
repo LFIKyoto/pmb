@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: semantique.class.php,v 1.13 2017-07-13 12:14:17 tsamson Exp $
+// $Id: semantique.class.php,v 1.14 2019-06-07 09:45:40 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -58,19 +58,20 @@ class semantique {
 		if (!$nb_notices_calcul) $nb_noti="*2>nb";
 			else  $nb_noti=">".$nb_notices_calcul;
 		
-		$rqt1="select word, count(id_notice) as cm,(select count(*) from notices) as nb from notices_mots_global_index join words on num_word = id_word group by num_word having cm$nb_noti";
-		$execute_query1=pmb_mysql_query($rqt1);
+		$rqt1 = "select word, count(id_notice) as cm,(select count(*) from notices) as nb from notices_mots_global_index join words on num_word = id_word group by num_word having cm$nb_noti";
+		$execute_query1 = pmb_mysql_query($rqt1);
 		//parcours de tous les mots trouvés afin de générer le code php
-		while ($r1=pmb_mysql_fetch_object($execute_query1)) {			
+		while ($r1 = pmb_mysql_fetch_object($execute_query1)) {			
 			//vérification de l'existence du mot dans la table mots
-			$rqt_select="select id_mot from mots where mot='".$r1->word."'";
-			$query_select=pmb_mysql_query($rqt_select);
-			if ($r_mot=pmb_mysql_num_rows($query_select)) {
-				$id_mot=$r_mot->id_mot;
+			$rqt_select = "select id_mot from mots where mot='".$r1->word."'";
+			$query_select = pmb_mysql_query($rqt_select);
+			if (pmb_mysql_num_rows($query_select)) {
+			    $r_mot = pmb_mysql_fetch_object($query_select);
+			    $id_mot = $r_mot->id_mot;
 				// Verifier de l'existance en mot vide (type_lien à 3)
-				$rqt_words_created="select mot from mots,linked_mots where mots.id_mot=linked_mots.num_mot and linked_mots.type_lien=3";
-				$query_select=pmb_mysql_query($rqt_select);
-				if (!pmb_mysql_num_rows($query_select)) {
+			    $rqt_words_created = "select mot from mots,linked_mots where mots.id_mot=linked_mots.num_mot and linked_mots.type_lien=3 and mots.id_mot=" . $id_mot;
+			    $result = pmb_mysql_query($rqt_words_created);
+			    if (!pmb_mysql_num_rows($result)) {
 					// Le mot est aussi un synonyme, donc insertion information mot vide calculé
 					pmb_mysql_query("insert into linked_mots (num_mot,num_linked_mot, type_lien) values (".$id_mot.",0,2)");
 				}	

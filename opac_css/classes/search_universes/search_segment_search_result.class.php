@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_segment_search_result.class.php,v 1.24 2018-10-19 14:50:42 apetithomme Exp $
+// $Id: search_segment_search_result.class.php,v 1.28.2.1 2019-11-08 11:07:11 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,6 +15,9 @@ require_once($include_path.'/search_queries/specials/combine/search.class.php');
 require_once($class_path.'/cms/cms_editorial_searcher.class.php');
 require_once($class_path.'/elements_list/elements_cms_editorial_articles_list_ui.class.php');
 require_once($class_path.'/elements_list/elements_cms_editorial_sections_list_ui.class.php');
+require_once($class_path.'/elements_list/elements_concepts_list_ui.class.php');
+require_once $class_path.'/entities.class.php';
+require_once $class_path."/search_universes/search_segment_searcher_authorities.class.php";
 
 class search_segment_search_result {
     
@@ -35,8 +38,8 @@ class search_segment_search_result {
 		
 		$facettes_tpl = '';
 		$tab_result = $this->init_session_facets();
-		$segment_facets = new search_segment_facets();
-		$segment_facets->set_num_segment($this->segment->get_id());
+		$segment_facets = new search_segment_facets('', $this->segment->get_id());
+// 		$segment_facets->set_num_segment($this->segment->get_id());
 		$segment_facets->set_segment_search($es->json_encode_search());
 	    $content = $es->make_segment_search_form($base_path.'/index.php?lvl=search_segment&id='.$this->segment->get_id().'&action=segment_results', 'form_values', "", true);
 	    $facettes_tpl .= $segment_facets->call_facets($content);
@@ -52,7 +55,10 @@ class search_segment_search_result {
     	    } elseif(($this->segment->get_type() == TYPE_CMS_ARTICLE) || ($this->segment->get_type() == TYPE_CMS_SECTION)) {
     	        $this->searcher = new cms_editorial_searcher('*', (TYPE_CMS_ARTICLE ? 'article' : 'section'));
     	    } else {
-    	        $this->searcher = searcher_factory::get_searcher('authorities', 'extended');
+    	        //$this->searcher = searcher_factory::get_searcher('authorities', 'extended');
+    	        $this->searcher = new search_segment_searcher_authorities();
+    	        $this->searcher->init_authority_param(entities::get_aut_table_from_type($this->segment->get_type()));
+    	        
     	    }
 	    }
 	    return $this->searcher;
@@ -94,7 +100,6 @@ class search_segment_search_result {
 	    }
 	    
 	    search_universes_history::update_json_search_with_history();
-	    
 	    if (!empty($segment_json_search)) {
 	    	$es->json_decode_search(stripslashes($segment_json_search));
 	    }
@@ -143,7 +148,7 @@ class search_segment_search_result {
 	    $count = $this->get_nb_results();
 	    
 	    $html = '<div id="search_universe_segment_result_list">';	    
-	    //il faudrait revoir ce système de globales
+	    //il faudrait revoir ce systï¿½me de globales
 	    if($count > 0){
 	        $html.= "<h4 class='segment_search_results'>".$count." ".htmlentities($msg['results'], ENT_QUOTES, $charset)."</h4>";
 	        if(!$page) {
@@ -157,7 +162,7 @@ class search_segment_search_result {
 	            if(($this->get_type_from_segment() == TYPE_CMS_ARTICLE) || ($this->get_type_from_segment() == TYPE_CMS_SECTION)){
 	                $sorted_results = array_slice($this->searcher->get_sorted_result("article_title", "asc", 0),$debut,$opac_search_results_per_page);
 	            }else{
-	                $sorted_results = $this->searcher->get_sorted_result("default",$debut,$opac_search_results_per_page);
+	                $sorted_results = $this->get_sorted_result();
 	            }
 	            
 	        }
@@ -178,13 +183,13 @@ class search_segment_search_result {
 	    if($this->get_type_from_segment() == TYPE_NOTICE){
 	        $html = '<div id="search_universe_segment_result_list">'.aff_notice(-1);
 	    	$recherche_ajax_mode=0;
-	    	
-	    	for ($i =0 ; $i<count($sorted_results);$i++) {
-	    		if($i>4) {
-	    			$recherche_ajax_mode=1;
-	    		}
-	    			
-	    		$html.= pmb_bidi(aff_notice($sorted_results[$i], 0, 1, 0, "", "", 0, 0, $recherche_ajax_mode));
+	    	if (!empty($sorted_results)) {
+    	    	for ($i =0 ; $i<count($sorted_results);$i++) {
+    	    		if($i>4) {
+    	    			$recherche_ajax_mode=1;
+    	    		}
+    	    		$html.= pmb_bidi(aff_notice($sorted_results[$i], 0, 1, 0, "", "", 0, 0, $recherche_ajax_mode));
+    	    	}
 	    	}
 	    	$html.= aff_notice(-2);
 	    }elseif(($this->get_type_from_segment() == TYPE_CMS_SECTION) || ($this->get_type_from_segment() == TYPE_CMS_ARTICLE)){
@@ -195,14 +200,14 @@ class search_segment_search_result {
 	        }
 	        $html .= $cms_list_ui->get_elements_list();
 	    }else{
-	    	if($sorted_results){
+	    	if(!empty($sorted_results)){
 // 	    		$sorted_results = array_slice($sorted_results, $debut, $opac_search_results_per_page);
-	    		$elements_authorities_list_ui = new elements_authorities_list_ui($sorted_results, $count, true);
-	    		/**
-	    		 * TODO affichage correct selon la présence ou non de résultat etc...
-	    		 * @var unknown
-	    		 */
-	    		$html .= $elements_authorities_list_ui->get_elements_list();
+// 	    	    if($this->get_type_from_segment() == TYPE_CONCEPT){
+// 	    	      $elements_list_ui = new elements_concepts_list_ui($sorted_results, $count, true);	    	      
+// 	    	    } else {	    	        
+	    	      $elements_list_ui = new elements_authorities_list_ui($sorted_results, $count, true);
+// 	    	    }
+	    		$html .= $elements_list_ui->get_elements_list();
 	    	}
 	    	
 	    }
@@ -237,5 +242,16 @@ class search_segment_search_result {
 	    if (empty($universe_id) && empty($search_index)) {
 	        $universe_id = $this->segment->get_num_universe(); 
 	    }
+	}
+	
+	protected function get_sorted_result() {
+	    global $debut, $opac_search_results_per_page;
+	    if (get_class($this->searcher) == 'searcher_extended') {
+	        return $this->searcher->get_sorted_result("default",$debut,$opac_search_results_per_page);
+	    }
+	    if (get_class($this->searcher) == 'search_segment_searcher_authorities') {
+	        return $this->searcher->get_sorted_result("default",$debut,$opac_search_results_per_page);
+	    }
+	    return $this->searcher->get_objects_ids();
 	}
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: synchro_rdf.class.php,v 1.8 2017-06-02 14:46:13 dgoron Exp $
+// $Id: synchro_rdf.class.php,v 1.10 2019-06-24 10:27:53 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -119,6 +119,7 @@ class synchro_rdf{
 				foreach($object['RDFFIELD'] as $field){
 					$detail=array();
 					foreach($field['FIELD'] as $fieldBis){
+					    if (empty($fieldBis['ORDRE'])) $fieldBis['ORDRE'] = '';
 						$detail[$fieldBis['CODE_CHAMP']."_".$fieldBis['CODE_SS_CHAMP']."_".$fieldBis['ORDRE']]=1;
 					}
 					$arrayFields[$field['NAME']]=array(
@@ -151,6 +152,7 @@ class synchro_rdf{
 				foreach($object['RDFFIELD'] as $field){
 					$detail=array();
 					foreach($field['FIELD'] as $fieldBis){
+					    if (empty($fieldBis['ORDRE'])) $fieldBis['ORDRE'] = '';
 						$detail[$fieldBis['CODE_CHAMP']."_".$fieldBis['CODE_SS_CHAMP']."_".$fieldBis['ORDRE']]=1;
 					}
 					$arrayFields[$field['NAME']]=array(
@@ -501,8 +503,12 @@ class synchro_rdf{
 			$tmpArray=explode("_",$entiteDetail['definition']['IDROW']);
 			if(trim($tmpArray[2])){
 				$maxOrdre=(int)$tmpArray[2];
-			}else{
-				$maxOrdre=count($arrayNotice[$tmpArray[0]][$tmpArray[1]]);
+			} else {
+			    if (isset($arrayNotice[$tmpArray[0]][$tmpArray[1]]) && is_array($arrayNotice[$tmpArray[0]][$tmpArray[1]])){
+			        $maxOrdre = count($arrayNotice[$tmpArray[0]][$tmpArray[1]]);
+			    } else {
+			        $maxOrdre = 0;
+			    }
 			}
 			//Pour chaque occurence
 			for($ordre=1;$ordre<=$maxOrdre;$ordre++){
@@ -535,12 +541,15 @@ class synchro_rdf{
 						foreach($fieldDetail['detail'] as $tmpRow=>$tmp){
 							$tmpCodes=explode("_",$tmpRow);
 							if(trim($tmpCodes[2])){
-								if($tmpValue=($arrayNotice[$tmpCodes[0]][$tmpCodes[1]][$tmpCodes[2]]['value'])){
-									$currentValues[]=array('code'=>$tmpRow,'value'=>$tmpValue);
+								if(isset($arrayNotice[$tmpCodes[0]][$tmpCodes[1]][$tmpCodes[2]]['value'])){
+									$currentValues[] = array(
+									    'code' => $tmpRow,
+									    'value' => $arrayNotice[$tmpCodes[0]][$tmpCodes[1]][$tmpCodes[2]]['value']
+									);
 								}
 							}else{
-								if($tmpArray=($arrayNotice[$tmpCodes[0]][$tmpCodes[1]])){
-									foreach($tmpArray as $arrayValues){
+								if(isset($arrayNotice[$tmpCodes[0]][$tmpCodes[1]])){
+								    foreach($arrayNotice[$tmpCodes[0]][$tmpCodes[1]] as $arrayValues){
 										if($fieldDetail['distinct']=="1"){
 											if($arrayValues['lang']==$fieldDetail['lang']){
 												$distinctValues[]=array('code'=>$tmpRow,'value'=>$arrayValues['authority_num']);
@@ -599,7 +608,7 @@ class synchro_rdf{
 				//cas particulier des auteurs liés
 				if(is_array($entiteDetail['authors']) && count($entiteDetail['authors'])){
 					foreach($entiteDetail['authors'][0]['FIELD'] as $author){
-						if(count($arrayNotice[$author['CODE_CHAMP']][$author['CODE_SS_CHAMP']])){
+						if(!empty($arrayNotice[$author['CODE_CHAMP']][$author['CODE_SS_CHAMP']])){
 							foreach($arrayNotice[$author['CODE_CHAMP']][$author['CODE_SS_CHAMP']] as $auteurNotice){
 								$uriAuteur=$this->baseUriAuteur.$auteurNotice[$author['IDFIELD']];
 								$triplet=array();
@@ -775,7 +784,7 @@ class synchro_rdf{
 				$triplet[1]=$field['NAME'];
 				$arrayValues=array();
 				foreach ($field['FIELD'] as $fieldName){
-					if($tmp=trim($row->$fieldName['NAME'])){
+				    if($tmp=trim($row->{$fieldName['NAME']})){
 						$arrayValues[]['value']=$tmp;
 					}
 				}
@@ -876,9 +885,11 @@ class synchro_rdf{
 			foreach($objects as $uri=>$detail){
 				if(!$this->existsUri('<'.$uri.'>')){
 					$this->storeTriples($detail['definition']);
-					$this->storeTriples($detail['data']);
+					if (!empty($detail['data'])) { 
+					    $this->storeTriples($detail['data']);
+					}
 				}
-				if(is_array($detail['links']) && count($detail['links'])){
+				if(!empty($detail['links']) && is_array($detail['links'])){
 					foreach($detail['links'] as $link){
 						if(!$this->existsTriple($link)){
 							$this->storeTriples(array($link));

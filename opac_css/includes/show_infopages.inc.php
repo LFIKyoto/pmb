@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: show_infopages.inc.php,v 1.6 2015-04-03 11:16:16 jpermanne Exp $
+// $Id: show_infopages.inc.php,v 1.7 2019-01-14 11:33:12 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -58,7 +58,7 @@ function show_infopages($infopagesid="") {
 			
 	}
 	for ($i=0; $i<count($t_infopagesid); $i++)  {
-		if ($t_infopageslues[$t_infopagesid[$i]]) $retaff.= $t_infopageslues[$t_infopagesid[$i]]; 
+		if (isset($t_infopageslues[$t_infopagesid[$i]])) $retaff.= $t_infopageslues[$t_infopagesid[$i]]; 
 	}
 	return $retaff;
 }

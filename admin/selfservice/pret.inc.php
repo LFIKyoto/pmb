@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pret.inc.php,v 1.4 2018-04-12 15:10:46 ngantier Exp $
+// $Id: pret.inc.php,v 1.5 2019-07-05 12:24:06 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -19,6 +19,7 @@ function show_param_pret($action='') {
 	global $selfservice_pret_expl_inconnu_msg;
 	global $selfservice_pret_prolonge_non_msg;
 	
+	$message = '';
 	if($action=="update") $message="<div class='erreur'>".$msg["selfservice_admin_update"]."</div>";
 	
 	print "

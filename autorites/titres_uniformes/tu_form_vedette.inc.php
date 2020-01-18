@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tu_form_vedette.inc.php,v 1.2 2015-12-23 10:20:42 ngantier Exp $
+// $Id: tu_form_vedette.inc.php,v 1.3 2019-06-03 07:04:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $role_field, $index;
 
 require_once($class_path."/vedette/vedette_ui.class.php");
 

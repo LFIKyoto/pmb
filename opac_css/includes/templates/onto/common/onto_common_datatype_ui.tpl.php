@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_ui.tpl.php,v 1.17 2019-01-02 14:19:42 tsamson Exp $
+// $Id: onto_common_datatype_ui.tpl.php,v 1.23.2.1 2019-11-25 12:52:58 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -20,6 +20,9 @@ $ontology_tpl['form_row'] = '
 	<input type="hidden" id="!!onto_row_id!!_new_order" value="!!onto_new_order!!"/>
 	!!onto_rows!!
 </div>
+<script type="text/javascript">
+	!!onto_row_scripts!!
+</script>
 ';
 
 $ontology_tpl['form_row_content']='
@@ -64,7 +67,7 @@ $ontology_tpl['form_row_content_mandatory_sign'] = '
  * Text
  */
 $ontology_tpl['form_row_content_text']='
-<textarea cols="80" rows="4" wrap="virtual" name="!!onto_row_id!![!!onto_row_order!!][value]" id="!!onto_row_id!!_!!onto_row_order!!_value" data-dojo-type="apps/pmb/PMBTextArea"  data-dojo-props="!!onto_input_props!!">!!onto_row_content_text_value!!</textarea>
+<textarea cols="80" rows="4" wrap="virtual" name="!!onto_row_id!![!!onto_row_order!!][value]" id="!!onto_row_id!!_!!onto_row_order!!_value" !!onto_input_props!!>!!onto_row_content_text_value!!</textarea>
 ';
 
 
@@ -72,7 +75,7 @@ $ontology_tpl['form_row_content_text']='
  * Small text
  */
 $ontology_tpl['form_row_content_small_text']='
-<input type="text" class="saisie-80em" value="!!onto_row_content_small_text_value!!" name="!!onto_row_id!![!!onto_row_order!!][value]" id="!!onto_row_id!!_!!onto_row_order!!_value" data-dojo-type="dijit/form/TextBox" data-dojo-props="!!onto_input_props!!"/>
+<input type="text" class="saisie-80em" value="!!onto_row_content_small_text_value!!" name="!!onto_row_id!![!!onto_row_order!!][value]" id="!!onto_row_id!!_!!onto_row_order!!_value" !!onto_input_props!!/>
 ';
 
 /*
@@ -84,14 +87,17 @@ $ontology_tpl['form_row_card'] = '
 		<label class="etiquette !!form_row_content_mandatory_class!!" for="!!onto_row_id!!">!!onto_row_label!! !!form_row_content_mandatory_sign!!</label>
 		!!form_row_content_comment!! !!form_row_content_tooltip!!
 	</div>
-	<input type="hidden" id="!!onto_row_id!!_new_order" value="!!onto_new_order!!" data-dojo-type="dijit/form/TextBox"/>
-	<input type="hidden" id="!!onto_row_id!!_input_type" value="!!onto_input_type!!" data-dojo-type="dijit/form/TextBox"/>
+	<input type="hidden" id="!!onto_row_id!!_new_order" value="!!onto_new_order!!"/>
+	<input type="hidden" id="!!onto_row_id!!_input_type" value="!!onto_input_type!!"/>
 	!!onto_rows!!
 </div>
+<script type="text/javascript">
+	!!onto_row_scripts!!
+</script>
 ';
 
 $ontology_tpl['form_row_content_small_text_card']='
-<input type="text" class="saisie-80em" value="!!onto_row_content_small_text_value!!" name="!!onto_row_id!![!!onto_row_order!!][value]" id="!!onto_row_id!!_!!onto_row_order!!_value"  data-dojo-type="dijit/form/TextBox" data-dojo-props="!!onto_input_props!!"/>
+<input type="text" class="saisie-80em" value="!!onto_row_content_small_text_value!!" name="!!onto_row_id!![!!onto_row_order!!][value]" id="!!onto_row_id!!_!!onto_row_order!!_value" !!onto_input_props!!/>
 ';
 
 $ontology_tpl['form_row_content_input_add_card']='
@@ -135,14 +141,14 @@ $ontology_tpl['form_row_content_input_remove']='
  * checkbox
  */
 $ontology_tpl['form_row_content_checkbox']='
-<input type="checkbox" class="saisie-80em" !!onto_row_content_checkbox_checked!! value="1" name="!!onto_row_id!![!!onto_row_order!!][value]" id="!!onto_row_id!!_!!onto_row_order!!_value" data-dojo-type="dijit/form/CheckBox" data-dojo-props="!!onto_input_props!!"/>
+<input type="checkbox" class="saisie-80em" !!onto_row_content_checkbox_checked!! value="1" name="!!onto_row_id!![!!onto_row_order!!][value]" id="!!onto_row_id!!_!!onto_row_order!!_value" !!onto_input_props!!/>
 ';
 
 /*
  * date & dojo widget en général (supp & add) 
 */
 $ontology_tpl['form_row_content_date']='
-<input type="text" id="!!onto_row_id!!_!!onto_row_order!!_value" name="!!onto_row_id!![!!onto_row_order!!][value]" value="!!onto_date!!" data-dojo-type="dijit/form/DateTextBox" data-dojo-props="!!onto_input_props!!"/>';
+<input type="text" id="!!onto_row_id!!_!!onto_row_order!!_value" name="!!onto_row_id!![!!onto_row_order!!][value]" value="!!onto_date!!" !!onto_input_props!!/>';
 
 $ontology_tpl['form_row_content_widget_add']='
 <input class="bouton_small" id="!!onto_row_id!!_add" type="button" value="'.$msg['ontology_p_add_button'].'" onclick="onto_add_dojo_element(\'!!onto_row_id!!\',0);">
@@ -159,7 +165,7 @@ $ontology_tpl['form_row_content_widget_del']='
  * Représentation d'un entier 
  */
 $ontology_tpl['form_row_content_integer']='
-<input type="text" class="saisie-80em" value="!!onto_row_content_integer_value!!" name="!!onto_row_id!![!!onto_row_order!!][value]" id="!!onto_row_id!!_!!onto_row_order!!_value" data-dojo-type="dijit/form/NumberTextBox" data-dojo-props="!!onto_input_props!!"/>
+<input type="text" class="saisie-80em" value="!!onto_row_content_integer_value!!" name="!!onto_row_id!![!!onto_row_order!!][value]" id="!!onto_row_id!!_!!onto_row_order!!_value" !!onto_input_props!!/>
 ';
 
 /**
@@ -171,7 +177,7 @@ $ontology_tpl['form_row_content_marclist']='
 	id="!!onto_row_id!!_!!onto_row_order!!_value" 
 	data-dojo-type="dijit/form/Select" 
 	data-dojo-props="options : [!!onto_row_content_marclist_options!!], !!onto_disabled!!"
-/>';
+></select>';
 
 /*
  * Liste
@@ -180,7 +186,7 @@ $ontology_tpl['form_row_content_list']='
 <select 
 	name="!!onto_row_id!![!!onto_row_order!!][value][]"
 	id="!!onto_row_id!!_!!onto_row_order!!_value"
-	!!onto_disabled!!"
+	!!onto_disabled!!
 >
 	!!onto_row_content_list_options!!
 </select>
@@ -293,10 +299,10 @@ $ontology_tpl['form_row_content_responsability_selector']='
 	att_id_filter="!!onto_current_range!!"
 	autocomplete="off"
 	 />
-<select name="!!onto_row_id!![!!onto_row_order!!][value]" id="!!onto_row_id!!_!!onto_row_order!!_value">
+<select name="!!onto_row_id!![!!onto_row_order!!][function_value]" id="!!onto_row_id!!_!!onto_row_order!!_function_value">
 	!!onto_row_content_marclist_options!!
 </select>
-<input type="hidden" value="!!onto_row_content_marclist_range!!" name="!!onto_row_id!![!!onto_row_order!!][type]" id="!!onto_row_id!!_!!onto_row_order!!_type"/>
+<input type="hidden" value="!!onto_row_content_marclist_range!!" name="!!onto_row_id!![!!onto_row_order!!][function_type]" id="!!onto_row_id!!_!!onto_row_order!!_type"/>
 <input type="hidden" value="!!form_row_content_responsability_selector_value!!" name="!!onto_row_id!![!!onto_row_order!!][value]" id="!!onto_row_id!!_!!onto_row_order!!_value">
 <input type="hidden" value="!!form_row_content_responsability_selector_range!!" name="!!onto_row_id!![!!onto_row_order!!][type]" id="!!onto_row_id!!_!!onto_row_order!!_type"/>
 ';
@@ -341,5 +347,122 @@ $ontology_tpl['form_row_content_linked_authority_selector']='
  * resource template
  */
 $ontology_tpl['form_row_content_resource_template'] = '
-<div id="!!onto_row_id!!_!!onto_row_order!!_resource_template"></div>
+<div id="!!onto_row_id!!_!!onto_row_order!!_resource_template" class="contribution_resource_template"></div>
 ';
+
+/*
+ * script commun de champs calculés
+ */
+$ontology_tpl['form_row_common_field_change_script'] = '
+	if (typeof !!onto_row_id!!_already_parsed == "undefined") {
+		var !!onto_row_id!!_already_parsed = true;
+		require(["dojo/on", "dojo/topic", "dojo/dom", "dojo/ready"], function(on, topic, dom, ready) {
+			ready(function() {
+				var valueInput = dom.byId("!!onto_row_id!!_0_value");
+				var displayLabelInput = dom.byId("!!onto_row_id!!_0_display_label");
+				if (valueInput) {
+					on(valueInput, "change", function() {
+						topic.publish("form/change", "!!data_pmb_uniqueid!!");
+					});
+				}
+				if (displayLabelInput) {
+					on(displayLabelInput, "change", function() {
+						topic.publish("form/change", "!!data_pmb_uniqueid!!");
+					});
+				}
+	
+				topic.subscribe("form/getValues", function(uniqueId, deferred) {
+					if (uniqueId == "!!data_pmb_uniqueid!!") {
+						var params = {uniqueId: "!!data_pmb_uniqueid!!"};
+						if (valueInput) {
+							params.value = valueInput.value;
+						}
+						if (displayLabelInput) {
+							params.displayLabel = displayLabelInput.value;
+						}
+						deferred.resolve(params);
+					}
+				});
+			});
+		});
+	}
+';
+
+/**
+ * Liste boutons radios ou checkbox
+ */
+$ontology_tpl['form_row_content_list_checkbox_option']='
+<input type="!!radio_or_checkbox!!" name="!!onto_row_id!![!!onto_row_order!!][value][]" id="!!onto_row_id!!_!!onto_row_order!!_!!onto_row_content_value_index!!" value="!!onto_row_content_value!!" !!onto_checked!! !!onto_disabled!! />
+<label for="!!onto_row_id!!_!!onto_row_order!!_!!onto_row_content_value_index!!">!!onto_row_content_label!!<label>';
+
+$ontology_tpl['form_row_content_list_checkbox'] = '
+<input type="hidden" value="!!onto_row_content_values!!" id="!!onto_row_id!!_!!onto_row_order!!_value" />
+<script>
+if (typeof window.!!onto_row_id!!_!!onto_row_order!!_script == "undefined") {
+	document.querySelectorAll("input[name=\'!!onto_row_id!![!!onto_row_order!!][value][]\']").forEach(function(node, index, nodes) {
+		node.addEventListener("click", function() {
+			var values = [];
+			nodes.forEach(function(node) {
+				if (node.checked) {
+					values.push(node.value);
+				}
+			});
+			document.getElementById("!!onto_row_id!!_!!onto_row_order!!_value").value=values.join();
+		});
+	});
+	window.!!onto_row_id!!_!!onto_row_order!!_script = true;
+}
+</script>';
+
+$ontology_tpl['form_row_content_floating_date_script'] = "<script>
+function date_flottante_type_onchange(field_name) {
+    var type = document.getElementById(field_name + '_value').value;
+console.log(field_name);
+    switch(type) {
+        case '4' : // interval date
+            document.getElementById(field_name + '_date_begin_zone_label').style.display = '';
+            document.getElementById(field_name + '_date_end_zone').style.display = '';
+            break;
+        case '0' : // vers
+        case '1' : // avant
+        case '2' : // après
+        case '3' : // date précise
+        default :
+            document.getElementById(field_name + '_date_begin_zone_label').style.display = 'none';
+            document.getElementById(field_name + '_date_end_zone').style.display = 'none';
+            break;
+    }
+}
+    
+function date_flottante_reset_fields(field_name) {
+    document.getElementById(field_name + '_date_begin').value = '';
+    document.getElementById(field_name + '_date_end').value = '';
+    document.getElementById(field_name + '_comment').value = '';
+}
+</script>";
+
+$ontology_tpl['form_row_content_floating_date'] = "<div>
+					<select id='!!onto_row_id!!_!!onto_row_order!!_value' name='!!onto_row_id!![!!onto_row_order!!][value]' onchange=\"date_flottante_type_onchange('!!onto_row_id!!_!!onto_row_order!!');\">
+ 						<option value='0'>" . $msg['parperso_option_duration_type0'] . "</option>
+ 						<option value='1'>" . $msg['parperso_option_duration_type1'] . "</option>
+ 						<option value='2'>" . $msg['parperso_option_duration_type2'] . "</option>
+ 						<option value='3'>" . $msg['parperso_option_duration_type3'] . "</option>
+ 						<option value='4'>" . $msg['parperso_option_duration_type4'] . "</option>
+					</select>
+ 					<span id='!!onto_row_id!!_!!onto_row_order!!_date_begin_zone'>
+						<label id='!!onto_row_id!!_!!onto_row_order!!_date_begin_zone_label' for='!!onto_row_id!!_!!onto_row_order!!_date_begin'>" . $msg['parperso_option_duration_begin'] . "</label>
+						<input type='text' id='!!onto_row_id!!_!!onto_row_order!!_date_begin' name='!!onto_row_id!![!!onto_row_order!!][date_begin]' value='!!floating_date_begin!!' placeholder='" . $msg["format_date_input_placeholder"] . "' maxlength='11' size='11' />
+					</span>
+ 					<span id='!!onto_row_id!!_!!onto_row_order!!_date_end_zone'>
+						<label id='!!onto_row_id!!_!!onto_row_order!!_date_end_zone_label' for='!!onto_row_id!!_!!onto_row_order!!_date_end'>" . $msg['parperso_option_duration_end'] . "</label>
+						<input type='text' id='!!onto_row_id!!_!!onto_row_order!!_date_end' name='!!onto_row_id!![!!onto_row_order!!][date_end]' value='!!floating_date_end!!' placeholder='" . $msg["format_date_input_placeholder"] . "' maxlength='11' size='11' />
+					</span>
+					<label>" . $msg['parperso_option_duration_comment'] . "</label>
+					<input type='text' id='!!onto_row_id!!_!!onto_row_order!!_comment' name='!!onto_row_id!![!!onto_row_order!!][comment]' value='!!floating_date_comment!!' class='saisie-30em'/>
+					<input class='bouton' type='button' value='X' onClick=\"date_flottante_reset_fields('!!onto_row_id!!_!!onto_row_order!!');\"/>
+            <!--<input class='bouton' type='button' value='+' onclick='add_custom_date_flottante_()' >-->
+		</div>
+		<script>
+            document.getElementById('!!onto_row_id!!_!!onto_row_order!!_value').value = !!floating_date_value!!;
+			date_flottante_type_onchange('!!onto_row_id!!_!!onto_row_order!!');
+		</script>";

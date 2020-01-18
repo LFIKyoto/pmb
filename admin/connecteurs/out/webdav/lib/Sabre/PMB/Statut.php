@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Statut.php,v 1.5 2016-01-26 15:36:15 dgoron Exp $
+// $Id: Statut.php,v 1.6 2019-07-05 13:25:14 btafforeau Exp $
 namespace Sabre\PMB;
 
 class Statut extends Collection {
 	protected $statut_id;
 
-	function __construct($name,$config) {
+	public function __construct($name,$config) {
 		parent::__construct($config);
 		
 		$this->statut_id = substr($this->get_code_from_name($name),1);
@@ -20,11 +20,11 @@ class Statut extends Collection {
 		$this->type = "statut";
 	}
 
-	function getName() {
+	public function getName() {
 		return $this->format_name($this->statut_libelle." (S".$this->statut_id.")");
 	}
 	
-	function getNotices(){
+	public function getNotices(){
 		
 		$this->notices = array();		
 		if(!count($this->notices)){
@@ -39,7 +39,7 @@ class Statut extends Collection {
 		return $this->notices;
 	}
 	
-	function update_notice_infos($notice_id){
+	public function update_notice_infos($notice_id){
 		if($notice_id*1 >0){
 			$query = "update notices set statut = ".$this->statut_id." where notice_id = ".$notice_id;
 			pmb_mysql_query($query);

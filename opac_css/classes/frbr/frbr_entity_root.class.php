@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_root.class.php,v 1.4 2017-06-06 08:57:19 dgoron Exp $
+// $Id: frbr_entity_root.class.php,v 1.6 2019-09-03 15:36:06 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+require_once($class_path."/encoding_normalize.class.php");
 
 class frbr_entity_root {
 	protected $parameters;
@@ -196,7 +198,11 @@ class frbr_entity_root {
 	}
 	
 	public function json_decode($parameters){
-		$this->parameters = json_decode($parameters);
+	    global $charset;
+	    $this->parameters = json_decode($parameters);
+	    if (isset($this->parameters->active_template) && $charset != "utf-8") {
+	        $this->parameters->active_template = encoding_normalize::charset_normalize($this->parameters->active_template, "utf-8");
+	    }
 	}
 	
 	public function get_ajax_link($args){
@@ -258,6 +264,10 @@ class frbr_entity_root {
 	
 	public function get_parameters() {
 		return $this->parameters;
+	}
+	
+	public function set_parameters($parameters) {
+	    $this->parameters = $parameters;
 	}
 	
 	public function stripslashes($data) {

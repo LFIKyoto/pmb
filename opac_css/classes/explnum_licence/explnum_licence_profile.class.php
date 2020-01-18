@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_licence_profile.class.php,v 1.2 2017-07-27 10:09:39 vtouchard Exp $
+// $Id: explnum_licence_profile.class.php,v 1.4 2019-01-31 14:28:08 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -156,6 +156,52 @@ class explnum_licence_profile {
 	}
 	
 	public function get_quotation_rights(){
+		if (!isset($this->quotation_rights)) {
+			$this->fetch_data();
+		}
 		return $this->quotation_rights;
+	}
+	
+	public function get_quotation_rights_for_explnum($explnum_id) {
+		global $opac_url_base;
+		
+		$quotation = $this->get_quotation_rights();
+		
+		$query = 'SELECT explnum_nom, explnum_notice, explnum_bulletin FROM explnum WHERE explnum_id = "'.$explnum_id.'"';
+		$result = pmb_mysql_query($query);
+		if (pmb_mysql_num_rows($result)) {
+			$row = pmb_mysql_fetch_assoc($result);
+			$quotation = str_replace('{{ explnum_nom }}', $row['explnum_nom'], $quotation);
+			if ($row['explnum_notice']) {
+				$quotation = str_replace('{{ permalink }}', $opac_url_base.'index.php?lvl=notice_display&id='.$row['explnum_notice'], $quotation);
+				$query = 'SELECT tit1 FROM notices WHERE notice_id = '.$row['explnum_notice'];
+				$result = pmb_mysql_query($query);
+				if (pmb_mysql_num_rows($result)) {
+					$row = pmb_mysql_fetch_assoc($result);
+					$quotation = str_replace('{{ tit1 }}', $row['tit1'], $quotation);
+				}
+			} else if ($row['explnum_bulletin']) {
+				$quotation = str_replace('{{ permalink }}', $opac_url_base.'/index.php?lvl=bulletin_display&id='.$row['explnum_bulletin'], $quotation);
+				$query = 'SELECT bulletin_titre FROM bulletins WHERE bulletin_id = '.$row['explnum_bulletin'];
+				$result = pmb_mysql_query($query);
+				if (pmb_mysql_num_rows($result)) {
+					$row = pmb_mysql_fetch_assoc($result);
+					$quotation = str_replace('{{ tit1 }}', $row['bulletin_titre'], $quotation);
+				}
+			}
+			$p_perso = new parametres_perso("explnum");
+			if (!$p_perso->no_special_fields) {
+			    $p_perso->get_values($explnum_id);
+			    $values = $p_perso->values;
+			    foreach ($values as $field_id => $vals ) {
+			        $parametres_perso = array();
+			        foreach ($vals as $value) {
+			            $parametres_perso[] = $p_perso->get_formatted_output(array($value), $field_id);			        
+			        }			        
+			        $quotation = str_replace('{{ ' . $p_perso->t_fields[$field_id]["NAME"] . ' }}', implode(' ', $parametres_perso), $quotation);			        
+			    }
+			}
+		}
+		return $quotation;
 	}
 }

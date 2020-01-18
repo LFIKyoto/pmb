@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mailtpl.class.php,v 1.8 2017-08-29 12:20:10 jpermanne Exp $
+// $Id: mailtpl.class.php,v 1.8.6.1 2019-11-06 11:24:01 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -186,6 +186,13 @@ class mailtpl {
 		$this->fetch_data();	
 	}	
 	
+	public static function get_attachments_form() {
+	    global $mailtpl_attachments_form_tpl;
+	    
+	    $form = $mailtpl_attachments_form_tpl;
+	    return $form;
+	}
+	    
 } //mailtpl class end
 
 

@@ -6,8 +6,7 @@
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $charset;
-global $tpl_vue_facettes;
+global $charset, $tpl_vue_facettes, $msg;
 
 $tpl_vue_facettes=
 "

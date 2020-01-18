@@ -2,85 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rss.inc.php,v 1.11 2017-08-23 07:31:23 ngantier Exp $
+// $Id: rss.inc.php,v 1.12 2019-02-12 08:28:19 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-if(!isset($suite)) $suite = '';
-if(!isset($form_cb)) $form_cb = '';
 if(!isset($id_rss_flux)) $id_rss_flux = 0;
 
+require_once($class_path."/dsi/rss_controller.class.php");
+
 print "<h1>".$msg['dsi_rss_titre']."</h1>" ;
-switch($suite) {
-    case 'acces':
-    	$flux = new rss_flux($id_rss_flux) ;
-    	print $flux->show_form();  
-		break;
-    case 'add':
-    	$flux = new rss_flux(0) ;
-    	print $flux->show_form();  
-        break;
-    case 'delete':
-    	$flux = new rss_flux($id_rss_flux) ;
-    	print $flux->delete();  
-        print get_flux ($msg['dsi_flux_search'], $msg['dsi_flux_search_nom'], './dsi.php?categ=fluxrss&sub=', stripslashes($form_cb));
-		print pmb_bidi(dsi_list_flux_info($form_cb, 0)) ;
-		break;
-    case 'update':
-    	$flux = new rss_flux($id_rss_flux) ;
 
-		$temp=new stdClass();
-		$temp->id_rss_flux         	=$id_rss_flux ;
-		$temp->nom_rss_flux        	=$nom_rss_flux ;
-		$temp->link_rss_flux       	=$link_rss_flux ;
-		$temp->descr_rss_flux      	=$descr_rss_flux ;
-		$temp->lang_rss_flux       	=$lang_rss_flux ;
-		$temp->copy_rss_flux       	=$copy_rss_flux ;
-		$temp->editor_rss_flux     	=$editor_rss_flux ;
-		$temp->webmaster_rss_flux  	=$webmaster_rss_flux ;
-		$temp->ttl_rss_flux        	=$ttl_rss_flux ;
-		$temp->img_url_rss_flux    	=$img_url_rss_flux ;
-		$temp->img_title_rss_flux  	=$img_title_rss_flux ;
-		$temp->img_link_rss_flux   	=$img_link_rss_flux ;
-		
-		switch ($type_export){
-			case 'tpl':
-				$temp->export_court_flux="0";
-				$temp->tpl_rss_flux	=$notice_tpl;
-				if($notice_tpl==0){
-					$temp->format_flux=$format_flux;
-				}else{
-					$temp->format_flux="";
-				}
-				
-				break;
-			case 'export_court':
-				$temp->export_court_flux="1";
-				$temp->tpl_rss_flux	="0";
-				$temp->format_flux="";	
-				break;
-			default:
-				$temp->format_flux=$format_flux ;
-				break;
-		}
-		
-		if (!isset($paniers) || !$paniers) $paniers = array();
-		if (!isset($bannettes) || !$bannettes) $bannettes = array();
-    	$temp->num_paniers=			$paniers;
-    	$temp->num_bannettes=		$bannettes;
-		$flux->update($temp); 
-
-    	print get_flux ($msg['dsi_flux_search'], $msg['dsi_flux_search_nom'], './dsi.php?categ=fluxrss&sub=', stripslashes($nom_rss_flux));
-		print pmb_bidi(dsi_list_flux_info($form_cb, $id_rss_flux)) ;
-        break;
-    case 'search':
-        print get_flux ($msg['dsi_flux_search'], $msg['dsi_flux_search_nom'], './dsi.php?categ=fluxrss&sub=', stripslashes($form_cb));
-		print pmb_bidi(dsi_list_flux_info($form_cb, $id_rss_flux)) ;
-		break;
-    default:
-		echo window_title($database_window_title.$msg['dsi_menu_flux']);
-		print get_flux ($msg['dsi_flux_search'], $msg['dsi_flux_search_nom'], './dsi.php?categ=fluxrss&sub=', stripslashes($form_cb));
-		print pmb_bidi(dsi_list_flux_info($form_cb, $id_rss_flux)) ;
-        break;
-    }
-
+rss_controller::proceed($id_rss_flux);

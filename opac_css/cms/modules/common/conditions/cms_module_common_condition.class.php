@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_condition.class.php,v 1.21 2018-08-03 09:10:31 arenou Exp $
+// $Id: cms_module_common_condition.class.php,v 1.22 2019-02-25 14:40:39 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -300,7 +300,9 @@ class cms_module_common_condition extends cms_module_root{
 		$description = "";
 		if($this->parameters['selector']!= ""){
 			$selector = $this->get_selected_selector();
-			$description = "<span class = 'cms_module_common_condition_name_human_description'>".$context_name."</span> : ".$selector->get_human_description();
+			if(is_object($selector)) {
+				$description = "<span class = 'cms_module_common_condition_name_human_description'>".$context_name."</span> : ".$selector->get_human_description();
+			}
 		}
 		return $description;
 	}

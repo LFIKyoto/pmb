@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_segment_facets.tpl.php,v 1.6 2018-04-27 10:18:26 dgoron Exp $
+// $Id: search_segment_facets.tpl.php,v 1.7 2019-05-27 09:16:11 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $charset;
+global $charset, $msg;
 global $segment_facets_list_form;
 global $segment_facets_list_form_line;
 

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: edit.tpl.php,v 1.37 2018-06-07 12:55:12 ngantier Exp $
+// $Id: edit.tpl.php,v 1.38 2019-05-27 12:13:23 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $edit_menu, $msg, $pmb_short_loan_management, $pmb_pnb_param_login, $pmb_resa_planning,  $pmb_gestion_financiere_caisses, $pmb_transferts_actif, $transferts_validation_actif, $pmb_logs_activate, $edit_layout, $current_module, $edit_layout_end;
 
 // $edit_menu : menu page Editions
 $edit_menu = "

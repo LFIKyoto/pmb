@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_records.class.php,v 1.22 2018-06-14 10:19:16 dgoron Exp $
+// $Id: cms_module_common_datasource_records.class.php,v 1.23 2019-06-14 12:36:53 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -67,7 +67,7 @@ class cms_module_common_datasource_records extends cms_module_common_datasource_
 				}
 			}
 			$records = $this->filter_datas("notices",$records);
-			if($this->parameters['nb_max_elements'] > 0){
+			if(isset($this->parameters['nb_max_elements']) && $this->parameters['nb_max_elements'] > 0){
 				$records = array_slice($records, 0, $this->parameters['nb_max_elements']);
 			}
 			$return = array(

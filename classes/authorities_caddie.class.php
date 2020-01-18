@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authorities_caddie.class.php,v 1.33 2018-12-18 13:14:03 dgoron Exp $
+// $Id: authorities_caddie.class.php,v 1.44.2.1 2019-10-23 12:47:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,6 +13,7 @@ require_once ($include_path."/templates/authorities_cart.tpl.php");
 require_once ($include_path."/templates/cart.tpl.php");
 require_once($class_path."/autoloader.class.php");
 require_once($class_path."/list/caddie/list_authorities_caddie_ui.class.php");
+require_once($class_path.'/event/events/event_users_group.class.php');
 
 class authorities_caddie extends caddie_root {
 	// propriétés
@@ -55,8 +56,10 @@ class authorities_caddie extends caddie_root {
 				$this->name = $temp->name;
 				$this->comment = $temp->comment;
 				$this->autorisations = $temp->autorisations;
+				$this->autorisations_all = $temp->autorisations_all;
 				$this->classementGen = $temp->caddie_classement;
 				$this->acces_rapide = $temp->acces_rapide;
+				$this->favorite_color = $temp->favorite_color;
 				$this->creation_user_name = $temp->creation_user_name;
 				$this->creation_date = $temp->creation_date;
 			
@@ -93,11 +96,11 @@ class authorities_caddie extends caddie_root {
 	}
 	
 	// formulaire
-	public function get_form($form_action="", $form_cancel="") {
+	public function get_form($form_action="", $form_cancel="", $form_duplicate="") {
 		global $msg, $charset;
 		global $liaison_tpl;
 		
-		$form = parent::get_form($form_action, $form_cancel);
+		$form = parent::get_form($form_action, $form_cancel, $form_duplicate);
 		$form=str_replace('!!cart_type!!', $this->get_type_form(), $form);
 		if ($this->get_idcaddie()) {
 			$info_liaisons = $this->get_links_form();
@@ -180,7 +183,10 @@ class authorities_caddie extends caddie_root {
 				'type' => $temp->type,
 				'comment' => $temp->comment,
 				'autorisations' => $temp->autorisations,
+				'autorisations_all' => $temp->autorisations_all,
 				'caddie_classement' => $temp->caddie_classement,
+				'acces_rapide' => $temp->acces_rapide,
+				'favorite_color' => $temp->favorite_color,
 				'nb_item' => $nb_item,
 				'nb_item_pointe' => $nb_item_pointe,
 		);
@@ -188,17 +194,21 @@ class authorities_caddie extends caddie_root {
 	
 	// liste des paniers disponibles
 	static public function get_cart_list($restriction_panier="",$acces_rapide = 0) {
-		$caddies = array_merge(
+		if($restriction_panier == 'MIXED') {
+			$caddies = parent::get_cart_list("", $acces_rapide);
+		} else {
+			$caddies = array_merge(
 				parent::get_cart_list($restriction_panier, $acces_rapide),
 				parent::get_cart_list("MIXED", $acces_rapide)
-		);
+			);
+		}
 		//Dédoublonnage 
 		return array_map("unserialize", array_unique(array_map("serialize", $caddies)));
 	}
 	
 	// création d'un panier vide
 	public function create_cart() {
-		$requete = "insert into authorities_caddie set name='".addslashes($this->name)."', type='".$this->type."', comment='".addslashes($this->comment)."', autorisations='".$this->autorisations."', caddie_classement='".addslashes($this->classementGen)."', acces_rapide='".$this->acces_rapide."' ";
+		$requete = "insert into authorities_caddie set name='".addslashes($this->name)."', type='".$this->type."', comment='".addslashes($this->comment)."', autorisations='".$this->autorisations."', autorisations_all='".$this->autorisations_all."', caddie_classement='".addslashes($this->classementGen)."', acces_rapide='".$this->acces_rapide."', favorite_color='".addslashes($this->favorite_color)."' ";
 		$user = $this->get_info_user();
 		if(count($user)) {
 			$requete .= ", creation_user_name='".addslashes($user->name)."', creation_date='".date("Y-m-d H:i:s")."'";
@@ -206,21 +216,36 @@ class authorities_caddie extends caddie_root {
 		pmb_mysql_query($requete);
 		$this->idcaddie = pmb_mysql_insert_id();
 		$this->compte_items();
+		return $this->idcaddie;
 	}
 	
 	// sauvegarde du panier
 	public function save_cart() {
-		$query = "update authorities_caddie set name='".addslashes($this->name)."', type='".$this->type."', comment='".addslashes($this->comment)."', autorisations='".$this->autorisations."', caddie_classement='".addslashes($this->classementGen)."', acces_rapide='".$this->acces_rapide."' where ".static::get_field_name()."='".$this->get_idcaddie()."'";
+		$query = "update authorities_caddie set name='".addslashes($this->name)."', type='".$this->type."', comment='".addslashes($this->comment)."', autorisations='".$this->autorisations."', autorisations_all='".$this->autorisations_all."', caddie_classement='".addslashes($this->classementGen)."', acces_rapide='".$this->acces_rapide."', favorite_color='".addslashes($this->favorite_color)."' where ".static::get_field_name()."='".$this->get_idcaddie()."'";
 		$result = pmb_mysql_query($query);
 		return true;
 	}
 
+	protected function get_type_object_from_item($item=0) {
+		$authority = new authority($item);
+		$object_instance = $authority->get_object_instance();
+		return $authority->get_type_object();
+	}
+	
 	// ajout d'un item
 	public function add_item($item=0, $object_type="AUTHORS") {
 		if (!$item) return CADDIE_ITEM_NULL ;
 		
 		// les objets sont cohérents
 		if ($object_type==$this->type || $this->type == "MIXED") {
+			$requete_compte = "select count(1) from authorities_caddie_content where caddie_id='".$this->get_idcaddie()."' AND object_id='".$item."' ";
+			$result_compte = @pmb_mysql_query($requete_compte);
+			$deja_item=pmb_mysql_result($result_compte, 0, 0);
+			if (!$deja_item) {
+				$requete= "insert into authorities_caddie_content set caddie_id='".$this->get_idcaddie()."', object_id='".$item."' ";
+				$result = @pmb_mysql_query($requete);
+			}
+		} elseif($object_type == "MIXED" && $this->get_type_object_from_item($item) == static::get_const_from_type($this->type)) {
 			$requete_compte = "select count(1) from authorities_caddie_content where caddie_id='".$this->get_idcaddie()."' AND object_id='".$item."' ";
 			$result_compte = @pmb_mysql_query($requete_compte);
 			$deja_item=pmb_mysql_result($result_compte, 0, 0);
@@ -261,11 +286,9 @@ class authorities_caddie extends caddie_root {
 					return CADDIE_ITEM_SUPPR_BASE_OK;
 				}
 				break;
-			
 			case AUT_TABLE_AUTHPERSO :
-				//TODO : à revoir quand on implémentera les paniers d'autorités perso				
 				$authperso = new authperso(0, $object_instance->id);
-				if ($authperso->delete() === false) {
+				if ($authperso->delete($object_instance->id) === false) {
 					return CADDIE_ITEM_SUPPR_BASE_OK;
 				} else  {
 					return CADDIE_ITEM_AUT_USED;
@@ -349,19 +372,9 @@ class authorities_caddie extends caddie_root {
 	}
 
 	static public function show_actions($id_caddie = 0, $type_caddie = '') {
-		global $msg,$cart_action_selector,$cart_action_selector_line;
+		global $cart_action_selector,$cart_action_selector_line;
 		
-		//Le tableau des actions possibles
-		$array_actions = array();
-		$array_actions[] = array('msg' => $msg["caddie_menu_action_edit_panier"], 'location' => './autorites.php?categ=caddie&sub=gestion&quoi=panier&action=edit_cart&idcaddie='.$id_caddie.'&item=0');
-		$array_actions[] = array('msg' => $msg["caddie_menu_action_suppr_panier"], 'location' => './autorites.php?categ=caddie&sub=action&quelle=supprpanier&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
-		//$array_actions[] = array('msg' => $msg["caddie_menu_action_transfert"], 'location' => './autorites.php?categ=caddie&sub=action&quelle=transfert&action=transfert&object_type=NOTI&idcaddie='.$id_caddie.'&item=');
-		$array_actions[] = array('msg' => $msg["caddie_menu_action_edition"], 'location' => './autorites.php?categ=caddie&sub=action&quelle=edition&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
-		//$array_actions[] = array('msg' => $msg["caddie_menu_action_export"], 'location' => './autorites.php?categ=caddie&sub=action&quelle=export&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
-		$array_actions[] = array('msg' => $msg["caddie_menu_action_selection"], 'location' => './autorites.php?categ=caddie&sub=action&quelle=selection&action=&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
-		//$array_actions[] = array('msg' => $msg["caddie_menu_action_suppr_base"], 'location' => './autorites.php?categ=caddie&sub=action&quelle=supprbase&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
-		$array_actions[] = array('msg' => $msg["caddie_menu_action_reindex"], 'location' => './autorites.php?categ=caddie&sub=action&quelle=reindex&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
-		//On crée les lignes du menu
+		$array_actions = self::get_array_actions($id_caddie, $type_caddie);
 		$lines = '';
 		foreach($array_actions as $item_action){
 			$tmp_line = str_replace('!!cart_action_selector_line_location!!',$item_action['location'],$cart_action_selector_line);
@@ -375,9 +388,38 @@ class authorities_caddie extends caddie_root {
 		return $to_show;
 	}
 	
+	public static function get_array_actions($id_caddie = 0, $type_caddie = '', $actions_to_remove = array()) {
+		global $msg;
+		$array_actions = array();
+		if (empty($actions_to_remove['edit_cart'])) {
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_edit_panier"], 'location' => './autorites.php?categ=caddie&sub=gestion&quoi=panier&action=edit_cart&idcaddie='.$id_caddie.'&item=0');
+		}
+		if (empty($actions_to_remove['supprpanier'])) {
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_suppr_panier"], 'location' => './autorites.php?categ=caddie&sub=action&quelle=supprpanier&action=choix_quoi&idcaddie='.$id_caddie.'&item=0');
+		}
+		//$array_actions[] = array('msg' => $msg["caddie_menu_action_transfert"], 'location' => './autorites.php?categ=caddie&sub=action&quelle=transfert&action=transfert&object_type=NOTI&idcaddie='.$id_caddie.'&item=');
+		if (empty($actions_to_remove['edition'])) {
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_edition"], 'location' => './autorites.php?categ=caddie&sub=action&quelle=edition&action=choix_quoi&idcaddie='.$id_caddie.'&item=0');
+		}
+		//$array_actions[] = array('msg' => $msg["caddie_menu_action_export"], 'location' => './autorites.php?categ=caddie&sub=action&quelle=export&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
+		if (empty($actions_to_remove['selection'])) {
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_selection"], 'location' => './autorites.php?categ=caddie&sub=action&quelle=selection&action=&idcaddie='.$id_caddie.'&item=0');
+		}
+		$evt_handler = events_handler::get_instance();
+		$event = new event_users_group("users_group", "get_autorisation_del_base");
+		$evt_handler->send($event);
+		if(!$event->get_error_message() && empty($actions_to_remove['supprbase'])){
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_suppr_base"], 'location' => './autorites.php?categ=caddie&sub=action&quelle=supprbase&action=choix_quoi&object_type='.$type_caddie.'&idcaddie='.$id_caddie.'&item=0');
+		}
+		if (empty($actions_to_remove['reindex'])) {
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_reindex"], 'location' => './autorites.php?categ=caddie&sub=action&quelle=reindex&action=choix_quoi&idcaddie='.$id_caddie.'&item=0');
+		}
+		return $array_actions;
+	}
+	
 	protected function replace_in_action_query($query, $by) {
 // 		$final_query=str_replace("CADDIE(MIXED)",$by,$final_query);
-		$final_query = preg_replace("/CADDIE\(((.*,)?AUTHORS(,[^\)]*)?|(.*,)?CATEGORIES(,[^\)]*)?|(.*,)?PUBLISHERS(,[^\)]*)?|(.*,)?COLLECTIONS(,[^\)]*)?|(.*,)?SUBCOLLECTIONS(,[^\)]*)?|(.*,)?SERIES(,[^\)]*)?|(.*,)?TITRES_UNIFORMES(,[^\)]*)?|(.*,)?INDEXINT(,[^\)]*)?|(.*,)?CONCEPTS(,[^\)]*)?)\)/", $by, $query);
+		$final_query = preg_replace("/CADDIE\(((.*,)?MIXED(,[^\)]*)?|(.*,)?AUTHORS(,[^\)]*)?|(.*,)?CATEGORIES(,[^\)]*)?|(.*,)?PUBLISHERS(,[^\)]*)?|(.*,)?COLLECTIONS(,[^\)]*)?|(.*,)?SUBCOLLECTIONS(,[^\)]*)?|(.*,)?SERIES(,[^\)]*)?|(.*,)?TITRES_UNIFORMES(,[^\)]*)?|(.*,)?INDEXINT(,[^\)]*)?|(.*,)?AUTHPERSO(,[^\)]*)?|(.*,)?CONCEPTS(,[^\)]*)?)\)/", $by, $query);
 		return $final_query;
 	}
 	
@@ -467,14 +509,14 @@ class authorities_caddie extends caddie_root {
 				}
 			}
 		}
-		if(!sizeof($liste) || !is_array($liste)) {
+		if ((empty($liste) && !is_array($liste)) || !is_array($liste)) {
 			print $msg[399];
 			return;
 		} else {
 			print $this->get_js_script_cart_objects('autorites');
 			print $begin_result_liste;
 			print authorities_caddie::show_actions($this->get_idcaddie());
-			while(list($cle, $object) = each($liste)) {
+			foreach ($liste as $cle => $object) {
 				$authority = new authority($object['object_id']);
 				if (!$no_del) {
 					$lien_suppr_cart = "<a href='$url_base&action=del_item&item=".$object['object_id']."&page=$page_suppr&nbr_lignes=$nb_after_suppr&nb_per_page=$nb_per_page'><img src='".get_url_icon('basket_empty_20x20.gif')."' alt='basket' title=\"".$msg['caddie_icone_suppr_elt']."\" /></a>";
@@ -497,8 +539,8 @@ class authorities_caddie extends caddie_root {
 	
 	public function aff_cart_titre() {
 		global $msg;
-	
-		$link = "";
+		
+		$link = "./autorites.php?categ=caddie&sub=gestion&quoi=panier&action=&object_type=$this->type&idcaddie=$this->idcaddie&item=0";
 		return "
 			<div class='titre-panier'>
 				<h3>
@@ -516,7 +558,7 @@ class authorities_caddie extends caddie_root {
 		global $msg;
 		
 		$pb = new progress_bar($msg['caddie_situation_reindex_encours'], count($liste), 5);
-		while (list($cle, $object) = each($liste)) {
+		foreach ($liste as $cle => $object) {
 		    $authority = new authority($object);
 		    switch ($authority->get_type_object()) {
 		        case AUT_TABLE_CONCEPT :
@@ -686,6 +728,10 @@ class authorities_caddie extends caddie_root {
 	
 	public function get_idcaddie() {
 		return $this->idcaddie;
+	}
+	
+	public function set_idcaddie($idcaddie) {
+	    $this->idcaddie = intval($idcaddie);
 	}
 	
 	public static function get_type_from_const($const) {

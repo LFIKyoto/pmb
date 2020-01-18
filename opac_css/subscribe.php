@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: subscribe.php,v 1.47 2018-10-24 12:34:04 ngantier Exp $
+// $Id: subscribe.php,v 1.52.4.2 2019-11-21 09:56:16 ngantier Exp $
 
 $base_path=".";
 $is_opac_included = false;
@@ -62,6 +62,7 @@ require_once($base_path."/includes/mail.inc.php");
 
 // RSS
 require_once($base_path."/includes/includes_rss.inc.php");
+require_once($base_path."/includes/securimage/securimage.php");
 
 if ($is_opac_included) {
 	$std_header = $inclus_header ;
@@ -107,10 +108,11 @@ switch($subsact) {
 		echo $verif[1];
 		break;
 	case 'inscrire':
-		if ($f_verifcode) {
-			if (md5($f_verifcode) == $_SESSION['image_random_value']) {
-				// set the session
-				$_SESSION['image_is_logged_in'] = true;
+	    if ($captcha_code) {
+		    $securimage = new Securimage();
+		    if ($securimage->check($captcha_code)) {
+		        // set the session
+		        $_SESSION['image_is_logged_in'] = true;
 				// remove the random value from session
 				$_SESSION['image_random_value'] = '';
 				$verif=verif_validite_compte();
@@ -133,8 +135,6 @@ switch($subsact) {
 	case '':
 	default:
 		$subsact='';
-		echo $msg['subs_intro_services'];
-		echo str_replace("!!nb_h_valid!!",$opac_websubscribe_valid_limit,$msg['subs_intro_explication']);
 		echo generate_form_inscription() ;
 		break;
 	}
@@ -144,43 +144,7 @@ echo "</div>";
 //insertions des liens du bas dans le $footer si $opac_show_liensbas
 if ($opac_show_liensbas==1) $footer = str_replace("!!div_liens_bas!!",$liens_bas,$footer);
 	else $footer = str_replace("!!div_liens_bas!!","",$footer);
-
-$cms_build_info="";
-if($cms_build_activate == -1){
-	unset($_SESSION["cms_build_activate"]);
-}else if($cms_build_activate || $_SESSION["cms_build_activate"]){ // issu de la gestion
-	if(isset($pageid) && $pageid) {
-		require_once($base_path."/classes/cms/cms_pages.class.php");
-		$cms_page= new cms_page($pageid);
-		$cms_build_info['page']=$cms_page->get_env();
-	}
-	global $log, $infos_notice, $infos_expl, $nb_results_tab;
-	$cms_build_info['input']="subscribe.php";
-	$cms_build_info['session']=$_SESSION;
-	$cms_build_info['post']=$_POST;
-	$cms_build_info['get']=$_GET;
-	$cms_build_info['lvl']=$lvl;
-	$cms_build_info['tab']=$tab;
-	$cms_build_info['log']=$log;
-	$cms_build_info['infos_notice']=$infos_notice;
-	$cms_build_info['infos_expl']=$infos_expl;
-	$cms_build_info['nb_results_tab']=$nb_results_tab;
-	$cms_build_info['search_type_asked']=$search_type_asked;
-	$cms_build_info=rawurlencode(serialize(pmb_base64_encode($cms_build_info)));
-	$cms_build_info= "<input type='hidden' id='cms_build_info' name='cms_build_info' value='".$cms_build_info."' />";
-	$cms_build_info.="
-	<script type='text/javascript'>
-		if(window.top.window.cms_opac_loaded){
-			window.onload = function() {
-				window.top.window.cms_opac_loaded('".$_SERVER['REQUEST_URI']."');
-			}
-		}
-	</script>
-	";
-	$_SESSION["cms_build_activate"]="1";
-}
-$footer=str_replace("!!cms_build_info!!",$cms_build_info,$footer);
-
+	
 //affichage du bandeau_2 si $opac_show_bandeau_2 = 1
 if ($opac_show_bandeau_2==0) {
 	$bandeau_2_contains= "";
@@ -223,59 +187,9 @@ if ($opac_show_bandeaugauche==0) {
 	$footer= str_replace("!!contenu_bandeau_2!!",$opac_facette_in_bandeau_2?$lvl1.$facette:"",$footer);
 }
 
-print $footer;
 
-if($opac_parse_html || $cms_active){
-	if($opac_parse_html){
-		$htmltoparse= parseHTML(ob_get_contents());
-	}else{
-		$htmltoparse= ob_get_contents();
-	}
+cms_build_info(array(
+    'input' => 'subscribe.php',
+));
 
-	ob_end_clean();
-	if ($cms_active) {
-		require_once($base_path."/classes/cms/cms_build.class.php");
-		$cms=new cms_build();
-		$htmltoparse = $cms->transform_html($htmltoparse);
-	}
-	//Compression CSS
-	if($opac_compress_css == 1 && !$cms_active){
-		$compressed_file_exist = file_exists("./temp/full.css");
-		require_once($class_path."/curl.class.php");
-		$dom = new DOMDocument();
-		$dom->encoding = $charset;
-		$dom->loadHTML($htmltoparse);
-		$css_buffer = "";
-		$links = $dom->getElementsByTagName("link");
-		$dom_css = array();
-		for($i=0 ; $i<$links->length ; $i++){
-			$dom_css[] = $links->item($i);
-			if(!$compressed_file_exist && $links->item($i)->hasAttribute("type") && $links->item($i)->getAttribute("type") == "text/css"){
-				$css_buffer.= loadandcompresscss(html_entity_decode($links->item($i)->getAttribute("href")));
-			}
-		}
-		$styles = $dom->getElementsByTagName("style");
-		for($i=0 ; $i<$styles->length ; $i++){
-			$dom_css[] = $styles->item($i);
-			if(!$compressed_file_exist){
-				$css_buffer.= compresscss($styles->item($i)->nodeValue,"");
-			}
-		}
-		foreach($dom_css as $link){
-			$link->parentNode->removeChild($link);
-		}
-		if(!$compressed_file_exist){
-			file_put_contents("./temp/full.css",$css_buffer);
-		}
-		$link = $dom->createElement("link");
-		$link->setAttribute("href", "./temp/full.css");
-		$link->setAttribute("rel", "stylesheet");
-		$link->setAttribute("type", "text/css");
-		$dom->getElementsByTagName("head")->item(0)->appendChild($link);
-		$htmltoparse = $dom->saveHTML();
-	}else if (file_exists("./temp/full.css") && !$cms_active){
-		unlink("./temp/full.css");
-	}
-	print $htmltoparse;
-}
 pmb_mysql_close($dbh);

@@ -2,12 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: liste-suggestions_genes.inc.php,v 1.6 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: liste-suggestions_genes.inc.php,v 1.7 2019-05-28 15:00:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 // popup d'impression PDF pour liste de suggestions
 // reçoit : user_input, statut
+
+global $class_path, $base_path, $acquisition_pdfsug_text_size, $acquisition_pdfsug_format_page, $acquisition_pdfsug_orient_page, $acquisition_pdfsug_marges_page, $msg;
+global $acquisition_pdfsug_pos_titre, $acquisition_pdfsug_pos_date, $acquisition_pdfsug_tab_sug, $acquisition_pdfsug_pos_footer, $fpdf, $statut, $user_input, $num_categ, $pmb_pdf_font;
 
 	require_once($class_path.'/suggestions.class.php');
 	require_once($class_path.'/suggestions_origine.class.php');
@@ -103,7 +106,7 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 		$aq=new analyse_query(stripslashes($user_input),0,0,0,0);
 		$q = suggestions::listSuggestions(0, $statut, $num_categ, $mask, 0, 0, $aq, $user_input);
 	}
-	$res = pmb_mysql_query($q, $dbh);
+	$res = pmb_mysql_query($q);
 	
 	
 	$ourPDF->addPage();
@@ -165,7 +168,7 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 		
 		$sug = new suggestions($row->id_suggestion);
 		$q = suggestions_origine::listOccurences($row->id_suggestion, '1');
-		$list_orig = pmb_mysql_query($q, $dbh);
+		$list_orig = pmb_mysql_query($q);
 		
 		if (pmb_mysql_num_rows($list_orig)) {
 			$row_orig = pmb_mysql_fetch_object($list_orig);
@@ -178,14 +181,14 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 			default:
 			case '0' :
 			 	$requete_user = "SELECT userid, nom, prenom FROM users where userid = '".$orig."' limit 1 ";
-				$res_user = pmb_mysql_query($requete_user, $dbh);
+				$res_user = pmb_mysql_query($requete_user);
 				$row_user=pmb_mysql_fetch_row($res_user);
 				$lib_orig = $row_user[1];
 				if ($row_user[2]) $lib_orig.= ", ".$row_user[2];			
 				break;
 			case '1' :
 			 	$requete_empr = "SELECT id_empr, empr_nom, empr_prenom, empr_adr1 FROM empr where id_empr = '".$orig."' limit 1 ";
-				$res_empr = pmb_mysql_query($requete_empr, $dbh);
+				$res_empr = pmb_mysql_query($requete_empr);
 				$row_empr=pmb_mysql_fetch_row($res_empr);
 				$lib_orig = $row_empr[1];
 				if ($row_empr[2]) $lib_orig.= ", ".$row_empr[2];		
@@ -313,9 +316,3 @@ function printEntete_genes() {
 	
 	$y = $y+$h;
 }
-?>
-
-
-
-
-

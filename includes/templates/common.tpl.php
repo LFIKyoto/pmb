@@ -2,9 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: common.tpl.php,v 1.180 2018-11-21 21:11:00 dgoron Exp $
+// $Id: common.tpl.php,v 1.182 2019-05-27 14:55:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $pmb_recherche_ajax_mode, $fiches_active, $cms_active, $pmb_scan_request_activate, $semantic_active, $acquisition_active, $demandes_active, $dsi_active, $pmb_show_help;
+global $pmb_extension_tab, $current, $frbr_active, $modelling_active, $param_chat_activate, $class_path, $pmb_default_style_addon, $css_addon, $std_header, $charset, $msg, $stylesheet;
+global $base_path, $src_maps_dojo, $pmb_map_activate, $pmb_map_base_layer_type, $javascript_path, $base_use_dojo, $pmb_dojo_gestion_style, $lang, $base_title, $base_noheader;
+global $base_nobody, $base_nochat, $selector_header, $selector_header_no_cache, $extra2, $menu_bar, $dash_icon_path, $notification_empty, $notification_icon, $notification_zone;
+global $dashboard_module_name, $dashboard_class_name, $dash, $styles_path, $notif_icon_path, $pmb_dashboard_quick_params_activate, $extra, $request_uri, $doc_params_explode, $doc_params;
+global $pos, $script_name, $pmb_opac_url, $pmb_show_rtl, $timeout_start_alert, $categ, $url_active, $presence_chaine, $extra_info, $footer, $begin_result_liste, $affich_tris_result_liste;
+global $sort, $expand_result, $end_result_list, $cms_dojo_plugins_editor;
 
 if(!isset($pmb_recherche_ajax_mode)) $pmb_recherche_ajax_mode = 0;
 if(!isset($fiches_active)) $fiches_active = 0;
@@ -26,7 +34,7 @@ require_once($class_path."/sort.class.php");
 function link_styles($style) {
     // où $rep = répertoire de stockage des feuilles
     
-    global $feuilles_style_deja_lu ;
+    global $feuilles_style_deja_lu;
     if ($feuilles_style_deja_lu) return $feuilles_style_deja_lu ;
     
     // mise en forme du répertoire
@@ -773,7 +781,6 @@ $std_header = "<!DOCTYPE html>
                       $affich_tris_result_liste .= $msg['tri_par']." ".$sort->descriptionTriParId($_SESSION["tri"]);
                   }
                   
-                  $affich_tris_result_liste .="<br />";
                   $expand_result="
 <script type=\"text/javascript\" src=\"./javascript/tablist.js\"></script>
 ";

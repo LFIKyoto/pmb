@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: transaction.tpl.php,v 1.2 2014-06-11 14:09:26 ngantier Exp $
+// $Id: transaction.tpl.php,v 1.3 2019-05-27 10:25:29 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $transactype_form, $msg, $current_module, $transactype_list_form;
 
 $transactype_form="
 

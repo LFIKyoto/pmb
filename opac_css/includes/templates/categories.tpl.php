@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: categories.tpl.php,v 1.18 2018-01-25 10:13:28 dgoron Exp $
+// $Id: categories.tpl.php,v 1.19 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
+global $msg;
 global $tpl_div_categories;
 global $tpl_div_category;
 global $tpl_subcategory;

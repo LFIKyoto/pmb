@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mysql.inc.php,v 1.18 2017-02-09 13:45:19 dgoron Exp $
+// $Id: mysql.inc.php,v 1.19 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -171,7 +171,7 @@ if($action) {
 	}
 
 	echo "<table >";
-	while(list($cle, $valeur) = each($table)) {
+	foreach ($table as $cle => $valeur) {
 		$requete = $action." TABLE ".$valeur." ";
 		$res = @pmb_mysql_query($requete, $dbh);
 		$nbr_lignes = @pmb_mysql_num_rows($res);

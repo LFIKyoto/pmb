@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_diff.tpl.php,v 1.30 2017-11-22 11:07:34 dgoron Exp $
+// $Id: serialcirc_diff.tpl.php,v 1.31 2019-05-27 12:51:50 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $serialcirc_diff_form, $msg, $charset, $serialcirc_diff_form_empr_list, $serialcirc_diff_form_empr_list_empr, $serialcirc_diff_form_empr_list_group, $serialcirc_diff_form_empr_list_group_elt, $serialcirc_diff_form_empr_list_group_empty, $serialcirc_diff_form_empr, $serialcirc_diff_form_group_empr_0, $serialcirc_diff_form_group_empr, $serialcirc_diff_form_group, $serialcirc_diff_form_ficheformat, $serialcirc_diff_form_option;
 
 $serialcirc_diff_form="
 	<script type='text/javascript' src='./javascript/ajax.js'></script>

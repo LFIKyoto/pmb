@@ -2,17 +2,15 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_empr_caddie_ui.class.php,v 1.4 2018-08-06 12:20:58 dgoron Exp $
+// $Id: list_empr_caddie_ui.class.php,v 1.4.6.5 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+global $class_path;
 
 require_once($class_path."/list/caddie/list_caddie_root_ui.class.php");
 
 class list_empr_caddie_ui extends list_caddie_root_ui {
-		
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	protected function _get_query_caddie_content() {
 		$query = "SELECT empr_caddie_content.object_id FROM empr_caddie_content ";
@@ -24,45 +22,55 @@ class list_empr_caddie_ui extends list_caddie_root_ui {
 	protected function _get_query_base() {
 		switch (static::$object_type) {
 			case 'EMPR':
-// 				group_concat(libelle_groupe separator ' ; ') as 'libelle_groupe'
-				$query = "select empr.id_empr as id, empr.*, empr_categ.libelle as categ_libelle,
-					empr_codestat.libelle as codestat_libelle,statut_libelle,location_libelle,type_abt_libelle
-					from empr 
-					left join empr_groupe on id_empr = empr_id 
-					left join groupe on id_groupe = groupe_id 
-					left join type_abts on id_type_abt=type_abt, 
-					empr_categ, empr_codestat, empr_statut, docs_location
-					where id_empr IN (".$this->_get_query_caddie_content().") and empr_categ=id_categ_empr and empr_codestat=idcode and empr_statut=idstatut and empr_location=idlocation
-				";
+				$query = "SELECT DISTINCT empr.id_empr as id, empr.*, empr_categ.libelle AS categ_libelle, empr_codestat.libelle AS codestat_libelle, 
+				          type_abt_libelle, statut_libelle, location_libelle, GROUP_CONCAT(libelle_groupe SEPARATOR ' ; ') as groupe_libelle
+				          FROM empr 
+                          LEFT JOIN empr_groupe ON id_empr = empr_id 
+				          LEFT JOIN groupe ON id_groupe = groupe_id 
+				          LEFT JOIN type_abts ON id_type_abt = type_abt, empr_categ, empr_codestat, empr_statut, docs_location 
+				          WHERE id_empr IN (".$this->_get_query_caddie_content().") 
+			              AND empr_categ = id_categ_empr 
+			              AND empr_codestat = idcode 
+			              AND empr_statut = idstatut 
+			              AND empr_location = idlocation";
 				break;
+			default:
+			    $query = "";
+			    break;
 		}
 		return $query;
 	}
 	
+	protected function _get_query_order() {
+	    return ' GROUP BY empr.id_empr '.parent::_get_query_order();
+	}
+	
 	protected function get_exclude_fields() {
 		return array(
-				'empr_categ',
-				'empr_codestat',
-				'empr_password',
-				'empr_password_is_encrypted',
-				'empr_digest',
-				'type_abt',
-				'empr_location',
-				'empr_statut',
-				'cle_validation',
-				'empr_subscription_action'
+			'empr_categ',
+			'empr_codestat',
+			'empr_password',
+			'empr_password_is_encrypted',
+			'empr_pnb_password',
+			'empr_pnb_password_hint',
+			'empr_digest',
+			'type_abt',
+			'empr_location',
+			'empr_statut',
+			'cle_validation',
+			'empr_subscription_action'
 		);
 	}
 	
 	protected function get_main_fields() {
 		return array_merge(
-				$this->get_describe_fields('empr', 'lenders', 'empr'),
-				array('categ_libelle' => $this->get_describe_field('categ_libelle', 'lenders', 'empr')),
-				array('codestat_libelle' => $this->get_describe_field('codestat_libelle', 'lenders', 'empr')),
-				array('statut_libelle' => $this->get_describe_field('statut_libelle', 'lenders', 'empr')),
-				array('location_libelle' => $this->get_describe_field('location_libelle', 'lenders', 'empr')),
-				array('type_abt_libelle' => $this->get_describe_field('type_abt_libelle', 'lenders', 'empr')),
-				array('groupe_libelle' => $this->get_describe_field('groupe_libelle', 'lenders', 'empr'))
+			$this->get_describe_fields('empr', 'lenders', 'empr'),
+			array('categ_libelle' => $this->get_describe_field('categ_libelle', 'lenders', 'empr')),
+			array('codestat_libelle' => $this->get_describe_field('codestat_libelle', 'lenders', 'empr')),
+			array('statut_libelle' => $this->get_describe_field('statut_libelle', 'lenders', 'empr')),
+			array('location_libelle' => $this->get_describe_field('location_libelle', 'lenders', 'empr')),
+			array('type_abt_libelle' => $this->get_describe_field('type_abt_libelle', 'lenders', 'empr')),
+			array('groupe_libelle' => $this->get_describe_field('groupe_libelle', 'lenders', 'empr'))
 		);
 	}
 	
@@ -78,10 +86,7 @@ class list_empr_caddie_ui extends list_caddie_root_ui {
 	 * Initialisation du tri par défaut appliqué
 	 */
 	protected function init_default_applied_sort() {
-		$this->applied_sort = array(
-				'by' => 'empr_nom',
-				'asc_desc' => 'asc'
-		);
+	    $this->add_applied_sort('empr_nom');
 	}
 	
 	public static function get_controller_url_base() {

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entities_controller.class.php,v 1.10 2018-06-19 16:02:55 dgoron Exp $
+// $Id: entities_controller.class.php,v 1.13 2019-05-21 09:12:35 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -29,7 +29,7 @@ class entities_controller {
 	protected $delete_url = '';
 	
 	public function __construct($id=0) {
-		$this->id = $id+0;
+	    $this->id = intval($id);
 	}
 	
 	public function get_model_class_name() {
@@ -92,10 +92,20 @@ class entities_controller {
 	}
 	
 	public function proceed_explnum_update() {
+		global $msg;
 		global $f_notice, $f_bulletin, $f_nom, $f_url;
 		global $conservervignette, $f_statut_chk, $f_explnum_statut;
 
+		//Vérification des champs personalisés
+		$p_perso=new parametres_perso("explnum");
+		$nberrors=$p_perso->check_submited_fields();
+		if ($nberrors) {
+			error_message_history($msg["notice_champs_perso"],$p_perso->error_message,1);
+			exit();
+		}
+		
 		$explnum = new explnum($this->id);
+		$explnum->set_p_perso($p_perso);
 		$explnum->mise_a_jour($f_notice, $f_bulletin, $f_nom, $f_url, $this->get_permalink(), $conservervignette, $f_statut_chk, $f_explnum_statut);
 	}
 	

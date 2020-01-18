@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entite.inc.php,v 1.32 2017-04-19 12:37:02 dgoron Exp $
+// $Id: entite.inc.php,v 1.33.4.1 2019-11-04 10:54:00 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -50,9 +50,11 @@ function show_coord_form($id= 0) {
 	global $charset;
 	global $coord_form, $coord_form_biblio, $coord_form_suite;
 	global $ptab, $script;
+	global $PMBuserid;
 	
 	$ptab[1] = $ptab[1].$ptab[10].$ptab[11];
 	$ptab[1] = str_replace('!!adresse!!', htmlentities($msg['acquisition_adr_fac'],ENT_QUOTES, $charset), $ptab[1]);
+	$ptab[1] = str_replace('!!button_adr_fac!!', $ptab[12], $ptab[1]);
 	$coord_form = str_replace('!!id!!', $id, $coord_form);
 	$ptab[3] = str_replace('!!id!!', $id, $ptab[3]);
 
@@ -101,7 +103,7 @@ function show_coord_form($id= 0) {
 		$coord_form = str_replace('!!site_web!!', '', $coord_form);
 		$coord_form = str_replace('!!logo!!', '', $coord_form);
 
-		autorisations();
+		autorisations($PMBuserid);
 
 	} else {
 		

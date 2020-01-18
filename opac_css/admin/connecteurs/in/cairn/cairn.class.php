@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cairn.class.php,v 1.6 2018-11-21 20:14:45 dgoron Exp $
+// $Id: cairn.class.php,v 1.8 2019-07-10 06:44:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,7 +12,7 @@ require_once($base_path."/admin/connecteurs/in/oai/oai_protocol.class.php");
 require_once($class_path."/sessions_tokens.class.php");
 
 if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
-	if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "0");
+    if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "0");
 	require_once($include_path.'/xslt-php4-to-php5.inc.php');
 }
 
@@ -205,7 +205,7 @@ class cairn extends oai {
 		return $url;
 	}
 	
-	function source_get_property_form($source_id) {
+	public function source_get_property_form($source_id) {
     	global $charset;
     	
     	$params=$this->get_source_params($source_id);

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannette_gerer.inc.php,v 1.15 2017-11-23 09:38:40 ngantier Exp $
+// $Id: bannette_gerer.inc.php,v 1.16.6.1 2019-09-26 15:41:01 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,11 +17,13 @@ if (!$id_empr) $id_empr=$_SESSION["id_empr_session"] ;
 
 $bannette_abon_instance = new bannette_abon(0, $id_empr);
 if (isset($enregistrer) && $enregistrer=='PUB') {
-	$bannette_abon_instance->save_bannette_abon($bannette_abon);
+    if(empty($bannette_filtered_list)) $bannette_filtered_list = array();
+	$bannette_abon_instance->save_bannette_abon($bannette_abon, $bannette_filtered_list);
 }
 
 if (isset($enregistrer) && $enregistrer=='PRI') {
-	$bannette_abon_instance->delete_bannette_abon($bannette_abon);
+    if(empty($bannette_filtered_list)) $bannette_filtered_list = array();
+    $bannette_abon_instance->delete_bannette_abon($bannette_abon, $bannette_filtered_list);
 }
 
 print "<div id='aut_details' class='aut_details_bannette'>\n";
@@ -31,7 +33,7 @@ if ($opac_allow_resiliation) {
 	if ($aff) 
 		print "<h3><span>".$msg['dsi_bannette_gerer_pub']."</span></h3>\n".$aff;
 	else 
-		print "<h3><span>".$msg['dsi_bannette_gerer_pub']."</span></h3><br />".$msg['empr_no_alerts'];
+		print "<h3><span>".$msg['dsi_bannette_gerer_pub']."</span></h3><br />".$msg['dsi_bannette_pub_no_alerts'];
 	}
 	 
 if ($opac_allow_bannette_priv) {
@@ -39,7 +41,7 @@ if ($opac_allow_bannette_priv) {
 	if ($aff)
 		 print "<h3><span>".$msg['dsi_bannette_gerer_priv']."</span></h3>\n".$aff ;
 	else 
-		print "<h3><span>".$msg['dsi_bannette_gerer_priv']."</span></h3><br />".$msg['empr_no_alerts'];
+		print "<h3><span>".$msg['dsi_bannette_gerer_priv']."</span></h3><br />".$msg['dsi_bannette_priv_no_alerts'];
 	} 
 
 print "</div><!-- fermeture #aut_details -->\n";	

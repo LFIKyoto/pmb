@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: skos_view_concepts.class.php,v 1.10 2018-10-16 14:08:38 ngantier Exp $
+// $Id: skos_view_concepts.class.php,v 1.11 2019-03-12 10:59:25 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -127,7 +127,7 @@ class skos_view_concepts {
 	}
 	
 	/**
-	 * Retourne l'affichage des termes associés d'un concept
+	 * Retourne l'affichage des relations associatives d'un concept
 	 * @param skos_concepts_list $concepts_list Liste des parents
 	 * @return string
 	 */
@@ -136,13 +136,35 @@ class skos_view_concepts {
 	}
 	
 	/**
-	 * Retourne les data des termes associés d'un concept
+	 * Retourne les data des relations associatives d'un concept
 	 * @param skos_concepts_list $concepts_list Liste des parents
 	 * @return array
 	 */
 	static public function get_related_data_list($concepts_list) {
 	    return array(
 	        'title' => skos_onto::get_property_label("http://www.w3.org/2004/02/skos/core#Concept", "http://www.w3.org/2004/02/skos/core#related"),
+	        'elements' => self::get_sorted_concepts($concepts_list->get_concepts(), false)
+	    );
+	}
+	
+	/**
+	 * Retourne l'affichage des termes associés d'un concept
+	 * @param skos_concepts_list $concepts_list Liste des parents
+	 * @return string
+	 */
+	static public function get_related_match_list($concepts_list) {
+	    //on garde le même template que pour les relation associatives (skos_view_concepts_related_list)
+		return self::render(self::get_related_match_data_list($concepts_list), "skos_view_concepts_related_list", 0);
+	}
+	
+	/**
+	 * Retourne les data des termes associés d'un concept
+	 * @param skos_concepts_list $concepts_list Liste des parents
+	 * @return array
+	 */
+	static public function get_related_match_data_list($concepts_list) {
+	    return array(
+	        'title' => skos_onto::get_property_label("http://www.w3.org/2004/02/skos/core#Concept", "http://www.w3.org/2004/02/skos/core#relatedMatch"),
 	        'elements' => self::get_sorted_concepts($concepts_list->get_concepts(), false)
 	    );
 	}

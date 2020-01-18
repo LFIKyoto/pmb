@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_contribution_datatype_resource_selector_ui.class.php,v 1.11 2018-12-28 16:19:06 tsamson Exp $
+// $Id: onto_contribution_datatype_resource_selector_ui.class.php,v 1.15 2019-08-14 08:02:58 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -38,7 +38,7 @@ class onto_contribution_datatype_resource_selector_ui extends onto_common_dataty
 		}
 	
 		$form=$ontology_tpl['form_row'];
-		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->label, 'utf-8') ,ENT_QUOTES,$charset) , $form);
+		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->get_label(), 'utf-8') ,ENT_QUOTES,$charset) , $form);
 		/** traitement initial du range ?!*/
 		$range_for_form = "";
 		if(is_array($property->range)){
@@ -54,7 +54,7 @@ class onto_contribution_datatype_resource_selector_ui extends onto_common_dataty
 			/** On part du principe que l'on a qu'un range **/
 		// 		$selector_url = $this->get_resource_selector_url($property->range[0]);
 		$content='';
-		if($restrictions->get_max()<$i || $restrictions->get_max()===-1){			
+		if($restrictions->get_max()===-1){			
 			$content.=$ontology_tpl['form_row_content_input_add_resource_selector'];
 		}
 		$content = str_replace("!!property_name!!", rawurlencode($property->pmb_name), $content);
@@ -174,7 +174,7 @@ class onto_contribution_datatype_resource_selector_ui extends onto_common_dataty
 	// 				$input = str_replace("!!linked_form_title!!", $property->linked_form[0]['form_title'], $input);
 				}
 			}
-				
+			$input .= $ontology_tpl['form_row_content_resource_template'];
 			$input = str_replace("!!property_name!!", rawurlencode($property->pmb_name), $input);
 			$row=str_replace("!!onto_row_inputs!!",$input , $row);	
 			$row=str_replace("!!onto_row_order!!","0" , $row);	
@@ -182,12 +182,13 @@ class onto_contribution_datatype_resource_selector_ui extends onto_common_dataty
 		}	
 	
 		$input = '';	
-		$form=str_replace("!!onto_rows!!",$content ,$form);	
-		$form=str_replace("!!onto_completion!!",self::get_completion_from_range($range_for_form), $form);	
-		$form=str_replace("!!onto_equation_query!!",htmlentities(static::get_equation_query($property),ENT_QUOTES,$charset),$form);	
-		$form=str_replace("!!onto_area_id!!",($area_id ? $area_id : ''),$form);		
+		$form = str_replace("!!onto_rows!!", $content, $form);
+		$form = str_replace("!!onto_row_scripts!!", static::get_scripts(), $form);
+		$form = str_replace("!!onto_completion!!", self::get_completion_from_range($range_for_form), $form);	
+		$form = str_replace("!!onto_equation_query!!", htmlentities(static::get_equation_query($property),ENT_QUOTES,$charset), $form);	
+		$form = str_replace("!!onto_area_id!!", ($area_id ? $area_id : ''), $form);		
 		$form = self::get_form_with_special_properties($property, $datas, $instance_name, $form);	
-		$form=str_replace("!!onto_row_id!!",$instance_name.'_'.$property->pmb_name , $form);
+		$form = str_replace("!!onto_row_id!!", $instance_name.'_'.$property->pmb_name, $form);
 	
 		return $form;
 	} // end of member function get_form
@@ -198,7 +199,7 @@ class onto_contribution_datatype_resource_selector_ui extends onto_common_dataty
 	 * @return string
 	 */
 	protected static function get_equation_query($property) {	
-		if(!$property->pmb_extended['equation']) {
+		if(empty($property->pmb_extended['equation'])) {
 			return '';
 		}
 		$query = "SELECT contribution_area_equation_query FROM contribution_area_equations WHERE contribution_area_equation_id='".$property->pmb_extended['equation']."'";

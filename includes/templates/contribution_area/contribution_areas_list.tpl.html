@@ -1,4 +1,4 @@
-<!-- $Id: contribution_areas_list.tpl.html,v 1.1 2017-09-13 12:38:29 tsamson Exp $ -->
+<!-- $Id: contribution_areas_list.tpl.html,v 1.2 2019-03-21 16:19:24 ccraig Exp $ -->
 
 <style type="text/css">
 	.contribution_form_table {
@@ -57,6 +57,9 @@
 						<div class='contribution_form_table_cell'>
 							<a href='./catalog.php?categ=contribution_area&action=push&sub={{ form.sub }}&id={{ form.uri_id }}&action=push' onclick='if(!confirm(pmbDojo.messages.getMessage("contribution", "onto_contribution_push_confirm"))){return false;}'>
 								<input type="button" value="{{ msg.contribution_area_validate }}" class="bouton"/>
+							</a>
+							<a href='./catalog.php?categ=contribution_area&action=edit&sub={{ form.sub }}&area_id={{ form.area.id }}&form_id={{ form.form_id }}&form_uri={{ form.form_uri }}&id={{ form.uri_id }}&scenario={{ form.parent_scenario_uri }}{% if form.contributor %}&contributor={{ form.contributor.id }}{% endif %}'>
+								<input type="button" value="{{ msg.62 }}" class="bouton"/>
 							</a>
 							<a href='./catalog.php?categ=contribution_area&action=delete&sub={{ form.sub }}&id={{ form.uri_id }}&action=delete' onclick='if(!confirm("{{ msg.onto_contribution_delete_confirm }}")){return false;}'>
 								<input type="button" value="{{ msg.63 }}" class="bouton"/>

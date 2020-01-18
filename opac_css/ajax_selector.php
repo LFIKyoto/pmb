@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_selector.php,v 1.77 2018-12-28 15:27:22 mbertin Exp $
+// $Id: ajax_selector.php,v 1.86.2.2 2019-11-25 12:52:58 ngantier Exp $
 
 $base_path=".";
 require_once($base_path."/includes/init.inc.php");
@@ -27,7 +27,7 @@ $start = str_replace("*","%",$start);
 
 $autexclude_tab=explode(",",$autexclude);
 foreach($autexclude_tab as $id_autexclude){
-	$autexclude_tab_clean[]=$id_autexclude+0;
+	$autexclude_tab_clean[] = (int) $id_autexclude;
 }
 $autexclude=implode(",",$autexclude_tab_clean);
 
@@ -100,7 +100,7 @@ switch($completion):
 			$display_temp = "" ;
 			$display_temp_prefix = "" ;
 			$lib_simple="";
-			$tab_lib_categ="";
+			$tab_lib_categ = array();
 			$temp = new categories($categ->categ_id, $categ->langue);
 			if (($id_thes == -1) && (!$thes_unique)) {
 				$thes = new thesaurus($categ->num_thesaurus);
@@ -152,7 +152,7 @@ switch($completion):
 				$display_temp = "" ;
 				$display_temp_prefix="";
 				$lib_simple="";
-				$tab_lib_categ="";
+				$tab_lib_categ = array();
 				$temp = new categories($categ->categ_id, $categ->langue);
 				if (($id_thes == -1) && (!$thes_unique)) {
 					$thes = new thesaurus($categ->num_thesaurus);
@@ -235,7 +235,7 @@ switch($completion):
 		while(($categ=pmb_mysql_fetch_object($res))) {
 			$display_temp = "" ;
 			$lib_simple="";
-			$tab_lib_categ="";
+			$tab_lib_categ = array();
 			$temp = new categories($categ->categ_id, $categ->langue);
 			if ($id_thes == -1) {
 				$thes = new thesaurus($categ->num_thesaurus);
@@ -394,7 +394,7 @@ switch($completion):
 		$array_selector=array();
 		if(count($suggestion->arrayResults)){
 			foreach($suggestion->arrayResults as $v){
-				if(str_word_count($v["field_content"])>10){
+				if(str_word_count($v["field_content"], 0, "0123456789")>10){
 					//$array_selector[]=array($v["field_content"]." <small>dans <i>".$v["field_name"]."</i></small>"=>implode(" ",$v["field_content_search"]));
 					$array_selector[]=array($v["field_content"]." <small></small>"=>implode(" ",$v["field_content_search"]));
 				}else{
@@ -410,13 +410,133 @@ switch($completion):
 		$query = "drop table if exists temp_empr";
 		$result = pmb_mysql_query($query);
 		$query = "create temporary table temp_empr as select concat(empr_nom,' ',empr_prenom), id_empr as id 
-				from empr where empr_nom like '".addslashes($start)."%' and id_empr <> '".$_SESSION['id_empr_session']."' order by 1 limit 20";
+				from empr where concat(empr_nom,' ',empr_prenom) like '".addslashes($start)."%' and id_empr <> '".$_SESSION['id_empr_session']."' order by 1 limit 20";
 		$result = pmb_mysql_query($query);
 		$requetes[] = "select * from temp_empr";
 		$requetes[] = "select concat(empr_nom,' ',empr_prenom), id_empr as id
 				from empr where empr_prenom like '".addslashes($start)."%' and id_empr not in (select id from temp_empr) and id_empr <> '".$_SESSION['id_empr_session']."' order by 1 limit 20";
+		$requetes[] = "select concat(empr_nom,' ',empr_prenom), id_empr as id
+				from empr where empr_mail like '".addslashes($start)."%' and id_empr not in (select id from temp_empr) and id_empr <> '".$_SESSION['id_empr_session']."' order by 1 limit 20";
 		$origine = "SQL_GROUP";
 		break;
+	case 'onto':
+	    if(!isset($autoloader) || !is_object($autoloader)){
+	        require_once($class_path."/autoloader.class.php");
+	        $autoloader = new autoloader();
+	    }
+	    $autoloader->add_register("onto_class",true);
+	    $onto_store_config = array(
+	        /* db */
+	        'db_name' => DATA_BASE,
+	        'db_user' => USER_NAME,
+	        'db_pwd' => USER_PASS,
+	        'db_host' => SQL_SERVER,
+	        /* store */
+	        'store_name' => 'ontology',
+	        /* stop after 100 errors */
+	        'max_errors' => 100,
+	        'store_strip_mb_comp_str' => 0
+	    );
+	    $data_store_config = array(
+	        /* db */
+	        'db_name' => DATA_BASE,
+	        'db_user' => USER_NAME,
+	        'db_pwd' => USER_PASS,
+	        'db_host' => SQL_SERVER,
+	        /* store */
+	        'store_name' => 'rdfstore',
+	        /* stop after 100 errors */
+	        'max_errors' => 100,
+	        'store_strip_mb_comp_str' => 0
+	    );
+	    $tab_namespaces=array(
+	        "skos"	=> "http://www.w3.org/2004/02/skos/core#",
+	        "dc"	=> "http://purl.org/dc/elements/1.1",
+	        "dct"	=> "http://purl.org/dc/terms/",
+	        "owl"	=> "http://www.w3.org/2002/07/owl#",
+	        "rdf"	=> "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+	        "rdfs"	=> "http://www.w3.org/2000/01/rdf-schema#",
+	        "xsd"	=> "http://www.w3.org/2001/XMLSchema#",
+	        "pmb"	=> "http://www.pmbservices.fr/ontology#"
+	    );
+	    if($linkfield && !$param1) {
+	        $param1 = $linkfield;
+	    }
+	    $params=new onto_param(
+	        array(
+	            'autexclude' => "",
+	            'linkfield' => "",
+	            'autfield' => "",
+	            'typdoc' => "",
+	            'att_id_filter' => "",
+	            'listfield' => "",
+	            'callback' => "",
+	            'datas' => "",
+	            'concept_scheme' => $param1,
+	            'return_concept_id' => $param2,
+	            'action'=>'ajax_selector'
+	        )
+	        );
+	    //HACK pas hyper hyper générique, mais ca fait le job!
+	    if(isset($param1) && $param1){
+	        global $concept_scheme;
+	        if($param1 == -1 || $param1 > 0) {
+	            $concept_scheme = $param1;
+	        }else {
+	            $concept_scheme = (($params->concept_scheme !== '') ? $params->concept_scheme : null);
+	        }
+	        $params->return_concept_id = true;
+	    }
+	    $onto_ui = new onto_ui($class_path."/rdf/skos_pmb.rdf", "arc2", $onto_store_config, "arc2", $data_store_config,$tab_namespaces,'http://www.w3.org/2004/02/skos/core#prefLabel',$params);
+	    $list_results = $onto_ui->proceed();
+	    $array_prefix = (isset($list_results['prefix']) ? $list_results['prefix'] : '');
+	    $array_selector = (isset($list_results['elements']) ? $list_results['elements'] : '');
+	    $origine='ONTO_ARRAY';
+	    break;
+	case 'instruments':
+	    // $param1 : id du pupitre préféré. si 0 on retourne tous les instruments
+	    // $param1 = workshop: Signifie qu'il faut aller chercher le(s) pupitre(s) associés aux ateliers
+	    // $param2 = 0: Instruments du pupitre préféré seulement
+	    // $param2 = 1: Instruments du pupitre préféré en premier, puis les autres
+	    if ($autexclude) $restrict = " AND id_instrument not in ($autexclude) ";
+	    else $restrict = "";
+	    
+	    $origine = "SQL" ;
+	    $musicstands = array();
+	    if($param1 == 'workshop') {
+	        $query = "select id_musicstand from nomenclature_musicstands where musicstand_workshop = 1";
+	        $result = pmb_mysql_query($query);
+	        if($result) {
+	            while($row = pmb_mysql_fetch_object($result)) {
+	                $musicstands[] = $row->id_musicstand;
+	            }
+	        }
+	    } elseif($param1) {
+	        $musicstands[] = $param1;
+	    }
+	    if (count($musicstands) && !$param2){ // que ceux du pupitre
+	        $restrict .= " AND instrument_musicstand_num IN (".implode(',', $musicstands).") ";
+	        
+	        $requete="
+			select if(instrument_name is not null and instrument_name!='',concat(instrument_code,' - ',instrument_name),instrument_code) as instrument_lib, id_instrument, instrument_code from nomenclature_instruments
+			where ( instrument_code like '".addslashes($start)."%' or instrument_name like '".addslashes($start)."%' ) $restrict order by 1 limit 20";
+	        
+	    }elseif(count($musicstands) && $param2){//  que ceux du pupitre en premier, puis les autres
+	        $restrict1 = $restrict." AND instrument_musicstand_num IN (".implode(',', $musicstands).") ";
+	        $restrict2 = $restrict." AND instrument_musicstand_num NOT IN (".implode(',', $musicstands).") ";
+	        $requetes = array();
+	        $requetes[] = "select if(instrument_name is not null and instrument_name!='',concat(instrument_code,' - ',instrument_name),instrument_code) as instrument_lib, id_instrument, instrument_code from nomenclature_instruments
+			 	where ( instrument_code like '".addslashes($start)."%' or instrument_name like '".addslashes($start)."%' ) $restrict1 order by 1";
+	        $requetes[] = "select if(instrument_name is not null and instrument_name!='',concat(instrument_code,' - ',instrument_name),instrument_code) as instrument_lib, id_instrument, instrument_code from nomenclature_instruments
+				where ( instrument_code like '".addslashes($start)."%' or instrument_name like '".addslashes($start)."%' ) $restrict2 order by 1 limit 20";
+	        $origine = "SQL_GROUP" ;
+	    }else{ // tous les instruments
+	        $requete="
+			select if(instrument_name is not null and instrument_name!='',concat(instrument_code,' - ',instrument_name),instrument_code) as instrument_lib, id_instrument, instrument_code from nomenclature_instruments
+			where ( instrument_code like '".addslashes($start)."%' or instrument_name like '".addslashes($start)."%' ) $restrict order by 1 limit 20";
+	    }
+	    $insert_between_separator = "/";
+	    break;
 	case 'music_key':
 		// récupération des codes
 		if (!isset($s_func )) {
@@ -459,6 +579,26 @@ switch($completion):
 			$origine = "SQL_GROUP";
 		}
 		break;
+	case 'keywords':
+		$array_selector = array();
+		$query = "select index_l from notices where index_l is not null and index_l!=''";
+		$result = pmb_mysql_query($query);
+		if (pmb_mysql_num_rows($result)){
+			$start = trim(str_replace('%', '', $start));
+			$start_length = strlen($start);
+			while ($row = pmb_mysql_fetch_object($result)) {
+				$liste = explode($pmb_keyword_sep,$row->index_l);
+				for ($i=0;$i<count($liste);$i++){
+					$value = trim($liste[$i]);
+					if(($start == substr($value, 0, $start_length)) && !in_array($value, $array_selector)) {
+						$array_selector[$value] = $value;
+					}
+				}
+			}
+		}
+		ksort($array_selector);
+		$origine = "ARRAY" ;
+		break;
 	case 'query_list':
 	case 'list':
 	case 'marc_list':
@@ -471,6 +611,9 @@ switch($completion):
 		}
 		$origine = "ARRAY" ;
 		break;
+	case 'extend':
+    	if (is_file('ajax/misc/extend_selector.php')) require_once('./ajax/misc/extend_selector.php');
+        break;
 	default: 
 		$p=explode('_', $completion);
 		if(count ($p)){
@@ -529,9 +672,26 @@ switch ($origine):
 				}
 			}
 		} else {
+		    $i = 0;
+		    $results = contribution_area_forms_controller::show_result();
+		    if (!empty($results)) {
+		        $i = 1;
+		        foreach ($results as $r) {
+		            echo "<div id='l".$id."_".$i."'";
+		            if ($autfield) echo " autid='".$r["value"]."'";
+		            echo " class='ajax_completion_normal ajax_font_width_100 ".$ajax_font_size."'";
+		            echo " onMouseOver=\"this.className='ajax_completion_surbrillance ajax_font_width_100 ".$ajax_font_size."'\"";
+		            echo " onMouseOut=\"this.className='ajax_completion_normal ajax_font_width_100 ".$ajax_font_size."'\"";
+		            echo " onClick='if(document.getElementById(\"c".$id."_".$i."\")) ajax_set_datas(\"c".$id."_".$i."\",\"$id\"); else ajax_set_datas(\"l".$id."_".$i."\",\"$id\");'>".$r["label"]."</div>";
+		            $i++;
+		        }
+		    }
+		    
 			$resultat=pmb_mysql_query($requete);		
 			if (pmb_mysql_num_rows($resultat) > 0) {
-				$i=1;
+				if (!$i) {
+				    $i=1;
+				}
 				while($r=@pmb_mysql_fetch_array($resultat)) {
 					if(isset($r[2]) && $r[2])
 						echo "<div id='c".$id."_".$i."' style='display:none' autid='".$r[1]."'>".$r[2]."</div>";
@@ -544,7 +704,9 @@ switch ($origine):
 					$i++;
 				}
 			} else {
-				echo "<div id='l".$id."_0' class='ajax_completion_no_result ".$ajax_font_size."'>".$msg["no_result"]."</div>";
+			    if (!$i) {
+    				echo "<div id='l".$id."_0' class='ajax_completion_no_result ".$ajax_font_size."'>".$msg["no_result"]."</div>";
+			    }
 			}
 		}
 		break;
@@ -575,7 +737,7 @@ switch ($origine):
 		if (count($s_func->table) > 0) {
 			$i=1;
 			$start_converted = convert_diacrit($start);
-			while(list($index, $value) = each($s_func->table)) {
+			foreach ($s_func->table as $index => $value) {
 				if (strtolower(substr(convert_diacrit($value),0,strlen($start_converted)))==strtolower($start_converted)) {
 					echo "<div id='l".$id."_".$i."'";
 					if ($autfield) echo " autid='".$index."'";
@@ -624,7 +786,7 @@ switch ($origine):
 			}
 		} else if (is_array($array_selector) && count($array_selector)) {
 			$i=1;
-			while(list($index, $value) = each($array_selector)) {
+			foreach ($array_selector as $index => $value) {
 				$grey=false;
 				if(isset($array_prefix[$index]['libelle'])) {
 					$prefix = $array_prefix[$index]['libelle'];
@@ -662,12 +824,42 @@ switch ($origine):
 			echo "<div id='l".$id."_0' class='ajax_completion_no_result ".$ajax_font_size."'>".$msg["no_result"]."</div>";
 		}
 		break;
+	case 'ONTO_ARRAY':
+	    if (is_array($array_selector) && count($array_selector)) {
+	        $i=1;
+	        foreach ($array_selector as $index => $value) {
+	            $lib_liste="";
+	            if(isset($array_prefix[$index]['libelle'])) {
+	                $type_label = $array_prefix[$index]['libelle'];
+	            } else {
+	                $type_label = '';
+	            }
+	            if(isset($array_prefix[$index]['id'])) {
+	                $type_uri = $array_prefix[$index]['id'];
+	            } else {
+	                $type_uri = '';
+	            }
+	            if(!$type_uri) $type_uri = $att_id_filter;
+	            if(is_array($value)){
+	                foreach($value as $k=>$v){
+	                    $lib_liste = $k;
+	                    echo "<div id='"."c".$id."_".$i."' style='display:none' nbcar='".$taille_search."'>".$v."</div>";
+	                }
+	            } else $lib_liste=$value;
+	            echo "<div id='l".$id."_".$i."'";
+	            if ($autfield) echo " autid='".$index."'";
+	            if ($type_uri) echo " typeuri='".$type_uri."'";
+	            echo " class='ajax_selector_normal' onmouseover='this.className=\"ajax_selector_surbrillance\";' onmouseout='this.className=\"ajax_selector_normal\";' onClick='if(document.getElementById(\"c".$id."_".$i."\")) ajax_set_datas(\"c".$id."_".$i."\",\"$id\"); else ajax_set_datas(\"l".$id."_".$i."\",\"$id\");'>".trim($type_label." ".$lib_liste)."</div>";
+	            $i++;
+	        }
+	    }
+	    break;	
 	default: 
 		break;
 endswitch;
 
 global $opac_contribution_area_activate, $allow_contribution;
-if ($opac_contribution_area_activate && $allow_contribution) {
+if ($opac_contribution_area_activate && $allow_contribution && isset($handleAs) && ($handleAs == "json")) {
 	if (!isset($json_results) && !is_array($json_results)) {
 		$json_results = array();
 	}

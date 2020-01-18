@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external_authorities.inc.php,v 1.5 2017-12-22 10:04:52 arenou Exp $
+// $Id: external_authorities.inc.php,v 1.6 2019-07-12 10:25:27 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -149,4 +149,3 @@ switch ($search_type) {
 print pmb_bidi($form);
 
 ?>
-

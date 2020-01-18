@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: install_rep_inc.php,v 1.17 2016-03-30 09:04:52 mbertin Exp $
+// $Id: install_rep_inc.php,v 1.18 2019-07-12 10:25:27 btafforeau Exp $
 
 // plus rien ici : reprise d'un script d'une autre install
 if(preg_match('/install_rep_inc\.php/', $_SERVER['REQUEST_URI'])) {
@@ -89,4 +89,3 @@ $msg_crea_control_version = "<h3>La version de la base de donn&eacute;es est <fo
 			Allez en Administration > Outils > Mise &agrave; jour de la base avant de travailler avec PMB.<br />
 			N'oubliez pas de faire des sauvegardes, v&eacute;rifiez notamment que toutes les tables de donn&eacute;es sont bien sauvegard&eacute;es";
 ?>
-

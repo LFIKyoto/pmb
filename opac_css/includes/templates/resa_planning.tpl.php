@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa_planning.tpl.php,v 1.9 2017-11-21 13:38:21 dgoron Exp $
+// $Id: resa_planning.tpl.php,v 1.10 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
+
+global $form_resa_planning_add, $form_resa_planning_confirm, $form_resa_planning_add_from_cart, $form_resa_planning_add_from_cart_item, $form_resa_planning_add_from_cart_loc_retrait_table, $msg;
+global $form_resa_planning_add_from_cart_loc_retrait_row, $form_resa_planning_add_from_cart_loc_retrait_option, $form_resa_planning_add_from_cart_loc_retrait_none;
 
 // templates pour le formulaire de pose de reservation planifiee
 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: opac_view.class.php,v 1.19 2018-01-26 16:40:18 dgoron Exp $
+// $Id: opac_view.class.php,v 1.21 2019-05-29 06:53:19 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -37,14 +37,14 @@ class opac_view {
 	// constructeur
 	public function __construct($id=0,$id_empr=0) {
 		// si id, allez chercher les infos dans la base
-		$this->id_empr = $id_empr+0;
+		$this->id_empr = intval($id_empr);
 		if($id === "default_opac"){
 			$this->id = 0;
 			if (!$this->check_right()){
 				$this->build_env();
 			}
 		}else{
-			$this->id = $id+0;
+			$this->id = intval($id);
 			$this->build_env();
 		}
 	}
@@ -182,9 +182,11 @@ class opac_view {
 					$tmp = $qt->apply_conflict(array(""));
 					$val = $tmp['VALUE'];
 				}
-				$values = unserialize($val);
-				$this->opac_views_list = $values['allowed'];
-				$this->view_list_empr_default = $values['default'];
+				if ($val != '-1') {
+    				$values = unserialize($val);
+    				$this->opac_views_list = $values['allowed'];
+    				$this->view_list_empr_default = $values['default'];
+				}
 			}else if(!$this->id_empr){
 				$this->opac_views_list[] = 0;
 				$req="SELECT * FROM opac_views where opac_view_visible=1";

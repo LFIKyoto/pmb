@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: quotas.class.php,v 1.52 2018-12-20 11:00:19 mbertin Exp $
+// $Id: quotas.class.php,v 1.55.4.1 2019-10-16 06:58:58 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -98,7 +98,7 @@ class quota {
 					reset($ml->table);
 					$requete="create temporary table ".$elt["TABLE"]." (id varchar(255),libelle varchar(255)) ENGINE=MyISAM ";
 					pmb_mysql_query($requete);
-					while (list($key,$val)=each($ml->table)) {
+					foreach ($ml->table as $key => $val) {
 						$requete="insert into ".$elt["TABLE"]." (id,libelle) values('".addslashes($key)."','".addslashes($val)."')";
 						pmb_mysql_query($requete);
 					}
@@ -194,7 +194,7 @@ class quota {
 	public function get_element_by_name($element_name) {
 		if (isset(static::$_quotas_[$this->descriptor])) {
 			reset(static::$_quotas_[$this->descriptor]['_elements_']);
-			while (list($key,$val)=each(static::$_quotas_[$this->descriptor]['_elements_'])) {
+			foreach (static::$_quotas_[$this->descriptor]['_elements_'] as $key => $val) {
 				if ($val["NAME"]==$element_name)
 					return $key;
 			}
@@ -206,7 +206,7 @@ class quota {
 	public function get_element_by_id($element_id) {
 		if (isset(static::$_quotas_[$this->descriptor])) {
 			reset(static::$_quotas_[$this->descriptor]['_elements_']);
-			while (list($key,$val)=each(static::$_quotas_[$this->descriptor]['_elements_'])) {
+			foreach (static::$_quotas_[$this->descriptor]['_elements_'] as $key => $val) {
 				if ($val["ID"]==$element_id)
 					return $key;
 			}
@@ -218,7 +218,7 @@ class quota {
 	public function get_element_id_by_name($element_name) {
 		if (isset(static::$_quotas_[$this->descriptor])) {
 			reset(static::$_quotas_[$this->descriptor]['_elements_']);
-			while (list($key,$val)=each(static::$_quotas_[$this->descriptor]['_elements_'])) {
+			foreach (static::$_quotas_[$this->descriptor]['_elements_'] as $key => $val) {
 				if ($val["NAME"]==$element_name)
 					return $val["ID"];
 			}
@@ -295,7 +295,7 @@ class quota {
 					$conflict_list[$r->value]=$r->elements;
 					break;
 				case 'FORCE_LEND':
-					$force_lend=1;
+				    $force_lend=$r->value;
 					break;
 				case 'MAX_QUOTA':
 					$max_quota=$r->value;
@@ -498,7 +498,7 @@ class quota {
 		for ($i=0; $i<count($ids); $i++) {
 			$_quota_element_=static::$_quotas_[$this->descriptor]['_elements_'][$this->get_element_by_id($ids[$i])];
 			
-			$requete="select ".$_quota_element_["FIELD"].", ".$_quota_element_["LABEL"]." from ".$_quota_element_["TABLE"]." order by ".$_quota_element_["LABEL"];
+			$requete="select distinct ".$_quota_element_["FIELD"].", ".$_quota_element_["LABEL"]." from ".$_quota_element_["TABLE"]." order by ".$_quota_element_["LABEL"];
 			$resultat=pmb_mysql_query($requete);
 			while ($r=pmb_mysql_fetch_array($resultat)) {
 				$t=array();
@@ -635,7 +635,7 @@ class quota {
 			//Pour chaque id on récupère l'identifiant et le label
 			for ($i=0; $i<count($ids); $i++) {
 				$_quota_element_=static::$_quotas_[$this->descriptor]['_elements_'][$this->get_element_by_id($ids[$i])];
-				$requete="select ".$_quota_element_["FIELD"].", ".$_quota_element_["LABEL"]." from ".$_quota_element_["TABLE"];
+				$requete="select distinct ".$_quota_element_["FIELD"].", ".$_quota_element_["LABEL"]." from ".$_quota_element_["TABLE"];
 				$resultat=pmb_mysql_query($requete);
 				while ($r=pmb_mysql_fetch_array($resultat)) {
 					$t=array();
@@ -666,7 +666,7 @@ class quota {
 		$r_error=array("ID"=>"","VALUE"=>-1);
 		reset($q);
 		//Test valeurs toutes vides et calcul du min, du max et du total
-		while (list($key,$val)=each($q)) {
+		foreach ($q as $key => $val) {
 			$test&=($val==="");
 			if ($val!=="") {
 				if ($max_quota==="") {
@@ -758,7 +758,7 @@ class quota {
 		reset($s);
 		$flag=true;
 		$values=array();
-		while (list($key,$val)=each($s)) {
+		foreach ($s as $key => $val) {
 			$_quota_element_=static::$_quotas_[$this->descriptor]['_elements_'][$val];
 			if ($struct[$_quota_element_["LINKEDTO"]]=="") {
 				$flag=false;
@@ -821,7 +821,7 @@ class quota {
 		reset($s);
 		$flag=true;
 		$values=array();
-		while (list($key,$val)=each($s)) {
+		foreach ($s as $key => $val) {
 			$_quota_element_=static::$_quotas_[$this->descriptor]['_elements_'][$val];
 			if ($struct[$_quota_element_["LINKEDTO"]]=="") {
 				$flag=false;
@@ -916,7 +916,7 @@ class quota {
 		reset($s);
 		$flag=true;
 		$values=array();
-		while (list($key,$val)=each($s)) {
+		foreach ($s as $key => $val) {
 			$struct_=$struct;
 			$_quota_element_=static::$_quotas_[$this->descriptor]['_elements_'][$val];
 			if ($struct_[$_quota_element_["LINKEDTO"]]=="") {
@@ -1002,7 +1002,7 @@ class quota {
 		for ($i=0; $i<count($ids); $i++) {
 			$element=static::$_quotas_[$this->descriptor]['_elements_'][$this->get_element_by_id($ids[$i])];
 			if ($element["TABLE"]==$element["TABLELINKED"]) {
-				$requete="select ".$element["LABEL"]." from ".$element["TABLE"]." where ".$element["FIELD"]."='".$struct[$element["LINKEDTO"]]."'";
+				$requete="select ".$element["LABEL"]." from ".$element["TABLE"]." where ".$element["LINKEDID"]."='".$struct[$element["LINKEDTO"]]."'";
 			} else {
 				$struct_=$struct;
 				//Si c'est un object indirect (ex : notice passée pour le type d'exemplaire) alors on va chercher l'objet ayant le quota le plus défavorable

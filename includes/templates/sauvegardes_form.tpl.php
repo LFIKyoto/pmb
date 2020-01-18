@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sauvegardes_form.tpl.php,v 1.7 2017-10-19 07:59:09 ngantier Exp $
+// $Id: sauvegardes_form.tpl.php,v 1.8 2019-05-27 14:05:40 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $form, $msg;
 
 $form='
 <script>

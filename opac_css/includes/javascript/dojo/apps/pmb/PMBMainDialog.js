@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: PMBMainDialog.js,v 1.1 2018-10-08 13:59:40 vtouchard Exp $
+// $Id: PMBMainDialog.js,v 1.2 2019-01-22 10:29:27 apetithomme Exp $
 
 
 define(["dojo/_base/declare", 
@@ -18,7 +18,7 @@ define(["dojo/_base/declare",
         "dijit/layout/utils",
         ], function(declare, Dialog, lang, domClass, win, on, lang, domGeometry, domStyle, array, has, utils){
 
-	  return declare(null, {
+	  return declare(Dialog, {
 		  lastState: {},
 		  expanded: false,
 		  initialResize: false,
@@ -52,7 +52,7 @@ define(["dojo/_base/declare",
 				  domClass.remove(document.body, "dojoDialogOpened");
 				  if(this.expanded){ 
 					  //nous n'avons qu'une instance du popup, il 
-					  //faut donc le rÃ©initialiser pour avoir un comportement logique 
+					  //faut donc le réinitialiser pour avoir un comportement logique 
 					  this.expanded = false;
 					  this.collapse(); 
 				  }
@@ -61,8 +61,8 @@ define(["dojo/_base/declare",
 		  },
 		  toggleSize: function(){
 			  /**
-			   * TODO: Ajout d'un test pour le placement en hauteur du dijit (la title bar ne doit jamais Ãªtre masquÃ©e);
-			   * RÃ©cupÃ©rer position top et left
+			   * TODO: Ajout d'un test pour le placement en hauteur du dijit (la title bar ne doit jamais être masquée);
+			   * Récupérer position top et left
 			   */
 			  if(!this.expanded){
 				  this.expand();

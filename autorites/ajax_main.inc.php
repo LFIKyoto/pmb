@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_main.inc.php,v 1.13 2018-11-26 10:04:59 tsamson Exp $
+// $Id: ajax_main.inc.php,v 1.14.6.2 2019-09-10 09:58:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $categ, $datas, $plugin, $sub, $file, $search_xml_file, $search_xml_file_full_path;
 
 require_once($class_path."/caddie/authorities_caddie_controller.class.php");
 
@@ -12,11 +14,10 @@ require_once($class_path."/caddie/authorities_caddie_controller.class.php");
 
 switch($categ):
 	case 'commande':
-		
-	break;
+        break;
 	case 'type_empty_word':
 		include('./autorites/semantique/ajax/type_empty_word.inc.php');
-	break;
+		break;
 	case 'dashboard' :
 		include("./dashboard/ajax_main.inc.php");
 		break;
@@ -31,13 +32,7 @@ switch($categ):
 		include('./autorites/titres_uniformes/tu_form_vedette.inc.php');
 		break;
 	case 'caddie':
-		if(isset($caddie)) {
-			$idcaddie = substr($caddie, strrpos($caddie, '_')+1);
-		}
-		if(isset($object)) {
-			$id_item = substr($object, strrpos($object, '_')+1);
-		}
-		authorities_caddie_controller::proceed_ajax($idcaddie, $id_item);
+	    include('./autorites/caddie/caddie_ajax.inc.php');
 		break;
 	case 'plugin' :
 		$plugins = plugins::get_instance();
@@ -68,6 +63,6 @@ switch($categ):
 	    include("./autorites/vedettes/ajax_main.inc.php");
 	    break;
 	default:
-	//tbd
-	break;		
+    	//tbd
+    	break;
 endswitch;	

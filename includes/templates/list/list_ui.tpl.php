@@ -2,13 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_ui.tpl.php,v 1.17 2018-11-09 14:45:19 dgoron Exp $
+// $Id: list_ui.tpl.php,v 1.23.2.1 2019-11-22 15:01:20 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 //	------------------------------------------------------------------------------
 //	$list_ui_search_form_tpl : template de recherche pour les listes
 //	------------------------------------------------------------------------------
+global $list_ui_search_form_tpl, $base_path, $current_module, $msg, $charset, $list_ui_search_hidden_form_tpl, $list_ui_options_content_form_tpl;
+global $list_ui_datasets_content_form_tpl, $list_ui_js_sort_script_sort, $list_ui_search_add_filter_form_tpl, $list_ui_search_order_form_tpl, $list_dataset_form_tpl;
 
 $list_ui_search_form_tpl = "
 <script src='".$base_path."/javascript/ajax.js'></script>
@@ -17,12 +19,12 @@ $list_ui_search_form_tpl = "
 	<!--    Contenu du form    -->
 	<div class='form-contenu'>
 		<div id='!!objects_type!!_search_label' class='list_ui_search_label !!objects_type!!_search_label'>
-			<img src='".get_url_icon('minus.gif')."' class='img_plus' name='imEx' id='!!objects_type!!_search_img' title='".$msg['plus_detail']."' border='0' hspace='3'>
+			<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='!!objects_type!!_search_img' title='".$msg['plus_detail']."' border='0' hspace='3'>
 			<span class='list_ui_search_label_text'>
 				<label>".htmlentities($msg['list_ui_search'], ENT_QUOTES, $charset)."</label>
 			</span>
 		</div>
-		<div id='!!objects_type!!_search_content' class='list_ui_search_content !!objects_type!!_search_content'>
+		<div id='!!objects_type!!_search_content' class='list_ui_search_content !!objects_type!!_search_content' style='display:none;'>
 			!!list_search_content_form_tpl!!
 		</div>
 		!!list_options_content_form_tpl!!
@@ -38,6 +40,7 @@ $list_ui_search_form_tpl = "
 				<input type='hidden' id='!!objects_type!!_page' name='!!objects_type!!_page' value='!!page!!' />
 				<input type='hidden' id='!!objects_type!!_nb_per_page' name='!!objects_type!!_nb_per_page' value='!!nb_per_page!!' />
 				<input type='hidden' id='!!objects_type!!_pager' name='!!objects_type!!_pager' value='!!pager!!' />
+				<input type='hidden' id='!!objects_type!!_selected_filters' name='!!objects_type!!_selected_filters' value='!!selected_filters!!' />
 				<input type='hidden' id='!!objects_type!!_initialization' name='!!objects_type!!_initialization' value='' />
 				<input type='submit' id='!!objects_type!!_button_search' class='bouton' value='".$msg['search']."' />&nbsp;
 				!!list_button_add!!
@@ -75,6 +78,7 @@ $list_ui_search_hidden_form_tpl = "
 	<input type='hidden' id='!!objects_type!!_page' name='!!objects_type!!_page' value='!!page!!' />
 	<input type='hidden' id='!!objects_type!!_nb_per_page' name='!!objects_type!!_nb_per_page' value='!!nb_per_page!!' />
 	<input type='hidden' id='!!objects_type!!_pager' name='!!objects_type!!_pager' value='!!pager!!' />
+	<input type='hidden' id='!!objects_type!!_selected_filters' name='!!objects_type!!_selected_filters' value='!!selected_filters!!' />
 </form>
 ";
 
@@ -121,7 +125,7 @@ $list_ui_options_content_form_tpl = "
 					<span class='list_ui_options_group_label_text'>
 						<label>".htmlentities($msg['list_ui_options_group_by'], ENT_QUOTES, $charset)."</label>
 					</span>
-					!!applied_group_selector!!
+ 					!!applied_group_selectors!!
 				</div>
 			</div>
 		</div>
@@ -212,18 +216,27 @@ $list_ui_js_sort_script_sort = "
 	</script>
 ";
 
-$list_ui_search_order_form_tpl = "
+$list_ui_search_add_filter_form_tpl = "
 <div class='row'>
 	<div class='colonne3'>
 		<div class='row'>
-			<label class='etiquette'>".$msg["list_applied_sort"]."</label>
+			<label>".htmlentities($msg['list_ui_add_filter'], ENT_QUOTES, $charset)."</label>
 		</div>
 		<div class='row'>
-			<select id='!!objects_type!!_applied_sort_by' name='!!objects_type!!_applied_sort[by]'>!!order_options!!</select>
-			<input type='radio' id='!!objects_type!!_applied_sort_asc' name='!!objects_type!!_applied_sort[asc_desc]' value='asc' !!applied_sort_asc!! />".$msg["list_applied_sort_asc"]."
-			<input type='radio' id='!!objects_type!!_applied_sort_desc' name='!!objects_type!!_applied_sort[asc_desc]' value='desc' !!applied_sort_desc!! />".$msg["list_applied_sort_desc"]."
+			<select id='!!objects_type!!_add_filter' name='!!objects_type!!_add_filter' onchange='this.form.submit();'>!!add_filter_options!!</select>
 		</div>
 	</div>
+</div>
+";
+
+$list_ui_search_order_form_tpl = "
+<div class='row'>
+	<div class='row'>
+		<label class='etiquette'>".$msg["list_applied_sort"]."</label>
+	</div>
+    <div class='row'>
+        !!applied_sort_selectors!!
+    </div>
 </div>
 ";
 

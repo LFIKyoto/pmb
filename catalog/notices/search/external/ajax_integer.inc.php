@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_integer.inc.php,v 1.7 2017-11-21 12:01:00 dgoron Exp $
+// $Id: ajax_integer.inc.php,v 1.8 2019-06-07 08:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $include_path, $item, $infos, $signature, $pmb_notice_controle_doublons, $id_notice, $ret, $recid, $retour, $notice_id;
+global $url_view, $serialize_search, $result, $charset;
 
 require_once($class_path."/search.class.php");
 require_once($class_path."/searcher.class.php");

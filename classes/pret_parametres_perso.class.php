@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pret_parametres_perso.class.php,v 1.23 2018-10-17 10:09:03 dgoron Exp $
+// $Id: pret_parametres_perso.class.php,v 1.26.2.1 2019-10-30 14:23:22 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -125,7 +125,7 @@ class pret_parametres_perso extends parametres_perso {
 		//Liste des types
 		$t_list="<select name='type'>\n";
 		reset($type_list_empr);
-		while (list($key,$val)=each($type_list_empr)) {
+		foreach ($type_list_empr as $key => $val) {
 			$t_list.="<option value='".$key."'";
 			if ($type==$key) $t_list.=" selected";
 			$t_list.=">".htmlentities($val,ENT_QUOTES, $charset)."</option>\n";
@@ -136,7 +136,7 @@ class pret_parametres_perso extends parametres_perso {
 		//Liste des types de données
 		$t_list="<select name='datatype'>\n";
 		reset($datatype_list);
-		while (list($key,$val)=each($datatype_list)) {
+		foreach ($datatype_list as $key => $val) {
 			$t_list.="<option value='".$key."'";
 			if ($datatype==$key) $t_list.=" selected";
 			$t_list.=">".htmlentities($val,ENT_QUOTES, $charset)."</option>\n";
@@ -194,7 +194,7 @@ class pret_parametres_perso extends parametres_perso {
 		
 		if (!$this->no_special_fields) {
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				$check_message="";
 				$field=array();
 				$field["ID"]=$key;
@@ -229,14 +229,14 @@ class pret_parametres_perso extends parametres_perso {
 			}
 			$check_scripts="";
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				$t=array();
 				$t["ID"]=$key;
 				$t["NAME"]=$val["NAME"];
 				$t["TITRE"]=$val["TITRE"];
 				$t["COMMENT"]=$val["COMMENT"];
 				if($t["COMMENT"]){
-					$t["COMMENT_DISPLAY"]="&nbsp;<span class='pperso_comment' title='".htmlentities($t["COMMENT"],ENT_QUOTES, $charset)."' >".htmlentities($t["COMMENT"],ENT_QUOTES, $charset)."</span>";
+					$t["COMMENT_DISPLAY"]="&nbsp;<span class='pperso_comment' title='".htmlentities($t["COMMENT"],ENT_QUOTES, $charset)."' >".nl2br(htmlentities($t["COMMENT"],ENT_QUOTES, $charset))."</span>";
 				} else {
 					$t["COMMENT_DISPLAY"]="";
 				}
@@ -279,7 +279,7 @@ class pret_parametres_perso extends parametres_perso {
 			//Affichage champs persos
 			$c=0;
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				$t=array();
 				$t["TITRE"]="<b>".htmlentities($val["TITRE"],ENT_QUOTES,$charset)." : </b>";
 				if(!isset($val["OPAC_SHOW"])) $val["OPAC_SHOW"] = '';
@@ -300,7 +300,7 @@ class pret_parametres_perso extends parametres_perso {
 				}
 				$aff=$val_list_empr[$this->t_fields[$key]["TYPE"]](static::$fields[$this->prefix][$key],$this->values[$key]);
 				
-				if (is_array($aff) && $aff[ishtml] == true)$t["AFF"] = $aff["value"];
+				if (is_array($aff) && $aff['ishtml'] == true)$t["AFF"] = $aff["value"];
 				else $t["AFF"]=htmlentities($aff,ENT_QUOTES,$charset);
 				$t["NAME"]=$this->t_fields[$key]["NAME"];
 				$t["COMMENT"]=$this->t_fields[$key]["COMMENT"];
@@ -329,13 +329,16 @@ class pret_parametres_perso extends parametres_perso {
     			static::$fields[$this->prefix][$field_id]["PREFIX"]=$this->prefix;
 		    }
 	    }
-	    if(!empty($this->t_fields[$field_id])){
-    		$aff=$val_list_empr[$this->t_fields[$field_id]["TYPE"]](static::$fields[$this->prefix][$field_id],$values);
-	    }else {
-	        $aff='';
+	    if (!empty($this->t_fields[$field_id])) {
+    		$aff = $val_list_empr[$this->t_fields[$field_id]["TYPE"]](static::$fields[$this->prefix][$field_id],$values);
 	    }
-		if(is_array($aff)) return $aff['withoutHTML']; 
-		else return $aff;
+	    if (isset($aff)) {
+    	    if (is_array($aff)) {
+    	        return $aff['withoutHTML']; 
+    	    }
+    		return $aff;
+	    }
+	    return '';
 	}
 
 	//Gestion des actions en administration

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_datasource_articles.class.php,v 1.9 2018-06-18 09:41:38 vtouchard Exp $
+// $Id: docwatch_datasource_articles.class.php,v 1.10 2019-03-19 14:38:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -74,7 +74,9 @@ class docwatch_datasource_articles extends docwatch_datasource{
 	public function get_available_selectors(){
 		global $msg;
 		return array(
-			'docwatch_selector_articles_by_sections' => $msg['docwatch_selector_articles_by_sections']
+			'docwatch_selector_articles_by_sections' => $msg['docwatch_selector_articles_by_sections'],
+			'docwatch_selector_articles_type_article_generic' => $this->msg['docwatch_datasource_selector_articles_type_article_generic'],
+			'docwatch_selector_articles_type_article' => $this->msg['docwatch_datasource_selector_articles_type_article']
 		);
 	}
 

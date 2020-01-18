@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mono_display.class.php,v 1.322 2018-12-07 15:10:23 dgoron Exp $
+// $Id: mono_display.class.php,v 1.326.2.1 2019-10-14 13:57:57 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -322,9 +322,17 @@ class mono_display extends record_display {
 		}
 	
 		if($this->notice->year) {
-			$editeurs ? $editeurs .= ', '.htmlentities($this->notice->year, ENT_QUOTES, $charset) : $editeurs = htmlentities($this->notice->year, ENT_QUOTES, $charset);
+		    if ($editeurs) {
+		        $editeurs .= ', '.htmlentities($this->notice->year, ENT_QUOTES, $charset);
+		    } else {
+		        $editeurs = htmlentities($this->notice->year, ENT_QUOTES, $charset);
+		    }
 		} elseif ($this->notice->niveau_biblio!='b') {
-			$editeurs ? $editeurs .= ', [s.d.]' : $editeurs = "[s.d.]";
+		    if ($editeurs) {
+		        $editeurs .= ', [s.d.]';
+		    } else {
+		        $editeurs = "[s.d.]";
+		    }
 		}
 	
 		if($editeurs) {
@@ -438,18 +446,22 @@ class mono_display extends record_display {
 	
 		// catégories
 		$tmpcateg_aff = $this->get_display_categories();
-		if ($tmpcateg_aff) $this->isbd .= "<br />$tmpcateg_aff";
+		if ($tmpcateg_aff) {
+		    $this->isbd .= "<br />$tmpcateg_aff";
+		}
 	
 		// Concepts
 		if ($thesaurus_concepts_active == 1) {
 			$index_concept = new index_concept($this->notice_id, TYPE_NOTICE);
-			$this->isbd .= $index_concept->get_isbd_display();
+			if ($index_concept->get_concepts()) {
+    			$this->isbd .= "<br /><b>".$msg['param_concepts']."&nbsp;:</b> ".$index_concept->get_isbd_display();
+			}
 		}
 	
 		// langues
 		$langues = '';
 		if(count($this->langues)) {
-			$langues .= "<b>${msg[537]}</b>&nbsp;: ".construit_liste_langues($this->langues);
+			$langues .= "<b>${msg[537]}&nbsp;:</b> ".construit_liste_langues($this->langues);
 		}
 		if(count($this->languesorg)) {
 			$langues .= " <b>${msg[711]}</b>&nbsp;: ".construit_liste_langues($this->languesorg);
@@ -571,6 +583,9 @@ class mono_display extends record_display {
 				if ($aff_resa){
 					$this->isbd .= "<b>".$msg['resas']."</b><br />";
 					if($nb_expl_reservables && !($categ=="resa") && !$id_empr) $this->isbd .= "<input type='button' class='bouton' value='".$msg['351']."' $ouvrir_reserv><br /><br />";
+					if(!$nb_expl_reservables && $pmb_resa_records_no_expl){
+					    $this->isbd.= "<input type='button' class='bouton' value='".$msg['resa_force']."' $force_reserv><br /><br />";
+					}
 					$this->isbd .= $aff_resa."<br />";
 				} else {
 					if ($nb_expl_reservables && !($categ=="resa") && !$id_empr){

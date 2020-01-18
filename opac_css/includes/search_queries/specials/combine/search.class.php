@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.39 2018-10-19 14:50:42 apetithomme Exp $
+// $Id: search.class.php,v 1.44 2019-07-10 06:44:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -90,6 +90,7 @@ class combine_search {
 			$bool=false;
 
 			//parcours de l'historique des recherches
+			$pair = 0;
 			for ($i=$_SESSION["nb_queries"]; $i>=1; $i--) {
 				if(is_array($_SESSION["notice_view".$i]) && $_SESSION["notice_view".$i]["search_mod"]){
 					$temp=html_entity_decode(strip_tags(($i).") ".substr(get_human_query_level_two($i),strpos(get_human_query_level_two($i),":")+2,strlen(get_human_query_level_two($i))-(strpos(get_human_query_level_two($i),":")+2))),ENT_QUOTES,$charset);
@@ -97,12 +98,12 @@ class combine_search {
 						$onclick="onClick=\"document.getElementById('".$get_input_box_id."_label').innerHTML=this.innerHTML;document.getElementById('".$get_input_box_id."_value').value='$i';expandBase('$get_input_box_id', true); return false;\"";
 						if(($pair=1-$pair)) $style=$style_odd;
 						else $style=$style_even;
-						$liste.="<tr $style><td $onclick >$temp</td></tr>";
+						$liste.="<tr $style><td $onclick >" . htmlentities($temp,ENT_QUOTES,$charset) . "</td></tr>";
 					}
 					if ($valeur) {
 						if ($valeur[0]==$i) {
 							$r=str_replace("!!value_selected!!","$i", $r);
-							$r=str_replace("!!label_selected!!",$temp, $r);
+							$r=str_replace("!!label_selected!!", htmlentities($temp,ENT_QUOTES,$charset), $r);
 						}
 					}
 				}
@@ -241,7 +242,9 @@ class combine_search {
 			switch ($_SESSION["search_type".$valeur[0]]) {
 				case 'simple_search':
 					global $search;
-
+					if(empty($search)) {
+						$search=array();
+					}
 					switch($_SESSION["notice_view".$valeur[0]]["search_mod"]) {
 						case 'title':
 							$search[0]="f_6";
@@ -334,7 +337,9 @@ class combine_search {
 					break;
 				case 'term_search':
 					global $search;
-
+					if(empty($search)) {
+						$search=array();
+					}
 					$search[0]="f_1";
 					$op_="EQ";
 					$valeur_champ=$_SESSION["notice_view".$valeur[0]]["search_id"];
@@ -366,7 +371,9 @@ class combine_search {
 					break;
 				case 'module':
 					global $search;
-
+					if(empty($search)) {
+						$search=array();
+					}
 					switch($_SESSION["notice_view".$valeur[0]]["search_mod"]) {
 						case 'authperso_see':
 							$search[0]="f_30";
@@ -487,7 +494,7 @@ class combine_search {
 				'search_instance' => instance de search
 				)
 	 */
-	static function simple2mc($index_history,$recursive_history=false) {
+	public static function simple2mc($index_history,$recursive_history=false) {
 		global $opac_indexation_docnum_allfields;
 		global $opac_search_other_function;
 		$table_tempo = "";
@@ -497,6 +504,9 @@ class combine_search {
 			switch ($_SESSION["search_type".$index_history]) {
 				case 'simple_search':
 					global $search;
+					if(empty($search)) {
+						$search=array();
+					}
 					if ($opac_search_other_function) search_other_function_get_history($index_history);
 					if(isset($_SESSION["notice_view".$index_history]["search_mod"])) {
 						switch($_SESSION["notice_view".$index_history]["search_mod"]) {
@@ -652,7 +662,9 @@ class combine_search {
 					break;
 				case 'term_search':
 					global $search;
-	
+					if(empty($search)) {
+						$search=array();
+					}
 					$search[0]="f_1";
 					$op_="EQ";
 					$valeur_champ=$_SESSION["notice_view".$index_history]["search_id"];
@@ -685,7 +697,9 @@ class combine_search {
 					break;
 				case 'module':
 					global $search;
-	
+					if(empty($search)) {
+						$search=array();
+					}
 					switch($_SESSION["notice_view".$index_history]["search_mod"]) {
 						case 'authperso_see':
 							$search[0]="f_30";
@@ -818,6 +832,9 @@ class combine_search {
 			case TYPE_INDEXINT:
 				$search[$n]="f_8102";
 				break;
+			case TYPE_CONCEPT:
+			    $search[$n] = "f_11102";
+			    break;
 			case TYPE_AUTHPERSO:
 			default :
 			    if (intval($type) > 1000) {

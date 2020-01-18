@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: make_object.inc.php,v 1.11 2015-04-03 11:16:28 jpermanne Exp $
+// $Id: make_object.inc.php,v 1.12 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -119,7 +119,8 @@ function test_other_query($n_res=0, $n_gen=0, $n_tit=0, $n_mat=0, $query, $opera
 				//$query_result['restr'] = "(n_resume REGEXP '${tab[0]}'";
 				//$query_result['restr'] .= " OR n_contenu REGEXP '$tab[0]')";
 				$query_result['display'] = $tab[0];
-				for ($i = 1; $i < sizeof($tab); $i++) {
+				$nb_tabs = count($tab);
+				for ($i = 1; $i < $nb_tabs; $i++) {
 					$query_suite="";					
 					if ($n_res) $query_suite =  " ( n_resume REGEXP '${tab[$i]}' OR n_contenu REGEXP '${tab[$i]}' ";
 					if ($n_gen) {
@@ -168,7 +169,8 @@ function test_other_query($n_res=0, $n_gen=0, $n_tit=0, $n_mat=0, $query, $opera
 					
 					//$query_result['restr'] = "MATCH (n_resume, n_contenu) AGAINST ('${tab[0]}')";
 					$query_result['display'] = $tab[0];
-					for ($i = 1; $i < sizeof($tab); $i++) {
+					$nb_tabs = count($tab);
+					for ($i = 1; $i < $nb_tabs; $i++) {
 						$query_suite="";					
 						if ($n_res) $query_suite =  " ( MATCH (n_resume, n_contenu) AGAINST ('${tab[$i]}') ";
 						if ($n_gen) {

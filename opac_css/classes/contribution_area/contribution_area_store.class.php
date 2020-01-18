@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution_area_store.class.php,v 1.7 2018-12-28 16:19:06 tsamson Exp $
+// $Id: contribution_area_store.class.php,v 1.8 2019-02-22 10:16:53 tsamson Exp $
 if (stristr($_SERVER ['REQUEST_URI'], ".class.php"))
 	die("no access");
 
@@ -13,6 +13,7 @@ class contribution_area_store {
 	
 	protected static $onto;
 	protected static $graphstore;
+	protected static $datastore;
 	
 	public function get_ontology(){
 		global $class_path;
@@ -82,6 +83,37 @@ class contribution_area_store {
 			self::$graphstore->set_namespaces($tab_namespaces);
 		}
 		return self::$graphstore;
+	}
+	
+	public function get_datastore(){
+		if(!isset(self::$datastore)){
+			$store_config = array(
+					/* db */
+					'db_name' => DATA_BASE,
+					'db_user' => USER_NAME,
+					'db_pwd' => USER_PASS,
+					'db_host' => SQL_SERVER,
+					/* store */
+					'store_name' => 'contribution_area_datastore',
+					/* stop after 100 errors */
+					'max_errors' => 100,
+					'store_strip_mb_comp_str' => 0
+			);
+			$tab_namespaces = array(
+					"dc"	=> "http://purl.org/dc/elements/1.1",
+					"dct"	=> "http://purl.org/dc/terms/",
+					"owl"	=> "http://www.w3.org/2002/07/owl#",
+					"rdf"	=> "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+					"rdfs"	=> "http://www.w3.org/2000/01/rdf-schema#",
+					"xsd"	=> "http://www.w3.org/2001/XMLSchema#",
+					"pmb"	=> "http://www.pmbservices.fr/ontology#",
+					"ca"	=> "http://www.pmbservices.fr/ca/"
+			);
+	
+			self::$datastore = new onto_store_arc2($store_config);
+			self::$datastore->set_namespaces($tab_namespaces);
+		}
+		return self::$datastore;
 	}
 	
 	public function get_attachment($source_uri, $area_uri = ''){

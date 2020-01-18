@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export.class.php,v 1.90 2018-10-19 08:44:05 dgoron Exp $
+// $Id: export.class.php,v 1.96.2.1 2019-09-19 08:29:15 dgoron Exp $
 
 //Export d'une notice PMB en XML PMB MARC
 
@@ -12,6 +12,10 @@ require_once($class_path."/parametres_perso.class.php");
 require_once("$class_path/XMLlist.class.php");
 require_once($class_path."/notice_relations_collection.class.php");
 require_once($class_path."/concept.class.php");
+
+require_once($class_path."/import/import_entities.class.php");
+require_once($class_path."/import/import_records.class.php");
+require_once($class_path."/import/import_expl.class.php");
 
 class export {
 
@@ -106,7 +110,7 @@ class export {
 		}
 		if ($value == "" && is_array($sub_fields)) {
 			$flag_s = 0;
-			while (list ($key, $val) = each($sub_fields)) {
+			foreach ($sub_fields as $key => $val) {
 				if(is_array($val)){
 				  foreach($val as $valeur){
 				  	$s = array();
@@ -251,7 +255,7 @@ class export {
 	public function get_next_notice($lender = "", $td = array(), $sd = array(), $keep_expl = false, $params=array()) {
 		global $is_expl_caddie;
 		global $include_path, $lang;
-		global $opac_show_book_pics;
+		global $opac_show_book_pics, $pmb_map_activate;
 		global $dbh,$charset;
 		global $msg;
 		
@@ -653,7 +657,7 @@ class export {
 
 			//Vignette
 			if ($opac_show_book_pics) {
-				$vignette=get_vignette($this->notice_list[$this->current_notice]);
+				$vignette=get_vignette($this->notice_list[$this->current_notice], true);
 				if ($vignette) {
 					$this->add_field("896","  ",array("a"=>$vignette));
 				}
@@ -715,8 +719,25 @@ class export {
 					$subfields["a"] = $concept->get_display_label();
 					$this->add_field("606"," 1",$subfields);
                 }
-            }
-			
+            }			
+            
+            // Map emprises
+            if (!empty($params['map']) && $pmb_map_activate) {
+                $requete = "SELECT AsText(map_emprise_data)
+    						FROM map_emprises
+    						WHERE map_emprise_obj_num = '".$res->notice_id."'
+    						AND map_emprise_type  = 11
+    						ORDER BY map_emprise_order";
+                $resultat = pmb_mysql_query($requete);
+                if (pmb_mysql_num_rows($resultat)) {
+                    $subfields = array();
+                    while ($row = pmb_mysql_fetch_array($resultat)) {
+                        $subfields["w"][] = $row[0];
+                    }
+                    $this->add_field("940", "  ", $subfields);
+                }
+            }            
+            
 			//Champs perso de notice traite par la table notice_custom
 			$this->processing_cp("notices",$res->notice_id);
 
@@ -986,7 +1007,7 @@ class export {
 			}	
 			
 			//Documents numeriques
-			if ($params['docnum'] || $params['explnum']) {
+			if (!empty($params['docnum']) || !empty($params['explnum'])) {
 				$this->process_explnum(0, $id_bulletin, $params['docnum'], $params['docnum_rep']);
 			}
 			
@@ -1079,9 +1100,9 @@ class export {
 		$requete = "select expl_id, create_date, expl_cb,expl_cote,expl_statut,statut_libelle, statusdoc_codage_import, expl_typdoc, tdoc_libelle, tdoc_codage_import, expl_note, expl_comment, expl_section, section_libelle, sdoc_codage_import, expl_owner, lender_libelle, codestat_libelle, statisdoc_codage_import, expl_date_retour, expl_date_depot, expl_note, pret_flag, location_libelle, locdoc_codage_import from exemplaires, docs_statut, docs_type, docs_section, docs_codestat, lenders, docs_location".($is_expl_caddie==2?",expl_cart_id":"")." where ".($expl_bulletin != 0 ?"expl_bulletin=".$expl_bulletin." AND expl_notice=0":"expl_notice=".$expl_notice." AND expl_bulletin=0")." and expl_statut=idstatut and expl_typdoc=idtyp_doc and expl_section=idsection and expl_owner=idlender and expl_codestat=idcode and expl_location=idlocation".($is_expl_caddie==2?" and expl_id=id":"");
 		if (($lender != "x")&&($lender!=""))
 			$requete.= " and expl_owner=".$lender;
-		if (count($td) != 0)
+		if (!empty($td))
 			$requete.= " and expl_typdoc in (".implode(",", $td).")";
-		if (count($sd) != 0)
+		if (!empty($sd))
 			$requete.= " and expl_statut in (".implode(",", $sd).")";
 		$resultat = pmb_mysql_query($requete);
 		
@@ -1090,7 +1111,7 @@ class export {
 				$subfields = array();
 				global $export996 ;
 				$export996 = array() ;
-				if(function_exists(export_traite_exemplaires)) $subfields = export_traite_exemplaires ($ex);
+				if(function_exists('export_traite_exemplaires')) $subfields = export_traite_exemplaires ($ex);
 				$this->add_field("995", "  ", $subfields);
 				//J'ajoute dans le sous champs 996 tous ce qu'il faut à l'exemlaire pour le reconstruire
 				foreach($ex as $key => $value) {

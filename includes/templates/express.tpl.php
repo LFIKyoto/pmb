@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: express.tpl.php,v 1.7 2012-07-06 08:00:08 dgoron Exp $
+// $Id: express.tpl.php,v 1.8 2019-05-27 13:46:21 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $layout_begin, $msg, $groupID, $pmb_short_loan_management, $short_loan, $current_module, $id_empr;
 // select "type document"
 $sel_tdoc=do_selector('docs_type', 'pe_tdoc', 0);
 

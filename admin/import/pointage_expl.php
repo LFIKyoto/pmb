@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pointage_expl.php,v 1.22 2017-12-28 11:32:18 dgoron Exp $
+// $Id: pointage_expl.php,v 1.24 2019-07-12 10:25:27 btafforeau Exp $
 
 // définition du minimum nécéssaire 
 $base_path="../..";                            
@@ -87,8 +87,16 @@ switch ($action) {
 					$tparent = $serie->name;
 				}
 				$tparent ? $header = $tparent : $header = '';
-				$item->tnvol && $header ? $header .= ", $item->tnvol" : $header = '';
-				$header ? $header .= '. ' : $header = '';
+				if ($item->tnvol && $header) {
+				    $header .= ", $item->tnvol";
+				} else {
+				    $header = '';
+				}
+				if ($header) {
+				    $header .= '. ';
+				} else {
+				    $header = '';
+				}
 				
 				$responsabilites = get_notice_authors($item->notice_id) ;
 				$header_aut = gen_authors_header($responsabilites);
@@ -240,8 +248,4 @@ function expl_pointage($action, $annuler='') {
 	
 
 } /* fin expl_pointage */
-
-
-
 ?>
-

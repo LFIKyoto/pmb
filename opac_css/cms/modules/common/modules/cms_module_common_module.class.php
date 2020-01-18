@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_module.class.php,v 1.64 2018-09-25 13:55:47 arenou Exp $
+// $Id: cms_module_common_module.class.php,v 1.67.2.1 2019-11-25 11:30:26 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -49,7 +49,7 @@ class cms_module_common_module extends cms_module_root{
 		$informations = array();
 		@ini_set("zend.ze1_compatibility_mode", "0");
 		$manifest = new domDocument();
-		$module_path = realpath(dirname($base_path."/cms/modules/".str_replace("cms_module_","",get_called_class())."/".get_called_class().".class.php"));
+		$module_path = realpath(dirname($base_path."/cms/modules/".str_replace("cms_module_","",static::class)."/".static::class.".class.php"));
 		
 		$manifest->load($module_path."/manifest.xml");
 		//on récupère le nom
@@ -161,7 +161,7 @@ class cms_module_common_module extends cms_module_root{
 		}
 	}
 	
-	static function read_elements_used($use_node){
+	public static function read_elements_used($use_node){
 		@ini_set("zend.ze1_compatibility_mode", "0");
 		$elements_used = array();
 		$types = array(
@@ -197,12 +197,14 @@ class cms_module_common_module extends cms_module_root{
 		if(!in_array("cms_module_common_condition_global_var_value",$elements_used['condition'])) $elements_used['condition'][] = "cms_module_common_condition_global_var_value";
 		if(!in_array("cms_module_common_condition_view",$elements_used['condition'])) $elements_used['condition'][] = "cms_module_common_condition_view";
 		if(!in_array("cms_module_common_condition_lang",$elements_used['condition'])) $elements_used['condition'][] = "cms_module_common_condition_lang";
+		if(!in_array("cms_module_common_condition_readers_categories",$elements_used['condition'])) $elements_used['condition'][] = "cms_module_common_condition_readers_categories";
+		if(!in_array("cms_module_common_condition_readers_statuses",$elements_used['condition'])) $elements_used['condition'][] = "cms_module_common_condition_readers_statuses";
 		
 		@ini_set("zend.ze1_compatibility_mode", "1");
 		return $elements_used;
 	}
 	
-	static function get_elements_used($file=""){
+	public static function get_elements_used($file=""){
 		@ini_set("zend.ze1_compatibility_mode", "0");
 		//on récupère la partie intéressante du manifest...
 		$dom = new domDocument();
@@ -1204,4 +1206,13 @@ class cms_module_common_module extends cms_module_root{
 						<span class = 'cms_module_common_view_human_description'><em>- ".$this->format_text($this->msg['cms_manage_module_views'])."</em> : ".$view->get_human_description(isset($this->msg[$view->class_name]) ? $this->format_text($this->msg[$view->class_name]) : '')."</span>";		
 		return $description;	
 	}
+	public function clean_duplication(){
+	    $this->id=0;
+	    $this->hash = '';
+	    $this->get_hash();
+        $this->conditions = [];
+        $this->filter = [];
+        $this->datasource= [];
+        $this->view = [];
+	} 
 }

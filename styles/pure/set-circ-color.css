@@ -2,7 +2,7 @@
 /* +--------------------------------------------------------------------------+
 // 2017 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: set-circ-color.css,v 1.7 2018-04-17 15:21:19 wlair Exp $ */
+// $Id: set-circ-color.css,v 1.7.6.1 2019-12-01 15:46:58 Alexandre Exp $ */
 /*------------------------------------------------------------------------------------------*/
 /* Color :
 base :#469de1
@@ -25,6 +25,7 @@ li#navbar-circ.current,
 	background-color:#469de1;	
 }
 .circ input[type="text"]:focus, 
+.circ input[type="date"]:focus,
 .circ select:focus, 
 .circ textarea:focus,
 .circ input[type="checkbox"]:focus, 

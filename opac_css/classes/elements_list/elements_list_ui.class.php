@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: elements_list_ui.class.php,v 1.4 2018-10-18 09:08:07 dgoron Exp $
+// $Id: elements_list_ui.class.php,v 1.6 2019-06-11 08:53:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -30,6 +30,7 @@ class elements_list_ui {
 		$this->mixed = $mixed;
 		$this->groups = $groups;
 		$this->nb_filtered_results = $nb_filtered_results;
+		$this->context_parameters = array();
 	}
 	
 	protected function generate_elements_list(){
@@ -39,7 +40,7 @@ class elements_list_ui {
 		$recherche_ajax_mode = 0;
 		$nb = 0;
 		//On est sur une liste mixte
-		if(get_called_class() == 'elements_list_ui') {
+		if(static::class == 'elements_list_ui') {
 			foreach($this->contents as $element){
 				if(!$recherche_ajax_mode && ($nb++>5)) $recherche_ajax_mode=1;
 				$class_name = 'elements_'.$element['type'].'_list_ui';
@@ -62,9 +63,9 @@ class elements_list_ui {
 		//Surcharge dans les classes dérivées
 	}
 	
-	protected static function render($template_path, $context) {
+	protected static function render($template_path, $context, $context_parameters=array()) {
 		if(file_exists($template_path)){
-			$h2o = H2o_collection::get_instance($template_path);
+			$h2o = H2o_collection::get_instance($template_path, array('context_parameters', $context_parameters));
 			return $h2o->render($context);
 		}
 		return '';

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: campaign_logs.class.php,v 1.2 2018-03-02 16:39:37 dgoron Exp $
+// $Id: campaign_logs.class.php,v 1.3 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -17,7 +17,7 @@ class campaign_logs {
 	protected static $instance;
 	
 	public function __construct($num_campaign=0) {
-		$this->num_campaign = $num_campaign+0;
+	    $this->num_campaign = (int) $num_campaign;
 	}
 	
 	protected function get_url_details($url, $num_recipient) {

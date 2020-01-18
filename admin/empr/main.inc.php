@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.12 2013-10-15 08:41:33 dgoron Exp $
+// $Id: main.inc.php,v 1.13.6.1 2019-11-08 10:55:39 btafforeau Exp $
 // supporto ldap by MaxMan
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
@@ -54,6 +54,12 @@ switch($sub) {
         print $admin_layout;
         echo window_title($database_window_title.$msg["parametres_perso_lec_lien"].$msg[1003].$msg[1001]);
         include("./admin/empr/parametres_perso_empr.inc.php");
+        break;
+    case 'empr_account':
+        $admin_layout = str_replace('!!menu_sous_rub!!', $msg["empr_account"], $admin_layout);
+        print $admin_layout;
+        echo window_title($database_window_title.$msg["empr_account"].$msg[1003].$msg[1001]);
+        include("./admin/empr/empr_account.inc.php");
         break;
     default:
         $admin_layout = str_replace('!!menu_sous_rub!!', "", $admin_layout);

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: superdoc2pmbxml.class.php,v 1.1 2018-07-25 06:19:18 dgoron Exp $
+// $Id: superdoc2pmbxml.class.php,v 1.2 2019-07-01 12:08:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -152,30 +152,32 @@ class superdoc2pmbxml extends convert {
 		$data="<notice>\n<rs>n</rs>\n";
 		
 		//Explosion des champs dans un tableau
-		$lignes=explode("\n",$notice);
-		$before=false;
-		$contenu="";
-		for ($i=0; $i<count($lignes); $i++) {
-			if ((!preg_match("/^[A-Z'\- ]+( )*\: /",$lignes[$i]))&&(trim($lignes[$i]))) {
-				$contenu.=" ".trim($lignes[$i]);
+		$lignes = explode("\n",$notice);
+		$before = false;
+		$contenu = "";
+		for ($i = 0; $i < count($lignes); $i++) {
+			if ((!preg_match("/^[A-Z'\- ]+( )*\: /", $lignes[$i])) && (trim($lignes[$i]))) {
+				$contenu .= " ".trim($lignes[$i]);
 			} else {
 				if ($before) {
-					if ($contenu[strlen($contenu)-1]=="/") $contenu=substr($contenu,0,strlen($contenu)-1);
-					if (substr($contenu,0,3)=="#_#") {
-						$f["URL"][0]=substr($contenu,3,strlen($contenu)-6);
+				    if (substr($contenu, strlen($contenu)-1, 0) == "/") {
+				        $contenu = substr($contenu, 0, strlen($contenu)-1);
+				    }
+					if (substr($contenu, 0, 3) == "#_#") {
+						$f["URL"][0] = substr($contenu, 3, strlen($contenu)-6);
 					} else {
-						$contenu=explode("/",$contenu);
-						for ($j=0; $j<count($contenu); $j++) {
-							$contenu[$j]=trim($contenu[$j]);
+						$contenu_array = explode("/", $contenu);
+						for ($j = 0; $j < count($contenu_array); $j++) {
+						    $contenu_array[$j] = trim($contenu_array[$j]);
 						}
-						$f[$index]=$contenu;
+						$f[$index] = $contenu_array;
 					}
 				}
-				$ligne=explode(": ",trim($lignes[$i]));
-				$index=trim($ligne[0]);
+				$ligne = explode(": ", trim($lignes[$i]));
+				$index = trim($ligne[0]);
 				unset($ligne[0]);
-				$contenu=implode(": ",$ligne);
-				$before=true;
+				$contenu = implode(": ",$ligne);
+				$before = true;
 			}
 		}
 		

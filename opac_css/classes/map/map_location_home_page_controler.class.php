@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_location_home_page_controler.class.php,v 1.1 2016-11-05 14:49:08 ngantier Exp $
+// $Id: map_location_home_page_controler.class.php,v 1.2 2019-02-26 13:48:41 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/map/map_facette_controler.class.php");
@@ -17,9 +17,8 @@ class map_location_home_page_controler extends map_facette_controler {
         global $msg;
 
         if(!count($ids_loc) && !count($ids_surloc)){
-                return '';
+            return '';
         }
-        
         $map = new map_facette_controler(TYPE_LOCATION, $ids_loc, $tab_locations, $ids_surloc, $tab_surlocations);
         return  $map->get_map();
     }

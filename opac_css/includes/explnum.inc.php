@@ -1,8 +1,8 @@
 <?php
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum.inc.php,v 1.62 2018-11-27 13:17:37 dgoron Exp $
+// $Id: explnum.inc.php,v 1.65.2.2 2019-09-10 16:14:46 dbellamy Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 require_once($class_path."/auth_popup.class.php");
@@ -45,16 +45,19 @@ function extension_fichier($fichier) {
 	return strtolower(strrev($ext));
 }
 
-function trouve_mimetype ($fichier, $ext='') {
-	
-	global $_mimetypes_byext_ ;
-	if ($ext!='') {
+function trouve_mimetype($fichier, $ext = '') {
+	global $_mimetypes_byext_;
+	if ($ext != '') {
 		// chercher le mimetype associe a l'extension : si trouvee nickel, sinon : ""
-		if ($_mimetypes_byext_[$ext]["mimetype"]) return $_mimetypes_byext_[$ext]["mimetype"] ;
+	    if (!empty($_mimetypes_byext_[$ext]["mimetype"])) {
+	        return $_mimetypes_byext_[$ext]["mimetype"];
+	    }
 	}
-	if (extension_loaded('mime_magic') || extension_loaded('fileinfo')) {
-		$mime_type = mime_content_type($fichier) ;
-		if ($mime_type) return $mime_type ;
+	if (extension_loaded('fileinfo') && is_file($fichier)) {
+		$mime_type = mime_content_type($fichier);
+		if (!empty($mime_type)) {
+		    return $mime_type;
+		}
 	}
 	return '';
 }
@@ -86,8 +89,8 @@ function __mimetype__($param) {
 function icone_mimetype ($mimetype, $ext) {
 	
 	global $_mimetypes_bymimetype_, $_mimetypes_byext_ ;
-	// trouve l'icone associée au mimetype
-	// sinon trouve l'icone associée à l'extension
+	// trouve l'icone associï¿½e au mimetype
+	// sinon trouve l'icone associï¿½e ï¿½ l'extension
 	/*
 	echo "<pre>" ;
 	print_r ($_mimetypes_bymimetype_) ;
@@ -95,17 +98,17 @@ function icone_mimetype ($mimetype, $ext) {
 	echo "</pre>" ;
 	echo "<br />-- $mimetype<br />-- $ext";
 	*/
-	if ($_mimetypes_bymimetype_[$mimetype]["icon"]) return $_mimetypes_bymimetype_[$mimetype]["icon"] ;
+	if (!empty($_mimetypes_bymimetype_[$mimetype]["icon"])) return $_mimetypes_bymimetype_[$mimetype]["icon"] ;
 	if ($_mimetypes_byext_[$ext]["icon"]) return $_mimetypes_byext_[$ext]["icon"] ;
 	return "unknown.gif" ;
 } // fin icone_mimetype
 
 
-// fonction retournant les infos d'exemplaires numériques pour une notice ou un bulletin donné
+// fonction retournant les infos d'exemplaires numï¿½riques pour une notice ou un bulletin donnï¿½
 function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='') {
 	
 	// params :
-	// $link_expl= lien associé à l'exemplaire avec !!explnum_id!! à mettre à jour
+	// $link_expl= lien associï¿½ ï¿½ l'exemplaire avec !!explnum_id!! ï¿½ mettre ï¿½ jour
 	global $dbh;
 	global $charset;
 	global $opac_url_base ;
@@ -123,7 +126,7 @@ function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='') {
 	global $_mimetypes_bymimetype_, $_mimetypes_byext_ ;
 	create_tableau_mimetype() ;
 	
-	// récupération du nombre d'exemplaires
+	// rï¿½cupï¿½ration du nombre d'exemplaires
 	$requete = "SELECT explnum_id, explnum_notice, explnum_bulletin, explnum_nom, explnum_mimetype, explnum_url, explnum_vignette, explnum_nomfichier, explnum_extfichier, explnum_docnum_statut FROM explnum WHERE ";
 	if ($no_notice && !$no_bulletin) $requete .= "explnum_notice='$no_notice' ";
 	elseif (!$no_notice && $no_bulletin) $requete .= "explnum_bulletin='$no_bulletin' ";
@@ -167,9 +170,10 @@ function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='') {
 	}
 
 	if ($nb_ex && ($docnum_visible || $opac_show_links_invisible_docnums)) {
-		// on récupère les données des exemplaires
+		// on rï¿½cupï¿½re les donnï¿½es des exemplaires
 		$i = 1 ;
 		$ligne_finale = '';
+		$ligne = '';
 		global $search_terms;
 		$docnums_exists_flag = false;
 		while (($expl = pmb_mysql_fetch_object($res))) {
@@ -246,7 +250,8 @@ function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='') {
 						$words_to_find = "#search=\"".trim(str_replace('*','',implode(' ',$search_terms)))."\"";
 					} 
 				}
-				//si l'affichage du lien vers les documents numériques est forcé et qu'on est pas connecté, on propose l'invite de connexion!
+				$allowed_mimetype = array();
+				//si l'affichage du lien vers les documents numï¿½riques est forcï¿½ et qu'on est pas connectï¿½, on propose l'invite de connexion!
 				if(!$explnum_docnum_visible && $opac_show_links_invisible_docnums && !$_SESSION['id_empr_session']){
 					if ($opac_visionneuse_allow)
 						$allowed_mimetype = explode(",",str_replace("'","",$opac_photo_filtre_mimetype));
@@ -301,7 +306,7 @@ function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='') {
 					$expl_liste_obj .= "<span class='title_docnum'>".htmlentities($expl->explnum_nom,ENT_QUOTES, $charset)."</span><div class='explnum_type'>".htmlentities($explmime_nom,ENT_QUOTES, $charset)."</div>";
 				}
 				
-				// mémorisation des exemplaires numériques et de leurs localisations
+				// mï¿½morisation des exemplaires numï¿½riques et de leurs localisations
 				$ids_loc = array();
 				$requete_loc = "SELECT num_location	FROM explnum_location  WHERE num_explnum=" . $expl->explnum_id;				
 				$result_loc = pmb_mysql_query($requete_loc, $dbh);
@@ -346,8 +351,8 @@ function show_explnum_per_notice($no_notice, $no_bulletin, $link_expl='') {
 
 
 /**
- * Fonction retournant les infos d'exemplaires numériques pour une notice ou un bulletin donné
- * @param int $explnum_id Identifiant du document numérique
+ * Fonction retournant les infos d'exemplaires numï¿½riques pour une notice ou un bulletin donnï¿½
+ * @param int $explnum_id Identifiant du document numï¿½rique
  * @return string
  */
 function show_explnum_per_id($explnum_id, $link_explnum = "") {
@@ -367,7 +372,7 @@ function show_explnum_per_id($explnum_id, $link_explnum = "") {
 	global $_mimetypes_bymimetype_, $_mimetypes_byext_ ;
 	create_tableau_mimetype() ;
 	
-	// récupération des infos du document
+	// rï¿½cupï¿½ration des infos du document
 	$query = "select explnum_id, explnum_notice, explnum_bulletin, explnum_nom, explnum_mimetype, explnum_url, explnum_vignette, explnum_nomfichier, explnum_extfichier , explnum_docnum_statut FROM explnum WHERE explnum_id = ".$explnum_id;
 	$result = pmb_mysql_query($query, $dbh);
 	if ($result && pmb_mysql_num_rows($result)) {
@@ -448,7 +453,7 @@ function show_explnum_per_id($explnum_id, $link_explnum = "") {
 				} 
 			}
 			
-			//si l'affichage du lien vers les documents numériques est forcé et qu'on est pas connecté, on propose l'invite de connexion!
+			//si l'affichage du lien vers les documents numï¿½riques est forcï¿½ et qu'on est pas connectï¿½, on propose l'invite de connexion!
 			if(!$docnum_visible && !$_SESSION['user_code'] && $opac_show_links_invisible_docnums){
 				if ($opac_visionneuse_allow)
 					$allowed_mimetype = explode(",",str_replace("'","",$opac_photo_filtre_mimetype));

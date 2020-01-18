@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: download_docnum.inc.php,v 1.5 2018-12-13 16:46:16 dgoron Exp $
+// $Id: download_docnum.inc.php,v 1.6 2019-06-04 13:49:50 ngantier Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 //gestion des droits
@@ -11,7 +11,7 @@ require_once($class_path."/explnum.class.php");
 
 switch($sub){
 	case 'gen_list':	
-		if($select_noti){
+		if (!empty($select_noti)) {
 			$id_notices = explode(",",$select_noti);
 		} else $id_notices=$_SESSION["cart"];
 		doc_num_gen_list($id_notices);

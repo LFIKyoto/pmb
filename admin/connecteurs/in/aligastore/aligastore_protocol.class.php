@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: aligastore_protocol.class.php,v 1.6 2017-07-12 09:07:56 dgoron Exp $
+// $Id: aligastore_protocol.class.php,v 1.8 2019-07-11 10:24:50 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -146,8 +146,8 @@ class xml_dom_aligastore {
 	 Les attributs ne peuvent être cités que sur le noeud final.
 	 \endverbatim
 	 */
-	public function get_node($path,$node="") {
-		if ($node=="") $node=&$this->tree;
+	public function get_node($path, $node = array()) {
+		if (empty($node)) $node =& $this->tree;
 		$paths=explode("/",$path);
 		for ($i=0; $i<count($paths); $i++) {
 			if ($i==count($paths)-1) {
@@ -210,7 +210,7 @@ class xml_dom_aligastore {
 	 */
 	public function get_nodes($path,$node="") {
 		$n=0;
-		$nodes="";
+		$nodes=[];
 		while ($nod=$this->get_node($path."[$n]",$node)) {
 			$nodes[]=$nod;
 			$n++;
@@ -512,7 +512,7 @@ class aligastore_request {
 	}
 	
 	public function aligastore_response($charset='ISO-8859-1') {
-		$parameters = '';
+		$parameters = [];
 		foreach ($this->parameters as $name => $value)
 			$parameters[] .= $name.'='.urlencode($value);
 		$url = $this->base_url . '?'.implode('&', $parameters);

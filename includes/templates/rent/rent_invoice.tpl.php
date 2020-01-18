@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_invoice.tpl.php,v 1.5 2016-02-23 12:14:15 dgoron Exp $
+// $Id: rent_invoice.tpl.php,v 1.6 2019-05-27 09:53:06 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $rent_invoice_form_tpl, $current_module, $msg, $charset;
 
 $rent_invoice_form_tpl = "
 <script src='javascript/pricing_systems.js'></script>

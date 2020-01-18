@@ -2,7 +2,9 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: storage.inc.php,v 1.4 2017-10-18 13:00:57 tsamson Exp $
+// $Id: storage.inc.php,v 1.5 2019-05-29 12:03:09 btafforeau Exp $
+
+global $class_path, $sub, $id, $type, $id_collection, $from, $action, $class_name;
 
 require_once($class_path."/storages/storages.class.php");
 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serial_func.inc.php,v 1.100 2018-08-30 14:09:07 apetithomme Exp $
+// $Id: serial_func.inc.php,v 1.102 2019-06-19 07:03:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -59,7 +59,7 @@ function show_serial_info($serial_id, $page, $nbr_lignes) {
 	$visualise_click_notice="
 	<script type=\"text/javascript\" src='./javascript/select.js'></script>
 	
-	<a href='#' onClick='show_frame(\"$pmb_opac_url"."notice_view.php?id=$serial_id\")'><img src='".get_url_icon('search.gif')."' class='align_middle' title=\"${msg["noti_see_gestion"]}\" style='border:0px' /></a>";
+	<a href='#' onClick='show_frame(\"".$pmb_url_base."opac_css/notice_view.php?id=$serial_id\")'><img src='".get_url_icon('search.gif')."' class='align_middle' title=\"${msg["noti_see_gestion"]}\" style='border:0px' /></a>";
 	 
 	$base_url = "./catalog.php?categ=serials&sub=view&serial_id=$serial_id";
 	$serial_action_bar = str_replace('!!serial_id!!', $serial_id, $serial_action_bar);
@@ -106,7 +106,7 @@ function show_serial_info($serial_id, $page, $nbr_lignes) {
 				}			
 				if ($aff_bulletins_restrict_date) {
 					$aff_bulletins_restrict_date_traite = str_replace("*","%",$aff_bulletins_restrict_date) ;
-					$tab_bulletins_restrict_date = explode ($msg[format_date_input_separator],$aff_bulletins_restrict_date_traite) ;
+					$tab_bulletins_restrict_date = explode ($msg['format_date_input_separator'],$aff_bulletins_restrict_date_traite) ;
 					if(count($tab_bulletins_restrict_date)==3)$aff_bulletins_restrict_date_traite = $tab_bulletins_restrict_date[2]."-".$tab_bulletins_restrict_date[1]."-".$tab_bulletins_restrict_date[0];
 					if(count($tab_bulletins_restrict_date)==2)$aff_bulletins_restrict_date_traite = $tab_bulletins_restrict_date[1]."-".$tab_bulletins_restrict_date[0];
 					if(count($tab_bulletins_restrict_date)==1)$aff_bulletins_restrict_date_traite = $tab_bulletins_restrict_date[0];

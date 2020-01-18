@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_document.class.php,v 1.8 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: cms_document.class.php,v 1.9 2019-07-10 06:44:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -247,7 +247,7 @@ class cms_document {
 		return $form;
 	}
 	
-	function save_form(){
+	public function save_form(){
 		global $msg,$charset;
 		global $cms_document_title,$cms_document_description,$cms_document_url,$cms_document_vign;
 		
@@ -281,7 +281,7 @@ class cms_document {
 		}
 	}
 	
-	function delete(){
+	public function delete(){
 		//TODO vérification avant suppression dans le contenu éditorial
 		
 		//suppression physique
@@ -296,7 +296,7 @@ class cms_document {
 		return false;
 	}
 	
-	function calculate_vignette(){
+	public function calculate_vignette(){
 		error_reporting(null);
 		global $base_path,$include_path,$class_path;
 		$path = $this->get_document_in_tmp();
@@ -314,7 +314,7 @@ class cms_document {
 		}
 	}
 	
-	function get_document_in_tmp(){
+	public function get_document_in_tmp(){
 		$this->clean_tmp();
 		global $base_path;
 		$path = $base_path."/temp/cms_document_".$this->id;
@@ -351,7 +351,7 @@ class cms_document {
 		}
 	}
 	
-	function rrmdir($dir){
+	public function rrmdir($dir){
 		if (is_dir($dir)) {
 			$objects = scandir($dir);
 			foreach ($objects as $object) {

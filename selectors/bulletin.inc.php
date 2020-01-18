@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bulletin.inc.php,v 1.13 2017-11-21 14:23:55 dgoron Exp $
+// $Id: bulletin.inc.php,v 1.14 2019-08-29 10:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $caller, $param1, $param2, $no_display, $bt_ajouter, $idperio, $base_url;
 
 // la variable $caller, passée par l'URL, contient le nom du form appelant
 $base_url = "./select.php?what=bulletin&caller=$caller&param1=$param1&param2=$param2&no_display=$no_display&bt_ajouter=$bt_ajouter&idperio=$idperio";

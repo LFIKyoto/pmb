@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cfile.class.php,v 1.15 2017-07-12 15:15:02 tsamson Exp $
+// $Id: cfile.class.php,v 1.19 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,7 +14,7 @@ require_once ("$include_path/parser.inc.php");
 require_once($base_path."/admin/convert/xml_unimarc.class.php");
 
 if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
-	if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "0");
+    if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "0");
 	require_once($include_path.'/xslt-php4-to-php5.inc.php');
 }
 
@@ -22,7 +22,7 @@ if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
 function cfile_file_item_($param) {
 	global $catalogs;
 	
-	if (($param['VISIBLE'] != 'no') && ($param['IMPORT'] == 'yes') || ($param['OUTPUT_PMBXML'] == 'yes')) {
+	if ((isset($param['VISIBLE']) && $param['VISIBLE'] != 'no') && (isset($param['IMPORT']) && $param['IMPORT'] == 'yes') || (isset($param['OUTPUT_PMBXML']) && $param['OUTPUT_PMBXML'] == 'yes')) {
 		$catalogs[]= array(
 			"name" => $param['NAME'],
 			"path" => $param['PATH']
@@ -211,12 +211,12 @@ class cfile extends connector {
 			//Si pas de conservation ou reférence inexistante
 			if (($this->del_old)||((!$this->del_old)&&(!$ref_exists))) {
 				//Insertion de l'entête
-				$n_header["rs"]=$record["rs"];
-				$n_header["ru"]=$record["ru"];
-				$n_header["el"]=$record["el"];
-				$n_header["bl"]=$record["bl"];
-				$n_header["hl"]=$record["hl"];
-				$n_header["dt"]=$record["dt"];
+				$n_header["rs"]=$record["rs"];unset($record["rs"]);
+				$n_header["ru"]=$record["ru"];unset($record["ru"]);
+				$n_header["el"]=$record["el"];unset($record["el"]);
+				$n_header["bl"]=$record["bl"];unset($record["bl"]);
+				$n_header["hl"]=$record["hl"];unset($record["hl"]);
+				$n_header["dt"]=$record["dt"];unset($record["dt"]);
 				
 				//Récupération d'un ID
 				$recid = $this->insert_into_external_count($source_id, $ref);
@@ -367,7 +367,7 @@ class cfile extends connector {
 			}	
 		}
 		if (!isset($xslt_exemplaire))
-			$xslt_exemplaire = "";
+			$xslt_exemplaire = [];
 		
 		$file_type = "iso_2709";
 		//Récupérons le nom du fichier
@@ -540,7 +540,7 @@ class cfile extends connector {
 		$pb_fini="";
 		$txt="";
 		while ( ($i<=strlen($contents)) && ($pb_fini=="") ) {
-			$car_lu=substr($contents,$i,1) ;
+			$car_lu = $contents[$i];
 			$i++;
 			if ($i<=strlen($contents)) {
 				if ($car_lu != chr(0x1d)) {

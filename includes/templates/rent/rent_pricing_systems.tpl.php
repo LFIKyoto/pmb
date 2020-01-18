@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_pricing_systems.tpl.php,v 1.3 2017-11-21 13:38:21 dgoron Exp $
+// $Id: rent_pricing_systems.tpl.php,v 1.4 2019-05-27 10:00:50 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $rent_pricing_systems_list_tpl, $msg, $charset, $rent_pricing_system_line_tpl;
 
 $rent_pricing_systems_list_tpl = "
 <script src='javascript/pricing_systems.js'></script>

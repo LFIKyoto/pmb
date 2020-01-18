@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_genes.inc.php,v 1.18 2017-10-18 14:55:13 ngantier Exp $
+// $Id: import_genes.inc.php,v 1.19 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -134,7 +134,7 @@ function update_ensae(value) {
 					    <blockquote>
 					    	<div class='colonne3'>";
 								$requete = "SELECT id_groupe, libelle_groupe FROM groupe left join empr_groupe on id_groupe=groupe_id  group by id_groupe, libelle_groupe ORDER BY libelle_groupe ";
-								$groupe_form_aff = gen_liste_multiple ($requete, "id_groupe", "libelle_groupe", "id_groupe", "id_grp[]", "", $id, 0, $msg[empr_form_aucungroupe], 0,"", 60) ;
+								$groupe_form_aff = gen_liste_multiple ($requete, "id_groupe", "libelle_groupe", "id_groupe", "id_grp[]", "", $id, 0, $msg['empr_form_aucungroupe'], 0,"", 60) ;
 								print  "<div class='row'>
 									<label for='form_ajoutgroupe' class='etiquette'>Groupes :</label>
 								</div>

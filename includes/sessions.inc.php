@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sessions.inc.php,v 1.57 2018-12-20 11:00:19 mbertin Exp $
+// $Id: sessions.inc.php,v 1.59.4.1 2019-11-28 15:04:54 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -117,7 +117,7 @@ function checkUser($SESSNAME, $allow=0,$user_connexion='') {
 
 	if($allow) {
 		if(!($allow & $session->rights)) {
-			$checkuser_type_erreur = CHECK_USER_AUCUN_DROIT ;
+			$checkuser_type_erreur = CHECK_USER_AUCUN_DROITS;
 			define('SESSname', '');
 			return FALSE;
 		}
@@ -144,13 +144,13 @@ function checkUser($SESSNAME, $allow=0,$user_connexion='') {
 	// récupération de la langue de l'utilisateur
 
 	// mise à disposition des variables de la session
-	define('SESSlogin'	, addslashes($PHPSESSLOGIN));
-	define('SESSname'	, addslashes($SESSNAME));
-	define('SESSid'		, addslashes($PHPSESSID));
-	define('SESSstart'	, $SESSstart_session);
-	define('SESSlang'	, $session->user_lang);
-	define('SESSrights'	, $session->rights);
-	define('SESSuserid'	, $session->userid);
+	if(!defined('SESSlogin')) define('SESSlogin'	, addslashes($PHPSESSLOGIN));
+	if(!defined('SESSname')) define('SESSname'	, addslashes($SESSNAME));
+	if(!defined('SESSid')) define('SESSid'		, addslashes($PHPSESSID));
+	if(!defined('SESSstart')) define('SESSstart'	, $SESSstart_session);
+	if(!defined('SESSlang')) define('SESSlang'	, $session->user_lang);
+	if(!defined('SESSrights')) define('SESSrights'	, $session->rights);
+	if(!defined('SESSuserid')) define('SESSuserid'	, $session->userid);
 	
 	/* Nbre d'enregistrements affichés par page */
 	/* l'usager a demandé à voir plus de résultats dans sa liste paginée */
@@ -272,7 +272,7 @@ function startSession($SESSNAME, $login, $database=LOCATION) {
 	mt_srand((float) microtime()*1000000);
 
 	// nombre aléatoire entre 1111111111 et 9999999999
-	$SESSID = mt_rand(1111111111, 9999999999);
+	$SESSID = mt_rand(1111111111, (int)9999999999);
 
 	// début session (date UNIX)
 	$SESSstart = time();

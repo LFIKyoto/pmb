@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.4 2018-12-14 16:20:14 ngantier Exp $
+// $Id: search.class.php,v 1.5 2019-05-16 13:40:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -141,5 +141,14 @@ class map_circle{
             }
         }
         return $valeur;
+    }
+    
+    public static function check_visibility() {
+    	global $opac_map_activate;
+    	if($opac_map_activate) {
+    		return true;
+    	} else {
+    		return false;
+    	}
     }
 }

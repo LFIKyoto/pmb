@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rubriques.inc.php,v 1.19 2017-10-19 14:04:50 ngantier Exp $
+// $Id: rubriques.inc.php,v 1.20 2019-08-20 09:18:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $caller, $param1, $param2, $id_bibli, $id_exer, $no_display, $bt_ajouter, $class_path, $sel_header, $elt_query, $charset;
+global $sel_search, $jscript, $nbr_lignes, $page, $sel_footer;
 
 // la variable $caller, passée par l'URL, contient le nom du form appelant
 $base_url = "./select.php?what=rubriques&caller=$caller&param1=$param1&param2=$param2&id_bibli=$id_bibli&id_exer=$id_exer&no_display=$no_display&bt_ajouter=$bt_ajouter";
@@ -25,7 +28,7 @@ $sel_search = str_replace("!!action_url!!", $base_url, $sel_search);
 print $sel_search;
 
 print $jscript;
-show_results($dbh, $nbr_lignes, $page);
+show_results($nbr_lignes, $page);
 
 //fonction de tri des rubriques par libellé
 function sort_array_rub($a,$b) {
@@ -33,7 +36,7 @@ function sort_array_rub($a,$b) {
 }
 
 // affichage des membres de la page
-function show_results($dbh, $nbr_lignes=0, $page=0) {
+function show_results($nbr_lignes=0, $page=0) {
 	
 	global $nb_per_page;
 	global $base_url;
@@ -97,7 +100,7 @@ function show_results($dbh, $nbr_lignes=0, $page=0) {
 			
 			$lib_rub = '';
 			$lib_rub_no_html = "" ;
-			foreach ($tab_rub as $dummykey=>$value) {
+			foreach ($tab_rub as $value) {
 				$lib_rub.= htmlentities($value[1], ENT_QUOTES, $charset);
 				$lib_rub_no_html.= $value[1];
 				if($value[0] != $row->id_rubrique) $lib_rub.= ":";

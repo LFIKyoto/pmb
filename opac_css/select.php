@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: select.php,v 1.18 2018-10-11 08:08:20 vtouchard Exp $
+// $Id: select.php,v 1.19 2019-02-20 15:20:24 dgoron Exp $
 
 // définition du minimum nécéssaire 
 $base_path=".";
@@ -142,6 +142,9 @@ switch($what) {
 		$autoloader = new autoloader();
 		$autoloader->add_register("onto_class",true);
 		$selector_instance = new selector_ontology(stripslashes($deb_rech));
+		break;
+	case 'keyword':
+		$selector_instance = new selector_keyword(stripslashes($user_input));
 		break;
 	default:
 		print "<script type='text/javascript'>

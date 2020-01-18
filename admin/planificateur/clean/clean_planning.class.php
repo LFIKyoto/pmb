@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: clean_planning.class.php,v 1.2 2017-12-28 14:27:36 wlair Exp $
+// $Id: clean_planning.class.php,v 1.3 2019-04-29 11:04:20 dgoron Exp $
 
 global $class_path;
 require_once($class_path."/scheduler/scheduler_planning.class.php");
@@ -34,7 +34,7 @@ class clean_planning extends scheduler_planning {
     	global $clean_relations, $clean_notices, $index_acquisitions;
     	global $gen_signature_notice, $gen_phonetique, $nettoyage_clean_tags, $clean_categories_path;
     	global $gen_date_publication_article, $gen_date_tri, $reindex_docnum;
-    	global $clean_opac_search_cache, $clean_cache_amende;
+    	global $clean_opac_search_cache, $clean_cache_amende, $clean_cache_temporary_files;
     	global $index_rdfstore, $index_synchrordfstore;
     	global $index_faq, $index_cms, $index_concept, $hash_empr_password;
     	global $index_authorities;
@@ -65,6 +65,7 @@ class clean_planning extends scheduler_planning {
 		if($reindex_docnum) $t_clean["reindex_docnum"] = $reindex_docnum;
 		if($clean_opac_search_cache) $t_clean["clean_opac_search_cache"] = $clean_opac_search_cache;
 		if($clean_cache_amende) $t_clean["clean_cache_amende"] = $clean_cache_amende;
+		if($clean_cache_temporary_files) $t_clean["clean_cache_temporary_files"] = $clean_cache_temporary_files;
 		if($index_rdfstore) $t_clean["index_rdfstore"] = $index_rdfstore;
 		if($index_synchrordfstore) $t_clean["index_synchrordfstore"] = $index_synchrordfstore;
 		if($index_faq) $t_clean["index_faq"] = $index_faq;

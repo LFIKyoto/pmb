@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: stats.class.php,v 1.6 2017-07-10 15:50:02 dgoron Exp $
+// $Id: stats.class.php,v 1.7 2019-06-05 13:13:19 btafforeau Exp $
 
 global $class_path;
 require_once($class_path."/scheduler/scheduler_task.class.php");
@@ -21,20 +21,20 @@ class stats extends scheduler_task {
 				$date_deb = $parameters["date_deb"];
 				$date_fin = $parameters["date_fin"];
 				$date_ech = "";
-				$critere_title = $msg[stat_interval_consolidation];
+				$critere_title = $msg['stat_interval_consolidation'];
 				$critere_title=str_replace("!!date_deb_btn!!",formatdate($date_deb),$critere_title);
 				$critere_title=str_replace("!!date_fin_btn!!",formatdate($date_fin),$critere_title);
 			} else if ($conso == "3") {
 				$date_deb = "";
 				$date_fin = "";
 				$date_ech = $parameters["date_ech"];
-				$critere_title = $msg[stat_echeance_consolidation];
+				$critere_title = $msg['stat_echeance_consolidation'];
 				$critere_title=str_replace("!!echeance_btn!!",formatdate($date_ech),$critere_title);
 			} else {
 				$date_deb = "";
 				$date_fin = "";
 				$date_ech = "";
-				$critere_title = $msg[stat_last_consolidation];
+				$critere_title = $msg['stat_last_consolidation'];
 			}
 			if ($parameters["list_view"]) {
 				$ids_view = implode(",", $parameters["list_view"]);

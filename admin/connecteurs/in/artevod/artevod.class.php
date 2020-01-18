@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: artevod.class.php,v 1.19 2018-10-10 10:03:50 dgoron Exp $
+// $Id: artevod.class.php,v 1.21 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,7 +10,7 @@ global $class_path,$base_path, $include_path;
 require_once($class_path."/connecteurs.class.php");
 require_once("$class_path/curl.class.php");
 if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
-	if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "0");
+    if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "0");
 	require_once($include_path.'/xslt-php4-to-php5.inc.php');
 }
 
@@ -38,7 +38,7 @@ class artevod extends connector {
 	}
     
    	public function source_get_property_form($source_id) {
-   		global $charset;
+   	    global $charset, $url, $cp_field, $enrichment_template;
     	$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
 			//Affichage du formulaire avec $params["PARAMETERS"]

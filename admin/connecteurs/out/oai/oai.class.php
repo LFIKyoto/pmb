@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: oai.class.php,v 1.18 2018-02-14 15:46:29 dgoron Exp $
+// $Id: oai.class.php,v 1.20 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -92,7 +92,7 @@ class oai_source extends connecteur_out_source {
 	
 	public function get_config_form() {
 		
-		global $charset, $dbh;
+		global $charset;
 		
 		$result = parent::get_config_form();
 		
@@ -196,7 +196,7 @@ class oai_source extends connecteur_out_source {
 		//Linked Status to deletion
 		$notice_statut_select = '<select '.($this->link_status_to_deletion ? '' : 'disabled').' id="linked_status_to_deletion" name="linked_status_to_deletion">';
 		$sql = "SELECT id_notice_statut, gestion_libelle FROM notice_statut";
-		$res = pmb_mysql_query($sql, $dbh);
+		$res = pmb_mysql_query($sql);
 		while($row=pmb_mysql_fetch_assoc($res))
 			$notice_statut_select .= '<option '.($this->linked_status_to_deletion == $row["id_notice_statut"] ? "selected" : '').' value="'.$row["id_notice_statut"].'">'.htmlentities($row["gestion_libelle"] ,ENT_QUOTES, $charset).'</option>';
 		$notice_statut_select .= '</select>';
@@ -232,7 +232,6 @@ class oai_source extends connecteur_out_source {
 	}
 	
 	public function update_config_from_form() {
-		global $dbh;
 		parent::update_config_from_form();
 		global $repo_name, $admin_email, $included_sets, $repositoryIdentifier, $chunksize, $token_lifeduration, $cache_complete_records, $cache_complete_records_seconds, $link_status_to_deletion, $linked_status_to_deletion, $allow_gzip_compression, $baseURL, $include_items,$suppr_feuille_xslt;
 		global $deletion_management, $deletion_management_transient_duration, $use_items_update_date, $oai_pmh_valid;
@@ -240,12 +239,12 @@ class oai_source extends connecteur_out_source {
 		$this->config["repo_name"] = stripslashes($repo_name);
 		$this->config["admin_email"] = stripslashes($admin_email);
 		$this->config["repositoryIdentifier"] = stripslashes($repositoryIdentifier);
-		$this->config["chunksize"] = $chunksize+0;
-		$this->config["token_lifeduration"] = $token_lifeduration+0;
+		$this->config["chunksize"] = (int) $chunksize;
+		$this->config["token_lifeduration"] = (int) $token_lifeduration;
 		$this->config["cache_complete_records"] = isset($cache_complete_records);
-		$this->config["cache_complete_records_seconds"] = $cache_complete_records_seconds+0;
+		$this->config["cache_complete_records_seconds"] = (int) $cache_complete_records_seconds;
 		$this->config["link_status_to_deletion"] = isset($link_status_to_deletion);
-		$this->config["linked_status_to_deletion"] = $linked_status_to_deletion+0;
+		$this->config["linked_status_to_deletion"] = (int) $linked_status_to_deletion;
 		$this->config["allow_gzip_compression"] = isset($allow_gzip_compression);
 		$this->config["baseURL"] = stripslashes($baseURL);
 		$this->config["include_items"] = isset($include_items);
@@ -272,8 +271,8 @@ class oai_source extends connecteur_out_source {
 		$this->config['include_links'] = $e_param->get_parametres(EXP_OAI_CONTEXT);
 		
 		//Vérifions que le statut proposé existe bien
-		$sql = "SELECT COUNT(1) > 0 FROM notice_statut WHERE id_notice_statut = ".($linked_status_to_deletion+0);
-		$status_exists = pmb_mysql_result(pmb_mysql_query($sql, $dbh), 0, 0);
+		$sql = "SELECT COUNT(1) > 0 FROM notice_statut WHERE id_notice_statut = ".((int) $linked_status_to_deletion);
+		$status_exists = pmb_mysql_result(pmb_mysql_query($sql), 0, 0);
 		if (!$status_exists)
 			$this->config["linked_status_to_deletion"] = 0;
 		
@@ -286,10 +285,10 @@ class oai_source extends connecteur_out_source {
 		//et maintenant les sets
 		if (!is_array($included_sets))
 			$included_sets=array($included_sets);
-		array_walk($included_sets, create_function('&$a', '$a+=0;'));	//Virons ce qui n'est pas entier
+		array_walk($included_sets, function(&$a) {$a = intval($a);});	//Virons ce qui n'est pas entier
 		//Virons ce qui n'est pas un index de set de notice
 		$sql = "SELECT connector_out_set_id FROM connectors_out_sets WHERE connector_out_set_type IN (".implode(",",$this->allowed_set_types).") AND connector_out_set_id IN (".implode(",", $included_sets).')';
-		$res = pmb_mysql_query($sql, $dbh);
+		$res = pmb_mysql_query($sql);
 		$this->config["included_sets"] = array();
 		while($row=pmb_mysql_fetch_assoc($res)) {
 			$this->config["included_sets"][] = $row["connector_out_set_id"];
@@ -319,12 +318,10 @@ class oai_source extends connecteur_out_source {
 	 * Nettoie la table des enregistrements OAI supprimés
 	 */
 	static public function clean_out_oai_deleted_records() {
-		global $dbh;
-
 		$sets_configs = array();
 		// On récupère les configurations des sources du connecteur oai
 		$query = "select connectors_out_source_config from connectors_out_sources where connectors_out_sources_connectornum = 3";
-		$result = pmb_mysql_query($query, $dbh);
+		$result = pmb_mysql_query($query);
 		if ($result && pmb_mysql_num_rows($result)) {
 			while ($source = pmb_mysql_fetch_object($result)) {
 				$source_config = unserialize($source->connectors_out_source_config);
@@ -353,7 +350,7 @@ class oai_source extends connecteur_out_source {
 				if ($set['deletion_management'] == 1) {
 					$query .= " and timestampdiff(second, deletion_date, now()) > ".$set['deletion_management_transient_duration'];
 				}
-				pmb_mysql_query($query, $dbh);
+				pmb_mysql_query($query);
 			}
 		}
 	}

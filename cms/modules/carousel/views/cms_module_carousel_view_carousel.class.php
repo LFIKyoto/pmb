@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_carousel_view_carousel.class.php,v 1.27 2017-07-27 14:50:32 tsamson Exp $
+// $Id: cms_module_carousel_view_carousel.class.php,v 1.29 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/h2o/h2o.php");
@@ -150,10 +150,10 @@ class cms_module_carousel_view_carousel extends cms_module_common_view_django{
 		global $cms_module_carousel_view_carousel_pager;
 				
 		$this->parameters['mode'] = $cms_module_carousel_view_carousel_mode;
-		$this->parameters['speed'] = $cms_module_carousel_view_carousel_speed+0;
-		$this->parameters['pause'] = $cms_module_carousel_view_carousel_pause+0;
-		$this->parameters['display_quantity'] = $cms_module_carousel_view_carousel_display_quantity+0;
-		$this->parameters['slide_quantity'] = $cms_module_carousel_view_carousel_slide_quantity+0;
+		$this->parameters['speed'] = (int) $cms_module_carousel_view_carousel_speed;
+		$this->parameters['pause'] = (int) $cms_module_carousel_view_carousel_pause;
+		$this->parameters['display_quantity'] = (int) $cms_module_carousel_view_carousel_display_quantity;
+		$this->parameters['slide_quantity'] = (int) $cms_module_carousel_view_carousel_slide_quantity;
 		$this->parameters['autostart'] = $cms_module_carousel_view_carousel_autostart==1 ? true : false;
 		$this->parameters['css'] = stripslashes($cms_module_carousel_view_carousel_css);
 		$this->parameters['used_template'] = $cms_module_common_view_django_template_record_content;
@@ -350,7 +350,7 @@ class cms_module_carousel_view_carousel extends cms_module_common_view_django{
 	}	
 
 	public function get_format_data_structure(){
-		if (get_called_class() == "cms_module_carousel_view_carousel") {
+	    if (static::class == "cms_module_carousel_view_carousel") {
 			$datas = new cms_module_carousel_datasource_notices();
 			$format_datas = $datas->get_format_data_structure();
 	 		$format_datas[0]['children'][] = array(

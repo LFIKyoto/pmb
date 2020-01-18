@@ -2,17 +2,13 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_accounting_devis_ui.class.php,v 1.2 2018-04-23 13:25:26 dgoron Exp $
+// $Id: list_accounting_devis_ui.class.php,v 1.4.2.1 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/list/accounting/list_accounting_ui.class.php");
 
 class list_accounting_devis_ui extends list_accounting_ui {
-		
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	protected function get_button_add() {
 		global $msg;
@@ -31,7 +27,9 @@ class list_accounting_devis_ui extends list_accounting_ui {
 						'num_fournisseur' => 'acquisition_ach_fou2',
 						'date_acte' => 'acquisition_cde_date_cde',
 						'statut' => 'acquisition_statut',
-						'print_mail' => ''
+    				    'commentaires' => 'acquisition_commentaires',
+    				    'commentaires_i' => 'acquisition_commentaires_i',
+						'print_mail' => 'print_mail'
 				)
 		);
 	}

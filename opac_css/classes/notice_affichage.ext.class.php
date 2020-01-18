@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_affichage.ext.class.php,v 1.293 2018-11-27 13:17:36 dgoron Exp $
+// $Id: notice_affichage.ext.class.php,v 1.297 2019-07-05 12:36:24 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -231,7 +231,6 @@ class notice_affichage_custom_bretagne extends notice_affichage {
 		if ($this->notice->subcoll_id || ($this->notice->year && $this->notice->ed1_id)) $colspanbretagne = " colspan='3' ";
 		else $colspanbretagne = "";
 		
-		$this->fetch_categories() ;
 		$this->notice_public="<table>";
 		// Notices parentes
 		$this->notice_public.=$this->parents;
@@ -520,13 +519,13 @@ class notice_affichage_mw extends notice_affichage {
 		
 		$basket="<img src='".$opac_url_base."mw/images/commun/cale.gif' border='0' width='1' height='8' /><br /><div style='float:left;'>";
 		if ($this->cart_allowed) {
-			$basket.="<a href='cart_info.php?id=".$this->notice_id."&header=".rawurlencode(strip_tags($this->notice_header))."' target='cart_info' title=\"".$msg[notice_title_basket]."\"><img src='".$opac_url_base."mw/images/commun/basket_small_20x20.png' border='0' align='absmiddle' alt=\"".$msg[notice_title_basket]."\" />".$msg[notice_bt_panier]."</a>";
+			$basket.="<a href='cart_info.php?id=".$this->notice_id."&header=".rawurlencode(strip_tags($this->notice_header))."' target='cart_info' title=\"".$msg['notice_title_basket']."\"><img src='".$opac_url_base."mw/images/commun/basket_small_20x20.png' border='0' align='absmiddle' alt=\"".$msg['notice_title_basket']."\" />".$msg['notice_bt_panier']."</a>";
 		}
 		 if (($opac_avis_allow && $opac_avis_allow != 2) || ($_SESSION["user_code"] && $opac_avis_allow == 2)) {//Avis
-				$basket.="&nbsp;&nbsp;<a href='#' onclick=\"javascript:open('avis.php?todo=liste&noticeid=$this->notice_id','avis','width=520,height=290,scrollbars=yes,resizable=yes')\"><img src='".$opac_url_base."mw/images/commun/avis.gif' align='absmiddle' border='0' />".$msg[notice_bt_avis]."</a><br /><br />";
+				$basket.="&nbsp;&nbsp;<a href='#' onclick=\"javascript:open('avis.php?todo=liste&noticeid=$this->notice_id','avis','width=520,height=290,scrollbars=yes,resizable=yes')\"><img src='".$opac_url_base."mw/images/commun/avis.gif' align='absmiddle' border='0' />".$msg['notice_bt_avis']."</a><br /><br />";
 		}
 		if (($opac_allow_add_tag==1)||(($opac_allow_add_tag==2)&&($_SESSION["user_code"]))){//add tags
-				$basket.="&nbsp;&nbsp;<a href='#' onclick=\"javascript:open('addtags.php?noticeid=$this->notice_id','Ajouter_un_tag','width=350,height=150,scrollbars=yes,resizable=yes')\"><img src='".$opac_url_base."mw/images/commun/tag.gif'align='absmiddle' border='0' />".$msg[notice_bt_tag]."</a>";
+				$basket.="&nbsp;&nbsp;<a href='#' onclick=\"javascript:open('addtags.php?noticeid=$this->notice_id','Ajouter_un_tag','width=350,height=150,scrollbars=yes,resizable=yes')\"><img src='".$opac_url_base."mw/images/commun/tag.gif'align='absmiddle' border='0' />".$msg['notice_bt_tag']."</a>";
 		}
 		if ((!$this->cart_allowed)&&($opac_avis_allow==0)) {
 			$basket.="";
@@ -615,13 +614,13 @@ class notice_affichage_mw extends notice_affichage {
 		
 		$basket="<img src='".$opac_url_base."mw/images/commun/cale.gif' border='0' width='1' height='8'><br /><div style='float:left;'>";
 		if ($this->cart_allowed) {
-			$basket.="<a href='cart_info.php?id=".$this->notice_id."&header=".rawurlencode(strip_tags($this->notice_header))."' target='cart_info' title=\"".$msg[notice_title_basket]."\"><img src='".$opac_url_base."mw/images/commun/basket_small_20x20.png' border='0' align='absmiddle' alt=\"".$msg[notice_title_basket]."\" />".$msg[notice_bt_panier]."</a>";
+			$basket.="<a href='cart_info.php?id=".$this->notice_id."&header=".rawurlencode(strip_tags($this->notice_header))."' target='cart_info' title=\"".$msg['notice_title_basket']."\"><img src='".$opac_url_base."mw/images/commun/basket_small_20x20.png' border='0' align='absmiddle' alt=\"".$msg['notice_title_basket']."\" />".$msg['notice_bt_panier']."</a>";
 		}
 		if ($opac_avis_allow){	//Avis
-				$basket.="&nbsp;&nbsp;<a href='#' onclick=\"javascript:open('avis.php?todo=liste&noticeid=$this->notice_id','avis','width=520,height=290,scrollbars=yes,resizable=yes')\"><img src='".$opac_url_base."mw/images/commun/avis.gif' align='absmiddle' border='0'>".$msg[notice_bt_avis]."</a>";
+				$basket.="&nbsp;&nbsp;<a href='#' onclick=\"javascript:open('avis.php?todo=liste&noticeid=$this->notice_id','avis','width=520,height=290,scrollbars=yes,resizable=yes')\"><img src='".$opac_url_base."mw/images/commun/avis.gif' align='absmiddle' border='0'>".$msg['notice_bt_avis']."</a>";
 		}
 		if (($opac_allow_add_tag==1)||(($opac_allow_add_tag==2)&&($_SESSION["user_code"]))){//add tags
-				$basket.="&nbsp;&nbsp;<a href='#' onclick=\"javascript:open('addtags.php?noticeid=$this->notice_id','Ajouter_un_tag','width=350,height=150,scrollbars=yes,resizable=yes')\"><img src='".$opac_url_base."mw/images/commun/tag.gif' align='absmiddle' border='0'>".$msg[notice_bt_tag]."</a>";
+				$basket.="&nbsp;&nbsp;<a href='#' onclick=\"javascript:open('addtags.php?noticeid=$this->notice_id','Ajouter_un_tag','width=350,height=150,scrollbars=yes,resizable=yes')\"><img src='".$opac_url_base."mw/images/commun/tag.gif' align='absmiddle' border='0'>".$msg['notice_bt_tag']."</a>";
 		}
 		if ((!$this->cart_allowed)&&($opac_avis_allow==0)) {
 			 	$basket.="";
@@ -697,14 +696,14 @@ class notice_affichage_categ_regroup extends notice_affichage {
 			$categ_repetables[$categ->thes->libelle_thesaurus][$categ_id]["commentaire_public"] = $categ->commentaire_public;
 			//$categ_repetables[$categ_id] = $categ->catalog_form;
 		}
-		$categ_final_table=array();    
-        while (list($key,$val)=each($categ_repetables)) {
+		$categ_final_table=array();
+		foreach ($categ_repetables as $key => $val) {
         	$categ_final_table[$key]=$key;
 			if ($opac_categories_affichage_ordre!="1")
 				asort($val) ;
         	reset($val);
         	$categ_r=array();
-            while (list($categ_id,$libelle)=each($val)) {
+        	foreach ($val as $categ_id => $libelle) {
             	// Si il y a présence d'un commentaire affichage du layer					
 				$result_com = categorie::zoom_categ($categ_id, $libelle["commentaire_public"]);
             	$categ_r[$categ_id] = inslink($libelle["libelle"],  str_replace("!!id!!", $categ_id, $this->lien_rech_categ), $result_com['java_com']).$result_com['zoom'];
@@ -731,14 +730,14 @@ class notice_affichage_epires extends notice_affichage {
 			$categ_repetables[$categ->path_table[0]["libelle"]][$categ_id]["commentaire_public"] = $categ->commentaire_public;
 		}
 		$categ_final_table=array();
-		while (list($key,$val)=each($categ_repetables)) {
+		foreach ($categ_repetables as $key => $val) {
 		    if (!$opac_categories_show_only_last){
     			$categ_final_table[$key]=$key;
 		    }
 			asort($val) ;
 			reset($val);
 			$categ_r=array();
-			while (list($categ_id,$libelle)=each($val)) {
+			foreach ($val as $categ_id => $libelle) {
 				// Si il y a présence d'un commentaire affichage du layer					
 				$result_com = categorie::zoom_categ($categ_id, $libelle["commentaire_public"]);
 				$categ_r[$categ_id] = inslink($libelle["libelle"],  str_replace("!!id!!", $categ_id, $this->lien_rech_categ), $result_com['java_com']).$result_com['zoom'];
@@ -1732,15 +1731,28 @@ class notice_affichage_supagro extends notice_affichage {
 			$editeurs .= inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed1_id, $this->lien_rech_editeur));
 		}
 		
-		if($this->notice->ed2_id) {
+		if ($this->notice->ed2_id) {
 			$editeur = new publisher($this->notice->ed2_id);
-			$editeurs ? $editeurs .= '&nbsp;: '.inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur)) : $editeurs = inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			if ($editeurs) {
+			    $editeurs .= '&nbsp;: '.inslink($editeur->get_isbd(), str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			} else {
+			    $editeurs = inslink($editeur->get_isbd(), str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			}
 		}
 	
-		if($this->notice->year) $editeurs ? $editeurs .= ', '.$this->notice->year : $editeurs = $this->notice->year;
-		elseif ($this->notice->niveau_biblio == 'm' && $this->notice->niveau_hierar == 0) 
-				$editeurs ? $editeurs .= ', [s.d.]' : $editeurs = "[s.d.]";
-	
+		if ($this->notice->year) {
+		    if ($editeurs) {
+		        $editeurs .= ', '.$this->notice->year;
+		    } else {
+		        $editeurs = $this->notice->year;
+		    }
+		} elseif ($this->notice->niveau_biblio == 'm' && $this->notice->niveau_hierar == 0) {
+		    if ($editeurs) {
+		        $editeurs .= ', [s.d.]';
+		    } else {
+		        $editeurs = "[s.d.]";
+		    }
+		}
 		if($editeurs) $this->notice_isbd .= "&nbsp;.&nbsp;-&nbsp;$editeurs";
 		
 		// zone de la collation
@@ -2162,13 +2174,26 @@ class notice_affichage_crips extends notice_affichage {
 		
 		if($this->notice->ed2_id) {
 			$editeur = new publisher($this->notice->ed2_id);
-			$editeurs ? $editeurs .= '&nbsp;: '.inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur)) : $editeurs = inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			if ($editeurs) {
+			    $editeurs .= '&nbsp;: '.inslink($editeur->get_isbd(), str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			} else {
+			    $editeurs = inslink($editeur->get_isbd(), str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			}
 		}
 	
-		if($this->notice->year) $editeurs ? $editeurs .= ', '.$this->notice->year : $editeurs = $this->notice->year;
-		elseif ($this->notice->niveau_biblio == 'm' && $this->notice->niveau_hierar == 0) 
-				$editeurs ? $editeurs .= ', [s.d.]' : $editeurs = "[s.d.]";
-	
+		if($this->notice->year) {
+		    if ($editeurs) {
+		        $editeurs .= ', '.$this->notice->year;
+		    } else {
+		        $editeurs = $this->notice->year;
+		    }
+		} elseif ($this->notice->niveau_biblio == 'm' && $this->notice->niveau_hierar == 0) {
+		    if ($editeurs) {
+		        $editeurs .= ', [s.d.]';
+		    } else {
+		        $editeurs = "[s.d.]";
+		    }
+		}
 		if($editeurs) $this->notice_isbd .= "&nbsp;.&nbsp;-&nbsp;$editeurs";
 		
 		// zone de la collation
@@ -3055,13 +3080,26 @@ class notice_affichage_commande_copie extends notice_affichage {
 		
 		if($this->notice->ed2_id) {
 			$editeur = new publisher($this->notice->ed2_id);
-			$editeurs ? $editeurs .= '&nbsp;: '.inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur)) : $editeurs = inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			if ($editeurs) {
+			    $editeurs .= '&nbsp;: '.inslink($editeur->get_isbd(), str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			} else {
+			    $editeurs = inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			}
 		}
 	
-		if($this->notice->year) $editeurs ? $editeurs .= ', '.$this->notice->year : $editeurs = $this->notice->year;
-		elseif ($this->notice->niveau_biblio == 'm' && $this->notice->niveau_hierar == 0) 
-				$editeurs ? $editeurs .= ', [s.d.]' : $editeurs = "[s.d.]";
-	
+		if($this->notice->year) {
+		    if ($editeurs) {
+		        $editeurs .= ', '.$this->notice->year;
+		    } else {
+		        $editeurs = $this->notice->year;
+		    }
+		} elseif ($this->notice->niveau_biblio == 'm' && $this->notice->niveau_hierar == 0) {
+		    if ($editeurs) {
+		        $editeurs .= ', [s.d.]';
+		    } else {
+		        $editeurs = "[s.d.]";
+		    }
+		}
 		if($editeurs) $this->notice_isbd_small .= "&nbsp;.&nbsp;-&nbsp;$editeurs";
 		
 		// zone de la collation

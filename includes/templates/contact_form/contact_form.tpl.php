@@ -1,4 +1,12 @@
 <?php
+// +-------------------------------------------------+
+// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// +-------------------------------------------------+
+// $Id: contact_form.tpl.php,v 1.2.6.1 2019-10-09 08:18:47 dgoron Exp $
+
+if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $contact_form_object_form_tpl, $msg, $current_module;
 
 $contact_form_object_form_tpl="
 <script type='text/javascript'>
@@ -19,7 +27,13 @@ $contact_form_object_form_tpl="
 			<label class='etiquette' for='object_label'>".$msg['admin_opac_contact_form_object_label']."</label>
 		</div>
 		<div class='row'>
-			<input type='text' class='saisie-50em' name='object_label' id='object_label' value='!!label!!' />
+			<input type='text' class='saisie-50em' name='object_label' id='object_label' data-translation-fieldname='object_label' value='!!label!!' />
+		</div>
+        <div class='row'>
+			<label class='etiquette' for='f_message'>".$msg["admin_opac_contact_form_object_message"]."</label>
+		</div>	
+        <div class='row'>
+			<textarea id='object_message' name='object_message' cols='100' rows='20'>!!message!!</textarea>
 		</div>
 		<div class='row'>
 		</div>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannettes_controller.class.php,v 1.2 2018-12-27 10:32:05 dgoron Exp $
+// $Id: bannettes_controller.class.php,v 1.4 2019-08-01 13:16:36 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,7 +14,7 @@ class bannettes_controller{
 	protected $id;
 	
 	public function __construct($id=0) {
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 	}
 	
 	public static function proceed_module_diffusion($suite) {
@@ -28,7 +28,8 @@ class bannettes_controller{
 		$action_diff_aff = '';
 		// récupérer les bannettes cochées
 		if (!$liste_bannette) $liste_bannette = array() ;
-		for ($iba=0 ; $iba < sizeof($liste_bannette) ; $iba++) {
+		$nb_listes_bannette = count($liste_bannette);
+		for ($iba = 0; $iba < $nb_listes_bannette; $iba++) {
 			$bannette = new bannette($liste_bannette[$iba]) ;
 			switch($suite) {
 				case "vider" :

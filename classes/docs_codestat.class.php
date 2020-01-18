@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docs_codestat.class.php,v 1.9 2017-01-03 11:14:01 dgoron Exp $
+// $Id: docs_codestat.class.php,v 1.10 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -67,10 +67,10 @@ class docs_codestat {
 		global $dbh;
 	
 		// check sur le type de la variable passée en paramètre
-		if(!sizeof($data) || !is_array($data)) {
+		if ((empty($data) && !is_array($data)) || !is_array($data)) {
 			// si ce n'est pas un tableau ou un tableau vide, on retourne 0
 			return 0;
-			}
+		}
 		// check sur les éléments du tableau
 		
 		$long_maxi = pmb_mysql_field_len(pmb_mysql_query("SELECT codestat_libelle FROM docs_codestat limit 1"),0);

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_transferts_ui.tpl.php,v 1.1 2018-12-27 10:05:22 dgoron Exp $
+// $Id: list_transferts_ui.tpl.php,v 1.2 2019-05-27 10:12:16 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -10,6 +10,7 @@ if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 // Définition des templates pour le parcours des listes de transfert
 // en circulation
 //*******************************************************************
+global $list_transferts_ui_parcours_search_content_form_tpl, $msg, $list_transferts_ui_script_case_a_cocher, $list_transferts_ui_script_chg_date_retour, $list_transferts_ui_no_results, $list_transferts_ui_valid_list_tpl, $list_transferts_ui_reception_valid_list_tpl;
 
 $list_transferts_ui_parcours_search_content_form_tpl = "
 <div class='row'>
@@ -88,7 +89,6 @@ $list_transferts_ui_script_chg_date_retour = "
 	}
 </script>
 ";
-
 $list_transferts_ui_no_results = "<br /><strong style='text-align: center;display:block;'>!!message!!</strong>";
 
 $list_transferts_ui_valid_list_tpl = "

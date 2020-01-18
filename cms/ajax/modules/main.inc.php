@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.25 2018-01-24 15:33:28 apetithomme Exp $
+// $Id: main.inc.php,v 1.27.2.1 2019-11-25 11:30:26 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $var;
 
 require_once($include_path.'/misc.inc.php');
 require_once($class_path."/autoloader.class.php");
@@ -14,7 +16,7 @@ $autoloader->add_register("cms_modules",true);
 //si l'id n'est pas passé en GET, on récupère le hidden qui se balade dans les posts...
 if(!$id){
 	if(isset($cms_module_common_module_id)) {
-		$id = $cms_module_common_module_id+0;
+	    $id = (int) $cms_module_common_module_id;
 	} else {
 		$id = 0;
 	}
@@ -59,6 +61,18 @@ switch($action){
 		$response = $element->execute_ajax();
 		ajax_http_send_response($response['content'],$response['content-type']);
 		break;	
+	case "duplicate_form" :
+	    if(!isset($callback)) $callback = "";
+	    if(!isset($cancel_callback) || !$cancel_callback) $cancel_callback = "";
+	    if(!isset($delete_callback)) $delete_callback = "";
+	    $element = new $elem($id);
+		if(isset($cms_module_class) && $cms_module_class){
+			$element->set_module_class_name($cms_module_class);
+		}
+		$element->set_cms_build_env(restore_cms_env($cms_build_info));
+	    $element->clean_duplication();
+		$response = $element->save_form();
+	    break; 
 	case "get_form" :
 	default :
 		if(!isset($callback)) $callback = "";

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: zattr.inc.php,v 1.13 2017-10-27 13:42:55 ngantier Exp $
+// $Id: zattr.inc.php,v 1.14 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -91,7 +91,7 @@ function zattr_form($zbib_id="", $zattr_libelle="", $zattr_attr="") {
 				<div class='colonne_suite'> ";
 		
 		$select .= "<select name='form_attr_libelle'>	";
-		while(list($codeattr, $libelle) = each($codici)) {
+		foreach ($codici as $codeattr => $libelle) {
 			if($zattr_libelle == $codeattr) $select .= "<option value='".htmlentities($codeattr,ENT_QUOTES, $charset)."' SELECTED>".htmlentities($msg["z3950_".$libelle],ENT_QUOTES, $charset)."</option>";
 				else $select .= "<option value='".htmlentities($codeattr,ENT_QUOTES, $charset)."'>".htmlentities($msg["z3950_".$libelle],ENT_QUOTES, $charset)."</option>";
 			}

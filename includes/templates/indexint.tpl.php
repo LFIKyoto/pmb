@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: indexint.tpl.php,v 1.39 2018-03-02 10:54:13 dgoron Exp $
+// $Id: indexint.tpl.php,v 1.43 2019-05-27 13:32:11 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -11,7 +11,7 @@ global $indexint_replace;
 
 global $pmb_autorites_verif_js;
 global $pmb_form_authorities_editables;
-global $PMBuserid;
+global $PMBuserid, $base_path, $msg, $current_module, $charset;
 
 // $indexint_form : form saisie titre de série
 $indexint_form = jscript_unload_question();
@@ -26,9 +26,12 @@ $indexint_form.= "
 	});
 </script>
 <script type='text/javascript'>
-<!--
-	function test_form(form)
-	{
+	function test_form(form) {
+		if (typeof check_form == 'function') {
+			if (!check_form()) {
+				return false;
+			}
+		}
 	";
 	if ($pmb_autorites_verif_js != "") {
 		$indexint_form.= "
@@ -53,7 +56,6 @@ function confirm_delete() {
 		} else
             document.forms['saisie_indexint'].elements['indexint_nom'].focus();
     }
--->
 </script>
 <script type='text/javascript'>
 	document.title='!!document_title!!';
@@ -97,7 +99,7 @@ function confirm_delete() {
 				<label class='etiquette' for='indexint_nom'>".$msg['indexint_nom']."</label>
 			</div>
 			<div class='row'>
-				<input type='text' class='saisie-50em' name='indexint_nom' value=\"!!indexint_nom!!\" />
+				<input type='text' class='saisie-50em' name='indexint_nom' value=\"!!indexint_nom!!\" data-pmb-deb-rech='1'/>
 			</div>
 		</div>
 		<div id='el0Child_1' class='row' movable='yes' title=\"".htmlentities($msg['indexint_comment'], ENT_QUOTES, $charset)."\">
@@ -117,7 +119,9 @@ function confirm_delete() {
 <div class='row'>
 	<div class='left'>
 		<input type='button' id='btcancel' class='bouton' value='$msg[76]' onClick=\"unload_off();document.location='!!cancel_action!!';\" />
-		<input type='submit' id='btsubmit' value='$msg[77]' class='bouton' onClick=\"return test_form(this.form)\" />
+		<input type='submit' id='btsubmit' value='$msg[77]' class='bouton' onClick=\"document.getElementById('save_and_continue').value=0;return test_form(this.form)\" />
+		<input type='hidden' name='save_and_continue' id='save_and_continue' value='' />
+		<input type='submit' id='update_continue' class='bouton' value='" . $msg['save_and_continue'] . "' onClick=\"document.getElementById('save_and_continue').value=1;return test_form(this.form)\" />
 		!!remplace!!
 		!!voir_notices!!
 		!!audit_bt!!

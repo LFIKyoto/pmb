@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_uri.class.php,v 1.5 2017-05-19 12:50:45 dgoron Exp $
+// $Id: onto_common_uri.class.php,v 1.6 2019-01-14 11:33:12 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -150,6 +150,7 @@ class onto_common_uri {
 	
 	public static function get_id($uri){
 		global $dbh;
+		$id = 0;
 		$query = "select uri_id from onto_uri where uri = '".addslashes($uri)."'";
 		$result = pmb_mysql_query($query,$dbh);
 		if(pmb_mysql_num_rows($result)){

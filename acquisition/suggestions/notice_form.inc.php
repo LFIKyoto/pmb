@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_form.inc.php,v 1.12 2017-09-28 09:23:37 dgoron Exp $
+// $Id: notice_form.inc.php,v 1.13 2019-05-28 15:00:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $include_path, $class_path, $pmb_indexation_lang, $pmb_prefill_cote, $id_sug, $msg, $id_bibli, $charset, $id, $cod;
 
 require_once("$include_path/templates/catalog.tpl.php");
 require_once("$include_path/isbn.inc.php");

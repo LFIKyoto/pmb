@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: AceManager.js,v 1.3 2017-11-22 16:23:58 dgoron Exp $
+// $Id: AceManager.js,v 1.4 2019-02-18 16:48:33 apetithomme Exp $
 
 define([
      "dojo/_base/declare",
@@ -12,7 +12,10 @@ define([
 	  constructor:function(){
 			this.registry = {};
 		  },
-	  initEditor: function(id){ //Cette méthode n'est à utiliser qu'avec des textarea ou des inputs
+	  initEditor: function(id, mode){ //Cette méthode n'est à utiliser qu'avec des textarea ou des inputs
+		  if (!mode) {
+			  mode = 'twig';
+		  }
 		  var node = document.getElementById(id)
 		  if(node){ //Un noeud porte l'identifiant
 			  var nodeName = node.getAttribute('name');
@@ -23,7 +26,7 @@ define([
 		  	  });
 			  
 			  editor.setTheme('ace/theme/eclipse');
-			  editor.getSession().setMode('ace/mode/twig');
+			  editor.getSession().setMode('ace/mode/'+mode);
 			  editor.setOptions({
 				  maxLines: Infinity,
 				  minLines: 5

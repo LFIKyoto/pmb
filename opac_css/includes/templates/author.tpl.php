@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: author.tpl.php,v 1.16 2018-01-25 10:13:28 dgoron Exp $
+// $Id: author.tpl.php,v 1.17 2019-05-29 11:23:32 btafforeau Exp $
 
 // ce fichier contient des templates indiquant comment doit s'afficher un auteur
 
@@ -25,6 +25,7 @@ if ( ! defined( 'AUTHOR_TMPL' ) ) {
 // !!allnamenc!! Nom complet et lisible non clikable (pour affichage seulement)
 // !!dates!!     date de naissance et de décès
 
+global $msg;
 global $author_level1_display;
 global $author_level1_no_dates_info;
 global $author_level2_display;

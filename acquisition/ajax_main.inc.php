@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_main.inc.php,v 1.6 2016-03-29 15:31:33 arenou Exp $
+// $Id: ajax_main.inc.php,v 1.7 2019-05-28 15:00:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $categ, $plugin, $sub;
 
 //En fonction de $categ, il inclut les fichiers correspondants
 

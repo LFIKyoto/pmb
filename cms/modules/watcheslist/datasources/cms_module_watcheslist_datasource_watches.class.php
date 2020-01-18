@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_watcheslist_datasource_watches.class.php,v 1.5 2016-09-20 10:25:42 apetithomme Exp $
+// $Id: cms_module_watcheslist_datasource_watches.class.php,v 1.5.10.1 2019-11-08 08:01:16 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -61,6 +61,7 @@ class cms_module_watcheslist_datasource_watches extends cms_module_common_dataso
 					if (pmb_mysql_num_rows($result)) {
 						while($row=pmb_mysql_fetch_object($result)){
 							$docwatch_watch = new docwatch_watch($row->id_watch);
+							$docwatch_watch->fetch_items();
 							$watcheslist[] = $docwatch_watch->get_normalized_watch();
 						}
 					}

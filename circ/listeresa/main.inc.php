@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.58 2018-05-18 13:07:36 dgoron Exp $
+// $Id: main.inc.php,v 1.61 2019-08-01 13:16:36 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-if(!isset($suppr_id_resa)) $suppr_id_resa = '';
+if(!isset($suppr_id_resa)) $suppr_id_resa = array();
 
 require_once($class_path."/resa.class.php");
 require_once("$include_path/resa.inc.php");
@@ -152,10 +152,11 @@ switch($action) {
 
 	case 'suppr_resa':
 		// récupérer les items
-		for ($i=0 ; $i < sizeof($suppr_id_resa) ; $i++) {
+		$nb_suppr_id_resa = count($suppr_id_resa);
+		for ($i = 0; $i < $nb_suppr_id_resa; $i++) {
 			// récup éventuelle du cb
 			$cb_recup = reservation::get_cb_from_id($suppr_id_resa[$i]);
-			if($pmb_transferts_actif){
+			if (!empty($pmb_transferts_actif)) {
 				
 				// on cloture que si etat_demande =0, le livre est en rayon, pas validé... https://mypmb.sigb.net/issues/3370
 				/*
@@ -211,6 +212,7 @@ switch($action) {
 			if($cb_recup){
 				if (!verif_cb_utilise ($cb_recup)) {
 					if (!($id_resa_validee=affecte_cb ($cb_recup))) {
+					    $pas_ranger = 0;
 						if($pmb_transferts_actif){
 							$rqt = "SELECT id_transfert, sens_transfert, num_location_source, num_location_dest
 								FROM transferts, transferts_demande, exemplaires						

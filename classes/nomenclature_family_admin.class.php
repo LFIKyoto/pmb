@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_family_admin.class.php,v 1.10 2017-04-26 10:20:06 dgoron Exp $
+// $Id: nomenclature_family_admin.class.php,v 1.11 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -321,7 +321,7 @@ class nomenclature_family_admins {
 		return $tpl;
 	}	
 	
-	function order_up($id){
+	public function order_up($id){
 		global $dbh;	
 	
 		$requete="select family_order from nomenclature_families where id_family=$id";
@@ -342,7 +342,7 @@ class nomenclature_family_admins {
 		}
 	}
 	
-	function order_down($id){
+	public function order_down($id){
 		global $dbh;
 		$requete="select family_order from nomenclature_families where id_family=$id";
 		$resultat=pmb_mysql_query($requete);
@@ -407,7 +407,7 @@ class nomenclature_family_musicstand_admins {
 		return $tpl;
 	}
 	
-	function order_up($id){
+	public function order_up($id){
 		global $dbh;
 	
 		$requete="select musicstand_order from nomenclature_musicstands where id_musicstand=$id";
@@ -428,7 +428,7 @@ class nomenclature_family_musicstand_admins {
 		}
 	}
 	
-	function order_down($id){
+	public function order_down($id){
 		global $dbh;
 		$requete="select musicstand_order from nomenclature_musicstands where id_musicstand=$id";
 		$resultat=pmb_mysql_query($requete, $dbh);

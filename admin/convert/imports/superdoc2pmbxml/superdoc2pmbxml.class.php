@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: superdoc2pmbxml.class.php,v 1.1 2018-07-25 06:19:18 dgoron Exp $
+// $Id: superdoc2pmbxml.class.php,v 1.3 2019-07-11 10:24:50 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -160,15 +160,15 @@ class superdoc2pmbxml extends convert {
 				$contenu.=" ".trim($lignes[$i]);
 			} else {
 				if ($before) {
-					if ($contenu[strlen($contenu)-1]=="/") $contenu=substr($contenu,0,strlen($contenu)-1);
+					if (substr($contenu, strlen($contenu)-1, 1) == "/") $contenu=substr($contenu,0,strlen($contenu)-1);
 					if (substr($contenu,0,3)=="#_#") {
 						$f["URL"][0]=substr($contenu,3,strlen($contenu)-6);
 					} else {
-						$contenu=explode("/",$contenu);
-						for ($j=0; $j<count($contenu); $j++) {
-							$contenu[$j]=trim($contenu[$j]);
+						$contenu_explode=explode("/",$contenu);
+						for ($j=0; $j<count($contenu_explode); $j++) {
+						    $contenu_explode[$j]=trim($contenu_explode[$j]);
 						}
-						$f[$index]=$contenu;
+						$f[$index]=$contenu_explode;
 					}
 				}
 				$ligne=explode(": ",trim($lignes[$i]));

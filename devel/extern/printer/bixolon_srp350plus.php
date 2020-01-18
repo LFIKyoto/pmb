@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bixolon_srp350plus.php,v 1.3 2010-03-02 09:52:36 ngantier Exp $
+// $Id: bixolon_srp350plus.php,v 1.4 2019-07-12 10:25:27 btafforeau Exp $
 
 //$xml=utf8_decode($_POST["xml"]);
 if (get_magic_quotes_gpc()) {
@@ -82,4 +82,3 @@ function function_text($param){
 	printer_draw_text($handle, $param['value'], $pos_X, $pos_Y);
 }
 ?>
-

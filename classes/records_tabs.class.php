@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: records_tabs.class.php,v 1.10 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: records_tabs.class.php,v 1.11 2019-06-06 14:04:45 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -76,7 +76,8 @@ class records_tabs {
 		global $dbh;
 		global $tab_page;
 		global $msg;
-	
+		
+		$concept_ids = array();
 		$tab = new elements_list_tab('records_records_indexed', $msg['record_tabs_records_indexed'], 'records');
 		$vedette_composee_found = vedette_composee::get_vedettes_built_with_element($this->record->id, TYPE_NOTICE);
 		pmb_mysql_query('set session group_concat_max_len = 16777216');
@@ -96,11 +97,7 @@ class records_tabs {
 			
 			$tab->set_nb_results($nb_results);
 			
-			if (!$quoi && $nb_results) {
-				// Si $quoi n'est pas valorisé et qu'on a des résultats, on valorise $quoi avec cet onglet
-				$quoi = $tab->get_name();
-			}
-			if ($nb_results && ($quoi == $tab->get_name())) {
+			if ($nb_results) {
 				$query = 'select group_concat(distinct notice_id separator ",") from notices join index_concept on index_concept.num_object = notices.notice_id and index_concept.type_object = "'.TYPE_NOTICE.'" where index_concept.num_concept in ('.implode(',', $concept_ids).') ';
 				$query.= $this->get_records_sort();
 				// on lance la requête
@@ -124,6 +121,7 @@ class records_tabs {
 	protected function get_tab_authorities_indexed_with_concept(){
 		global $dbh, $msg;
 		
+		$concept_ids = array();
 		$tab = new elements_list_tab('records_authorities_indexed', $msg['record_tabs_authorities_indexed'], 'authorities');
 		$types_needed = array(TYPE_AUTHOR, TYPE_CATEGORY, TYPE_PUBLISHER, TYPE_COLLECTION, TYPE_SUBCOLLECTION, TYPE_SERIE, TYPE_TITRE_UNIFORME, TYPE_INDEXINT, TYPE_AUTHPERSO);
 		$vedette_composee_found = vedette_composee::get_vedettes_built_with_element($this->record->id, TYPE_NOTICE);
@@ -137,11 +135,7 @@ class records_tabs {
 			
 			$tab->set_nb_results($nb_results);
 			
-			if (!$quoi && $nb_results) {
-				// Si $quoi n'est pas valorisé et qu'on a des résultats, on valorise $quoi avec cet onglet
-				$quoi = $tab->get_name();
-			}
-			if ($nb_results && ($quoi == $tab->get_name())) {
+			if ($nb_results) {
 				// On définit les filtres
 				$filter = array(
 						'name' => 'records_authorities_indexed_by_types',

@@ -299,7 +299,7 @@ class sip2_trame {
 	    						if ((string)($f[2]*1)!=(string)$f[2]) {
 	    							//Erreur, le numéro de séquence est faux
 	    							$this->error=true;
-	    							$this->error_code=BAD_SEQUENCE_NUMBER;
+	    							$this->error_code='BAD_SEQUENCE_NUMBER';
 	    							$this->error_message="Le numéro de séquence n'est pas conforme";
 	    							return;
 	    						} else {
@@ -337,7 +337,7 @@ class sip2_trame {
 								}
 								if ($sum!=0) {
 									$this->error=true;
-									$this->error_code=BAD_CHEKCSUM;
+									$this->error_code='BAD_CHEKCSUM';
 									$this->error_message="La checksum est fausse";
 									return;
 								}

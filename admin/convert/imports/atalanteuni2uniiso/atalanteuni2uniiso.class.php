@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: atalanteuni2uniiso.class.php,v 1.1 2018-07-25 06:19:18 dgoron Exp $
+// $Id: atalanteuni2uniiso.class.php,v 1.2 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -59,9 +59,9 @@ class atalanteuni2uniiso extends convert {
 			}
 			$zs[$cf1][$csf1]=$field[3];
 		}
-		while (list($key,$val)=each($zs)) {
+		foreach ($zs as $key => $val) {
 			$data.="  <f c='".$key."' ind='  '>\n";
-			while (list($keys,$vals)=each($val)) {
+			foreach ($val as $keys => $vals) {
 				if ((substr($key,0,1)=="7") && ($keys=="4") && ($vals=="Auteur")) $vals = "070" ;
 				$data.="    <s c='".$keys."'>".htmlspecialchars($vals,ENT_QUOTES,$charset)."</s>\n";
 			}

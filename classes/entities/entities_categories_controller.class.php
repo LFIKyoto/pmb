@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entities_categories_controller.class.php,v 1.15 2018-10-01 14:12:04 dgoron Exp $
+// $Id: entities_categories_controller.class.php,v 1.20 2019-08-01 13:16:36 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -41,7 +41,7 @@ class entities_categories_controller extends entities_authorities_controller {
 			$page=1;
 			$this->page = $page;
 		} else {
-			$this->page = $page+0;
+		    $this->page = (int) $page;
 		}
 		$debut =($this->page-1)*$nb_per_page_gestion;
 	
@@ -117,9 +117,14 @@ class entities_categories_controller extends entities_authorities_controller {
 						// récupération de la 1ère entrée et création du header
 						$cat = pmb_mysql_fetch_row($result);
 						$tcateg =  new category($cat[0]);
-						if(sizeof($tcateg->path_table)) {
-							for($i=0; $i < sizeof($tcateg->path_table) - 1; $i++){
-								$browser_header ? $browser_header .= '&gt;' : $browser_header = '';
+						if (!empty($tcateg->path_table)) {
+						    $nb_paths_table = count($tcateg->path_table);
+						    for ($i = 0; $i < $nb_paths_table - 1; $i++) {
+							    if ($browser_header) {
+							        $browser_header .= '&gt;';
+							    } else {
+							        $browser_header = '';
+							    }
 								$browser_header .= "<a href='";
 								$browser_header .= $this->url_base."&parent=";
 								$browser_header .= $tcateg->path_table[$i]['id'];
@@ -127,8 +132,12 @@ class entities_categories_controller extends entities_authorities_controller {
 								$browser_header .= $tcateg->path_table[$i]['libelle'];
 								$browser_header .= "</a>";
 							}
-							$browser_header ? $browser_header .= '&gt;<strong>' : $browser_header = '<strong>';
-							$browser_header .= $tcateg->path_table[sizeof($tcateg->path_table) - 1]['libelle'];
+							if ($browser_header) {
+							    $browser_header .= '&gt;<strong>';
+							} else {
+							    $browser_header = '<strong>';
+							}
+							$browser_header .= $tcateg->path_table[count($tcateg->path_table) - 1]['libelle'];
 							$browser_header .= '</strong>';
 						}
 					}
@@ -164,7 +173,7 @@ class entities_categories_controller extends entities_authorities_controller {
 	}
 	
 	public function proceed() {
-		global $sub;
+	    global $sub, $save_and_continue, $category_parent_id, $parent;
 	
 		switch($sub) {
 			case 'delete':
@@ -183,7 +192,13 @@ class entities_categories_controller extends entities_authorities_controller {
 			    }
 			    $updated_id = $this->proceed_update();
 			    if($updated_id) {
-			        print $this->get_display_view($updated_id);
+			        if ($save_and_continue) {
+			            $this->id = 0;
+			            $parent = $category_parent_id;
+			            $this->proceed_form();			            
+			        } else {
+			            print $this->get_display_view($updated_id);
+			        }
 			    }
 			    break;
 			case 'categ_replace':
@@ -355,7 +370,7 @@ class entities_categories_controller extends entities_authorities_controller {
 		}
 		//traitement noeud
 		
-		$authority_statut = $authority_statut+0;
+		$authority_statut = (int) $authority_statut;
 		if(!$authority_statut){
 			$authority_statut = 1;
 		}
@@ -366,7 +381,7 @@ class entities_categories_controller extends entities_authorities_controller {
 				$noeud->num_parent = $category_parent_id;
 				$noeud->num_renvoi_voir = $category_voir_id;
 				$noeud->authority_import_denied = $authority_import_denied=0;
-				$noeud->not_use_in_indexation = $not_use_in_indexation+0;
+				$noeud->not_use_in_indexation = (int) $not_use_in_indexation;
 				$noeud->autorite = $num_aut;
 				$noeud->num_statut = $authority_statut;
 				$noeud->thumbnail_url = $authority_thumbnail_url;
@@ -380,7 +395,7 @@ class entities_categories_controller extends entities_authorities_controller {
 			$noeud->autorite = $num_aut;
 			$noeud->num_thesaurus = $thes->id_thesaurus;
 			$noeud->authority_import_denied = $authority_import_denied=0;
-			$noeud->not_use_in_indexation = $not_use_in_indexation+0;
+			$noeud->not_use_in_indexation = (int) $not_use_in_indexation;
 			$noeud->num_statut = $authority_statut;
 			$noeud->thumbnail_url = $authority_thumbnail_url;
 			$noeud->save();
@@ -503,14 +518,8 @@ class entities_categories_controller extends entities_authorities_controller {
 	}
 	
 	public function proceed_default() {
-		global $pmb_allow_authorities_first_page;
-	
-		if(!$pmb_allow_authorities_first_page && (!isset($this->user_input) || $this->user_input == '')){
-			$this->search_form();
-		}else {
-			// affichage du début de la liste
-			print $this->get_display_hierarchical_list();
-		}
+	    
+		print $this->get_display_hierarchical_list();
 	}
 	
 	public function get_thesaurus_display_list() {
@@ -785,11 +794,11 @@ class entities_categories_controller extends entities_authorities_controller {
 	}
 	
 	public function set_parent($parent) {
-		$this->parent = $parent+0;
+	    $this->parent = (int) $parent;
 	}
 	
 	public function set_id_thes($id_thes) {
-		$this->id_thes = $id_thes+0;
+	    $this->id_thes = (int) $id_thes;
 	}
 	
 	public function get_back_url() {

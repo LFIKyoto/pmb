@@ -1,5 +1,6 @@
 <?php
 
+global $cms_articles_list, $cms_articles_list_item;
 
 $cms_articles_list ="
 	<h3>!!cms_articles_list_title!!</h3>

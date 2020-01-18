@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_works_datasource_works_links.class.php,v 1.6 2018-06-13 15:06:29 tsamson Exp $
+// $Id: frbr_entity_works_datasource_works_links.class.php,v 1.7 2019-09-04 13:20:56 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -61,13 +61,6 @@ class frbr_entity_works_datasource_works_links extends frbr_entity_common_dataso
 		$selector.= '</select>';
 		return $selector;
 	}
-	
-        public function save_form() {
-            global $datanode_work_link_type;
-            
-            $this->parameters->work_link_type=$datanode_work_link_type;
-            return parent::save_form();
-        }
         
 	public function get_form() {
 		if (!isset($this->parameters->work_link_type)) {

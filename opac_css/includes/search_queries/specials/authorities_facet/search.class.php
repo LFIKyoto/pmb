@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.1 2018-10-08 13:59:40 vtouchard Exp $
+// $Id: search.class.php,v 1.3 2019-07-30 08:09:50 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -62,7 +62,7 @@ class authorities_facet extends facette_search{
 		    		}
     				break;
     		}
-    		$rs = pmb_mysql_query($qs, $dbh) or die (mysql_error());
+    		$rs = pmb_mysql_query($qs, $dbh);
     		
     		$t_ids_authorities=array();
     		
@@ -79,11 +79,11 @@ class authorities_facet extends facette_search{
     	
     	unset($ids_authorities);
     	$last_table = 'table_facette_temp_'.$this->n_ligne.'_'.md5(microtime());
-    	$qc_last_table = 'create temporary table '.$last_table.' (authority_id int, index i_authority_id(authority_id))';
-    	pmb_mysql_query($qc_last_table,$dbh) or die ();
+    	$qc_last_table = 'create temporary table '.$last_table.' (id_authority int, index i_id_authority(id_authority))';
+    	pmb_mysql_query($qc_last_table,$dbh);
     	if(count($t_ids_authorities)) {
     		$qi_last_table = 'insert ignore into '.$last_table.' values ('.implode('),(', $t_ids_authorities).')';
-    		pmb_mysql_query($qi_last_table,$dbh) or die ();
+    		pmb_mysql_query($qi_last_table,$dbh);
     	}
     	unset($t_ids_authorities);
     	return $last_table;

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pricing_systems.inc.php,v 1.4 2016-02-22 16:45:27 dgoron Exp $
+// $Id: pricing_systems.inc.php,v 1.5 2019-08-20 09:18:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $action, $id, $id_entity, $msg, $charset;
 
 // gestion des systèmes de tarification
 require_once($class_path.'/rent/rent_pricing_systems.class.php');

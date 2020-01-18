@@ -2,29 +2,32 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fournisseurs.tpl.php,v 1.25 2017-01-26 15:36:34 dgoron Exp $
+// $Id: fournisseurs.tpl.php,v 1.26.6.1 2019-11-28 16:52:29 dbellamy Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-if(!isset($id_bibli)) $id_bibli = 0;
+global $id_bibli, $coord_form2, $current_module, $msg, $charset, $search_form, $cond_form, $frame, $bt_add, $rem_form, $bt_sup, $histrel_form, $histrel_hrow_form, $acquisition_gestion_tva, $acquisition_gestion_tva;
 
 //	------------------------------------------------------------------------------
 //	$coord_form2 : template form edition des coordonnées des fournisseurs 
 //	------------------------------------------------------------------------------
 
 $coord_form2 = "
-<form class='form-".$current_module."' id='coordform' name='coordform' method='post' action=\"./acquisition.php?categ=ach&sub=fourn&action=update&id_bibli=!!id_bibli!!&id=!!id!!\">
+<form class='form-".$current_module."' id='coordform' name='coordform' method='post' action=\"./acquisition.php?categ=ach&sub=fourn&action=update&id=!!id!!\">
 <h3>!!form_title!!</h3>
 <!--    Contenu du form    -->
 <div class='form-contenu'>
 	<div class='row'>
-		<div class='colonne2'>
-			<div class='colonne2' >			
+		<div class='colonne'>
+			<div class='colonne5' >			
 				<label class='etiquette'>".htmlentities($msg['acquisition_coord_lib'], ENT_QUOTES, $charset)."</label>
 			</div>
-			<div class='colonne_suite'>
+			<div class='colonne5'>
 				!!lib_bibli!!
+			</div>
+			<div class='colonne_suite'>
+				<!-- chk_all_etablissements -->
 			</div>
 		</div>
 	</div>
@@ -101,7 +104,7 @@ $coord_form2 = "
 <!-- Boutons -->
 <div class='row'>
 	<div class='left'>
-		<input class='bouton' type='button' value=' $msg[76] ' onclick=\"document.location='./acquisition.php?categ=ach&sub=fourn&action=list&id_bibli=!!id_bibli!!'\" />&nbsp;
+		<input class='bouton' type='button' value=' $msg[76] ' onclick=\"document.location='./acquisition.php?categ=ach&sub=fourn&action=list'\" />&nbsp;
 		<input class='bouton' type='submit' value=' $msg[77] ' onclick=\"return test_form(this.form)\" />
 	</div>
 	<div class='right'>
@@ -163,7 +166,7 @@ $search_form = "
 //	------------------------------------------------------------------------------
 
 $cond_form = "
-<form class='form-".$current_module."' id='condform' name='condform' method='post' action=\"./acquisition.php?categ=ach&sub=fourn&action=updatecond&id_bibli=!!id_bibli!!&id=!!id!!\">
+<form class='form-".$current_module."' id='condform' name='condform' method='post' action=\"./acquisition.php?categ=ach&sub=fourn&action=updatecond&id=!!id!!\">
 <h3>!!form_title!!</h3>
 <!--    Contenu du form    -->
 <div class='form-contenu'>
@@ -215,7 +218,7 @@ $cond_form = "
 <!-- Boutons -->
 <div class='row'>
 	<div class='left'>
-		<input class='bouton' type='button' value=' $msg[76] ' onclick=\"document.location='./acquisition.php?categ=ach&sub=fourn&id_bibli=!!id_bibli!!'\" />&nbsp;
+		<input class='bouton' type='button' value=' $msg[76] ' onclick=\"document.location='./acquisition.php?categ=ach&sub=fourn'\" />&nbsp;
 		<input class='bouton' type='submit' value=' $msg[77] ' />
 	</div>
 	<div class='row'></div>
@@ -240,7 +243,7 @@ $frame = "
 ";
 
 $bt_add = "<input type='button' class='bouton' value='".htmlentities($msg['acquisition_rem_bt_add'],ENT_QUOTES,$charset)."' 
-			onclick=\"document.forms['condform'].setAttribute('action', './acquisition.php?categ=ach&sub=fourn&action=modrem&id_bibli=".$id_bibli."&id=".$id."&id_prod=0');
+			onclick=\"document.forms['condform'].setAttribute('action', './acquisition.php?categ=ach&sub=fourn&action=modrem&id=!!id_fou!!&id_prod=0');
 						document.forms['condform'].submit();\" />";
 
 
@@ -249,7 +252,7 @@ $bt_add = "<input type='button' class='bouton' value='".htmlentities($msg['acqui
 //	------------------------------------------------------------------------------
 
 $rem_form = "
-<form class='form-".$current_module."' id='remform' name='remform' method='post' action=\"./acquisition.php?categ=ach&sub=fourn&action=updaterem&id_bibli=!!id_bibli!!&id=!!id_fou!! \">
+<form class='form-".$current_module."' id='remform' name='remform' method='post' action=\"./acquisition.php?categ=ach&sub=fourn&action=updaterem&id=!!id_fou!! \">
 <h3>!!form_title!!</h3>
 <!--    Contenu du form    -->
 <div class='form-contenu'>
@@ -305,7 +308,7 @@ $rem_form = "
 <!-- Boutons -->
 <div class='row'>
 	<div class='left'>
-		<input type='button' class='bouton' value=' $msg[76] ' onclick=\"document.location='./acquisition.php?categ=ach&sub=fourn&action=cond&id_bibli=!!id_bibli!!&id=!!id_fou!!'\" />&nbsp;
+		<input type='button' class='bouton' value=' $msg[76] ' onclick=\"document.location='./acquisition.php?categ=ach&sub=fourn&action=cond&id=!!id_fou!!'\" />&nbsp;
 		<input type='submit' class='bouton' value=' $msg[77] ' />
 	</div>
 	<div class='right'>
@@ -320,7 +323,7 @@ $rem_form = "
 $bt_sup = "<input class='bouton' type='button' value=' $msg[63] ' onclick=\"
 				var r = confirm('".$msg['confirm_suppr']."');
 				if(r) {
-					document.location='./acquisition.php?categ=ach&sub=fourn&action=deleterem&id_bibli=!!id_bibli!!&id=!!id_fou!!& id_prod=!!id_prod!!';
+					document.location='./acquisition.php?categ=ach&sub=fourn&action=deleterem&id=!!id_fou!!& id_prod=!!id_prod!!';
 				}
 				return false; \" />";
 
@@ -359,7 +362,7 @@ $histrel_form ="
 <!-- Boutons -->
 <div class='row'>
 	<div class='left'>
-		<input class='bouton' type='button' value=\"".$msg['654']."\" onclick=\"document.location='./acquisition.php?categ=ach&sub=fourn&action=list&id_bibli=!!id_bibli!!'\" />&nbsp;
+		<input class='bouton' type='button' value=\"".$msg['654']."\" onclick=\"document.location='./acquisition.php?categ=ach&sub=fourn&action=list'\" />&nbsp;
 	</div>
 	<div class='right'>
 		<input class='bouton' type='button' value=\"".$msg['acquisition_hist_rel_del']."\" onclick=\"confirmation_delete();\" />&nbsp;

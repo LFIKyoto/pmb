@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dilicom.class.php,v 1.4 2018-06-29 15:15:08 vtouchard Exp $
+// $Id: dilicom.class.php,v 1.4.6.1 2019-11-08 11:28:01 arenou Exp $
 
 
 require_once($class_path.'/curl.class.php');
@@ -10,6 +10,7 @@ require_once($class_path.'/curl.class.php');
 class dilicom {
 	protected $parameters;
 	protected $curl_instance;
+	private static $dilicom=null;
 	
 	public function __construct(){
 		global $pmb_pnb_param_login, $pmb_pnb_param_password, $pmb_pnb_param_dilicom_url;
@@ -19,6 +20,15 @@ class dilicom {
 		$this->curl_instance->set_option('CURLOPT_USERPWD', $pmb_pnb_param_login.':'.$pmb_pnb_param_password);
 		$this->curl_instance->set_option('CURLOPT_HTTPHEADER', array('Content-Type:application/json'));
 		$this->init_parameters();
+	}
+	
+	public static function get_instance()
+	{
+	    if(!empty(self::$dilicom)){
+	        return self::$dilicom;
+	    }
+	    self::$dilicom = new dilicom();
+	    return self::$dilicom;
 	}
 	
 	public function query($function = '', $parameters = array()){

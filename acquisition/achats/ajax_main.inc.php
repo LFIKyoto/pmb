@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_main.inc.php,v 1.5 2018-07-20 08:58:27 dgoron Exp $
+// $Id: ajax_main.inc.php,v 1.6 2019-05-28 15:00:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $sub, $action, $id_entity, $id_cde, $ids_line, $object_type;
 
 require_once($class_path."/thresholds.class.php");
 require_once($class_path."/lignes_actes.class.php");

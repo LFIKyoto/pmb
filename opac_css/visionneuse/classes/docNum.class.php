@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docNum.class.php,v 1.8 2017-05-10 17:16:13 arenou Exp $
+// $Id: docNum.class.php,v 1.9 2019-08-08 06:42:15 jlaurent Exp $
 
 require_once($visionneuse_path."/classes/mimetypes/affichage.class.php");
 require_once($visionneuse_path."/classes/defaultConf.class.php");
@@ -67,7 +67,7 @@ class docNum {
 
     	if (sizeof($this->mimetypeClass)>0){
     	//si une configuration existe 
-    		if($this->mimetypeClass[$this->mimetype]){
+    		if(!empty($this->mimetypeClass[$this->mimetype])){
     		//et le mimetype courant est défini
     			//on récupère la bonne classe
 	 			require_once($visionneuse_path."/classes/mimetypes/".$this->mimetypeClass[$this->mimetype]."/".$this->mimetypeClass[$this->mimetype].".class.php");
@@ -80,7 +80,7 @@ class docNum {
     		//on instancie les choix par défaut
 	    	$this->defaultClass= new defaultConf();
 	    	//si le mimetype est défini
-			if($this->defaultClass->defaultMimetype[$this->mimetype]){
+			if(!empty($this->defaultClass->defaultMimetype[$this->mimetype])){
 				//on récupère la bonne classe
 				require_once($visionneuse_path."/classes/mimetypes/".$this->defaultClass->defaultMimetype[$this->mimetype]."/".$this->defaultClass->defaultMimetype[$this->mimetype].".class.php");
 				$this->displayClass = new $this->defaultClass->defaultMimetype[$this->mimetype]($this);

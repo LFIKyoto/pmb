@@ -5,11 +5,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cbgen.tpl.php,v 1.6 2017-11-07 15:33:07 ngantier Exp $
+// $Id: cbgen.tpl.php,v 1.7 2019-05-27 13:34:31 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $msg;
+global $msg, $cbgen_menu, $cbgen_layout, $cbgen_layout_end;
 
 
 //	----------------------------------

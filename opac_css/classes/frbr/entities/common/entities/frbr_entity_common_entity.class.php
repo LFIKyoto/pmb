@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_common_entity.class.php,v 1.10 2018-12-11 10:06:57 apetithomme Exp $
+// $Id: frbr_entity_common_entity.class.php,v 1.12 2019-09-03 15:36:06 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -21,7 +21,7 @@ class frbr_entity_common_entity extends frbr_entity_root{
 	protected $page;
 	
 	public function __construct($id=0){
-		$this->id = $id+0;		
+	    $this->id = (int) $id;		
 		$infos = self::read_manifest();
 		if (isset($infos['informations'])) {
 			$this->informations = $infos['informations'];
@@ -43,7 +43,7 @@ class frbr_entity_common_entity extends frbr_entity_root{
 		$informations = array();
 		@ini_set("zend.ze1_compatibility_mode", "0");
 		$manifest = new domDocument();
-		$entity_path = realpath(dirname($class_path."/frbr/entities/".str_replace(array("frbr_entity_", "_datanode", "_cadre", "_page"),"",get_called_class())."/".get_called_class().".class.php"));
+		$entity_path = realpath(dirname($class_path."/frbr/entities/".str_replace(array("frbr_entity_", "_datanode", "_cadre", "_page"),"",static::class)."/".static::class.".class.php"));
 		$manifest_path = $entity_path."/manifest.xml";		
 		
 		if (file_exists($manifest_path)) {
@@ -419,8 +419,9 @@ class frbr_entity_common_entity extends frbr_entity_root{
 						$manage_id = static::get_max_manage_id("filter",$this->managed_datas[$quoi])+1;
 					}
 					$params["filter".$manage_id] = array(
-							'name' => stripslashes($filter_name),
-							'fields' => $frbr_instance_fields->format_fields()
+						'name' => stripslashes($filter_name),
+					    'fields' => $frbr_instance_fields->format_fields(),
+					    'details' => $this->get_additional_managed_datas(),
 					);
 				}
 				break;
@@ -436,7 +437,8 @@ class frbr_entity_common_entity extends frbr_entity_root{
 					}
 					$params["sort".$manage_id] = array(
 						'name' => stripslashes($sort_name),
-						'fields' => $frbr_instance_fields->format_fields()
+						'fields' => $frbr_instance_fields->format_fields(),
+					    'details' => $this->get_additional_managed_datas(),
 					);
 				}
 				break;
@@ -561,5 +563,13 @@ class frbr_entity_common_entity extends frbr_entity_root{
 	public function set_page_from_num($num_page) {
 		$num_page += 0;
 		$this->page = new frbr_entity_common_entity_page($num_page);
+	}
+	
+	/**
+	 * donnees complementaires
+	 * @return array
+	 */
+	public function get_additional_managed_datas() {
+	    return [];
 	}
 }

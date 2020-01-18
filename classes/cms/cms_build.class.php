@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_build.class.php,v 1.55 2018-05-26 13:37:47 dgoron Exp $
+// $Id: cms_build.class.php,v 1.57 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -860,12 +860,7 @@ class cms_build{
 	
 	public function get_clean_cache_button(){
 		global $msg,$base_path;
-		$clean_cache_button='';
-		$rqt = "SELECT count(*) FROM cms_cache_cadres";
-		$res = pmb_mysql_query($rqt);
-		if(pmb_mysql_result($res,0,0)!=0){
-			$clean_cache_button ='<div data-dojo-type=\'dijit/form/Button\' data-dojo-props=\'id:"clean_cache_button",title:"'.cms_cache::get_cache_formatted_last_date().'",onclick:"if(confirm(\"'.$msg['cms_clean_cache_confirm'].'\")){document.location=\"'.$base_path.'/cms.php?categ=build&sub=block&action=clean_cache\";}"\'>'.$msg['cms_clean_cache'].'</div>';
-		}
+		$clean_cache_button ='<div data-dojo-type=\'dijit/form/Button\' data-dojo-props=\'id:"clean_cache_button",title:"'.cms_cache::get_cache_formatted_last_date().'",onclick:"if(confirm(\"'.$msg['cms_clean_cache_confirm'].'\")){document.location=\"'.$base_path.'/cms.php?categ=build&sub=block&action=clean_cache\";}"\'>'.$msg['cms_clean_cache'].'</div>';
 		return $clean_cache_button;
 	}
 	
@@ -873,7 +868,7 @@ class cms_build{
 		global $msg;
 	
 		$reset_all_css_button='';
-		$current_version = $_SESSION["cms_version"]+0;
+		$current_version = (int) $_SESSION["cms_version"];
 		
 		$query = "select max(id_version) as max_num_version from cms_version where version_cms_num='".$_SESSION["cms_in_use"]."'";
 		$result_version = pmb_mysql_query($query);

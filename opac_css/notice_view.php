@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_view.php,v 1.19 2018-11-19 16:25:17 dgoron Exp $
+// $Id: notice_view.php,v 1.20 2019-06-18 12:01:36 dgoron Exp $
 
 $base_path=".";
 //Affichage d'une notice
@@ -43,7 +43,33 @@ $templates = "
 			<meta http-equiv='content-type' content='text/html; charset=".$charset."' />
 			!!styles!!
 			!!scripts!!
-		</head>
+			<link rel='stylesheet' type='text/css' href='".$javascript_path."/dojo/dijit/themes/tundra/tundra.css' />
+            <script type='text/javascript'>
+            	var dojoConfig = {
+            		parseOnLoad: true,
+            		locale: '".str_replace("_","-",strtolower($lang))."',
+            		isDebug: false,
+            		usePlainJson: true,
+            		packages: [{
+            			name: 'pmbBase',
+            			location:'../../../..'
+            		},{
+            			name: 'd3',
+            			location:'../../d3'
+            		}],
+            		deps: ['apps/pmb/MessagesStore', 'dgrowl/dGrowl', 'dojo/ready'],
+            		callback:function(MessagesStore, dGrowl, ready){
+            			window.pmbDojo = {};
+            			pmbDojo.messages = new MessagesStore({url:'./ajax.php?module=ajax&categ=messages', directInit:false});
+            			ready(function(){
+            				new dGrowl({'channels':[{'name':'info','pos':2},{'name':'error', 'pos':1}]});
+            			});
+            		    
+            		},
+            	};
+            </script>
+            <script type='text/javascript' src='".$javascript_path."/dojo/dojo/dojo.js'></script>
+        </head>
 		<body>";
 if ($opac_notice_enrichment == 0) {
 	$templates .= "<script type='text/javascript'>

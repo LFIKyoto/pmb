@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_selector.class.php,v 1.8 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: docwatch_selector.class.php,v 1.10 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -48,8 +48,9 @@ class docwatch_selector extends docwatch_root{
 	 * @access public
 	 */
 	public function __construct($id=0) {
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 		$this->fetch_datas();
+		parent::__construct($id);
 	} // end of member function __construct
 	
 	/**

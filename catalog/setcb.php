@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: setcb.php,v 1.22 2017-10-19 14:21:11 ngantier Exp $
+// $Id: setcb.php,v 1.23 2019-06-05 13:13:19 btafforeau Exp $
 // popup de saisie d'un code barre
 
 require_once ("../includes/error_report.inc.php") ;
@@ -111,7 +111,7 @@ if (isset($suite) && $suite) { // un CB a été soumis
 if ($alerte_code_double) {
 	?>
 		<script type="text/javascript">
-			if (confirm("<?php echo $msg[isbn_duplicate_raz]; ?>")) {
+			if (confirm("<?php echo $msg['isbn_duplicate_raz']; ?>")) {
 				window.opener.document.forms['<?php echo $formulaire_appelant; ?>'].elements['<?php echo $objet_appelant; ?>'].value = '<?php echo $code_temp; ?>';
 				window.close();
 				}

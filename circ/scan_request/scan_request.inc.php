@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_request.inc.php,v 1.5 2016-02-16 10:54:45 vtouchard Exp $
+// $Id: scan_request.inc.php,v 1.6 2019-05-23 07:01:35 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($class_path.'/scan_request/scan_request.class.php');
 
-$id += 0;
+$id = intval($id);
 $scan_request = new scan_request($id);
 
 switch($action) {

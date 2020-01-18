@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: oai_protocol.class.php,v 1.33 2018-09-06 14:54:54 dgoron Exp $
+// $Id: oai_protocol.class.php,v 1.37 2019-07-11 11:57:30 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -72,7 +72,7 @@ class iso8601 {
 				if (substr($times[2],strlen($times[2])-1,1)=="Z") $times[2]=substr($times[2],0,strlen($times[2])-1);
 			}
 		}
-		$unixtime=mktime($times[0]+0,$times[1]+0,$time[2]+0,$days[1]+0,$days[2]+0,$days[0]+0);
+		$unixtime=mktime((int) $times[0],(int) $times[1],(int) $time[2],(int) $days[1],(int) $days[2],(int) $days[0]);
 		return $unixtime;
 	}
 }
@@ -100,7 +100,7 @@ class oai_record {
 	 *
 	 * Créé une représentation d'un enregistrement OAI et le transforme en uni_marc si possible
 	 */
-	public function __construct($record,$charset="iso-8859-1",$base_path="",$prefix="",$xslt_transform="",$sets_names="") {
+	public function __construct($record, $charset="iso-8859-1", $base_path="", $prefix="", $xslt_transform="", $sets_names = array()) {
 		$this->srecord=$record;
 		$this->charset=$charset;
 		$this->prefix=$prefix;
@@ -371,7 +371,7 @@ class oai_parser {
 
 	public function __construct($rcallback="",$charset="iso-8859-1") {
 		$this->depth=0;
-		$this->rtoken="";
+		$this->rtoken = array();
 		$this->rec_callback=$rcallback;
 		$this->charset=$charset;
 	}
@@ -460,7 +460,7 @@ class oai_protocol {
     	//remise à zero des enregistrements
     	if ($url!=$this->next_request) $this->records=array();
     	$this->next_request="";
-    	$this->rtoken="";
+    	$this->rtoken = array();
 
     	//Initialisation de la ressource
     	$this->remainder='';
@@ -536,9 +536,11 @@ class oai_protocol {
 		$this->response_date=$c?utf8_decode($s->tree[1][0]["CHAR"]):$s->tree[1][0]["CHAR"];
 		$this->url_base=$c?utf8_decode($s->tree[1][1]["CHAR"]):$s->tree[1][1]["CHAR"];
 		$this->request["URL_BASE"]=$c?utf8_decode($s->tree[1][1]["CHAR"]):$s->tree[1][1]["CHAR"];
-		foreach ($s->tree[1][1]["ATTRIB"] as $key=>$val) {
-			if ($key!="resumptionToken")
-				$this->request["ATTRIBS"][$key]=$c?utf8_decode($val):$val;
+		if(isset($s->tree[1][1]["ATTRIB"]) && is_array($s->tree[1][1]["ATTRIB"])) {
+			foreach ($s->tree[1][1]["ATTRIB"] as $key=>$val) {
+				if ($key!="resumptionToken")
+					$this->request["ATTRIBS"][$key]=$c?utf8_decode($val):$val;
+			}
 		}
 		$this->verb=$c?utf8_decode($s->tree[1][1]["ATTRIB"]["verb"]):$s->tree[1][1]["ATTRIB"]["verb"];
 		$this->rtoken=$s->rtoken;
@@ -651,12 +653,12 @@ class oai20 {
 		$this->error_oai_code="";
 	}
 
-	public function send_request($url,$callback="",$callback_progress="") {
+	public function send_request($url,$callback="",$callback_progress = array()) {
 		$this->last_query=$url;
 		$this->prt->analyse_response($url,$callback);
 		while ((!$this->prt->error)&&($this->prt->next_request)) {
 			$last_request=$this->prt->next_request;
-			if ($callback_progress) {
+			if (!empty($callback_progress)) {
 				if (!is_array($callback_progress))
 					$callback_progress($this->last_query,$this->prt->rtoken);
 				else {

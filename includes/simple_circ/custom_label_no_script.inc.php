@@ -2,12 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: custom_label_no_script.inc.php,v 1.8 2017-10-27 14:01:48 ngantier Exp $
+// $Id: custom_label_no_script.inc.php,v 1.14.2.4 2019-11-27 08:56:15 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-require_once($class_path.'/html2pdf/html2pdf.class.php');
-
+use Spipu\Html2Pdf\Html2Pdf;
 
 /*
 $label_con['s0']['content_type'][1] 	= "image";
@@ -46,7 +45,8 @@ $label_con['s1']['font_style'][0]	 	= "B";
 $label_con['s1']['font_color'][0]	 	= "000000";
 $label_con['s1']['align'][0] 			= "C";
 $label_con['s1']['rotation'][0]			= "0";
-
+$label_con['s1']['border_size'][0]		= "0";
+$label_con['s1']['character_line_break'][0]	= "";
 
 $label_con['s1']['content_type'][1] 	= "abts";
 $label_con['s1']['comment'][1] 			= $msg["serial_simple_circ_edit_abt"];
@@ -104,7 +104,8 @@ $label_con['s0']['font_style'][0]	 	= "B";
 $label_con['s0']['font_color'][0]	 	= "000000";
 $label_con['s0']['align'][0] 			= "C";
 $label_con['s0']['rotation'][0]			= "0";
-
+$label_con['s0']['border_size'][0]		= "0";
+$label_con['s0']['character_line_break'][0]	= "";
 
 $label_con['s0']['content_type'][1] 	= "abts";
 $label_con['s0']['comment'][1] 			= $msg["serial_simple_circ_edit_abt"];
@@ -162,6 +163,8 @@ $label_con['s1']['font_style'][0]	 	= "B";
 $label_con['s1']['font_color'][0]	 	= "000000";
 $label_con['s1']['align'][0] 			= "C";
 $label_con['s1']['rotation'][0]			= "90";
+$label_con['s1']['border_size'][0]		= "0";
+$label_con['s1']['character_line_break'][0]	= "";
 
 $label_con['s1']['content_type'][1] 	= "image";
 $label_con['s1']['comment'][1] 			= htmlentities($msg[image], ENT_QUOTES, $charset);
@@ -197,6 +200,8 @@ $label_con[s2]['font_style'][0]	 	= "B";
 $label_con[s2]['font_color'][0]	 	= "000000";
 $label_con[s2]['align'][0] 			= "C";
 $label_con[s2]['rotation'][0]			= "0";
+$label_con[s2]['border_size'][0]		= "0";
+$label_con['s2']['character_line_break'][0]	= "";
 
 $label_con[s2]['content_type'][1] 	= "image";
 $label_con[s2]['comment'][1] 			= htmlentities($msg[image], ENT_QUOTES, $charset);
@@ -442,8 +447,7 @@ function display_cote_content($label_id, $step) {
 	$r.= "<div class='row'>
 			<div class='left'>".htmlentities($msg['font'], ENT_QUOTES, $charset)."</div>
 			<div class='right'>
-				<input type='hidden' id='content_value[".$step."]['font']' name='content_value[".$step."]['font']' value='".$label_con[$label_id]['font'][$step]."' />
-				".htmlentities($label_con[$label_id]['font'][$step], ENT_QUOTES, $charset)."
+				<input type='text' id='content_value[".$step."]['font']' name='content_value[".$step."]['font']' class='saisie-5em' style='text-align:right;' value='".$label_con[$label_id]['font'][$step]."' />
 			</div>
 		</div>";
 
@@ -509,6 +513,18 @@ function display_cote_content($label_id, $step) {
 			<div class='left'>".htmlentities($msg['rotation'], ENT_QUOTES, $charset)."</div>
 			<div class='right'>
 				<input type='text' id='content_value[".$step."][rotation]' name='content_value[".$step."][rotation]' class='saisie-5em' style='text-align:right;' value='".$label_con[$label_id]['rotation'][$step]."' />
+			</div>
+		</div>
+        <div class='row'>
+			<div class='left'>".htmlentities($msg['cote_border_size'].' ('.$label_fmt[$label_id]['unit'].')', ENT_QUOTES, $charset)."</div>
+			<div class='right'>
+				<input type='text' id='content_value[".$step."][border_size]' name='content_value[".$step."][border_size]' class='saisie-5em' style='text-align:right;' value='".$label_con[$label_id]['border_size'][$step]."' />
+			</div>
+		</div>
+        <div class='row'>
+			<div class='left'>".htmlentities($msg['cote_character_line_break'], ENT_QUOTES, $charset)."</div>
+			<div class='right'>
+				<input type='text' id='content_value[".$step."][character_line_break]' name='content_value[".$step."][character_line_break]' class='saisie-5em' style='text-align:right;' value='".$label_con[$label_id]['character_line_break'][$step]."' />
 			</div>
 		</div>";
 
@@ -856,6 +872,13 @@ function  verif_cote_content($label_id, $step) {
 			alert(\"".$msg['param_err_impr']."\");
 		return false;
 	}";
+	
+	$r.= "
+		var border_size = document.getElementById('content_value[".$step."][border_size]').value;
+		if ( (border_size=='') || (isNaN(border_size)) || (parseFloat(border_size) < 0) ) {
+			alert(\"".$msg['param_err_impr']."\");
+		return false;
+	}";
 
 	return $r;	
 }
@@ -902,7 +925,7 @@ function  verif_image_content($label_id, $step) {
 	return $r;	
 }
 
-function print_abts(&$target, $content_value, $data='') {	
+function print_abts(&$target, $content_value, $data = array()) {	
 
 	//if(count($data["diff"])>1)return;
 	$target->SetFont($content_value['font'],$content_value['font_style'] ,$content_value['font_size']);
@@ -949,21 +972,21 @@ function print_abts(&$target, $content_value, $data='') {
 			
 	}
 	
-	$target->SetXY($target->GetStickX()+$content_value['from_left'], $target->GetStickY()+$content_value[from_top]);
-	$target->Rotate($content_value['rotation'], $target->GetStickX()+$content_value['from_left'],$target->GetStickY()+$content_value[from_top] ) ;
+	$target->SetXY($target->GetStickX()+$content_value['from_left'], $target->GetStickY()+$content_value['from_top']);
+	$target->Rotate($content_value['rotation'], $target->GetStickX()+$content_value['from_left'],$target->GetStickY()+$content_value['from_top'] ) ;
 	if(count($group)==2){
-		$target->MultiCell($content_value[width], ($content_value['font_size']*25.4/72), $group[0], 0,  $content_value['align']);
+		$target->MultiCell($content_value['width'], ($content_value['font_size']*25.4/72), $group[0], 0,  $content_value['align']);
 
-		$target->SetXY($target->GetStickX()+$content_value['from_left'], $target->GetStickY()+$content_value[from_top]+5);
-		$target->MultiCell($content_value[width], ($content_value['font_size']*25.4/72), $group[1], 0,  $content_value['align']);
+		$target->SetXY($target->GetStickX()+$content_value['from_left'], $target->GetStickY()+$content_value['from_top']+5);
+		$target->MultiCell($content_value['width'], ($content_value['font_size']*25.4/72), $group[1], 0,  $content_value['align']);
 	}else{
-		$target->MultiCell($content_value[width], ($content_value['font_size']*25.4/72), $group_name, 0,  $content_value['align']);
+		$target->MultiCell($content_value['width'], ($content_value['font_size']*25.4/72), $group_name, 0,  $content_value['align']);
 	}
 	$target->Rotate(0);
 	//$target->Rect($target->GetStickX(), $target->GetStickY(), 38.1, 21.2 ); //Affiche un cadre autour de l'etiquette 
 }
 
-function print_date(&$target, $content_value, $data='') {
+function print_date(&$target, $content_value, $data = array()) {
 
 	$target->SetFont($content_value['font'],$content_value['font_style'] ,$content_value['font_size']);
 	$r = 0; $g=-1; $b=-1;
@@ -987,14 +1010,27 @@ function print_date(&$target, $content_value, $data='') {
 	
 	$target->SetTextColor($r, $g, $b);
 	$target->SetXY($target->GetStickX()+$content_value['from_left'], $target->GetStickY()+$content_value['from_top']);
-	$target->Rotate($content_value['rotation'], $target->GetStickX()+$content_value['from_left'],$target->GetStickY()+$content_value[from_top] ) ;
+	$target->Rotate($content_value['rotation'], $target->GetStickX()+$content_value['from_left'],$target->GetStickY()+$content_value['from_top'] ) ;
 	$target->MultiCell($content_value['width'], ($content_value['font_size']*25.4/72), $tab_jours[$jour], 0,  $content_value['align']);
 	$target->Rotate(0);	
 }
 
-function print_cote(&$target, $content_value, $data='') {
+function get_border_print_cote(&$target, $content_value) {
+    $border = 0;
+    if(!empty($content_value['border_size'])) {
+        $target->SetLineWidth($content_value['border_size']);
+        $border = 1;
+    }
+    return $border;
+}
+
+function print_cote(&$target, $content_value, $data = array()) {
 	//printr($data);
-	
+    $str_display = $data["tit1"];
+    if(!empty($content_value['character_line_break'])) {
+        $tab_display = explode($content_value['character_line_break'], rtrim(ltrim($str_display)));
+        $str_display = implode("\n", $tab_display);
+    }
 	$target->SetFont($content_value['font'],$content_value['font_style'] ,$content_value['font_size']);
 	$r = 0; $g=-1; $b=-1;
 	switch (strlen($content_value['font_color'])) {
@@ -1012,8 +1048,13 @@ function print_cote(&$target, $content_value, $data='') {
 	$target->SetTextColor($r, $g, $b);
 	$target->SetXY($target->GetStickX()+$content_value['from_left'], $target->GetStickY()+$content_value['from_top']);
 	$target->Rotate($content_value['rotation'], $target->GetStickX()+$content_value['from_left'],$target->GetStickY()+$content_value['from_top'] ) ;
-	$target->MultiCell($content_value['width'], ($content_value['font_size']*25.4/72), $data["tit1"], 0,  $content_value['align']);
+	$target->MultiCell($content_value['width'], ($content_value['font_size']*25.4/72), $str_display, 0,  $content_value['align']);
 	$target->Rotate(0);
+	$border = get_border_print_cote($target, $content_value);
+	if($border) {
+	    $target->Rect($target->GetStickX(), $target->GetStickY(), $content_value['width'], $content_value['height']); //Affiche un cadre autour de l'etiquette
+	    $target->SetLineWidth(0.2);
+	}
 }
 
 
@@ -1066,7 +1107,7 @@ function print_circ_list($abt_cb,$data){
 	
 	$abt_cb_list=array();
 	foreach ($abt_cb as $circ_cb){
-		$abt_cb_list[]=$circ_cb+0;
+	    $abt_cb_list[] = (int) $circ_cb;
 	}
 	$count_values=array_count_values($abt_cb_list);
 	foreach ($data as $abt){
@@ -1149,12 +1190,12 @@ function print_circ_list($abt_cb,$data){
 	";
 //	print $style.$all_tpl;exit;
 	
-	$html2pdf = new HTML2PDF('L','A4','fr');
-	$html2pdf->WriteHTML($style.$all_tpl);
-	$html2pdf->Output('diffusion.pdf','D');
+	$html2pdf = new Html2Pdf('L','A4','fr');
+	$html2pdf->writeHTML($style.$all_tpl);
+	$html2pdf->output('diffusion.pdf','D');
 }
 
-function print_diff(&$target, $content_value, $data='') {
+function print_diff(&$target, $content_value, $data = array()) {
 //	printr($data);
 	global $label_grid_nb_per_row;
 	$display_diff_list = "";
@@ -1207,16 +1248,16 @@ function print_diff(&$target, $content_value, $data='') {
 		if($label_grid_nb_per_row==3) $offset=8;
 		else $offset=24; 
 		$target->DrawBarcode($code_barres, $target->GetStickX()+$content_value['from_left']+$offset, 
-			$target->GetStickY()+$content_value[from_top]+8, 50, 8, 'c39');		
+			$target->GetStickY()+$content_value['from_top']+8, 50, 8, 'c39');		
 	}	
 	//else $target->MultiCell($content_value[width], ($content_value['font_size']*25.4/72), $display_diff_list, 0,  $content_value['align']);
 	$target->Rotate(0);
 }
 
 function print_image(&$target, $content_value, $content_src='') {	
-	if($content_value[source] == '') return;		
+	if($content_value['source'] == '') return;		
 	$target->Rotate($content_value['rotation'], $target->GetStickX()+$content_value['from_left'], $target->GetStickY()+$content_value['from_top'] );
-	$target->Image("../../../images/".$content_value[source], $target->GetStickX()+$content_value['from_left'], $target->GetStickY()+$content_value['from_top'], $content_value[width], $content_value[height]);
+	$target->Image("../../../images/".$content_value['source'], $target->GetStickX()+$content_value['from_left'], $target->GetStickY()+$content_value['from_top'], $content_value['width'], $content_value['height']);
 	$target->Rotate(0);	
 }
 

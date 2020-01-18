@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_searcher.class.php,v 1.12 2018-07-04 09:09:14 dgoron Exp $
+// $Id: cms_editorial_searcher.class.php,v 1.15 2019-08-29 10:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,7 +11,7 @@ require_once($class_path."/searcher.class.php");
 class cms_editorial_searcher extends searcher {
 	public $type_obj; 	// type éditorial (rubrique/article)
 	
-	function __construct($user_query,$type_obj="article"){
+	public function __construct($user_query,$type_obj="article"){
 		$this->type_obj = $type_obj;
 		$this->field_restrict[] = array(
 			'field' => 'type',
@@ -86,7 +86,7 @@ class cms_editorial_searcher extends searcher {
 	
 	public function _get_pert($with_explnum=false, $return_query=false){
 		global $opac_allow_term_troncat_search;
-		global $opac_exclude_fields;
+		global $opac_exclude_fields, $restrict, $all_fields;
 
 		$empty_word = get_empty_words();
 		$with_explnum = false;
@@ -139,7 +139,7 @@ class cms_editorial_searcher extends searcher {
 						$where.= " ".$crit;
 						$pert_query_words = str_replace("!!pert!!","((".$crit.") * pond *".$term->pound.")+!!pert!!",$pert_query_words);
 					}
-					$where.= (count($restrict) > 0? " and ".$this->aq->get_field_restrict($restrict,$neg_restrict) : "");
+					$where.= ((is_array($restrict) && (count($restrict) > 0))? " and ".$this->aq->get_field_restrict($restrict,$neg_restrict) : "");
 					$pert_query_words = str_replace("!!pert!!",0,$pert_query_words);
 					if($all_fields && $opac_exclude_fields!= ""){
 						$where.=" and code_champ not in (".$opac_exclude_fields.")";
@@ -159,7 +159,7 @@ class cms_editorial_searcher extends searcher {
 						$crit = str_replace("%%","%",$crit);
 						$pert_query_literals = str_replace("!!pert!!","((".$crit.") * pond *".$term->pound.")+!!pert!!",$pert_query_literals);
 					}
- 					$where.= (count($restrict) > 0? " and ".$this->aq->get_field_restrict($restrict,$neg_restrict) : "");
+ 					$where.= ((is_array($restrict) && (count($restrict) > 0))? " and ".$this->aq->get_field_restrict($restrict,$neg_restrict) : "");
 					$pert_query_literals = str_replace("!!pert!!",0,$pert_query_literals);
 					if($all_fields && $opac_exclude_fields!= ""){
 						$where.=" and code_champ not in (".$opac_exclude_fields.")";

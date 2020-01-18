@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_docnum.class.php,v 1.8 2017-07-10 15:50:02 dgoron Exp $
+// $Id: scan_docnum.class.php,v 1.9 2019-08-01 13:16:36 btafforeau Exp $
 
 global $class_path;
 require_once($class_path."/scheduler/scheduler_task.class.php");
@@ -43,7 +43,7 @@ class scan_docnum extends scheduler_task {
 				if ($parameters["upload_folder"] && $parameters["upload_repertoire"]) {
 					//on liste les documents dans le fichier upload_folder	
 					$list_docnum=$this->list_docnum($parameters["upload_folder"]);
-					if(sizeof($list_docnum)){
+					if (!empty($list_docnum)) {
 						//il y en a
 						$percent = 0;
 						$p_value = (int) 100/count($list_docnum);

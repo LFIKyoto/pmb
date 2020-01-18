@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lettre-retard.inc.php,v 1.41 2017-07-12 15:15:00 tsamson Exp $
+// $Id: lettre-retard.inc.php,v 1.42.6.2 2019-12-02 14:33:29 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 require_once($include_path."/sms.inc.php");
@@ -11,7 +11,7 @@ require_once($include_path."/sms.inc.php");
 // reçoit : id_empr et éventuellement cb_doc
 function get_texts($relance) {
 	global $format_page,$marge_page_gauche, $marge_page_droite, $largeur_page, $fdp, $after_list, $limite_after_list, $before_list, $madame_monsieur, $nb_1ere_page, $nb_par_page, $taille_bloc_expl, $debut_expl_1er_page, $debut_expl_page, $before_recouvrement,$after_recouvrement;
-	global $biblio_name, $biblio_phone, $biblio_email;
+	global $biblio_name, $biblio_phone, $biblio_email, $biblio_commentaire;
 
 	$var = "pdflettreretard_".$relance."fdp";
 	global ${$var};
@@ -101,7 +101,7 @@ function get_texts($relance) {
 
 function get_texts_group($relance) {
 	global $format_page,$marge_page_gauche, $marge_page_droite, $largeur_page, $fdp_group, $after_list_group, $limite_after_list, $before_list_group, $madame_monsieur_group, $nb_1ere_page, $nb_par_page, $taille_bloc_expl, $debut_expl_1er_page, $debut_expl_page;
-	global $biblio_name, $biblio_phone, $biblio_email;
+	global $biblio_name, $biblio_phone, $biblio_email, $biblio_commentaire;
 
 	$var = "pdflettreretard_".$relance."fdp_group";
 	global ${$var};
@@ -189,17 +189,24 @@ $ourPDF = new $fpdf($format_page, 'mm', $taille_doc);
 $ourPDF->Open();
 
 switch($pdfdoc) {
+    case "lettre_mail_retard_groupe" :
+        //TODO 
+        break;
 	case "lettre_retard_groupe" :
 		get_texts_group($relance);
-		if ($id_groupe) lettre_retard_par_groupe($id_groupe) ;
+		if (isset($id_groupe) && $id_groupe) lettre_retard_par_groupe($id_groupe, array(), $relance) ;
 			else {
 				$j=0;
-				while ($coch_groupe[$j]) {
+				//Via la nouvelle mécanique de listes
+				if(empty($coch_groupe) && !empty($selected_objects)) {
+				    $coch_groupe = explode(',', $selected_objects);
+				}
+				while (!empty($coch_groupe[$j])) {
 					$id_groupe=$coch_groupe[$j];
 					$rqt = "select distinct groupe_id from pret, empr_groupe where pret_retour < curdate() and empr_id=pret_idempr and groupe_id=$id_groupe" ;
 					$req = pmb_mysql_query($rqt, $dbh) or die ($msg['err_sql'].'<br />'.$rqt.'<br />'.pmb_mysql_error()); 
 					while ($data = pmb_mysql_fetch_object($req)) {
-						lettre_retard_par_groupe($data->groupe_id) ;
+						lettre_retard_par_groupe($data->groupe_id, array(), $relance) ;
 					}
 					$j++;
 				}
@@ -236,14 +243,14 @@ switch($pdfdoc) {
 					pmb_mysql_query("update pret set printed=1 where printed=2 and pret_idempr=".$r->id_empr);
 					if (($print_all || !$printed)&&($niveau_min)) {
 						$niveau=$niveau_min;
-						get_texts($niveau);
-						lettre_retard_par_lecteur($r->id_empr) ;
+// 						get_texts($niveau);
+						lettre_retard_par_lecteur($r->id_empr, $niveau) ;
 						$ourPDF->SetMargins($marge_page_gauche,$marge_page_gauche);
 					}
 				} else {
 					if (!$niveau) $niveau=1;
-					get_texts($niveau);
-					lettre_retard_par_lecteur($r->id_empr) ;
+// 					get_texts($niveau);
+					lettre_retard_par_lecteur($r->id_empr, $niveau) ;
 					$ourPDF->SetMargins($marge_page_gauche,$marge_page_gauche);
 				}
 				if($r->empr_tel1 && $r->empr_sms && $empr_sms_msg_retard){	
@@ -252,8 +259,8 @@ switch($pdfdoc) {
 			} // fin while		
 		} else {
 			if (!$niveau) $niveau=1;
-			get_texts($niveau);
-			lettre_retard_par_lecteur($id_empr) ;
+// 			get_texts($niveau);
+			lettre_retard_par_lecteur($id_empr, $niveau) ;
 			$ourPDF->SetMargins($marge_page_gauche,$marge_page_gauche);
 			if($empr_sms_msg_retard) {
 				$rqt="select concat(empr_nom,' ',empr_prenom) as  empr_name, empr_mail, empr_tel1, empr_sms from empr where id_empr='".$id_empr."' and empr_tel1!='' and empr_sms=1";							

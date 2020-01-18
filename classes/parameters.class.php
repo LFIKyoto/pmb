@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: parameters.class.php,v 1.32 2018-07-17 09:52:55 dgoron Exp $
+// $Id: parameters.class.php,v 1.33 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -315,7 +315,7 @@ class parameters {
 		global $type_list;
 		$res="<select name=\"".$field['NAME']."_type\">";
 		reset($type_list);
-		while (list($key,$val)=each($type_list)) {
+		foreach ($type_list as $key => $val) {
 			$res.="<option value=\"".$key."\" ";
 			if ($key==$field['TYPE'][0]['value']) $res.="selected";
 			$res.=">".$val."</option>";

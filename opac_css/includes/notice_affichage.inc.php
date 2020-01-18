@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_affichage.inc.php,v 1.60 2018-07-13 08:47:06 dgoron Exp $
+// $Id: notice_affichage.inc.php,v 1.65.2.1 2019-11-20 14:07:11 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -109,7 +109,7 @@ function aff_notice($id, $nocart=0, $gen_header=1, $use_cache=0, $mode_aff_notic
 		$cart=0;
 	}
 	if ($nocart) $cart=0;
-	$id+=0;	
+	$id = intval($id);
 	//Recherche des fonctions d'affichage
 	$entete='';
 	$recordmodes = record_display_modes::get_instance();
@@ -186,20 +186,39 @@ function aff_notice($id, $nocart=0, $gen_header=1, $use_cache=0, $mode_aff_notic
 						}
 						$record_css_already_included = true;
 					}
-					switch ($lvl) {
-						case 'notice_display' :
-						case 'bulletin_display' :
-						case 'resa' :
-							$retour_aff .= record_display::get_display_extended($id, $template_directory);
-							break;
-						case 'more_result' :
-						default :
-							if($search_type_asked=='perio_a2z'){
-								$retour_aff .= record_display::get_display_extended($id, $template_directory);
-							} else {
-								$retour_aff .= record_display::get_display_in_result($id, $template_directory);
-							}
-							break;
+					// Si on l'appelle par le tag {% etagere_see %}, on veut tout le temps le réduit...
+					$trace = debug_backtrace();
+					$count_trace = count($trace);
+					$from_etagesee_tag = false;
+					$from_recordsee_tag = false;
+					for ($i = 2; $i < $count_trace; $i++) {
+					    if (isset($trace[$i]['object']) && get_class($trace[$i]['object']) === "Etageresee_Tag") {
+					        $from_etagesee_tag=true;
+					    }
+					    if (isset($trace[$i]['object']) && get_class($trace[$i]['object']) === "Recordsee_Tag") {
+					        $from_recordsee_tag=true;
+					    }
+					}
+					if($from_etagesee_tag === true){
+					    $retour_aff .= record_display::get_display_in_result($id, $template_directory);
+					}elseif($from_recordsee_tag === true){
+					    $retour_aff .= record_display::get_display_in_result($id, $template_directory);
+					}else{
+    					switch ($lvl) {
+    						case 'notice_display' :
+    						case 'bulletin_display' :
+    						case 'resa' :
+    							$retour_aff .= record_display::get_display_extended($id, $template_directory);
+    							break;
+    						case 'more_result' :
+    						default :
+    							if($search_type_asked=='perio_a2z'){
+    								$retour_aff .= record_display::get_display_extended($id, $template_directory);
+    							} else {
+    								$retour_aff .= record_display::get_display_in_result($id, $template_directory);
+    							}
+    							break;
+    					}
 					}
 					break;
 				default:
@@ -246,65 +265,86 @@ function aff_notice($id, $nocart=0, $gen_header=1, $use_cache=0, $mode_aff_notic
 	return $entete.$retour_aff;
 }
 
-function aff_notice_unimarc($id,$nocart=0, $entrepots_localisations=array()) {
+function aff_notice_unimarc($id,$nocart=0, $entrepots_localisations=array(), $mode_aff_notice = "", $template_directory = "") {
 
 	global $opac_notices_format;
 	global $opac_notices_depliable;
 	global $opac_cart_allow;
 	global $opac_cart_only_for_subscriber;
 	global $msg;
+	global $record_css_already_included;
 
 	$retour_aff = '';
 	if ((($opac_cart_allow)&&(!$opac_cart_only_for_subscriber))||(($opac_cart_allow)&&($_SESSION["user_code"]))) $cart=1; else $cart=0;
 	if ($nocart) $cart=0;
 	
+	if ($mode_aff_notice !== "") $type_aff=$mode_aff_notice;
+	else $type_aff=$opac_notices_format;
 	//Recherche des fonctions d'affichage
 	//$f=get_aff_function();
 	//if ($f) return $f($id,$cart);
-	
 	if ($id) {
-		$current = new notice_affichage_unimarc($id,"",$cart,0, $entrepots_localisations);
-		$depliable=$opac_notices_depliable;
-		$current->do_header(); 
-		
-		if($current->notice_header == ""){
-			$current->notice_header = sprintf($msg['cart_notice_expired'],$id);
-			$current->notice_expired = true;
+	    if ($type_aff != AFF_ETA_NOTICES_TEMPLATE_DJANGO) {
+    		$current = new notice_affichage_unimarc($id,"",$cart,0, $entrepots_localisations);
+    		$depliable=$opac_notices_depliable;
+    		$current->do_header(); 
+    		
+    		if($current->notice_header == ""){
+    			$current->notice_header = sprintf($msg['cart_notice_expired'],$id);
+    			$current->notice_expired = true;
+    		}
+	    }
+		switch ($type_aff) {
+			case AFF_ETA_NOTICES_REDUIT :
+				$retour_aff .= $current->notice_header." ";
+				break;
+			case AFF_ETA_NOTICES_ISBD :	
+				$current->do_isbd();
+				$current->genere_simple($depliable, 'ISBD') ;
+				$retour_aff .= $current->result ;
+				break;
+			case AFF_ETA_NOTICES_PUBLIC :
+				$current->do_public();
+				$current->genere_simple($depliable, 'PUBLIC') ;
+				$retour_aff .= $current->result ;
+				break;
+			case AFF_ETA_NOTICES_BOTH :
+				$current->do_isbd();
+				$current->do_public();
+				$current->genere_double($depliable, 'PUBLIC') ;
+				$retour_aff .= $current->result ;
+				break ;
+			case AFF_ETA_NOTICES_BOTH_ISBD_FIRST :
+				$current->do_isbd();
+				$current->do_public();
+				$current->genere_double($depliable, 'ISBD') ;
+				$retour_aff .= $current->result ;
+				break ;
+			case AFF_ETA_NOTICES_TEMPLATE_DJANGO :
+			    global $include_path;
+			    global $opac_notices_format_django_directory;
+			    
+			    if (!$opac_notices_format_django_directory) $opac_notices_format_django_directory = "common";
+			    
+			    if (!$record_css_already_included) {
+			        if (file_exists($include_path."/templates/record/".$opac_notices_format_django_directory."/styles/style.css")) {
+			            $retour_aff .= "<link type='text/css' href='./includes/templates/record/".$opac_notices_format_django_directory."/styles/style.css' rel='stylesheet'></link>";
+			        }
+			        $record_css_already_included = true;
+			    }
+			    
+			    $retour_aff .= record_display::get_display_unimarc_in_result($id, $template_directory, $entrepots_localisations);
+			    
+			    break;
+			default:
+				$current->do_isbd();
+				$current->do_public();					
+				$current->genere_double($depliable, 'autre') ;
+				$retour_aff .= $current->result ;
+				break ;
 		}
-		switch ($opac_notices_format) {
-				case AFF_ETA_NOTICES_REDUIT :
-					$retour_aff .= $current->notice_header." ";
-					break;
-				case AFF_ETA_NOTICES_ISBD :	
-					$current->do_isbd();
-					$current->genere_simple($depliable, 'ISBD') ;
-					$retour_aff .= $current->result ;
-					break;
-				case AFF_ETA_NOTICES_PUBLIC :
-					$current->do_public();
-					$current->genere_simple($depliable, 'PUBLIC') ;
-					$retour_aff .= $current->result ;
-					break;
-				case AFF_ETA_NOTICES_BOTH :
-					$current->do_isbd();
-					$current->do_public();
-					$current->genere_double($depliable, 'PUBLIC') ;
-					$retour_aff .= $current->result ;
-					break ;
-				case AFF_ETA_NOTICES_BOTH_ISBD_FIRST :
-					$current->do_isbd();
-					$current->do_public();
-					$current->genere_double($depliable, 'ISBD') ;
-					$retour_aff .= $current->result ;
-					break ;
-				default:
-					$current->do_isbd();
-					$current->do_public();					
-					$current->genere_double($depliable, 'autre') ;
-					$retour_aff .= $current->result ;
-					break ;
-			}
 	}
+	
 	return $retour_aff;
 }
 

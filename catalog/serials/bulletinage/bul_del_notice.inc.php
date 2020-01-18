@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bul_del_notice.inc.php,v 1.2 2016-05-06 12:44:27 jpermanne Exp $
+// $Id: bul_del_notice.inc.php,v 1.3 2019-08-05 12:57:04 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -41,7 +41,7 @@ if ($acces_m==0) {
 	$myBulletinage = new bulletinage($bul_id, $serial_id);
 	$notice_id = $myBulletinage->bull_num_notice;
 	
-	pmb_mysql_query("UPDATE bulletins SET num_notice=0 WHERE notice_id=".$notice_id);
+	pmb_mysql_query("UPDATE bulletins SET num_notice=0 WHERE bulletin_id=".$bul_id);
 	notice::del_notice($notice_id);
 	
 	print "<div class='row'><div class='msg-perio'>".$msg["maj_encours"]."</div></div>";

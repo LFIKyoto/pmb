@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: affiliate_search.class.php,v 1.27 2018-05-22 10:51:06 dgoron Exp $
+// $Id: affiliate_search.class.php,v 1.29 2019-02-21 11:03:40 ngantier Exp $
 
 require_once($class_path."/connecteurs.class.php");
 require_once($class_path."/marc_table.class.php");
@@ -120,6 +120,9 @@ class affiliate_search {
 		global $field_0_s_2;
 		
 		$flag_found=false;
+		if(empty($search)) {
+			$search=array();
+		}
 		for ($i=0; $i<count($search); $i++) {
 			if ($search[$i]=="s_2") { $flag_found=true; break; }
 		}
@@ -875,6 +878,7 @@ class affiliate_search_collection extends affiliate_search_authorities {
 									
 										break;
 									case "210" :
+									case "219":
 										switch($elem->usubfield){
 											case "c" :
 												$publisher = $elem->value;

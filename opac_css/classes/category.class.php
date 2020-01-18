@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: category.class.php,v 1.31 2018-12-20 14:00:06 mbertin Exp $
+// $Id: category.class.php,v 1.32 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -132,7 +132,7 @@ class category {
 	
 		} else {
 			if(sizeof($this->path_table)) {
-				while(list($i, $l) = each($this->path_table)) {
+			    foreach ($this->path_table as $i => $l) {
 						$temp_table[] = $l['libelle'];
 				}
 				$this->parent_libelle = join(':', $temp_table);

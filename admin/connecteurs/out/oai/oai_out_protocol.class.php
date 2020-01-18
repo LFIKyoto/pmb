@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: oai_out_protocol.class.php,v 1.23 2018-09-19 12:21:47 dgoron Exp $
+// $Id: oai_out_protocol.class.php,v 1.24 2019-06-13 15:26:51 btafforeau Exp $
 //There be komodo dragons
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
@@ -117,7 +117,7 @@ class iso8601 {
 				if (substr($times[2],strlen($times[2])-1,1)=="Z") $times[2]=substr($times[2],0,strlen($times[2])-1);
 			}
 		}
-		$unixtime=mktime($times[0]+0,$times[1]+0,$time[2]+0,$days[1]+0,$days[2]+0,$days[0]+0);
+		$unixtime=mktime((int) $times[0],(int) $times[1],(int) $time[2],(int) $days[1],(int) $days[2],(int) $days[0]);
 		return $unixtime;
 	}
 }
@@ -835,7 +835,7 @@ class external_services_converter_oairecord extends external_services_converter 
 
 	public function __construct($object_type, $life_duration, $set_life_duration, $source_set_ids, $repository_identifier, $deleted_record_statut, $include_items,$xslt="",$include_links, $deletion_management = 0, $deletion_management_transient_duration = 0) {
 		parent::__construct($object_type, $life_duration);
-		$this->set_life_duration = $set_life_duration+0;
+		$this->set_life_duration = (int) $set_life_duration;
 		$this->source_set_ids = $source_set_ids;
 		$this->repository_identifier = $repository_identifier;
 		$this->deleted_record_statut = $deleted_record_statut;

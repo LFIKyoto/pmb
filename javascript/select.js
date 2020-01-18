@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: select.js,v 1.11 2016-10-27 12:21:24 dgoron Exp $
+// $Id: select.js,v 1.11.10.1 2019-09-27 09:52:23 dgoron Exp $
 
 function insertatcursor(myField, myValue) {
 	if (document.selection) {
@@ -57,9 +57,13 @@ function getWindowWidth() {
 
 function show_frame(url) {
 	var att=document.getElementById("att");
-	var notice_view=document.createElement("iframe");
-	notice_view.setAttribute('id','frame_notice_preview');
-	notice_view.setAttribute('name','notice_preview');
+	if(document.getElementById('frame_notice_preview')) {
+		var notice_view=document.getElementById('frame_notice_preview');
+	} else {
+		var notice_view=document.createElement("iframe");
+		notice_view.setAttribute('id','frame_notice_preview');
+		notice_view.setAttribute('name','notice_preview');
+	}
 	notice_view.src=url; 
 	notice_view.style.visibility="hidden";
 	notice_view.style.display="block";
@@ -149,9 +153,13 @@ function frame_shortcuts(url) {
 
 function show_layer() {
 	var att=document.getElementById("att");
-	var div_view=document.createElement("div");
-	div_view.setAttribute('id','frame_notice_preview');
-	div_view.setAttribute('name','layer_view');
+	if(document.getElementById('frame_notice_preview')) {
+		var div_view=document.getElementById('frame_notice_preview');
+	} else {
+		var div_view=document.createElement("div");
+		div_view.setAttribute('id','frame_notice_preview');
+		div_view.setAttribute('name','layer_view');
+	}
 	div_view.style.visibility="hidden";
 	div_view.style.display="block";
 	div_view.style.position="fixed";

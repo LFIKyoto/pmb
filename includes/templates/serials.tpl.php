@@ -2,9 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serials.tpl.php,v 1.239 2018-06-13 06:23:30 dgoron Exp $
+// $Id: serials.tpl.php,v 1.242.6.1 2019-12-04 10:15:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $user_query, $issn_query, $serial_header, $serial_footer, $serial_access_form, $current_module, $msg, $filter_abo_actif, $nb_onglets, $ptab, $charset, $ptab_bul;
+global $serial_top_form, $pmb_catalog_verif_js, $base_path, $PMBuserid, $pmb_form_editables, $message_search, $serial_action_bar, $z3950_accessible, $acquisition_active;
+global $scan_request_record_button, $pmb_scan_request_activate, $bul_action_bar, $serial_bul_form, $pdeptab, $analysis_top_form, $pmb_use_uniform_title, $notice_bulletin_form;
+global $liste_script, $liste_debut, $liste_fin, $pmb_numero_exemplaire_auto, $num_exemplaire_test, $pmb_rfid_activate, $num_exemplaire_rfid_test, $bul_cb_form, $pmb_rfid_serveur_url;
+global $pmb_rfid_driver, $script_erase, $rfid_script_catalog, $rfid_js_header, $rfid_program_button, $serial_edit_access, $serial_list_tmpl, $perio_replace, $deflt_notice_replace_links;
+global $bulletin_replace, $rfid_script_bulletine, $expl_bulletinage_tpl, $bul_expl_form1, $analysis_type_form, $perio_replace_categories, $perio_replace_category;
+global $bulletin_replace_categories, $bulletin_replace_category, $analysis_move, $bulletin_move;
 
 if(!isset($user_query)) $user_query = '';
 if(!isset($issn_query)) $issn_query = '';
@@ -87,7 +95,7 @@ $ptab[0] = "
 			<label class='etiquette' for='f_tit1'>$msg[237]</label>
 		</div>
 		<div class='row'>
-			<input id='f_tit1' type='text' class='saisie-80em' name='f_tit1' value=\"!!tit1!!\" />
+			<input id='f_tit1' type='text' class='saisie-80em' name='f_tit1' value=\"!!tit1!!\" data-pmb-deb-rech='1'/>
 		</div>
 	</div>
 	<div id='el0Child_1' title='".htmlentities($msg[239],ENT_QUOTES, $charset)."' movable='yes'>
@@ -687,6 +695,7 @@ $serial_bul_form.="</div></h3>
 	<input type=\"button\" class=\"bouton\" value=\"$msg[76]\" onClick=\"unload_off();history.go(-1);\" />&nbsp;<input type=\"button\" class=\"bouton\" value=\"$msg[77]\" onClick=\"if (test_form(this.form)) {unload_off();this.form.submit();}\" />
 	!!link_audit!!
 	!!link_duplicate!!
+    !!link_move!!
 	</div>
 </form>
 <script type='text/javascript'>".($pmb_form_editables?"get_pos(); ":"")."
@@ -718,7 +727,7 @@ $pdeptab[0] = "
 			<label class='etiquette' for='f_tit1'>$msg[237]</label>
 		</div>
 		<div class='row'>
-			<input id='f_tit1' type='text' class='saisie-80em' name='f_tit1' value=\"!!tit1!!\" />
+			<input id='f_tit1' type='text' class='saisie-80em' name='f_tit1' value=\"!!tit1!!\" data-pmb-deb-rech='1'/>
 		</div>
 	</div>
 	<div id='el0Child_1' title='".htmlentities($msg[239],ENT_QUOTES, $charset)."' movable='yes'>
@@ -1305,7 +1314,7 @@ function calcule_section(selectBox) {
 	</div>
 	<!-- prix -->
 	<div class='row'>
-		<label class='etiquette' for='f_ex_prix'>$msg[4050]</label>
+		<label class='etiquette' for='f_ex_prix'>" . $msg['expl_price'] . "</label>
 	</div>
 	<div class='row'>
 		<input type='text' class='text' name='expl_prix' id='f_ex_prix' value=\"!!prix!!\" />
@@ -1550,6 +1559,26 @@ $analysis_move = "
 <div class='row'>
 <input type='button' class='bouton' value='".$msg['76']."' onClick=\"history.go(-1);\">
 <input type='button' class='bouton' value='".$msg['analysis_move_bouton']."' onClick=\"var to_bul=document.getElementById('to_bul').value; if(to_bul!=0){document.forms['analysis_move'].submit();}else{ alert('".$msg['analysis_move_sel_bull_choose']."'); }\">
+</div>
+</form>
+";
+
+// $bulletin_move : form déplacement bulletin
+$bulletin_move = "
+<form class='form-$current_module' name='bulletin_move' method='post' action='./catalog.php?categ=serials&sub=bulletinage&action=bul_move&bul_id=!!bul_id!!'>
+<div class='form-contenu'>
+<div class='row'>
+<label class='etiquette'>".$msg['bulletin_move_sel_perio']."</label>
+</div>
+<div class='row'>
+<input type='text' class='saisie-50emr' value='' id='serial_libelle' name='serial_libelle' readonly>
+<input class='bouton' type='button' onclick=\"openPopUp('./select.php?what=perio&caller=analysis_move&param1=to_serial&param2=serial_libelle', 'selector_notice')\" title='".$msg['157']."' value='".$msg['parcourir']."' />
+<input type='button' class='bouton' value='".$msg['raz']."' onclick=\"this.form.serial_libelle.value=''; this.form.to_serial.value='0'; \" />
+<input type='hidden' id='to_serial' name='to_serial' value='0'>
+</div>
+<div class='row'>
+<input type='button' class='bouton' value='".$msg['76']."' onClick=\"history.go(-1);\">
+<input type='button' class='bouton' value='".$msg['bulletin_move_bouton']."' onClick=\"var to_serial=document.getElementById('to_serial').value; if(to_serial!=0){document.forms['bulletin_move'].submit();}else{ alert('".$msg['bulletin_move_sel_perio_choose']."'); }\">
 </div>
 </form>
 ";

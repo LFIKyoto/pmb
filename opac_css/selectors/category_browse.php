@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: category_browse.php,v 1.13 2018-07-26 15:25:52 tsamson Exp $
+// $Id: category_browse.php,v 1.14 2019-07-05 12:36:24 btafforeau Exp $
 //
 // Navigation simple dans l'arbre des catégories
 
@@ -260,7 +260,11 @@ if($aj!='add'){
 			if(!$user_input && $premier){
 				if(sizeof($tcateg->path_table) && $id_thes !=-1) {
 					for($i=0; $i < sizeof($tcateg->path_table) - 1; $i++){
-		       	 		$browser_header ? $browser_header .= '&gt;' : $browser_header = '';
+					    if ($browser_header) {
+					        $browser_header .= '&gt;';
+					    } else {
+					        $browser_header = '';
+					    }
 						$browser_header .= "<a href='";
 						$browser_header .= $base_url;
 						$browser_header .= $tcateg->path_table[$i]['id'];
@@ -270,7 +274,11 @@ if($aj!='add'){
 						$browser_header .= $tcateg->path_table[$i]['libelle'];
 						$browser_header .= "</a>";
 					}
-					$browser_header ? $browser_header .= '&gt;<strong>' : $browser_header = '<strong>';
+					if ($browser_header) {
+					    $browser_header .= '&gt;<strong>';
+					} else {
+					    $browser_header = '<strong>';
+					}
 					$browser_header .= $tcateg->path_table[sizeof($tcateg->path_table) - 1]['libelle'];
 					$browser_header .= '</strong>';
 					$bouton_ajouter=str_replace("!!id_aj!!",$tcateg->path_table[sizeof($tcateg->path_table) - 1]['id'],$bouton_ajouter);

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: thesaurus.tpl.php,v 1.2 2018-10-18 06:51:59 dgoron Exp $
+// $Id: thesaurus.tpl.php,v 1.3 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -10,6 +10,7 @@ if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 global $thes_browser;
 global $thes_form;
+global $msg, $current_module;
 
 // $thes_browser : template du browser de thesaurus
 $thes_browser = "

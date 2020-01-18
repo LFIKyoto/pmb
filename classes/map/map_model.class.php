@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_model.class.php,v 1.23 2017-07-28 15:07:44 ngantier Exp $
+// $Id: map_model.class.php,v 1.26 2019-05-28 14:16:07 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
     die("no access");
@@ -85,7 +85,7 @@ class map_model {
         $this->cluster = $cluster;
         for ($i = 0; $i < count($this->ids); $i++) {
             $layer_model_class_name = $this->get_layer_model_class_name($this->ids[$i]['layer']);
-            if ($this->ids[$i]['layer'] == 'authority') {
+            if ($this->ids[$i]['layer'] == 'authority' || $this->ids[$i]['layer'] == 'authority_concept') {
 
                 $this->models[$this->ids[$i]['layer']] = new $layer_model_class_name($this->ids[$i]['type'], $this->ids[$i]['ids']);
             } elseif ($this->ids[$i]['layer'] == 'location') {
@@ -225,6 +225,7 @@ class map_model {
 
     protected function get_layer_model_class_name($layer = "") {
         if ($layer) {
+            if($layer == "authority_concept") $layer = "authority";
             if (class_exists("map_layer_model_" . $layer)) {
                 return "map_layer_model_" . $layer;
             } else {
@@ -237,6 +238,7 @@ class map_model {
 
     public function get_holds_informations($id_layer) {
         global $dbh;
+        
         $informations = array();
         $holds_layer = $this->get_objects($id_layer);
         foreach ($holds_layer as $id => $hold) {
@@ -248,15 +250,35 @@ class map_model {
                     $id_layer => (is_array($hold->get_num_object()) ? $hold->get_num_object() : array($hold->get_num_object()))
                 )
             );
-            if ($id_layer == "authority") {
-                $requete = "select notcateg_notice from notices_categories where num_noeud in (" . implode(",", $infos['objects']['authority']) . ")";
-                $result = pmb_mysql_query($requete, $dbh);
-                $notice_from_categ = array();
-                while ($row = pmb_mysql_fetch_object($result)) {
-                    $notice_from_categ[] = $row->notcateg_notice;
+            if ($id_layer == "authority" || $id_layer == "authority_concept") {
+                $type_authority = $this->models[$id_layer]->get_type();                
+                $notices_ids = array();
+                if (!empty($_SESSION["session_history"][$_SESSION['CURRENT']]["NOTI"]["TEXT_QUERY"])) {
+                    $requete = substr($_SESSION["session_history"][$_SESSION['CURRENT']]["NOTI"]["TEXT_QUERY"], 0, strpos($_SESSION["session_history"][$_SESSION['CURRENT']]["NOTI"]["TEXT_QUERY"], "limit"));
+                    if($requete) {
+                        $result = pmb_mysql_query($requete, $dbh);
+                        while ($row = pmb_mysql_fetch_object($result)) {
+                            $notices_ids[] = $row->notice_id;
+                        }                    
+                    }
                 }
-
-                $infos['objects']['record'] = $notice_from_categ;
+                if ($type_authority == 2) {
+                    $requete = "select notcateg_notice as notice_id from notices_categories where num_noeud in (" . implode(",", $infos['objects']['authority']) . ")";
+                    if (count($notices_ids)) {
+                        $requete.= " and notcateg_notice in (" . implode(",", $notices_ids) . ")";
+                    }
+                } else {
+                    $requete = "select num_object as notice_id from index_concept where type_object=1 and num_concept in (" . implode(",", $infos['objects']['authority_concept']) . ")";
+                    if (count($notices_ids)) {
+                        $requete.= " and num_object in (" . implode(",", $notices_ids) . ")";
+                    }
+                }
+                $result = pmb_mysql_query($requete, $dbh);
+                $notice_ids = array();
+                while ($row = pmb_mysql_fetch_object($result)) {
+                    $notice_ids[] = $row->notice_id;
+                }
+                $infos['objects']['record'] = $notice_ids;
             }
             $informations[] = $infos;
         }

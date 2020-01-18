@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fluxrss.class.php,v 1.2 2018-11-22 16:05:42 ngantier Exp $
+// $Id: fluxrss.class.php,v 1.4 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -61,7 +61,7 @@ class fluxrss extends connector {
 			</div>
 			<div class='colonne_suite'>
 				<input type='file' name='xslt_file' />";
-			if ($vars['xsl_transform']) {
+			if (!empty($vars['xsl_transform'])) {
 				$form.= "<br /><i>" . sprintf($this->msg["fluxrss_xslt_file_linked"], $vars['xsl_transform']["name"]) . "</i> : " . $this->msg["fluxrss_del_xslt_file"] . "<input type='checkbox' name='del_xsl_transform' value='1'/>";
 			}
 			$form.= "
@@ -71,7 +71,7 @@ class fluxrss extends connector {
 		$form.= "<div class='row'>
 				<div class='colonne3'><label>".$this->msg["fluxrss_enrichment_template"]."</label></div>
 				<div class='colonne-suite'>
-					<textarea name='enrichment_template'>".($vars['enrichment_template'] ? stripslashes($vars['enrichment_template']) : stripslashes($this->default_enrichment_template))."</textarea>
+					<textarea name='enrichment_template'>".(!empty($vars['enrichment_template']) ? stripslashes($vars['enrichment_template']) : stripslashes($this->default_enrichment_template))."</textarea>
 				</div>
 			</div>";
 		
@@ -199,11 +199,11 @@ class fluxrss extends connector {
 	 			'|[\x00-\x7F][\x80-\xBF]+'.
 	 			'|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*'.
 	 			'|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})'.
-	 			'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
+	 			'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/',
 	 			'?', $xml);	 
 	 	} else {			
-			$xml = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]/S', '', $xml);
-			$xml = preg_replace('/[\x91\x92]/S', '\x27', $xml);
+			$xml = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]/', '', $xml);
+			$xml = preg_replace('/[\x91\x92]/', '\x27', $xml);
 		} 
  	
 	 	$xslt = new XSLTProcessor();

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_metadatas_datasource_metadatas_generic.class.php,v 1.9 2017-11-28 15:33:39 dgoron Exp $
+// $Id: cms_module_metadatas_datasource_metadatas_generic.class.php,v 1.9.6.2 2019-10-03 11:56:44 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -222,25 +222,43 @@ class cms_module_metadatas_datasource_metadatas_generic extends cms_module_commo
 	/*
 	 * Récupération des données de la source...
 	*/
-	public function get_datas(){
+	public function get_datas() {
 		$datas = array();
 
-		if(!isset($datas['id']) || !$datas['id']){
-			$datas['id'] = $this->get_module_dom_id();
+		$datas['id'] = $this->get_module_dom_id();
+		$datas['get_vars'] = $_GET;
+		$datas['post_vars'] = $_POST;
+		$datas['session_vars']['view'] = (isset($_SESSION['opac_view']) ? $_SESSION['opac_view'] : '');
+		$datas['session_vars']['id_empr'] = $_SESSION['id_empr_session'];
+		$datas['env_vars']['script'] = basename($_SERVER['SCRIPT_NAME']);
+		$datas['env_vars']['request'] = basename($_SERVER['REQUEST_URI']);
+		
+		return $datas;
+	}
+	
+	public function get_object_datas($datas) {
+	    if (!is_object($datas)) {
+	       return null; 
+	    }
+	    
+		if (empty($datas->id)) {
+			$datas->id = $this->get_module_dom_id();
 		}
-		if(!isset($datas['get_vars']) || !$datas['get_vars']){
-			$datas['get_vars'] = $_GET;
+		if (empty($datas->get_vars)) {
+			$datas->get_vars = $_GET;
 		}
-		if(!isset($datas['post_vars']) || !$datas['post_vars']){
-			$datas['post_vars'] = $_POST;
+		if (empty($datas->post_vars)) {
+			$datas->post_vars = $_POST;
 		}
-		if(!isset($datas['session_vars']) || !$datas['session_vars']){
-			$datas['session_vars']['view'] = (isset($_SESSION['opac_view']) ? $_SESSION['opac_view'] : '');
-			$datas['session_vars']['id_empr'] = $_SESSION['id_empr_session'];
+		if (empty($datas->session_vars)) {
+		    $datas->session_vars = array();
+		    $datas->session_vars['view'] = (isset($_SESSION['opac_view']) ? $_SESSION['opac_view'] : '');
+			$datas->session_vars['id_empr'] = $_SESSION['id_empr_session'];
 		}
-		if(!isset($datas['env_vars']) || !$datas['env_vars']){
-			$datas['env_vars']['script'] = basename($_SERVER['SCRIPT_NAME']);
-			$datas['env_vars']['request'] = basename($_SERVER['REQUEST_URI']);
+		if (empty($datas->env_vars)) {
+		    $datas->env_vars = array();
+		    $datas->env_vars['script'] = basename($_SERVER['SCRIPT_NAME']);
+		    $datas->env_vars['request'] = basename($_SERVER['REQUEST_URI']);
 		}
 		
 		return $datas;

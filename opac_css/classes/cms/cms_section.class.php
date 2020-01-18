@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_section.class.php,v 1.46 2018-08-03 09:07:41 arenou Exp $
+// $Id: cms_section.class.php,v 1.50.2.2 2019-10-25 07:00:47 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,7 +12,7 @@ class cms_section extends cms_editorial {
 	public $num_parent;		// id du parent
 	public $articles;
 	public $children;
-	function __construct($id=0,$num_parent=0){
+	public function __construct($id=0,$num_parent=0){
 		//on gère les propriétés communes dans la classe parente
 		parent::__construct($id,"section");
 
@@ -165,6 +165,7 @@ class cms_section extends cms_editorial {
 				}
 			}
 		}
+		return $id;
 	}
 	
 	public function get_parent_selector(){
@@ -220,79 +221,8 @@ class cms_section extends cms_editorial {
 	}
 	
 	public function format_datas($get_children= true,$get_articles = true,$filter = true, $get_parent=false){
-		global $lang, $thesaurus_concepts_active;
-		
-		$documents = array();
-		if($this->formated_datas === null){
-			$this->get_documents();
-			foreach($this->documents_linked as $id_doc){
-				$document = new cms_document($id_doc);
-				$documents[] = $document->format_datas();
-			}
-			$this->formated_datas = array(
-				'id' => $this->id,
-				'num_parent' =>$this->num_parent,
-				'title' => $this->title,
-				'resume' => $this->resume,
-				'logo' => $this->logo->format_datas(),
-				'publication_state' => $this->publication_state,
-				'start_date' => $this->start_date,
-				'end_date' => $this->end_date,
-				'descriptors' => $this->get_descriptors(),
-				'num_type' => $this->num_type,
-				'fields_type' => $this->get_fields_type(),
-				'type' => $this->type_content,
-				'create_date' => format_date($this->create_date),
-				'documents' => $documents,
-				'nb_documents' => count($documents),
-				'last_update_date' => format_date($this->last_update_date),
-				'permalink' => $this->get_permalink(),
-				'social_media_sharing' => $this->get_social_media_block()
-			);
-			if($thesaurus_concepts_active == 1){
-				$this->formated_datas['concepts'] = $this->index_concept->get_concepts();
-			}
-			if($this->get_avis_allowed()) {
-				$this->formated_datas['avis_display'] = $this->get_display_avis_detail();
-			}
-        }
-		$formated_datas = $this->formated_datas;
-		
-		if ($lang != "fr_FR") {
-			$this->format_datas_lang($formated_datas, $lang);
-		}
-		$formated_datas = $this->formated_datas;
-		if($get_children){
-			
-			if($filter && !isset($this->children['filter'])){
-			    $this->children['filter'] = $this->get_children($get_articles,$filter);
-			}else if(!isset($this->children['full'])){
-			    $this->children['full'] = $this->get_children($get_articles,$filter);
-			}
-			if($filter){
-				$formated_datas['children'] = $this->children['filter'];
-			}else{
-				$formated_datas['children'] = $this->children['full'];
-			}
-		}
-		if($get_articles){
-			
-			if($filter && !isset($this->articles['filter'])){
-				$this->articles['filter'] = $this->get_articles($filter);
-			}else if (!isset($this->articles['full'])){
-				$this->articles['full'] = $this->get_articles($filter);
-			}
-			if($filter){
-				$formated_datas['articles'] = $this->articles['filter'];
-			}else{
-				$formated_datas['articles'] = $this->articles['full'];
-			}
-		}
-		if ($get_parent && $formated_datas['num_parent']) {
-			$cms_parent_section = cms_provider::get_instance("section",$formated_datas['num_parent']);
-			$formated_datas['parent'] = $cms_parent_section->format_datas(false, false);
-		}
-		return $formated_datas;
+	    $cms_editorial_data = new cms_editorial_data($this->id, $this->type);
+	    return $cms_editorial_data;
 	}
 	
 	private function format_datas_lang(&$array, $lang) {
@@ -316,7 +246,7 @@ class cms_section extends cms_editorial {
 
 	public function get_children($get_articles,$filter){
 		global $dbh;
-		if(($filter && $this->children['filter'] === null) || !$filter && $this->children['full'] === null){
+		if(($filter && $this->children['filter'.$get_articles] === null) || !$filter && $this->children['full'.$get_articles] === null){
 			if($this->id){
 				$children = array();
 				$query = "select id_section from cms_sections JOIN cms_editorial_publications_states ON section_publication_state=id_publication_state where section_num_parent = '".$this->id."'";
@@ -332,16 +262,16 @@ class cms_section extends cms_editorial {
 					}
 				}
 				if($filter){
-					$this->children['filter'] = $children;
+				    $this->children['filter'.$get_articles] = $children;
 				}else{
-					$this->children['full'] = $children;
+				    $this->children['full'.$get_articles] = $children;
 				}
 			}
 		}	
 		if($filter){
-			return $this->children['filter'];
+		    return $this->children['filter'.$get_articles];
 		}else{
-			return $this->children['full'];
+		    return $this->children['full'.$get_articles];
 		}
 	}
 	

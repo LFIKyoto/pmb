@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_bcdi.inc.php,v 1.15 2018-01-09 08:54:31 jpermanne Exp $
+// $Id: func_bcdi.inc.php,v 1.17 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -199,95 +199,13 @@ function import_new_notice_suite() {
 	}
 
 	//Thème
-	if (count($info_900)) {
-		$requete="SELECT name,type,datatype FROM notices_custom WHERE idchamp=1";
-		$res=pmb_mysql_query($requete);
-		if(pmb_mysql_num_rows($res) && (pmb_mysql_result($res,0,1) == "list") && (pmb_mysql_result($res,0,2) == "integer")){
-			$requete="select max(notices_custom_list_value*1) from notices_custom_lists where notices_custom_champ=1";
-			$resultat=pmb_mysql_query($requete);
-			$max=@pmb_mysql_result($resultat,0,0);
-			$n=$max+1;
-			for ($i=0; $i<count($info_900); $i++) {
-				for ($j=0; $j<count($info_900[$i]); $j++) {
-					$requete="select notices_custom_list_value from notices_custom_lists where notices_custom_list_lib='".addslashes($info_900[$i][$j])."' and notices_custom_champ=1";
-					$resultat=pmb_mysql_query($requete);
-					if (pmb_mysql_num_rows($resultat)) {
-						$value=pmb_mysql_result($resultat,0,0);
-					} else {
-						$requete="insert into notices_custom_lists (notices_custom_champ,notices_custom_list_value,notices_custom_list_lib) values(1,$n,'".addslashes($info_900[$i][$j])."')";
-						pmb_mysql_query($requete);
-						$value=$n;
-						$n++;
-					}
-					$requete="insert into notices_custom_values (notices_custom_champ,notices_custom_origine,notices_custom_integer) values(1,$notice_id,$value)";
-					pmb_mysql_query($requete);
-				}
-			}
-		}else{
-			pmb_mysql_query("insert into error_log (error_origin, error_text) values ('import_expl_".addslashes(SESSid).".inc', 'Il n\'y a pas de CP de notice avec l\'identifiant=1 ou il n\'est pas de type liste entier : le 900 n\'est donc pas repris (Th&egrave;me)') ") ;
-		}
-
-	}
+	import_records::insert_list_integer_values_custom_field(1, $notice_id, $info_900, array('field_code' => '900', 'field_label' => 'Th&egrave;me'));
 
 	//Genres
-	if (count($info_901)) {
-		$requete="SELECT name,type,datatype FROM notices_custom WHERE idchamp=2";
-		$res=pmb_mysql_query($requete);
-		if(pmb_mysql_num_rows($res) && (pmb_mysql_result($res,0,1) == "list") && (pmb_mysql_result($res,0,2) == "integer")){
-			$requete="select max(notices_custom_list_value*1) from notices_custom_lists where notices_custom_champ=2";
-			$resultat=pmb_mysql_query($requete);
-			$max=@pmb_mysql_result($resultat,0,0);
-			$n=$max+1;
-			for ($i=0; $i<count($info_901); $i++) {
-				for ($j=0; $j<count($info_901[$i]); $j++) {
-					$requete="select notices_custom_list_value from notices_custom_lists where notices_custom_list_lib='".addslashes($info_901[$i][$j])."' and notices_custom_champ=2";
-					$resultat=pmb_mysql_query($requete);
-					if (pmb_mysql_num_rows($resultat)) {
-						$value=pmb_mysql_result($resultat,0,0);
-					} else {
-						$requete="insert into notices_custom_lists (notices_custom_champ,notices_custom_list_value,notices_custom_list_lib) values(2,$n,'".addslashes($info_901[$i][$j])."')";
-						pmb_mysql_query($requete);
-						$value=$n;
-						$n++;
-					}
-					$requete="insert into notices_custom_values (notices_custom_champ,notices_custom_origine,notices_custom_integer) values(2,$notice_id,$value)";
-					pmb_mysql_query($requete);
-				}
-			}
-		}else{
-			pmb_mysql_query("insert into error_log (error_origin, error_text) values ('import_expl_".addslashes(SESSid).".inc', 'Il n\'y a pas de CP de notice avec l\'identifiant=2 ou il n\'est pas de type liste entier : le 901 n\'est donc pas repris (Genres)') ") ;
-		}
-	}
+	import_records::insert_list_integer_values_custom_field(2, $notice_id, $info_901, array('field_code' => '901', 'field_label' => 'Genres'));
 
 	//Discipline
-	if (count($info_902)) {
-		$requete="SELECT name,type,datatype FROM notices_custom WHERE idchamp=3";
-		$res=pmb_mysql_query($requete);
-		if(pmb_mysql_num_rows($res) && (pmb_mysql_result($res,0,1) == "list") && (pmb_mysql_result($res,0,2) == "integer")){
-			$requete="select max(notices_custom_list_value*1) from notices_custom_lists where notices_custom_champ=3";
-			$resultat=pmb_mysql_query($requete);
-			$max=@pmb_mysql_result($resultat,0,0);
-			$n=$max+1;
-			for ($i=0; $i<count($info_902); $i++) {
-				for ($j=0; $j<count($info_902[$i]); $j++) {
-					$requete="select notices_custom_list_value from notices_custom_lists where notices_custom_list_lib='".addslashes($info_902[$i][$j])."' and notices_custom_champ=3";
-					$resultat=pmb_mysql_query($requete);
-					if (pmb_mysql_num_rows($resultat)) {
-						$value=pmb_mysql_result($resultat,0,0);
-					} else {
-						$requete="insert into notices_custom_lists (notices_custom_champ,notices_custom_list_value,notices_custom_list_lib) values(3,$n,'".addslashes($info_902[$i][$j])."')";
-						pmb_mysql_query($requete);
-						$value=$n;
-						$n++;
-					}
-					$requete="insert into notices_custom_values (notices_custom_champ,notices_custom_origine,notices_custom_integer) values(3,$notice_id,$value)";
-					pmb_mysql_query($requete);
-				}
-			}
-		}else{
-			pmb_mysql_query("insert into error_log (error_origin, error_text) values ('import_expl_".addslashes(SESSid).".inc', 'Il n\'y a pas de CP de notice avec l\'identifiant=3 ou il n\'est pas de type liste entier : le 902 n\'est donc pas repris (Discipline)') ") ;
-		}
-	}
+	import_records::insert_list_integer_values_custom_field(3, $notice_id, $info_902, array('field_code' => '902', 'field_label' => 'Discipline'));
 
 	//Type de nature
 	if ($info_905[0]) {
@@ -317,34 +235,7 @@ function import_new_notice_suite() {
 	}
 
 	//Niveau
-	if (count($info_906)) {
-		$requete="SELECT name,type,datatype FROM notices_custom WHERE idchamp=7";
-		$res=pmb_mysql_query($requete);
-		if(pmb_mysql_num_rows($res) && (pmb_mysql_result($res,0,1) == "list") && (pmb_mysql_result($res,0,2) == "integer")){
-			for ($i=0; $i<count($info_906); $i++) {
-				for ($j=0; $j<count($info_906[$i]); $j++) {
-					$requete="select max(notices_custom_list_value*1) from notices_custom_lists where notices_custom_champ=7";
-					$resultat=pmb_mysql_query($requete);
-					$max=@pmb_mysql_result($resultat,0,0);
-					$n=$max+1;
-					$requete="select notices_custom_list_value from notices_custom_lists where notices_custom_list_lib='".addslashes($info_906[$i][$j])."' and notices_custom_champ=7";
-					$resultat=pmb_mysql_query($requete);
-					if (pmb_mysql_num_rows($resultat)) {
-						$value=pmb_mysql_result($resultat,0,0);
-					} else {
-						$requete="insert into notices_custom_lists (notices_custom_champ,notices_custom_list_value,notices_custom_list_lib) values(7,$n,'".addslashes($info_906[$i][$j])."')";
-						pmb_mysql_query($requete);
-						$value=$n;
-						$n++;
-					}
-					$requete="insert into notices_custom_values (notices_custom_champ,notices_custom_origine,notices_custom_integer) values(7,$notice_id,$value)";
-					pmb_mysql_query($requete);
-				}
-			}
-		}else{
-			pmb_mysql_query("insert into error_log (error_origin, error_text) values ('import_expl_".addslashes(SESSid).".inc', 'Il n\'y a pas de CP de notice avec l\'identifiant=7 ou il n\'est pas de type liste entier : le 906 n\'est donc pas repris (Niveau)') ") ;
-		}
-	}
+	import_records::insert_list_integer_values_custom_field(7, $notice_id, $info_906, array('field_code' => '906', 'field_label' => 'Niveau'));
 
 	//Année de péremption
 	if ($info_903[0]) {
@@ -385,8 +276,9 @@ function traite_exemplaires () {
 	// lu en 010$d de la notice
 	$price = $prix[0];
 
+	$nb_infos_995 = count($info_995);
 	// la zone 995 est répétable
-	for ($nb_expl = 0; $nb_expl < sizeof($info_995); $nb_expl++) {
+	for ($nb_expl = 0; $nb_expl < $nb_infos_995; $nb_expl++) {
 		/* RAZ expl */
 		$expl = array();
 
@@ -501,47 +393,5 @@ function traite_exemplaires () {
 
 // fonction spécifique d'export de la zone 995
 function export_traite_exemplaires ($ex=array()) {
-	global $msg, $dbh ;
-
-	$subfields["a"] = $ex -> lender_libelle;
-	$subfields["c"] = $ex -> lender_libelle;
-	$subfields["f"] = $ex -> expl_cb;
-	$subfields["k"] = $ex -> expl_cote;
-	$subfields["u"] = $ex -> expl_note;
-
-	if ($ex->statusdoc_codage_import) $subfields["o"] = $ex -> statusdoc_codage_import;
-	if ($ex -> tdoc_codage_import) $subfields["r"] = $ex -> tdoc_codage_import;
-		else $subfields["r"] = "uu";
-	if ($ex -> sdoc_codage_import) $subfields["q"] = $ex -> sdoc_codage_import;
-		else $subfields["q"] = "u";
-
-	global $export996 ;
-	$export996['f'] = $ex -> expl_cb ;
-	$export996['k'] = $ex -> expl_cote ;
-	$export996['u'] = $ex -> expl_note ;
-
-	$export996['m'] = substr($ex -> expl_date_depot, 0, 4).substr($ex -> expl_date_depot, 5, 2).substr($ex -> expl_date_depot, 8, 2) ;
-	$export996['n'] = substr($ex -> expl_date_retour, 0, 4).substr($ex -> expl_date_retour, 5, 2).substr($ex -> expl_date_retour, 8, 2) ;
-
-	$export996['a'] = $ex -> lender_libelle;
-	$export996['b'] = $ex -> expl_owner;
-
-	$export996['v'] = $ex -> location_libelle;
-	$export996['w'] = $ex -> ldoc_codage_import;
-
-	$export996['x'] = $ex -> section_libelle;
-	$export996['y'] = $ex -> sdoc_codage_import;
-
-	$export996['e'] = $ex -> tdoc_libelle;
-	$export996['r'] = $ex -> tdoc_codage_import;
-
-	$export996['1'] = $ex -> statut_libelle;
-	$export996['2'] = $ex -> statusdoc_codage_import;
-	$export996['3'] = $ex -> pret_flag;
-
-	global $export_traitement_exemplaires ;
-	$export996['0'] = $export_traitement_exemplaires ;
-
-	return 	$subfields ;
-
-	}
+	return import_expl::export_traite_exemplaires($ex);
+}

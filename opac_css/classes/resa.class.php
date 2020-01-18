@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa.class.php,v 1.24 2018-01-05 08:40:41 dgoron Exp $
+// $Id: resa.class.php,v 1.27 2019-08-01 10:37:57 dgoron Exp $
 
 // classe emprunteur
 // classe remaniée le 7.12.2003. : prise en compte de résas sur le bulletinage
@@ -420,7 +420,7 @@ if (!defined('RESA_CLASS')) {
 					// d'autres réservataires existent
 					$next_empr=pmb_mysql_fetch_object($result);
 
-					$this->message=$msg[resa_supprimee];
+					$this->message=$msg['resa_supprimee'];
 
 					// on regarde la disponibilité du document
 					// on compte le nombre total d'exemplaires pour la notice
@@ -839,13 +839,24 @@ if (!defined('RESA_CLASS')) {
 		}
 		
 		/**
+		 * On compte le nombre d'exemplaires en circulation
+		 */
+		public function get_number_expl_in_circ() {
+			$query = "SELECT count(1) FROM exemplaires, serialcirc_expl WHERE num_serialcirc_expl_id=expl_id ".$this->get_restrict_expl_location_query();
+			$query .= " AND ".$this->get_restrict_expl_notice_query();
+			$tresult = pmb_mysql_query($query);
+			return pmb_mysql_result($tresult, 0, 0);
+		}
+		
+		/**
 		 * On compte le nombre d'exemplaires disponibles
 		 */
 		public function get_number_expl_available() {
 			// on compte le nombre total d'exemplaires prêtables pour la notice
 			// on compte le nombre d'exemplaires sortis
+			// on compte le nombre d'exemplaires en circulation
 			// on en déduit le nombre d'exemplaires disponibles
-			$number = $this->get_number_expl_lendable() - $this->get_number_expl_out();
+			$number = $this->get_number_expl_lendable() - $this->get_number_expl_out() - $this->get_number_expl_in_circ();
 			return $number;
 		}
 		
@@ -872,6 +883,19 @@ if (!defined('RESA_CLASS')) {
 				$expl = pmb_mysql_fetch_object($result);
 				return $expl->statut_allow_resa;
 			}
+		}
+		
+		public static function get_instance_from_empr_and_notice($id_empr, $notice_id) {
+		    $bulletin_id=0;
+		    //On vérifie que notre notice n'est pas une notice de bulletin.
+		    $query='SELECT bulletin_id FROM bulletins WHERE num_notice='.$notice_id;
+		    $result = pmb_mysql_query($query);
+		    if(pmb_mysql_num_rows($result)){
+		        while($line=pmb_mysql_fetch_array($result,PMB_MYSQL_ASSOC)){
+		            $bulletin_id=$line['bulletin_id'];
+		        }
+		    }
+		    return new reservation($id_empr, $notice_id, $bulletin_id);
 		}
 	} # fin de déclaration classe reservation
 

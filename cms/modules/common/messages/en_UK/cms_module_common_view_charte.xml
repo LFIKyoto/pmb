@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE XMLlist SYSTEM "../XMLlist.dtd" [<!ENTITY nbsp "&amp;nbsp;">]>
+
+<!-- messages localisés en français pour le module Article
+****************************************************************************************
+© 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+****************************************************************************************
+$Id: cms_module_common_view_charte.xml,v 1.1.6.1 2019-10-25 06:49:16 jlaurent Exp $ -->
+
+<XMLlist>
+	<entry code='cms_module_common_view_charte_css'>CSS linked</entry>
+	<entry code='cms_module_common_view_charte_modal_only_connected'>Afficher uniquement aux utilisateurs connectés</entry>
+</XMLlist>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authority.class.php,v 1.33 2018-10-11 08:08:19 vtouchard Exp $
+// $Id: authority.class.php,v 1.35 2019-07-04 12:10:48 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -399,6 +399,7 @@ class authority {
 				$this->autlink_class = new aut_link($this->type_object, $this->num_object);
 			}
 		}
+		return  $this->autlink_class;
 	}
 	
 	public function get_indexing_concepts(){
@@ -500,6 +501,11 @@ class authority {
 		}
 	}
 	
+	public function get_aut_link() {
+	    
+	    return $this->init_autlink_class();
+	}
+	
 	/**
 	 * Retourne les paramètres persos
 	 * @return array
@@ -513,7 +519,10 @@ class authority {
 				$out_values = $parametres_perso->get_out_values($this->num_object);
 				if(isset($ppersos['FIELDS']) && is_array($ppersos['FIELDS'])){
 					foreach ($ppersos['FIELDS'] as $pperso) {
-						if($pperso['OPAC_SHOW'] && $pperso['AFF']) {
+					    if($pperso['OPAC_SHOW'] && $pperso['AFF']) {
+					        if ($pperso["TYPE"] !== 'html') {
+					            $pperso['AFF'] = nl2br($pperso["AFF"]);
+					        }
 							$this->p_perso[$pperso['NAME']] = $pperso;
 							$this->p_perso[$pperso['NAME']]['values'] = $out_values[$pperso['NAME']]['values'];
 						}

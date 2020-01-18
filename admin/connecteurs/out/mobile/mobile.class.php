@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mobile.class.php,v 1.8 2017-07-12 15:15:02 tsamson Exp $
+// $Id: mobile.class.php,v 1.9 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -90,7 +90,7 @@ class mobile_source extends connecteur_out_source {
 		
 		//on génère l'affichage du sélecteur
 		$proxyIsInList = false; 
-		if(sizeof($sources) == 0) {
+		if (empty($sources)) {
 			$selectWS = $this->msg['mobile_admin_error_proxy'];
 		} else {
 			$selectWS="<select name='proxyUrl'>";

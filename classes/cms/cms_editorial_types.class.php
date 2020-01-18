@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_types.class.php,v 1.18 2018-03-13 09:31:35 tsamson Exp $
+// $Id: cms_editorial_types.class.php,v 1.20 2019-06-13 09:39:52 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -72,20 +72,22 @@ class cms_editorial_types {
 	}
 	
 	public static function get_type($id){
-		$id +=0;
-		$rqt = "select * from cms_editorial_types where id_editorial_type = ".$id;
-		$res = pmb_mysql_query($rqt);
-		$type = array();
-		if($id && pmb_mysql_num_rows($res)){
-			$row = pmb_mysql_fetch_object($res);
-			$type = array(
-				'id' => $row->id_editorial_type,
-				'element' => $row->editorial_type_element,
-				'label' => $row->editorial_type_label,
-				'comment' => $row->editorial_type_comment,
-				'num_page' => $row->editorial_type_permalink_num_page,
-				'var_name' => $row->editorial_type_permalink_var_name
-			);
+	    $type = array();
+		$id = intval($id);
+		if($id) {
+    		$rqt = "select * from cms_editorial_types where id_editorial_type = ".$id;
+    		$res = pmb_mysql_query($rqt);
+    		if($id && pmb_mysql_num_rows($res)){
+    			$row = pmb_mysql_fetch_object($res);
+    			$type = array(
+    				'id' => $row->id_editorial_type,
+    				'element' => $row->editorial_type_element,
+    				'label' => $row->editorial_type_label,
+    				'comment' => $row->editorial_type_comment,
+    				'num_page' => $row->editorial_type_permalink_num_page,
+    				'var_name' => $row->editorial_type_permalink_var_name
+    			);
+    		}
 		}
 		return $type;		
 	}

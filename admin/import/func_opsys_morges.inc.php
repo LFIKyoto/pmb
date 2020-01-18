@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_opsys_morges.inc.php,v 1.9 2017-11-23 14:10:50 jpermanne Exp $
+// $Id: func_opsys_morges.inc.php,v 1.14 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -191,7 +191,7 @@ function xml_save_table($filename,$table) {
 	$fp = fopen($filename, "w");
 	fwrite($fp,"<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n<!DOCTYPE XMLlist SYSTEM \"../../XMLlist.dtd\">\n<XMLlist>\n");
 	foreach ($table_responsability_function as $key=>$val) {
-		fwrite($fp,"<entry code=\"".$key."\">".$table_responsability_function[$key]."</entry>\n");
+		fwrite($fp,"<entry code=\"".$key."\">".$val."</entry>\n");
 	}
 	fwrite($fp,"</XMLlist>\n");
 	fclose($fp);
@@ -226,7 +226,7 @@ function update_authors_num_opsys($aut_ ,$responsability_type)
 
 			$aut_i_4=str_replace('&',"",$aut_[$i]['4']);
 			$aut_i_p=str_replace('&',"",$aut_[$i]['p']);
-			$requete="select author_id from authors, responsability where author_name='".addslashes($aut_[$i][a])."' and author_rejete='".addslashes($aut_[$i][b])."'
+			$requete="select author_id from authors, responsability where author_name='".addslashes($aut_[$i]['a'])."' and author_rejete='".addslashes($aut_[$i]['b'])."'
 				and responsability_notice='$notice_id' and responsability_author = author_id";
 			$result=pmb_mysql_query($requete);
 			if($row = pmb_mysql_fetch_row($result)){
@@ -237,7 +237,7 @@ function update_authors_num_opsys($aut_ ,$responsability_type)
 				if($aut_i_4>=900) {
 					$index='';
 					if($table_responsability_function)foreach ($table_responsability_function as $key=>$val) {
-						if($table_responsability_function[$key]==$aut_i_4) {
+						if($val==$aut_i_4) {
 							 $index=$key;
 							 break;
 						}
@@ -258,7 +258,7 @@ function update_authors_num_opsys($aut_ ,$responsability_type)
 					$result=pmb_mysql_query($requete);
 					$index='';
 					if($table_responsability_function)foreach ($table_responsability_function as $key=>$val) {
-						if($table_responsability_function[$key]==$aut_i_p) {
+						if($val==$aut_i_p) {
 							 $index=$key;
 							 break;
 						}
@@ -361,9 +361,9 @@ function import_new_notice_suite() {
 		pmb_mysql_query($requete);
 	}
 
-	if ($aut_700[0][a]!="") {
+	if ($aut_700[0]['a']!="") {
 		if ($aut_700[0][3]!="") {
-			$requete="select author_id from authors where author_name='".addslashes($aut_700[0][a])."' and author_rejete='".addslashes($aut_700[0][b])."' ";
+			$requete="select author_id from authors where author_name='".addslashes($aut_700[0]['a'])."' and author_rejete='".addslashes($aut_700[0]['b'])."' ";
 			$result=pmb_mysql_query($requete);
 			if($row = pmb_mysql_fetch_row($result)){
 				$author_id=$row[0];
@@ -546,66 +546,66 @@ function import_new_notice_suite() {
 //		else $mots_cles = $index_sujets;
 	$mots_cles='';
 
-	for ($a=0; $a<sizeof($info_600_a); $a++) {
+	for ($a=0; $a<count($info_600_a); $a++) {
 		$mots_cles .= " $pmb_keyword_sep ".$info_600_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_600_b[$a]); $j++) $mots_cles .= " , ".$info_600_b[$a][0];
-		for ($j=0; $j<sizeof($info_600_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_600_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_600_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_600_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_600_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_600_z[$a][$j] ;
+		for ($j=0; $j<count($info_600_b[$a]); $j++) $mots_cles .= " , ".$info_600_b[$a][0];
+		for ($j=0; $j<count($info_600_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_600_j[$a][$j] ;
+		for ($j=0; $j<count($info_600_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_600_x[$a][$j] ;
+		for ($j=0; $j<count($info_600_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_600_y[$a][$j] ;
+		for ($j=0; $j<count($info_600_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_600_z[$a][$j] ;
 		}
-	for ($a=0; $a<sizeof($info_601_a); $a++) {
+	for ($a=0; $a<count($info_601_a); $a++) {
 		$mots_cles .= " $pmb_keyword_sep ".$info_601_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_601_b[$a]); $j++) $mots_cles .= " , ".$info_601_b[$a][0];
-		for ($j=0; $j<sizeof($info_601_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_601_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_601_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_601_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_601_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_601_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_601_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_601_z[$a][$j] ;
+		for ($j=0; $j<count($info_601_b[$a]); $j++) $mots_cles .= " , ".$info_601_b[$a][0];
+		for ($j=0; $j<count($info_601_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_601_j[$a][$j] ;
+		for ($j=0; $j<count($info_601_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_601_x[$a][$j] ;
+		for ($j=0; $j<count($info_601_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_601_y[$a][$j] ;
+		for ($j=0; $j<count($info_601_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_601_z[$a][$j] ;
 		}
-	for ($a=0; $a<sizeof($info_602_a); $a++) {
+	for ($a=0; $a<count($info_602_a); $a++) {
 		$mots_cles .= " $pmb_keyword_sep ".$info_602_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_602_b[$a]); $j++) $mots_cles .= " , ".$info_602_b[$a][0];
-		for ($j=0; $j<sizeof($info_602_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_602_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_602_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_602_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_602_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_602_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_602_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_602_z[$a][$j] ;
+		for ($j=0; $j<count($info_602_b[$a]); $j++) $mots_cles .= " , ".$info_602_b[$a][0];
+		for ($j=0; $j<count($info_602_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_602_j[$a][$j] ;
+		for ($j=0; $j<count($info_602_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_602_x[$a][$j] ;
+		for ($j=0; $j<count($info_602_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_602_y[$a][$j] ;
+		for ($j=0; $j<count($info_602_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_602_z[$a][$j] ;
 		}
-	for ($a=0; $a<sizeof($info_605_a); $a++) {
+	for ($a=0; $a<count($info_605_a); $a++) {
 		$mots_cles .= " $pmb_keyword_sep ".$info_605_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_605_b[$a]); $j++) $mots_cles .= " , ".$info_605_b[$a][0];
-		for ($j=0; $j<sizeof($info_605_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_605_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_605_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_605_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_605_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_605_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_605_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_605_z[$a][$j] ;
+		for ($j=0; $j<count($info_605_b[$a]); $j++) $mots_cles .= " , ".$info_605_b[$a][0];
+		for ($j=0; $j<count($info_605_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_605_j[$a][$j] ;
+		for ($j=0; $j<count($info_605_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_605_x[$a][$j] ;
+		for ($j=0; $j<count($info_605_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_605_y[$a][$j] ;
+		for ($j=0; $j<count($info_605_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_605_z[$a][$j] ;
 		}
-	for ($a=0; $a<sizeof($info_606_a); $a++) {
+	for ($a=0; $a<count($info_606_a); $a++) {
 		$mots_cles .= " $pmb_keyword_sep ".$info_606_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_606_b[$a]); $j++) $mots_cles .= " , ".$info_606_b[$a][0];
-		for ($j=0; $j<sizeof($info_606_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_606_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_606_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_606_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_606_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_606_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_606_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_606_z[$a][$j] ;
+		for ($j=0; $j<count($info_606_b[$a]); $j++) $mots_cles .= " , ".$info_606_b[$a][0];
+		for ($j=0; $j<count($info_606_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_606_j[$a][$j] ;
+		for ($j=0; $j<count($info_606_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_606_x[$a][$j] ;
+		for ($j=0; $j<count($info_606_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_606_y[$a][$j] ;
+		for ($j=0; $j<count($info_606_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_606_z[$a][$j] ;
 		}
-	for ($a=0; $a<sizeof($info_607_a); $a++) {
+	for ($a=0; $a<count($info_607_a); $a++) {
 		$mots_cles .= " $pmb_keyword_sep ".$info_607_a[$a][0] ;
-		for ($j=0; $j<sizeof($info_607_b[$a]); $j++) $mots_cles .= " , ".$info_607_b[$a][0];
-		for ($j=0; $j<sizeof($info_607_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_607_j[$a][$j] ;
-		for ($j=0; $j<sizeof($info_607_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_607_x[$a][$j] ;
-		for ($j=0; $j<sizeof($info_607_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_607_y[$a][$j] ;
-		for ($j=0; $j<sizeof($info_607_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_607_z[$a][$j] ;
+		for ($j=0; $j<count($info_607_b[$a]); $j++) $mots_cles .= " , ".$info_607_b[$a][0];
+		for ($j=0; $j<count($info_607_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_607_j[$a][$j] ;
+		for ($j=0; $j<count($info_607_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_607_x[$a][$j] ;
+		for ($j=0; $j<count($info_607_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_607_y[$a][$j] ;
+		for ($j=0; $j<count($info_607_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_607_z[$a][$j] ;
 		}
 
 	if($flag_import_610_in_mot_cles) {
-		for ($a=0; $a<sizeof($info_610_a); $a++) {
+		for ($a=0; $a<count($info_610_a); $a++) {
 			$mots_cles .= " $pmb_keyword_sep ".$info_610_a[$a][0] ;
-			for ($j=0; $j<sizeof($info_610_b[$a]); $j++) $mots_cles .= " , ".$info_610_b[$a][0];
-			for ($j=0; $j<sizeof($info_610_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_610_j[$a][$j] ;
-			for ($j=0; $j<sizeof($info_610_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_610_x[$a][$j] ;
-			for ($j=0; $j<sizeof($info_610_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_610_y[$a][$j] ;
-			for ($j=0; $j<sizeof($info_610_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_610_z[$a][$j] ;
-			if (sizeof($info_610_e[$a]))	{
+			for ($j=0; $j<count($info_610_b[$a]); $j++) $mots_cles .= " , ".$info_610_b[$a][0];
+			for ($j=0; $j<count($info_610_j[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_610_j[$a][$j] ;
+			for ($j=0; $j<count($info_610_x[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_610_x[$a][$j] ;
+			for ($j=0; $j<count($info_610_y[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_610_y[$a][$j] ;
+			for ($j=0; $j<count($info_610_z[$a]); $j++) $mots_cles .= " $pmb_keyword_sep ".$info_610_z[$a][$j] ;
+			if (count($info_610_e[$a]))	{
 				$mots_cles .= " ( ";
-				for ($j=0; $j<sizeof($info_610_e[$a]); $j++) {
+				for ($j=0; $j<count($info_610_e[$a]); $j++) {
 					if ($j) $mots_cles .= " , ";
 					$mots_cles .= $info_610_e[$a][$j] ;
 				}
@@ -616,14 +616,14 @@ function import_new_notice_suite() {
 
 	//print"<pre>";print_r($info_610_a);print_r($info_610_e);print"</pre>";
 
-	for ($a=0; $a<sizeof($info_610_a); $a++) {
+	for ($a=0; $a<count($info_610_a); $a++) {
 
 		$resultat = categories::searchLibelle(addslashes($info_610_a[$a][0]), $num_thesaurus_610, 'fr_FR', $thes_610->num_noeud_racine);
 		if (!$resultat){
 			/*vérification de l'existence des categs, sinon création */
 			$resultat = create_categ($thes_610,$thes_610->num_noeud_racine, $info_610_a[$a][0], ' '.strip_empty_words($info_610_a[$a][0]).' ',$info_610_3[$a][0]);
 		}
-		for ($j=0; $j<sizeof($info_610_e[$a]); $j++) {
+		for ($j=0; $j<count($info_610_e[$a]); $j++) {
 			if($info_610_e[$a][$j]){
 				$num_parent=$resultat;
 				$resultat = categories::searchLibelle(addslashes($info_610_e[$a][$j]), $num_thesaurus_610, 'fr_FR',$num_parent);
@@ -658,10 +658,8 @@ function import_new_notice_suite() {
 		if ($res && ($r = pmb_mysql_fetch_object($res)))	$id_notices_custom_type_opsys= $r->idchamp;
 	}
 
-	$requete="insert into notices_custom_values (notices_custom_champ,notices_custom_origine,notices_custom_small_text) values($id_notices_custom_opsys,$notice_id,'".addslashes($num_opsys)."')";
-	pmb_mysql_query($requete);
-	$requete="insert into notices_custom_values (notices_custom_champ,notices_custom_origine,notices_custom_small_text) values($id_notices_custom_type_opsys,$notice_id,'".addslashes($type_opsys)."')";
-	pmb_mysql_query($requete);
+	import_records::insert_value_custom_field($id_notices_custom_opsys, $notice_id, $num_opsys);
+	import_records::insert_value_custom_field($id_notices_custom_opsys, $notice_id, $type_opsys);
 
 	$requete="select * from notices where notice_id=$notice_id";
 	$resultat=pmb_mysql_query($requete);
@@ -698,16 +696,16 @@ function import_new_notice_suite() {
 				break;
 			}
 			//print "<pre>";print_r	($info_464);print "</pre>";
-			for ($i=0; $i<sizeof($info_464); $i++) {
+			for ($i=0; $i<count($info_464); $i++) {
 				$a_464=$e_464=$_3_464=array();
 				$author_id=0;
-				for ($j=0; $j<sizeof($info_464[$i]); $j++) {
+				for ($j=0; $j<count($info_464[$i]); $j++) {
 					if($info_464[$i][$j]['label']=='a') $a_464[]=$info_464[$i][$j]['content'];
 					if($info_464[$i][$j]['label']=='e') $e_464[]=$info_464[$i][$j]['content'];		// Complément du titre
 					if($info_464[$i][$j]['label']=='3') $_3_464[]=$info_464[$i][$j]['content'];		// Complément du titre
 				}
 				//print "<pre>";print_r	($_3_464);print "</pre>";
-				for ($j=0; $j<sizeof($a_464); $j++) {
+				for ($j=0; $j<count($a_464); $j++) {
 					if($_3_464[$j]) {
 						$requete="select author_id from authors where author_comment='".addslashes($_3_464[$j])."' ";
 						$result=pmb_mysql_query($requete);
@@ -741,7 +739,7 @@ function import_new_notice_suite() {
 
 
 	// $info_461_3,$info_461_t : dépendance d'une notice chapeau
-	for ($_3=0; $_3<sizeof($info_461_3); $_3++) {
+	for ($_3=0; $_3<count($info_461_3); $_3++) {
 		switch ($type_opsys) {
 			case 'UMO:1': case 'UMO:2': case 'UMO:4': case 'UMO:8':
 				if($flag_titre_serie_recuperation) { // que si on veut
@@ -815,7 +813,7 @@ function import_new_notice_suite() {
 
 
 	// $info_462_3,$info_462_t : Dépouillement, article
-	for ($_3=0; $_3<sizeof($info_462_3); $_3++) {
+	for ($_3=0; $_3<count($info_462_3); $_3++) {
 		switch ($type_opsys) {
 			case 'UMO:1': case 'UMO:2': case 'UMO:8':
 				$requete="select notices_custom_origine from notices_custom_values where notices_custom_small_text='".$info_462_3[$_3]."'";
@@ -950,7 +948,7 @@ function traite_exemplaires () {
 	}
 	// la zone 995 est répétable
 
-	for ($nb_expl = 0; $nb_expl < sizeof ($info_995); $nb_expl++) {
+	for ($nb_expl = 0; $nb_expl < count($info_995); $nb_expl++) {
 
 		/* RAZ expl */
 		$expl = array();
@@ -1070,47 +1068,5 @@ function traite_exemplaires () {
 
 // fonction spécifique d'export de la zone 995
 function export_traite_exemplaires ($ex=array()) {
-	global $msg, $dbh ;
-
-	$subfields["a"] = $ex -> lender_libelle;
-	$subfields["c"] = $ex -> lender_libelle;
-	$subfields["f"] = $ex -> expl_cb;
-	$subfields["k"] = $ex -> expl_cote;
-	$subfields["u"] = $ex -> expl_note;
-
-	if ($ex->statusdoc_codage_import) $subfields["o"] = $ex -> statusdoc_codage_import;
-	if ($ex -> tdoc_codage_import) $subfields["r"] = $ex -> tdoc_codage_import;
-		else $subfields["r"] = "uu";
-	if ($ex -> sdoc_codage_import) $subfields["q"] = $ex -> sdoc_codage_import;
-		else $subfields["q"] = "u";
-
-	global $export996 ;
-	$export996['f'] = $ex -> expl_cb ;
-	$export996['k'] = $ex -> expl_cote ;
-	$export996['u'] = $ex -> expl_note ;
-
-	$export996['m'] = substr($ex -> expl_date_depot, 0, 4).substr($ex -> expl_date_depot, 5, 2).substr($ex -> expl_date_depot, 8, 2) ;
-	$export996['n'] = substr($ex -> expl_date_retour, 0, 4).substr($ex -> expl_date_retour, 5, 2).substr($ex -> expl_date_retour, 8, 2) ;
-
-	$export996['a'] = $ex -> lender_libelle;
-	$export996['b'] = $ex -> expl_owner;
-
-	$export996['v'] = $ex -> location_libelle;
-	$export996['w'] = $ex -> ldoc_codage_import;
-
-	$export996['x'] = $ex -> section_libelle;
-	$export996['y'] = $ex -> sdoc_codage_import;
-
-	$export996['e'] = $ex -> tdoc_libelle;
-	$export996['r'] = $ex -> tdoc_codage_import;
-
-	$export996['1'] = $ex -> statut_libelle;
-	$export996['2'] = $ex -> statusdoc_codage_import;
-	$export996['3'] = $ex -> pret_flag;
-
-	global $export_traitement_exemplaires ;
-	$export996['0'] = $export_traitement_exemplaires ;
-
-	return 	$subfields ;
-
-	}
+	return import_expl::export_traite_exemplaires($ex);
+}

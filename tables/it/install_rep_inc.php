@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: install_rep_inc.php,v 1.11 2016-03-30 09:04:51 mbertin Exp $
+// $Id: install_rep_inc.php,v 1.12 2019-07-12 10:25:27 btafforeau Exp $
 
 // plus rien ici : reprise d'un script d'une autre install
 if(preg_match('/install_rep_inc\.php/', $_SERVER['REQUEST_URI'])) {
@@ -88,4 +88,3 @@ $msg_crea_control_version = "<h3>The database version is <font color=red>!!pmb_v
 			Go to Administration > Tools > database update before you work with PMB.<br />
 			Don't forget to do backups, check that all the tables are saved.";
 ?>
-

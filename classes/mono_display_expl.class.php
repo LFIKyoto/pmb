@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mono_display_expl.class.php,v 1.22 2018-10-19 15:06:56 dgoron Exp $
+// $Id: mono_display_expl.class.php,v 1.25 2019-07-11 10:24:50 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -160,8 +160,7 @@ class mono_display_expl {
 	public function expl_titre_diplay() {
 		global $charset;
 		global $msg;
-		global $dbh;
-		global $pmb_expl_title_display_format,$p_perso;
+		global $pmb_expl_title_display_format,$p_perso, $perso_, $nb_param;
 		
 		if(!$pmb_expl_title_display_format) return'';
 		$liste_format=explode(",",$pmb_expl_title_display_format);
@@ -171,7 +170,7 @@ class mono_display_expl {
 				case "expl_cb":$liste_aff[]=htmlentities($this->expl_data->expl_cb,ENT_QUOTES,$charset);break;
 				case "expl_notice":$liste_aff[]=htmlentities($this->expl_data->id_notice,ENT_QUOTES,$charset);break;	
 				case "expl_bulletin":$liste_aff[]=htmlentities($this->expl_data->id_bulletin,ENT_QUOTES,$charset);break;		
-				case "expl_typdoc":$liste_aff[]=htmlentities($this->expl_data->typdoc,ENT_QUOTES,$charset);break;
+				case "expl_typdoc":$liste_aff[]=htmlentities($this->expl_data->tdoc_libelle,ENT_QUOTES,$charset);break;
 				case "expl_cote":$liste_aff[]=htmlentities($this->expl_data->expl_cote,ENT_QUOTES,$charset);break;
 				case "expl_section":$liste_aff[]=htmlentities($this->expl_data->section_libelle,ENT_QUOTES,$charset);break;
 				case "expl_statut":$liste_aff[]=htmlentities($this->expl_data->statut,ENT_QUOTES,$charset);break;
@@ -358,8 +357,12 @@ class mono_display_expl {
 	        <img src='".get_url_icon('basket_small_20x20.gif')."' class='align_middle' alt='basket' title=\"${msg[400]}\" $cart_click $cart_over_out>
 	        !!ISBD!!
 	 		</div>";
-		}	
-		$this->result = str_replace('!!id!!', $this->expl_data->expl_id.($this->anti_loop?"_p".$this->anti_loop[count($this->anti_loop)-1]:""), $javascript_template);
+		}
+		$id_part = "";
+		if ($this->anti_loop) {
+		    $id_part = "_p" . substr($this->anti_loop, count($this->anti_loop)-1, 1);
+		}
+		$this->result = str_replace('!!id!!', $this->expl_data->expl_id . $id_part, $javascript_template);
 		$this->result = str_replace('!!heada!!', $this->lien_suppr_cart.$this->header, $this->result);
 	}
 

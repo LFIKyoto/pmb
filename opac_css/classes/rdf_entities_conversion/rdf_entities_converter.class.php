@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rdf_entities_converter.class.php,v 1.1 2018-09-24 13:39:22 tsamson Exp $
+// $Id: rdf_entities_converter.class.php,v 1.2 2019-01-17 08:15:10 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -105,42 +105,6 @@ class rdf_entities_converter {
 	protected function init_special_fields() {
 		$this->special_fields = array();
 		return $this->special_fields;
-	}
-	
-	/**
-	 * Retourne la classe d'intégration associé au type d'entité
-	 * @param string $uri URI du type d'entité
-	 */
-	protected function get_entity_integrator_from_type_uri($type_uri) {
-		switch ($type_uri) {
-			default :
-				$is_cms = false;
-				$type = substr($type_uri, strpos($type_uri, '#') + 1);
-				$type = strtolower($type);
-				
-				$integrator_class = 'rdf_entities_integrator_'.$type;
-				if (strpos($type, 'article') !== false) {
-					$integrator_class = 'rdf_entities_integrator_article';
-					$is_cms = true;
-				}
-				if (strpos($type, 'section') !== false) {
-					$integrator_class = 'rdf_entities_integrator_section';
-					$is_cms = true;
-				}
-				if (class_exists($integrator_class)) {
-					$integrator = new $integrator_class($this->store);
-					if($is_cms){
-						$type_explode = explode('_', $type);
-						$num_type = $type_explode[count($type_explode) - 1];
-						if (is_numeric($num_type)) {
-							$integrator->set_cms_type($num_type);
-						}
-					}
-					return $integrator;
-					
-				}
-				return null;
-		}
 	}
 	
 	/**
@@ -317,7 +281,7 @@ class rdf_entities_converter {
 	            return $authority_instance->get_header();
 	        case 'category' :
 	            $authority_instance = authorities_collection::get_authority(AUT_TABLE_CATEG, $id);
-	            return $authority_instance->get_header();
+	            return $authority_instance->get_isbd();
 	        case 'publisher' :
 	            $authority_instance = authorities_collection::get_authority(AUT_TABLE_PUBLISHERS, $id);
 	            return $authority_instance->get_header();

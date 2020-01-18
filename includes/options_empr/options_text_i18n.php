@@ -2,12 +2,13 @@
  // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: options_text_i18n.php,v 1.5 2018-06-21 16:09:19 dgoron Exp $
+// $Id: options_text_i18n.php,v 1.6 2019-03-25 13:28:03 dgoron Exp $
 
 //Gestion des options de type text_i18n
 $base_path = "../..";
 $base_auth = "CATALOGAGE_AUTH|ADMINISTRATION_AUTH";
 $base_title = "";
+$base_use_dojo=1;
 include ($base_path."/includes/init.inc.php");
 
 require_once ("$include_path/parser.inc.php");

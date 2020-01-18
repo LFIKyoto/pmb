@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl_owner.inc.php,v 1.21 2017-11-21 12:01:00 dgoron Exp $
+// $Id: expl_owner.inc.php,v 1.22 2019-06-05 06:41:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -67,7 +67,7 @@ $sql.= "WHERE expl_typdoc = idtyp_doc and idsection = expl_section and expl_owne
 $sql = $sql.$critere_requete;
 switch($dest) {
 	case "TABLEAU":
-		$worksheet = new spreadsheet();
+	    $worksheet = new spreadsheetPMB();
 		$row=0;
 		$col=0;
 		break;

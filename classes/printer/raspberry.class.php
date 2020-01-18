@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: raspberry.class.php,v 1.1 2018-02-13 15:02:30 jpermanne Exp $
+// $Id: raspberry.class.php,v 1.3 2019-01-31 09:17:58 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -22,11 +22,6 @@ class raspberry {
 		global $charset;
 		
 		$tpl = H2o::parseString($tpl)->render($data);
-		
-		//Demandé par Florent lors des tests avec Christophe : on renvoie de l'iso à l'imprimante
-		if($charset == 'utf-8'){
-			$tpl = utf8_decode($tpl);
-		}
 
 		$templates = array(
 				'epson' => escPos::parseTpl($tpl, 'epson'),
@@ -120,9 +115,9 @@ Emprunteur:
 	}
 
 	public static function get_selector_options($selected=0) {
-		global $pmb_printer_list, $charset;
+		global $pmb_printer_list, $charset, $msg;
 		
-		$options = "<option value='0' ".(!$selected ? "selected='selected'" : "").">&nbsp;</option>";
+		$options = "<option value='0' ".(!$selected ? "selected='selected'" : "").">".$msg["user_deflt_printer_not_selected"]."</option>";
 		if (trim($pmb_printer_list)) {
 			$list_printers = explode(";", $pmb_printer_list);
 			foreach ($list_printers as $printer) {

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannette_tpl.class.php,v 1.5 2018-08-23 15:09:39 tsamson Exp $
+// $Id: bannette_tpl.class.php,v 1.6 2019-06-03 12:11:23 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -22,7 +22,7 @@ class bannette_tpl {
 	// ---------------------------------------------------------------
 	//		constructeur
 	// ---------------------------------------------------------------
-	public function bannette_tpl($id=0) {			
+	public function __construct($id=0) {			
 		$this->id = $id+0;
 		$this->getData();
 	}

@@ -2,21 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: category.tpl.php,v 1.71 2018-05-17 16:21:06 dgoron Exp $
+// $Id: category.tpl.php,v 1.76 2019-07-17 14:07:57 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $category_form;
-global $add_see_also;
-global $categ0, $categ1;
-global $form_categ_parent, $form_renvoivoir, $form_renvoivoiraussi;
-global $form_num_aut;
-global $form_categ_replace;
-global $categories_liaison_tpl;
-global $traduction_na_tpl, $traduction_cm_tpl;
-
-global $pmb_form_authorities_editables, $PMBuserid;
-global $pmb_autorites_verif_js, $base_path;
+global $category_form, $add_see_also, $categ0, $categ1, $form_categ_parent, $form_renvoivoir, $form_renvoivoiraussi, $form_num_aut, $form_categ_replace, $categories_liaison_tpl, $charset;
+global $traduction_na_tpl, $traduction_cm_tpl, $pmb_form_authorities_editables, $PMBuserid, $pmb_autorites_verif_js, $base_path, $include_path, $categ_browser, $msg, $current_module;
+global $thesaurus_mode_pmb;
 
 // templates pour la gestion des catégories
 require_once("$base_path/javascript/misc.inc.php");
@@ -54,8 +46,12 @@ $category_form.= "
 	});
 </script>
 <script type='text/javascript'>
-<!--
 	function test_form(form){
+		if (typeof check_form == 'function') {
+			if (!check_form()) {
+				return false;
+			}
+		}
 		";
 if ($pmb_autorites_verif_js != "") {
 	$category_form.= "
@@ -81,7 +77,6 @@ $category_form.= "if(document.getElementById('category_libelle_defaut').value.re
 		} else
             document.forms['categ_form'].elements['category_libelle!!lang_def_cle!!'].focus();
     }
--->
 </script>
 <script type='text/javascript'>
 	document.title='!!document_title!!';
@@ -113,8 +108,19 @@ $category_form.= "if(document.getElementById('category_libelle_defaut').value.re
 		<a onclick='expandAll();return false;' href='#'><img border='0' id='expandall' src='".get_url_icon('expand_all.gif')."'></a>
 		<a onclick='collapseAll();return false;' href='#'><img border='0' id='collapseall' src='".get_url_icon('collapse_all.gif')."'></a>
 	</div>
-	<div id='zone-container'>
-		<!-- libelle defaut -->
+	<div id='zone-container'>";
+	if($thesaurus_mode_pmb != 0) {
+	    $category_form .= "
+        <div id='el0Child_9' class='row' movable='yes' title=\"".htmlentities($msg['thesaurus'], ENT_QUOTES, $charset)."\">
+            <div class='row'>
+				<label class='etiquette' >".htmlentities($msg['thesaurus'], ENT_QUOTES, $charset)."</label>
+			</div>
+            <div class='row'>
+                <!-- sel_thesaurus -->
+            </div>
+        </div>";
+	}
+$category_form .= "<!-- libelle defaut -->
 		<div id='el0Child_0' class='row'>
 			<div id='el0Child_0_a' class='colonne2' movable='yes' title=\"".htmlentities($msg[103], ENT_QUOTES, $charset)."\">
 				<div class='row'>
@@ -204,7 +210,9 @@ $category_form.= "if(document.getElementById('category_libelle_defaut').value.re
 <div class='row'>
 	<div class='left'>
 		<input type='button' id='btcancel' class='bouton' value='$msg[76]' onClick=\"unload_off();document.location='!!cancel_action!!'\" />
-		<input type='submit' id='btsubmit' class='bouton' value='$msg[77]' onClick=\"return test_form(this.form)\" />
+		<input type='submit' id='btsubmit' class='bouton' value='$msg[77]' onClick=\"document.getElementById('save_and_continue').value=0;return test_form(this.form)\" />
+		<input type='hidden' name='save_and_continue' id='save_and_continue' value='' />
+		<input type='submit' id='update_continue' class='bouton' value='" . $msg['save_and_continue'] . "' onClick=\"document.getElementById('save_and_continue').value=1;return test_form(this.form)\" />
 		<!-- remplace_categ -->
 		!!voir_notices!!
 		!!audit_bt!!
@@ -256,8 +264,10 @@ $add_see_also="
 		f_categ.setAttribute('id',nom_id);
 		f_categ.setAttribute('type','text');
 		f_categ.className='saisie-80emr';
-		f_categ.setAttribute('readonly','');
 		f_categ.setAttribute('value','');
+		f_categ.setAttribute('completion','categories_mul');
+		f_categ.setAttribute('autfield','f_categ_id'+suffixe);
+		f_categ.setAttribute('autocomplete','off');
 		
 		f_categ_rec = document.createElement('input');
 		f_categ_rec.name = 'f_categ_rec'+suffixe;
@@ -295,12 +305,15 @@ $add_see_also="
 		}
 
 		document.categ_form.max_categ.value=suffixe*1+1*1 ;
+        ajax_pack_element(f_categ);
 	}
 </script>";
 	
 $categ0 = "
 	<div class='row'>
-		<input type='text' class='saisie-80emr' id='f_categ!!icateg!!' name='f_categ!!icateg!!' readonly value=\"!!categ_libelle!!\" /><input type='checkbox' id='f_categ_rec!!icateg!!' name='f_categ_rec!!icateg!!' !!chk!! />
+		<input type='text' class='saisie-80emr' id='f_categ!!icateg!!' name='f_categ!!icateg!!' value=\"!!categ_libelle!!\" 
+            completion='categories_mul' autfield='f_categ_id!!icateg!!' autocomplete='off'/>
+        <input type='checkbox' id='f_categ_rec!!icateg!!' name='f_categ_rec!!icateg!!' !!chk!! />
 		<input type='button' class='bouton_small' value='$msg[parcourir]' onclick=\"openPopUp('./select.php?what=categorie&caller=categ_form&p1=f_categ_id!!icateg!!&p2=f_categ!!icateg!!&dyn=1&parent=!!parent!!&id2=!!id!!', 'selector_category')\" />
 		<input type='button' class='bouton_small' value='$msg[raz]' onclick=\"this.form.f_categ!!icateg!!.value=''; this.form.f_categ_id!!icateg!!.value='0'; this.form.f_categ_rec!!icateg!!.checked=false; \" />
 		<input type='hidden' name='f_categ_id!!icateg!!' id='f_categ_id!!icateg!!' value='!!categ_id!!' /><input type='button' class='bouton_small' value='+' onClick=\"add_categ();\"/>
@@ -308,7 +321,11 @@ $categ0 = "
 	
 $categ1 = "
 	<div class='row'>
-		<input type='text' class='saisie-80emr' id='f_categ!!icateg!!' name='f_categ!!icateg!!' readonly value=\"!!categ_libelle!!\" /><input type='checkbox' id='f_categ_rec!!icateg!!' name='f_categ_rec!!icateg!!' !!chk!! />&nbsp;<input type='button' class='bouton_small' value='$msg[raz]' onclick=\"this.form.f_categ!!icateg!!.value=''; this.form.f_categ_id!!icateg!!.value='0'; \" /><input type='hidden' name='f_categ_id!!icateg!!' id='f_categ_id!!icateg!!' value='!!categ_id!!' />
+		<input type='text' class='saisie-80emr' id='f_categ!!icateg!!' name='f_categ!!icateg!!' value=\"!!categ_libelle!!\" 
+            completion='categories_mul' autfield='f_categ_id!!icateg!!' autocomplete='off'/>
+        <input type='checkbox' id='f_categ_rec!!icateg!!' name='f_categ_rec!!icateg!!' !!chk!! />&nbsp;
+        <input type='button' class='bouton_small' value='$msg[raz]' onclick=\"this.form.f_categ!!icateg!!.value=''; this.form.f_categ_id!!icateg!!.value='0'; \" />
+        <input type='hidden' name='f_categ_id!!icateg!!' id='f_categ_id!!icateg!!' value='!!categ_id!!' />
 	</div>";
 
 $form_categ_parent = "
@@ -317,7 +334,8 @@ $form_categ_parent = "
 			<label class='etiquette' for='form_categparent'>".htmlentities($msg['categ_parent'], ENT_QUOTES, $charset)."</label>
 		</div>
 		<div class='row'>
-			<input type='text' class='saisie-80emr' id='category_parent' name='category_parent' readonly value=\"!!parent_libelle!!\" />
+			<input type='text' class='saisie-80emr' id='category_parent' name='category_parent' value=\"!!parent_libelle!!\"
+                completion='categories_mul' autfield='category_parent_id' autocomplete='off'/>
 			<input type='button' class='bouton_small' onclick=\"openPopUp('./select.php?what=categorie&caller=categ_form&p1=category_parent_id&p2=category_parent&keep_tilde=1&parent=!!parent!!&id2='+document.categ_form.category_parent_id.value, 'selector_category')\" title='$msg[157]' value='$msg[parcourir]' />
 			<input type='button' class='bouton_small' value='$msg[raz]' onclick=\"this.form.category_parent.value=''; this.form.category_parent_id.value='0'; \" />
 			<input type='hidden' id='category_parent_id' name='category_parent_id' value='!!parent_value!!' />
@@ -330,7 +348,8 @@ $form_renvoivoir = "
 			<label class='etiquette' for='form_renvoivoir'>".htmlentities($msg['categ_renvoi'], ENT_QUOTES, $charset)."</label>
 		</div>
 		<div class='row'>
-			<input type='text' class='saisie-80emr' id='category_voir' name='category_voir' size='48' readonly value=\"!!voir_libelle!!\" />
+			<input type='text' class='saisie-80emr' id='category_voir' name='category_voir' size='48' value=\"!!voir_libelle!!\"
+                completion='categories_mul' autfield='category_voir_id' autocomplete='off' />
 			<input type='button' class='bouton_small' onclick=\"openPopUp('./select.php?what=categorie&caller=categ_form&p1=category_voir_id&p2=category_voir&parent=!!parent!!&id2='+document.categ_form.category_voir_id.value, 'selector_category')\" title='$msg[157]' value='$msg[parcourir]' />
 			<input type='button' class='bouton_small' value='$msg[raz]' onclick=\"this.form.category_voir.value=''; this.form.category_voir_id.value='0'; \" />
 			<input type='hidden' id='category_voir_id' name='category_voir_id' value='!!voir_value!!' />

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bul_func.inc.php,v 1.74 2018-10-18 14:39:20 dgoron Exp $
+// $Id: bul_func.inc.php,v 1.76 2019-08-01 13:16:36 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -90,7 +90,7 @@ function show_bulletinage_info_catalogage(	$bul_id,
 
 			$bul_action_bar = str_replace('!!bul_id!!', $bul_id, $bul_action_bar);
 			$bul_action_bar = str_replace('!!serial_id!!', $myBul->bulletin_notice, $bul_action_bar);
-			$bul_action_bar = str_replace('!!nb_expl!!', sizeof($myBul->expl), $bul_action_bar);
+			$bul_action_bar = str_replace('!!nb_expl!!', count($myBul->expl), $bul_action_bar);
 
 			global $avis_quoifaire,$valid_id_avis;
 			if($myBul->bull_num_notice) {
@@ -244,7 +244,7 @@ function show_bulletinage_info_catalogage(	$bul_id,
 					if($nb_expl_reservables ) $form.= "<input type='button' class='bouton' value='".$msg['resa_planning_add']."' $ouvrir_reserv><br /><br />";
 					$form.= $aff_resa_planning."<br />";
 				} else {
-					if ($nb_expl_reservables && !($categ=="resa_planning") && !$id_empr && $nb_expl_reservables) $form.= "<b>".$msg['resas_planning']."</b><br /><input type='button' class='bouton' value='".$msg['resa_planning_add']."' $ouvrir_reserv><br /><br />";
+					if ($nb_expl_reservables && !($categ=="resa_planning") && $nb_expl_reservables) $form.= "<b>".$msg['resas_planning']."</b><br /><input type='button' class='bouton' value='".$msg['resa_planning_add']."' $ouvrir_reserv><br /><br />";
 				}
 			}
 

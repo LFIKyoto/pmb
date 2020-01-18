@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: planificateur.inc.php,v 1.7 2018-11-08 13:59:48 dgoron Exp $
+// $Id: planificateur.inc.php,v 1.8 2019-05-29 12:03:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $sub, $task_id, $cmd;
 
 require_once($class_path."/scheduler/scheduler_tasks.class.php");
 require_once($class_path."/scheduler/scheduler_dashboard.class.php");

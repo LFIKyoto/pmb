@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: more_results.class.php,v 1.17 2018-10-31 11:23:01 ngantier Exp $
+// $Id: more_results.class.php,v 1.21.4.1 2019-10-15 09:59:05 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -307,7 +307,7 @@ class more_results {
 			}
 			$_SESSION['tab_result'] = $tab_result;
 			if ($opac_map_activate == 1 || $opac_map_activate == 3) {
-				$searcher->check_emprises();
+				searcher::check_emprises();
 			}
 		} elseif(isset(static::$level2_search) && is_object(static::$level2_search)) {
 			$tab_result = implode(',', static::$level2_search->get_elements_ids());
@@ -362,7 +362,9 @@ class more_results {
 		global $nbexplnum_to_photo;
 		global $opac_cart_allow, $opac_cart_only_for_subscriber, $facette_test, $es;
 		global $opac_allow_affiliate_search, $id_authperso;
+		global $external_env;
 		
+		$page+= 0;
 		if(!isset($id_authperso)) $id_authperso = 0;
 		// affichage recherche
 		$clause = stripslashes($clause);
@@ -387,61 +389,61 @@ class more_results {
 			case 'tags_search':
 				// constitution du form pour la suite
 				$f_values = "<input type=\"hidden\" name=\"user_query\" value=\"".htmlentities(static::$user_query,ENT_QUOTES,$charset)."\">\n";
-				$f_values .= "<input type=\"hidden\" name=\"mode\" value=\"$mode\">\n";
-				$f_values .= "<input type=\"hidden\" name=\"count\" value=\"$count\">\n";
-				$f_values .= "<input type=\"hidden\" name=\"typdoc\" value=\"".$typdoc."\">";
-				$f_values .= "<input type=\"hidden\" name=\"id_authperso\" value=\"".$id_authperso."\">";
+				$f_values .= "<input type=\"hidden\" name=\"mode\" value=\"".htmlentities($mode, ENT_QUOTES, $charset)."\">\n";
+				$f_values .= "<input type=\"hidden\" name=\"count\" value=\"".htmlentities($count, ENT_QUOTES, $charset)."\">\n";
+				$f_values .= "<input type=\"hidden\" name=\"typdoc\" value=\"".htmlentities($typdoc, ENT_QUOTES, $charset)."\">";
+				$f_values .= "<input type=\"hidden\" name=\"id_authperso\" value=\"".htmlentities($id_authperso, ENT_QUOTES, $charset)."\">";
 				if (function_exists("search_other_function_post_values")){
 					$f_values .=search_other_function_post_values();
 				}
 				$f_values .= "<input type=\"hidden\" name=\"clause\" value=\"".htmlentities($clause,ENT_QUOTES,$charset)."\">\n";
 				$f_values .= "<input type=\"hidden\" name=\"clause_bull\" value=\"".htmlentities($clause_bull,ENT_QUOTES,$charset)."\">\n";
 				$f_values .= "<input type=\"hidden\" name=\"clause_bull_num_notice\" value=\"".htmlentities($clause_bull_num_notice,ENT_QUOTES,$charset)."\">\n";
-				if($opac_indexation_docnum_allfields)
-					$f_values .= "<input type=\"hidden\" name=\"join\" value=\"".htmlentities($join,ENT_QUOTES,$charset)."\">\n";
-					$f_values .= "<input type=\"hidden\" name=\"tri\" value=\"".htmlentities($tri,ENT_QUOTES,$charset)."\">\n";
-					$f_values .= "<input type=\"hidden\" name=\"pert\" value=\"".htmlentities($pert,ENT_QUOTES,$charset)."\">\n";
-					$f_values .= "<input type=\"hidden\" name=\"l_typdoc\" value=\"".htmlentities($l_typdoc,ENT_QUOTES,$charset)."\">\n";
-					$f_values .= "<input type=\"hidden\" id='author_type' name=\"author_type\" value=\"".(isset($author_type) ? $author_type : '')."\">\n";
-					$f_values .= "<input type=\"hidden\" id=\"id_thes\" name=\"id_thes\" value=\"".$id_thes."\">\n";
-					$f_values .= "<input type=\"hidden\" name=\"surligne\" value=\"".(isset($surligne) ? $surligne : '')."\">\n";
-					$f_values .= "<input type=\"hidden\" name=\"tags\" value=\"".(isset($tags) ? $tags : '')."\">\n";
-		
-					$form .= "<form name=\"form_values\" action=\"".static::format_url('lvl=more_results')."\" method=\"post\">\n";
-		
-					$form.=facette_search_compare::form_write_facette_compare();
-		
+			
+				$f_values .= "<input type=\"hidden\" name=\"join\" value=\"".htmlentities($join,ENT_QUOTES,$charset)."\">\n";
+				$f_values .= "<input type=\"hidden\" name=\"tri\" value=\"".htmlentities($tri,ENT_QUOTES,$charset)."\">\n";
+				$f_values .= "<input type=\"hidden\" name=\"pert\" value=\"".htmlentities($pert,ENT_QUOTES,$charset)."\">\n";
+				$f_values .= "<input type=\"hidden\" name=\"l_typdoc\" value=\"".htmlentities($l_typdoc,ENT_QUOTES,$charset)."\">\n";
+				$f_values .= "<input type=\"hidden\" id='author_type' name=\"author_type\" value=\"".(isset($author_type) ? htmlentities($author_type, ENT_QUOTES, $charset) : '')."\">\n";
+				$f_values .= "<input type=\"hidden\" id=\"id_thes\" name=\"id_thes\" value=\"".htmlentities($id_thes, ENT_QUOTES, $charset)."\">\n";
+				$f_values .= "<input type=\"hidden\" name=\"surligne\" value=\"".(isset($surligne) ? htmlentities($surligne,ENT_QUOTES,$charset) : '')."\">\n";
+				$f_values .= "<input type=\"hidden\" name=\"tags\" value=\"".(isset($tags) ? htmlentities($tags,ENT_QUOTES,$charset) : '')."\">\n";
+	
+				$form .= "<form name=\"form_values\" action=\"".static::format_url('lvl=more_results')."\" method=\"post\">\n";
+	
+				$form.=facette_search_compare::form_write_facette_compare();
+	
+				$form .= $f_values;
+				$form .= "<input type=\"hidden\" name=\"page\" value=\"".htmlentities($page, ENT_QUOTES, $charset)."\">
+				<input type=\"hidden\" name=\"nb_per_page_custom\" value=\"".htmlentities($nb_per_page_custom, ENT_QUOTES, $charset)."\">\n";
+				if($opac_allow_affiliate_search){
+					$form .= "<input type=\"hidden\" name=\"catalog_page\" value=\"".htmlentities($catalog_page, ENT_QUOTES, $charset)."\">\n";
+					$form .= "<input type=\"hidden\" name=\"affiliate_page\" value=\"".htmlentities($affiliate_page, ENT_QUOTES, $charset)."\">\n";
+				}
+				$form .= "<input type=\"hidden\" name=\"nbexplnum_to_photo\" value=\"".htmlentities($nbexplnum_to_photo, ENT_QUOTES, $charset)."\">\n";
+				$form .= "</form>";
+				if ((($opac_cart_allow)&&(!$opac_cart_only_for_subscriber))||(($opac_cart_allow)&&($_SESSION["user_code"]))) {
+					$form .= "<form name='cart_values' action='./cart_info.php?lvl=more_results' method='post' target='cart_info'>\n";
 					$form .= $f_values;
-					$form .= "<input type=\"hidden\" name=\"page\" value=\"$page\">
-					<input type=\"hidden\" name=\"nb_per_page_custom\" value=\"$nb_per_page_custom\">\n";
-					if($opac_allow_affiliate_search){
-						$form .= "<input type=\"hidden\" name=\"catalog_page\" value=\"$catalog_page\">\n";
-						$form .= "<input type=\"hidden\" name=\"affiliate_page\" value=\"$affiliate_page\">\n";
-					}
-					$form .= "<input type=\"hidden\" name=\"nbexplnum_to_photo\" value=\"".$nbexplnum_to_photo."\">\n";
 					$form .= "</form>";
-					if ((($opac_cart_allow)&&(!$opac_cart_only_for_subscriber))||(($opac_cart_allow)&&($_SESSION["user_code"]))) {
-						$form .= "<form name='cart_values' action='./cart_info.php?lvl=more_results' method='post' target='cart_info'>\n";
-						$form .= $f_values;
-						$form .= "</form>";
-					}
-					break;
+				}
+				break;
 			case 'extended_search':
 				$form=$es->make_hidden_search_form(static::format_url('lvl=more_results&mode=extended'),"form_values","",false);
 		
 				$form.=facette_search_compare::form_write_facette_compare();
 		
 				if($opac_allow_affiliate_search){
-					$form .= "<input type=\"hidden\" name=\"catalog_page\" value=\"$catalog_page\">\n";
-					$form .= "<input type=\"hidden\" name=\"affiliate_page\" value=\"$affiliate_page\">\n";
+					$form .= "<input type=\"hidden\" name=\"catalog_page\" value=\"".htmlentities($catalog_page, ENT_QUOTES, $charset)."\">\n";
+					$form .= "<input type=\"hidden\" name=\"affiliate_page\" value=\"".htmlentities($affiliate_page, ENT_QUOTES, $charset)."\">\n";
 				}
 				if($facette_test) $form .= "<input type=\"hidden\" name=\"facette_test\" value=\"2\">\n";
 				$form.="</form>";
 				if ((($opac_cart_allow)&&(!$opac_cart_only_for_subscriber))||(($opac_cart_allow)&&($_SESSION["user_code"]))) {
 					$form.=$es->make_hidden_search_form("./cart_info.php?lvl=more_results&mode=extended","cart_values","cart_info","",false);
 					if($opac_allow_affiliate_search){
-						$form .= "<input type=\"hidden\" name=\"catalog_page\" value=\"$catalog_page\">\n";
-						$form .= "<input type=\"hidden\" name=\"affiliate_page\" value=\"$affiliate_page\">\n";
+						$form .= "<input type=\"hidden\" name=\"catalog_page\" value=\"".htmlentities($catalog_page, ENT_QUOTES, $charset)."\">\n";
+						$form .= "<input type=\"hidden\" name=\"affiliate_page\" value=\"".htmlentities($affiliate_page, ENT_QUOTES, $charset)."\">\n";
 					}
 					$form.="</form>";
 				}
@@ -451,7 +453,7 @@ class more_results {
 		
 				$form.=facettes_external_search_compare::form_write_facette_compare();
 		
-				$form .= "<input type=\"hidden\" name=\"count\" value=\"$count\">\n";
+				$form .= "<input type=\"hidden\" name=\"count\" value=\"".htmlentities($count, ENT_QUOTES, $charset)."\">\n";
 				if ($_SESSION["ext_type"]!="multi") {
 					$form.="<input type='hidden' name='external_env' value='".htmlentities(stripslashes($external_env),ENT_QUOTES,$charset)."'/>";
 					$form.="</form>";
@@ -465,16 +467,16 @@ class more_results {
 				$form.=facette_search_compare::form_write_facette_compare();
 				
 				if($opac_allow_affiliate_search){
-					$form .= "<input type=\"hidden\" name=\"catalog_page\" value=\"$catalog_page\">\n";
-					$form .= "<input type=\"hidden\" name=\"affiliate_page\" value=\"$affiliate_page\">\n";
+					$form .= "<input type=\"hidden\" name=\"catalog_page\" value=\"".htmlentities($catalog_page, ENT_QUOTES, $charset)."\">\n";
+					$form .= "<input type=\"hidden\" name=\"affiliate_page\" value=\"".htmlentities($affiliate_page, ENT_QUOTES, $charset)."\">\n";
 				}
 				if($facette_test) $form .= "<input type=\"hidden\" name=\"facette_test\" value=\"2\">\n";
 				$form.="</form>";
 				if ((($opac_cart_allow)&&(!$opac_cart_only_for_subscriber))||(($opac_cart_allow)&&($_SESSION["user_code"]))) {
 					$form.=$es->make_hidden_search_form("./cart_info.php?lvl=more_results&mode=extended_authorities","cart_values","cart_info","",false);
 					if($opac_allow_affiliate_search){
-						$form .= "<input type=\"hidden\" name=\"catalog_page\" value=\"$catalog_page\">\n";
-						$form .= "<input type=\"hidden\" name=\"affiliate_page\" value=\"$affiliate_page\">\n";
+						$form .= "<input type=\"hidden\" name=\"catalog_page\" value=\"".htmlentities($catalog_page, ENT_QUOTES, $charset)."\">\n";
+						$form .= "<input type=\"hidden\" name=\"affiliate_page\" value=\"".htmlentities($affiliate_page, ENT_QUOTES, $charset)."\">\n";
 					}
 					$form.="</form>";
 				}

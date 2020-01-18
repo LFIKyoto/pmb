@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_ask.tpl.php,v 1.5 2017-03-17 14:29:17 dgoron Exp $
+// $Id: serialcirc_ask.tpl.php,v 1.6 2019-05-27 13:29:27 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $biblio_name, $serialcirc_asklist_filter_tpl, $msg, $charset, $current_module, $serialcirc_asklist_tpl, $serialcirc_asklist_tr, $serialcirc_inscription_accepted_mail, $serialcirc_inscription_no_mail, $serialcirc_inscription_end_mail;
 
 if(!isset($biblio_name)) $biblio_name = '';
 

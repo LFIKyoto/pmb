@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_hold_polygon.class.php,v 1.2 2016-11-05 14:49:08 ngantier Exp $
+// $Id: map_hold_polygon.class.php,v 1.4 2019-02-26 15:58:50 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/map/map_hold.class.php");
@@ -57,8 +57,8 @@ class map_hold_polygon extends map_hold {
   					$infos =array();
   					$coord = $coords[$i];
   					$infos = explode(" ",$coord);
-  					//on ne met pas la dernière coordonnée
-  					if($i<(count($coords)-1)){
+  					//on ne met pas la dernière coordonnée, c'est la même que la 1ere
+  					if (0 == $i || $coords[0] != $coords[$i]) {
   						$coords_polygon[] = new map_coord($infos[0],$infos[1]);
   					}
   				}
@@ -72,8 +72,8 @@ class map_hold_polygon extends map_hold {
   				$infos =array();
   				$coord = $coords[$i];
   				$infos = explode(" ",$coord);
-  				//on ne met pas la dernière coordonnée
-  				if($i<(count($coords)-1)){
+  				//on ne met pas la dernière coordonnée, c'est la même que la 1ere
+  				if (0 == $i || $coords[0] != $coords[$i]) {
   					$this->coords[] = new map_coord($infos[0],$infos[1]);
   				}
   			}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abts_abonnements.class.php,v 1.58 2018-06-27 11:30:29 dgoron Exp $
+// $Id: abts_abonnements.class.php,v 1.60.2.1 2019-10-09 07:44:03 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,10 +15,12 @@ require_once($class_path."/abts_pointage.class.php");
 require_once($class_path."/serialcirc_diff.class.php");
 require_once($class_path."/serialcirc.class.php");
 require_once($class_path."/abts_status.class.php");
+require_once($class_path.'/translation.class.php');
 
 class abts_abonnement {
 	public $abt_id; //Numéro du modèle
 	public $abt_name; //Nom du modèle
+	public $abt_name_opac; //Nom OPAC du modèle
 	public $base_modele_name;//
 	public $base_modele_id;//
 	public $num_notice; //numéro de la notice liée
@@ -49,6 +51,7 @@ class abts_abonnement {
 	
 	public function getData() {
 		$this->abt_name = '';
+		$this->abt_name_opac = '';
 		$this->num_notice = '';
 		$this->base_modele_name = '';
 		$this->base_modele_id = '';
@@ -77,6 +80,7 @@ class abts_abonnement {
 				$r=pmb_mysql_fetch_object($resultat);
 				$this->abt_id = $r->abt_id;
 				$this->abt_name = $r->abt_name;
+				$this->abt_name_opac = $r->abt_name_opac;
 				$this->num_notice = $r->num_notice;
 				$this->base_modele_name = $r->base_modele_name;
 				$this->base_modele_id = $r->base_modele_id;
@@ -193,7 +197,12 @@ class abts_abonnement {
 				}
 			}
 			$tpl_empr=str_replace('!!id_diff!!', $diff['id'], $tpl_empr);
-			$tpl_empr=str_replace('!!empr_view_link!!', $diff['empr']['view_link'], $tpl_empr);
+			if (isset($diff['empr']['view_link'])) {
+			    $tpl_empr=str_replace('!!empr_view_link!!', $diff['empr']['view_link'], $tpl_empr);			    
+			} else {
+			    // un groupe
+			    $tpl_empr=str_replace('!!empr_view_link!!', '', $tpl_empr);
+			}
 			$tpl_empr=str_replace('!!empr_name!!', $name_elt, $tpl_empr);
 			$tpl_empr_list.=$tpl_empr;
 		}
@@ -601,11 +610,17 @@ ENDOFTEXT;
 		//Remplacement des valeurs
 		$r=str_replace("!!abt_id!!",htmlentities($this->abt_id,ENT_QUOTES,$charset),$r);
 		$r=str_replace("!!abt_name!!",htmlentities($this->abt_name,ENT_QUOTES,$charset),$r);
+		$r=str_replace("!!abt_name_opac!!",htmlentities($this->abt_name_opac,ENT_QUOTES,$charset),$r);
 		
 		//Notice mère
 		$perio=new serial_display($this->num_notice,1);
 		$r=str_replace("!!num_notice_libelle!!",$perio->header,$r);
 		$r=str_replace("!!num_notice!!",$this->num_notice,$r);
+		
+		//Traductions
+		$translation = new translation($this->abt_id, 'abts_abts');
+		$r .= $translation->connect('form_abonnement');
+		
 		return $r;
 	}
 	
@@ -778,9 +793,11 @@ ENDOFTEXT;
 		
 		if(!$this->abt_name)	return false;	
 		// nettoyage des valeurs en entrée
-		$this->abt_name = clean_string($this->abt_name); 
+		$this->abt_name = clean_string($this->abt_name);
+		$this->abt_name_opac = clean_string($this->abt_name_opac);
 		// construction de la requête
 		$requete = "SET abt_name='".addslashes($this->abt_name)."', ";
+		$requete .= "abt_name_opac='".addslashes($this->abt_name_opac)."', ";
 		$requete .= "num_notice='$this->num_notice', ";
 		$requete .= "duree_abonnement='$this->duree_abonnement', ";
 		$requete .= "date_debut='$this->date_debut', ";
@@ -825,7 +842,10 @@ ENDOFTEXT;
 					$requete = "UPDATE abts_abts_modeles SET num='$num[$modele_id]', vol='$vol[$modele_id]', tome='$tome[$modele_id]', delais='$delais[$modele_id]', critique='$delais_critique[$modele_id]'
 					, num_statut_general='$num_statut' WHERE modele_id='$modele_id'and abt_id='$this->abt_id'";
 					pmb_mysql_query($requete, $dbh);						
-				}								
+				}
+				//Traductions
+				$translation = new translation($this->abt_id, 'abts_abts');
+				$translation->update_small_text('abt_name_opac');
 				return TRUE;
 			}
 			else {
@@ -867,6 +887,10 @@ ENDOFTEXT;
 						pmb_mysql_query($requete, $dbh);	
 					}			
 				}
+				//Traductions
+				$translation = new translation($this->abt_id, 'abts_abts');
+				$translation->update_small_text('abt_name_opac');
+				
 				if($act=="gen") $this->gen_date();
 				return TRUE;	
 			} 
@@ -900,6 +924,8 @@ ENDOFTEXT;
 		abts_pointage::delete_retard($this->abt_id);
 		
 		serialcirc_diff::delete($this->abt_id);
+		
+		translation::delete($this->abt_id, 'abts_abts');
 		return "";
 	}
 		
@@ -907,7 +933,7 @@ ENDOFTEXT;
 	public function proceed() {
 		global $act;
 		global $serial_id,$msg,$num_notice,$num_periodicite,$duree_abonnement,$date_debut,$date_fin,$days,$day_month,$week_month,$week_year,$month_year,$date_parution;		
-		global $abt_name,$duree_abonnement,$date_debut,$date_fin,$id_fou,$destinataire;
+		global $abt_name,$abt_name_opac,$duree_abonnement,$date_debut,$date_fin,$id_fou,$destinataire;
 		global $dbh,$abt_id;
 		global $cote,$typdoc_id,$exemp_auto,$location_id,$lender_id,$statut_id,$codestat_id, $prix,$type_antivol,$abt_numeric, $abts_status;
 		global $deflt_docs_section;
@@ -924,6 +950,7 @@ ENDOFTEXT;
 			case 'update':								
 				// mise à jour modèle
 				$this->abt_name= stripslashes($abt_name);
+				$this->abt_name_opac= stripslashes($abt_name_opac);
 				$this->num_notice= $num_notice;
 				$this->duree_abonnement = $duree_abonnement;
 				$this->date_debut= $date_debut;
@@ -949,6 +976,7 @@ ENDOFTEXT;
 			case 'gen':								
 				// mise à jour modèle
 				$this->abt_name= stripslashes($abt_name);
+				$this->abt_name_opac= stripslashes($abt_name_opac);
 				$this->num_notice= $num_notice;
 				$this->duree_abonnement = $duree_abonnement;
 				$this->date_debut= $date_debut;
@@ -974,6 +1002,7 @@ ENDOFTEXT;
 			case 'prolonge':								
 				// mise à jour modèle
 				$this->abt_name= stripslashes($abt_name);
+				$this->abt_name_opac= stripslashes($abt_name_opac);
 				$this->num_notice= $num_notice;
 				$this->duree_abonnement = $duree_abonnement;							
 				$this->date_debut= $date_fin; //Ce n'est pas une erreur mais cela sert pour $this->gen_date(1); qui suit... Date début est bien re-valorisé juste après				

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pnb.inc.php,v 1.2 2018-06-29 09:47:33 ngantier Exp $
+// $Id: pnb.inc.php,v 1.3 2019-05-29 12:12:29 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $aff_alerte, $msg;
 
 $temp_aff = alert_pnb();
 if ($temp_aff) $aff_alerte.= "<ul>".$msg["alert_pnb"].$temp_aff."</ul>";

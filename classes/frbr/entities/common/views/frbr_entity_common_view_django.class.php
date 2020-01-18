@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_common_view_django.class.php,v 1.9 2018-06-13 06:21:51 dgoron Exp $
+// $Id: frbr_entity_common_view_django.class.php,v 1.11.4.1 2019-10-23 13:32:54 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/h2o/h2o.php");
@@ -10,11 +10,11 @@ require_once($include_path."/h2o/h2o.php");
 class frbr_entity_common_view_django extends frbr_entity_common_view{
 
 	public function __construct($id=0){
-		parent::__construct($id+0);
+	    parent::__construct((int) $id);
 	}
 
 	public function get_form(){
-		global $class_path;
+		global $class_path, $charset;
 		$form = '';
 
 		if(!isset($this->parameters->active_template) || $this->parameters->active_template == ""){
@@ -28,7 +28,7 @@ class frbr_entity_common_view_django extends frbr_entity_common_view{
 				".$this->get_format_data_structure_tree("frbr_entity_common_view_django_template_content")."
 			</div>
 			<div class='colonne-suite'>
-				<textarea name='frbr_entity_common_view_django_template_content' id='frbr_entity_common_view_django_template_content'>".$this->format_text($this->parameters->active_template)."</textarea>
+				<textarea name='frbr_entity_common_view_django_template_content' id='frbr_entity_common_view_django_template_content'>".htmlentities($this->parameters->active_template, ENT_QUOTES, $charset)."</textarea>
 				<script src='./javascript/ace/ace.js' type='text/javascript' charset='utf-8'></script>
 				<script>
 				 	pmbDojo.aceManager.initEditor('frbr_entity_common_view_django_template_content');						
@@ -197,7 +197,11 @@ class frbr_entity_common_view_django extends frbr_entity_common_view{
 				array(
 						'var' => "env_vars.browser",
 						'desc' => $this->msg['frbr_entity_common_view_django_session_vars_browser_desc'],
-				)
+				),
+			    array(
+			        'var' => "env_vars.server_addr",
+			        'desc' => $this->msg['frbr_entity_common_view_django_session_vars_server_addr_desc'],
+			    )
 			)
 		);
 		return $format_datas;

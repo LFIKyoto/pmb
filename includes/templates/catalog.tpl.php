@@ -2,10 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: catalog.tpl.php,v 1.54 2018-09-23 18:38:58 Alexandre Exp $
+// $Id: catalog.tpl.php,v 1.56.2.1 2019-10-10 08:04:47 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $categ, $mode, $sub, $quoi, $catalog_menu, $msg, $opac_avis_allow, $opac_allow_add_tag, $pmb_serialcirc_active, $pmb_collstate_advanced, $z3950_accessible, $acquisition_active;
+global $pmb_contribution_area_activate, $plugins, $catalog_menu_panier_gestion, $catalog_menu_panier_collecte, $catalog_menu_panier_pointage, $pmb_scan_request_activate;
+global $scan_request_record_button, $catalog_menu_panier_action, $class_path, $evt_handler, $event, $gestion_acces_active, $pmb_transferts_actif, $catalog_layout, $current_module;
+global $catalog_layout_end, $biblio_query, $saisie_cb_form, $search_bar;
 
 // Valeurs pour l'affichage de la page par defaut 
 // (selection de l'onglet)
@@ -31,7 +35,8 @@ $catalog_menu = "
 	<li><a href='./catalog.php'>".$msg["recherche_catalogue"]."</a></li>
 	<li><a href='./catalog.php?categ=serials'>".$msg["recherche_periodique"]."</a></li>
 	<li><a href='./catalog.php?categ=last_records'>".$msg["938"]."</a></li>
-	<li><a href='./catalog.php?categ=search_perso'>".$msg["search_perso_menu"]."</a></li>	
+	<li><a href='./catalog.php?categ=search_perso'>".$msg["search_perso_menu"]."</a></li>
+    <li><a href='./catalog.php?categ=search_perso&type=EXPL'>".$msg["search_perso_expl_menu"]."</a></li>	
 </ul>
 
 <h3 onclick='menuHide(this,event)'>".$msg["4057"]."</h3>
@@ -45,8 +50,10 @@ $catalog_menu .= "
 <h3 onclick='menuHide(this,event)'>".$msg["771"]."</h3>
 <ul>
 	<li><a href='./catalog.php?categ=serials&sub=serial_form&id=0'>".$msg["new_serial"]."</a></li>
-	<li><a href='./catalog.php?categ=serials&sub=pointage&id=0'>".$msg["pointage_menu_pointage"]."</a></li>
-	<li><a href='./catalog.php?categ=serials&sub=circ_ask'>".$msg["serialcirc_ask_menu"]."</a></li>";
+	<li><a href='./catalog.php?categ=serials&sub=pointage&id=0'>".$msg["pointage_menu_pointage"]."</a></li>";
+if($pmb_serialcirc_active) {
+    $catalog_menu .= "<li><a href='./catalog.php?categ=serials&sub=circ_ask'>".$msg["serialcirc_ask_menu"]."</a></li>";
+}
 if ($pmb_collstate_advanced) {
 	$catalog_menu .= "
 		<li><a href='./catalog.php?categ=serials&sub=collstate_form'>".$msg["collstate_advanced_add_collstate"]."</a></li>";

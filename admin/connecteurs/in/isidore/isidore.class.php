@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: isidore.class.php,v 1.3 2018-07-03 12:59:59 apetithomme Exp $
+// $Id: isidore.class.php,v 1.6 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,7 +15,7 @@ class isidore extends connector {
 	
     public function __construct($connector_path="") {
     	parent::__construct($connector_path);
-    	$this->api_url = 'https://api.rechercheisidore.fr/resource/search?output=json';
+    	$this->api_url = 'https://api.isidore.science/resource/search?output=json';
     }
     
     public function get_id() {
@@ -55,7 +55,7 @@ class isidore extends connector {
     	$response = $curl->get($this->api_url."&facet=discipline,replies=99&replies=0");
 		$json_content = json_decode($response->body, true);
 		
-		$hal_domains = $json_content['response']['replies']['facets']['facet']['node']['node'];
+		$hal_domains = $json_content['response']['replies']['facets']['facet']['node'];
     	
     	$response = $curl->get($this->api_url."&facet=type,replies=99&replies=0");
 		$json_content = json_decode($response->body, true);
@@ -71,7 +71,7 @@ class isidore extends connector {
 				<select name='isidore_hal_domains'>";
     	for ($i = 0; $i < count($hal_domains); $i++) {
     		$form.= "
-    				<option value='".$hal_domains[$i]['key']."' ".(($hal_domains[$i]['key'] == $isidore_hal_domains) ? "selected='selected'" : "").">".htmlentities($hal_domains[$i]['label']['_value'], ENT_QUOTES, $charset)." ".sprintf($this->msg['isidore_nb_items'], $hal_domains[$i]['items'])."</option>";
+    				<option value='".$hal_domains[$i]['@key']."' ".(($hal_domains[$i]['@key'] == $isidore_hal_domains) ? "selected='selected'" : "").">".htmlentities($hal_domains[$i]['label']['$'], ENT_QUOTES, $charset)." ".sprintf($this->msg['isidore_nb_items'], $hal_domains[$i]['@items'])."</option>";
     	}
     	$form.= "
 				</select>
@@ -85,7 +85,7 @@ class isidore extends connector {
 				<select name='isidore_doc_types[]' multiple='multiple' size='".(count($doc_types) <= 30 ? count($doc_types) : 30)."'>";
     	for ($i = 0; $i < count($doc_types); $i++) {
     		$form.= "
-    				<option value='".$doc_types[$i]['key']."' ".(in_array($doc_types[$i]['key'], $isidore_doc_types) ? "selected='selected'" : "").">".htmlentities($doc_types[$i]['label']['_value'], ENT_QUOTES, $charset)."</option>";
+    				<option value='".$doc_types[$i]['@key']."' ".(in_array($doc_types[$i]['@key'], $isidore_doc_types) ? "selected='selected'" : "").">".htmlentities($doc_types[$i]['label']['$'], ENT_QUOTES, $charset)."</option>";
     	}
     	$form.= "
 				</select>
@@ -102,7 +102,7 @@ class isidore extends connector {
 	}
         
     public function rec_record($record, $source_id, $search_id) {
-    	global $charset, $base_path, $dbh, $url, $search_index;
+    	global $charset;
 
     	$date_import = date("Y-m-d H:i:s",time());
     	
@@ -172,9 +172,8 @@ class isidore extends connector {
 	}
 	
 	public function maj_entrepot($source_id, $callback_progress="", $recover=false, $recover_env="") {
-		global $charset, $base_path;
 		global $form_radio, $form_from;
-		 
+		
 		$this->fetch_global_properties();
 		$keys = unserialize($this->parameters);
 	
@@ -211,7 +210,7 @@ class isidore extends connector {
 			$response = $curl->get($url.'&replies=0'.$type_filter);
 			$json_content = json_decode($response->body);
 			if (!empty($json_content->response->replies)) {
-				$this->n_total+= $json_content->response->replies->meta->items;
+				$this->n_total+= $json_content->response->replies->meta->{'@items'};
 			}
 		}
 		$this->progress();
@@ -234,10 +233,10 @@ class isidore extends connector {
 						$this->n_recu++;
 						$this->progress();
 					}
-					if (empty($json_content->response->replies->page->next)) {
+					if (empty($json_content->response->replies->page->{'@next'})) {
 						break;
 					}
-					$page_nb = $json_content->response->replies->page->next;
+					$page_nb = $json_content->response->replies->page->{'@next'};
 					$response = $curl->get($url.$type_filter.'&page='.$page_nb);
 					$json_content = json_decode($response->body);
 				}
@@ -264,7 +263,7 @@ class isidore extends connector {
     	global $form_from;
     	global $form_radio;
     
-    	$source_id = $source_id + 0;
+    	$source_id = (int) $source_id;
     
     	$sql = " SELECT MAX(UNIX_TIMESTAMP(date_import)) FROM entrepot_source_" . $source_id;
     	$res = pmb_mysql_result(pmb_mysql_query($sql), 0, 0);
@@ -316,10 +315,8 @@ class isidore extends connector {
 			for ($i = 0; $i < count($titles); $i++) {
 				$title = $titles[$i];
 				if (is_object($title)) {
-					if (!empty($title->_label)) {
-						$title = $title->_label;
-					} else if ($title->_value) {
-						$title = $title->_value;
+					if (!empty($title->{'$'})) {
+						$title = $title->{'$'};
 					}
 				}
 				switch ($i) {
@@ -377,10 +374,8 @@ class isidore extends connector {
 			foreach ($summaries as $summary) {
 				$summary_label = $summary;
 				if (is_object($summary)) {
-					if (!empty($summary->_label)) {
+					if (!empty($summary->{'$'})) {
 						$summary_label = $summary->_label;
-					} else if ($summary->_value) {
-						$summary_label = $summary->_value;
 					}
 				}
 				if ($unimarc["330"][0]["a"][0]) {
@@ -399,10 +394,8 @@ class isidore extends connector {
 			foreach($subjects as $subject) {
 				$subject_label = $subject;
 				if (is_object($subject)) {
-					if (!empty($subject->_label)) {
-						$subject_label = $subject->_label;
-					} else if ($subject->_value) {
-						$subject_label = $subject->_value;
+					if (!empty($subject->{'$'})) {
+						$subject_label = $subject->{'$'};
 					}
 				}
 				$keyword = array(
@@ -414,10 +407,20 @@ class isidore extends connector {
 		
 		// Collection
 		if (!empty($nt->isidore->source_info->collectionLabel)) {
-			$unimarc['410'][0]['t'][0] = $nt->isidore->source_info->collectionLabel->_value;
+			$unimarc['410'][0]['t'][0] = $nt->isidore->source_info->collectionLabel->{'$'};
 		}
 		
 		return $unimarc;
+	}
+	
+	public function getEnrichment($notice_id, $source_id, $type="", $enrich_params=array()) {
+		$enrichment = array();
+		return $enrichment;
+	}
+	
+	public function getEnrichmentHeader(){
+		$header = array();
+		return $header;
 	}
 }
 ?>

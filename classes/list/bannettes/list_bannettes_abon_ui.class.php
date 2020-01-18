@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_bannettes_abon_ui.class.php,v 1.1 2018-12-27 10:32:05 dgoron Exp $
+// $Id: list_bannettes_abon_ui.class.php,v 1.2.6.3 2019-12-04 08:20:26 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -67,31 +67,21 @@ class list_bannettes_abon_ui extends list_bannettes_ui {
 		return $access_liste_id;
 	}
 	
-	protected function fetch_data() {
-		$this->objects = array();
-		$query = $this->_get_query_base();
-		if(!$this->filters['proprio_bannette']) {
-			$query .= " join bannette_abon on num_bannette=id_bannette ";
-		}
-		$query .= $this->_get_query_filters();
-		if(!$this->filters['proprio_bannette']) {
-			$query .= " union ".$this->_get_query_base()." where ((id_bannette IN (".implode(',',$this->get_access_liste_id()).")) or (bannette_opac_accueil = 1)) and proprio_bannette=0 ";
-		}
-		$query .= $this->_get_query_order();
-		if($this->applied_sort_type == "SQL"){
-			$this->pager['nb_results'] = pmb_mysql_num_rows(pmb_mysql_query($query));
-			$query .= $this->_get_query_pager();
-		}
-		$result = pmb_mysql_query($query);
-		if (pmb_mysql_num_rows($result)) {
-			while($row = pmb_mysql_fetch_object($result)) {
-				$this->add_object($row);
-			}
-			if($this->applied_sort_type != "SQL"){
-				$this->pager['nb_results'] = pmb_mysql_num_rows($result);
-			}
-		}
-		$this->messages = "";
+	protected function _get_query() {
+	    $query = $this->_get_query_base();
+	    if(!$this->filters['proprio_bannette']) {
+	        $query .= " join bannette_abon on num_bannette=id_bannette ";
+	    }
+	    $query .= $this->_get_query_filters();
+	    if(!$this->filters['proprio_bannette']) {
+	        $query .= " union ".$this->_get_query_base()." where ((id_bannette IN (".implode(',',$this->get_access_liste_id()).")) or (bannette_opac_accueil = 1)) and proprio_bannette=0 ";
+	    }
+	    $query .= $this->_get_query_order();
+	    if($this->applied_sort_type == "SQL"){
+	        $this->pager['nb_results'] = pmb_mysql_num_rows(pmb_mysql_query($query));
+	        $query .= $this->_get_query_pager();
+	    }
+	    return $query;
 	}
 	
 	protected function get_title() {
@@ -201,7 +191,7 @@ class list_bannettes_abon_ui extends list_bannettes_ui {
 	
 	/**
 	 * Affichage d'une colonne
-	 * @param unknown $object
+	 * @param object $object
 	 * @param string $property
 	 */
 	protected function get_display_cell($object, $property) {
@@ -218,14 +208,14 @@ class list_bannettes_abon_ui extends list_bannettes_ui {
 	
 	protected function get_link_to_bannette($id_bannette, $proprio_bannette) {
 		if($proprio_bannette) {
-			return "./dsi.php?categ=bannettes&sub=abo&id_bannette=".$id_bannette."&suite=modif";
+			return "./dsi.php?categ=bannettes&sub=abo&id_bannette=".$id_bannette."&suite=modif&id_empr=".$proprio_bannette;
 		} else {
 			return "./dsi.php?categ=bannettes&sub=pro&id_bannette=".$id_bannette."&suite=acces";
 		}
 	}
 	
 	protected function get_cell_content($object, $property) {
-		global $charset;
+	    global $charset, $search;
 		
 		$content = '';
 		switch($property) {
@@ -234,6 +224,8 @@ class list_bannettes_abon_ui extends list_bannettes_ui {
 				break;
 			case 'name':
 				// Construction de l'affichage de l'info bulle de la requette
+			    $java_comment = '';
+			    $zoom_comment = '';
 				$requete = "select * from bannette_equation, equations where num_equation = id_equation and num_bannette = ".$object->id_bannette;
 				$resultat = pmb_mysql_query($requete);
 				if (($r = pmb_mysql_fetch_object($resultat))) {

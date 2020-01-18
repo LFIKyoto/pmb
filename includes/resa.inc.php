@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa.inc.php,v 1.49 2018-10-22 12:47:47 dgoron Exp $
+// $Id: resa.inc.php,v 1.53 2019-07-11 14:17:15 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($include_path."/mail.inc.php") ;
 require_once($include_path."/sms.inc.php") ;
+require_once($class_path."/mail/reader/resa/mail_reader_resa.class.php");
 
 function alert_empr_resa($id_resa=0, $id_empr_concerne=0, $print_mode=0) {
 	global $dbh;
@@ -32,7 +33,7 @@ function alert_empr_resa($id_resa=0, $id_empr_concerne=0, $print_mode=0) {
 	$query .= "date_format(resa_date, '".$msg["format_date"]."') as aff_resa_date_resa, ";
 	$query .= "date_format(resa_date_fin, '".$msg["format_date"]."') as aff_resa_date_fin, ";
 	$query .= "date_format(resa_date_debut, '".$msg["format_date"]."') as aff_resa_date_debut, ";
-	$query .= "empr_prenom, empr_nom, empr_cb, empr_mail, empr_tel1, empr_sms, id_resa, ";
+	$query .= "id_empr, empr_prenom, empr_nom, empr_cb, empr_mail, empr_tel1, empr_sms, id_resa, ";
 	$query .= "trim(concat(ifnull(notices_m.niveau_biblio,''), ifnull(notices_s.niveau_biblio,''))) as niveau_biblio, ";
 	$query .= "trim(concat(ifnull(notices_m.notice_id,''), ifnull(notices_s.notice_id,''))) as id_notice ";
 	$query .= "from (((resa LEFT JOIN notices AS notices_m ON resa_idnotice = notices_m.notice_id ) LEFT JOIN bulletins ON resa_idbulletin = bulletins.bulletin_id) LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id), empr ";
@@ -40,23 +41,6 @@ function alert_empr_resa($id_resa=0, $id_empr_concerne=0, $print_mode=0) {
 	if ($id_empr_concerne) $query .= " and id_empr=$id_empr_concerne ";
 
 	$result = pmb_mysql_query($query, $dbh);
-	$headers  = "MIME-Version: 1.0\n";
-	$headers .= "Content-type: text/html; charset=".$charset."\n";
-
-	$var = "pdflettreresa_fdp";
-	eval ("\$pdflettreresa_fdp=\"".${$var}."\";");
-	
-	// le texte après la liste des ouvrages en résa
-	$var = "pdflettreresa_after_list";
-	eval ("\$pdflettreresa_after_list=\"".${$var}."\";");
-		
-	// le texte avant la liste des ouvrges en réservation
-	$var = "pdflettreresa_before_list";
-	eval ("\$pdflettreresa_before_list=\"".${$var}."\";");
-	
-	// le "Madame, Monsieur," ou tout autre truc du genre "Cher adhérent,"
-	$var = "pdflettreresa_madame_monsieur";
-	eval ("\$pdflettreresa_madame_monsieur=\"".${$var}."\";");
 	
 	$tab_resa = array();
 	while ($empr=pmb_mysql_fetch_object($result)) {
@@ -66,65 +50,19 @@ function alert_empr_resa($id_resa=0, $id_empr_concerne=0, $print_mode=0) {
 		if (($pdflettreresa_priorite_email==1 || $pdflettreresa_priorite_email==2) && $empr->empr_mail) {
 			
 			$to = $empr->empr_prenom." ".$empr->empr_nom." <".$empr->empr_mail.">";
-			$output_final = "<!DOCTYPE html><html lang='".get_iso_lang_code()."'><head><meta charset=\"".$charset."\" /></head><body>" ;
-			$texte_madame_monsieur=str_replace("!!empr_name!!", $empr->empr_nom,$pdflettreresa_madame_monsieur);
-			$texte_madame_monsieur=str_replace("!!empr_first_name!!", $empr->empr_prenom,$texte_madame_monsieur);
-			$output_final .= "$texte_madame_monsieur <br />".$pdflettreresa_before_list ;
-			if($empr->niveau_biblio == 'm' || $empr->niveau_biblio == 'b'){
-				$affichage=new mono_display($empr->id_notice,0,'','','','','','','','','','','',true,'','');
-				$output_final .= "<hr /><strong>".$affichage->header."</strong>";
-			} elseif($empr->niveau_biblio == 's' || $empr->niveau_biblio == 'a'){
-				$affichage_perio=new serial_display($empr->id_notice,0);
-				$output_final .= "<hr /><strong>".$affichage_perio->header."</strong>";
-			}
 			
-			$rqt_detail = "select resa_confirmee, resa_cb,location_libelle, expl_cote from resa
-			left join exemplaires on expl_cb=resa_cb
-			left join docs_location on idlocation=expl_location
-			where id_resa =$empr->id_resa  and resa_cb is not null and resa_cb!='' ";
-			$res_detail = pmb_mysql_query($rqt_detail) ;
-			$expl_detail = pmb_mysql_fetch_object($res_detail);
+			$mail_reader_resa = new mail_reader_resa();
+			$res_envoi = $mail_reader_resa->send_mail($empr);
 			
-			$output_final .= "<br />";
-			$output_final .= strip_tags($msg['291']." : ".$expl_detail->resa_cb." ".$msg['296']." : ".$expl_detail->expl_cote);
-			$output_final .= "<br />";
-			$output_final .= $msg['fpdf_reserv_enreg']." ".$empr->aff_resa_date_resa." - ".$msg['fpdf_valable_debut']." ".$empr->aff_resa_date_debut." - ".$msg['fpdf_valable']." - ".$empr->aff_resa_date_fin ;
-			$lieu_retrait="";
-			if($pmb_transferts_actif && $transferts_choix_lieu_opac==3) {
-				$rqt = "select resa_confirmee, resa_cb,resa_loc_retrait from resa where id_resa in (".$empr->id_resa.")  and resa_cb is not null and resa_cb!='' ";
-				$res = pmb_mysql_query($rqt, $dbh) ;
-				if(($resa_lue = pmb_mysql_fetch_object($res))) {
-					if ($resa_lue->resa_confirmee) {
-						if ($resa_lue->resa_loc_retrait) {
-							$loc_retait=$resa_lue->resa_loc_retrait;
-						} else {
-							$rqt = "select expl_location from exemplaires where expl_cb='".$resa_lue->resa_cb."' ";
-							$res = pmb_mysql_query($rqt, $dbh) ;
-							if(($res_expl = pmb_mysql_fetch_object($res))) {	
-								$loc_retait=$res_expl->expl_location;						
-							}
-						}
-						$rqt = "select location_libelle from docs_location where idlocation=".$loc_retait;
-						$res = pmb_mysql_query($rqt, $dbh) ;
-						if(($res_expl = pmb_mysql_fetch_object($res))) {	
-							$lieu_retrait=str_replace("!!location!!",$res_expl->location_libelle,$msg["resa_lettre_lieu_retrait"]);						
-						}		
-					}
-				}	
-			} else {
-				$lieu_retrait=str_replace("!!location!!",$expl_detail->location_libelle,$msg["resa_lettre_lieu_retrait"]);
-			}
-			$output_final .= "<br />$lieu_retrait<br /><hr />$pdflettreresa_after_list <br />".$pdflettreresa_fdp ;
-			$output_final .= "<br /><br />".mail_bloc_adresse() ;
-			$output_final .= "</body></html> ";
-			if(is_resa_confirme($empr->id_resa)) {
-				$res_envoi=mailpmb($empr->empr_prenom." ".$empr->empr_nom, $empr->empr_mail, sprintf($msg["mail_obj_resa_validee"], " : ".$empr->empr_prenom." ".mb_strtoupper($empr->empr_nom,$charset)." (".$empr->empr_cb.")"),$output_final,$biblio_name, $biblio_email, $headers, "", $PMBuseremailbcc, 1);	
-			}	
 			if (!$res_envoi || $pdflettreresa_priorite_email==2) {
-				if(is_resa_confirme($empr->id_resa)) array_push($tab_resa,$empr->id_resa);
+			    if(is_resa_confirme($empr->id_resa)) {
+			        $tab_resa[] = $empr->id_resa;
+			    }
 			}
 		} elseif ($pdflettreresa_priorite_email!=3) {
-			if(is_resa_confirme($empr->id_resa)) array_push($tab_resa,$empr->id_resa);
+		    if(is_resa_confirme($empr->id_resa)) {
+		        $tab_resa[] = $empr->id_resa;
+		    }
 		}				
 		if(is_resa_confirme($empr->id_resa) && $empr->empr_tel1 && $empr->empr_sms && $empr_sms_msg_resa_dispo){		
 			$res_envoi_sms=send_sms(1, 0, $empr->empr_tel1,$empr_sms_msg_resa_dispo);

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: selector_indexint.class.php,v 1.8 2017-10-13 07:38:14 dgoron Exp $
+// $Id: selector_indexint.class.php,v 1.9 2019-03-13 11:46:25 dgoron Exp $
   
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -41,6 +41,7 @@ class selector_indexint extends selector_authorities {
 	protected function get_search_form() {
 		global $charset;
 		global $thesaurus_classement_mode_pmb, $typdoc;
+		global $thesaurus_classement_location, $deflt_docs_location;
 		global $id_pclass;
 		global $exact;
 		
@@ -48,7 +49,11 @@ class selector_indexint extends selector_authorities {
 		
 		$toprint_typdocfield = '';
 		if ($thesaurus_classement_mode_pmb) { //classement indexation décimale autorisé en parametrage
-			$query = "select id_pclass,name_pclass from pclassement where typedoc like '%$typdoc%' order by name_pclass";
+			$query = "select id_pclass,name_pclass from pclassement where typedoc like '%$typdoc%'";
+			if($thesaurus_classement_location && $deflt_docs_location) {
+				$query .= " AND (locations like '".$deflt_docs_location."' or locations like '".$deflt_docs_location.",%' or locations like '%,".$deflt_docs_location."' or locations like '%,".$deflt_docs_location.",%')";
+			}
+			$query .= " order by name_pclass";
 			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result) == 1) {
 				$row = pmb_mysql_fetch_object($result);
@@ -155,12 +160,17 @@ class selector_indexint extends selector_authorities {
 	public static function get_params_url() {
 		global $typdoc, $id_pclass;
 		global $thesaurus_classement_mode_pmb;
+		global $thesaurus_classement_location, $deflt_docs_location;
 		global $thesaurus_classement_defaut;
 		
 		$params_url = parent::get_params_url();
 		$params_url .= ($typdoc ? "&typdoc=".$typdoc : "");
 		if ($thesaurus_classement_mode_pmb) {
-			$query = "select id_pclass,name_pclass from pclassement where typedoc like '%$typdoc%' order by name_pclass";
+			$query = "select id_pclass,name_pclass from pclassement where typedoc like '%$typdoc%'";
+			if($thesaurus_classement_location && $deflt_docs_location) {
+				$query .= " AND (locations like '".$deflt_docs_location."' or locations like '".$deflt_docs_location.",%' or locations like '%,".$deflt_docs_location."' or locations like '%,".$deflt_docs_location.",%')";
+			}
+			$query .= " order by name_pclass";
 			$result = pmb_mysql_query($query);
 			while ($row = pmb_mysql_fetch_object($result)) {
 				if ($id_pclass==$row->id_pclass) {

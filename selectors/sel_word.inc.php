@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_word.inc.php,v 1.6 2017-10-18 12:42:50 ngantier Exp $letter $mot
+// $Id: sel_word.inc.php,v 1.8 2019-08-01 13:16:35 btafforeau Exp $letter $mot
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");		
 
@@ -11,7 +11,7 @@ require('./selectors/templates/sel_word.tpl.php');
 
 // la variable $caller, passée par l'URL, contient le nom du form appelant
 $baseurl = "./select.php?what=synonyms&caller=$caller&p1=$p1&p2=$p2";
-
+$letter = '';
 switch ($action) {
 case 'add':
 	//ajout de l'url
@@ -57,7 +57,7 @@ default :
 		$words_for_syn[$r->id_mot]=stripslashes($r->mot);
 		$words_for_syn1[$r->id_mot]=convert_diacrit(pmb_strtolower($r->mot));
 	}
-	
+	$alphabet_num = array();
 	if (count($words_for_syn)) {
 		//toutes les lettres de l'alphabet dans un tableau
 		$alphabet=array();
@@ -94,13 +94,15 @@ default :
 		}
 		foreach($alphabet as $char) {
 			$present = pmb_preg_grep("/^$char/i", $words_for_syn1);
-			if(sizeof($present) && strcasecmp($letter, $char))
-				$affichage_lettres.="<a href='$baseurl&letter=$char'>$char</a> ";
-			else if(!strcasecmp($letter, $char))
-				$affichage_lettres.="<strong><u>$char</u></strong> ";
-			else $affichage_lettres.="<span class='gris'>".$char."</span> ";
+			if (!empty($present) && strcasecmp($letter, $char)) {
+				$affichage_lettres .= "<a href='$baseurl&letter=$char'>$char</a> ";
+			} elseif (!strcasecmp($letter, $char)) {
+				$affichage_lettres .= "<strong><u>$char</u></strong> ";
+			} else {
+			    $affichage_lettres .= "<span class='gris'>$char</span> ";
+			}
 		}
-		$affichage_lettres.="</div>";
+		$affichage_lettres .= "</div>";
 	
 		//affichage des mots
 		$affichage_mots="<div class='row' style='margin-left:10px;'>";

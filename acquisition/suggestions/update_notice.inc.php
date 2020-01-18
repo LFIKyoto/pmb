@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: update_notice.inc.php,v 1.39 2017-09-06 12:29:31 dgoron Exp $
+// $Id: update_notice.inc.php,v 1.40 2019-05-28 15:00:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $forcage, $class_path, $id, $ret_url, $f_tit1, $signature, $id_sug, $msg;
 
 if(!isset($forcage)) $forcage = 0;
 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: stat_opac.inc.php,v 1.24 2017-11-22 11:07:34 dgoron Exp $
+// $Id: stat_opac.inc.php,v 1.25 2019-06-05 06:41:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -169,7 +169,7 @@ function show_results_stats($id_proc=0){
 		if ($nbr_lignes) {
 			switch($dest) {
 				case "TABLEAU":
-					$worksheet = new spreadsheet();
+				    $worksheet = new spreadsheetPMB();
 					
 					$worksheet->write_string(0,0,$row[1]);
 					$worksheet->write_string(0,1,$row[3]);

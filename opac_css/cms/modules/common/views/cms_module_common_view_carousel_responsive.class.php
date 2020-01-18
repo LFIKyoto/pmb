@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_carousel_responsive.class.php,v 1.20 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: cms_module_common_view_carousel_responsive.class.php,v 1.21.6.1 2019-09-17 09:59:20 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/h2o/h2o.php");
@@ -464,7 +464,7 @@ class cms_module_common_view_carousel_responsive extends cms_module_common_view_
 			}
 			$datas['no_image_url'] = $path.$this->parameters['no_image'];
 			for($i=0 ; $i<count($datas['records']) ; $i++){
-				if(!isset($datas['records'][$i]['vign']) || $datas['records'][$i]['vign'] == ""){
+			    if(is_array($datas['records'][$i]) && (empty($datas['records'][$i]['vign']))){
 					$datas['records'][$i]['vign'] = $datas['no_image_url'];
 				}
 			}
@@ -499,10 +499,10 @@ class cms_module_common_view_carousel_responsive extends cms_module_common_view_
 					adaptiveHeight:			".(isset($this->parameters['adaptive_heigt']) && $this->parameters['adaptive_heigt'] ? "true" : "false").",
 					adaptiveHeightSpeed:	'".(isset($this->parameters["adaptive_heigt_speed"]) ? $this->parameters["adaptive_heigt_speed"] : '')."',
 					pagerType:				'".(isset($this->parameters["pager_type"]) ? $this->parameters["pager_type"] : '')."',
-					pagerSeparator:			'".(isset($this->parameters["pager_short_separator"]) ? $this->parameters["pager_short_separator"] : '')."',
+					pagerShortSeparator:	'".(isset($this->parameters["pager_short_separator"]) ? $this->parameters["pager_short_separator"] : '')."',
 					controls:				".(isset($this->parameters['controls']) && $this->parameters['controls'] ? "true" : "false").",
 					nextText:				'".(isset($this->parameters["next_text"]) ? $this->parameters["next_text"] : '')."',
-					previouText:			'".(isset($this->parameters["previous_text"]) ? $this->parameters["previous_text"] : '')."',
+					prevText:				'".(isset($this->parameters["previous_text"]) ? $this->parameters["previous_text"] : '')."',
 					autoControls: 			".(isset($this->parameters['auto_controls']) && $this->parameters['auto_controls'] ? "true" : "false").",
 					startText: 				'".(isset($this->parameters["start_text"]) ? $this->parameters["start_text"] : '')."',
 					stopText: 				'".(isset($this->parameters["stop_text"]) ? $this->parameters["stop_text"] : '')."',

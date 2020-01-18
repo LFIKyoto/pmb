@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_affichage_unimarc.class.php,v 1.82 2018-11-05 14:09:15 mbertin Exp $
+// $Id: notice_affichage_unimarc.class.php,v 1.90.2.1 2019-12-05 14:45:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -120,6 +120,10 @@ class notice_affichage_unimarc {
 	public $entrepots_localisations=array();
 
 	public $notice_expired = false;
+	
+	public $details = array();
+	public $publishers = array();
+	public $titres_uniformes = array();
 
 	// constructeur------------------------------------------------------------
 	public function __construct($id, $liens, $cart=0, $to_print=0, $entrepots_localisations=array()) {
@@ -164,7 +168,7 @@ class notice_affichage_unimarc {
 	  	if(!$id)
 	  		return;
 		else {
-			$id+=0;
+		    $id = intval($id);
 			$this->notice_id = $id;
 			$this->fetch_data();
 		}
@@ -205,6 +209,18 @@ class notice_affichage_unimarc {
 						$this->connector_id = $row->id_connector;
 					}
 				}
+				
+				
+				if (!isset($this->details[$l->ufield])) {
+				    $this->details[$l->ufield] = array();
+				}
+				if ($l->usubfield === "") {
+				    $this->details[$l->ufield][] = $l->value;
+				} else {
+				    $this->details[$l->ufield][] = array($l->usubfield => $l->value);
+				}
+				
+				
 // 				$this->unimarc[$l->ufield][$l->field_order][$l->usubfield][$l->subfield_order];
 				switch ($l->ufield) {
 					//dt
@@ -248,6 +264,7 @@ class notice_affichage_unimarc {
 						break;
 					//Editeur
 					case "210":
+					case "219":
 						if($l->field_order!=$lpfo) {
 							$lpfo=$l->field_order;
 							$n_ed++;
@@ -286,15 +303,15 @@ class notice_affichage_unimarc {
 					case "225":
 						switch ($l->usubfield) {
 							case "a":
-								if(!$notice->coll)$notice->coll = new stdClass();
+								if(!isset($notice->coll))$notice->coll = new stdClass();
 								$notice->coll->titre=$l->value;
 								break;
 							case "i":
-								if(!$notice->subcoll)$notice->subcoll = new stdClass();
+								if(!isset($notice->subcoll))$notice->subcoll = new stdClass();
 								$notice->subcoll->titre=$l->value;
 								break;
 							case "v":
-								if(!$notice->coll)$notice->coll = new stdClass();
+								if(!isset($notice->coll))$notice->coll = new stdClass();
 								$notice->coll->num=$l->value;
 								break;
 						}
@@ -361,6 +378,9 @@ class notice_affichage_unimarc {
 					case "610":
 						switch ($l->usubfield) {
 							case "a":
+							    if (!isset($notice->index_l)) {
+							        $notice->index_l = "";
+							    }
 								$notice->index_l.=($notice->index_l?" / ":"").$l->value;
 								break;
 						}
@@ -393,7 +413,7 @@ class notice_affichage_unimarc {
 					case "900":
 						switch ($l->usubfield) {
 							case "a":
-								if($notice->notice_pperso[$cpt_notice_pperso]['value']){
+								if(isset($notice->notice_pperso[$cpt_notice_pperso]['value'])){
 									$cpt_notice_pperso++;
 								}
 								$notice->notice_pperso[$cpt_notice_pperso]['value']=$l->value;
@@ -446,7 +466,7 @@ class notice_affichage_unimarc {
 		//$this->fetch_avis();
 	
 		//$this->childs=array();
-	
+		
 		return pmb_mysql_num_rows($myQuery);
 		} // fin fetch_data
 	
@@ -551,6 +571,9 @@ class notice_affichage_unimarc {
 					break;
 				case 'e':
 					if ($auteurs[$n_aut]['type']==2) {
+					    if (!isset($auteurs[$n_aut]['lieu'])) {
+					        $auteurs[$n_aut]['lieu'] = "";
+					    }
 						$auteurs[$n_aut]['lieu'].=(($auteurs[$n_aut]['lieu'])?'; ':'').$l->value;
 					}
 					break;
@@ -566,19 +589,27 @@ class notice_affichage_unimarc {
 		}
 	
 		foreach($auteurs as $n_aut=>$auteur) {
-			$auteurs[$n_aut]['auteur_titre']=(!empty($auteurs[$n_aut]['rejete'])? $auteurs[$n_aut]['rejete'].' ' : '').$auteurs[$n_aut]['name'];
-			if ($auteur['type']==2 && ($auteurs[$n_aut]['subdivision'] || $auteurs[$n_aut]['numero'] || $auteurs[$n_aut]['date'] || $auteurs[$n_aut]['lieu'])) {
+			$auteurs[$n_aut]['auteur_titre'] = (!empty($auteurs[$n_aut]['rejete']) ? $auteurs[$n_aut]['rejete'].' ' : '').$auteurs[$n_aut]['name'];
+			if ($auteur['type']==2 && (!empty($auteurs[$n_aut]['subdivision']) || !empty($auteurs[$n_aut]['numero']) || !empty($auteurs[$n_aut]['date']) || !empty($auteurs[$n_aut]['lieu']))) {
 				$c='';
-				$c.=$auteurs[$n_aut]['subdivision'];
-				$c.=($c && $auteurs[$n_aut]['numero'])?(', '.$auteurs[$n_aut]['numero']):($auteurs[$n_aut]['numero']);
-				$c.=($c && $auteurs[$n_aut]['date'])?(', '.$auteurs[$n_aut]['date']):($auteurs[$n_aut]['date']);
-				$c.=($c && $auteurs[$n_aut]['lieu'])?(', '.$auteurs[$n_aut]['lieu']):($auteurs[$n_aut]['lieu']);
+				
+				$c.=(!empty($auteurs[$n_aut]['subdivision']) ? $auteurs[$n_aut]['subdivision'] : "");
+				
+				$c.=($c && !empty($auteurs[$n_aut]['numero'])) ? ', ' : "";
+				$c.=(!empty($auteurs[$n_aut]['numero'])) ? $auteurs[$n_aut]['numero'] : "";
+				
+				$c.=($c && !empty($auteurs[$n_aut]['date'])) ? ', ' : "";
+				$c.=(!empty($auteurs[$n_aut]['date'])) ? $auteurs[$n_aut]['date'] : "";
+				
+				$c.=($c && !empty($auteurs[$n_aut]['lieu'])) ? ', ' : "";
+				$c.=(!empty($auteurs[$n_aut]['lieu'])) ? $auteurs[$n_aut]['lieu'] : "";
+				
 				$auteurs[$n_aut]['auteur_titre'].=' ('.$c.')';
 			}
 			$auteurs[$n_aut]['auteur_isbd']=$auteurs[$n_aut]['auteur_titre'].(!empty($auteurs[$n_aut]['fonction_aff'])?' ,':'').(isset($auteurs[$n_aut]['fonction_aff']) ? $auteurs[$n_aut]['fonction_aff'] : '');
 		}
 	
-		if (!$responsabilites) $responsabilites = array();
+		if (!isset($responsabilites)) $responsabilites = array();
 		if (!$auteurs) $auteurs = array();
 		$res["responsabilites"] = $responsabilites ;
 		$res["auteurs"] = $auteurs ;
@@ -652,7 +683,7 @@ class notice_affichage_unimarc {
 		while ($l=pmb_mysql_fetch_object($res_sql)) {
 			if ($l->field_order!=$id_categ) {
 				if ($n_categ!=-1) {
-					$categ_libelle=$categ_l["a"][0].($categ_l["x"]?" - ".implode(" - ",$categ_l["x"]):"").($categ_l["y"]?" - ".implode(" - ",$categ_l["y"]):"").($categ_l["z"]?" - ".implode(" - ",$categ_l["z"]):"");
+				    $categ_libelle=(!empty($categ_l["a"][0]) ? $categ_l["a"][0] : "").(!empty($categ_l["x"])?" - ".implode(" - ",$categ_l["x"]):"").(!empty($categ_l["y"]) ?" - ".implode(" - ",$categ_l["y"]):"").(!empty($categ_l["z"]) ?" - ".implode(" - ",$categ_l["z"]):"");
 					$this->categories_toutes.=($this->categories_toutes?"<br />":"").$categ_libelle;
 				}
 				$categ_l=array();
@@ -662,7 +693,7 @@ class notice_affichage_unimarc {
 			$categ_l[$l->usubfield][]=$l->value;
 		}
 		if ($n_categ>=0) {
-			$categ_libelle=$categ_l["a"][0].($categ_l["x"]?" - ".implode(" - ",$categ_l["x"]):"").($categ_l["y"]?" - ".implode(" - ",$categ_l["y"]):"").($categ_l["z"]?" - ".implode(" - ",$categ_l["z"]):"");
+		    $categ_libelle=(!empty($categ_l["a"][0]) ? $categ_l["a"][0] : "").(!empty($categ_l["x"])?" - ".implode(" - ",$categ_l["x"]):"").(!empty($categ_l["y"]) ?" - ".implode(" - ",$categ_l["y"]):"").(!empty($categ_l["z"]) ?" - ".implode(" - ",$categ_l["z"]):"");
 			$this->categories_toutes.=($this->categories_toutes?"<br />":"").$categ_libelle;
 		}
 	}
@@ -839,7 +870,7 @@ class notice_affichage_unimarc {
 			else $case_a_cocher = "" ;
 	
 		$icon_doc = marc_list_collection::get_instance('icondoc');
-		$icon = $icon_doc->table[$this->notice->niveau_biblio.$this->notice->typdoc];
+		$icon = (isset($icon_doc->table[$this->notice->niveau_biblio.$this->notice->typdoc]) ? $icon_doc->table[$this->notice->niveau_biblio.$this->notice->typdoc] : "");
 	
 		$biblio_doc = marc_list_collection::get_instance('nivbiblio');
 		if($depliable == 1){
@@ -1073,23 +1104,31 @@ class notice_affichage_unimarc {
 		if(!empty($this->notice->mention_edition)) $this->notice_isbd .= " &nbsp;. -&nbsp; ".$this->notice->mention_edition;
 	
 		if(!empty($this->notice->coll)){
-			$collections = $this->notice->coll->titre.($this->notice->coll->num ? ", ".$this->notice->coll->num :"");
+			$collections = $this->notice->coll->titre.(isset($this->notice->coll->num) ? ", ".$this->notice->coll->num :"");
 		} else {
 			$collections = '';
 		}
 	
 		if (is_array($this->publishers)) {
 			for ($i=0; $i<count($this->publishers) ;$i++) {
-				$editeur[$i]=$this->publishers[$i]["name"].(!empty($this->publishers[$i]["city"])?" (".$this->publishers[$i]["city"].")":"");
+			    $editeur[$i] = (!empty($this->publishers[$i]["name"]) ? $this->publishers[$i]["name"] : "").(!empty($this->publishers[$i]["city"])?" (".$this->publishers[$i]["city"].")":"");
 			}
 			$editeurs=implode("&nbsp;: ",$editeur);
 		}
 	
-		if(!empty($this->notice->year))
-			$editeurs ? $editeurs .= ', '.$this->notice->year : $editeurs = $this->notice->year;
-		else if ($this->notice->niveau_biblio == 'm' && $this->notice->niveau_hierar == 0)
-			$editeurs ? $editeurs .= ', [s.d.]' : $editeurs = "[s.d.]";
-	
+		if(!empty($this->notice->year)) {
+		    if ($editeurs) {
+		        $editeurs .= ', '.$this->notice->year;
+		    } else {
+		        $editeurs = $this->notice->year;
+		    }
+		} else if ($this->notice->niveau_biblio == 'm' && $this->notice->niveau_hierar == 0) {
+		    if ($editeurs) {
+		        $editeurs .= ', [s.d.]';
+		    } else {
+		        $editeurs = "[s.d.]";
+		    }
+		}
 		if($editeurs) $this->notice_isbd .= "&nbsp;.&nbsp;-&nbsp;$editeurs";
 	
 	
@@ -1139,22 +1178,19 @@ class notice_affichage_unimarc {
 			}
 		if(count($this->languesorg)) {
 			$langues .= " <span class='etiq_champ'>${msg[711]}</span>&nbsp;: ".$this->construit_liste_langues($this->languesorg);
-			}
-		if ($langues) $this->notice_isbd .= "<br />".$langues ;
+		}
+		if (isset($langues)) $this->notice_isbd .= "<br />".$langues ;
 	
 		$html_pprerso = "";
 		if(count($this->notice->notice_pperso)){
 			foreach($this->notice->notice_pperso as $pperso){
 				// est-ce bien de type pmb
 				if($pperso['value'] && $pperso['libelle'] && $pperso['name'] ){
-					switch($pperso['type']){
-						case 'url':
-							$html_pprerso .= "<span class='etiq_champ'>".$pperso['libelle']."</span>&nbsp;: <a href='".$pperso['value']."' >".$pperso['value']."</a>";
-						break;
-						default:
-							$html_pprerso .= "<span class='etiq_champ'>".$pperso['libelle']."</span>&nbsp;: ".$pperso['value'];
-						break;
-					}
+				    if(!empty($pperso['type']) && $pperso['type'] == 'url') {
+				        $html_pprerso .= "<span class='etiq_champ'>".$pperso['libelle']."</span>&nbsp;: <a href='".$pperso['value']."' >".$pperso['value']."</a>";
+				    } else {
+				        $html_pprerso .= "<span class='etiq_champ'>".$pperso['libelle']."</span>&nbsp;: ".$pperso['value'];				        
+				    }
 				}
 			}
 		}
@@ -1209,8 +1245,10 @@ class notice_affichage_unimarc {
 		if (!empty($this->notice->mention_edition)) $this->notice_public .= "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg['mention_edition_start']."</span></td><td>".$this->notice->mention_edition."</td></tr>";
 	
 		// zone de l'editeur
-		if (!empty($this->year))
-			$annee = "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg['year_start']."</span></td><td>".$this->year."</td></tr>" ;
+		$annee = "";
+		if (!empty($this->year)) {
+		    $annee = "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg['year_start']."</span></td><td>".$this->year."</td></tr>" ;
+		}
 	
 		if (is_array($this->publishers) && (!empty($this->publishers[0]["name"]) || !empty($this->publishers[1]["name"])) ) {
 			for ($i=0; $i<count($this->publishers) ;$i++) {
@@ -1222,8 +1260,8 @@ class notice_affichage_unimarc {
 		
 		if ($annee) {
 			$this->notice_public .= $annee ;
-			$annee = "" ;
 		}
+		
 		//titres uniformes
 		if(isset($this->titres_uniformes) && count($this->titres_uniformes)){
 			$this->notice_public.= "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg['titre_uniforme_aff_public']."</span></td><td>";
@@ -1233,15 +1271,13 @@ class notice_affichage_unimarc {
 			$this->notice_public."</td></tr>";
 		}
 		if(!empty($this->notice->coll)){
-			$collection = $this->notice->coll->titre.(!$this->notice->subcoll && $this->notice->coll->num ? ". ".$this->notice->coll->num :"");
+			$collection = $this->notice->coll->titre.(empty($this->notice->subcoll) && !empty($this->notice->coll->num) ? ". ".$this->notice->coll->num :"");
 			$this->notice_public .= "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg['coll_start']."</span></td><td>$collection</td></tr>" ;
 		}
 		if(!empty($this->notice->subcoll)){
 			$subcollection = $this->notice->subcoll->titre.($this->notice->coll->num ? ". ".$this->notice->coll->num :"");
 			$this->notice_public .= "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg['subcoll_start']."</span></td><td>$subcollection</td></tr>" ;
 		}
-		// ajout $annee si pas vide. Est vide si deja ajoute plus haut
-		$this->notice_public .= $annee ;
 	
 		// zone de la collation
 		if(!empty($this->notice->npages))
@@ -1263,8 +1299,8 @@ class notice_affichage_unimarc {
 			$this->notice_public .= "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg['price_start']."</span></td><td>".$this->notice->prix."</td></tr>";
 	
 		// note generale
-		if (is_array($this->notice->n_gen) && count($this->notice->n_gen)) $zoneNote = nl2br(htmlentities(strip_tags(implode("\n",$this->notice->n_gen)),ENT_QUOTES, $charset));
-		if ($zoneNote) $this->notice_public .= "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg['n_gen_start']."</span></td><td>".$zoneNote."</td></tr>";
+		if (isset($this->notice->n_gen) && is_array($this->notice->n_gen) && count($this->notice->n_gen)) $zoneNote = nl2br(htmlentities(strip_tags(implode("\n",$this->notice->n_gen)),ENT_QUOTES, $charset));
+		if (!empty($zoneNote)) $this->notice_public .= "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg['n_gen_start']."</span></td><td>".$zoneNote."</td></tr>";
 	
 		// langues
 		if (count($this->langues)) {
@@ -1278,16 +1314,12 @@ class notice_affichage_unimarc {
 		if(count($this->notice->notice_pperso)){
 			foreach($this->notice->notice_pperso as $pperso){
 				// est-ce bien de type pmb
-				if($pperso['value'] && $pperso['libelle'] && $pperso['name'] ){
-	
-					switch($pperso['type']){
-						case 'url':
-							$html_pprerso .= "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$pperso['libelle']." :</span></td><td><a href='".$pperso['value']."' >".$pperso['value']."</a></td></tr>";
-							break;
-						default:
-							$html_pprerso .= "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$pperso['libelle']." :</span></td><td>".$pperso['value']."</td></tr>";
-							break;
-					}
+				if($pperso['value'] && $pperso['libelle'] && $pperso['name'] ){				    
+				    if(!empty($pperso['type']) && $pperso['type'] == 'url') {
+				        $html_pprerso .= "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$pperso['libelle']." :</span></td><td><a href='".$pperso['value']."' >".$pperso['value']."</a></td></tr>";
+				    } else {
+				        $html_pprerso .= "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$pperso['libelle']." :</span></td><td>".$pperso['value']."</td></tr>";
+				    }
 				}
 			}
 		}
@@ -1443,7 +1475,10 @@ class notice_affichage_unimarc {
 			$bulletin = inslink($numero.$date_affichee, str_replace("!!id!!","es". $this->bul_id, $this->lien_rech_bulletin));
 			$mention_parent = "<b>in</b> $notice_mere > $bulletin ";
 			$retour .= "<br />$mention_parent";
-			$pagination = htmlentities($this->notice->npages,ENT_QUOTES, $charset);
+			$pagination = "";
+			if (isset($this->notice->npages)) {
+			    $pagination = htmlentities($this->notice->npages,ENT_QUOTES, $charset);
+			}
 			if ($pagination) $retour .= ".&nbsp;-&nbsp;$pagination";
 		}
 		return $retour ;
@@ -1568,10 +1603,10 @@ class notice_affichage_unimarc {
 			$ret .= "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg['categories_start']."</span></td><td>".$this->categories_toutes."</td></tr>";
 	
 		// Concepts
-		$concepts_list = new skos_concepts_list();
-		if ($concepts_list->set_concepts_from_object(TYPE_NOTICE, $this->notice_id)) {
-			$ret .= "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg['concepts_start']."</span></td><td>".skos_view_concepts::get_list_in_notice($concepts_list)."</td></tr>";
-		}
+// 		$concepts_list = new skos_concepts_list();
+// 		if ($concepts_list->set_concepts_from_object(TYPE_NOTICE, $this->notice_id)) {
+// 			$ret .= "<tr><td class='align_right bg-grey'><span class='etiq_champ'>".$msg['concepts_start']."</span></td><td>".skos_view_concepts::get_list_in_notice($concepts_list)."</td></tr>";
+// 		}
 	
 	
 		// Affectation du libelle mots cles ou tags en fonction de la recherche precedente
@@ -1624,7 +1659,6 @@ class notice_affichage_unimarc {
 		global $dbh;
 		global $msg, $charset;
 		global $expl_list_header, $expl_list_footer;
-		$expl_liste = "sdfsdfsdf";
 	
 		if (!$this->exemplaires)
 			return;
@@ -1690,173 +1724,8 @@ class notice_affichage_unimarc {
 		}
 		$expl_output .= $expl_list_footer;
 	
-		return $expl_output;
-	
-		global $expl_list_header, $expl_list_footer;
-		// les depouillements n'ont pas d'exemplaire
-		if ($type=="a") {
-			return "" ;
-		}
-	
-		// les exemplaires des monographies
-		if ($type=="m") {
-			$requete = "SELECT exemplaires.*, pret.*, docs_location.*, docs_section.*, docs_statut.*, docs_type.*";
-			$requete .= " FROM exemplaires LEFT JOIN pret ON exemplaires.expl_id=pret.pret_idexpl, docs_location, docs_section, docs_statut, docs_type";
-			$requete .= " WHERE expl_notice='$id' and expl_bulletin='$bull_id'";
-			$requete .= " AND location_visible_opac=1 AND section_visible_opac=1 AND statut_visible_opac=1";
-			$requete .= " AND exemplaires.expl_location=docs_location.idlocation";
-			$requete .= " AND exemplaires.expl_section=docs_section.idsection ";
-			$requete .= " AND exemplaires.expl_statut=docs_statut.idstatut ";
-			$requete .= " AND exemplaires.expl_typdoc=docs_type. idtyp_doc ";
-			// recuperation du nombre d'exemplaires
-			$res = pmb_mysql_query($requete, $dbh);
-			$expl_liste="";
-			$requete_resa = "SELECT count(1) from resa where resa_idnotice='$id' ";
-			$nb_resa = pmb_mysql_result(pmb_mysql_query($requete_resa, $dbh),0,0);
-			while($expl = pmb_mysql_fetch_object($res)) {
-				$compteur = $compteur+1;
-				$expl_liste .= "<tr><td>";
-				$expl_liste .= $expl->expl_cb."&nbsp;";
-				$expl_liste .= "</td><td><strong>";
-				$expl_liste .= $expl->expl_cote."&nbsp;";
-				$expl_liste .= "</strong></td><td>";
-				$expl_liste .= $expl->tdoc_libelle."&nbsp;";
-				$expl_liste .= "</td><td>";
-				$expl_liste .= $expl->location_libelle."&nbsp;";
-				$expl_liste .= "</td><td>";
-				$expl_liste .= $expl->section_libelle."&nbsp;";
-	
-				$requete_resa = "SELECT count(1) from resa where resa_cb='$expl->expl_cb' ";
-				$flag_resa = pmb_mysql_result(pmb_mysql_query($requete_resa, $dbh),0,0);
-				$requete_resa = "SELECT count(1) from resa_ranger where resa_cb='$expl->expl_cb' ";
-				$flag_resa = $flag_resa + pmb_mysql_result(pmb_mysql_query($requete_resa, $dbh),0,0);
-				$situation = "";
-				if ($expl->statut_libelle_opac !="") $situation .= $expl->statut_libelle_opac."<br />";
-				if ($flag_resa) {
-					$nb_resa--;
-					$situation .= "<strong>$msg[expl_reserve]</strong>";
-				} else {
-					if ($expl->pret_flag) {
-						if($expl->pret_retour) { // exemplaire sorti
-							global $opac_show_empr ;
-							if ((($opac_show_empr==1) && ($_SESSION["user_code"])) || ($opac_show_empr==2)) {
-								$rqt_empr = "SELECT empr_nom, empr_prenom, id_empr, empr_cb FROM empr WHERE id_empr='$expl->pret_idempr' ";
-								$res_empr = pmb_mysql_query($rqt_empr, $dbh) ;
-								$res_empr_obj = pmb_mysql_fetch_object($res_empr) ;
-								$situation .= $msg[entete_show_empr].htmlentities(" $res_empr_obj->empr_prenom $res_empr_obj->empr_nom",ENT_QUOTES, $charset)."<br />";
-							}
-							$situation .= "<strong>".str_replace('!!date!!', formatdate($expl->pret_retour), $msg['out_until'] )."</strong>";								
-						// ****** Affichage de l'emprunteur
-						} else { // pas sorti
-							$situation .= "<strong>".$msg['available']."</strong>";
-						}
-					} else { // pas pretable
-						// exemplaire pas pretable
-						$situation .= "<strong>".$msg['exclu']."</strong>";
-					}
-				} // fin if else $flag_resa
-				$expl_liste .= "</td><td>$situation </td>";
-				$expl_liste .="</tr>";
-			} // fin while
-	
-			// affichage de la liste d'exemplaires calculee ci-dessus
-			if (!$expl_liste) {
-				$expl_liste = $expl_list_header."<tr class=even><td colspan=6>".$msg["no_expl"]."</td></tr>".$expl_list_footer;
-			} else {
-				$expl_liste = $expl_list_header.$expl_liste.$expl_list_footer;
-			}
-			return $expl_liste;
-		}
-	
-		// le resume des articles, bulletins et exemplaires des notices meres
-		if ($type=="s") {
-			return "";
-		}
+		return $expl_output;	
 	} // fin function expl_list
-	
-	//// fontion qui genere le bloc H3 + table des autres lectures
-	//public function autres_lectures ($notice_id=0,$bulletin_id=0) {
-	//	global $dbh, $msg;
-	//	global $opac_autres_lectures_tri;
-	//	global $opac_autres_lectures_nb_mini_emprunts;
-	//	global $opac_autres_lectures_nb_maxi;
-	//	global $opac_autres_lectures_nb_jours_maxi;
-	//	global $opac_autres_lectures;
-	//
-	//	if (!$opac_autres_lectures || (!$notice_id && !$bulletin_id)) return "";
-	//
-	//	if (!$opac_autres_lectures_nb_maxi) $opac_autres_lectures_nb_maxi = 999999 ;
-	//	if ($opac_autres_lectures_nb_jours_maxi) $restrict_date=" date_add(oal.arc_fin, INTERVAL $opac_autres_lectures_nb_jours_maxi day)>=sysdate() AND ";
-	//	if ($notice_id) $pas_notice = " oal.arc_expl_notice!=$notice_id AND ";
-	//	if ($bulletin_id) $pas_bulletin = " oal.arc_expl_bulletin!=$bulletin_id AND ";
-	//	// Ajout ici de la liste des notices lues par les lecteurs de cette notice
-	//	$rqt_autres_lectures = "SELECT oal.arc_expl_notice, oal.arc_expl_bulletin, count(*) AS total_prets,
-	//				trim(concat(ifnull(notices_m.tit1,''),ifnull(notices_s.tit1,''),' ',ifnull(bulletin_numero,''), if(mention_date, concat(' (',mention_date,')') ,if (date_date, concat(' (',date_format(date_date, '%d/%m/%Y'),')') ,'')))) as tit, if(notices_m.notice_id, notices_m.notice_id, notices_s.notice_id) as not_id
-	//			FROM ((((pret_archive AS oal JOIN
-	//				(SELECT distinct arc_id_empr FROM pret_archive nbec where (nbec.arc_expl_notice='".$notice_id."' AND nbec.arc_expl_bulletin='".$bulletin_id."') AND nbec.arc_id_empr !=0) as nbec
-	//				ON (oal.arc_id_empr=nbec.arc_id_empr and oal.arc_id_empr!=0 and nbec.arc_id_empr!=0))
-	//				LEFT JOIN notices AS notices_m ON arc_expl_notice = notices_m.notice_id )
-	//				LEFT JOIN bulletins ON arc_expl_bulletin = bulletins.bulletin_id)
-	//				LEFT JOIN notices AS notices_s ON bulletin_notice = notices_s.notice_id)
-	//			WHERE $restrict_date $pas_notice $pas_bulletin oal.arc_id_empr !=0
-	//			GROUP BY oal.arc_expl_notice, oal.arc_expl_bulletin
-	//			HAVING total_prets>=$opac_autres_lectures_nb_mini_emprunts
-	//			ORDER BY $opac_autres_lectures_tri
-	//			";
-	//
-	//	$res_autres_lectures = pmb_mysql_query($rqt_autres_lectures) or die ("<br />".pmb_mysql_error()."<br />".$rqt_autres_lectures."<br />");
-	//	if (pmb_mysql_num_rows($res_autres_lectures)) {
-	//		$odd_even=1;
-	//		$inotvisible=0;
-	//		$ret="";
-	//		while ($data=pmb_mysql_fetch_array($res_autres_lectures)) { // $inotvisible<=$opac_autres_lectures_nb_maxi
-	//			$requete = "SELECT  1  ";
-	//			$requete .= " FROM notices, notice_statut  WHERE notice_id='".$data[not_id]."' and statut=id_notice_statut and ((notice_visible_opac=1 and notice_visible_opac_abon=0)".($_SESSION["user_code"]?" or (notice_visible_opac_abon=1 and notice_visible_opac=1)":"").")";
-	//			$myQuery = pmb_mysql_query($requete, $dbh);
-	//			if (pmb_mysql_num_rows($myQuery) && $inotvisible<=$opac_autres_lectures_nb_maxi) { // pmb_mysql_num_rows($myQuery)
-	//				$inotvisible++;
-	//				$titre = $data['tit'];
-	//				// **********
-	//				$responsab = array("responsabilites" => array(),"auteurs" => array());  // les auteurs
-	//				$responsab = get_notice_authors($data['not_id']) ;
-	//				$as = array_search ("0", $responsab["responsabilites"]) ;
-	//				if ($as!== FALSE && $as!== NULL) {
-	//					$auteur_0 = $responsab["auteurs"][$as] ;
-	//					$auteur = new auteur($auteur_0["id"]);
-	//					$mention_resp = $auteur->isbd_entry;
-	//				} else {
-	//					$as = array_keys ($responsab["responsabilites"], "1" ) ;
-	//					for ($i = 0 ; $i < count($as) ; $i++) {
-	//						$indice = $as[$i] ;
-	//						$auteur_1 = $responsab["auteurs"][$indice] ;
-	//						$auteur = new auteur($auteur_1["id"]);
-	//						$aut1_libelle[]= $auteur->isbd_entry;
-	//					}
-	//					$mention_resp = implode (", ",$aut1_libelle) ;
-	//				}
-	//				$mention_resp ? $auteur = $mention_resp : $auteur="";
-	//
-	//				// on affiche les resultats
-	//				if ($odd_even==0) {
-	//					$pair_impair="odd";
-	//					$odd_even=1;
-	//				} else if ($odd_even==1) {
-	//					$pair_impair="even";
-	//					$odd_even=0;
-	//				}
-	//				if ($data['arc_expl_notice']) $tr_javascript=" class='$pair_impair' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./index.php?lvl=notice_display&id=".$data['not_id']."&seule=1';\" style='cursor: pointer' ";
-	//					else $tr_javascript=" class='$pair_impair' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./index.php?lvl=bulletin_display&id=".$data['arc_expl_bulletin']."';\" style='cursor: pointer' ";
-	//				$ret .= "<tr $tr_javascript>";
-	//				$ret .= "<td>".$titre."</td>";
-	//				$ret .= "<td>".$auteur."</td>";
-	//				$ret .= "</tr>\n";
-	//			}
-	//		}
-	//		if ($ret) $ret = "<h3 class='autres_lectures'>".$msg['autres_lectures']."</h3><table style='width:100%;'>".$ret."</table>";
-	//	} else $ret="";
-	//
-	//	return $ret;
-	//	}
 	
 	public function do_image(&$entree,$depliable) {
 		global $charset;
@@ -1896,12 +1765,12 @@ class notice_affichage_unimarc {
 		if ($this->notice_childs) return $this->notice_childs;
 		if ((count($this->childs))&&(!$this->to_print)) {
 			if ($this->seule) $affichage="";
-				else $affichage = "<a href='".str_replace("!!id!!","es".$this->notice_id,$this->lien_rech_notice)."&seule=1'>".$msg[voir_contenu_detail]."</a>";
+				else $affichage = "<a href='".str_replace("!!id!!","es".$this->notice_id,$this->lien_rech_notice)."&seule=1'>".$msg['voir_contenu_detail']."</a>";
 			global $relation_typedown;
 			if (!$relation_typedown) $relation_typedown=new marc_list("relationtypedown");
 			reset($this->childs);
 			$affichage.="<br />";
-			while (list($rel_type,$child_notices)=each($this->childs)) {
+			foreach ($this->childs as $rel_type => $child_notices) {
 				$affichage="<b>".$relation_typedown->table[$rel_type]."</b>";
 				if ($this->seule) {
 						} else $affichage.="<ul>";
@@ -2014,4 +1883,35 @@ class notice_affichage_unimarc {
 //			}
 //		} else return 0;
 //	}
+
+	public function __get($name) {
+	    if (isset($this->notice->{$name})) {
+	        return $this->notice->{$name};
+	    }
+	    if (isset($this->{$name})) {
+	        return $this->{$name};
+	    }	    
+	    return null;
+	}
+	
+	public function get_print_css_style() {
+	    $css_style = "
+			<style type='text/css'>
+				td.bg-grey {
+					width:156;
+				}
+				td.public_line_value {
+					width:551;
+				}
+				.vignetteimg {
+				    max-width: 140px;
+				    max-height: 200px;
+				    -moz-box-shadow: 1px 1px 5px #666666;
+				    -webkit-box-shadow: 1px 1px 5px #666666;
+				    box-shadow: 1px 1px 5px #666666;
+				}
+			</style>
+				";
+	    return $css_style;
+	}
 }

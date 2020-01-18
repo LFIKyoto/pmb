@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions.tpl.php,v 1.47 2017-11-23 15:48:51 ngantier Exp $
+// $Id: suggestions.tpl.php,v 1.49 2019-05-27 14:16:26 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $sug_search_form, $msg, $current_module, $acquisition_sugg_localises, $charset, $acquisition_sugg_categ, $sel_date_form, $sug_list_form, $sug_modif_form, $back_url, $orig_form_mod;
+global $bt_chk, $bt_supChk, $bt_imp, $bt_exporter, $bt_export_tableau, $lk_url_sug, $script, $nb_per_page, $sel_orig_form, $bt_fusVal;
 
 //	------------------------------------------------------------------------------
 //	$search_form : template de recherche pour les suggestions
@@ -129,7 +132,8 @@ $sug_list_form ="
 			<th>".htmlentities($msg['acquisition_sug_edi'], ENT_QUOTES, $charset)."</th>
 			<th>".htmlentities($msg['acquisition_sug_aut'], ENT_QUOTES, $charset)."</th>
 			<th>".htmlentities($msg['acquisition_sug_etat'], ENT_QUOTES, $charset)."</th>	
-			<th>".htmlentities($msg['acquisition_sug_iscat'], ENT_QUOTES, $charset)."</th>";
+			<th>".htmlentities($msg['acquisition_sug_iscat'], ENT_QUOTES, $charset)."</th>
+			<th>".htmlentities($msg['acquisition_sug_url'], ENT_QUOTES, $charset)."</th>";
 
 if ($acquisition_sugg_categ == '1') {
 	$sug_list_form.="<th>".htmlentities($msg['acquisition_categ'], ENT_QUOTES, $charset)."</th>";

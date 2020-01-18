@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_transferts_edition_ui.tpl.php,v 1.1 2018-12-27 10:05:22 dgoron Exp $
+// $Id: list_transferts_edition_ui.tpl.php,v 1.2 2019-05-27 10:07:02 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $list_transferts_edition_ui_search_filters_form_tpl, $msg, $list_transferts_edition_ui_search_order_form_tpl;
 
 $list_transferts_edition_ui_search_filters_form_tpl = "
 <div class='row'>

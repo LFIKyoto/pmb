@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // Â© 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: param_subst.tpl.php,v 1.3 2017-11-07 15:34:41 ngantier Exp $
+// $Id: param_subst.tpl.php,v 1.4 2019-05-27 14:50:06 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $tpl_param_table, $msg, $tpl_param_table_line, $tpl_param_subst_table, $tpl_param_subst_table_line, $tpl_param_subst_form, $current_module;
 
 //*******************************************************************
 // Définition des templates pour les listes en edition

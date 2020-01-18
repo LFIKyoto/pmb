@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_sphinx_authorities.class.php,v 1.8 2018-08-17 10:33:02 ccraig Exp $
+// $Id: searcher_sphinx_authorities.class.php,v 1.11 2019-07-02 14:21:52 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -21,25 +21,31 @@ class searcher_sphinx_authorities extends searcher_sphinx {
  	
  	protected function get_search_indexes(){
  		global $lang;
+ 		global $sphinx_indexes_prefix;
  		$indexes = explode(',',$this->index_name);
  		$index = "";
  		foreach($indexes as $index_name){
  			if($index) $index.= ',';
- 			$index.= trim($index_name).'_'.$lang.','.trim($index_name);
+ 			$index.= $sphinx_indexes_prefix.trim($index_name).'_'.$lang.','.$sphinx_indexes_prefix.trim($index_name);
  		}
  		if(!$this->authority_type){
 	 		$result = pmb_mysql_query('select id_authperso from authperso');
 	 		if (pmb_mysql_num_rows($result)) {
 	 			while ($row = pmb_mysql_fetch_object($result)) {
 	 				if($index) $index.= ',';
-	 				$index.= 'authperso_'.$row->id_authperso.'_'.$lang.','.'authperso_'.$row->id_authperso;
+	 				$index.= $sphinx_indexes_prefix.'authperso_'.$row->id_authperso.'_'.$lang.','.$sphinx_indexes_prefix.'authperso_'.$row->id_authperso;
 	 			}
 	 		}
  		}
  		return $index;
  	}
 	
-	protected function get_full_raw_query(){
+	protected function get_full_raw_query(){    
+	    global $sub;
+	    
+	    if(!empty($sub) && substr($sub, -4) == 'last') { 
+	        return 'select id_authority as id, 100 as weight from authorities  where type_object = ' . $this->authority_type . ' order by id_authority desc';
+	    }
 		if($this->authority_type){
 			return 'select id_authority as id, 100 as weight from authorities where type_object = '.$this->authority_type;
 		}
@@ -76,7 +82,7 @@ class searcher_sphinx_authorities extends searcher_sphinx {
 		return $this->result;
 	}
 	
-	public function explain(){
+	public function explain($display,$mode,$mini=false){
 		print '<div style="margin-left:10px;width:49%;overflow:hidden;float:left">';
 		print '<h1>Recherche SPHINX</h1>';
 		print '<p>QUERY : '.$this->sphinx_query.'</p>';

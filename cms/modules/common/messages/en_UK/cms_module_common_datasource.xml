@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_common_datasource.xml,v 1.1 2015-06-15 12:55:33 pmbs Exp $ -->
+$Id: cms_module_common_datasource.xml,v 1.2 2019-03-20 10:51:52 dgoron Exp $ -->
 
 <XMLlist>
 	<entry code="cms_module_common_datasource_selector_choice">Choose a selector for the data source</entry>
@@ -13,4 +13,9 @@ $Id: cms_module_common_datasource.xml,v 1.1 2015-06-15 12:55:33 pmbs Exp $ -->
 	<entry code="cms_module_common_selector_env_var">Selector from an environment variable</entry>	
 	<entry code="cms_module_common_selector_global_var">Selector from a global variable</entry>	
 	<entry code="cms_module_commom_datasource_selector_save_error">Error when saving the selector "%s"</entry>
+	<entry code="cms_module_common_selector_doctypes">Sélecteur d'un ou plusieurs types de document</entry>	
+	<entry code="cms_module_common_datasource_categories_use_autopostage">Etendre aux catégories filles</entry>
+	<entry code="cms_module_common_datasource_operator_between_authorities">Opérateur entre autorités</entry>
+	<entry code="cms_module_common_datasource_operator_between_authorities_or">Or</entry>
+	<entry code="cms_module_common_datasource_operator_between_authorities_and">And</entry>
 </XMLlist>

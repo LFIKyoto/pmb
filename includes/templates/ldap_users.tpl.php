@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // ? 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ldap_users.tpl.php,v 1.8 2017-10-18 15:27:54 ngantier Exp $
+// $Id: ldap_users.tpl.php,v 1.9 2019-05-27 14:09:27 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $form_ldap_groups, $current_module, $msg, $form_show_ldap_users, $form_show_exldap_users;
 
 // templates for ldap_import operations (groups choice and list of users from ldap server)
 

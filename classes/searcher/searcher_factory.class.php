@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_factory.class.php,v 1.4 2017-07-03 14:56:28 apetithomme Exp $
+// $Id: searcher_factory.class.php,v 1.6 2019-04-24 13:53:42 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -24,7 +24,7 @@ class searcher_factory {
 	{
 		global $sphinx_active;
 		$classname = "";
-		if($sphinx_active && $mode != 'tab'){
+		if($sphinx_active && ($mode != 'tab' && $mode != 'query')){
 			$classname = self::get_sphinx_classname($type,$mode);
 		}
 		if($classname == ""){
@@ -70,8 +70,10 @@ class searcher_factory {
 	private static function get_native_classname($type,$mode)
 	{
 		if($type == 'authperso'){
-			$type = 'searcher_authorities_authpersos';			
-			return $type;				
+		    if($mode === 'query'){
+		        return 'searcher_authorities_authpersos_query';
+		    }
+			return 'searcher_authorities_authpersos';
 		}
 		//typo dans le source déjà en place...
 		if($type == 'authorities' && $mode == ''){

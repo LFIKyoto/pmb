@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: generate.php,v 1.18 2017-01-31 15:41:41 dgoron Exp $
+// $Id: generate.php,v 1.19 2019-07-15 14:24:31 btafforeau Exp $
 
 //modifié 12/2007 François CEROVETTI pour affichage code en clair avec police vectorielle.
 // lire exemple de valeurs adaptées à 65 etiquettes AVERY A4 plus bas:
@@ -177,17 +177,17 @@ while ( ! $fini) {
 			// incrémentation
 			$i = strlen($cb) - 1;
 			do {
-				if ($cb{$i} == "9") {
-					$cb{$i} = 0;
+				if (substr($cb, $i, 1) == "9") {
+					substr_replace($cb, 0, $i, 1); // $cb{$i} = 0;
 					if ($i == 0) {
 						$cb = "1".$cb;
 					}
 				}
 				else {
-					$cb{$i} = chr(ord($cb{$i}) + 1);
+				    substr_replace($cb, chr(ord(substr($cb, $i, 1) + 1)), $i, 1); // $cb{$i} = chr(ord($cb{$i}) + 1);
 				}
 				$i--;
-			} while (($i >= 0) && ($cb{$i+1} == 0));
+			} while (($i >= 0) && (substr($cb, $i+1, 1) == 0));
 			// test de fin
 			if ($pdf->GetNbrSticks() >= $nbr_cb)
 			{

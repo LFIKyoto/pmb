@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_types.class.php,v 1.8 2018-02-09 15:55:44 ngantier Exp $
+// $Id: demandes_types.class.php,v 1.10 2019-08-26 08:36:37 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/templates/demandes_type.tpl.php");
@@ -108,8 +108,8 @@ class demandes_types extends liste_simple{
 			$form.="
 			<tr>
 				<td>".htmlentities($allowed_action['comment'],ENT_QUOTES,$charset)."</td>
-				<td>".$msg['connecteurs_yes']."&nbsp;<input type='radio' name='action_".$allowed_action['id']."' value='1'".($allowed_action['active']==1 ? " checked='checked'": "")."/>&nbsp;&nbsp;
-					".$msg['connecteurs_no']."&nbsp;<input type='radio' name='action_".$allowed_action['id']."' value='0'".($allowed_action['active']==0 ? " checked='checked'": "")."/></td>
+				<td>".$msg['connecteurs_yes']."&nbsp;<input type='radio' name='action_".$allowed_action['id']."' value='1'".(isset($allowed_action['active']) && $allowed_action['active'] == 1 ? " checked='checked'": "")."/>&nbsp;&nbsp;
+					".$msg['connecteurs_no']."&nbsp;<input type='radio' name='action_".$allowed_action['id']."' value='0'".(empty($allowed_action['active']) ? " checked='checked'": "")."/></td>
 				<td><input type='radio' name='default_action' value='".$allowed_action['id']."'".($allowed_action['default']? " checked='checked'": "")."/></td>
 			</tr>";
 		}
@@ -151,14 +151,13 @@ class demandes_types extends liste_simple{
 	 * Formulaire de présentation
 	*/
 	public function show_form(){
-		global $dbh;
 		global $msg;
 		global $charset;
 		
-		
-		$tab_list =array();
+		$colspan = 0;
+		$tab_list = array();
 		$req = "select * from $this->table order by $this->colonne_lib_nom";
-		$res=pmb_mysql_query($req,$dbh);
+		$res = pmb_mysql_query($req);
 		while ($row = pmb_mysql_fetch_object($res)){
 			$nom = $this->colonne_lib_nom;
 			$id = $this->colonne_id_nom;

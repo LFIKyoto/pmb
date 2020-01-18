@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facette_search_compare.class.php,v 1.28 2018-12-11 09:41:42 dgoron Exp $
+// $Id: facette_search_compare.class.php,v 1.30 2019-07-31 13:57:31 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -260,7 +260,7 @@ class facette_search_compare {
 		$facette_search_compare_wrapper=str_replace("!!compare_body!!", $body, $facette_search_compare_wrapper);
 		
 		//construction du lien AJAX
-		if(get_called_class() == 'facettes_external_search_compare') {
+		if(static::class == 'facettes_external_search_compare') {
 			$facette_search_compare_wrapper=str_replace("!!categ!!", "facettes_external", $facette_search_compare_wrapper);
 		} else {
 			$facette_search_compare_wrapper=str_replace("!!categ!!", "facettes", $facette_search_compare_wrapper);
@@ -456,7 +456,7 @@ class facette_search_compare {
 						$facettes_compare_checked[$f_c_tab[4]]['value']=$f_c;
 						static::set_compare_checked_session($facettes_compare_checked);
 					}else{
-						if(get_called_class() == 'facettes_external_search_compare') {
+					    if(static::class == 'facettes_external_search_compare') {
 							unset($_SESSION['check_facettes_external_compare'][$f_c_tab[4]]);
 						} else {
 							unset($_SESSION['check_facette_compare'][$f_c_tab[4]]);
@@ -482,7 +482,7 @@ class facette_search_compare {
 						$facettes_groupby_checked[$f_gb_tab[3]]['value']=$f_gb;
 						static::set_groupby_checked_session($facettes_groupby_checked);
 					}else{
-						if(get_called_class() == 'facettes_external_search_compare') {
+					    if(static::class == 'facettes_external_search_compare') {
 							unset($_SESSION['check_facettes_external_groupby'][$f_gb_tab[3]]);
 						} else {
 							unset($_SESSION['check_facette_groupby'][$f_gb_tab[3]]);
@@ -541,13 +541,13 @@ class facette_search_compare {
 		
 		$form='';
 		$facettes_compare_checked = static::get_compare_checked_session();
-		if(sizeof($facettes_compare_checked)){
+		if(is_array($facettes_compare_checked)){
 			foreach($facettes_compare_checked as $facette_compare){
 				$form .= "<input type=\"hidden\" name=\"check_facette_compare[]\" value=\"".htmlentities($facette_compare['value'],ENT_QUOTES,$charset)."\">\n";
 			}
 		}
 		$facettes_groupby_checked = static::get_groupby_checked_session();
-		if(sizeof($facettes_groupby_checked)){
+		if(is_array($facettes_groupby_checked)){
 			foreach($facettes_groupby_checked as $facette_groupby){
 				$form .= "<input type=\"hidden\" name=\"check_facette_groupby[]\" value=\"".htmlentities($facette_groupby['value'],ENT_QUOTES,$charset)."\">\n";
 			}
@@ -699,7 +699,7 @@ class facette_search_compare {
 				}
 
 				if(post){
-					if('".get_called_class() ."' == 'facettes_external_search_compare') {
+					if('".static::class."' == 'facettes_external_search_compare') {
 						var input_form_values = document.createElement('input');
 						input_form_values.setAttribute('type', 'hidden');
 						input_form_values.setAttribute('name', 'reinit_compare');

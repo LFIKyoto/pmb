@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: comptabilite.tpl.php,v 1.7 2018-05-18 12:24:50 dgoron Exp $
+// $Id: comptabilite.tpl.php,v 1.9 2019-05-27 11:55:20 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $exer_form, $current_module, $msg, $charset, $ptab;
 
 //Template du formulaire d'exercices
 $exer_form = "

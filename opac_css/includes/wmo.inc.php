@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: wmo.inc.php,v 1.4 2015-04-03 11:16:16 jpermanne Exp $
+// $Id: wmo.inc.php,v 1.5 2019-06-05 13:13:19 btafforeau Exp $
 
 function search_other_function_filters() {
 	global $annee_parution,$dbh,$doc_num,$free, $code_langue_restrict,$lang,$nocoll,$tdnocoll;
@@ -230,7 +230,7 @@ function search_other_function_human_query($n) {
 	
 	//message historique recherche langue
 	if ($code_langue_restrict) {
-		$r.=", ".$msg[langue_publication_query]." : ";
+		$r.=", ".$msg['langue_publication_query']." : ";
 		$r.=$marc_liste_langues->table[$code_langue_restrict];	
 	}
 	
@@ -240,7 +240,7 @@ function search_other_function_human_query($n) {
 	}
 	
 	if($annee_parution) {
-		$r.=", ".$msg[year_start].">=";
+		$r.=", ".$msg['year_start'].">=";
 		$r.=$annee_parution;
 	}
 	
@@ -250,7 +250,7 @@ function search_other_function_human_query($n) {
 	}
 	
 	if($nocoll) {
-		$r.=", ".$msg[nocoll]."=";
+		$r.=", ".$msg['nocoll']."=";
 		$r.=$nocoll;
 	}
 	
@@ -260,7 +260,7 @@ function search_other_function_human_query($n) {
 	}
 	
 	if($tdnocoll) {
-		$r.=", ".$msg[tdnocoll]."=";
+		$r.=", ".$msg['tdnocoll']."=";
 		$r.=$tdnocoll;
 	}
 	
@@ -270,7 +270,7 @@ function search_other_function_human_query($n) {
 	}
 	
 	if ($wmo_pub){
-		$r.=", ".$msg[author_search]."/".$msg[publisher_search]."= WMO/OMM/BMO...";
+		$r.=", ".$msg['author_search']."/".$msg['publisher_search']."= WMO/OMM/BMO...";
 	}
 	
 	//message topics
@@ -279,7 +279,7 @@ function search_other_function_human_query($n) {
 	}
 	
 	if ($topics){
-		$r.=", ".$msg[categories_search]."=";
+		$r.=", ".$msg['categories_search']."=";
 		$r.=$topics;
 	}
 	
@@ -289,16 +289,16 @@ function search_other_function_human_query($n) {
 	}
 	
 	if($regions) {
-		$r.=", ".$msg[regions_search]."=";
-			if($regions==10630) {$r.=$msg[region_0];}
-			if($regions==10291) {$r.=$msg[region_1];}
-			if($regions==10378) {$r.=$msg[region_2];}
-			if($regions==10332) {$r.=$msg[region_3];}
-			if($regions==10918) {$r.=$msg[region_4];}
-			if($regions==10411) {$r.=$msg[region_5];}
-			if($regions==10395) {$r.=$msg[region_6];}
-			if($regions==10624) {$r.=$msg[region_antarctique];}
-			if($regions==10625) {$r.=$msg[region_arctique];}
+		$r.=", ".$msg['regions_search']."=";
+			if($regions==10630) {$r.=$msg['region_0'];}
+			if($regions==10291) {$r.=$msg['region_1'];}
+			if($regions==10378) {$r.=$msg['region_2'];}
+			if($regions==10332) {$r.=$msg['region_3'];}
+			if($regions==10918) {$r.=$msg['region_4'];}
+			if($regions==10411) {$r.=$msg['region_5'];}
+			if($regions==10395) {$r.=$msg['region_6'];}
+			if($regions==10624) {$r.=$msg['region_antarctique'];}
+			if($regions==10625) {$r.=$msg['region_arctique'];}
 		}
 	
 	//message typdoc
@@ -307,14 +307,14 @@ function search_other_function_human_query($n) {
 	}
 	
 	if($typnoti){
-		$r.=", ".$msg[typdocdisplay_start]."= ";
-		if($typnoti==1) {$r.=$msg[typnoti_1];}
-		elseif($typnoti==2) {$r.=$msg[typnoti_2];}
-		elseif($typnoti==3) {$r.=$msg[typnoti_3];}
-		elseif($typnoti==4) {$r.=$msg[typnoti_4];}
-		elseif($typnoti==5) {$r.=$msg[typnoti_5];}
-		elseif($typnoti==6) {$r.=$msg[typnoti_6];}
-		elseif($typnoti==7) {$r.=$msg[typnoti_7];}
+		$r.=", ".$msg['typdocdisplay_start']."= ";
+		if($typnoti==1) {$r.=$msg['typnoti_1'];}
+		elseif($typnoti==2) {$r.=$msg['typnoti_2'];}
+		elseif($typnoti==3) {$r.=$msg['typnoti_3'];}
+		elseif($typnoti==4) {$r.=$msg['typnoti_4'];}
+		elseif($typnoti==5) {$r.=$msg['typnoti_5'];}
+		elseif($typnoti==6) {$r.=$msg['typnoti_6'];}
+		elseif($typnoti==7) {$r.=$msg['typnoti_7'];}
 	}
 	
 	//message free full text
@@ -323,7 +323,7 @@ function search_other_function_human_query($n) {
 	}
 	
 	if ($free){
-		$r.=", ".$msg[access_custom_free];
+		$r.=", ".$msg['access_custom_free'];
 	}
 	
 	//message doc_num
@@ -332,7 +332,7 @@ function search_other_function_human_query($n) {
 	}
 	
 	if ($doc_num){
-		$r.=", ".$msg[sfull_text];
+		$r.=", ".$msg['sfull_text'];
 	}
 	
         

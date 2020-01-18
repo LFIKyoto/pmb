@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.22 2017-10-18 14:55:50 dgoron Exp $
+// $Id: main.inc.php,v 1.24 2019-06-07 08:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $id_thes, $search_term, $recalled, $page_search, $term_click, $class_path, $search_form_term, $current_module, $msg, $charset, $lien_thesaurus;
+global $thesaurus_mode_pmb, $base_path;
 
 if(!isset($id_thes)) $id_thes = 0;
 if(!isset($search_term)) $search_term = '';
@@ -73,6 +76,9 @@ $search_form_term=str_replace("<!-- lien_thesaurus -->",$lien_thesaurus,$search_
 
 echo $search_form_term;
 
+if (!isset($_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["SEARCH_TYPE"])) {
+    $_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["SEARCH_TYPE"] = "";
+}
 
 //Nouvelle recherche
 if (($search_term)&&(!$recalled)) {
@@ -85,11 +91,11 @@ if (($search_term)&&(!$recalled)) {
 	$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["HUMAN_QUERY"]="<b>".$msg["histo_term"]."</b> ".htmlentities(stripslashes($search_term),ENT_QUOTES,$charset);
 	$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["HUMAN_QUERY_START"]="<b>".$msg["histo_term"]."</b> ".htmlentities(stripslashes($search_term),ENT_QUOTES,$charset);
 	$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["HUMAN_TITLE"]=$msg["search_by_terms"];
-} else if ((!$search_term)&&(!$recalled)&&($_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["SEARCH_TYPE"]=="term_search")&&($_SESSION["CURRENT"]!==false)) {  
-		$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["SEARCH_TYPE"]="";
-	} else if (($recalled)&&($_SESSION["CURRENT"]!==false)) {
-		$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["SEARCH_TYPE"]="term_search";
-	}
+} else if ((!$search_term) && (!$recalled) && (isset($_SESSION["session_history"])) && ($_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["SEARCH_TYPE"]=="term_search") && ($_SESSION["CURRENT"]!==false)) {  
+	$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["SEARCH_TYPE"]="";
+} else if (($recalled)&&($_SESSION["CURRENT"]!==false)) {
+	$_SESSION["session_history"][$_SESSION["CURRENT"]]["QUERY"]["SEARCH_TYPE"]="term_search";
+}
 echo "
 <a name='search_frame'/>
 <div class='row'>

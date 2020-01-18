@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abonnement_parution_edition.php,v 1.11 2018-11-14 15:12:37 ngantier Exp $
+// $Id: abonnement_parution_edition.php,v 1.12 2019-06-06 14:26:20 ngantier Exp $
 
 // définition du minimum nécéssaire
 $base_path="./../../..";
@@ -10,6 +10,8 @@ $base_auth = "CATALOGAGE_AUTH";
 $base_title = "\$msg[6]";
 require_once ("$base_path/includes/init.inc.php");
 
+if (!isset($act)) $act = '';
+if (!isset($nom)) $nom = '';
 $templates = <<<ENDOFFILE
 			<script type='text/javascript'>
 				function Fermer(obj,type_doc) {

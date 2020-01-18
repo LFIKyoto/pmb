@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.10 2017-07-27 09:19:38 dgoron Exp $
+// $Id: main.inc.php,v 1.11 2019-03-20 16:34:06 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once("$class_path/classementGen.class.php") ;
+
+if (empty($quoi)) $quoi = '';
 
 switch ($quoi) {
 	case 'razpointage':

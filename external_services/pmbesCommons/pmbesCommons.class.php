@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesCommons.class.php,v 1.4 2013-02-25 10:34:03 mbertin Exp $
+// $Id: pmbesCommons.class.php,v 1.5 2019-07-05 13:37:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,7 +10,7 @@ require_once($class_path."/external_services.class.php");
 
 class pmbesCommons extends external_services_api_class{
 
-	function get_unimarc_labels() {
+	public function get_unimarc_labels() {
 		global $lang,$base_path;
 
 		$fields=array();

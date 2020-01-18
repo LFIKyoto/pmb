@@ -2,12 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mail.inc.php,v 1.33 2018-03-09 13:44:09 dgoron Exp $
+// $Id: mail.inc.php,v 1.34 2019-06-20 09:46:13 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-require_once($class_path.'/class.phpmailer.php');
-require_once($class_path.'/class.smtp.php');
 require_once($class_path.'/mail.class.php');
 
 if (!defined('PHP_EOL')) define ('PHP_EOL', strtoupper(substr(PHP_OS,0,3) == 'WIN') ? "\r\n" : "\n");

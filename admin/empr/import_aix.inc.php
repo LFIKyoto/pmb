@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_aix.inc.php,v 1.3 2015-04-03 11:16:21 jpermanne Exp $
+// $Id: import_aix.inc.php,v 1.4 2019-07-12 10:25:27 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -606,8 +606,4 @@ switch($action) {
         show_import_choix_fichier();
         break;
 }
-
 ?>
-
-
-

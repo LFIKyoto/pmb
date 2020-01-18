@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.5 2017-11-21 12:01:00 dgoron Exp $
+// $Id: search.class.php,v 1.8 2019-07-16 09:43:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -82,13 +82,17 @@ class combine_search_empr {
     		$onclick="onClick=\"document.getElementById('".$get_input_box_id."_label').innerHTML='".addslashes($msg["default_search_histo"])."';document.getElementById('".$get_input_box_id."_value').value='-1';expandBase('$get_input_box_id', true); return false;\"";
 
     		$liste="<tr $style_even><td $onclick >".$msg["default_search_histo"]."</td></tr>";
+    		$pair = 0;
     	    for ($i=count($_SESSION["session_history"])-1; $i>=0; $i--) {
     			if ($_SESSION["session_history"][$i]["EMPR"]) {
     				$temp=html_entity_decode(strip_tags(($i+1).") ".$_SESSION["session_history"][$i]["QUERY"]["HUMAN_QUERY"]),ENT_QUOTES,$charset);
     				$onclick="onClick=\"document.getElementById('".$get_input_box_id."_label').innerHTML=this.innerHTML;document.getElementById('".$get_input_box_id."_value').value='$i';expandBase('$get_input_box_id', true); return false;\"";
-    				
-    				if(($pair=1-$pair)) $style=$style_odd;
-    				else $style=$style_even;
+    				$pair = 1 - $pair;
+    				if($pair) {
+    				    $style = $style_odd;
+    				} else {
+    				    $style = $style_even;
+    				}
     				$liste.="<tr $style><td $onclick >$temp</td></tr>";
 
     				if ($valeur) {
@@ -167,6 +171,9 @@ class combine_search_empr {
     			} else {
     				$op_="EQ";
     				$valeur_champ=$_SESSION["session_history"][$valeur[0]]["EMPR"]["GET"]["idcaddie"];
+    				if(empty($search)) {
+    					$search=array();
+    				}
     				$search[0]="f_11";
 					//opérateur
     				$op="op_0_".$search[0];
@@ -174,11 +181,11 @@ class combine_search_empr {
     				${$op}=$op_;
     		    			
     				//contenu de la recherche
-    				$field="field_0_".$search[0];
-    				$field_=array();
-    				$field_[0]=$valeur_champ;
+    				$field = "field_0_".$search[0];
+    				$field_array_ = array();
+    				$field_array_[0] = $valeur_champ;
     				global ${$field};
-    				${$field}=$field_;
+    				${$field} = $field_array_;
     	    	
     				//opérateur inter-champ
     				$inter="inter_0_".$search[0];

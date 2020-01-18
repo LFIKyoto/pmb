@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_common_children_filter.class.php,v 1.2 2018-08-22 16:23:31 tsamson Exp $
+// $Id: frbr_entity_common_children_filter.class.php,v 1.3 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,12 +10,12 @@ class frbr_entity_common_children_filter extends frbr_entity_root{
 	protected $num_datanode;
 	
 	public function __construct($id=0){
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 		parent::__construct();
 	}
 	
 	public function set_num_datanode($id){
-		$this->num_datanode = $id+0;
+	    $this->num_datanode = (int) $id;
 	}
 	
 	/*
@@ -33,8 +33,8 @@ class frbr_entity_common_children_filter extends frbr_entity_root{
 			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)){
 				$row = pmb_mysql_fetch_object($result);
-				$this->id = $row->id_datanode_content+0;
-				$this->num_datanode = $row->datanode_content_num_datanode+0;
+				$this->id = (int) $row->id_datanode_content;
+				$this->num_datanode = (int) $row->datanode_content_num_datanode;
 				$this->json_decode($row->datanode_content_data);
 			}	
 		}

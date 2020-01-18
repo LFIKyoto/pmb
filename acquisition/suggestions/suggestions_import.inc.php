@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions_import.inc.php,v 1.6 2017-04-19 12:37:02 dgoron Exp $
+// $Id: suggestions_import.inc.php,v 1.7 2019-05-28 15:00:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $act, $class_path, $src_liste, $origine_id, $type_origine, $import_type, $file_in, $explnum_id, $msg;
 
 if(!isset($act)) $act = '';
 
@@ -20,7 +22,6 @@ switch($act){
 			$redirect=rawurlencode("../../acquisition.php?categ=sug&sub=multi&act=import&src_liste=".$src_liste."&origine_id=".$origine_id."&type_origine=".$type_origine);
 			if($import_type == 'uni'){
 				//Si on a un fichier unimarc en entrée
-				global $file_in;				
 				$file_in = rawurlencode($file_name);
 				$sug = new suggestion_multi();
 				$sug->create_table_from_uni();
@@ -31,7 +32,7 @@ switch($act){
 			}
 		} elseif($explnum_id) {
 			$req = "select explnum_doc_data as data from explnum_doc where id_explnum_doc='".$explnum_id."'";
-			$res = pmb_mysql_query($req,$dbh);
+			$res = pmb_mysql_query($req);
 			$expl = pmb_mysql_fetch_object($res);			
 			$file_name=SESSid."_".str_replace(" ","",microtime());
 			$file_name=str_replace(".","",$file_name);

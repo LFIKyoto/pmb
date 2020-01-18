@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr.inc.php,v 1.17 2017-11-21 14:23:55 dgoron Exp $
+// $Id: empr.inc.php,v 1.19 2019-06-06 15:04:28 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $base_url, $caller, $param1, $param2, $no_display, $bt_ajouter, $callback, $infields, $auto_submit, $user_input;
 
 // la variable $caller, passée par l'URL, contient le nom du form appelant
 $base_url = "./select.php?what=emprunteur&caller=$caller&param1=$param1&param2=$param2&no_display=$no_display&bt_ajouter=$bt_ajouter&auto_submit=$auto_submit&callback=$callback&infield=$infields";
@@ -13,7 +15,7 @@ $selector_empr = new selector_empr(stripslashes($user_input));
 $selector_empr->proceed();
 
 function show_results($user_input, $nbr_lignes=0, $page=0) {
-	global $nb_per_page;
+	global $nb_per_page, $msg;
 	global $base_url;
 	global $caller;
  	global $charset;

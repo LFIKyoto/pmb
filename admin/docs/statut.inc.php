@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: statut.inc.php,v 1.26 2018-10-12 14:44:48 dgoron Exp $
+// $Id: statut.inc.php,v 1.27 2019-06-07 12:57:50 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -86,9 +86,16 @@ function statut_form($libelle="", $pret=1, $trans=1, $statusdoc_codage_import=""
 	print $admin_statut_form;
 
 }
-
+$id = intval($id);
 switch($action) {
 	case 'update':
+	    if(empty($form_libelle)) $form_libelle = '';
+	    if(empty($form_pret)) $form_pret = '';
+	    if(empty($form_allow_resa)) $form_allow_resa = '';
+	    if(empty($form_trans)) $form_trans = '';
+	    if(empty($form_statusdoc_owner)) $form_statusdoc_owner = '';
+	    if(empty($form_libelle_opac)) $form_libelle_opac = '';
+	    if(empty($form_visible_opac)) $form_visible_opac = '';
 		// vérification validité des données fournies.
 		$requete = " SELECT count(1) FROM docs_statut WHERE (statut_libelle='$form_libelle' AND idstatut!='$id' )  LIMIT 1 ";
 		$res = pmb_mysql_query($requete, $dbh);

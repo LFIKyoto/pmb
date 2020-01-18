@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_universes_controller.class.php,v 1.21 2018-09-26 09:08:33 arenou Exp $
+// $Id: search_universes_controller.class.php,v 1.21.6.1 2019-09-12 07:52:20 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -246,6 +246,15 @@ class search_universes_controller {
     			$response['status'] = $segment_set->update();
     			$response['human_query'] = $segment_set->get_human_query();
     			$response['set'] = $segment_set->get_data_set();
+                print encoding_normalize::json_encode($response);
+  			    break;
+    		case 'delete_data_set':
+    		    $response = array();
+    			$segment_set = new search_segment_set($id);
+    			$segment_set->delete_data_set();
+    			$response['status'] = $segment_set->update();
+    			$response['human_query'] = "";
+    			$response['set'] = "";
                 print encoding_normalize::json_encode($response);
   			    break;
     		case 'delete':

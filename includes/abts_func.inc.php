@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abts_func.inc.php,v 1.11 2017-11-24 14:53:54 ngantier Exp $
+// $Id: abts_func.inc.php,v 1.12 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -114,7 +114,7 @@ function calendar_gestion($date = '', $navbar=0, $url_maj_base='', $base_url_moi
 	$monthes_name = array('',$msg[1006],$msg[1007],$msg[1008],$msg[1009],$msg[1010],$msg[1011],$msg[1012],$msg[1013],$msg[1014],$msg[1015],$msg[1016],$msg[1017]);
 	$days_name = array('',$msg[1018],$msg[1019],$msg[1020],$msg[1021],$msg[1022],$msg[1023],$msg[1024]);
 	
-	while (list($key, $val) = each($param_d)) {
+	foreach ($param_d as $key => $val) {
 		if (isset($params[$key])) $param[$key] = $params[$key];
 		else $param[$key] = $param_d[$key];
 	}

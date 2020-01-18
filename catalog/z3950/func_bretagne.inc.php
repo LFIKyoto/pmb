@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_bretagne.inc.php,v 1.11 2017-07-12 15:15:00 tsamson Exp $
+// $Id: func_bretagne.inc.php,v 1.12 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -27,21 +27,21 @@ function z_traite_exemplaires () {
 	
 // enregistrement de la notices dans les catégories
 function traite_categories_enreg($notice_retour,$categories,$thesaurus_traite=0) {
-
-	global $dbh;
-	
 	// si $thesaurus_traite fourni, on ne delete que les catégories de ce thesaurus, sinon on efface toutes
 	//  les indexations de la notice sans distinction de thesaurus
-	if (!$thesaurus_traite) $rqt_del = "delete from notices_categories where notcateg_notice='$notice_retour' ";
-	else $rqt_del = "delete from notices_categories where notcateg_notice='$notice_retour' and num_noeud in (select id_noeud from noeuds where num_thesaurus='$thesaurus_traite' and id_noeud=notices_categories.num_noeud) ";
-	$res_del = @pmb_mysql_query($rqt_del, $dbh);
-	
+	if (empty($thesaurus_traite)) {
+	    $rqt_del = "delete from notices_categories where notcateg_notice='$notice_retour' ";
+	} else {
+	    $rqt_del = "delete from notices_categories where notcateg_notice='$notice_retour' and num_noeud in (select id_noeud from noeuds where num_thesaurus='$thesaurus_traite' and id_noeud=notices_categories.num_noeud) ";
+	}
+	$res_del = @pmb_mysql_query($rqt_del);
 	$rqt_ins = "INSERT INTO notices_categories (notcateg_notice, notcateg_categorie, ordre_categorie) VALUES ";
-	for($i=0 ; $i< sizeof($categories) ; $i++) {
-		$id_categ=$categories[$i]['categ_id'];
-		if ($id_categ) {
-			$rqt = $rqt_ins . " ('$notice_retour','$id_categ',$i) " ; 
-			$res_ins = @pmb_mysql_query($rqt, $dbh);
+	$nb_categories = count($categories);
+	for ($i = 0; $i < $nb_categories; $i++) {
+		$id_categ = $categories[$i]['categ_id'];
+		if (!empty($id_categ)) {
+			$rqt = $rqt_ins . " ('$notice_retour','$id_categ',$i) "; 
+			$res_ins = @pmb_mysql_query($rqt);
 		}
 	}
 }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: databnf.class.php,v 1.8 2017-10-19 14:13:43 ngantier Exp $
+// $Id: databnf.class.php,v 1.9 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -42,6 +42,7 @@ class databnf extends connector {
 	}
     
     public function source_get_property_form($source_id) {
+        global $charset, $sparql_endpoint_url;
     	$params=$this->get_source_params($source_id);
     	if ($params["PARAMETERS"]) {
     		//Affichage du formulaire avec $params["PARAMETERS"]

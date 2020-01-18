@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_small_text_card_ui.class.php,v 1.5 2017-09-04 12:47:43 tsamson Exp $
+// $Id: onto_common_datatype_small_text_card_ui.class.php,v 1.8 2019-08-14 08:02:58 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -40,7 +40,7 @@ class onto_common_datatype_small_text_card_ui extends onto_common_datatype_ui {
 		$max = $restrictions->get_max();
 		
 		$form=$ontology_tpl['form_row_card'];
-		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->label, 'utf-8') ,ENT_QUOTES,$charset) , $form);
+		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->get_label(), 'utf-8') ,ENT_QUOTES,$charset) , $form);
 		$form=str_replace("!!onto_input_type!!",htmlentities(self::$default_type ,ENT_QUOTES,$charset) , $form);
 		
 		$content='';
@@ -109,10 +109,11 @@ class onto_common_datatype_small_text_card_ui extends onto_common_datatype_ui {
 		$onto_rows = "";
 		$onto_rows.= $content;
 		$form = str_replace("!!input_add!!", $ontology_tpl['form_row_content_input_add_card'], $form);
-		$form = str_replace("!!onto_row_max_card!!", $max, $form);		
-		$form=str_replace("!!onto_rows!!",$onto_rows ,$form);
+		$form = str_replace("!!onto_row_max_card!!", $max, $form);
+		$form = str_replace("!!onto_rows!!", $onto_rows, $form);
+		$form = str_replace("!!onto_row_scripts!!", static::get_scripts(), $form);
 		$form = self::get_form_with_special_properties($property, $datas, $instance_name, $form);
-		$form=str_replace("!!onto_row_id!!",$instance_name.'_'.$property->pmb_name , $form);
+		$form = str_replace("!!onto_row_id!!", $instance_name.'_'.$property->pmb_name, $form);
 		
 		return $form;
 	} // end of member function get_form
@@ -131,7 +132,7 @@ class onto_common_datatype_small_text_card_ui extends onto_common_datatype_ui {
 		
 		$display='<div id="'.$instance_name.'_'.$property->pmb_name.'">';
 		$display.='<p>';
-		$display.=$property->label.' : ';
+		$display.=$property->get_label().' : ';
 		foreach($datas as $data){
 			$display.=$data->get_formated_value();
 		}
@@ -157,7 +158,7 @@ class onto_common_datatype_small_text_card_ui extends onto_common_datatype_ui {
 	public static function get_validation_js($item_uri,$property, $restrictions,$datas, $instance_name,$flag){
 		global $msg;
 		return '{
-			"message": "'.addslashes($property->label).'",
+			"message": "'.addslashes($property->get_label()).'",
 			"valid" : true,
 			"nb_values": 0,
 			"error": "",
@@ -170,6 +171,10 @@ class onto_common_datatype_small_text_card_ui extends onto_common_datatype_ui {
 				for (var i=0; i<=order ; i++){
 					var label = document.getElementById("'.$instance_name.'_'.$property->pmb_name.'_"+i+"_value");
 					if(label && label.value != ""){
+						if (label.value.length > 511) {
+							this.valid = false;
+							this.error = "too_long";
+						}
 						this.nb_values++;
 					}
 				}
@@ -192,9 +197,12 @@ class onto_common_datatype_small_text_card_ui extends onto_common_datatype_ui {
 					case "max" : 
 						this.message = "'.addslashes($msg['onto_error_too_much_values']).'";
 						break;
+					case "too_long" : 
+						this.message = "'.addslashes($msg['onto_error_too_long_value_small_text']).'";
+						break;
  				}
-				this.message = this.message.replace("%s","'.addslashes($property->label).'");			
-				return this.message;	
+				this.message = this.message.replace("%s","'.addslashes($property->get_label()).'");
+				return this.message;
 			} 	
 		}';	
 	}

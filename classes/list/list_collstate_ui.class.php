@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_collstate_ui.class.php,v 1.2 2018-11-09 14:45:19 dgoron Exp $
+// $Id: list_collstate_ui.class.php,v 1.2.6.2 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -12,10 +12,6 @@ require_once($class_path."/parametres_perso.class.php");
 
 class list_collstate_ui extends list_ui {
 		
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
-	
 	protected function _get_query_base() {
 		global $pmb_sur_location_activate;
 		
@@ -134,9 +130,9 @@ class list_collstate_ui extends list_ui {
 		global $pmb_sur_location_activate;
 		global $pmb_etat_collections_localise;
 		
-		if($this->applied_sort['by']) {
+		if($this->applied_sort[0]['by']) {
 			$order = '';
-			$sort_by = $this->applied_sort['by'];
+			$sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				default :
 					$order .= parent::_get_query_order();
@@ -144,7 +140,7 @@ class list_collstate_ui extends list_ui {
 			}
 			if($order) {
 				$this->applied_sort_type = 'SQL';
-				return " order by ".$order." ".$this->applied_sort['asc_desc'];
+				return " order by ".$order." ".$this->applied_sort[0]['asc_desc'];
 			} else {
 				//Tri SQL par défaut
 				$this->applied_sort_type = 'SQL';
@@ -167,12 +163,8 @@ class list_collstate_ui extends list_ui {
 	protected function init_default_pager() {
 		global $nb_per_page_a_search;
 		
-		$this->pager = array(
-				'page' => 1,
-				'nb_per_page' => $nb_per_page_a_search,
-				'nb_results' => 0,
-				'nb_page' => 1
-		);
+		parent::init_default_pager();
+		$this->pager['nb_per_page'] = $nb_per_page_a_search;
 	}
 	
 	protected function get_form_title() {

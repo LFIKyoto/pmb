@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.5 2017-09-21 14:52:32 ngantier Exp $
+// $Id: main.inc.php,v 1.6 2019-06-05 13:44:31 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -59,6 +59,7 @@ $empr_grille_default.= "
   <movable id='g4_r0_f0' visible='yes' parent='g4' width='25%'/>
   <movable id='g4_r0_f1' visible='yes' parent='g4' width='25%'/>
   <movable id='g4_r0_f2' visible='yes' parent='g4'/>
+  <movable id='g4_r0_f3' visible='yes' parent='g4'/>
   <movable id='g4_r1_f0' visible='yes' parent='g4'/>
   <movable id='g5_r0_f0' visible='yes' parent='g5'/>";
 if ($nb_cp) {

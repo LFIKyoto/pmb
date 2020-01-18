@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_history.inc.php,v 1.4 2016-11-15 13:35:23 dgoron Exp $
+// $Id: search_history.inc.php,v 1.5 2019-06-05 09:04:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $idcaddie, $action, $msg;
 
 if($idcaddie) {
 	$myCart = new caddie($idcaddie);
@@ -31,14 +33,14 @@ if($idcaddie) {
 		    		switch ($myCart->type) {
 						case "EXPL" :
 		    				$requete="select $table.* from ".$table.", exemplaires where exemplaires.expl_id=$table.expl_id";
-	    			 		$resultat=pmb_mysql_query($requete,$dbh);
+	    			 		$resultat=pmb_mysql_query($requete);
 	    			 		while ($row = pmb_mysql_fetch_object($resultat)) {
 	    						$res_ajout = $myCart->pointe_item($row->expl_id,$myCart->type);
 	    			 		}
 							break;
 						case "NOTI" :
 		    				$requete="select $table.* from ".$table;
-	    			 		$resultat=pmb_mysql_query($requete,$dbh);
+	    			 		$resultat=pmb_mysql_query($requete);
 	    			 		while ($row = pmb_mysql_fetch_object($resultat)) {
 	    						$res_ajout = $myCart->pointe_item($row->notice_id,$myCart->type);
 	    			 		}

@@ -2,8 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facettes_external.inc.php,v 1.1 2016-10-26 14:57:59 dgoron Exp $
+// $Id: facettes_external.inc.php,v 1.2 2019-05-29 12:03:09 btafforeau Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $sub, $charset, $sended_datas, $pmb_compare_notice_nb, $pmb_compare_notice_template;
 
 require_once($class_path.'/facettes_external.class.php');
 require_once($class_path.'/facettes_external_search_compare.class.php');

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abiodoc.inc.php,v 1.6 2015-04-03 11:16:17 jpermanne Exp $
+// $Id: abiodoc.inc.php,v 1.6.14.1 2019-10-15 09:59:04 btafforeau Exp $
 
 function search_other_function_filters() {
 	global $abiodoc_app,$charset;
@@ -94,8 +94,8 @@ function search_other_function_human_query($n) {
 
 
 function search_other_function_post_values() {
-	global $abiodoc_app;
-	return "<input type=\"hidden\" name=\"abiodoc_app\" value=\"$abiodoc_app\">\n";
+	global $abiodoc_app, $charset;
+	return "<input type=\"hidden\" name=\"abiodoc_app\" value=\"".htmlentities($abiodoc_app, ENT_QUOTES, $charset)."\">\n";
 }
 
 

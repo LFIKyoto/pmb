@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_store_arc2_extended.class.php,v 1.2 2017-06-01 16:26:30 apetithomme Exp $
+// $Id: onto_store_arc2_extended.class.php,v 1.3 2019-02-22 10:16:53 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -57,7 +57,7 @@ class onto_store_arc2_extended extends onto_store_arc2 {
 		}
 		
 		if ($bool) {
-			if ($this->config['params']) {
+			if (!empty($this->config['params'])) {
 				foreach ($this->config['params'] as $uri => $object) {
 					$query = "insert into <pmb> " . $this->rdf_serialize($object,$uri);
 					$this->query($query,$this->namespaces);

@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial.tpl.php,v 1.41 2018-11-21 21:10:46 dgoron Exp $
+// $Id: cms_editorial.tpl.php,v 1.45 2019-05-27 12:03:18 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 global $cms_editorial_form_editables;
-global $PMBuserid;
+global $PMBuserid, $current_module, $cms_editorial_form_tpl, $msg;
+global $cms_editorial_form_del_button_tpl, $cms_editorial_form_dupli_button_tpl, $cms_editorial_form_audit_button_tpl, $cms_editorial_parent_field, $cms_editorial_title_field, $charset, $cms_dojo_plugins_editor, $cms_editorial_resume_field, $cms_editorial_resume_field_no_dojo, $cms_editorial_contenu_field, $cms_editorial_contenu_field_no_dojo, $cms_editorial_desc_field, $cms_editorial_first_desc, $cms_editorial_other_desc, $cms_editorial_publication_state_field, $cms_editorial_dates_field, $cms_editorial_type_field, $cms_editorial_obj_id_field, $cms_editorial_permalink_field;
 
 $cms_editorial_form_tpl = "
 	<script type='text/javascript'>
@@ -39,7 +40,7 @@ $cms_editorial_form_tpl = "
 				<input type='hidden' name='cms_editorial_form_obj_id' id='cms_editorial_form_obj_id' value='!!cms_editorial_form_obj_id!!' />
 				!!fields!!
 				<div class='row'>&nbsp;</div>
-				<div id='el9Child' etirable='yes' data-zone-ajax='yes' dojoType='apps/cms/CmsEditorialTypeContentForm' href='!!type_href!!' data-dojo-props='type : \"!!type!!\", activated_grid : ".$cms_editorial_form_editables."' label=\"".htmlentities($msg['cms_editorial_form_type'], ENT_QUOTES, $charset)."\">
+				<div id='el9Child' etirable='yes' data-zone-ajax='yes' dojoType='apps/cms/CmsEditorialTypeContentForm' href='!!type_href!!' data-dojo-props='type : \"!!type!!\", activated_grid : ".$cms_editorial_form_editables.", activated_tinymce : !!activated_tinymce!!' label=\"".htmlentities($msg['cms_editorial_form_type'], ENT_QUOTES, $charset)."\">
 				</div>
 			</div>
 		</div>
@@ -215,7 +216,6 @@ $cms_editorial_desc_field = "
 			dojo.require('dojox.editor.plugins.InsertAnchor');
 			dojo.require('dojox.editor.plugins.Blockquote');
 			dojo.require('dojox.editor.plugins.LocalImage');
-			ajax_parse_dom();
 			function add_categ() {
 		        template = document.getElementById('addcateg');
 		        categ=document.createElement('div');
@@ -351,31 +351,18 @@ $cms_editorial_type_field = "
 				if (dojo.byId('cms_editorial_form_obj_id').value != 0) {
 					if (confirm(\"".$msg['cms_editorial_form_change_type_confirm']."\")) {
 						document.getElementById('cms_editorial_form_type_sel_index').value = elem.selectedIndex;
-						require(['dojo/ready', 'dojo/dom', 'dojo/request/xhr'], function(ready, dom, xhr){
-						     ready(function(){
-								xhr('./ajax.php?module=cms&categ=get_type_form&elem=!!type!!&type_id='+id+'&id='+dojo.byId('cms_editorial_form_obj_id').value, {
-									sync: true,
-									handleAs: 'text',
-								}).then(function(response){
-									dom.byId('el9Child').innerHTML = response; 
-								});
-						     });
-						});
+						var content = dijit.byId('el9Child');
+						content.href='./ajax.php?module=cms&categ=get_type_form&elem=!!type!!&type_id='+id+'&id='+dojo.byId('cms_editorial_form_obj_id').value;
+						content.refresh();
 					} else {
 						elem.selectedIndex = document.getElementById('cms_editorial_form_type_sel_index').value;
 					}	
 				} else {
-					require(['dojo/ready', 'dojo/dom', 'dojo/request/xhr'], function(ready, dom, xhr){
-					     ready(function(){
-							xhr('./ajax.php?module=cms&categ=get_type_form&elem=!!type!!&type_id='+id+'&id='+dojo.byId('cms_editorial_form_obj_id').value, {
-								sync: true,
-								handleAs: 'text',
-							}).then(function(response){
-								dom.byId('el9Child').innerHTML = response; 
-							});
-					     });
-					});
+					var content = dijit.byId('el9Child');
+					content.href='./ajax.php?module=cms&categ=get_type_form&elem=!!type!!&type_id='+id+'&id='+dojo.byId('cms_editorial_form_obj_id').value;
+					content.refresh();
 				}
+				return true;
 			}
 		</script>
 	</div>

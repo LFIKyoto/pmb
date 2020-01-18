@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum.tpl.php,v 1.49 2018-11-26 15:48:23 dgoron Exp $
+// $Id: explnum.tpl.php,v 1.51 2019-09-03 09:45:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $pmb_docnum_in_directory_allow, $explnum_form, $msg, $charset, $current_module, $pmb_docnum_in_database_allow, $explnum_drop_zone, $explnum_popup_edition_script;
 
 // on teste si des répertoires de stockages sont paramétrés
 if (pmb_mysql_num_rows(pmb_mysql_query("select * from upload_repertoire "))==0) $pmb_docnum_in_directory_allow = 0;
@@ -230,7 +232,7 @@ $explnum_form.="
 
 
 $explnum_drop_zone = "
-               <div class='row'>
+               <div id='document_drop_zone_item' class='row'>
                   <div id='dropTarget_!!entity_id!!' class='dropTarget document_item'>
                         <p style='pointer-events: none;'>".htmlentities($msg['drag_files_here'],ENT_QUOTES,$charset)."</p>
                   </div>

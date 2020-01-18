@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: editor.class.php,v 1.103 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: editor.class.php,v 1.107 2019-08-05 11:46:08 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -435,7 +435,11 @@ class editeur {
 		// b) remplacement dans la table des collections
 		$requete = "UPDATE collections SET collection_parent=$by WHERE collection_parent=".$this->id;
 		$res = pmb_mysql_query($requete, $dbh);
-	
+		
+		// nettoyage indexation concepts
+		$index_concept = new index_concept($this->id, TYPE_PUBLISHER);
+		$index_concept->delete();
+		
 		// c) suppression de l'editeur a remplacer
 		$requete = "DELETE FROM publishers WHERE ed_id=".$this->id;
 		$res = pmb_mysql_query($requete, $dbh);
@@ -547,9 +551,10 @@ class editeur {
 		} else {
 			// s'assurer que l'editeur n'existe pas deja
 			// on teste sur le nom et la ville seulement. voir a l'usage si necessaire de tester plus
-			if (editeur::check_if_exists($value)) {
+		    $id_doublon = editeur::check_if_exists($value, 1);
+		    if ($id_doublon) {
 				require_once("$include_path/user_error.inc.php");
-				warning($msg[145], $msg[149]." (${value['name']}).");
+				warning($msg[145], $msg[149] . "<a href='./autorites.php?categ=see&sub=publisher&id=$id_doublon'>" . stripslashes(" (${value['name']}).</a>"));
 				return FALSE;
 			}
 			$requete = 'INSERT INTO publishers '.$requete.';';
@@ -598,7 +603,7 @@ class editeur {
 		global $pmb_controle_doublons_diacrit;
 	
 		// check sur le type de  la variable passee en parametre
-		if(!sizeof($data) || !is_array($data)) {
+		if ((empty($data) && !is_array($data)) || !is_array($data)) {
 			// si ce n'est pas un tableau ou un tableau vide, on retourne 0
 			return 0;
 		}
@@ -701,19 +706,29 @@ class editeur {
 			if($fields['210'][0]['b'][0]) $data['adr1'] = clean_string($fields['210'][0]['b'][0]);
 			if($fields['210'][0]['d'][0]) $data['year'] = clean_string($fields['210'][0]['d'][0]);
 		}
+		if($fields['219']){
+		    $data['name'] = $fields['210'][0]['c'][0];
+		    if($fields['219'][0]['a'][0]) $data['ville'] = clean_string($fields['219'][0]['a'][0]);
+		    if($fields['219'][0]['b'][0]) $data['adr1'] = clean_string($fields['219'][0]['b'][0]);
+		    if($fields['219'][0]['d'][0]) $data['year'] = clean_string($fields['219'][0]['d'][0]);
+		}
 		return $data;
 	}	
 
-	public static function check_if_exists($data){
+	public static function check_if_exists($data, $from_form = 0){
 	    global $dbh;
 	    global $pmb_controle_doublons_diacrit;
 		
-		if(!isset(static::$long_maxi)) {
+		if (!isset(static::$long_maxi)) {
 			static::$long_maxi = pmb_mysql_field_len(pmb_mysql_query("SELECT ed_name FROM publishers limit 1"),0);
 		}
-		$key = addslashes(rtrim(substr(preg_replace('/\[|\]/', '', rtrim(ltrim($data['name']))),0,static::$long_maxi)));
-		$ville=addslashes(trim($data['ville']));
-		$ed_comment=addslashes(trim($data['ed_comment']));
+		if ($from_form) {
+    		$key = rtrim(substr(preg_replace('/\[|\]/', '', rtrim(ltrim($data['name']))),0,static::$long_maxi));
+    		$ville = trim($data['ville']);
+		} else  {		    
+		    $key = addslashes(rtrim(substr(preg_replace('/\[|\]/', '', rtrim(ltrim($data['name']))),0,static::$long_maxi)));
+		    $ville = addslashes(trim($data['ville']));
+		}
 		
 		$binary = '';
 		if ($pmb_controle_doublons_diacrit) {
@@ -723,15 +738,13 @@ class editeur {
 		$result = @pmb_mysql_query($query, $dbh);
 		if(!$result) die("can't SELECT publisher ".$query);
 		// resultat
-	
-		if(pmb_mysql_num_rows($result)) {
+		if (pmb_mysql_num_rows($result)) {
 			// recuperation du resultat de la recherche
 			$tediteur  = pmb_mysql_fetch_object($result);
 			// et recuperation eventuelle de l'id
-			if($tediteur->ed_id)
+			if ($tediteur->ed_id)
 				return $tediteur->ed_id;
-		}
-			
+		}			
 		return 0;
 	}
 	

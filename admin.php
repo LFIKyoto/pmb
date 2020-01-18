@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: admin.php,v 1.65 2018-12-19 13:59:19 ngantier Exp $
+// $Id: admin.php,v 1.66 2019-03-26 14:05:19 apetithomme Exp $
 
 // définition du minimum nécessaire 
 $base_path=".";                            
@@ -261,7 +261,7 @@ switch($categ) {
 	    include("./admin/vignette/main.inc.php");
 	    break;
 	case 'composed_vedettes':
-		$admin_layout = str_replace ( '!!menu_contextuel!!', '', $admin_layout );
+		$admin_layout = str_replace ( '!!menu_contextuel!!', $admin_composed_vedettes_menu, $admin_layout );
 		include("./admin/composed_vedettes/main.inc.php");
 		break;
 	default:

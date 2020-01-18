@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dashboard.inc.php,v 1.3 2018-01-08 13:28:37 dgoron Exp $
+// $Id: dashboard.inc.php,v 1.4 2019-05-29 12:03:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $current_dashboard;
 
 require_once($class_path."/encoding_normalize.class.php");
 

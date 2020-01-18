@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_locations_controler.class.php,v 1.2 2016-11-05 14:49:08 ngantier Exp $
+// $Id: map_locations_controler.class.php,v 1.3 2019-02-26 13:48:41 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($class_path."/map/map_objects_controler.class.php");
@@ -52,7 +52,7 @@ class map_locations_controler extends map_objects_controler
                 $json_list = array_merge($json_list, $json);
             }
             return "mode:\"visualization\", type:\"" . TYPE_LOCATION . "\", initialFit: [ " . self::get_coord_initialFit($coords) . "], layers : " .
-                    json_encode($json_list) . ", data : " . json_encode($this->location_objects);
+                encoding_normalize::json_encode($json_list) . ", data : " . encoding_normalize::json_encode($this->location_objects);
         } else {
             return "";
         }

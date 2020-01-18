@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_transferts_ui.class.php,v 1.1 2018-12-27 10:05:22 dgoron Exp $
+// $Id: list_transferts_ui.class.php,v 1.2.4.3 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -21,10 +21,6 @@ class list_transferts_ui extends list_ui {
 	protected $cp;
 	
 	protected $displayed_cp;
-	
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	protected function _get_query_base() {
 		$query = 'select id_transfert from transferts
@@ -101,22 +97,15 @@ class list_transferts_ui extends list_ui {
 	 */
 	protected function init_default_pager() {
 		global $transferts_tableau_nb_lignes;
-		$this->pager = array(
-				'page' => 1,
-				'nb_per_page' => $transferts_tableau_nb_lignes,
-				'nb_results' => 0,
-				'nb_page' => 1
-		);
+		parent::init_default_pager();
+		$this->pager['nb_per_page'] = $transferts_tableau_nb_lignes;
 	}
 	
 	/**
 	 * Initialisation du tri par défaut appliqué
 	 */
 	protected function init_default_applied_sort() {
-		$this->applied_sort = array(
-				'by' => 'formatted_date_creation',
-				'asc_desc' => 'desc'
-		);
+	    $this->add_applied_sort('formatted_date_creation', 'desc');
 	}
 	
 	/**
@@ -124,9 +113,9 @@ class list_transferts_ui extends list_ui {
 	 */
 	protected function _get_query_order() {
 		
-		if($this->applied_sort['by']) {
+	    if($this->applied_sort[0]['by']) {
 			$order = '';
-			$sort_by = $this->applied_sort['by'];
+			$sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				case 'id':
 					$order .= 'id_transfert';
@@ -185,7 +174,7 @@ class list_transferts_ui extends list_ui {
 			}
 			if($order) {
 				$this->applied_sort_type = 'SQL';
-				return " order by ".$order." ".$this->applied_sort['asc_desc']; 
+				return " order by ".$order." ".$this->applied_sort[0]['asc_desc']; 
 			} else {
 				return "";
 			}
@@ -331,12 +320,12 @@ class list_transferts_ui extends list_ui {
 	
 	/**
 	 * Fonction de callback
-	 * @param account $a
-	 * @param account $b
+	 * @param object $a
+	 * @param object $b
 	 */
 	protected function _compare_objects($a, $b) {
-		if($this->applied_sort['by']) {
-			$sort_by = $this->applied_sort['by'];
+	    if($this->applied_sort[0]['by']) {
+	        $sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				case 'record' :
 					if($a->get_num_notice()) {
@@ -565,7 +554,7 @@ class list_transferts_ui extends list_ui {
 		if (SESSrights & EDIT_AUTH) {
 			$sub_url = $sub;
 			if($sub == 'departs') {
-				switch (get_called_class()) {
+			    switch (static::class) {
 					case 'list_transferts_envoi_ui':
 						$sub_url = 'envoi';
 						break;
@@ -671,7 +660,7 @@ class list_transferts_ui extends list_ui {
 		}
 		$display = str_replace('!!valid_list!!', $display_valid_list, $display);
 		$motif = '';
-		if(get_called_class() == 'list_transferts_refus_ui') {
+		if(static::class == 'list_transferts_refus_ui') {
 			$motif .= "<hr />".$msg["transferts_circ_validation_refus_motif"]."<br />
 					<textarea name='motif_refus' cols=60></textarea>"; 
 		}

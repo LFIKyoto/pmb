@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.96 2018-07-13 06:58:05 dgoron Exp $
+// $Id: main.inc.php,v 1.96.6.2 2019-11-07 15:27:01 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -44,8 +44,6 @@ if (($categ=='pretrestrict') && ($form_login) && ($form_password)) {
 }
 if (SESSrights & RESTRICTCIRC_AUTH) $sub="" ;
 
-pnb_loan::clean_loans();
-
 switch($categ) {
 	case 'pret':
 		echo window_title($database_window_title.$msg['5']." : ".$msg['13']);
@@ -74,7 +72,7 @@ switch($categ) {
 				break;
 			case 'pret_prolongation':
 			case 'pret_prolongation_bloc':
-				if ($id_doc) {
+				if (!empty($id_doc)) {
 					$id_bloc=$id_doc;
 				}
 				if ($id_bloc) {

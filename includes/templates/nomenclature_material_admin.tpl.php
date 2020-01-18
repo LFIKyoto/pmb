@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_material_admin.tpl.php,v 1.2 2017-09-28 09:23:36 dgoron Exp $
+// $Id: nomenclature_material_admin.tpl.php,v 1.3 2019-05-27 14:05:40 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $nomenclature_material_form_tpl, $current_module, $msg, $charset;
 
 $nomenclature_material_form_tpl="
 <script type='text/javascript' src='javascript/ajax.js'></script>

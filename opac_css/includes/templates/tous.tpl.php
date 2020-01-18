@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tous.tpl.php,v 1.9 2018-04-18 14:08:59 dgoron Exp $
+// $Id: tous.tpl.php,v 1.10 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -79,7 +79,8 @@ global $notice_level2_no_publisher_info;
 global $notice_level3_display;
 global $notice_level4_display;
 global $notice_level5_display;
-global $largeur;  
+global $largeur;
+global $msg;
 
 // level 1 : affichage sur une ligne titre, auteur principal, disponibilité
 $notice_level1_display = "

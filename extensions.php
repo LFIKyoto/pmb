@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: extensions.php,v 1.6 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: extensions.php,v 1.6.14.1 2019-11-15 15:10:43 tsamson Exp $
 
 // définition du minimum nécéssaire
 $base_path=".";
 $base_auth = "EXTENSIONS_AUTH";
 $base_title = "\$msg[extensions_menu]";
+$base_use_dojo = 1;
 require_once ("$base_path/includes/init.inc.php");
 
 

@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_edition_controler.class.php,v 1.30 2018-12-20 11:00:19 mbertin Exp $
+// $Id: map_edition_controler.class.php,v 1.33 2019-06-06 10:09:21 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
     die("no access");
@@ -65,6 +65,13 @@ class map_edition_controler {
                     'type' => $this->type,
                     'layer' => "authority",
                     'ids' => array($this->id)
+                );
+                break;
+            case AUT_TABLE_CONCEPT :
+                $objects[] = array(
+                'type' => $this->type,
+                'layer' => "authority_concept",
+                'ids' => array($this->id)
                 );
                 break;
         }
@@ -142,6 +149,13 @@ class map_edition_controler {
                     'ids' => $ids
                 );
                 break;
+            case AUT_TABLE_CONCEPT :
+                $objects[] = array(
+                'type' => $this->type,
+                'layer' => "authority_concept",
+                'ids' => $ids
+                );
+                break;
         }
         $map_hold = null;
 
@@ -207,6 +221,16 @@ class map_edition_controler {
 	  				</div>
 	  			";
                 break;
+            case AUT_TABLE_CONCEPT :
+                $form_map = "
+	  				<div class='row'>
+	  					<label class='etiquette'>" . $msg["categ_map_title"] . "</label>
+	  				</div>
+	  				<div class='row'>
+	  					" . $this->get_map() . "
+	  				</div>
+	  			";
+                break;
         }
         return $form_map;
     }
@@ -217,7 +241,7 @@ class map_edition_controler {
 
         $this->delete();
         // save des emprises:
-        if (count($map_wkt)) {
+        if (!empty($map_wkt) && count($map_wkt)) {
             for ($i = 0; $i < count($map_wkt); $i++) {
                 $query = "insert into map_emprises set
 				map_emprise_data= GeomFromText('" . $map_wkt[$i] . "'),
@@ -250,6 +274,11 @@ class map_edition_controler {
             $req_areas = "DELETE FROM map_hold_areas where type_obj=" . $this->type . " and id_obj=" . $row->map_emprise_id;
             pmb_mysql_query($req_areas, $dbh);
         }
+    }
+    
+    public function replace($by) {
+        // TO DO
+        $this->delete();
     }
 }
 

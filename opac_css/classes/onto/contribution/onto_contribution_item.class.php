@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_contribution_item.class.php,v 1.30 2019-01-02 14:19:42 tsamson Exp $
+// $Id: onto_contribution_item.class.php,v 1.39.2.4 2019-11-25 12:52:58 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path.'/templates/onto/contribution/onto_contribution_item.tpl.php');
@@ -49,7 +49,9 @@ class onto_contribution_item extends onto_common_item {
 		$is_new = onto_common_uri::is_temp_uri($this->uri);
 		if($is_new){
 			$this->set_assertions($this->get_assertions_from_active_properties());
-		}	
+		} else {
+		    $this->merge_datatypes();
+		}
 		$temp_datatype_tab = $this->order_datatypes();
 		
 		$end_form = '';
@@ -71,10 +73,15 @@ class onto_contribution_item extends onto_common_item {
 			$form.= '		<div title="!!onto_form_title!!" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="selected:true">';
 			$end_form .= "</div>
 						</div>
+                        <script>ajax_parse_dom();</script>
 					</div>";
 		}
 		
-		$form.= $ontology_tpl['form_body'];
+		$comment = $this->contribution_area_form->get_comment();
+		if ($comment) {
+		    $comment = "<div class='contribution_area_form_comment'>" . $comment . "</div>";
+		}
+		$form.= $comment . $ontology_tpl['form_body'];
 		
 		if (!is_numeric((explode('#',$this->uri)[1]))) {
 			$prefix_uri = explode('#',$this->uri)[1];
@@ -182,6 +189,7 @@ class onto_contribution_item extends onto_common_item {
 										
 					//on modifie la propiété avec le paramétrage du formulaire
 					if (!empty($property->pmb_extended['label'])) {
+					    $property->pmb_extended['label'] = onto_common_ui::get_message($property->pmb_extended['label']);
 						$property->label = $property->pmb_extended['label'];
 					}
 										
@@ -208,11 +216,12 @@ class onto_contribution_item extends onto_common_item {
 					if (!empty($property->pmb_extended['hidden'])) {
 						$movable_div = str_replace('!!datatype_ui_form!!', $datatype_ui_class_name::get_hidden_fields($property,$temp_datatype_tab[$property->uri][$datatype_ui_class_name],onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name)), $movable_div);
 					} else {
-						$datatype_ui_form = $datatype_ui_class_name::get_form($this->uri,$property,$this->onto_class->get_restriction($property->uri),$temp_datatype_tab[$property->uri][$datatype_ui_class_name],onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name),$flag);
+					    $datatype_ui_form = $datatype_ui_class_name::get_form($this->uri,$property,$this->onto_class->get_restriction($property->uri),(isset($temp_datatype_tab[$property->uri]) ? $temp_datatype_tab[$property->uri][$datatype_ui_class_name] : null),onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name),$flag);
 						$form_row_content_tooltip = '';
 						if (!empty($property->pmb_extended['tooltip'])) {
+						    $property->pmb_extended['tooltip'] = onto_common_ui::get_message($property->pmb_extended['tooltip']);
 							$form_row_content_tooltip = $ontology_tpl['form_row_content_tooltip'];
-							$form_row_content_tooltip = str_replace('!!form_row_content_tooltip_content!!', htmlentities($property->pmb_extended['tooltip'], ENT_QUOTES, $charset), $form_row_content_tooltip);
+							$form_row_content_tooltip = str_replace('!!form_row_content_tooltip_content!!', nl2br(htmlentities($property->pmb_extended['tooltip'], ENT_QUOTES, $charset)), $form_row_content_tooltip);
 							$form_row_content_tooltip = str_replace('!!onto_row_id!!', onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name).'_'.$property->pmb_name, $form_row_content_tooltip);
 						}
 						$datatype_ui_form = str_replace('!!form_row_content_tooltip!!', $form_row_content_tooltip, $datatype_ui_form);
@@ -228,9 +237,10 @@ class onto_contribution_item extends onto_common_item {
 						
 						$comment = '';
 						if (!empty($property->pmb_extended['comment'])) {
-							$comment = '<i class="contribution_comment">'.$property->pmb_extended['comment'].'</i>';
+						    $property->pmb_extended['comment'] = onto_common_ui::get_message($property->pmb_extended['comment']);
+							$comment = '<i class="contribution_comment">'.nl2br(htmlentities($property->pmb_extended['comment'], ENT_QUOTES, $charset)).'</i>';
 						}
-						$datatype_ui_form = str_replace('!!form_row_content_comment!!', htmlentities($comment, ENT_QUOTES, $charset), $datatype_ui_form);
+						$datatype_ui_form = str_replace('!!form_row_content_comment!!', $comment, $datatype_ui_form);
 						
 						$movable_div = str_replace('!!datatype_ui_form!!', $datatype_ui_form, $movable_div);
 					}
@@ -240,7 +250,7 @@ class onto_contribution_item extends onto_common_item {
 					if($valid_js){
 						$valid_js.= ",";
 					}
-					$valid_js.= $datatype_ui_class_name::get_validation_js($this->uri,$property,$this->onto_class->get_restriction($property->uri),$temp_datatype_tab[$property->uri][$datatype_ui_class_name],onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name),$flag);
+					$valid_js.= $datatype_ui_class_name::get_validation_js($this->uri,$property,$this->onto_class->get_restriction($property->uri),(isset($temp_datatype_tab[$property->uri]) ? $temp_datatype_tab[$property->uri][$datatype_ui_class_name] : null),onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name),$flag);
 					$index++;
 				}
 			}
@@ -357,9 +367,14 @@ class onto_contribution_item extends onto_common_item {
 		$assertions[] = new onto_assertion($this->uri, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", $this->onto_class->uri, "", array('type'=>"uri"));
 		foreach($this->onto_class->get_properties() as $uri_property){
 			$property=$this->onto_class->get_property($uri_property);
+			
 			if ($property->pmb_extended) {
+				if (onto_common_uri::is_temp_uri($this->uri) && isset($_SESSION['contribution_default_fields']) && !empty($_SESSION['contribution_default_fields'][$uri_property])) {
+					$property->pmb_extended['default_value'] = $_SESSION['contribution_default_fields'][$uri_property];
+				}
 				/* @var $datatype onto_common_datatype */
 				$datatype_class_name=$this->resolve_datatype_class_name($property);
+				
 				if(count($property->pmb_extended['default_value'])) {
 					foreach ($property->pmb_extended['default_value'] as $bnode => $bnode_value) {
 						
@@ -384,6 +399,7 @@ class onto_contribution_item extends onto_common_item {
 				}
 			}
 		}
+		unset($_SESSION['contribution_default_fields']);
 		return $assertions;
 	} // end of member function get_assertions
 	
@@ -420,7 +436,6 @@ class onto_contribution_item extends onto_common_item {
 					}
 					
 				}else{
-				    var_dump($datatype);
 					$assertions[] = new onto_assertion($this->uri, $property, $datatype->get_raw_value(), $datatype->get_value_type(), $datatype->get_value_properties());
 					if($this->onto_class->get_property($property)->inverse_of){
 						$assertions[] = new onto_assertion($datatype->get_raw_value(), $this->onto_class->get_property($property)->inverse_of->uri, $this->uri, $this->onto_class->uri);
@@ -518,5 +533,51 @@ class onto_contribution_item extends onto_common_item {
 		$this->onto_class->get_restrictions();
 		return $this->datatypes;
 	} // end of member function get_values_from_form
+	
+	private function merge_datatypes() {
+	    $datatypes = $this->datatypes;
+	    $this->datatypes = [];
+	    $this->set_assertions($this->get_assertions_from_active_properties());
+	    foreach ($datatypes as $uri => $values) {
+	        $this->datatypes[$uri] = $values;
+	    }
+	}
+	
+	public function get_label($uri_property){
+	    global $lang;
+	    
+	    if (!is_array($uri_property)) {
+	        return parent::get_label($uri_property);
+	    }	    
+	    $values = [];
+	    foreach ($uri_property as $uri) {
+	        $values = array_merge($values, $this->datatypes[$uri]);
+	    }	    
+	    $label = "";
+	    $default_label = "";
+	    if(count($values) == 1){
+	        $label = $values[0]->get_value();
+	    }else if(count($values) > 1){
+	        foreach($values as $value){
+	            if ($label) {
+	                $label .= ", ";
+	            }
+	            if ($default_label) {
+	                $default_label .= ", ";
+	            }
+	            if($value->offsetget_value_property("lang") == ""){
+	                $default_label .= $value->get_value();
+	            }
+	            if(!$default_label){
+	                $default_label .= $value->get_value();
+	            }
+	            if($value->offsetget_value_property("lang") == substr($lang,0,2)){
+	                $label .= $value->get_value();
+	            }
+	        }
+	        if(!$label) $label = $default_label;
+	    }
+	    return $label;
+	}
 	
 } // end of onto_contribution_item

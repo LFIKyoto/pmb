@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authority.class.php,v 1.80 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: authority.class.php,v 1.85.2.2 2019-11-27 10:56:19 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -67,18 +67,20 @@ class authority {
 	private $type_label;
 
 	/**
-	 * @var identifiant du statut
+	 * Identifiant du statut
+	 * @var int
 	 */
 	private $num_statut = 1;
 	
 	/**
-	 * @var class html du statut
+	 * Class HTML du statut
+	 * @var string
 	 */
 	private $statut_class_html = 'statutnot1';
 	
 	/**
-	 * 
-	 * @var label du statut
+	 * Label du statut
+	 * @var string
 	 */
 	private $statut_label = '';
 	
@@ -355,6 +357,13 @@ class authority {
 		//Suppression de la vignette de l'autorité si il y en a une d'uploadée
 		thumbnail::delete($this->id, 'authority');
 		
+		if ($this->get_prefix_for_pperso() != "authperso") {
+		    $query = "DELETE FROM " . $this->get_prefix_for_pperso() . "_custom_values where " . $this->get_prefix_for_pperso() ."_custom_origine=" . $this->num_object;
+		    pmb_mysql_query($query);		    
+		    $query = "DELETE FROM " . $this->get_prefix_for_pperso() . "_custom_dates where " . $this->get_prefix_for_pperso() ."_custom_origine=" . $this->num_object;
+		    pmb_mysql_query($query);		    
+		}
+		
 	    $query = "delete from authorities where num_object=".$this->num_object." and type_object=".$this->type_object;
 	    $result = pmb_mysql_query($query);
 	    if($result) {
@@ -407,7 +416,7 @@ class authority {
 		$attributes = explode(".",$property);
 		for($i=0 ; $i<count($attributes) ; $i++){
 			if(is_array($obj)){
-				$obj = $obj[$attributes[$i]];
+			    $obj = (!empty($obj[$attributes[$i]]) ? $obj[$attributes[$i]] : null );
 			} else if(is_object($obj)){
 				$obj = $this->look_for_attribute_in_class($obj, $attributes[$i]);
 			} else{
@@ -584,7 +593,8 @@ class authority {
 	
 	public static function get_type_label_from_type_id($type_id) {
 		global $msg;
-		switch($type_id){
+		$type_id = (int) $type_id;
+		switch($type_id) {
 			case AUT_TABLE_AUTHORS :
 				return $msg['isbd_author'];
 			case AUT_TABLE_PUBLISHERS :
@@ -603,7 +613,60 @@ class authority {
 				return $msg['isbd_categories'];
 			case AUT_TABLE_CONCEPT :
 				return $msg['concept_menu'];
+			case AUT_TABLE_AUTHPERSO :
+				return $msg['notice_authperso'];
+			default:
+			    return '';
 		}
+	}
+	
+	public function build_isbd_entry_lien_gestion() {
+	    
+	    switch ($this->type_object) {
+	        case AUT_TABLE_AUTHORS :
+	            $sub_val = 'author';
+	            break;
+	        case AUT_TABLE_CATEG :
+	            $sub_val = 'category';
+	            break;
+	        case AUT_TABLE_PUBLISHERS :
+	            $sub_val = 'publisher';
+	            break;
+	        case AUT_TABLE_COLLECTIONS :
+	            $sub_val = 'collection';
+	            break;
+	        case AUT_TABLE_SUB_COLLECTIONS :
+	            $sub_val = 'subcollection';
+	            break;
+	        case AUT_TABLE_SERIES :
+	            $sub_val = 'serie';
+	            break;
+	        case AUT_TABLE_INDEXINT :
+	            $sub_val = 'indexint';
+	            break;
+	        case AUT_TABLE_TITRES_UNIFORMES :
+	            $sub_val = 'titre_uniforme';
+	            break;
+	        case AUT_TABLE_CONCEPT :
+	            $sub_val = 'concept';
+	            break;
+	        case AUT_TABLE_AUTHPERSO :
+	            $sub_val = 'authperso';
+	            break;
+	        default :
+	            return '';
+	    }
+	    // construit le lien si l'utilisateur à accès aux autorités
+	    if (SESSrights & AUTORITES_AUTH) {
+	        return "<a href='./autorites.php?categ=see&sub=" . $sub_val . "&id=" .$this->num_object ."' class='lien_gestion' title=''>" . $this->get_isbd() ."</a>";
+	    } else {
+	        return $this->get_isbd();
+	    }
+	}
+	
+	public function get_aut_link() {
+	    
+	    return $this->init_autlink_class();
 	}
 	
 	/**
@@ -624,7 +687,10 @@ class authority {
 		    }
 			$ppersos = $parametres_perso->show_fields($this->num_object);
 			if(isset($ppersos['FIELDS']) && is_array($ppersos['FIELDS'])){
-				foreach ($ppersos['FIELDS'] as $pperso) {
+			    foreach ($ppersos['FIELDS'] as $pperso) {
+			        if ($pperso["TYPE"] !== 'html') {
+			            $pperso['AFF'] = nl2br($pperso["AFF"]);
+			        }
 					$this->p_perso[$pperso['NAME']] = $pperso;
 				}
 			}
@@ -812,7 +878,33 @@ class authority {
 	
 	public function get_type_icon() {
 		if (!isset($this->type_icon)) {
-			$this->type_icon = get_url_icon('authorities/'.$this->get_string_type_object().'_icon.png');
+			$auth_type = $this->get_string_type_object();
+			switch ($auth_type) {
+				case 'author' :
+					$author_type = $this->get_object_instance()->type;
+					if (!empty($author_type)) {
+						$this->type_icon = get_url_icon('authorities/'.$auth_type.'_'.$author_type.'_icon.png');
+						break;
+					}
+					$this->type_icon = get_url_icon('authorities/'.$auth_type.'_icon.png');
+					break;
+				case 'titre_uniforme' :
+					// stocker comme ça ou juste les propriétés qui nous intéressent ? qu'est-ce qui est le plus performant?
+					$tu_type = $this->object_instance->oeuvre_type;
+					$tu_nature = $this->object_instance->oeuvre_nature;
+					if (!empty($tu_type) && !empty($tu_nature)) {
+						$this->type_icon = get_url_icon('authorities/tu_'.$tu_nature.'_'.$tu_type.'_icon.png');
+						break;
+					}
+					$this->type_icon = get_url_icon('authorities/'.$auth_type.'_icon.png');
+					break;
+				default :
+					$this->type_icon = get_url_icon('authorities/'.$auth_type.'_icon.png');
+					break;
+			}
+			if (empty($this->type_icon)) {
+				$this->type_icon = get_url_icon('authorities/'.$auth_type.'_icon.png');
+			}
 		}
 		return $this->type_icon;
 	}
@@ -855,8 +947,6 @@ class authority {
 	}
 	
 	public function get_used_in_pperso_authorities() {
-		global $dbh;
-		
 		if (!isset($this->used_in_pperso_authorities)) {
 	   		$this->used_in_pperso_authorities=aut_pperso::get_used($this->type_object, $this->num_object,$this->table_tempo);
 		}
@@ -864,8 +954,6 @@ class authority {
 	}
 	
 	public function get_used_in_pperso_authorities_ids($prefix) {
-		global $dbh;	
-		
 		switch($prefix){
 			case 'article':$type_object=20;	break;
 			case 'section':$type_object=21;	break;

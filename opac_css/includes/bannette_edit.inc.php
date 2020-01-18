@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannette_edit.inc.php,v 1.3 2018-04-19 14:41:41 dgoron Exp $
+// $Id: bannette_edit.inc.php,v 1.6 2019-06-24 15:50:49 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -54,20 +54,37 @@ if ($equation) {
 
 		$bannette->set_properties_from_form();
 		$bannette->save();
+		
+		$query = 'SELECT * FROM bannette_equation WHERE num_equation = '.$instance_equation->id_equation;
+		$result = pmb_mysql_query($query);
+		if (!pmb_mysql_num_rows($result)) {
+		    $rqt_bannette_equation = "INSERT INTO bannette_equation (num_bannette, num_equation) VALUES (".$bannette->id_bannette.", $instance_equation->id_equation)";
+		    pmb_mysql_query($rqt_bannette_equation);
+		    
+		    $bannette->set_bannette_equations();
+		    
+		    $bannette->vider();
+		    $bannette->remplir();
+		} else {
+		    // mise à jour de l'instance bannette_equations de classe bannette
+		    $bannette->set_bannette_equations();
+		    
+		    $bannette->vider();
+		    $bannette->remplir();
+		}
 
 		// bannette modifiée, on supprime le bouton des rech multicritères
 		$_SESSION['abon_edit_bannette_priv'] = 0 ;
 		print "<br />" ;
 		print str_replace("!!nom_bannette!!", $bannette->nom_bannette, $msg['dsi_bannette_saved']);
 		print "<br /><br />" ;
+		if (!empty($bannette_diffuse_checked)) {
+		    $bannette->diffuser();
+		}
 		// pour construction correcte du mail de diffusion
 		$liens_opac = array() ;
-		if(isset($bannette_diffuse_checked) && $bannette_diffuse_checked) {
-			$bannette->vider();
-			print pmb_bidi($bannette->remplir());
-			$bannette->diffuser();
-		}
 	} else {
+	    print '<div id="equation_container">';
 		print $equ_human;
 		$search_class->unserialize_search($equation);
 		print $search_class->make_hidden_search_form($base_path."/index.php?tab=dsi&bt_edit_bannette_priv=1&search_type_asked=extended_search&id_bannette=".$bannette->id_bannette,"bannette_search_form_".$bannette->id_bannette);
@@ -75,10 +92,43 @@ if ($equation) {
 		print "<a href=\"javascript:document.forms['bannette_search_form_".$bannette->id_bannette."'].submit();\" style='cursor : pointer'>";
 		print "<img src='".get_url_icon('tag.png')."' alt='".htmlentities($msg['edit'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['edit'],ENT_QUOTES,$charset)."' />";
 		print "</a>";
+		print "</div>";
 		print "<br /><br />".$bannette->get_short_form($equation);
 	}
 } else {
-	// y'a un binz, pas d'équation...
+    if (isset($enregistrer) && $enregistrer=='1') {         
+        if(!isset($instance_equation)) {
+            $instance_equation = new equation();
+        }
+        $instance_equation->set_properties_from_form();
+        $instance_equation->save();
+        
+        $bannette->set_properties_from_form();
+        $bannette->save();        
+        $query = 'SELECT num_equation FROM bannette_equations WHERE num_equation = '.$instance_equation->id_equation. ' LIMIT 1';
+        $result = pmb_mysql_query($query);
+        
+        if (!pmb_mysql_num_rows($result)) {
+            $rqt_bannette_equation = "INSERT INTO bannette_equation (num_bannette, num_equation) VALUES (".$bannette->id_bannette.", $instance_equation->id_equation)";
+            pmb_mysql_query($rqt_bannette_equation);
+        }
+
+        print "<br />";
+        print str_replace("!!nom_bannette!!", $bannette->nom_bannette, $msg['dsi_bannette_saved']);
+        print "<br /><br />".$msg['dsi_bannette_no_equation'];
+        
+    } else {
+        print '<div id="equation_container">';
+        print '<span>
+            '.$msg['dsi_bannette_no_equation'].'
+            </span>';
+        print $search_class->make_hidden_search_form($base_path."/index.php?tab=dsi&bt_edit_bannette_priv=1&search_type_asked=extended_search&id_bannette=".$bannette->id_bannette,"bannette_search_form_".$bannette->id_bannette);
+        print "<a href=\"javascript:document.forms['bannette_search_form_".$bannette->id_bannette."'].submit();\" style='cursor : pointer'>";
+        print "<img src='".get_url_icon('tag.png')."' alt='".htmlentities($msg['edit'],ENT_QUOTES,$charset)."' title='".htmlentities($msg['edit'],ENT_QUOTES,$charset)."' />";
+        print "</a>";
+        print "</div>";
+        print "<br /><br />".$bannette->get_short_form($equation);
+    }
 }
 
 print "</div><!-- fermeture #aut_details -->\n";	

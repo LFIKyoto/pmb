@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scheduler_caddie_planning.class.php,v 1.6 2018-11-13 12:14:03 dgoron Exp $
+// $Id: scheduler_caddie_planning.class.php,v 1.10 2019-08-01 13:16:35 btafforeau Exp $
 
 require_once($class_path."/scheduler/scheduler_planning.class.php");
 require_once($class_path."/authorities_caddie.class.php");
@@ -121,9 +121,9 @@ class scheduler_caddie_planning extends scheduler_planning {
 		$display = '';
 		$model_class_name = static::get_model_class_name_from_object_type($object_type);
 		$liste = $model_class_name::get_cart_list($object_type);
-		if(sizeof($liste)) {
-			$parity=array();
-			while(list($cle, $valeur) = each($liste)) {
+		if (!empty($liste)) {
+			$parity = array();
+			foreach ($liste as $cle => $valeur) {
 				$rqt_autorisation=explode(" ",$valeur['autorisations']);
 				if (array_search ($PMBuserid, $rqt_autorisation)!==FALSE || $PMBuserid==1) {
 					$myCart = new $model_class_name();
@@ -182,8 +182,8 @@ class scheduler_caddie_planning extends scheduler_planning {
 		$display = '';
 		$model_class_name = static::get_model_class_name_from_object_type($object_type);
 		$liste = $model_class_name::get_cart_list($object_type);
-		if(sizeof($liste)) {
-			while(list($cle, $valeur) = each($liste)) {
+		if (!empty($liste)) {
+		    foreach ($liste as $valeur) {
 				$rqt_autorisation=explode(" ",$valeur['autorisations']);
 				if (array_search ($PMBuserid, $rqt_autorisation)!==FALSE || $PMBuserid==1) {
 					$myCart = new $model_class_name();
@@ -295,12 +295,12 @@ class scheduler_caddie_planning extends scheduler_planning {
 		return "
 			<div class='scheduler_caddie_action_flag'>
 				<div class='row'>
-					<input type='checkbox' name='scheduler_caddie_action_elt_flag' ".(isset($this->param['scheduler_caddie_action_elt_flag']) && $this->param['scheduler_caddie_action_elt_flag'] ? "checked='checked'" : "")." value='1'>".$msg['caddie_item_marque']."
-					".(($action_what=="supprbase" || $action_what=="supprpanier") ? "&nbsp;<input type='checkbox' name='scheduler_caddie_action_elt_no_flag_inconnu' value='1'>".$msg['caddie_item_blob'] : '')."		
+					<input type='checkbox' name='scheduler_caddie_action_elt_flag' id='scheduler_caddie_action_elt_flag' ".(isset($this->param['scheduler_caddie_action_elt_flag']) && $this->param['scheduler_caddie_action_elt_flag'] ? "checked='checked'" : "")." value='1'><label for='scheduler_caddie_action_elt_flag'>".$msg['caddie_item_marque']."</label>
+					".(($action_what=="supprbase" || $action_what=="supprpanier") ? "&nbsp;<input type='checkbox' name='scheduler_caddie_action_elt_flag_inconnu' id='scheduler_caddie_action_elt_flag_inconnu' value='1'><label for='scheduler_caddie_action_elt_flag_inconnu'>".$msg['caddie_item_blob'] : '')."</label>		
 				</div>
 				<div class='row'>
-					<input type='checkbox' name='scheduler_caddie_action_elt_no_flag' ".(isset($this->param['scheduler_caddie_action_elt_no_flag']) && $this->param['scheduler_caddie_action_elt_no_flag'] ? "checked='checked'" : "")." value='1'>".$msg['caddie_item_NonMarque']."
-					".(($action_what=="supprbase" || $action_what=="supprpanier") ? "&nbsp;<input type='checkbox' name='scheduler_caddie_action_elt_no_flag_inconnu' value='1'>".$msg['caddie_item_blob'] : '')."
+					<input type='checkbox' name='scheduler_caddie_action_elt_no_flag' id='scheduler_caddie_action_elt_no_flag' ".(isset($this->param['scheduler_caddie_action_elt_no_flag']) && $this->param['scheduler_caddie_action_elt_no_flag'] ? "checked='checked'" : "")." value='1'><label for='scheduler_caddie_action_elt_no_flag'>".$msg['caddie_item_NonMarque']."</label>
+					".(($action_what=="supprbase" || $action_what=="supprpanier") ? "&nbsp;<input type='checkbox' name='scheduler_caddie_action_elt_no_flag_inconnu' id='scheduler_caddie_action_elt_no_flag_inconnu' value='1'><label for='scheduler_caddie_action_elt_no_flag_inconnu'>".$msg['caddie_item_blob'] : '')."</label>
 				</div>
 			</div>
 				";
@@ -408,11 +408,11 @@ class scheduler_caddie_planning extends scheduler_planning {
 		
 		$t['scheduler_caddie_type'] = $scheduler_caddie_type;
 		$t['scheduler_caddie_action'] = $scheduler_caddie_action;
-		$t['scheduler_caddie_action_elt_flag'] = $scheduler_caddie_action_elt_flag+0;
-		$t['scheduler_caddie_action_elt_no_flag'] = $scheduler_caddie_action_elt_no_flag+0;
-		$t['scheduler_caddie_action_elt_flag_inconnu'] = $scheduler_caddie_action_elt_flag_inconnu+0;
-		$t['scheduler_caddie_action_elt_no_flag_inconnu'] = $scheduler_caddie_action_elt_no_flag_inconnu+0;
-		$t['scheduler_caddie_action_by_caddie'] = $scheduler_caddie_action_by_caddie+0;
+		$t['scheduler_caddie_action_elt_flag'] = (int) $scheduler_caddie_action_elt_flag;
+		$t['scheduler_caddie_action_elt_no_flag'] = (int) $scheduler_caddie_action_elt_no_flag;
+		$t['scheduler_caddie_action_elt_flag_inconnu'] = (int) $scheduler_caddie_action_elt_flag_inconnu;
+		$t['scheduler_caddie_action_elt_no_flag_inconnu'] = (int) $scheduler_caddie_action_elt_no_flag_inconnu;
+		$t['scheduler_caddie_action_by_caddie'] = (int) $scheduler_caddie_action_by_caddie;
 		$t['scheduler_caddie_list'] = $scheduler_caddie_list;
 		$t['scheduler_proc'] = $scheduler_proc;
 		$t['scheduler_proc_options'] = array();

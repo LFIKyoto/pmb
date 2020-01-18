@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bookreaderPDF.class.php,v 1.24 2017-07-03 09:07:10 dgoron Exp $
+// $Id: bookreaderPDF.class.php,v 1.25 2019-02-18 13:58:09 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -107,7 +107,9 @@ class bookreaderPDF {
 		
 		ini_set("zend.ze1_compatibility_mode", "0");
 		$dom = new DOMDocument('1.0', 'UTF-8');
-		file_put_contents($this->doc->driver->get_cached_filename($this->doc->id).".bbox", str_replace(array(chr("0x01"),chr("0x02"),chr("0x1f"),chr("0x1e")),"",file_get_contents($this->doc->driver->get_cached_filename($this->doc->id).".bbox")));
+		// Hexadecimal In String
+        //file_put_contents($this->doc->driver->get_cached_filename($this->doc->id).".bbox", str_replace(array(chr("0x01"),chr("0x02"),chr("0x1f"),chr("0x1e")),"",file_get_contents($this->doc->driver->get_cached_filename($this->doc->id).".bbox")));
+		file_put_contents($this->doc->driver->get_cached_filename($this->doc->id).".bbox", str_replace(array(chr(1),chr(2),chr(31),chr(30)),"",file_get_contents($this->doc->driver->get_cached_filename($this->doc->id).".bbox")));
 		$dom->load($this->doc->driver->get_cached_filename($this->doc->id).".bbox");
 		// On nettoie la recherche
 		$user_query = strip_empty_words(strtolower(convert_diacrit($user_query)));

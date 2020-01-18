@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: origine_notice.class.php,v 1.8 2017-07-17 15:52:22 dgoron Exp $
+// $Id: origine_notice.class.php,v 1.10 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -74,7 +74,7 @@ class origine_notice {
 		global $dbh;
 	
 		// check sur le type de  la variable passée en paramètre
-		if(!sizeof($data) || !is_array($data)) {
+		if (!is_array($data) || empty($data)) {
 			// si ce n'est pas un tableau ou un tableau vide, on retourne 0
 			return 0;
 		}
@@ -106,7 +106,7 @@ class origine_notice {
 		$origine_notice  = pmb_mysql_fetch_object($result);
 	
 		/* le statut de doc existe, on retourne l'ID */
-		if($origine_notice->orinot_id) return $origine_notice->orinot_id;
+		if(!empty($origine_notice->orinot_id)) return $origine_notice->orinot_id;
 	
 		// id non-récupérée, il faut créer la forme.
 		

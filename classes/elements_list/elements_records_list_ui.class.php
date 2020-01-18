@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: elements_records_list_ui.class.php,v 1.11 2018-10-18 10:08:44 dgoron Exp $
+// $Id: elements_records_list_ui.class.php,v 1.12 2019-08-26 08:36:37 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -94,7 +94,7 @@ class elements_records_list_ui extends elements_list_ui {
 	}
 	
 	protected function generate_element($element_id, $recherche_ajax_mode=0){
-		$element_id +=0;
+		$element_id = (int) $element_id;
 		$result = pmb_mysql_query("SELECT niveau_biblio FROM notices WHERE notice_id=".$element_id);
 		$niveau_biblio = pmb_mysql_result($result, 0, 'niveau_biblio');
 		switch($niveau_biblio) {
@@ -125,6 +125,9 @@ class elements_records_list_ui extends elements_list_ui {
 				$display = new mono_display($element_id, $this->get_level(), str_replace('!!id!!' , $id_bulletin, static::get_link_notice_bulletin()), $this->show_expl, static::get_link_expl(), static::get_link_delete_cart(), str_replace("!!bul_id!!", $id_bulletin, static::get_link_explnum_bulletin()),$this->show_resa, $this->print, $this->show_explnum, $this->show_statut, $this->anti_loop, $this->draggable, $this->no_link, $this->show_opac_hidden_fields,($this->ajax_mode ? $recherche_ajax_mode : 0), $this->show_resa_planning, $this->show_map, 0, $this->context_parameters);
 // 				static::set_link_notice_bulletin('');
 				break;
+			default:
+			    return '';
+			    break; 
 		}
 		return $display->result;
 	}

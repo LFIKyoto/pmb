@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // Â© 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_watch.class.php,v 1.51 2018-08-21 15:38:44 plmrozowski Exp $
+// $Id: docwatch_watch.class.php,v 1.54.2.1 2019-10-25 08:01:59 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -211,7 +211,7 @@ class docwatch_watch extends docwatch_root{
 	 * @access public
 	 */
 	public function __construct($id=0) {
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 		$this->fetch_datas();
 	} // end of member function __construct
 	
@@ -277,7 +277,7 @@ class docwatch_watch extends docwatch_root{
 				if($result && pmb_mysql_num_rows($result)){
 					$this->datasources = array();
 					while ($row=pmb_mysql_fetch_object($result)) {
-						$this->datasources[$row->id_datasource+0] = $row->datasource_type;
+					    $this->datasources[(int) $row->id_datasource] = $row->datasource_type;
 					}
 				}
 			}
@@ -457,6 +457,21 @@ class docwatch_watch extends docwatch_root{
 		}
 	}
 	
+	public function purge_items_mark_as_deleted() {
+	    if($this->id && $this->check_rights()){
+	        $query = "select id_item from docwatch_items where item_status = 2 and item_num_watch = '".$this->id."'";
+	        $result = pmb_mysql_query($query);
+	        if (pmb_mysql_num_rows($result)) {
+	            while($row = pmb_mysql_fetch_object($result)){
+	                $item = new docwatch_item($row->id_item);
+	                $item->delete();
+	            }
+	            return true;
+	        }
+	        return false;
+	    }
+	}
+	
 	/**
 	 * Récupération des données de la source...
 	*/
@@ -579,7 +594,7 @@ class docwatch_watch extends docwatch_root{
 	}
 	
 	public function set_id($id) {
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 	}
 	
 	public function get_title() {
@@ -603,7 +618,7 @@ class docwatch_watch extends docwatch_root{
 	}
 	
 	public function set_owner($owner) {
-		$this->owner = $owner+0;
+	    $this->owner = (int) $owner;
 	}
 	 
 	public function get_allowed_users() {
@@ -612,7 +627,7 @@ class docwatch_watch extends docwatch_root{
 	
 	public function set_allowed_users($allowed_users) {
 		foreach ($allowed_users as $key => $value){
-			$allowed_users[$key] = $value+0;	
+		    $allowed_users[$key] = (int) $value;	
 		}
 		$this->allowed_users = $allowed_users;
 	}
@@ -622,7 +637,7 @@ class docwatch_watch extends docwatch_root{
 	}
 	
 	public function set_num_category($num_category) {
-		$this->num_category = $num_category+0;
+	    $this->num_category = (int) $num_category;
 	}
 	
 	public function set_items($items) {
@@ -634,7 +649,7 @@ class docwatch_watch extends docwatch_root{
 	}
 	
 	public function set_ttl($ttl) {
-		$this->ttl = $ttl+0;
+	    $this->ttl = (int) $ttl;
 	}
 	
 	public function get_desc() {
@@ -666,7 +681,7 @@ class docwatch_watch extends docwatch_root{
 	}
 	
 	public function set_record_default_status($record_default_status) {
-	  $this->record_default_status = $record_default_status+0;
+	    $this->record_default_status = (int) $record_default_status;
 	}
 	
 	public function get_record_default_index_lang() {
@@ -690,7 +705,7 @@ class docwatch_watch extends docwatch_root{
 	}
 	
 	public function set_record_default_is_new($record_default_is_new) {
-		$this->record_default_is_new= $record_default_is_new+0;
+	    $this->record_default_is_new= (int) $record_default_is_new;
 	}
 	    
 	public function get_article_default_parent() {
@@ -698,7 +713,7 @@ class docwatch_watch extends docwatch_root{
 	}
 	
 	public function set_article_default_parent($article_default_parent) {
-	  $this->article_default_parent = $article_default_parent+0;
+	    $this->article_default_parent = (int) $article_default_parent;
 	}
 	    
 	public function get_article_default_content_type() {
@@ -706,7 +721,7 @@ class docwatch_watch extends docwatch_root{
 	}
 	
 	public function set_article_default_content_type($article_default_content_type) {
-	  $this->article_default_content_type = $article_default_content_type+0;
+	    $this->article_default_content_type = (int) $article_default_content_type;
 	}
 	
 	public function get_article_default_publication_status() {
@@ -714,7 +729,7 @@ class docwatch_watch extends docwatch_root{
 	}
 	
 	public function set_article_default_publication_status($article_default_publication_status) {
-	  $this->article_default_publication_status = $article_default_publication_status+0;
+	    $this->article_default_publication_status = (int) $article_default_publication_status;
 	}
 	
 	public function get_section_default_parent() {
@@ -722,7 +737,7 @@ class docwatch_watch extends docwatch_root{
 	}
 	
 	public function set_section_default_parent($section_default_parent) {
-		$this->section_default_parent = $section_default_parent+0;
+	    $this->section_default_parent = (int) $section_default_parent;
 	}
 	 
 	public function get_section_default_content_type() {
@@ -730,7 +745,7 @@ class docwatch_watch extends docwatch_root{
 	}
 	
 	public function set_section_default_content_type($section_default_content_type) {
-		$this->section_default_content_type = $section_default_content_type+0;
+	    $this->section_default_content_type = (int) $section_default_content_type;
 	}
 	
 	public function get_section_default_publication_status() {
@@ -738,7 +753,7 @@ class docwatch_watch extends docwatch_root{
 	}
 	
 	public function set_section_default_publication_status($section_default_publication_status) {
-		$this->section_default_publication_status = $section_default_publication_status+0;
+	    $this->section_default_publication_status = (int) $section_default_publication_status;
 	}
 
 	public function get_watch_rss_link() {
@@ -1026,16 +1041,16 @@ class docwatch_watch extends docwatch_root{
 					'|[\x00-\x7F][\x80-\xBF]+'.
 					'|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*'.
 					'|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})'.
-					'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
+					'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/',
 					'', $xmlrss );
 		} else {
-			$xmlrss = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]/S',
+			$xmlrss = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]/',
 					'', $xmlrss );
 		}
 		return $xmlrss;
 	}
 	
-	function get_items_xmlrss() {
+	public function get_items_xmlrss() {
 		global $charset;
 		
 		$items_xmlrss = "";

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: etagere.inc.php,v 1.21 2017-11-21 12:01:00 dgoron Exp $
+// $Id: etagere.inc.php,v 1.23 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -14,7 +14,7 @@ function aff_etagere($action, $bouton_ajout=1) {
 	global $deflt_catalog_expanded_caddies;
 	
 	$liste = etagere::get_etagere_list();
-	if(sizeof($liste)) {
+	if (!empty($liste)) {
 		if($action=="edit_etagere"){
 			print "<script src='./javascript/classementGen.js' type='text/javascript'></script>";
 			print "<div class='hmenu'>
@@ -30,7 +30,7 @@ function aff_etagere($action, $bouton_ajout=1) {
 				<a href='javascript:collapseAll()'><img src='".get_url_icon('collapse_all.gif')."' id='collapseall' border='0'></a></div>");
 		$parity=1;
 		$arrayRows=array();
-		while(list($cle, $valeur) = each($liste)) {
+		foreach ($liste as $cle => $valeur) {
 			$rqt_autorisation=explode(" ",$valeur['autorisations']);
 			if (array_search ($PMBuserid, $rqt_autorisation)!==FALSE || $PMBuserid==1) {
 				$classementRow = $valeur['etagere_classement'];

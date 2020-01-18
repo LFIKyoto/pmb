@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // Â© 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_ui.class.php,v 1.10 2018-08-21 15:38:44 plmrozowski Exp $
+// $Id: docwatch_ui.class.php,v 1.12 2019-07-11 12:17:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -26,12 +26,18 @@ class docwatch_ui{
 	
 	public static function get_watch_form(){
 		global $docwatch_watch_form_tpl, $msg, $value_deflt_lang, $lang, $include_path, $xmlta_indexation_lang, $deflt_notice_is_new;
+		$langs = array();
 		if ($value_deflt_lang) {
 			$create_lang = new marc_list('lang');
 			$langs[] = array(
 				'lang_code' => $value_deflt_lang,
 				'langue' => $create_lang->table[$value_deflt_lang]
 			);
+		} else {
+		    $langs[] = array(
+		        'lang_code' => '',
+		        'langue' => ''
+		    );
 		}
 
 		// Création du selecteur de statut nouveauté en prenant le paramêtre utilisateur en compte
@@ -234,5 +240,11 @@ class docwatch_ui{
 			$toprint_statutfield .=">".htmlentities($obj[2]."  (".$obj[0].")",ENT_QUOTES, $charset)."</OPTION>\n";
 		}
 		return $toprint_statutfield;
+	}
+	
+	public static function get_source_duplicate_form(){
+		global $docwatch_duplicate_source_form_tpl;
+		$form = $docwatch_duplicate_source_form_tpl;
+		return $form;
 	}
 } // end of docwatch_ui

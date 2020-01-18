@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: reindex.inc.php,v 1.37 2017-11-22 11:07:34 dgoron Exp $
+// $Id: reindex.inc.php,v 1.38 2019-07-18 12:48:24 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -161,18 +161,18 @@ switch ($index_quoi) {
 						$r1 = pmb_mysql_query($q1, $dbh);
 						if(pmb_mysql_num_rows($r1)) {
 							//le mot existe
-							$t_words[$i]['allready_exists']=1;
+							$w['allready_exists']=1;
 						} else {
 							//le mot n'existe pas
 							$dmeta = new DoubleMetaPhone($w['word']);
 							if($dmeta->primary || $dmeta->secondary){
-								$t_words[$i]['double_metaphone'] = $dmeta->primary." ".$dmeta->secondary;
+								$w['double_metaphone'] = $dmeta->primary." ".$dmeta->secondary;
 							}
 							if($w['lang']=='fr_FR') {
 								$stemming = new stemming($w['word']);
-								$t_words[$i]['stem']=$stemming->stem;
+								$w['stem']=$stemming->stem;
 							} else {
-								$t_words[$i]['stem']='';
+								$w['stem']='';
 							}
 						}
 					}

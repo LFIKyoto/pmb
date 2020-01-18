@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_autorities_skos_concepts.class.php,v 1.23 2018-08-17 10:33:02 ccraig Exp $
+// $Id: searcher_autorities_skos_concepts.class.php,v 1.24 2019-01-14 15:34:20 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -46,15 +46,21 @@ class searcher_autorities_skos_concepts extends searcher_autorities {
 		$filters = $this->_get_authorities_filters();
 		$filters[] = 'type_object = '.AUT_TABLE_CONCEPT;
 		$filters[] = 'num_object in ('.$query.')';
-
+		if(!is_array($concept_scheme)){
+		    if($concept_scheme !== ''){
+		        $concept_scheme = explode(',',$concept_scheme);
+		    }else{
+		        $concept_scheme = [];
+		    }
+		}
 		$query = 'select num_object as id_item from authorities';
-		if (($concept_scheme !== null) && ($concept_scheme*1 === 0)) {
+		if (count($concept_scheme)> 0 && $concept_scheme[0] == 0) {
  			// On cherche dans les concepts sans schéma
 			$query.= ' left join skos_fields_global_index on authorities.num_object = skos_fields_global_index.id_item and code_champ = 4 ';
 			$filters[] = 'authority_num is null';
- 		} else if ($concept_scheme && ($concept_scheme != -1)) {
+		} else if (count($concept_scheme) && ($concept_scheme[0] != -1)) {
 			$query.= ' join skos_fields_global_index on authorities.num_object = skos_fields_global_index.id_item and code_champ = 4 ';
-			$filters[] = 'authority_num in ('.$concept_scheme.')';
+			$filters[] = 'authority_num in ('.implode(",",$concept_scheme).')';
 		}
 		
 		if (count($filters)) {
@@ -66,13 +72,20 @@ class searcher_autorities_skos_concepts extends searcher_autorities {
  	protected function _filter_results(){
  		global $dbh, $concept_scheme;
  		$query = "";
-
- 		if (($concept_scheme !== null) && ($concept_scheme*1 === 0)) {
+ 		
+ 		if(!is_array($concept_scheme)){
+ 		    if($concept_scheme !== ''){
+ 		        $concept_scheme = explode(',',$concept_scheme);
+ 		    }else{
+ 		        $concept_scheme = [];
+ 		    }
+ 		}
+ 		if (count($concept_scheme) > 0 && $concept_scheme[0] == 0) {
  			// On cherche dans les concepts sans schéma
  			$query = "select ".$this->object_key." from ".$this->object_fields_table." where ".$this->object_key." not in (select ".$this->object_key." from ".$this->object_fields_table." where code_champ = 4) and code_champ = 1";
- 		} else if ($concept_scheme && ($concept_scheme != -1)) {
+ 		} else if (count($concept_scheme) && ($concept_scheme[0] != -1)) {
  			// On cherche dans un schema en particulier
- 			$query = "select ".$this->object_key." from ".$this->object_fields_table." where code_champ = 4 and authority_num in (".$concept_scheme.")";
+ 		    $query = "select ".$this->object_key." from ".$this->object_fields_table." where code_champ = 4 and authority_num in (".implode(",",$concept_scheme).")";
  		}
  		// Pas de filtre si on cherche dans tous les schémas
  		if ($query && $this->objects_ids) {
@@ -91,20 +104,34 @@ class searcher_autorities_skos_concepts extends searcher_autorities {
 	protected function get_full_results_query(){
 		global $concept_scheme;
 		$query = "select ".$this->object_key." from ".$this->object_fields_table." where code_champ = 1";
-		if ($concept_scheme*1 === 0) {
+		if(!is_array($concept_scheme)){
+		    if($concept_scheme !== ''){
+		        $concept_scheme = explode(',',$concept_scheme);
+		    }else{
+		        $concept_scheme = [];
+		    }
+		}
+		if (count($concept_scheme) > 0 && $concept_scheme[0] == 0) {
 			// On cherche dans les concepts sans schéma
 			$query.= " and ".$this->object_key." not in (select ".$this->object_key." from ".$this->object_fields_table." where code_champ = 4)";
-		} else if ($concept_scheme && ($concept_scheme != -1)) {
+		} else if (count($concept_scheme) && ($concept_scheme[0] != -1)) {
 			// On cherche dans un schema en particulier
-			$query.= " and ".$this->object_key." in (select ".$this->object_key." from ".$this->object_fields_table." where code_champ = 4 and authority_num in (".$concept_scheme."))";
+		    $query.= " and ".$this->object_key." in (select ".$this->object_key." from ".$this->object_fields_table." where code_champ = 4 and authority_num in (".implode(",",$concept_scheme)."))";
 		}
 		return $query;	
 	}
 	
 	protected function _get_sign_elements($sorted=false) {
-		global $concept_scheme;
+	    global $concept_scheme;
+	    if(!is_array($concept_scheme)){
+	        if($concept_scheme !== ''){
+	            $concept_scheme = explode(',',$concept_scheme);
+	        }else{
+	            $concept_scheme = [];
+	        }
+	    }
 		$str_to_hash = parent::_get_sign_elements($sorted);
-		$str_to_hash .= "&concept_scheme=".$concept_scheme;
+		$str_to_hash .= "&concept_scheme=".implode(",",$concept_scheme);
 		return $str_to_hash;
 	}
 	

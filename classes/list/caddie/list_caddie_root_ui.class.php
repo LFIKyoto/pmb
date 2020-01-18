@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_caddie_root_ui.class.php,v 1.10 2018-11-13 12:38:10 dgoron Exp $
+// $Id: list_caddie_root_ui.class.php,v 1.11.6.4 2019-12-03 10:32:33 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+global $class_path, $include_path;
 
 require_once($class_path."/list/list_ui.class.php");
 require_once($class_path."/caddie_root.class.php");
@@ -55,6 +57,10 @@ class list_caddie_root_ui extends list_ui {
 		$this->objects[] = $row;
 	}
 		
+	protected function fetch_data() {
+        parent::fetch_data();
+	}
+	
 	/**
 	 * Initialisation des filtres de recherche
 	 */
@@ -63,6 +69,10 @@ class list_caddie_root_ui extends list_ui {
 				'elt_flag' => '1',
 				'elt_no_flag' => '1'
 		);
+		if(!empty(static::$id_caddie)) {
+			$filters['id_caddie'] = static::$id_caddie;
+			$this->filters['id_caddie'] = static::$id_caddie;
+		}
 		parent::init_filters($filters);
 	}
 	
@@ -138,21 +148,25 @@ class list_caddie_root_ui extends list_ui {
 	 * Tri SQL
 	 */
 	protected function _get_query_order() {
-	
-		if($this->applied_sort['by']) {
+	    if ($this->applied_sort[0]['by']) {
 			$order = '';
-			$sort_by = $this->applied_sort['by'];
+			$sort_by = $this->applied_sort[0]['by'];
+			if (isset($this->available_columns['custom_fields']) && array_key_exists($sort_by, $this->available_columns['custom_fields'])) {
+			    $sort_by = 'custom_fields';
+			}
 			switch($sort_by) {
+			    case 'custom_fields':
+			        $this->applied_sort_type = 'OBJECTS';
+			        break;
 				default :
 					$order .= $sort_by;
 					break;
 			}
 			if($order) {
 				$this->applied_sort_type = 'SQL';
-				return " order by ".$order." ".$this->applied_sort['asc_desc'];
-			} else {
-				return "";
+				return " order by ".$order." ".$this->applied_sort[0]['asc_desc'];
 			}
+			return "";
 		}
 	}
 	
@@ -227,14 +241,13 @@ class list_caddie_root_ui extends list_ui {
 	}
 	
 	protected function get_cell_content($object, $property) {
-		global $msg;
-		
 		$content = '';
 		switch($property) {
 			case 'flag_noflag':
 				if($this->is_flag($object->id)) {
 					$content .= 'X';
 				}
+				break;
 			default :
 				if (is_object($object) && isset($object->{$property}) && strpos($property, 'date') !== false) {
 					if(substr($object->{$property}, 0, 10) != '0000-00-00') {

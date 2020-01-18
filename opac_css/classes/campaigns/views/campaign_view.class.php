@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: campaign_view.class.php,v 1.4 2018-04-27 12:36:47 dgoron Exp $
+// $Id: campaign_view.class.php,v 1.5 2019-06-11 08:53:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -43,7 +43,7 @@ class campaign_view {
 		if($type) {
 			$this->type = $type;
 		} else {
-			$this->type = ucfirst(str_replace('campaign_view_', '', get_called_class()));
+		    $this->type = ucfirst(str_replace('campaign_view_', '', static::class));
 		}
 	}
 	
@@ -94,7 +94,7 @@ class campaign_view {
 	public function get_campaign_charting($node_id) {
 		global $msg;
 		
-		$campaign_charting = new campaign_charting(get_called_class().'_'.strtolower($this->type).'_'.$node_id);
+		$campaign_charting = new campaign_charting(static::class.'_'.strtolower($this->type).'_'.$node_id);
 		$campaign_charting->set_type($this->type);
 		if(isset($msg['campaign_view_'.strtolower($this->type).'_'.$node_id])) {
 			$campaign_charting->set_title($msg['campaign_view_'.$this->type.'_'.$node_id]);

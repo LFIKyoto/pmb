@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_authorities.tpl.php,v 1.7 2018-12-17 23:09:30 ccraig Exp $
+// $Id: sel_authorities.tpl.php,v 1.8 2019-05-21 09:12:35 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -81,6 +81,9 @@ $jscript_common_authorities_link = "
 			if (i==n_aut_link) w.parent.add_aut_link();
 			
 			var selObj = w.parent.document.getElementById('f_aut_link_table_list');
+            if (!selObj) {
+                selObj = w.parent.document.getElementById('f_aut_link_table_list_' + i);
+            }
 			var selIndex=selObj.selectedIndex;
 			w.parent.document.getElementById('f_aut_link_table'+i).value= selObj.options[selIndex].value;
 			

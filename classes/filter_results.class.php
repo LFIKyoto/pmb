@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: filter_results.class.php,v 1.5 2017-01-31 15:41:41 dgoron Exp $
+// $Id: filter_results.class.php,v 1.6 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,7 +13,7 @@ class filter_results {
 	private $notice_ids = '';
 	
 	
-	function __construct($notice_ids, $user=0) {
+	public function __construct($notice_ids, $user=0) {
 		global $PMBuserid;
 		$this->user = $user;
 		if($this->user = 0) $this->user = $PMBuserid;

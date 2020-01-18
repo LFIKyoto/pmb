@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pclass.tpl.php,v 1.8 2018-12-05 09:00:07 ngantier Exp $
+// $Id: pclass.tpl.php,v 1.10 2019-05-28 07:22:42 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -10,6 +10,7 @@ if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 global $browser_pclassement;
 global $pclassement_form;
+global $pclassement_location_form, $msg, $current_module;
 
 //Template du browser
 $browser_pclassement = "
@@ -78,6 +79,7 @@ function confirm_delete() {
 		<div class='row'>
 			!!type_doc!! 
 		</div>
+		!!locations!!
 	</div>
 
 
@@ -100,3 +102,14 @@ function confirm_delete() {
 	document.forms['pclass'].elements['libelle'].focus();
 </script>
 ";
+
+$pclassement_locations_form = "
+<!-- localisations -->
+<div class='row'>
+	<label class='etiquette' >".$msg['pclassement_locations']."</label>
+</div>
+<div class='row'>
+	!!locations!!
+</div>		
+";
+		

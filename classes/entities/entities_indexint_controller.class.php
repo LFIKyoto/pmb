@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entities_indexint_controller.class.php,v 1.9 2018-10-29 12:47:25 dgoron Exp $
+// $Id: entities_indexint_controller.class.php,v 1.10 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -31,7 +31,7 @@ class entities_indexint_controller extends entities_authorities_controller {
 	}
 	
 	public function set_id_pclass($id_pclass=0) {
-		$this->id_pclass = $id_pclass+0;
+	    $this->id_pclass = (int) $id_pclass;
 	}
 	
 	public function proceed() {

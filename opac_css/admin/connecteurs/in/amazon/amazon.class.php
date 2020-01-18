@@ -2,13 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: amazon.class.php,v 1.37 2018-07-16 08:57:11 ngantier Exp $
+// $Id: amazon.class.php,v 1.41.2.1 2019-10-02 08:47:54 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
 require_once($class_path."/connecteurs.class.php");
-require_once($class_path."/nusoap/nusoap.php");
 require_once($include_path."/notice_affichage.inc.php");
 
 class amazon extends connector {
@@ -379,9 +378,8 @@ class amazon extends connector {
                     $req="";
                     for ($j=0; $j<count($query[$i]["FIELDS"]); $j++) {
                         for ($k=0; $k<count($query[$i]["VALUE"]); $k++) {
-                            $param="";
-                            $param[$query[$i]["FIELDS"][$j]]=$query[$i]["VALUE"][$k];
-                            $expr[]=$param;
+                            $param[$query[$i]["FIELDS"][$j]] = $query[$i]["VALUE"][$k];
+                            $expr[] = $param;
                         }
                     }
                     if (count($expr)>1) {
@@ -705,38 +703,34 @@ class amazon extends connector {
             foreach ($item["ImageSets"] as $ImageSet) {
                 if (is_array($ImageSet)) {
                     foreach ($ImageSet as $aitem) {
-                        if (isset($aitem["!Category"]) && $aitem["!Category"] == 'primary' && $image_count)
+                        if (isset($aitem["!Category"]) && $aitem["!Category"] == 'primary' && $image_count) {
                             continue;
-                            if (isset($aitem["LargeImage"]) && isset($aitem["LargeImage"]["URL"])) {
-                                $unimarc["897"][$image_count]["a"][0] = $aitem["LargeImage"]["URL"];
-                                $unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - LargeImage";
-                                $image_count++;
-                            }
-                            else if (isset($aitem["MediumImage"]) && isset($aitem["MediumImage"]["URL"])) {
-                                $unimarc["897"][$image_count]["a"][0] = $aitem["MediumImage"]["URL"];
-                                $unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - MediumImage";
-                                $image_count++;
-                            }
-                            else if (isset($aitem["ThumbnailImage"]) && isset($aitem["ThumbnailImage"]["URL"])) {
-                                $unimarc["897"][$image_count]["a"][0] = $aitem["ThumbnailImage"]["URL"];
-                                $unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - ThumbnailImage";
-                                $image_count++;
-                            }
-                            else if (isset($aitem["SmallImage"]) && isset($aitem["SmallImage"]["URL"])) {
-                                $unimarc["897"][$image_count]["a"][0] = $aitem["SmallImage"]["URL"];
-                                $unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - SmallImage";
-                                $image_count++;
-                            }
-                            else if (isset($aitem["TinyImage"]) && isset($aitem["TinyImage"]["URL"])) {
-                                $unimarc["897"][$image_count]["a"][0] = $aitem["TinyImage"]["URL"];
-                                $unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - TinyImage";
-                                $image_count++;
-                            }
+                        }
+                        if (isset($aitem["LargeImage"]["URL"])) {
+                            $unimarc["897"][$image_count]["a"][0] = $aitem["LargeImage"]["URL"];
+                            $unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - LargeImage";
+                            $image_count++;
+                        } elseif (isset($aitem["MediumImage"]["URL"])) {
+                            $unimarc["897"][$image_count]["a"][0] = $aitem["MediumImage"]["URL"];
+                            $unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - MediumImage";
+                            $image_count++;
+                        } elseif (isset($aitem["ThumbnailImage"]["URL"])) {
+                            $unimarc["897"][$image_count]["a"][0] = $aitem["ThumbnailImage"]["URL"];
+                            $unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - ThumbnailImage";
+                            $image_count++;
+                        } elseif (isset($aitem["SmallImage"]["URL"])) {
+                            $unimarc["897"][$image_count]["a"][0] = $aitem["SmallImage"]["URL"];
+                            $unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - SmallImage";
+                            $image_count++;
+                        } elseif (isset($aitem["TinyImage"]["URL"])) {
+                            $unimarc["897"][$image_count]["a"][0] = $aitem["TinyImage"]["URL"];
+                            $unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - TinyImage";
+                            $image_count++;
+                        }
                     }
                 }
             }
         }
-        
         return $unimarc;
     }
     
@@ -951,7 +945,7 @@ class amazon extends connector {
                         $result=amazon::objectToArrayAndCharset($result);
                     }
                     $items=$this->soap2array($result["Items"],"Item");
-                    $asin = $items[0][ASIN];
+                    $asin = $items[0]['ASIN'];
                     if($asin){
                         $client->__setSoapHeaders(NULL);
                         $client->__setSoapHeaders($this->make_soap_headers('ItemLookup'));
@@ -1016,9 +1010,9 @@ class amazon extends connector {
                             }
                             
                             //pour les similarités
-                            foreach($items[0][SimilarProducts][SimilarProduct] as $similar){
-                                if(isISBN($similar[ASIN])){
-                                    $rqt= "select notice_id from notices where code = '".formatISBN($similar[ASIN],10)."' or code = '".formatISBN($similar[ASIN],13)."' limit 1";
+                            foreach($items[0]['SimilarProducts']['SimilarProduct'] as $similar){
+                                if(isISBN($similar['ASIN'])){
+                                    $rqt= "select notice_id from notices where code = '".formatISBN($similar['ASIN'],10)."' or code = '".formatISBN($similar['ASIN'],13)."' limit 1";
                                     $res = pmb_mysql_query($rqt);
                                     if(pmb_mysql_num_rows($res)){
                                         $notice = pmb_mysql_result($res,0,0);
@@ -1029,7 +1023,7 @@ class amazon extends connector {
                                     $paws["Request"]=array(
                                         "ResponseGroup"=>"ItemAttributes",
                                         "IdType" => "ASIN",
-                                        "ItemId" => $similar[ASIN]
+                                        "ItemId" => $similar['ASIN']
                                     );
                                     try{
                                         $result=$client->ItemLookup($paws);
@@ -1041,7 +1035,7 @@ class amazon extends connector {
                                     }
                                     if(!$error){
                                         $items=$this->soap2array($result["Items"],"Item");
-                                        $code = $items[0][ItemAttributes][UPC];
+                                        $code = $items[0]['ItemAttributes']['UPC'];
                                         if($code){
                                             $rqt= "select notice_id from notices where code = '".$code."' or code = '".$code."' limit 1";
                                             $res = pmb_mysql_query($rqt);
@@ -1171,7 +1165,6 @@ class amazon extends connector {
             return array();
         } else {
             $xml = json_decode(json_encode(simplexml_load_string($response, "SimpleXMLElement", LIBXML_NOCDATA)),TRUE);
-            // printr ($xml);
             if ($xml === FALSE) {
                 return array();
             } else {
@@ -1179,6 +1172,10 @@ class amazon extends connector {
                     return array(
                         'Error' => $xml['Items']['Request']['Errors']['Error'],
                     );
+                } elseif (isset($xml['Error'])) {
+                	return array(
+                		'Error' => $xml['Error'],
+                	);
                 } else {
                     return array(
                         'ASIN' => $xml['Items']['Item']['ASIN'],

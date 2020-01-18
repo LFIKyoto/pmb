@@ -27,6 +27,7 @@ if ( ! defined( 'SUBCOLLECTION_TMPL' ) ) {
 
 global $subcollection_level2_display;
 global $subcollection_level2_no_issn_info;
+global $msg;
 
 // level 2 : affichage général
 $subcollection_level2_display = "

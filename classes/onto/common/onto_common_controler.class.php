@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_controler.class.php,v 1.42 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: onto_common_controler.class.php,v 1.48 2019-08-06 14:00:00 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -27,7 +27,7 @@ class onto_common_controler {
 	
 	protected $nb_results;
 	
-	function __construct($handler,$params){
+	public function __construct($handler,$params){
 		$this->handler=$handler;
 		$this->params=$params;
 	}
@@ -36,7 +36,7 @@ class onto_common_controler {
 	 * Aiguilleur principal
 	 */
 	public function proceed(){
-		global $pmb_allow_authorities_first_page;
+	    global $pmb_allow_authorities_first_page, $force_delete;
 		
 		//on affecte la proprité item par une instance si nécessaire...
 		$this->init_item();
@@ -69,7 +69,8 @@ class onto_common_controler {
 				$this->proceed_delete(true);
 				break;
 			case "confirm_delete" :
-				$this->proceed_delete(false);
+			    if(!isset($force_delete)) $force_delete = false;
+			    $this->proceed_delete($force_delete);
 				break;
 			case "delete_from_cart" :
 				//voir plus tard si on veut forcer la suppression
@@ -141,10 +142,14 @@ class onto_common_controler {
 		}
 	}
 	
-	protected function proceed_list(){
+	protected function proceed_list($no_print = false){
 		$ui_class_name=self::resolve_ui_class_name($this->params->sub,$this->handler->get_onto_name());
-		print $ui_class_name::get_search_form($this,$this->params);
-		print $ui_class_name::get_list($this,$this->params);
+		$result = $ui_class_name::get_search_form($this,$this->params);
+		$result.= $ui_class_name::get_list($this,$this->params);
+		$this->set_session_history($this->get_human_query(), 'classic');
+		$result = str_replace("!!caddie_link!!", entities_authorities_controller::get_caddie_link(), $result);
+		if(!$no_print) echo($result);
+		return $result;		
 	}
 
 	protected function proceed_list_selector(){
@@ -161,7 +166,11 @@ class onto_common_controler {
 		foreach ($ranges as $range){
 			$elements = $this->get_ajax_searched_elements($range);
 			foreach($elements['elements'] as $key => $value){
-				$list['elements'][$key] = $value;
+			    $newKey = $key;
+			    if($this->params->return_concept_id){
+			        $newKey = onto_common_uri::get_id($key);
+			    }
+			    $list['elements'][$newKey] = $value;
 				if(count($ranges)>1){
 					$list['prefix'][$key]['libelle'] = $elements['label'];
 					$list['prefix'][$key]['id'] = $range;
@@ -171,10 +180,12 @@ class onto_common_controler {
 		return $list;
 	}
 	
-	protected function proceed_search(){
-		$ui_class_name=self::resolve_ui_class_name($this->params->sub,$this->handler->get_onto_name());
-		print $ui_class_name::get_search_form($this,$this->params);
-		print $ui_class_name::get_list($this,$this->params);		
+	protected function proceed_search($no_print = false) {
+		$ui_class_name=self::resolve_ui_class_name($this->params->sub, $this->handler->get_onto_name());
+		$result = $ui_class_name::get_search_form($this, $this->params);
+		$result.= $ui_class_name::get_list($this, $this->params);
+		if(!$no_print) echo($result);
+		return $result;
 	}
 	
 	protected function proceed_selector_add(){
@@ -463,8 +474,16 @@ class onto_common_controler {
 			);
 			$list['elements'] = array();
 			if(is_array($results)) {
-				foreach($results as $item){
-					$list['elements'][onto_common_uri::get_uri($item)]['default'] = $this->get_data_label(onto_common_uri::get_uri($item));
+			    foreach($results as $item){
+			     /*   $id = onto_common_uri::get_id(onto_common_uri::get_uri($item));
+				    $concept = authorities_collection::get_authority(AUT_TABLE_INDEX_CONCEPT, $id);
+				    $parent_label =  $concept->get_scheme();
+				    if ($parent_label != "") {
+				        $parent_label = "[" . $parent_label . "] ";				        
+				    }
+				    $list['elements'][onto_common_uri::get_uri($item)]['default'] = $parent_label . $this->get_data_label(onto_common_uri::get_uri($item));
+				*/
+			        $list['elements'][onto_common_uri::get_uri($item)]['default'] = $this->get_data_label(onto_common_uri::get_uri($item));
 				}
 			}
 		}
@@ -526,7 +545,7 @@ class onto_common_controler {
 		if($this->params->datas && $search_class_name){
 		    $searcher = new $search_class_name(($this->params->datas == "*" ? '*' : $this->params->datas.'*'));
 			if($searcher->get_nb_results()){
-				$results = $searcher->get_sorted_result("default",0,10);
+				$results = $searcher->get_sorted_result("default",0,20);
 			}else{
 				$results = array();
 			}

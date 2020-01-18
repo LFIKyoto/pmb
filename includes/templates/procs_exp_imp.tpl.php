@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: procs_exp_imp.tpl.php,v 1.5 2017-10-04 14:34:48 dgoron Exp $
+// $Id: procs_exp_imp.tpl.php,v 1.6 2019-05-27 15:09:40 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $import_proc_tmpl;
+global $import_proc_tmpl, $current_module, $msg;
+
 $import_proc_tmpl = "
 <form class='form-$current_module' ENCTYPE='multipart/form-data' name='fileform' method='post' action='!!action!!' >
 <h3>".$msg['procs_title_form_import']."</h3>

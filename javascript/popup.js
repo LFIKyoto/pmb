@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: popup.js,v 1.20 2018-09-05 07:31:02 dgoron Exp $
+// $Id: popup.js,v 1.21 2019-05-09 09:26:02 ccraig Exp $
 
 // openPopUp : permet d'afficher une popup de la taille et � la position donn�e
 //		la fonction gere aussi l'autoCentrage de la popup
@@ -229,4 +229,13 @@ function getSelectedObjects(context) {
 		selectionSelectedObjects.push(selectionSelectedNodes.item(i).value);
 	}
 	return selectionSelectedObjects.join(',');
+}
+
+function checkScrollPosition(id) {
+	var box = document.querySelector("#" + id + " .uk-overflow-container");
+	if (!((box.scrollHeight - box.offsetHeight) > box.scrollTop)) {
+		document.getElementById(id).querySelector(".uk-modal-close")
+				.removeAttribute("disabled");
+		box.removeEventListener("scroll", eval("handleScroll_" + id));
+	}
 }

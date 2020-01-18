@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: publisher.class.php,v 1.44 2018-10-16 09:50:56 dgoron Exp $
+// $Id: publisher.class.php,v 1.46 2019-06-05 13:13:19 btafforeau Exp $
 
 // définition de la classe de gestion des 'editeurs'
 
@@ -45,7 +45,7 @@ class publisher {
 	//  publisher($id) : constructeur
 	// ---------------------------------------------------------------
 
-	public function publisher($id) {
+	public function __construct($id) {
 		$this->id = $id+0;
 		$this->getData();
 	}
@@ -154,7 +154,7 @@ class publisher {
 			$query = "select collection_id, collection_name from collections where collection_parent='".$this->id."' order by index_coll";
 			$result = pmb_mysql_query($query, $dbh);
 			if(pmb_mysql_num_rows($result)) {
-				$remplacement = $msg[publishers_collections]."\n<ul>\n";
+				$remplacement = $msg['publishers_collections']."\n<ul>\n";
 				while ($obj = pmb_mysql_fetch_object($result)) {
 					$remplacement .= "<li><a href='index.php?lvl=coll_see&id=".$obj->collection_id."'>".$obj->collection_name."</a></li>\n";
 				}

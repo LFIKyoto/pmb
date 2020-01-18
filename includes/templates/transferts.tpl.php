@@ -2,9 +2,30 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: transferts.tpl.php,v 1.39 2017-11-30 10:00:36 dgoron Exp $
+// $Id: transferts.tpl.php,v 1.40 2019-05-27 13:06:42 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $transferts_reception_lot, $transferts_retour_lot, $transferts_validation_actif, $transferts_envoi_lot, $transferts_edition_tableau, $msg, $transferts_edition_ligne;
+global $transferts_edition_titre_destination, $transferts_edition_titre_source, $transferts_edition_ligne_destination, $transferts_edition_ligne_source, $transferts_edition_filtre_source;
+global $transferts_edition_filtre_source_retours, $transferts_edition_filtre_destination, $transferts_edition_filtre_destination_retours, $transferts_edition_order;
+global $transferts_popup_global, $base_path, $charset, $transferts_popup_expl_fantome_radio, $transferts_popup_table_expl_fantomes, $transferts_popup_ligne_tableau;
+global $transfert_popup_ligne_groupe_tableau, $transfert_popup_groups_checkbox, $transferts_popup_ligne_tableau_ex_fantome, $transferts_popup_enregistre_demande;
+global $transferts_parcours_nombre_resultats, $transferts_liste_localisations, $transferts_liste_localisations_tous, $transferts_script_case_a_cocher, $transferts_validation_form_global;
+global $transferts_validation_tableau_definition, $transferts_validation_tableau_ligne, $transferts_validation_acceptation_erreur, $transferts_validation_acceptation_OK;
+global $transferts_validation_boutons_action, $transferts_validation_pas_de_resultats, $transferts_validation_liste_valide, $transferts_validation_liste_refus;
+global $transferts_validation_liste_valide_ligne, $transferts_envoi_form_global, $transferts_envoi_tableau_definition, $transferts_envoi_tableau_ligne, $transferts_envoi_erreur;
+global $transferts_envoi_OK, $transferts_envoi_boutons_action, $transferts_envoi_boutons_action, $transferts_envoi_pas_de_resultats, $transferts_envoi_liste_valide_envoi_ligne;
+global $transferts_reception_form_global, $transferts_reception_tableau_definition, $transferts_reception_tableau_ligne, $transferts_reception_erreur, $transferts_reception_OK;
+global $transferts_reception_avertissement_retour, $transferts_reception_boutons_action, $transferts_reception_pas_de_resultats, $transferts_reception_liste_valide_reception;
+global $transferts_reception_liste_valide_reception_ligne, $transferts_retour_form_global, $javascript_path, $transferts_retour_filtre_etat, $transferts_retour_filtre_dispo;
+global $transferts_retour_tableau_definition, $transferts_retour_tableau_ligne, $transferts_retour_acceptation_erreur, $transferts_retour_acceptation_OK, $transferts_reset_OK;
+global $transferts_retour_boutons_action, $transferts_retour_pas_de_resultats, $transferts_retour_liste_valide, $transferts_retour_liste_valide_ligne, $transferts_refus_form_global;
+global $transferts_refus_tableau_definition, $transferts_refus_tableau_ligne, $transferts_refus_boutons_action, $transferts_refus_pas_de_resultats, $transferts_refus_liste_valide;
+global $transferts_refus_liste_valide_ligne, $transferts_refus_redemande_global, $transferts_admin_tableau_affiche, $transferts_admin_ligne_affiche, $transferts_admin_ligne_separateur;
+global $transferts_admin_tableau_modif, $transferts_admin_ligne_modif, $transferts_admin_modif_ordre_loc, $transferts_admin_modif_ordre_loc_ligne;
+global $transferts_admin_modif_ordre_loc_ligne_flBas, $transferts_admin_modif_ordre_loc_ligne_flHaut, $transferts_admin_statuts_loc_liste, $transferts_admin_statuts_loc_ligne;
+global $transferts_admin_statuts_loc_modif, $transferts_admin_purge_defaut, $transferts_admin_purge_message_ok;
 
 if(!isset($transferts_reception_lot)) $transferts_reception_lot = 0;
 if(!isset($transferts_retour_lot)) $transferts_retour_lot = 0;

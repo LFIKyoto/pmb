@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE XMLlist SYSTEM "../../../../../includes/XMLlist.dtd" [<!ENTITY nbsp "&amp;nbsp;">]>
+
+<!-- messages localisés en français
+****************************************************************************************
+© 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+****************************************************************************************
+$Id: fr_FR.xml,v 1.1.4.2 2019-11-12 15:16:44 dbellamy Exp $ -->
+
+<XMLlist>
+<entry code="diverscities_service_endpoint">Adresse du web service</entry>
+<entry code="diverscities_service_endpoint_unrecorded">Enregistrer la source pour obtenir l'adresse</entry>
+<entry code="diverscities_station_id">Identifiant station</entry>
+<entry code="diverscities_shared_key">Clé secrète</entry>
+<entry code="diverscities_no_uid">Erreur : UID manquant</entry>
+<entry code="diverscities_invalid_uid">Erreur : UID invalide</entry>
+<entry code="diverscities_no_token">Erreur : Token manquant</entry>
+<entry code="diverscities_invalid_token">Erreur : Token incorrect</entry>
+</XMLlist>

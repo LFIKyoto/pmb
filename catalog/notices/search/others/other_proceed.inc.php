@@ -2,10 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: other_proceed.inc.php,v 1.23 2018-06-29 09:03:35 dgoron Exp $
+// $Id: other_proceed.inc.php,v 1.24 2019-06-07 08:05:39 btafforeau Exp $
 // Armelle : a priori plus utilisé
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $high_color, $obj, $ourSearch, $other_query, $res_per_page, $results_per_page, $nb_per_page_a_search, $n_resume_flag;
+global $n_gen_flag, $n_titres_flag, $n_matieres_flag, $search_type, $query, $other_search_form, $msg, $page, $debut, $begin_result_liste;
+global $records, $elements_records_list_ui, $end_result_list, $nbepages, $suivante, $precedente, $unq, $current_module, $obj, $nav_bar, $result;
 
 require_once($class_path.'/elements_list/elements_records_list_ui.class.php');
 
@@ -67,7 +71,7 @@ if($ourSearch->nbr_rows == 0) {
 	print $begin_result_liste;
 
 	// boucle de fetch des notices
-	$res = @pmb_mysql_query($requete, $dbh);
+	$res = @pmb_mysql_query($requete);
 	$records = array();
 	while(($n=pmb_mysql_fetch_object($res))) {
 		$records[] = $n->notice_id;

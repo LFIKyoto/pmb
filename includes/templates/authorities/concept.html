@@ -1,6 +1,6 @@
 {% extends 'gabarit.html' %}
 
-<!-- $Id: concept.html,v 1.11 2017-09-28 09:23:37 dgoron Exp $ -->
+<!-- $Id: concept.html,v 1.14 2019-07-04 12:12:55 btafforeau Exp $ -->
 
 {% block header %}
 	<h1><span>{{ msg.detail_concept }}</span></h1>
@@ -11,7 +11,7 @@
 		{{ authority.isbd }}
 	</h3>
 	<script type="text/javascript">
-		document.title = "{{ authority.light_title }}";
+		document.title = "{{ authority.display_label }}";
 	</script>
 {% endblock %} 
 
@@ -23,13 +23,20 @@
 	<div class='row'>&nbsp;</div>
 	{{ authority.details_list }}
 {% endblock %}
-
+{% block map %}
+	{% if authority.map.map %}
+		<div class="map_notice">
+			{{ authority.map.map }}
+		</div>
+	{% endif %}
+{% endblock %}
 {% block aut_buttons %}		
 {% if authority.right %}
 	<div class='row'>
 		<div class='left'>
 			<input type='button' class='bouton' value='{{msg.62}}' onclick="document.location='./autorites.php?categ=concepts&sub=concept&action=edit&id={{authority.num_object}}'"/>
 			<input type='button' class='bouton' value='{{msg.158}}' onclick="document.location='./autorites.php?categ=concepts&sub=concept&action=replace&id={{authority.num_object}}'"/>
+			<input type='button' class='bouton' value='{{msg.merge}}' onclick="document.location='./autorites.php?categ=concepts&sub=concept&action=merge&id={{authority.num_object}}'"/>
 			<input type='button' class='bouton' value='{{msg.duplicate}}' onclick="document.location='./autorites.php?categ=concepts&sub=concept&action=duplicate&id={{authority.num_object}}'"/>
 			{% if global.pmb_type_audit %}
 				<input type='button' class='bouton' value='{{msg.audit_button}}' onclick="openPopUp('./audit.php?type_obj={{authority.audit_type}}&object_id={{authority.num_object}}', 'audit_popup')"/>

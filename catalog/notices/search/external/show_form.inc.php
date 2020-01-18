@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: show_form.inc.php,v 1.7 2018-12-20 11:00:19 mbertin Exp $
+// $Id: show_form.inc.php,v 1.9 2019-06-07 08:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $search, $op_0_s_2, $field_0_s_2, $flag_found, $op_0_s_2, $field_0_s_2, $sources, $notice_id, $notice_id_info;
+global $form_to_show, $msg;
 
 require_once($class_path."/facettes_external.class.php");
 
@@ -14,6 +17,7 @@ facettes_external::destroy_global_env();
 //Si c'est une multi
 if ($_SESSION["ext_type"]=="multi") {
 	if (!$search) {
+		$search=array();
 		$search[0]="s_2";
 		$op_0_s_2="EQ";
 		$field_0_s_2=array();

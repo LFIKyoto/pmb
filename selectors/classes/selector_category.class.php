@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: selector_category.class.php,v 1.26 2018-11-27 09:44:05 ngantier Exp $
+// $Id: selector_category.class.php,v 1.28 2019-08-01 13:16:35 btafforeau Exp $
   
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -392,9 +392,14 @@ class selector_category extends selector_authorities {
 				$tcateg =  new category($cat[0]);
 					
 				if(!$this->user_input && $premier){
-					if(sizeof($tcateg->path_table) && $id_thes !=-1) {
-						for($i=0; $i < sizeof($tcateg->path_table) - 1; $i++){
-							$browser_header ? $browser_header .= '&gt;' : $browser_header = '';
+					if (!empty($tcateg->path_table) && $id_thes !=-1) {
+					    $nb_path_table = count($tcateg->path_table);
+					    for ($i = 0; $i < $nb_path_table - 1; $i++) {
+						    if ($browser_header) {
+						        $browser_header .= '&gt;';
+						    } else {
+						        $browser_header = '';
+						    }
 							$browser_header .= "<a href='";
 							$browser_header .= static::get_base_url();
 							$browser_header .= "&parent=".$tcateg->path_table[$i]['id'];
@@ -404,10 +409,14 @@ class selector_category extends selector_authorities {
 							$browser_header .= $tcateg->path_table[$i]['libelle'];
 							$browser_header .= "</a>";
 						}
-						$browser_header ? $browser_header .= '&gt;<strong id="categ_libelle_header">' : $browser_header = '<strong id="categ_libelle_header">';
-						$browser_header .= $tcateg->path_table[sizeof($tcateg->path_table) - 1]['libelle'];
+						if ($browser_header) {
+						    $browser_header .= '&gt;<strong id="categ_libelle_header">';
+						} else {
+						    $browser_header = '<strong id="categ_libelle_header">';
+						}
+						$browser_header .= $tcateg->path_table[count($tcateg->path_table) - 1]['libelle'];
 						$browser_header .= '</strong>';
-						$bouton_ajouter=str_replace("!!id_aj!!",$tcateg->path_table[sizeof($tcateg->path_table) - 1]['id'],$bouton_ajouter);
+						$bouton_ajouter = str_replace("!!id_aj!!", $tcateg->path_table[count($tcateg->path_table) - 1]['id'], $bouton_ajouter);
 					} else {
 						$browser_header = "";
 						$t = thesaurus::getByEltId($cat[0]);

@@ -2,14 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: thesaurus.tpl.php,v 1.12 2018-10-18 06:51:59 dgoron Exp $
+// $Id: thesaurus.tpl.php,v 1.13 2019-05-27 10:24:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 // templates pour la gestion des thesaurus
 
-global $thes_browser;
-global $thes_form;
+global $current_module, $msg, $thes_browser, $thes_form;
 
 // $thes_browser : template du browser de thesaurus
 $thes_browser = "

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map.inc.php,v 1.5 2017-10-18 15:08:25 dgoron Exp $
+// $Id: map.inc.php,v 1.6 2019-05-29 08:24:26 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -11,6 +11,8 @@ if(!isset($search_id)) $search_id = '';
 require_once($class_path."/map/map_search_controler.class.php");
 require_once($class_path."/map/map_search_controler_location.class.php");
 require_once($class_path."/map/map_hold_polygon.class.php");
+
+if (!isset($cluster)) $cluster = '';
 
 switch($sub){
 	case 'search_location':

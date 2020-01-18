@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc.class.php,v 1.46 2018-11-22 13:35:23 dgoron Exp $
+// $Id: serialcirc.class.php,v 1.47 2019-06-12 12:48:06 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+use Spipu\Html2Pdf\Html2Pdf;
 
 require_once($include_path."/serialcirc.inc.php");
 require_once($include_path."/templates/serialcirc.tpl.php");
@@ -544,10 +546,9 @@ class serialcirc {
 	public function print_diffusion($expl_id,$start_diff_id){	
 		$tpl=$this->build_print_diffusion($expl_id,$start_diff_id);		
 		global $class_path;
-		require_once($class_path.'/html2pdf/html2pdf.class.php');	
-	    $html2pdf = new HTML2PDF('P','A4','fr');
-	    $html2pdf->WriteHTML($tpl);
-	    $html2pdf->Output('diffusion.pdf');		
+	    $html2pdf = new Html2Pdf('P','A4','fr');
+	    $html2pdf->writeHTML($tpl);
+	    $html2pdf->output('diffusion.pdf');		
 	}
 	
 	public function print_sel_diffusion($list){
@@ -558,10 +559,9 @@ class serialcirc {
 			$tpl.=$this->build_print_diffusion($expl_id,$start_diff_id);
 		}	
 		global $class_path;
-		require_once($class_path.'/html2pdf/html2pdf.class.php');	
-	    $html2pdf = new HTML2PDF('P','A4','fr');
-	    $html2pdf->WriteHTML($tpl);
-	    $html2pdf->Output('diffusion.pdf');				
+	    $html2pdf = new Html2Pdf('P','A4','fr');
+	    $html2pdf->writeHTML($tpl);
+	    $html2pdf->output('diffusion.pdf');				
 	}
 	
 	public function build_print_diffusion($expl_id,$start_diff_id){

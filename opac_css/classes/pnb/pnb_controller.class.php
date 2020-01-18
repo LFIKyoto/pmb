@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pnb_controller.class.php,v 1.2 2018-06-08 08:10:27 vtouchard Exp $
+// $Id: pnb_controller.class.php,v 1.2.6.1 2019-11-06 11:04:26 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -21,6 +21,7 @@ class pnb_controller {
 		$pnb = new pnb();
 		
 		switch ($lvl) {
+		    case 'all' :
 			case 'pnb_loan_list' :
 				print $pnb->get_empr_loans_list($empr_id);
 				break;

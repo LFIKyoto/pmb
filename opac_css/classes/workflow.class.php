@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: workflow.class.php,v 1.3 2017-01-31 15:41:41 dgoron Exp $
+// $Id: workflow.class.php,v 1.4 2019-05-09 10:35:37 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -27,7 +27,7 @@ class workflow {
 	 */
 	public function __construct($obj_name,$workflow_name=''){
 		
-		global $include_path;
+	    global $include_path, $charset;
 		
 		$this->object_name = $obj_name;
 		
@@ -36,7 +36,7 @@ class workflow {
 		
 		if (file_exists($file_subst)) {
 			$xml=file_get_contents($file_subst,"r");		
-		} else $xml=file_get_contents($file,"r") or die("Can't find XML file $file");
+		} else $xml=file_get_contents($file,"r") or die(htmlentities("Can't find XML file $file", ENT_QUOTES, $charset));
 		
 		//Parse le fichier dans un tableau	
 		$param=_parser_text_no_function_($xml,"STRUCTURE");

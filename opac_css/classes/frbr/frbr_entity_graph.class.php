@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_graph.class.php,v 1.6 2018-07-26 15:25:52 tsamson Exp $
+// $Id: frbr_entity_graph.class.php,v 1.6.6.1 2019-09-19 15:24:20 tsamson Exp $
 if (stristr ( $_SERVER ['REQUEST_URI'], ".class.php" ))
 	die ( "no access" );
 	
@@ -94,7 +94,10 @@ class frbr_entity_graph extends entity_graph {
 							$entity_type => $cadre_data ['node'] 
 					), $entity_type, $cadre_data ['parent_node'] );
 				} else {
-					$this->root_node_id = $cadre_data ['entity_type'] . '_' . $this->instance->get_id ();
+				    $this->root_node_id = "";
+				    if (isset($cadre_data ['entity_type'])) {
+				        $this->root_node_id = $cadre_data ['entity_type'] . '_' . $this->instance->get_id ();
+				    }
 					$this->compute_entities ( array (
 							$entity_type => $cadre_data 
 					), $entity_type, $node );
@@ -294,7 +297,7 @@ class frbr_entity_graph extends entity_graph {
 										'type' => 'subroot',
 										'radius' => '15',
 										'name' => $data ['label'],
-										'url' => $data ['link'],
+										'url' => $data ['url'],
 										'color' => $color 
 								);
 							}
@@ -357,7 +360,7 @@ class frbr_entity_graph extends entity_graph {
 									'type' => 'subroot',
 									'radius' => '15',
 									'name' => $data ['label'],
-									'url' => $data ['link'],
+									'url' => $data ['url'],
 									'color' => $color 
 							);
 						}

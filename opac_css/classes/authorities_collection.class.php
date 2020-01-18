@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authorities_collection.class.php,v 1.4 2018-09-19 09:59:29 tsamson Exp $
+// $Id: authorities_collection.class.php,v 1.7 2019-05-29 09:00:41 ngantier Exp $
 
 /**
  * Classe de collection d'autorités pour éviter d'instancier plusieurs fois les mêmes autorités dans une même page
@@ -11,23 +11,23 @@
  */
 class authorities_collection {
 	static private $authorities = array();
-	
+
 	static public function get_authority($authority_type, $authority_id, $params = array()) {
-		$authority_id = $authority_id*1;
+		$authority_id = intval($authority_id);
 		if (!$authority_type) {
 			return null;
 		}
 		if (isset($params['num_object']) && isset($params['type_object']) && isset(self::$authorities[$authority_type][$params['num_object'].'_'.$params['type_object']])) {
 		    return self::$authorities[$authority_type][$params['num_object'].'_'.$params['type_object']];
 		}
-		if (isset(self::$authorities[$authority_type][$authority_id])) {
+		if ($authority_id && isset(self::$authorities[$authority_type][$authority_id])) {
 			return self::$authorities[$authority_type][$authority_id];
 		}
-		
+
 		if (!isset(self::$authorities[$authority_type])) {
 			self::$authorities[$authority_type] = array();
 		}
-		
+
 		switch($authority_type){
 			case "author" :
 			case AUT_TABLE_AUTHORS :
@@ -73,7 +73,10 @@ class authorities_collection {
 			case "concept" :
 			case AUT_TABLE_CONCEPT :
 				self::load_class("skos/skos_concept");
-				self::$authorities[$authority_type][$authority_id] = new skos_concept($authority_id);
+				if(!is_numeric($authority_id)) {
+				    $authority_id = onto_common_uri::get_id($authority_id);
+				}
+				 self::$authorities[$authority_type][$authority_id] = new skos_concept($authority_id);
 				break;
 			case "authperso" :
 			case AUT_TABLE_AUTHPERSO :
@@ -85,6 +88,9 @@ class authorities_collection {
 			    if($authority_id > 0){
 			        $aut = new authority($authority_id);
 			    }else{
+			        if(!is_numeric($params['num_object'])) {
+			            $params['num_object'] = onto_common_uri::get_id($params['num_object']);
+			        }
 			        $aut = new authority($authority_id,$params['num_object'],$params['type_object']);
 			        $authority_id = $aut->get_id();
 			    }
@@ -96,9 +102,9 @@ class authorities_collection {
 		}
 		return self::$authorities[$authority_type][$authority_id];
 	}
-	
+
 	static private function load_class($classname) {
 		global $base_path,$include_path,$class_path,$javascript_path,$style_path;
 		require_once($class_path."/".$classname.".class.php");
-	} 
+	}
 }

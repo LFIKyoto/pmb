@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // + 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: FormEdit.js,v 1.31 2018-11-21 21:10:46 dgoron Exp $
+// $Id: FormEdit.js,v 1.32 2019-07-17 14:29:12 dgoron Exp $
 
 
 define(['dojo/_base/declare', 
@@ -400,10 +400,12 @@ define(['dojo/_base/declare',
 			  var sign = '';
 			  if(this.paramsForSign.length) {
 				  for(var i=0 ; i<this.paramsForSign.length ; i++){
-					  if(sign != '') {
-						  sign += '_'+dom.byId(this.paramsForSign[i]).value;
-					  } else {
-						  sign = dom.byId(this.paramsForSign[i]).value;
+					  if(dom.byId(this.paramsForSign[i])) {
+						  if(sign != '') {
+							  sign += '_'+dom.byId(this.paramsForSign[i]).value;
+						  } else {
+							  sign = dom.byId(this.paramsForSign[i]).value;
+						  }  
 					  }
 				  }
 			  }

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_delphe.inc.php,v 1.9 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: func_delphe.inc.php,v 1.10 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -67,8 +67,8 @@ function import_new_notice_suite() {
 		$term = $terms['a'];
 		switch($terms['2']){
 			case "local" :
-				$id_thesaurus=$thesEntreprise[TOP];
-				$non_classes =$thesEntreprise[NONCLASSES];
+				$id_thesaurus=$thesEntreprise['TOP'];
+				$non_classes =$thesEntreprise['NONCLASSES'];
 				$categ_id = find_categ($term,$id_thesaurus,$lang);
 				if($categ_id == 0){
 					$categ_id = add_categ($term,$id_thesaurus,$non_classes,$lang);
@@ -76,13 +76,13 @@ function import_new_notice_suite() {
 				break;
 			default : 
 				//on regarde par défault dans Aciège...
-				$id_thesaurus=$thesAciege[TOP];
-				$non_classes =$thesAciege[NONCLASSES];
+				$id_thesaurus=$thesAciege['TOP'];
+				$non_classes =$thesAciege['NONCLASSES'];
 				$categ_id = find_categ($term,$id_thesaurus,$lang);
 				if($categ_id == 0){
 					//pas trouvé dans aciège, on regarde dans delphes
-					$id_thesaurus=$thesDelphes[TOP];
-					$non_classes =$thesDelphes[NONCLASSES];
+					$id_thesaurus=$thesDelphes['TOP'];
+					$non_classes =$thesDelphes['NONCLASSES'];
 					$categ_id = find_categ($term,$id_thesaurus,$lang);
 					if($categ_id == 0){
 						//pas trouvé dans delphe, on regarde la table de correspondance
@@ -295,7 +295,7 @@ function identifiants_thesaurus ($thesaurus_name,$langues_thesaurus='fr_FR') {
 	$q = "select id_thesaurus from thesaurus where libelle_thesaurus='".addslashes($thesaurus_name)."'";
 	$r = pmb_mysql_query($q);
 	if ($o=pmb_mysql_fetch_object($r)) {
-		$res[NUMTHESAURUS]=$o->id_thesaurus;
+		$res['NUMTHESAURUS']=$o->id_thesaurus;
 		$q="select id_noeud, autorite from noeuds where num_thesaurus=".$o->id_thesaurus." and autorite in ('TOP','NONCLASSES','ORPHELINS') ";
 		$r = pmb_mysql_query($q) or die(pmb_mysql_error()."<br><br>$q<br><br>");
 		while ($o=pmb_mysql_fetch_object($r)) {
@@ -305,30 +305,30 @@ function identifiants_thesaurus ($thesaurus_name,$langues_thesaurus='fr_FR') {
 	} else {
 		$q = "INSERT INTO thesaurus (id_thesaurus, libelle_thesaurus, langue_defaut, active, opac_active, num_noeud_racine) VALUES (0, '".addslashes($thesaurus_name)."', '$langues_thesaurus', '1', '1', 0)";
 		$r = pmb_mysql_query($q) or die(pmb_mysql_error()."<br><br>$q<br><br>");
-		$res[NUMTHESAURUS]=pmb_mysql_insert_id();
+		$res['NUMTHESAURUS']=pmb_mysql_insert_id();
 
-		$q = "INSERT INTO noeuds (id_noeud, autorite, num_parent, num_renvoi_voir, visible, num_thesaurus) VALUES (0, 'TOP', 0, 0, '0', ".$res[NUMTHESAURUS].")";
+		$q = "INSERT INTO noeuds (id_noeud, autorite, num_parent, num_renvoi_voir, visible, num_thesaurus) VALUES (0, 'TOP', 0, 0, '0', ".$res['NUMTHESAURUS'].")";
 		$r = pmb_mysql_query($q) or die(pmb_mysql_error()."<br><br>$q<br><br>");
-		$res[TOP]=pmb_mysql_insert_id();
-		$q = "update thesaurus set num_noeud_racine=".$res[TOP]." where id_thesaurus=".$res[NUMTHESAURUS]." ";
+		$res['TOP']=pmb_mysql_insert_id();
+		$q = "update thesaurus set num_noeud_racine=".$res['TOP']." where id_thesaurus=".$res['NUMTHESAURUS']." ";
 		$r = pmb_mysql_query($q) or die(pmb_mysql_error()."<br><br>$q<br><br>");
 
-		$q = "INSERT INTO noeuds (id_noeud, autorite, num_parent, num_renvoi_voir, visible, num_thesaurus) VALUES (0, 'NONCLASSES', ".$res[TOP].", 0, '0', ".$res[NUMTHESAURUS].")";
+		$q = "INSERT INTO noeuds (id_noeud, autorite, num_parent, num_renvoi_voir, visible, num_thesaurus) VALUES (0, 'NONCLASSES', ".$res['TOP'].", 0, '0', ".$res['NUMTHESAURUS'].")";
 		$r = pmb_mysql_query($q) or die(pmb_mysql_error()."<br><br>$q<br><br>");
-		$res[NONCLASSES]=pmb_mysql_insert_id();
+		$res['NONCLASSES']=pmb_mysql_insert_id();
 
-		$q = "INSERT INTO noeuds (id_noeud, autorite, num_parent, num_renvoi_voir, visible, num_thesaurus) VALUES (0, 'ORPHELINS', ".$res[TOP].", 0, '0', ".$res[NUMTHESAURUS].")";
+		$q = "INSERT INTO noeuds (id_noeud, autorite, num_parent, num_renvoi_voir, visible, num_thesaurus) VALUES (0, 'ORPHELINS', ".$res['TOP'].", 0, '0', ".$res['NUMTHESAURUS'].")";
 		$r = pmb_mysql_query($q) or die(pmb_mysql_error()."<br><br>$q<br><br>");
-		$res[ORPHELINS]=pmb_mysql_insert_id();
+		$res['ORPHELINS']=pmb_mysql_insert_id();
 		
 		$tmp='~termes non classés';
 		if($charset=='utf-8'){
 			$tmp=utf8_encode($tmp);
 		}
-		$q = "INSERT INTO categories (num_thesaurus,num_noeud, langue, libelle_categorie, note_application, comment_public, comment_voir, index_categorie) VALUES (".$res[NUMTHESAURUS].", ".$res[NONCLASSES].", 'fr_FR', '".$tmp."', '', '', '', ' termes non classes ')";
+		$q = "INSERT INTO categories (num_thesaurus,num_noeud, langue, libelle_categorie, note_application, comment_public, comment_voir, index_categorie) VALUES (".$res['NUMTHESAURUS'].", ".$res['NONCLASSES'].", 'fr_FR', '".$tmp."', '', '', '', ' termes non classes ')";
 		$r = pmb_mysql_query($q) or die(pmb_mysql_error()."<br><br>$q<br><br>");
 
-		$q = "INSERT INTO categories (num_thesaurus,num_noeud, langue, libelle_categorie, note_application, comment_public, comment_voir, index_categorie) VALUES (".$res[NUMTHESAURUS].", ".$res[ORPHELINS].", 'fr_FR', '~termes orphelins', '', '', '', ' termes orphelins ')";
+		$q = "INSERT INTO categories (num_thesaurus,num_noeud, langue, libelle_categorie, note_application, comment_public, comment_voir, index_categorie) VALUES (".$res['NUMTHESAURUS'].", ".$res['ORPHELINS'].", 'fr_FR', '~termes orphelins', '', '', '', ' termes orphelins ')";
 		$r = pmb_mysql_query($q) or die(pmb_mysql_error()."<br><br>$q<br><br>");
 
 		return $res ;

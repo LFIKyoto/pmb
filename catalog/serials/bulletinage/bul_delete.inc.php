@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bul_delete.inc.php,v 1.20 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: bul_delete.inc.php,v 1.21 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -42,7 +42,7 @@ if ($acces_m==0) {
 		$result=@pmb_mysql_query($requete);
 		if (pmb_mysql_num_rows($result)) {
 			// gestion erreur pret en cours
-			error_message($msg[416], $msg[impossible_bull_del_pret], 1, "catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=$bul_id");
+			error_message($msg[416], $msg['impossible_bull_del_pret'], 1, "catalog.php?categ=serials&sub=bulletinage&action=view&bul_id=$bul_id");
 		
 		} else {
 		

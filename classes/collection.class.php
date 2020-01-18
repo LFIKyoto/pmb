@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: collection.class.php,v 1.95 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: collection.class.php,v 1.98 2019-08-05 11:46:08 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -271,11 +271,7 @@ class collection {
 		// b) remplacement dans la table des sous-collections
 		$requete = "UPDATE sub_collections SET sub_coll_parent=$by WHERE sub_coll_parent=".$this->id;
 		$res = pmb_mysql_query($requete, $dbh);
-	
-		// c) suppression de la collection
-		$requete = "DELETE FROM collections WHERE collection_id=".$this->id;
-		$res = pmb_mysql_query($requete, $dbh);
-		
+			
 		//nettoyage d'autorities_sources
 		$query = "select * from authorities_sources where num_authority = ".$this->id." and authority_type = 'collection'";
 		$result = pmb_mysql_query($query);
@@ -293,7 +289,10 @@ class collection {
 					pmb_mysql_query($query);
 				}
 			}
-		}
+		}		
+		// nettoyage indexation concepts
+		$index_concept = new index_concept($this->id, TYPE_COLLECTION);
+		$index_concept->delete();
 		
 		//Remplacement dans les champs persos sélecteur d'autorité
 		aut_pperso::replace_pperso(AUT_TABLE_COLLECTIONS, $this->id, $by);
@@ -306,6 +305,10 @@ class collection {
 		// effacement de l'identifiant unique d'autorité
 		$authority = new authority(0, $this->id, AUT_TABLE_COLLECTIONS);
 		$authority->delete();
+		
+		// c) suppression de la collection
+		$requete = "DELETE FROM collections WHERE collection_id=".$this->id;
+		$res = pmb_mysql_query($requete, $dbh);
 		
 		collection::update_index($by);
 	
@@ -495,7 +498,7 @@ class collection {
 		} else {
 			if(!$force_creation){
 				// création : s'assurer que la collection n'existe pas déjà
-				if ($id_collection_exists = collection::check_if_exists($value)) {
+				if ($id_collection_exists = collection::check_if_exists($value, 1)) {
 					$collection_exists = new collection($id_collection_exists);
 	 				require_once("$include_path/user_error.inc.php");
 					warning($msg[167],htmlentities($msg[171]." -> ".$collection_exists->display,ENT_QUOTES, $charset));
@@ -557,16 +560,13 @@ class collection {
 	// fonction d'import de collection (membre de la classe 'collection');
 	
 	public static function import($data) {
-	
 		// cette méthode prend en entrée un tableau constitué des informations éditeurs suivantes :
 		//	$data['name'] 	Nom de la collection
 		//	$data['parent']	id de l'éditeur parent de la collection
 		//	$data['issn']	numéro ISSN de la collection
 	
-		global $dbh;
-	
 		// check sur le type de  la variable passée en paramètre
-		if(!sizeof($data) || !is_array($data)) {
+		if ((empty($data) && !is_array($data)) || !is_array($data)) {
 			// si ce n'est pas un tableau ou un tableau vide, on retourne 0
 			return 0;
 		}
@@ -574,22 +574,22 @@ class collection {
 		$data = array_merge(static::get_default_data(), $data);
 		
 		// check sur les éléments du tableau (data['name'] est requis).
-		if(!isset(static::$long_maxi_name)) {
-			static::$long_maxi_name = pmb_mysql_field_len(pmb_mysql_query("SELECT collection_name FROM collections limit 1"),0);
+		if (!isset(static::$long_maxi_name)) {
+			static::$long_maxi_name = pmb_mysql_field_len(pmb_mysql_query("SELECT collection_name FROM collections limit 1"), 0);
 		}
-		$data['name'] = rtrim(substr(preg_replace('/\[|\]/', '', rtrim(ltrim($data['name']))),0,static::$long_maxi_name));
+		$data['name'] = rtrim(substr(preg_replace('/\[|\]/', '', rtrim(ltrim($data['name']))), 0, static::$long_maxi_name));
 	
 		//si on a pas d'id, on peut avoir les infos de l'éditeur 
-		if(!$data['parent']){
-			if($data['publisher']){
+		if (empty($data['parent'])) {
+			if (!empty($data['publisher'])) {
 				//on les a, on crée l'éditeur
 				$data['parent'] = editeur::import($data['publisher']);
 			}
 		}
 		
-		if(($data['name']=="") || ($data['parent']==0)) /* il nous faut impérativement un éditeur */
+		if ($data['name'] == "" || $data['parent'] == 0) { /* il nous faut impérativement un éditeur */
 			return 0;
-	
+		}
 	
 		// préparation de la requête
 		$key0 = addslashes($data['name']);
@@ -597,36 +597,44 @@ class collection {
 		$key2 = addslashes($data['issn']);
 		
 		/* vérification que l'éditeur existe bien ! */
-		$query = "SELECT ed_id FROM publishers WHERE ed_id='${key1}' LIMIT 1 ";
-		$result = @pmb_mysql_query($query, $dbh);
-		if(!$result) 
-			die("can't SELECT publishers ".$query);
-		if (pmb_mysql_num_rows($result)==0) 
+		$query = "SELECT ed_id FROM publishers WHERE ed_id='$key1' LIMIT 1 ";
+		$result = @pmb_mysql_query($query);
+		if (empty($result)) {
+			die("can't SELECT publishers $query");
+		}
+		if (pmb_mysql_num_rows($result) == 0) {
 			return 0;
+		}
 	
 		/* vérification que la collection existe */
-		$query = "SELECT collection_id FROM collections WHERE collection_name='${key0}' AND collection_parent='${key1}' LIMIT 1 ";
-		$result = @pmb_mysql_query($query, $dbh);
-		if(!$result) die("can't SELECT collections ".$query);
-		$collection  = pmb_mysql_fetch_object($result);
+		$query = "SELECT collection_id FROM collections WHERE collection_name='$key0' AND collection_parent='$key1' LIMIT 1 ";
+		$result = @pmb_mysql_query($query);
+		if (empty($result)) {
+		    die("can't SELECT collections $query");
+		}
+		$collection = pmb_mysql_fetch_object($result);
 	
 		/* la collection existe, on retourne l'ID */
-		if($collection->collection_id)
+		if (!empty($collection->collection_id)) {
 			return $collection->collection_id;
+		}
 	
 		// id non-récupérée, il faut créer la forme.
-		$query = 'INSERT INTO collections SET collection_name="'.$key0.'", ';
-		$query .= 'collection_parent="'.$key1.'", ';
-		$query .= 'collection_issn="'.$key2.'", ';
-		$query .= 'index_coll=" '.strip_empty_words($key0).' '.strip_empty_words($key2).' ", ';
-		$query .= 'collection_comment = "'.addslashes($data['comment']).'" ';
-		$result = @pmb_mysql_query($query, $dbh);
-		if(!$result) die("can't INSERT into database");
+		$query = "INSERT INTO collections SET collection_name='$key0', ";
+		$query .= "collection_parent='$key1', ";
+		$query .= "collection_issn='$key2', ";
+		$query .= "index_coll='".strip_empty_words($key0)." ".strip_empty_words($key2)."', ";
+		$query .= "collection_comment = '".addslashes($data['comment'])."'";
+		$result = @pmb_mysql_query($query);
+		if (empty($result)) {
+		    die("can't INSERT into database");
+		}
 		
-		$id = pmb_mysql_insert_id($dbh);
+		$id = pmb_mysql_insert_id();
 		
-		if($data['subcollections']){
-			for ( $i=0 ; $i<count($data['subcollections']) ; $i++){
+		if (!empty($data['subcollections'])) {
+		    $nb_subcollections = count($data['subcollections']);
+		    for ($i = 0; $i < $nb_subcollections; $i++) {
 				$subcoll = $data['subcollections'][$i];
 				$subcoll['coll_parent'] = $id;
 				subcollection::import($subcoll);
@@ -716,7 +724,7 @@ class collection {
 		return $data;
 	}
 	
-	public static function check_if_exists($data){
+	public static function check_if_exists($data, $from_form = 0){
 		global $dbh;
 		
 		//si on a pas d'id, on peut avoir les infos de l'éditeur 
@@ -728,9 +736,15 @@ class collection {
 		}
 	
 		// préparation de la requête
-		$key0 = addslashes($data['name']);
-		$key1 = $data['parent'];
-		$key2 = addslashes($data['issn']);
+		if ($from_form) {
+    		$key0 = $data['name'];
+    		$key1 = $data['parent'];
+    		$key2 = $data['issn'];
+		} else {		    
+		    $key0 = addslashes($data['name']);
+		    $key1 = $data['parent'];
+		    $key2 = addslashes($data['issn']);
+		}
 		
 		/* vérification que la collection existe */
 		$query = "SELECT collection_id FROM collections WHERE collection_name='${key0}' AND collection_parent='${key1}' LIMIT 1 ";

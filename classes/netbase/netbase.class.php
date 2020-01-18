@@ -1,10 +1,12 @@
 <?php
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: netbase.class.php,v 1.11 2018-07-27 06:43:41 dgoron Exp $
+// $Id: netbase.class.php,v 1.15.6.1 2019-10-09 10:01:22 dbellamy Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+require_once($class_path."/thumbnail.class.php");
 
 // definitions
 define('INDEX_GLOBAL'					, 1);
@@ -38,6 +40,9 @@ define('HASH_EMPR_PASSWORD'				, 134217728);
 define('INDEX_AUTHORITIES'				, 268435456);
 define('GEN_SIGNATURE_DOCNUM'			, 536870912);
 define('DELETE_EMPR_PASSWORDS'			, 1073741824);
+define('CLEAN_RECORDS_THUMBNAIL'		, 2147483648);
+define('GEN_AUT_LINK'		            , 4294967296);
+define('CLEAN_CACHE_TEMPORARY_FILES'	, 8589934592);
 
 class netbase {
 
@@ -56,14 +61,14 @@ class netbase {
 		global $faq_active, $cms_active;
 		global $thesaurus_concepts_active;
 		global $pmb_explnum_controle_doublons;
-
+		
 		if ($proceedings) {
 			foreach ($proceedings as $name=>$value) {
 				${$name} = $value;
 			}
 		}
 
-		// Réindexer
+		// Rï¿½indexer
 		$form_proceedings = "
 			<h3>".$msg['nettoyage_operations_reindex']."</h3>
 			<div class='row'>
@@ -114,7 +119,7 @@ class netbase {
 		}
 		$form_proceedings .= "
 			<div class='row'>
-				<input type='checkbox' value='268435456' name='index_authorities' ".(isset($index_authorities) && $index_authorities == "268435456" ? "checked" :"").">&nbsp;<label for='index_authorities'>".htmlentities($msg["nettoyage_index_authorities"], ENT_QUOTES, $charset)."</label>
+				<input type='checkbox' value='268435456' id='index_authorities' name='index_authorities' ".(isset($index_authorities) && $index_authorities == "268435456" ? "checked" :"").">&nbsp;<label for='index_authorities'>".htmlentities($msg["nettoyage_index_authorities"], ENT_QUOTES, $charset)."</label>
 			</div>";
 
 		// Supprimer
@@ -160,8 +165,14 @@ class netbase {
 			<div class='row'>
 				<input type='checkbox' value='4096' id='nettoyage_clean_tags' name='nettoyage_clean_tags' ".(isset($nettoyage_clean_tags) && $nettoyage_clean_tags == "4096" ? "checked" :"").">&nbsp;<label for='nettoyage_clean_tags'>".htmlentities($msg["nettoyage_clean_tags"], ENT_QUOTES, $charset)."</label>
 			</div>";
-
-		// Générer
+		if (thumbnail::is_valid_folder('record') && pmb_mysql_num_rows(pmb_mysql_query("select notice_id from notices where thumbnail_url like 'data:image%'"))) {
+			$form_proceedings .= "
+				<div class='row'>
+					<input type='checkbox' value='2147483648' name='clean_records_thumbnail' id='clean_records_thumbnail' ".(isset($clean_records_thumbnail) && $clean_records_thumbnail == "2147483648" ? "checked" :"").">&nbsp;<label for='clean_records_thumbnail' class='etiquette'>".htmlentities($msg["clean_records_thumbnail"], ENT_QUOTES, $charset)."</label>
+				</div>";
+		}
+		
+		// Gï¿½nï¿½rer
 		$form_proceedings .= "
 			<br />
 			<h3>".$msg['nettoyage_operations_generate']."</h3>
@@ -183,10 +194,15 @@ class netbase {
 		if ($pmb_explnum_controle_doublons) {
 			$form_proceedings .= "
 				<div class='row'>
-					<input type='checkbox' value='536870912' name='gen_signature_docnum' id='gen_signature_docnum' ".(isset($gen_signature_docnum) && $gen_signature_docnum == "536870912" ? "checked" :"").">&nbsp;<label for='gen_signature_docnum' class='etiquette'>".htmlentities($msg["gen_signature_docnum"], ENT_QUOTES, $charset)."</label>
+					<input type='checkbox' value='536870912' name='gen_signature_docnum' id='gen_signature_docnum' ".(isset($gen_signature_docnum) && $gen_signature_docnum == "536870912" ? "checked" :"").">&nbsp;<label for='gen_signature_docnum'>".htmlentities($msg["gen_signature_docnum"], ENT_QUOTES, $charset)."</label>
 				</div>";
 		}
-
+		if (pmb_mysql_num_rows(pmb_mysql_query("show columns from aut_link like 'id_aut_link'")) == 0) {
+		  $form_proceedings .= "
+				<div class='row'>
+					<input type='checkbox' value='4294967296' name='gen_aut_link' id='gen_aut_link' ".(isset($gen_aut_link) && $gen_aut_link == "4294967296" ? "checked" :"").">&nbsp;<label for='gen_aut_link'>".htmlentities($msg["gen_aut_link"], ENT_QUOTES, $charset)."</label>
+				</div>";
+		}
 		// Vider
 		$form_proceedings .= "
 			<br />
@@ -200,6 +216,10 @@ class netbase {
 					<input type='checkbox' value='262144' id='clean_cache_amende' name='clean_cache_amende' ".(isset($clean_cache_amende) && $clean_cache_amende == "262144" ? "checked" :"").">&nbsp;<label for='clean_cache_amende'>".htmlentities($msg["clean_cache_amende"], ENT_QUOTES, $charset)."</label>
 				</div>";
 		}
+		$form_proceedings .= "
+			<div class='row'>
+				<input type='checkbox' value='8589934592' id='clean_cache_amende' name='clean_cache_temporary_files' ".(isset($clean_cache_temporary_files) && $clean_cache_temporary_files == "8589934592" ? "checked" :"").">&nbsp;<label for='clean_cache_temporary_files'>".htmlentities($msg["clean_cache_temporary_files"], ENT_QUOTES, $charset)."</label>
+			</div>";
 
 		// Mot de passe
 		$form_proceedings .= "
@@ -218,7 +238,7 @@ class netbase {
 	}
 
 	/**
-	 * affichage du % d'avancement et de l'état
+	 * affichage du % d'avancement et de l'ï¿½tat
 	 * @param number $start
 	 * @param number $count
 	 */
@@ -227,17 +247,17 @@ class netbase {
 		$jauge_size = GAUGE_SIZE;
 		$jauge_size .= "px";
 
-		// définition de l'état de la jauge
+		// dï¿½finition de l'ï¿½tat de la jauge
 		$state = floor($start / ($count / $jauge_size));
 		$state .= "px";
-		// mise à jour de l'affichage de la jauge
+		// mise ï¿½ jour de l'affichage de la jauge
 		$display = "<table border='0' class='' style='width:".$jauge_size."' cellpadding='0'><tr><td class='jauge' style='width:100%'>";
 		$display .= "<div class='jauge'><img src='".get_url_icon('jauge.png')."' style='height:16px; width:".$state."'></div></td></tr></table>";
 
 		// calcul pourcentage avancement
 		$percent = floor(($start/$count)*100);
 
-		// affichage du % d'avancement et de l'état
+		// affichage du % d'avancement et de l'ï¿½tat
 		$display .= "<div class='center'>$percent%</div>";
 		return $display;
 	}
@@ -294,4 +314,4 @@ class netbase {
 		</script>";
 		return $form;
 	}
-} // fin de déclaration de la classe netbase
+} // fin de dï¿½claration de la classe netbase

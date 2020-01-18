@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_liste_lecture.inc.php,v 1.14 2017-10-18 09:16:50 ngantier Exp $
+// $Id: ajax_liste_lecture.inc.php,v 1.16 2019-06-17 11:47:11 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -47,17 +47,16 @@ switch($quoifaire){
  * Formulaire de saisie pour l'envoi d'une demande
  */
 function show_form($id){
-	global $dbh, $msg, $charset; 
+	global $msg, $charset; 
 	
 	$req = "select id_empr from empr where empr_login='".$_SESSION['user_code']."'";
-	$res=pmb_mysql_query($req,$dbh);
-	$idempr = pmb_mysql_result($res,0,0);
-	
-	$display .= "<div class='row'>
-					<span style='color:red;'><label class='etiquette'>".htmlentities($msg[list_lecture_mail_inscription],ENT_QUOTES,$charset)."</label></span>
+	$res = pmb_mysql_query($req);
+	$idempr = pmb_mysql_result($res, 0, 0);
+	$display = "<div class='row'>
+					<span style='color:red;'><label class='etiquette'>".htmlentities($msg['list_lecture_mail_inscription'],ENT_QUOTES,$charset)."</label></span>
 				</div>
 				<div class='row'>
-					<label class='etiquette' >".htmlentities($msg[list_lecture_demande_inscription],ENT_QUOTES,$charset)."</label>
+					<label class='etiquette' >".htmlentities($msg['list_lecture_demande_inscription'],ENT_QUOTES,$charset)."</label>
 				</div>
 				<div class='row'>
 					<blockquote>
@@ -79,7 +78,7 @@ function show_refus_form(){
 	global $msg;
 	$display .= "
 				<div class='row'>
-					<label class='etiquette' >".htmlentities($msg[list_lecture_motif_refus],ENT_QUOTES,$charset)."</label>
+					<label class='etiquette' >".htmlentities($msg['list_lecture_motif_refus'],ENT_QUOTES,$charset)."</label>
 				</div>
 				<div class='row'>
 					<blockquote>

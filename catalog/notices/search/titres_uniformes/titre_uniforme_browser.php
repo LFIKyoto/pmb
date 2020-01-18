@@ -2,7 +2,9 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: titre_uniforme_browser.php,v 1.5 2017-01-26 15:36:34 dgoron Exp $
+// $Id: titre_uniforme_browser.php,v 1.6 2019-06-07 08:05:39 btafforeau Exp $
+
+global $base_path, $base_auth, $base_title, $ancre, $j_offset, $browser_url, $limite_affichage, $restriction, $msg, $titre_uniforme, $titre_uniforme_entry;
 
 // page d'affichage du browser de collections
 
@@ -54,7 +56,7 @@ print "<a href='$browser_url?limite_affichage=ALL'>$msg[tout_afficher]</a><br />
 // affichage de la liste
 $requete = "SELECT * FROM titres_uniformes ORDER BY tu_name $restriction ";
 
-$result = pmb_mysql_query($requete, $dbh);
+$result = pmb_mysql_query($requete);
 
 while(($tu=pmb_mysql_fetch_object($result))) {
 	if($tu->tu_id){		
@@ -66,7 +68,7 @@ while(($tu=pmb_mysql_fetch_object($result))) {
 }
 if($ancre)
 	print $j_offset;
-pmb_mysql_close($dbh);
+pmb_mysql_close();
 
 // affichage du footer
 print "</div></body></html>";

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_property.class.php,v 1.12 2017-11-27 10:37:26 tsamson Exp $
+// $Id: onto_common_property.class.php,v 1.14 2019-08-14 08:02:58 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -89,6 +89,12 @@ class onto_common_property extends onto_common_root {
 	public $inverse_of;
 	
 	/**
+	 * Options de champ perso en json
+	 * @var string
+	 */
+	public $cp_options;
+	
+	/**
 	 * Obligatoire
 	 * 
 	 * @var unknown
@@ -159,6 +165,10 @@ class onto_common_property extends onto_common_root {
 	
 	public function set_pmb_list_query($pmb_list_query) {
 		$this->pmb_list_query = $pmb_list_query;
+	}
+	
+	public function set_cp_options($cp_options) {
+		$this->cp_options = $cp_options;
 	}
 	
 	public function get_pmb_datatype_label($datatype)
@@ -232,5 +242,16 @@ class onto_common_property extends onto_common_root {
 	
 	public function is_undisplayed() {
 		return $this->undisplayed;
+	}
+	
+	public function get_label() {
+	    global $msg;
+	    
+	    if (substr($this->label,0,4)=="msg:") {
+	        if (isset($msg[substr($this->label,4)])) {
+	            return $msg[substr($this->label,4)];
+	        }
+	    }
+	    return $this->label;
 	}
 } // end of onto_common_property

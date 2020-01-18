@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: livraisons.tpl.php,v 1.30 2017-11-21 12:00:58 dgoron Exp $
+// $Id: livraisons.tpl.php,v 1.31 2019-05-27 14:16:26 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $id_bibli, $id_cde, $id_liv, $livlist_form, $current_module, $msg, $charset, $livr_modif_form, $frame_modif, $frame_row, $frame_row_bl_header, $frame_row_bl, $frame_row_arc;
+global $frame_show_from_cde, $frame_show, $bt_sup_lig, $no_bt_sup_lig, $bt_sup, $bt_enr, $bt_audit, $form_search, $retour_liste;
 
 if(!isset($id_bibli)) $id_bibli = 0;
 if(!isset($id_cde)) $id_cde = 0;

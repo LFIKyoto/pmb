@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // Â© 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_root.class.php,v 1.12 2018-04-19 11:58:55 dgoron Exp $
+// $Id: docwatch_root.class.php,v 1.16 2019-08-07 13:59:14 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,11 +14,54 @@ require_once($class_path."/cms/cms_pages.class.php");
  */
 class docwatch_root{
 
+	protected $msg = array();
+	
 	/** Aggregations: */
 
 	/** Compositions: */
 
 	/** Fonctions: */
+	
+	public function __construct($id=0) {
+		$this->load_msg();
+	} // end of member function __construct
+	
+	protected function load_msg(){
+		if (!count($this->msg)) {
+			global $lang;
+			global $class_path;
+	
+			//on regarde la langue par défaut du module
+			$default_language = "fr_FR";
+			//si elle est différente de celle de l'interface, on l'intègre
+			// la langue par défaut donne l'assurance d'avoir tous les messages...
+			if($default_language != $lang){
+			    $file = $class_path."/docwatch/messages/".$default_language."/".static::class.".xml";
+				$this->load_msg_file($file);
+			}
+			$file = $class_path."/docwatch/messages/".$lang."/".static::class.".xml";
+			$this->load_msg_file($file);
+		}
+	}
+	
+	protected function load_msg_file($file){
+		global $charset;
+		global $cache_msg_file;
+		if(!$cache_msg_file || !is_array($cache_msg_file)){
+			$cache_msg_file=array();
+		}
+		if(isset($cache_msg_file[$file])){
+			$this->msg=$cache_msg_file[$file];
+		}elseif(file_exists($file)){
+			$messages = new XMLlist($file);
+			$messages->analyser();
+			$this->msg = array_merge($this->msg, $messages->table);
+			$cache_msg_file[$file]=$this->msg;
+			return true;
+		}else{
+			return false;
+		}
+	}
 	
 	public function serialize(){
 		return serialize($this->parameters);
@@ -50,7 +93,7 @@ class docwatch_root{
 			//PMB dans un autre charset, on converti la chaine...
 			$elem = self::clean_cp1252($elem, $input_charset);
 			if($charset != $input_charset){
-				$elem = iconv($input_charset,$charset,$elem);
+				$elem = iconv($input_charset,$charset . '//IGNORE',$elem);
 			}
 		}
 		return $elem;
@@ -153,7 +196,7 @@ class docwatch_root{
 			case $page."_select_cms_page":
 				$this->parameters['links'][$type] = array(
 						'method' => ${$method},
-						'page' => ${$page}+0,
+						'page' => (int) ${$page},
 						'var'  => ${$var}
 				);
 				break;
@@ -311,6 +354,11 @@ class docwatch_root{
 				break;
 		}
 		return $link;
+	}
+	
+	protected function format_text($text){
+		global $charset;
+		return htmlentities($text,ENT_QUOTES,$charset);
 	}
 	
 } // end of docwatch_root

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_categories_view_categorieslist.class.php,v 1.4 2018-07-26 15:25:52 tsamson Exp $
+// $Id: frbr_entity_categories_view_categorieslist.class.php,v 1.4.6.1 2019-10-11 14:22:45 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,7 +13,7 @@ class frbr_entity_categories_view_categorieslist extends frbr_entity_common_view
 		parent::__construct($id);
 		$this->default_template = "<div>
 {% for category in categories %}
-<h3>{{category.name}}</h3>
+<h3>{{category.libelle}}</h3>
 <blockquote>{{category.comment}}</blockquote>
 {% endfor %}
 </div>";

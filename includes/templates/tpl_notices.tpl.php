@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tpl_notices.tpl.php,v 1.7 2017-11-24 13:36:48 ngantier Exp $
+// $Id: tpl_notices.tpl.php,v 1.10.2.1 2019-10-09 07:44:03 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $abonnement_view,$abonnement_list,$abonnement_form;
+global $abonnement_view, $abonnement_list, $abonnement_form, $antivol_form, $msg, $script1, $creation_abonnement_form, $current_module, $edition_abonnement_form, $tpl_calendrier;
 
 if(!isset($antivol_form)) $antivol_form = '';
 
@@ -72,7 +72,7 @@ $script1 = "
 <script type='text/javascript'>
 function confirm_delete()
 {
-	phrase = \"{$msg[abonnements_confirm_suppr_abonnement]}\";
+	phrase = \"{$msg['abonnements_confirm_suppr_abonnement']}\";
 	result = confirm(phrase);
 	if(result)
 		form.submit();
@@ -108,9 +108,16 @@ $script1
 			</div>
 		</div>
 		<input type='hidden' name='num_notice' id='num_notice' value='!!num_notice!!'/>
-		<div class='row'>
-			
+		<div class='row'></div>
+        <div class='colonne2'>
+			<div class='row'>
+				<label for='abonnement_name_opac' class='etiquette'>".$msg["abonnements_nom_opac_abonnement"]."</label>
+			</div>
+			<div class='row'>
+				<input type='text' size='40' name='abt_name_opac' id='abt_name_opac' data-translation-fieldname='abt_name_opac' value='!!abt_name_opac!!'/>
+			</div>
 		</div>
+        <div class='row'></div>
 		<div class='colonne2'>
 			<div class='row'>
 				<label for='abonnement_name' class='etiquette'>".$msg["abonnements_liste_modele"]."</label>
@@ -184,6 +191,15 @@ $script1
 			</div>
 		</div>
 		<div class='row'></div>
+        <div class='colonne2'>
+			<div class='row'>
+				<label for='abonnement_name_opac' class='etiquette'>".$msg["abonnements_nom_opac_abonnement"]."</label>
+			</div>
+			<div class='row'>
+				<input type='text' size='40' name='abt_name_opac' id='abt_name_opac' data-translation-fieldname='abt_name_opac' value='!!abt_name_opac!!'/>
+			</div>
+		</div>
+        <div class='row'></div>
 		<div class='colonne2'>
 			<div class='row'>
 				<label for='date_debut_lib' class='etiquette'>".$msg["abonnements_date_debut"]."</label>

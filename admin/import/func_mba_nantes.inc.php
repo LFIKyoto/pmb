@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_mba_nantes.inc.php,v 1.12 2018-01-09 08:54:31 jpermanne Exp $
+// $Id: func_mba_nantes.inc.php,v 1.13 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -124,10 +124,10 @@ function import_new_notice_suite() {
 	if (!$pmb_keyword_sep) $pmb_keyword_sep=" ; ";
 	$champ_rameau="";
 	
-	for ($a=0; $a<sizeof($info_600_a); $a++) {
+	for ($a=0; $a<count($info_600_a); $a++) {
 		$libelle_final="";
 		$libelle_j="";
-		for ($j=0; $j<sizeof($info_600_j[$a]); $j++) {
+		for ($j=0; $j<count($info_600_j[$a]); $j++) {
 			if (!$libelle_j) $libelle_j .= trim($info_600_j[$a][$j]) ;
 				else $libelle_j .= " ** ".trim($info_600_j[$a][$j]) ;
 		}
@@ -136,13 +136,13 @@ function import_new_notice_suite() {
 		
 		if (!$libelle_j) $libelle_final = trim($info_600_a[$a][0]).$libelle_final ; else $libelle_final = trim($info_600_a[$a][0]).$libelle_final." ** ".$libelle_j ;
 		if (!$libelle_final) break ;
-		for ($j=0; $j<sizeof($info_600_x[$a]); $j++) {
+		for ($j=0; $j<count($info_600_x[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_600_x[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_600_y[$a]); $j++) {
+		for ($j=0; $j<count($info_600_y[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_600_y[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_600_z[$a]); $j++) {
+		for ($j=0; $j<count($info_600_z[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_600_z[$a][$j]) ;
 		}
 		//if($info_600_3[$a][0])$libelle_final.=" @@3 ".trim($info_600_3[$a][0]);		
@@ -150,22 +150,22 @@ function import_new_notice_suite() {
 		$champ_rameau.=$libelle_final;
 	} 	
 	
-	for ($a=0; $a<sizeof($info_601_a); $a++) {
+	for ($a=0; $a<count($info_601_a); $a++) {
 		$libelle_final="";
 		$libelle_j="";
-		for ($j=0; $j<sizeof($info_601_j[$a]); $j++) {
+		for ($j=0; $j<count($info_601_j[$a]); $j++) {
 			if (!$libelle_j) $libelle_j .= trim($info_601_j[$a][$j]) ;
 				else $libelle_j .= " ** ".trim($info_601_j[$a][$j]) ;
 		}
 		if (!$libelle_j) $libelle_final = trim($info_601_a[$a][0]) ; else $libelle_final = trim($info_601_a[$a][0])." ** ".$libelle_j ;
 		if (!$libelle_final) break ;
-		for ($j=0; $j<sizeof($info_601_x[$a]); $j++) {
+		for ($j=0; $j<count($info_601_x[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_601_x[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_601_y[$a]); $j++) {
+		for ($j=0; $j<count($info_601_y[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_601_y[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_601_z[$a]); $j++) {
+		for ($j=0; $j<count($info_601_z[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_601_z[$a][$j]) ;
 		}
 		//if($info_601_3[$a][0])$libelle_final.=" @@3 ".trim($info_601_3[$a][0]);
@@ -173,22 +173,22 @@ function import_new_notice_suite() {
 		$champ_rameau.=$libelle_final;
 	} 		
 	
-	for ($a=0; $a<sizeof($info_606_a); $a++) {
+	for ($a=0; $a<count($info_606_a); $a++) {
 		$libelle_final="";
 		$libelle_j="";
-		for ($j=0; $j<sizeof($info_606_j[$a]); $j++) {
+		for ($j=0; $j<count($info_606_j[$a]); $j++) {
 			if (!$libelle_j) $libelle_j .= trim($info_606_j[$a][$j]) ;
 				else $libelle_j .= " ** ".trim($info_606_j[$a][$j]) ;
 		}
 		if (!$libelle_j) $libelle_final = trim($info_606_a[$a][0]) ; else $libelle_final = trim($info_606_a[$a][0])." ** ".$libelle_j ;
 		if (!$libelle_final) break ;
-		for ($j=0; $j<sizeof($info_606_x[$a]); $j++) {
+		for ($j=0; $j<count($info_606_x[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_606_x[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_606_y[$a]); $j++) {
+		for ($j=0; $j<count($info_606_y[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_606_y[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_606_z[$a]); $j++) {
+		for ($j=0; $j<count($info_606_z[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_606_z[$a][$j]) ;
 		}
 		//if($info_606_3[$a][0])$libelle_final.=" @@3 ".trim($info_606_3[$a][0]);
@@ -196,22 +196,22 @@ function import_new_notice_suite() {
 		$champ_rameau.=$libelle_final;
 	} 
 	
-	for ($a=0; $a<sizeof($info_607_a); $a++) {
+	for ($a=0; $a<count($info_607_a); $a++) {
 		$libelle_final="";
 		$libelle_j="";
-		for ($j=0; $j<sizeof($info_607_j[$a]); $j++) {
+		for ($j=0; $j<count($info_607_j[$a]); $j++) {
 			if (!$libelle_j) $libelle_j .= trim($info_607_j[$a][$j]) ;
 				else $libelle_j .= " ** ".trim($info_607_j[$a][$j]) ;
 		}
 		if (!$libelle_j) $libelle_final = trim($info_607_a[$a][0]) ; else $libelle_final = trim($info_607_a[$a][0])." ** ".$libelle_j ;
 		if (!$libelle_final) break ;
-		for ($j=0; $j<sizeof($info_607_x[$a]); $j++) {
+		for ($j=0; $j<count($info_607_x[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_607_x[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_607_y[$a]); $j++) {
+		for ($j=0; $j<count($info_607_y[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_607_y[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_607_z[$a]); $j++) {
+		for ($j=0; $j<count($info_607_z[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_607_z[$a][$j]) ;
 		}
 		//if($info_607_3[$a][0])$libelle_final.=" @@3 ".trim($info_607_3[$a][0]);
@@ -219,22 +219,22 @@ function import_new_notice_suite() {
 		$champ_rameau.=$libelle_final;
 	} 
 	
-	for ($a=0; $a<sizeof($info_608_a); $a++) {
+	for ($a=0; $a<count($info_608_a); $a++) {
 		$libelle_final="";
 		$libelle_j="";
-		for ($j=0; $j<sizeof($info_608_j[$a]); $j++) {
+		for ($j=0; $j<count($info_608_j[$a]); $j++) {
 			if (!$libelle_j) $libelle_j .= trim($info_608_j[$a][$j]) ;
 				else $libelle_j .= " ** ".trim($info_608_j[$a][$j]) ;
 		}
 		if (!$libelle_j) $libelle_final = trim($info_608_a[$a][0]) ; else $libelle_final = trim($info_608_a[$a][0])." ** ".$libelle_j ;
 		if (!$libelle_final) break ;
-		for ($j=0; $j<sizeof($info_608_x[$a]); $j++) {
+		for ($j=0; $j<count($info_608_x[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_608_x[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_608_y[$a]); $j++) {
+		for ($j=0; $j<count($info_608_y[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_608_y[$a][$j]) ;
 		}
-		for ($j=0; $j<sizeof($info_608_z[$a]); $j++) {
+		for ($j=0; $j<count($info_608_z[$a]); $j++) {
 			$libelle_final .= " -- ".trim($info_608_z[$a][$j]) ;
 		}
 		//if($info_608_3[$a][0])$libelle_final.=" @@3 ".trim($info_608_3[$a][0]);
@@ -567,7 +567,7 @@ function traite_exemplaires () {
 	//$price = $prix[0];
 	
 	// la zone 995 est répétable
-	for ($nb_expl = 0; $nb_expl < sizeof ($info_995); $nb_expl++) {
+	for ($nb_expl = 0; $nb_expl < count ($info_995); $nb_expl++) {
 		/* RAZ expl */
 		$expl = array();
 		

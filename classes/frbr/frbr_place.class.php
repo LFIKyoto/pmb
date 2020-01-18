@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_place.class.php,v 1.6 2017-06-07 06:52:50 tsamson Exp $
+// $Id: frbr_place.class.php,v 1.7 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -20,7 +20,7 @@ class frbr_place {
 	protected $cadres;
 	
 	public function __construct($num_page=0) {
-		$this->num_page = $num_page+0;
+	    $this->num_page = (int) $num_page;
 		$this->fetch_data();
 	}
 	

@@ -1,7 +1,7 @@
 /* +--------------------------------------------------------------------------+
 // ? 2002-2013 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: common.css,v 1.136 2018-11-05 08:29:16 acarteret Exp $ */
+// $Id: common.css,v 1.138 2019-08-07 09:37:56 mramage Exp $ */
 /* ---------------------------------------------------------------------------*/
 /* ---------------------------------------------------------------------------*/
 /*                         ATTRIBUTS GENERAUX                                 */
@@ -680,6 +680,15 @@ td {
 
 #subs_form table td input.subsform {
     width: 195px;
+}
+
+#ok_subscribe {
+    font-size:115%;
+    background-color:#bb5c5c;
+    color:#fff;
+    margin-top:10px;
+    padding:15px;
+    display:block;
 }
 
 /* ---------------------------------------------------------------------------*/
@@ -3048,4 +3057,62 @@ arte-vod
 .ui-thumbnav>*>*:hover:before,
 .ui-thumbnav>*>*:focus:before {
     opacity: 0;
+}
+
+/*
+*
+* Responsive tableaux compte lecteur
+*
+*/
+
+@media screen and (max-width: 599px) {
+
+    .liste-expl-empr-all td:empty
+    ,#empr-old td:empty {
+        content: none;
+        padding: 0;
+        border: none;
+        height: 0;
+        min-height: 0;
+    }
+    .liste-expl-empr-all td[column_name]:before,
+    #empr-old td[column_name]:before {
+        content: attr(column_name);
+    }
+    #empr-old tbody, .liste-expl-empr-all tbody,
+    #empr-old td, .liste-expl-empr-all td,
+    #empr-old tr, .liste-expl-empr-all tr {
+        display: block;
+    }
+    #empr-old, .liste-expl-empr-all .tb_pret_location_row {
+    	border: 0;
+    }
+    #empr-old tr, .liste-expl-empr-all tr:not(.tb_pret_location_row) {
+		margin-bottom: 10px;
+        border: solid 2px #d3d3d3;
+		
+    }
+    #empr-old th, .liste-expl-empr-all th {
+        display: none;
+    }
+    #empr-old td, .liste-expl-empr-all td {
+        border: 0px solid transparent;
+        white-space: normal;
+        border-bottom: solid 1px #d3d3d3;
+        border-top: solid 0px #f9f9f9;
+        overflow: hidden;
+    }
+    #empr-old td:before, .liste-expl-empr-all tr:not(.tb_pret_location_row) td:before {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        text-align: left;
+        background-color: #efefef;
+        padding: 0px;
+        margin-top: 0px;
+        display: block;
+        font-weight: 600;
+        padding: 5px 0px 0px 4px;
+        text-indent: 5px;
+    }
 }

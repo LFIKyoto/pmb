@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: autoloader.class.php,v 1.9 2017-04-27 15:05:58 dgoron Exp $
+// $Id: autoloader.class.php,v 1.11 2019-06-06 09:56:29 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -25,7 +25,7 @@ class autoloader{
 	 * à partir de php 5.3
 	 */
 	public function add_register($type="classic",$first = false){
-		if(substr(phpversion(),2,1) >= 3){
+	    if(PHP_MINOR_VERSION >= 3){
 			spl_autoload_register(array($this, $type),true,$first);
 		}else{
 			spl_autoload_register(array($this, $type),true);
@@ -222,6 +222,23 @@ class autoloader{
 				$class_file = $class_path."/frbr/entities/".$entity."/".($element == 'entity' ? 'entities' : $element."s")."/".$class_name.".class.php";
 				$this->load($class_file);	
 			}
+		}else if($this->debug){
+			echo "Already loaded<br>";
+		}
+	}
+	
+	/*
+	 * Inclusion des pages d'autorités
+	 */
+	private function authorities_page_class($class_name) {
+		global $class_path;
+		if($this->debug){
+			echo '<br>Trying to load ', $class_name, ' via ', __METHOD__, "()<br>";
+		}
+		//inclusion de la classe d'un module...
+		if(!class_exists($class_name)){
+			$class_file = $class_path."/authorities/page/".$class_name.".class.php";
+			$this->load($class_file);
 		}else if($this->debug){
 			echo "Already loaded<br>";
 		}

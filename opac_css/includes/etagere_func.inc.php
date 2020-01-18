@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: etagere_func.inc.php,v 1.62 2018-06-14 10:19:16 dgoron Exp $
+// $Id: etagere_func.inc.php,v 1.65 2019-06-18 12:38:31 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -200,9 +200,11 @@ function affiche_etagere($accueil=0, $etageres="", $aff_commentaire=0, $aff_noti
 		reset ($notices) ;
 		$limit=0;
 		if ($limite_notices) $retour_aff.= "<div id='etagere-notice-list'>";
-		while ((list($idnotice, $niveau_biblio)= each($notices)) && ($limit<$limite_notices)) {
-			$limit++;
-			$retour_aff .= aff_notice($idnotice, 0, 1, 0, $mode_aff_notice, $depliable);
+		foreach ($notices as $idnotice => $niveau_biblio) {
+		    if ($limit < $limite_notices) {
+		        $limit++;
+		        $retour_aff .= aff_notice($idnotice, 0, 1, 0, $mode_aff_notice, $depliable);
+		    }
 		}
 		//if ($limite_notices&&($limite_notices<count($notices))) $retour_aff.= "<br />";
 		if ($opac_etagere_nbnotices_accueil>=0 && (count($notices)>$limite_notices) && $link_to_etagere ) {
@@ -220,16 +222,8 @@ function affiche_etagere($accueil=0, $etageres="", $aff_commentaire=0, $aff_noti
 	
 }
 
-// paramètres :
-//	$idetagere : l'id de l'étagère
-//	$aff_notices_nb : nombres de notices affichées : toutes = 0 
-//	$mode_aff_notice : mode d'affichage des notices, REDUIT (titre+auteur principal) ou ISBD ou PMB ou les deux : dans ce cas : (titre + auteur) en entête du truc, à faire dans notice_display.class.php
-//	$depliable : affichage des notices une par ligne avec le bouton de dépliable
-//	$link_to_etagere : 0 ou 1 pour afficher le lien d'accès à l'étagère en cas de nb notices > nb max
-//  $link : "./index.php?lvl=etagere_see&id=!!id!!"
-function contenu_etagere($idetagere, $aff_notices_nb=0, $mode_aff_notice=AFF_ETA_NOTICES_BOTH, $depliable=AFF_ETA_NOTICES_DEPLIABLES_OUI, $link_to_etagere="", $link="", $template_directory = "") {
-	
-	global $charset, $msg;
+//Liste des notices de l'étagère
+function get_etagere_notices($idetagere, $aff_notices_nb=0) {
 	global $gestion_acces_active, $gestion_acces_empr_notice;
 	global $class_path;
 	
@@ -246,23 +240,19 @@ function contenu_etagere($idetagere, $aff_notices_nb=0, $mode_aff_notice=AFF_ETA
 		$dom_2= $ac->setDomain(2);
 		$acces_j = $dom_2->getJoin($_SESSION['id_empr_session'],4,'notice_id');
 	}
-		
+	
 	if($acces_j) {
 		$statut_j='';
 		$statut_r='';
 	} else {
 		$statut_j=',notice_statut';
 		$statut_r="and statut=id_notice_statut and ((notice_visible_opac=1 and notice_visible_opac_abon=0)".($_SESSION["user_code"]?" or (notice_visible_opac_abon=1 and notice_visible_opac=1)":"").")";
-	}	
-	
+	}
 	if($opac_view_restrict)  $statut_r=" and ".$opac_view_restrict. $statut_r;
-
-	if (!$idetagere) return "" ;
-		
-	$notices = array() ;
 	
+	$notices = array();
 	//petit check rapide pour récupérer le tri imposé sur l'étagère...
-	$idetagere+=0;
+	$idetagere = intval($idetagere);
 	$rqt = "select id_tri from etagere where idetagere=".$idetagere;
 	$res = pmb_mysql_query($rqt);
 	if(pmb_mysql_num_rows($res)){
@@ -270,15 +260,33 @@ function contenu_etagere($idetagere, $aff_notices_nb=0, $mode_aff_notice=AFF_ETA
 	}else $id_tri = 0;
 	//On récupère les notices associées à l'étagère
 	notices_caddie($idetagere, $notices, $acces_j, $statut_j, $statut_r, $aff_notices_nb, $id_tri) ;
+	return $notices;
+}
 
+// paramètres :
+//	$idetagere : l'id de l'étagère
+//	$aff_notices_nb : nombres de notices affichées : toutes = 0 
+//	$mode_aff_notice : mode d'affichage des notices, REDUIT (titre+auteur principal) ou ISBD ou PMB ou les deux : dans ce cas : (titre + auteur) en entête du truc, à faire dans notice_display.class.php
+//	$depliable : affichage des notices une par ligne avec le bouton de dépliable
+//	$link_to_etagere : 0 ou 1 pour afficher le lien d'accès à l'étagère en cas de nb notices > nb max
+//  $link : "./index.php?lvl=etagere_see&id=!!id!!"
+function contenu_etagere($idetagere, $aff_notices_nb=0, $mode_aff_notice=AFF_ETA_NOTICES_BOTH, $depliable=AFF_ETA_NOTICES_DEPLIABLES_OUI, $link_to_etagere="", $link="", $template_directory = "") {
+	global $charset, $msg;
+
+	if (!$idetagere) return "" ;
+		
+	$notices = get_etagere_notices($idetagere, $aff_notices_nb);
+	
 	if ($aff_notices_nb>0) $limite_notices = min($aff_notices_nb, count($notices)) ;
 	elseif ($aff_notices_nb<0) $limite_notices = min($aff_notices_nb, count($notices)) ;
 	else  $limite_notices = count($notices) ;
 	reset ($notices) ;
 	$limit=0;
-	while ((list($idnotice, $niveau_biblio)= each($notices)) && ($limit<$limite_notices)) {
-		$limit++;
-		$retour_aff .= aff_notice($idnotice, 0, 1, 0, $mode_aff_notice, $depliable, 0, 1, 0, 1, $template_directory);
+	foreach ($notices as $idnotice => $niveau_biblio) {
+	    if ($limit < $limite_notices) {
+	        $limit++;
+	        $retour_aff .= aff_notice($idnotice, 0, 1, 0, $mode_aff_notice, $depliable, 0, 1, 0, 1, $template_directory);
+	    }
 	}
 
 	if ((count($notices)>$limite_notices) && $link_to_etagere) {

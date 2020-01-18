@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: delete_empr_passwords.inc.php,v 1.4 2017-11-22 11:07:34 dgoron Exp $
+// $Id: delete_empr_passwords.inc.php,v 1.5 2019-03-29 11:54:49 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -12,7 +12,7 @@ print "<br /><br /><h2 class='center'>".htmlentities($msg["deleting_empr_passwor
 
 $v_state .= "<br /><img src='".get_url_icon('d.gif')."' hspace=3>".htmlentities($msg["deleting_empr_passwords"], ENT_QUOTES, $charset)." : ";
 $query = "show tables like 'empr_passwords'";
-if (pmb_mysql_num_rows(mysql_query($query,$dbh))) {
+if (pmb_mysql_num_rows(pmb_mysql_query($query,$dbh))) {
 	$query = "DROP TABLE empr_passwords";
 	pmb_mysql_query($query);
 }

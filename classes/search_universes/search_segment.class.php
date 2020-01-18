@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_segment.class.php,v 1.13 2018-08-06 12:57:36 vtouchard Exp $
+// $Id: search_segment.class.php,v 1.14.4.2 2019-11-08 15:18:08 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -48,7 +48,7 @@ class search_segment {
 	
 
 	public function __construct($id = 0){
-		$this->id = $id+0;
+		$this->id = intval($id);
 		$this->fetch_data();
 	}
 	
@@ -88,6 +88,7 @@ class search_segment {
 		global $base_path;
 		global $search_segment_content_form;
 		global $universe_id;
+		global $pmb_opac_url;
 	
 		$content_form = $search_segment_content_form;
 		$content_form = str_replace('!!segment_label!!', htmlentities($this->label, ENT_QUOTES, $charset), $content_form);
@@ -103,6 +104,8 @@ class search_segment {
 			$content_form = str_replace('!!segment_search_perso_form!!', $this->search_perso->get_form(entities::get_string_from_const_type($this->type)), $content_form);
 			$content_form = str_replace('!!segment_set_form!!', $this->get_set()->get_form(), $content_form);
 			$content_form = str_replace('!!segment_type_readonly!!', 'disabled', $content_form);
+			$content_form = str_replace('!!segment_id_field!!',  $interface_form->get_display_field_text($msg['search_segment_id'], $this->id), $content_form);
+			$content_form = str_replace('!!segment_permalink_field!!', $interface_form->get_display_field_url($msg['search_segment_url'], $pmb_opac_url."index.php?lvl=search_segment&id=".$this->id), $content_form);
 			if ($this->get_default_segment_from_universe() == $this->id) {
 			    $content_form = str_replace('!!checked!!', 'checked', $content_form);
 			} else {
@@ -117,6 +120,8 @@ class search_segment {
 			$content_form = str_replace('!!segment_set_form!!', '', $content_form);
 			$content_form = str_replace('!!segment_type_readonly!!', '', $content_form);
 			$content_form = str_replace('!!checked!!', '', $content_form);
+			$content_form = str_replace('!!segment_id_field!!','', $content_form);
+			$content_form = str_replace('!!segment_permalink_field!!','', $content_form);
 		}
 		$content_form = str_replace('!!segment_id!!', $this->id, $content_form);
 		$interface_form->set_url_base($base_path."/admin.php?categ=search_universes&sub=segment");

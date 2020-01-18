@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_request.class.php,v 1.5 2018-08-30 14:09:07 apetithomme Exp $
+// $Id: rent_request.class.php,v 1.6 2019-06-12 12:48:05 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
+use Spipu\Html2Pdf\Html2Pdf;
+
 require_once($class_path."/rent/rent_account.class.php");
-require_once($class_path.'/html2pdf/html2pdf.class.php');
 
 class rent_request extends rent_account {
 	
@@ -35,8 +36,8 @@ class rent_request extends rent_account {
 		if($charset != "utf-8"){
 			$command_tpl=utf8_encode($command_tpl);
 		}
-		$html2pdf = new HTML2PDF('L','A4','fr');
-		$html2pdf->WriteHTML($command_tpl);
-		$html2pdf->Output(sprintf($msg['acquisition_request_pdf_filename'], $this->get_supplier()->raison_sociale, $this->get_id()).'.pdf','D');
+		$html2pdf = new Html2Pdf('L','A4','fr');
+		$html2pdf->writeHTML($command_tpl);
+		$html2pdf->output(sprintf($msg['acquisition_request_pdf_filename'], $this->get_supplier()->raison_sociale, $this->get_id()).'.pdf','D');
 	}
 }

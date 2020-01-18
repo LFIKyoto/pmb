@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_datasource_notices.class.php,v 1.9 2018-04-19 11:58:55 dgoron Exp $
+// $Id: docwatch_datasource_notices.class.php,v 1.10 2019-07-05 09:19:36 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -70,6 +70,11 @@ class docwatch_datasource_notices extends docwatch_datasource{
 				$record["logo_url"] = $logo_url;
 				$record["publication_date"] = $notice->date_parution;
 				$record["descriptors"] = $notice->categories;
+				if(count($record["descriptors"])) {
+				    foreach ($record["descriptors"] as $i=>$descriptor) {
+				        $record["descriptors"][$i]['id'] = $descriptor['categ_id'];
+				    }
+				}
 				$record["tags"] = ($notice->index_l ? explode($pmb_keyword_sep, $notice->index_l) : "");
 				$records[] = $record;
 			}

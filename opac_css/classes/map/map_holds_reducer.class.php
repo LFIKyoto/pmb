@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_holds_reducer.class.php,v 1.7 2016-11-05 14:49:08 ngantier Exp $
+// $Id: map_holds_reducer.class.php,v 1.10 2019-07-10 06:44:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -51,20 +51,22 @@ class map_holds_reducer {
 	 * @return void
 	 */
 	
-	function __construct($map_hold,$holds) {
+	public function __construct($map_hold,$holds) {
 		$this->map_hold = $map_hold;
 		$this->holds = $holds;
 		$this->clusters = array();
-		$this->init();
-		$this->map_hold->get_coords();
+		if(is_object($this->map_hold)) {
+			$this->init();
+			$this->map_hold->get_coords();
+		}
 	}
 	
 	
 	public function init(){
-		global $dbh, $opac_map_hold_distance;
+		global $opac_map_hold_distance;
 		
 		$query = "select Area(geomfromtext('".$this->map_hold->get_wkt()."')) as area";
-		$result = pmb_mysql_query($query, $dbh);
+		$result = pmb_mysql_query($query);
 		if(pmb_mysql_num_rows($result)){
 			$row = pmb_mysql_fetch_object($result);
 			$this->map_area = $row->area;

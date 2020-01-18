@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cart.inc.php,v 1.50 2018-12-21 14:05:40 dgoron Exp $
+// $Id: cart.inc.php,v 1.53 2019-08-01 13:16:36 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $idcaddie, $class_path, $include_path, $cart_click_bull, $cart_click_expl, $action, $item, $form_action, $form_cancel, $msg, $page, $lien;
 
 if(!isset($idcaddie)) $idcaddie = 0;
 
@@ -96,7 +98,7 @@ function aff_cart_notices($liste, $caddie_type, $idcaddie=0) {
 		$nb_after_suppr = ($nbr_lignes ? $nbr_lignes-1 : 0);	
 	}
 	
-	if(!sizeof($liste) || !is_array($liste)) {
+	if (empty($liste) || !is_array($liste)) {
 		print $msg[399];
 		return;
 	} else {
@@ -123,7 +125,7 @@ function aff_cart_notices($liste, $caddie_type, $idcaddie=0) {
 			// inclusion du javascript de gestion des listes dépliables
 			// début de liste
 			print $begin_result_liste;
-			while(list($cle, $expl) = each($liste)) {
+			foreach ($liste as $cle => $expl) {
 				if($stuff = get_expl_info($expl)) {
 					$stuff->lien_suppr_cart = "<a href='./catalog.php?categ=search&mode=3&action=del_item&object_type=EXPL&idcaddie=$idcaddie&item=$expl&page=$page_suppr&nbr_lignes=$nb_after_suppr&nb_per_page=$nb_per_page'><img src='".get_url_icon('basket_empty_20x20.gif')."' alt='basket' title='".$msg['caddie_icone_suppr_elt']."' /></a>";
 					$stuff = check_pret($stuff);
@@ -139,7 +141,7 @@ function aff_cart_notices($liste, $caddie_type, $idcaddie=0) {
 			// inclusion du javascript de gestion des listes dépliables
 			// début de liste
 			print $begin_result_liste;
-			while(list($cle, $expl) = each($liste)) {
+			foreach ($liste as $cle => $expl) {
 				if($bull_aff = show_bulletinage_info($expl)) {
 					$javascript_template ="
 						<div id=\"el!!id!!Parent\" class=\"notice-parent\">

@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: FrbrEntitiesGraph.js,v 1.2 2017-06-01 09:18:47 tsamson Exp $
+// $Id: FrbrEntitiesGraph.js,v 1.2.8.1 2019-09-20 08:50:13 tsamson Exp $
 
 
 define(["dojo/_base/declare",
@@ -118,7 +118,9 @@ define(["dojo/_base/declare",
 	        			return  "stroke: rgb("+d.color+")";	
 	        		}
 	        		return  "stroke: #999";
-	        	});
+	        	})
+	        	.attr("marker-end", "url(#arrow)");
+			
 			this.linkSvg = linkEnter.merge(this.linkSvg);
 			//this.linkSvg.exit().remove();
 			

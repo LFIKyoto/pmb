@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: accounts.inc.php,v 1.3 2016-02-19 15:54:50 dgoron Exp $
+// $Id: accounts.inc.php,v 1.4 2019-05-28 15:00:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $msg, $charset, $action, $id_bibli, $id;
 
 require_once($class_path.'/entites.class.php');
 require_once($class_path.'/rent/rent_accounts.class.php');

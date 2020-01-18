@@ -300,8 +300,6 @@ function CheckTTF($file)
 function MakeFont($fontfile, $afmfile, $enc='cp1252', $patch=array(), $type='TrueType')
 {
 	//Generate a font definition file
-	if(get_magic_quotes_runtime())
-		@set_magic_quotes_runtime(0);
 	ini_set('auto_detect_line_endings','1');
 	if($enc)
 	{
@@ -366,7 +364,7 @@ function MakeFont($fontfile, $afmfile, $enc='cp1252', $patch=array(), $type='Tru
 		if($type=='Type1')
 		{
 			//Find first two sections and discard third one
-			$header=(ord($file[0])==128);
+			$header = (ord(substr($file, 0, 1)) == 128);
 			if($header)
 			{
 				//Strip first binary header
@@ -376,7 +374,7 @@ function MakeFont($fontfile, $afmfile, $enc='cp1252', $patch=array(), $type='Tru
 			if(!$pos)
 				die('<b>Error:</b> font file does not seem to be valid Type1');
 			$size1=$pos+6;
-			if($header && ord($file[$size1])==128)
+			if ($header && ord(substr($file, $size1, 0)) == 128)
 			{
 				//Strip second binary header
 				$file=substr($file,0,$size1).substr($file,$size1+6);

@@ -1218,6 +1218,8 @@ INSERT INTO `z_attr` (`attr_bib_id`, `attr_libelle`, `attr_attr`) VALUES (3,'suj
 INSERT INTO `z_attr` (`attr_bib_id`, `attr_libelle`, `attr_attr`) VALUES (3,'titre','4');
 INSERT INTO `z_attr` (`attr_bib_id`, `attr_libelle`, `attr_attr`) VALUES (3,'isbn','7');
 INSERT INTO `z_attr` (`attr_bib_id`, `attr_libelle`, `attr_attr`) VALUES (3,'auteur','1003');
+INSERT INTO `z_attr` (`attr_bib_id`, `attr_libelle`, `attr_attr`) VALUES (3,'ismn','9');
+INSERT INTO `z_attr` (`attr_bib_id`, `attr_libelle`, `attr_attr`) VALUES (3,'ean','1214');
 INSERT INTO `z_attr` (`attr_bib_id`, `attr_libelle`, `attr_attr`) VALUES (5,'auteur','1004');
 INSERT INTO `z_attr` (`attr_bib_id`, `attr_libelle`, `attr_attr`) VALUES (5,'titre','4');
 INSERT INTO `z_attr` (`attr_bib_id`, `attr_libelle`, `attr_attr`) VALUES (5,'isbn','7');

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export.inc.php,v 1.2 2017-03-30 14:14:19 mbertin Exp $
+// $Id: export.inc.php,v 1.3 2019-07-01 12:08:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -429,21 +429,20 @@ function _make_export_numero_bull($rn,$dem=0) {
 	//Numéro de bulletin
 	if ($rn->niveau_biblio=="a") {
 		//Récupération du numéro de bulletin
-		$requete="select bulletin_numero from notices, bulletins, analysis where analysis_notice=".$rn->notice_id." and analysis_bulletin=bulletin_id and bulletin_notice=notice_id";
-		$resultat=pmb_mysql_query($requete);
-		$r_bull=@pmb_mysql_fetch_object($resultat);
-		if (($r_bull)&&($r_bull->bulletin_numero)) {
-			$matches="";
-			if(($dem != 0) && preg_match("/^(.+) vol (.+)$/i",$r_bull->bulletin_numero,$matches)){
-				if($dem == 1){//Numéro
-					$notice .=trim($matches[1]);
-				}else{//Volume
-					$notice .=trim($matches[2]);
+		$requete = "select bulletin_numero from notices, bulletins, analysis where analysis_notice=".$rn->notice_id." and analysis_bulletin=bulletin_id and bulletin_notice=notice_id";
+		$resultat = pmb_mysql_query($requete);
+		$r_bull = @pmb_mysql_fetch_object($resultat);
+		if (($r_bull) && ($r_bull->bulletin_numero)) {
+			$matches = array();
+			if (($dem != 0) && preg_match("/^(.+) vol (.+)$/i", $r_bull->bulletin_numero, $matches)) {
+				if ($dem == 1) {//Numéro
+					$notice .= trim($matches[1]);
+				} else {//Volume
+					$notice .= trim($matches[2]);
 				}
-			}elseif($dem != 2){
+			} elseif ($dem != 2) {
 			      $notice .= $r_bull->bulletin_numero;
 			}
-			
 		}
 	}
 	return $notice;

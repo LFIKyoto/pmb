@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Explnum.php,v 1.6 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: Explnum.php,v 1.7 2019-07-05 13:25:14 btafforeau Exp $
 namespace Sabre\PMB;
 
 use Sabre\DAV;
@@ -12,11 +12,11 @@ class Explnum extends PMB\File {
 	private $explnum_id;
 	private $name;
 
-	function __construct($name) {
+	public function __construct($name) {
 		$this->explnum_id = substr($this->get_code_from_name($name),1);
 	}
 	
-	function getName() {
+	public function getName() {
 		global $charset;
 		$query = "select explnum_nom, explnum_extfichier from explnum where explnum_id = ".$this->explnum_id;
 		$result = pmb_mysql_query($query);
@@ -36,16 +36,16 @@ class Explnum extends PMB\File {
 		}
 	}
 
-	function get() {
+	public function get() {
 		$explnum = new \explnum($this->explnum_id);
 		return $explnum->get_file_content();
 	}
 	
-	function getSize() {
+	public function getSize() {
 		return strlen($this->get());
 	}
 	
-	function getContentType(){
+	public function getContentType(){
 		$mimetype= "";
 		$query = "select explnum_mimetype from explnum where explnum_id = ".$this->explnum_id;
 		$result = pmb_mysql_query($query);
@@ -55,7 +55,7 @@ class Explnum extends PMB\File {
 		return $mimetype;
 	}
 	
-	function getETag() {
+	public function getETag() {
 		if(file_exists($this->explnum_id)){
 			return '"' . md5_file($this->explnum_id) . '"';
 		}else{
@@ -63,7 +63,7 @@ class Explnum extends PMB\File {
 		}
 	}
 	
-	function put($data){
+	public function put($data){
 		global $base_path;
 		global $id_rep;
 		if($this->check_write_permission()){
@@ -84,7 +84,7 @@ class Explnum extends PMB\File {
 		}
 	} 
 	
-	function delete(){
+	public function delete(){
 		$explnum = new \explnum($this->explnum_id);
 		$explnum->delete();
 	}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_small_text_ui.class.php,v 1.4 2017-09-04 12:47:43 tsamson Exp $
+// $Id: onto_common_datatype_small_text_ui.class.php,v 1.7 2019-08-14 08:02:58 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -36,7 +36,7 @@ class onto_common_datatype_small_text_ui extends onto_common_datatype_ui {
 		global $msg,$charset,$ontology_tpl;
 		
 		$form=$ontology_tpl['form_row'];
-		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->label, 'utf-8') ,ENT_QUOTES,$charset), $form);
+		$form=str_replace("!!onto_row_label!!",htmlentities(encoding_normalize::charset_normalize($property->get_label(), 'utf-8') ,ENT_QUOTES,$charset), $form);
 		
 		$content='';
 		if(sizeof($datas)){
@@ -101,9 +101,10 @@ class onto_common_datatype_small_text_ui extends onto_common_datatype_ui {
 			
 			$content.=$row;
 		}
-		$form=str_replace("!!onto_rows!!",$content ,$form);
+		$form = str_replace("!!onto_rows!!", $content, $form);
+		$form = str_replace("!!onto_row_scripts!!", static::get_scripts(), $form);
 		$form = self::get_form_with_special_properties($property, $datas, $instance_name, $form);
-		$form=str_replace("!!onto_row_id!!",$instance_name.'_'.$property->pmb_name , $form);
+		$form = str_replace("!!onto_row_id!!", $instance_name.'_'.$property->pmb_name, $form);
 		
 		return $form;
 	} // end of member function get_form
@@ -122,7 +123,7 @@ class onto_common_datatype_small_text_ui extends onto_common_datatype_ui {
 		
 		$display='<div id="'.$instance_name.'_'.$property->pmb_name.'">';
 		$display.='<p>';
-		$display.=$property->label.' : ';
+		$display.=$property->get_label().' : ';
 		foreach($datas as $data){
 			$display.=$data->get_formated_value();
 		}
@@ -132,5 +133,47 @@ class onto_common_datatype_small_text_ui extends onto_common_datatype_ui {
 		
 	} // end of member function get_display
 	
-	
+	/**
+	 *
+	 *
+	 * @param property property la propriété concernée
+	 * @param onto_restriction $restrictions le tableau des restrictions associées à la propriété
+	 * @param array datas le tableau des datatypes
+	 * @param string instance_name nom de l'instance
+	 * @param string flag Flag
+	 
+	 * @return string
+	 * @static
+	 * @access public
+	 */
+	public static function get_validation_js($item_uri,$property, $restrictions,$datas, $instance_name,$flag){
+		global $msg;
+		
+		return '{
+			"message": "'.addslashes($property->get_label()).'",
+			"valid" : true,
+			"error": "",
+			"check": function(){
+				this.valid = true;
+				var order = document.getElementById("'.$instance_name.'_'.$property->pmb_name.'_new_order").value;
+				for (var i=0; i<=order ; i++){
+					var label = document.getElementById("'.$instance_name.'_'.$property->pmb_name.'_"+i+"_value");
+					if(label && label.value.length > 51){
+						this.valid = false;
+						this.error = "too_long";
+					}
+				}
+				return this.valid;
+			},
+			"get_error_message": function(){
+ 				switch(this.error){
+					case "too_long" :
+						this.message = "'.addslashes($msg['onto_error_too_long_value_small_text']).'";
+						break;
+ 				}
+				this.message = this.message.replace("%s","'.addslashes($property->get_label()).'");
+				return this.message;
+			}
+		}';
+	}
 } // end of onto_common_datatype_ui

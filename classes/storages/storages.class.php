@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: storages.class.php,v 1.3 2017-10-18 13:00:57 tsamson Exp $
+// $Id: storages.class.php,v 1.4 2019-06-07 13:30:42 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -268,8 +268,8 @@ class storages {
 	public function save_form(){
 		global $id,$storage_name,$storage_method,$storage_params;
 		
-		$id+=0;
-		$row =array();
+		$id = intval($id);
+		$row = array();
 		if($id){
 			$query ="select * from storages where id_storage = '".$id."'";
 			$result = pmb_mysql_query($query);
@@ -287,8 +287,8 @@ class storages {
 		}
 		if($storage_method){
 			$query.= "storage_name='".$storage_name."', storage_class = '".$storage_method."', storage_params = '".addslashes(serialize($storage_params))."'";
-		}else if ($row['id_storage']){
-			$query ="delete from storages";
+		}else if (!empty($row['id_storage'])){
+			$query = "delete from storages";
 		}
 		pmb_mysql_query($query.$clause);
 	}

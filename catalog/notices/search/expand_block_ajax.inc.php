@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expand_block_ajax.inc.php,v 1.14 2017-11-21 12:01:00 dgoron Exp $
+// $Id: expand_block_ajax.inc.php,v 1.15 2019-06-07 08:05:38 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $display_cmd, $cmd_tab;
 
 // functions particulières à ce module
 require_once("$class_path/mono_display.class.php");

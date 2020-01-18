@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions_map.class.php,v 1.13 2017-02-07 14:01:37 dgoron Exp $
+// $Id: suggestions_map.class.php,v 1.15 2019-07-24 09:08:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -33,12 +33,13 @@ class suggestions_map {
 		
 		global $dbh;
 		global $include_path;
-
+		global $charset;
+		
 		//Recherche des fichiers XML de description
 		$map_file=$include_path.'/suggestions/suggestions_map.xml';
 		$map_file_subst=$include_path.'/suggestions/suggestions_map_subst.xml';
 		
-		$xml=file_get_contents($map_file,"r") or die("Can't find XML file $map_file");
+		$xml=file_get_contents($map_file,"r") or die(htmlentities("Can't find XML file $map_file", ENT_QUOTES, $charset));
 		if (file_exists($map_file_subst)) {
 			$xml_subst=file_get_contents($map_file_subst,"r");		
 		} else {
@@ -233,8 +234,8 @@ class suggestions_map {
 	}
 
 
-	//Construction du sélecteur en fonction de la liste des états possibles et de l'état en cours
-	public function getStateSelector() {
+	//Construction du sélecteur en fonction de la liste des états possibles
+	public function getStateSelector($selected=0) {
 		
 		global $msg, $charset;
 			
@@ -243,7 +244,7 @@ class suggestions_map {
 		
 		foreach ($this->states as $name=>$content) {
 			if ($this->getState_DISPLAY($name) != 'NO') {
-				$selector.= "<option value='".$this->getState_ID($name)."'>";
+			    $selector.= "<option value='".$this->getState_ID($name)."' ".($this->getState_ID($name) == $selected ? "selected='selected'" : "").">";
 				$selector.= htmlentities($msg[$this->getState_COMMENT($name)], ENT_QUOTES, $charset);
 				$selector.= "</option>";
 			}
@@ -416,7 +417,7 @@ class suggestions_map {
 		global $msg, $charset;
 		
 		$selector = "<label class='etiquette' >".htmlentities($msg['acquisition_sug_sel_categ'],ENT_QUOTES, $charset)."</label>&nbsp;"; 
-		$selector.= "<select class='saisie-25em' id='to_categ' name='to_categ' onChange=\"chk_CATEG(); \" />";
+		$selector.= "<select class='saisie-25em' id='to_categ' name='to_categ' onChange=\"chk_CATEG(); \">";
 		$selector.= "<option value= '0'>".htmlentities($msg['acquisition_sug_sel_no_categ'], ENT_QUOTES, $charset)."</option>";
 		$tab_categ = suggestions_categ::getCategList();
 		foreach ($tab_categ as $id_categ=>$lib_categ) {

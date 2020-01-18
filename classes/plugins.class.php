@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: plugins.class.php,v 1.14 2018-10-24 08:27:03 arenou Exp $
+// $Id: plugins.class.php,v 1.16 2019-07-16 13:09:50 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], '.class.php')) die('no access');
 
@@ -98,14 +98,14 @@ class plugins {
 				for($i=0 ; $i<count($manifest['MENUS'][0]['MENU']) ; $i++){
 					$menu = $manifest['MENUS'][0]['MENU'][$i];
 					$this->plugins[basename($plugin_path)]['menus'][$menu['MODULE']] = array();
-					if(is_array($menu['TABS'])){
+					if(isset($menu['TABS']) && is_array($menu['TABS'])){
 						for ($j=0 ; $j<count($menu['TABS'][0]['TAB']) ; $j++){	
 							$this->plugins[basename($plugin_path)]['menus'][$menu['MODULE']][$menu['TABS'][0]['TAB'][$j]['ID']] = array(
 								'name' => $menu['TABS'][0]['TAB'][$j]['value'],
 								'items' => array()
 							);
 						}
-						if(is_array($menu['ITEMS']) && is_array($menu['ITEMS'][0]['ITEM'])){
+						if(isset($menu['ITEMS']) && is_array($menu['ITEMS']) && is_array($menu['ITEMS'][0]['ITEM'])){
 							$items = $menu['ITEMS'][0]['ITEM'];
 							foreach ($items as $xml_item) {
 								$item = array();

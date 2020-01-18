@@ -2,13 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_main.inc.php,v 1.38 2018-10-25 07:58:18 dgoron Exp $
+// $Id: ajax_main.inc.php,v 1.42 2019-08-20 09:08:44 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $categ, $plugin, $sub, $class_path, $search_xml_file, $search_xml_file_full_path;
+
 //En fonction de $categ, il inclut les fichiers correspondants
 
-switch($categ):
+switch ($categ) {
 	case 'misc':
 		include('./ajax/misc/misc.inc.php');
 		break;
@@ -118,21 +120,7 @@ switch($categ):
 		require_once('./ajax/misc/indexation.inc.php');
 		break;
 	case 'list':
-		switch($action) {
-			case 'save':
-				require_once($class_path."/list/list_model.class.php");
-				$list_model = new list_model($id);
-				$list_model->set_objects_type($objects_type);
-				$list_model->set_properties_from_form();
-				$list_model->save();
-				break;
-			case 'edit':
-				
-				break;
-			case 'delete':
-				list_model::delete($id);
-				break;
-		}
+	    require_once './ajax/misc/list.inc.php';
 		break;
 	case 'translations':
 		include('./ajax/misc/translations.inc.php');
@@ -149,6 +137,9 @@ switch($categ):
 	case 'concepts_selector' :
 	    require_once './ajax/misc/concepts_selector.inc.php';
 	    break;
+    case 'entities' :
+    	require_once './ajax/misc/entities.inc.php';
+    	break;
 	default:
 		break;
-endswitch;
+}

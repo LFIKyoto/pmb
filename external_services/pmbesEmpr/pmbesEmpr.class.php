@@ -2,13 +2,14 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesEmpr.class.php,v 1.21 2018-10-19 10:21:25 vtouchard Exp $
+// $Id: pmbesEmpr.class.php,v 1.27.2.4 2019-11-27 09:02:53 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/external_services.class.php");
 require_once($class_path."/emprunteur.class.php");
 require_once($class_path."/parametres_perso.class.php");
+require_once($base_path.'/circ/pret_func.inc.php');
 
 class pmbesEmpr extends external_services_api_class {
 	
@@ -22,6 +23,20 @@ class pmbesEmpr extends external_services_api_class {
 	
 	public function save_general_config() {
 		
+	}
+	
+	// Permet de surcharger les messages avec ceux du web services si un subst est présent
+	public function merge_msg() {
+	    global $msg, $lang, $base_path;
+	    
+	    $filename = $base_path. "/external_services/pmbesEmpr/messages/" . $lang . "_subst.xml";
+	    if (file_exists($filename)) {
+	        $messages = new XMLlist($filename, 0);
+            $messages->analyser();
+            foreach ($messages->table as $key => $val) {
+                $msg[$key] = $val;
+            }
+	     }
 	}
 	
 	public function empr_list($filters=array()) {
@@ -62,7 +77,11 @@ class pmbesEmpr extends external_services_api_class {
 		global $dbh;
 		global $msg;		
 		global $charset;
+		global $see_all_pret;
+		global $get_self_renew_info;
 		
+		$see_all_pret = 1; //permet de passer outre le param $pmb_pret_aff_limitation
+		$get_self_renew_info = true; // retourne les informations de prolongation
 		$result = array(
 				'empr_id' => 0,
 				'empr_cb' => "",
@@ -113,8 +132,11 @@ class pmbesEmpr extends external_services_api_class {
 				'prets' => array(),
 				'reservations' => array(),
 				'nb_retard' => 0,
-				'nb_resa'=> 0,
-				'nb_previsions'=> 0,
+				'nb_resa' => 0,
+    		    'nb_previsions' => 0,
+    		    'adhesion_renouv_proche' => 0,
+    		    'adhesion_depassee' => 0,
+    		    'adhesion_msg' => '',
 		);
 		
 		$empr_cb=$this->clean_field($empr_cb);
@@ -126,13 +148,13 @@ class pmbesEmpr extends external_services_api_class {
 		
 		$sql = "SELECT id_empr, empr_cb FROM empr WHERE $where";
 		$res = pmb_mysql_query($sql);
-		if (!$res || !pmb_mysql_num_rows($res)) return $this->build_ok($result,"Lecteur inconnu.",false);
+		if (!$res || !pmb_mysql_num_rows($res)) return $this->build_ok($result,$msg['54'].".",false);
 			
 		$empr_res = pmb_mysql_fetch_object($res);
 		$empr_id=$empr_res->id_empr;
 		
 		$empr= new emprunteur($empr_id,'',false,1);
-		if (!$empr->cb) return  $this->build_ok($result,"Lecteur inconnu.",false);
+		if (!$empr->cb) return  $this->build_ok($result,$msg['54'].".",false);
 		$sql = "select id_groupe, libelle_groupe from groupe, empr_groupe where empr_id='".$empr_id."' and id_groupe=groupe_id order by libelle_groupe";
 		$res = pmb_mysql_query($sql);
 		$i=0;
@@ -149,11 +171,12 @@ class pmbesEmpr extends external_services_api_class {
 		$nb_pret = $r_nb_pret->nb_pret ;
 		
 		$resa_list=array();
-		$sql="SELECT resa_idnotice, resa_idbulletin, resa_date, resa_date_debut, resa_date_fin, resa_cb, resa_confirmee, resa_idempr, ifnull(expl_cote,'') as expl_cote, empr_nom, empr_prenom, empr_cb, location_libelle, resa_loc_retrait, ";
+		$sql="SELECT resa_idnotice, resa_idbulletin, resa_date, resa_date_debut, resa_date_fin, resa_cb, resa_confirmee, resa_idempr, ifnull(expl_cote,'') as expl_cote, empr_nom, empr_prenom, empr_cb, location_libelle, resa_loc_retrait, resa_pnb_flag, ";
 		$sql.=" trim(concat(if(series_m.serie_name <>'', if(notices_m.tnvol <>'', concat(series_m.serie_name,', ',notices_m.tnvol,'. '), concat(series_m.serie_name,'. ')), if(notices_m.tnvol <>'', concat(notices_m.tnvol,'. '),'')), ";
 		$sql.=" if(series_s.serie_name <>'', if(notices_s.tnvol <>'', concat(series_s.serie_name,', ',notices_s.tnvol,'. '), series_s.serie_name), if(notices_s.tnvol <>'', concat(notices_s.tnvol,'. '),'')), ";
 		$sql.="	ifnull(notices_m.tit1,''),ifnull(notices_s.tit1,''),' ',ifnull(bulletin_numero,''), if (mention_date, concat(' (',mention_date,')') ,''))) as tit, id_resa, ";
 		$sql.=" ifnull(notices_m.typdoc,notices_s.typdoc) as typdoc, ";
+		$sql.=" ifnull(notices_m.niveau_biblio,notices_s.niveau_biblio) as niveau_biblio, ";
 		$sql.=" IF(resa_date_fin>=sysdate() or resa_date_fin='0000-00-00',0,1) as perimee, date_format(resa_date_debut, '".$msg["format_date"]."') as aff_resa_date_debut, if(resa_date_fin='0000-00-00', '', date_format(resa_date_fin, '".$msg["format_date"]."')) as aff_resa_date_fin, date_format(resa_date, '".$msg["format_date"]."') as aff_resa_date " ;
 		$sql.=" FROM ((((resa LEFT JOIN notices AS notices_m ON resa_idnotice = notices_m.notice_id ";
 		$sql.=" LEFT JOIN series AS series_m ON notices_m.tparent_id = series_m.serie_id ) ";
@@ -166,7 +189,9 @@ class pmbesEmpr extends external_services_api_class {
 		
 		$res = pmb_mysql_query($sql);
 		while( $res_info=pmb_mysql_fetch_object($res)){
+		    $resa = array();
 			$resa["title"]=$res_info->tit;
+			$resa["icondoc"]= $this->get_icondoc($res_info->niveau_biblio, $res_info->typdoc);
 			$resa["typdoc"]=$res_info->typdoc;
 			$resa["date"]=$res_info->aff_resa_date;
 			$resa["date_debut"]=$res_info->aff_resa_date_debut;
@@ -175,6 +200,7 @@ class pmbesEmpr extends external_services_api_class {
 			$resa["confirmee"]=$res_info->resa_confirmee;
 			$resa["perimee"]=$res_info->perimee;
 			$resa["id"]=$res_info->id_resa;
+			$resa["pnb_flag"]=$res_info->resa_pnb_flag;
 			$resa_list[]=$resa;
 		}
 		
@@ -189,6 +215,16 @@ class pmbesEmpr extends external_services_api_class {
 				$pperso_list[$i]["libelle"]=$p["TITRE"];
 				$pperso_list[$i]["aff"]=$p["AFF"];
 			}				
+		}
+		$adhesion_renouv_proche = 0;
+		if($empr->adhesion_renouv_proche()) {		    
+		    $adhesion_renouv_proche = 1;
+		    $adhesion_msg = $msg['fetch_empr_adhesion_renouv_proche'];
+		}
+		$adhesion_depassee = 0;
+		if($empr->adhesion_depassee()) {
+		    $adhesion_depassee = 1;
+		    $adhesion_msg = $msg['fetch_empr_adhesion_renouv_depassee'];
 		}
 		$result = array(
 			'empr_id' => $empr_id,
@@ -241,10 +277,25 @@ class pmbesEmpr extends external_services_api_class {
 			'reservations' => $resa_list,
 			'nb_retard' => $empr->retard,
 			'nb_resa'=> $empr->nb_reservations,
-			'nb_previsions'=> $empr->nb_previsions,
+		    'nb_previsions'=> $empr->nb_previsions,
+		    'adhesion_renouv_proche'=> $adhesion_renouv_proche,
+		    'adhesion_depassee'=> $adhesion_depassee,
+		    'adhesion_msg' => $adhesion_msg,
 		);
 		
 		return $this->build_ok($result);
+	}
+	
+	public function get_icondoc($niveau_biblio, $typdoc) {
+	    global $opac_url_base;
+	    
+	    //Icone type de Document
+	    $icon_doc = marc_list_collection::get_instance('icondoc');
+	    $icon = (!empty($icon_doc->table[$niveau_biblio.$typdoc]) ? $icon_doc->table[$niveau_biblio.$typdoc] : '');
+	    if ($icon) {
+	        return "<img class='align_top' src='" . $opac_url_base . "images/$icon '>";
+	    }
+	    return '';
 	}
 	
 	public function delete_empr($empr_cb='', $empr_id='') {
@@ -261,7 +312,7 @@ class pmbesEmpr extends external_services_api_class {
 		
 		$sql = "SELECT id_empr, empr_cb FROM empr WHERE $where";
 		$res = pmb_mysql_query($sql);
-		if (!$res || !pmb_mysql_num_rows($res)) return $this->build_error( "Lecteur inconnu.");
+		if (!$res || !pmb_mysql_num_rows($res)) return $this->build_error( $msg['54'].".");
 			
 		$empr_res = pmb_mysql_fetch_object($res);
 		$empr_id=$empr_res->id_empr;
@@ -271,11 +322,11 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok();
 	}
 	
-	public function create_empr($empr_cb='',$fields) {
+	public function create_empr($empr_cb='',$fields='') {
 		global $dbh,$lang;
 		global $msg;		
 		global $charset;
-		global $pmb_num_carte_auto,$deflt2docs_location,$pmb_gestion_abonnement,$pmb_gestion_financiere;
+		global $pmb_num_carte_auto, $deflt2docs_location, $pmb_gestion_abonnement, $pmb_gestion_financiere, $opac_websubscribe_password_regexp;
 		
 		object_to_array($fields);
 		
@@ -304,24 +355,24 @@ class pmbesEmpr extends external_services_api_class {
 		$fields['pays']=$this->clean_field($fields['pays']);
 		$fields['mail']=$this->clean_field($fields['mail']);
 		$fields['tel1']=$this->clean_field($fields['tel1']);
-		$fields['sms']=$this->clean_field($fields['sms'])+0;
+		$fields['sms']=(int) $this->clean_field($fields['sms']);
 		$fields['tel2']=$this->clean_field($fields['tel2']);
 		$fields['prof']=$this->clean_field($fields['prof']);
 		$fields['birth']=$this->clean_field($fields['birth']);
-		$fields['sexe']=$this->clean_field($fields['sexe'])+0;
+		$fields['sexe']=(int) $this->clean_field($fields['sexe']);
 		$fields['login']=$this->clean_field($fields['login']);
 		$fields['pwd']=$this->clean_field($fields['pwd']);
 		$fields['msg']=$this->clean_field($fields['msg']);
 		$fields['lang']=$this->clean_field($fields['lang']);
-		$fields['location']=$this->clean_field($fields['location']+0);
+		$fields['location']=(int) $this->clean_field($fields['location']);
 		$fields['date_adhesion']=$this->clean_field($fields['date_adhesion']);
 		$fields['date_expiration']=$this->clean_field($fields['date_expiration']);
-		$fields['categ']=$this->clean_field($fields['categ'])+0;
-		$fields['statut']=$this->clean_field($fields['statut']+0);
+		$fields['categ']=(int) $this->clean_field($fields['categ']);
+		$fields['statut']=(int) $this->clean_field($fields['statut']);
 		$fields['lang']=$this->clean_field($fields['lang']);
-		$fields['cstat']=$this->clean_field($fields['cstat'])+0;
-		$fields['type_abt']=$this->clean_field($fields['type_abt']+0);
-		$fields['ldap']=$this->clean_field($fields['ldap'])+0;*/
+		$fields['cstat']=(int) $this->clean_field($fields['cstat']);
+		$fields['type_abt']=(int) $this->clean_field($fields['type_abt']);
+		$fields['ldap']=(int) $this->clean_field($fields['ldap']);*/
 		$fields['sexe']+=0;
 		$fields['location']+=0;
 		$fields['categ']+=0;
@@ -420,14 +471,29 @@ class pmbesEmpr extends external_services_api_class {
 			$requete.="type_abt=0, ";
 		}
 		
-		if ($fields['pwd']!="") $requete .= "empr_password='".addslashes($fields['pwd'])."' ";
-		else $requete .= "empr_password='".addslashes($fields['birth'])."' ";
+		if ($fields['pwd'] != "") {
+		    if (preg_match("/$opac_websubscribe_password_regexp/", $fields['pwd'])) {
+    		    $requete .= "empr_password='".addslashes($fields['pwd'])."' ";
+		    } else {
+		        return $this->build_ok($result, 'Le mot de passe ne correspond pas aux criteres', false);
+		    }
+		} else {
+		    $requete .= "empr_password='".addslashes($fields['birth'])."' ";
+		}
 		
 		$res = pmb_mysql_query($requete, $dbh);
 		if(!$res)return $this->build_ok($result,"Impossible de creer le lecteur: $requete",false);				
 		
 		// on récupère l'id du de l'emprunteur
 		$empr_id = pmb_mysql_insert_id($dbh);
+		
+		if ($fields['pwd'] != "") {
+		    emprunteur::update_digest($fields['login'],$fields['pwd']);
+		    emprunteur::hash_password($fields['login'],$fields['pwd']);
+		} else {
+		    emprunteur::update_digest($fields['login'],$fields['birth']);
+		    emprunteur::hash_password($fields['login'],$fields['birth']);
+		}
 		
 		if(is_array($fields['pperso_list'])){
 			if(count($fields['pperso_list'])){
@@ -457,7 +523,7 @@ class pmbesEmpr extends external_services_api_class {
 		global $dbh,$lang;
 		global $msg;
 		global $charset;
-		global $pmb_num_carte_auto,$deflt2docs_location,$pmb_gestion_abonnement,$pmb_gestion_financiere;
+		global $pmb_num_carte_auto, $deflt2docs_location, $pmb_gestion_abonnement, $pmb_gestion_financiere, $opac_websubscribe_password_regexp;
 	
 		object_to_array($fields);
 		
@@ -470,7 +536,7 @@ class pmbesEmpr extends external_services_api_class {
 		
 		$sql = "SELECT id_empr, empr_cb FROM empr WHERE $where";
 		$res = pmb_mysql_query($sql);
-		if (!$res || !pmb_mysql_num_rows($res)) return $this->build_error( "Lecteur inconnu: 'empr_cb' = $empr_cb ou id_empr = $empr_id .");
+		if (!$res || !pmb_mysql_num_rows($res)) return $this->build_error( $msg['54'].": 'empr_cb' = $empr_cb ou id_empr = $empr_id .");
 			
 		$empr_res = pmb_mysql_fetch_object($res);
 		$empr_id=$empr_res->id_empr;
@@ -486,24 +552,24 @@ class pmbesEmpr extends external_services_api_class {
 		$fields['pays']=$this->clean_field($fields['pays']);
 		$fields['mail']=$this->clean_field($fields['mail']);
 		$fields['tel1']=$this->clean_field($fields['tel1']);
-		$fields['sms']=$this->clean_field($fields['sms'])+0;
+		$fields['sms']=(int) $this->clean_field($fields['sms']);
 		$fields['tel2']=$this->clean_field($fields['tel2']);
 		$fields['prof']=$this->clean_field($fields['prof']);
 		$fields['birth']=$this->clean_field($fields['birth']);
-		$fields['sexe']=$this->clean_field($fields['sexe'])+0;
+		$fields['sexe']=(int) $this->clean_field($fields['sexe']);
 		$fields['login']=$this->clean_field($fields['login']);
 		$fields['pwd']=$this->clean_field($fields['pwd']);
 		$fields['msg']=$this->clean_field($fields['msg']);
 		$fields['lang']=$this->clean_field($fields['lang']);
-		$fields['location']=$this->clean_field($fields['location']+0);
+		$fields['location']=(int) $this->clean_field($fields['location']);
 		$fields['date_adhesion']=$this->clean_field($fields['date_adhesion']);
 		$fields['date_expiration']=$this->clean_field($fields['date_expiration']);
-		$fields['categ']=$this->clean_field($fields['categ'])+0;
-		$fields['statut']=$this->clean_field($fields['statut']+0);
+		$fields['categ']=(int) $this->clean_field($fields['categ']);
+		$fields['statut']=(int) $this->clean_field($fields['statut']);
 		$fields['lang']=$this->clean_field($fields['lang']);
-		$fields['cstat']=$this->clean_field($fields['cstat'])+0;
-		$fields['type_abt']=$this->clean_field($fields['type_abt']+0);
-		$fields['ldap']=$this->clean_field($fields['ldap'])+0;*/
+		$fields['cstat']=(int) $this->clean_field($fields['cstat']);
+		$fields['type_abt']=(int) $this->clean_field($fields['type_abt']);
+		$fields['ldap']=(int) $this->clean_field($fields['ldap']);*/
 		$fields['sexe']+=0;
 		$fields['location']+=0;
 		$fields['categ']+=0;
@@ -602,8 +668,15 @@ class pmbesEmpr extends external_services_api_class {
 			$requete.="type_abt=0, ";
 		}
 	
-		if ($fields['pwd']!="") $requete .= "empr_password='".addslashes($fields['pwd'])."' ";
-		else $requete .= "empr_password='".addslashes($fields['birth'])."' ";
+		if ($fields['pwd'] != "") {
+		    if (preg_match("/$opac_websubscribe_password_regexp/", $fields['pwd'])) {
+    		    $requete .= "empr_password='".addslashes($fields['pwd'])."' ";
+		    } else {
+		        return $this->build_error('Le mot de passe ne correspond pas aux criteres');
+		    }
+		} else {
+		    $requete .= "empr_password='".addslashes($fields['birth'])."' ";
+		}
 	
 		$requete .= " WHERE id_empr=".$empr_id." limit 1";
 		
@@ -724,8 +797,11 @@ class pmbesEmpr extends external_services_api_class {
 			$infos[$i]["libelle"]=$res_info->libelle_groupe;
 			$infos[$i]["resp_groupe"]=$res_info->resp_groupe;
 			$infos[$i]["lettre_rappel"]=$res_info->lettre_rappel;
-			$infos[$i]["mail_rappel"]=$res_info->id_groupe;
+			$infos[$i]["mail_rappel"]=$res_info->mail_rappel;
 			$infos[$i]["lettre_rappel_show_nomgroup"]=$res_info->lettre_rappel_show_nomgroup;
+			$infos[$i]["lettre_resa"]=$res_info->lettre_resa;
+			$infos[$i]["mail_resa"]=$res_info->mail_resa;
+			$infos[$i]["lettre_resa_show_nomgroup"]=$res_info->lettre_resa_show_nomgroup;
 			$i++;
 		}
 		return $this->build_ok($infos);
@@ -859,30 +935,6 @@ class pmbesEmpr extends external_services_api_class {
 		return $this->build_ok($infos);
 	}
 	
-	public function procédure_exec($id) {
-		global $dbh;
-		global $msg;
-		global $charset;
-		global $PMBuserid;
-		
-		$id+=0;
-		if ($PMBuserid!=1)
-			$where=" and (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid') ";
-		
-		$requete = "SELECT * FROM empr_caddie_procs WHERE idproc=$id $where ";
-		$res = pmb_mysql_query($requete, $dbh);
-		$nbr_lignes = pmb_mysql_num_rows($res);
-		$row = pmb_mysql_fetch_row($res);
-		$idp = $row[0];
-		$name = $row[2];
-		$commentaire = $row[4];
-		if (!$code)
-			$code = $row[3];
-		$commentaire = $row[4];
-		
-		return $this->build_ok($infos);
-	}
-	
 	public function caddie_pointage_raz($caddie_id) {
 		global $dbh;
 		global $msg;
@@ -910,7 +962,7 @@ class pmbesEmpr extends external_services_api_class {
 	
 		$sql = "SELECT id_empr, empr_cb FROM empr WHERE $where";
 		$res = pmb_mysql_query($sql);
-		if (!$res || !pmb_mysql_num_rows($res)) return $this->build_error( "Lecteur inconnu: 'empr_cb' = $empr_cb ou id_empr = $empr_id .");
+		if (!$res || !pmb_mysql_num_rows($res)) return $this->build_error( $msg['54'].": 'empr_cb' = $empr_cb ou id_empr = $empr_id .");
 				
 		$empr_res = pmb_mysql_fetch_object($res);
 		$empr_id=$empr_res->id_empr;
@@ -939,7 +991,7 @@ class pmbesEmpr extends external_services_api_class {
 	
 		$sql = "SELECT id_empr, empr_cb FROM empr WHERE $where";
 		$res = pmb_mysql_query($sql);
-		if (!$res || !pmb_mysql_num_rows($res)) return $this->build_error( "Lecteur inconnu: 'empr_cb' = $empr_cb ou id_empr = $empr_id");
+		if (!$res || !pmb_mysql_num_rows($res)) return $this->build_error( $msg['54'].": 'empr_cb' = $empr_cb ou id_empr = $empr_id");
 	
 		$empr_res = pmb_mysql_fetch_object($res);
 		$empr_id=$empr_res->id_empr;
@@ -972,7 +1024,7 @@ class pmbesEmpr extends external_services_api_class {
 	
 		$sql = "SELECT id_empr, empr_cb FROM empr WHERE $where";
 		$res = pmb_mysql_query($sql);
-		if (!$res || !pmb_mysql_num_rows($res)) return $this->build_ok($result,"Lecteur inconnu: 'empr_cb' = $empr_cb ou id_empr = $empr_id",false);
+		if (!$res || !pmb_mysql_num_rows($res)) return $this->build_ok($result,$msg['54'].": 'empr_cb' = $empr_cb ou id_empr = $empr_id",false);
 
 		$empr_res = pmb_mysql_fetch_object($res);
 		$empr_id=$empr_res->id_empr;
@@ -1089,8 +1141,7 @@ class pmbesEmpr extends external_services_api_class {
 			'status_msg' => utf8_normalize($msg)
 		);
 	}
-	
-	
+		
 	public function bibloto_empr_list($filters=array()) {
 	    global $dbh;
 	    global $msg;
@@ -1127,4 +1178,25 @@ class pmbesEmpr extends external_services_api_class {
 	    }
 	    return $this->build_ok($infos);
 	}
+	
+	public function send_mail_pret_info_to_empr($empr_cb){
+	    global $msg;
+	    
+	    $infos = array(
+	        'empr_cb' => $empr_cb,
+	    );
+	    
+	    $sql = "SELECT id_empr, empr_cb FROM empr WHERE  empr_cb = '".addslashes($empr_cb)."' ";
+	    $res = pmb_mysql_query($sql);
+	    if (!$res || !pmb_mysql_num_rows($res)) return $this->build_ok($infos, $msg['54'] . ".", false);
+	    
+	    $empr_res = pmb_mysql_fetch_object($res);
+	    $empr_id = $empr_res->id_empr;
+	    $statut = electronic_ticket($empr_id);
+	    if(!$statut) {
+	        return $this->build_ok($infos,$msg['bibloto_sendMailPret_failed'], false);
+	    }
+	    return $this->build_ok($infos,$msg['bibloto_sendMailPret']);
+	}
+	
 }

@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_collection.tpl.php,v 1.2 2017-10-19 14:42:59 dgoron Exp $
+// $Id: cms_collection.tpl.php,v 1.3 2019-05-27 11:57:15 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $cms_collection_form;
+global $cms_collection_form, $current_module, $msg;
 
 $cms_collection_form ="
 <form method='post' class='form-$current_module' name='cms_collection_form' action='!!action!!'>

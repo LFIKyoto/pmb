@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_main.inc.php,v 1.18 2018-10-12 13:13:51 dgoron Exp $
+// $Id: ajax_main.inc.php,v 1.18.6.1 2019-10-25 14:32:48 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -30,6 +30,15 @@ switch($categ):
 	case 'empr' :
 		include("./circ/empr/ajax/main.inc.php");
 		break;
+	case 'pret' :
+	case 'relance' :
+	    switch($action) {
+	        case "list":
+	            require_once($class_path.'/list/lists_controller.class.php');
+	            lists_controller::proceed_ajax($object_type, 'readers');
+	            break;
+	    }
+	    break;
 	case 'dashboard' :
 		include("./dashboard/ajax_main.inc.php");
 		break;

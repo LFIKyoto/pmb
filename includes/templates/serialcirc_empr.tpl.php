@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_empr.tpl.php,v 1.8 2017-11-21 12:00:59 dgoron Exp $
+// $Id: serialcirc_empr.tpl.php,v 1.9 2019-05-27 14:16:26 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $empr_serialcirc_tmpl, $msg, $charset, $empr_serialcirc_tmpl_item, $empr_serialcirc_circ_tmpl_item;
 
 $empr_serialcirc_tmpl="			
 <div class='row'>	

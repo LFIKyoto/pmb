@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lieux_form.tpl.php,v 1.9 2017-10-18 15:28:12 ngantier Exp $
+// $Id: lieux_form.tpl.php,v 1.10 2019-05-27 16:19:33 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $form, $msg;
 
 $form='
 <script>

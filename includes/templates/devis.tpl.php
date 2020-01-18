@@ -2,10 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: devis.tpl.php,v 1.45 2018-07-27 09:52:08 dgoron Exp $
+// $Id: devis.tpl.php,v 1.47 2019-08-19 08:48:38 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $msg, $charset, $current_module; 
+global $devlist_form, $modif_dev_form;
+global $acquisition_gestion_tva, $modif_dev_form, $modif_dev_row_form;
+global $bt_enr, $bt_dup, $bt_sup, $bt_cde, $bt_audit, $bt_imp, $id_dev, $id_bibli;
 
 $devlist_form = "
 <form class='form-$current_module' id='act_list_form' name='act_list_form' method='post' action=\"\" >
@@ -77,7 +81,7 @@ $modif_dev_form = "
 		    		<label class='etiquette'>".htmlentities($msg['acquisition_ach_fou2'], ENT_QUOTES, $charset)."</label>&nbsp;
 				</div>
 				<div class='colonne_suite'>
-					<input type='text' id='lib_fou' name='lib_fou' tabindex='1' value='!!lib_fou!!' class='saisie-30emr' onchange=\"openPopUp('./select.php?what=fournisseur&caller=act_modif&param1=id_fou&param2=lib_fou&param3=adr_fou&id_bibli=!!id_bibli!!&deb_rech='+".pmb_escape()."(this.form.lib_fou.value), 'selector'); \" />
+					<input type='text' id='lib_fou' name='lib_fou' tabindex='1' value='!!lib_fou!!' completion='fournisseurs' param1='!!id_bibli!!' autfield='id_fou' autocomplete='off' callback='callBackAdresseFournisseur' class='saisie-30emr' />
 					<input type='button' class='bouton_small' style='width:20px;' tabindex='1' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=fournisseur&caller=act_modif&param1=id_fou&param2=lib_fou&param3=adr_fou&id_bibli=!!id_bibli!!&deb_rech='+".pmb_escape()."(this.form.lib_fou.value), 'selector'); \" />
 				</div>
 			</div>
@@ -284,6 +288,7 @@ $modif_dev_form.= "
 </form>
 <br /><br />
 <script type='text/javascript' src='./javascript/tablist.js'></script>
+<script type='text/javascript' src='./javascript/ajax.js'></script>
 <script type='text/javascript' src='./javascript/actes.js'></script>
 <script type='text/javascript'>	
 	
@@ -302,7 +307,8 @@ $modif_dev_form.= "
 	} else {
 		act_addLine();
 	}
-	
+	ajax_parse_dom();
+
 </script>
 <!-- jscript -->";
 

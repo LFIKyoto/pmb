@@ -2,14 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_skos_concept_ui.tpl.php,v 1.27 2018-09-19 09:00:39 arenou Exp $
+// $Id: onto_skos_concept_ui.tpl.php,v 1.29.6.1 2019-10-14 09:26:54 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 global $ontology_tpl,$msg,$base_path;
 
 $ontology_tpl['scheme_list_selector']='
-	<select !!scheme_list_selector_onchange!! name="!!scheme_list_selector_name!!" id="!!scheme_list_selector_id!!" class="saisie-30em">
+	<select !!scheme_list_selector_onchange!! name="!!scheme_list_selector_name!!" id="!!scheme_list_selector_id!!" !!multiple!! class="saisie-30em">
 		!!scheme_list_selector_options!!
 	</select>
 ';
@@ -30,7 +30,7 @@ $ontology_tpl['scheme_radio_selector']='
 $ontology_tpl['skos_concept_list']='
 <div class="row">
 	<script type="javascript" src="./javascript/sorttable.js"></script>
-	<table class="sorttable">
+	<table class="sortable">
 		<tr>
 			<th></th>
 			<th>!!list_header!!</th>
@@ -118,6 +118,7 @@ $ontology_tpl['skos_concept_search_form']='
 		</div>
 		<div class="right">
 			<a id="skos_concept_search_form_last_concepts_link" href="!!skos_concept_search_form_last_concepts_link!!">'.$msg['onto_skos_show_last_concepts'].'</a>
+            <!-- imprimer_concepts -->
 		</div>		
 		<div class="row"> </div>			
 	</div>

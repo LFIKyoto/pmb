@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_sphinx_categories.class.php,v 1.1 2017-07-06 09:11:41 apetithomme Exp $
+// $Id: searcher_sphinx_categories.class.php,v 1.2 2019-05-27 12:55:59 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -34,16 +34,17 @@ class searcher_sphinx_categories extends searcher_sphinx_authorities {
 	
 	protected function get_search_indexes(){
 		global $lang, $lg_search;
+		global $sphinx_indexes_prefix;
 		if ($lg_search) {
 			$indexes = '';
 			foreach ($this->get_available_languages() as $language) {
 				if ($indexes) {
 					$indexes.= ',';
 				}
-				$indexes.= $this->index_name.($language ? '_'.$language : '');
+				$indexes.= $sphinx_indexes_prefix.$this->index_name.($language ? '_'.$language : '');
 			}
 			return $indexes;
 		}
-		return $this->index_name.'_'.$lang.','.$this->index_name;
+		return $sphinx_indexes_prefix.$this->index_name.'_'.$lang.','.$sphinx_indexes_prefix.$this->index_name;
 	}
 }

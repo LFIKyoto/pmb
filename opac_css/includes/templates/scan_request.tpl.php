@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_request.tpl.php,v 1.11 2018-12-06 12:27:17 dgoron Exp $
+// $Id: scan_request.tpl.php,v 1.13.6.1 2019-11-27 08:55:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -12,6 +12,8 @@ global $scan_request_linked_record;
 global $scan_request_link_in_record;
 global $scan_request_form_in_record;
 global $scan_request_form_in_record_scripts;
+global $opac_scan_request_location_activate;
+global $msg, $base_path;
 
 $scan_request_form ='
 <form method="post" name="scan_request_form" action="./empr.php?tab=scan_requests&lvl=scan_request&sub=save&id=!!id!!">
@@ -76,6 +78,14 @@ $scan_request_form_content = '
 			</div>
 			<div class="row">
 				<textarea id="scan_request_desc!!id_suffix!!" name="scan_request_desc" rows="4" cols="55" wrap="virtual">!!desc!!</textarea>				
+			</div>
+		</div>
+        <div class="row">
+			<div class="row">		
+				<label for="scan_request_nb_scanned_pages!!id_suffix!!">'.$msg["scan_request_nb_scanned_pages"].'</label>
+			</div>
+			<div class="row">
+				<input type="text" id="scan_request_nb_scanned_pages!!id_suffix!!" name="scan_request_nb_scanned_pages" value="!!nb_scanned_pages!!"/>				
 			</div>
 		</div>
 		'.$scan_request_form_location_content.'

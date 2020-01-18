@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.17 2017-12-29 10:08:49 ngantier Exp $
+// $Id: main.inc.php,v 1.18 2019-06-05 09:04:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $quelle, $msg, $catalog_layout;
 
 switch ($quelle) {
 	case 'changebloc':

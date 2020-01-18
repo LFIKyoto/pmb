@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.6 2017-11-13 10:24:05 dgoron Exp $
+// $Id: main.inc.php,v 1.7.6.1 2019-09-10 10:14:06 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -37,4 +37,9 @@ switch($sub) {
 		break;
 }
 
+switch($suite) {
+	case 'visualiser':
+		print "<div class='row dsi_dif_visualiser_buttons'><input type='button' class='bouton' value='".htmlentities($msg["654"], ENT_QUOTES, $charset)."' onclick=\"document.location='".$base_path."/dsi.php?categ=".$categ."&sub=".$sub."'\" />" ;
+		break;
+}
 bannettes_controller::proceed_module_diffusion($suite);

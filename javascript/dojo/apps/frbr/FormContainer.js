@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: FormContainer.js,v 1.12 2018-04-05 14:55:12 vtouchard Exp $
+// $Id: FormContainer.js,v 1.13 2019-03-29 16:16:25 tsamson Exp $
 
 
 define(["dojo/_base/declare", 
@@ -42,6 +42,12 @@ define(["dojo/_base/declare",
 					break;
 				case 'leafRootClicked':			
 					this.requestRootContent(evtArgs);
+					break;
+				case 'expandAll':			
+					this.treeExpandAll();
+					break;
+				case 'collapseAll':			
+					this.treeCollapseAll();
 					break;
 			}			
 		},
@@ -94,6 +100,14 @@ define(["dojo/_base/declare",
 					this.domNode.innerHTML = "";
 				}	
 			}));
+		},
+		
+		treeExpandAll : function() {
+			topic.publish('FormContainer', 'expandAll', {});
+		},
+		
+		treeCollapseAll : function() {
+			topic.publish('FormContainer', 'collapseAll', {});
 		},
 		
 		

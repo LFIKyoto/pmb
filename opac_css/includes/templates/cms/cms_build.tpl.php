@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_build.tpl.php,v 1.5 2017-11-07 15:51:41 ngantier Exp $
+// $Id: cms_build.tpl.php,v 1.6 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
+
+global $cms_edit_css, $msg, $cms_objet_type_selection, $cms_edit_objet, $cms_build_cadres_tpl, $cms_build_cadre_tpl_item, $cms_build_pages_tpl, $opac_url_base, $cms_build_pages_tpl_item;
+global $cms_build_pages_ajax_tpl, $cms_build_modules_tpl, $cms_build_block_tpl;
 
 function cms_gen_objet_css($name){
 	$objet_css="

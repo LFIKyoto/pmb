@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: FormSelector.js,v 1.1 2018-10-08 13:59:39 vtouchard Exp $
+// $Id: FormSelector.js,v 1.2 2019-07-17 14:16:53 dgoron Exp $
 
 /*****
  * 
@@ -136,8 +136,10 @@ define([
 				}
 				
 //				if (this.parameters.bt_ajouter != 'no') {
-//					this.newTab = new SubTabAdd({title: pmbDojo.messages.getMessage('selector', 'selector_tab_add'), style: 'width:95%; height:100%;', loadScripts: true, parameters: this.parameters});
-//					this.newTab.href = this.parameters.selectorURL+'&action=add&form_display_mode=2';
+//					if(!this.newTab) {
+//						this.newTab = new SubTabAdd({title: pmbDojo.messages.getMessage('selector', 'selector_tab_add'), style: 'width:95%; height:100%;', loadScripts: true, parameters: this.parameters});
+//						this.newTab.href = this.parameters.selectorURL+'&action=add&form_display_mode=2';
+//					}
 //					
 //					this.addChild(this.newTab);	
 //					

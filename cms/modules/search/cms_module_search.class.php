@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_search.class.php,v 1.7 2018-09-25 08:09:07 pmbs Exp $
+// $Id: cms_module_search.class.php,v 1.7.6.1 2019-09-16 13:11:15 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -85,6 +85,9 @@ class cms_module_search extends cms_module_common_module {
 					<select name='cms_module_search_page_dest'>";
 		if($opac_opac_view_activate) {
 			$form.= $this->gen_options_opac_view($infos['page']);
+		} else {
+		    $form.="
+                        <option value='0' ".(!$infos['page'] ? "selected='selected'" : "").">".$this->format_text($this->msg['cms_module_search_classique_dest'])."</option>";
 		}
 		//on va chercher les infos pour les pages du portail !
 		$query = "select id_page,page_name from cms_pages order by page_name asc";

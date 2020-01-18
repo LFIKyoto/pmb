@@ -3,7 +3,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.10 2013-02-20 16:09:28 mbertin Exp $ -->
+$Id: manifest.xml,v 1.11 2019-08-28 06:48:51 ngantier Exp $ -->
 <manifest>
 	<name>pmbesOPACGeneric</name>
 	<description>msg:pmbesOPACGeneric_description</description>
@@ -139,8 +139,8 @@ $Id: manifest.xml,v 1.10 2013-02-20 16:09:28 mbertin Exp $ -->
 			</pmb_requirements>
 			<inputs>
 				<description>msg:also_borrowed_input_description</description>
-				<param name="notice_id" type="scalar" dataType="integer" description="msg:also_borrowed_input_notice_id"/>
-				<param name="bulletin_id" type="scalar" dataType="integer" description="msg:also_borrowed_input_bulletin_id"/>
+				<param name="notice_id" type="scalar" dataType="integer" description="msg:also_borrowed_input_notice_id" optional="yes" default_value="0"/>
+				<param name="bulletin_id" type="scalar" dataType="integer" description="msg:also_borrowed_input_bulletin_id" optional="yes" default_value="0"/>
 			</inputs>
 			<outputs>
 				<description>msg:also_borrowed_output_description</description>
@@ -156,8 +156,8 @@ $Id: manifest.xml,v 1.10 2013-02-20 16:09:28 mbertin Exp $ -->
 			      <inputs>
 			      		<description></description>
 			      		<param name="infopage_id" type="scalar" dataType="integer" description=""/>
-			      		<param name="js_subst" type="scalar" dataType="string" description=""/>
-			      		<param name="encoding" type="scalar" dataType="string" description=""/>
+			      		<param name="js_subst" type="scalar" dataType="string" description="" optional="yes"/>
+			      		<param name="encoding" type="scalar" dataType="string" description="" optional="yes"/>
 				  </inputs>
 			      <outputs>
 				        <description></description>

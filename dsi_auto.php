@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dsi_auto.php,v 1.10 2017-07-12 15:15:00 tsamson Exp $
+// $Id: dsi_auto.php,v 1.11 2019-06-05 13:13:19 btafforeau Exp $
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
@@ -92,7 +92,7 @@ require_once("./dsi/func_equ.inc.php");
 require_once("./dsi/func_diff.inc.php");
 require_once("./dsi/func_rss.inc.php");
 
-$action_diff_aff = "<h1>".$msg[dsi_dif_auto_titre]."</h1>" ;
+$action_diff_aff = "<h1>".$msg['dsi_dif_auto_titre']."</h1>" ;
 
 // récupérer les bannettes à diffuser
 

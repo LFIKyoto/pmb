@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_perso.class.php,v 1.7 2017-11-21 12:01:00 dgoron Exp $
+// $Id: search_perso.class.php,v 1.8 2019-07-11 12:17:23 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -123,6 +123,51 @@ class search_perso {
 		$param=addslashes(serialize($param));		
 		$req="insert into opac_filters set opac_filter_view_num=".$this->id_vue." ,  opac_filter_path='".$this->path."', opac_filter_param='$param' ";
 		$myQuery = pmb_mysql_query($req, $dbh);
+		
+		//Sauvegarde dans les recherches prédéfinies
+		$req = "select search_id, search_opac_views_num from search_persopac";
+		$res = pmb_mysql_query($req,$dbh);
+		if ($res) {
+		    while($row = pmb_mysql_fetch_object($res)) {
+		        $views_num = array();
+		        //la recherche prédéfinie est sélectionnée..
+		        if (in_array($row->search_id,$selected_list)) {
+		            if ($row->search_opac_views_num != "") {
+		                $views_num = explode(",", $row->search_opac_views_num);
+		                if (count($views_num)) {
+		                    if (!in_array($this->id_vue, $views_num)) {
+		                        $views_num[] = $this->id_vue;
+		                        $requete = "update search_persopac set search_opac_views_num='".implode(",", $views_num)."' where search_id=".$row->search_id;
+		                        pmb_mysql_query($requete,$dbh);
+		                    }
+		                }
+		            }
+		        } else {
+		            if ($row->search_opac_views_num != "") {
+		                $views_num = explode(",", $row->search_opac_views_num);
+		                if (count($views_num)) {
+		                    $key_exists = array_search($this->id_vue, $views_num);
+		                    if ($key_exists !== false) {
+		                        //la recherche prédéfinie ne doit plus être affichée dans la vue
+		                        array_splice($views_num,$key_exists,1);
+		                        $requete = "update search_persopac set search_opac_views_num='".implode(",", $views_num)."' where search_id=".$row->search_id;
+		                        pmb_mysql_query($requete,$dbh);
+		                    }
+		                }
+		            } else {
+		                //la recherche prédéfinie doit être affichée dans les autres vues sauf celle-ci..
+		                $requete = "select opac_view_id from opac_views where opac_view_id <> ".$this->id_vue;
+		                $resultat = pmb_mysql_query($requete,$dbh);
+		                $views_num[] = 0; // OPAC classique
+		                while ($view = pmb_mysql_fetch_object($resultat)) {
+		                    $views_num[] = $view->opac_view_id;
+		                }
+		                $requete = "update search_persopac set search_opac_views_num='".implode(",", $views_num)."' where search_id=".$row->search_id;
+		                pmb_mysql_query($requete,$dbh);
+		            }
+		        }
+		    }
+		}
 	}	
 	
 }

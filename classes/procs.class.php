@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: procs.class.php,v 1.17 2018-06-28 12:27:32 dgoron Exp $
+// $Id: procs.class.php,v 1.22 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,8 +14,8 @@ require_once($include_path."/templates/procs_exp_imp.tpl.php");
 
 class procs {
 	
-	static $module = 'admin';
-	static $table = 'procs';
+	public static $module = 'admin';
+	public static $table = 'procs';
 	
 	public function __construct() {
 	}
@@ -33,7 +33,7 @@ class procs {
 		</span>
 		";
 		// affichage du tableau des procédures
-		$query = "SELECT idproc, name, requete, comment, autorisations, libproc_classement, num_classement FROM procs left join procs_classements on idproc_classement=num_classement ORDER BY libproc_classement,name ";
+		$query = "SELECT idproc, name, requete, comment, autorisations, autorisations_all, libproc_classement, num_classement FROM procs left join procs_classements on idproc_classement=num_classement ORDER BY libproc_classement,name ";
 		$result = pmb_mysql_query($query);
 		$class_prec=$msg['proc_clas_aucun'];
 		$buf_tit="";
@@ -42,8 +42,8 @@ class procs {
 		$parity=1;
 		while($row = pmb_mysql_fetch_object($result)) {
 			$rqt_autorisation=explode(" ",$row->autorisations);
-			if ((static::$module=='admin' && ($PMBuserid==1 || array_search ($PMBuserid, $rqt_autorisation)!==FALSE))
-				|| (static::$module=='edit' && ($PMBuserid==1 || array_search ($PMBuserid, $rqt_autorisation)!==FALSE) && pmb_strtolower(pmb_substr(trim($row->requete),0,6))=='select')) {
+			if ((static::$module=='admin' && ($PMBuserid==1 || $row->autorisations_all || array_search ($PMBuserid, $rqt_autorisation)!==FALSE))
+				|| (static::$module=='edit' && ($PMBuserid==1 || $row->autorisations_all || array_search ($PMBuserid, $rqt_autorisation)!==FALSE) && pmb_strtolower(pmb_substr(trim($row->requete),0,6))=='select')) {
 				$classement=$row->libproc_classement;
 				if ($class_prec!=$classement) {
 					if (!$row->libproc_classement) $row->libproc_classement=$msg['proc_clas_aucun'];
@@ -106,6 +106,7 @@ class procs {
 		global $f_proc_code;
 		global $f_proc_comment;
 		global $userautorisation;
+		global $autorisations_all;
 		global $form_classement;
 		global $form_notice_tpl;
 		global $form_notice_tpl_field;
@@ -120,12 +121,13 @@ class procs {
 				} else {
 					$autorisations='';
 				}
+				$autorisations_all += 0;
 				$param_name=parameters::check_param($f_proc_code);
 				if ($param_name!==true) {
 					error_message_history($param_name, sprintf($msg["proc_param_check_field_name"],$param_name), 1);
 					exit();
 				}
-				$query = "INSERT INTO ".static::$table." (idproc,name,requete,comment,autorisations,num_classement, proc_notice_tpl, proc_notice_tpl_field) VALUES ('', '$f_proc_name', '$f_proc_code', '$f_proc_comment', '$autorisations', '$form_classement', '$form_notice_tpl', '$form_notice_tpl_field' ) ";
+				$query = "INSERT INTO ".static::$table." (idproc,name,requete,comment,autorisations,autorisations_all,num_classement, proc_notice_tpl, proc_notice_tpl_field) VALUES ('', '$f_proc_name', '$f_proc_code', '$f_proc_comment', '$autorisations', '".$autorisations_all."', '$form_classement', '$form_notice_tpl', '$form_notice_tpl_field' ) ";
 				pmb_mysql_query($query);
 			} else {
 				print "<script language='Javascript'>alert(\"$msg[709]\");</script>";
@@ -140,6 +142,7 @@ class procs {
 		global $f_proc_code;
 		global $f_proc_comment;
 		global $userautorisation;
+		global $autorisations_all;
 		global $form_classement;
 		global $form_notice_tpl;
 		global $form_notice_tpl_field;
@@ -151,12 +154,13 @@ class procs {
 			} else {
 				$autorisations="";
 			}
+			$autorisations_all += 0;
 			$param_name=parameters::check_param($f_proc_code);
 			if ($param_name!==true) {
 				error_message_history($param_name, sprintf($msg["proc_param_check_field_name"],$param_name), 1);
 				exit();
 			}
-			$query = "UPDATE ".static::$table." SET name='$f_proc_name',requete='$f_proc_code',comment='$f_proc_comment' , autorisations='$autorisations', num_classement='$form_classement', proc_notice_tpl='$form_notice_tpl', proc_notice_tpl_field='$form_notice_tpl_field' WHERE idproc=$id ";
+			$query = "UPDATE ".static::$table." SET name='$f_proc_name',requete='$f_proc_code',comment='$f_proc_comment' , autorisations='$autorisations', autorisations_all='".$autorisations_all."', num_classement='$form_classement', proc_notice_tpl='$form_notice_tpl', proc_notice_tpl_field='$form_notice_tpl_field' WHERE idproc=$id ";
 			pmb_mysql_query($query);
 			return true;
 		}
@@ -174,7 +178,7 @@ class procs {
 		$autorisations = array();
 		$num_classement = 0;
 		if($id) {
-			$query = "SELECT idproc, name, requete, comment, autorisations, num_classement, proc_notice_tpl, proc_notice_tpl_field FROM ".static::$table." WHERE idproc=".$id;
+			$query = "SELECT idproc, name, requete, comment, autorisations, autorisations_all, num_classement, proc_notice_tpl, proc_notice_tpl_field FROM ".static::$table." WHERE idproc=".$id;
 			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)) {
 				$row = pmb_mysql_fetch_object($result);
@@ -229,7 +233,7 @@ class procs {
 	
 		$autorisations_users="";
 		$id_check_list='';
-		while (list($row_number, $row_data) = each($autorisations)) {
+		foreach ($autorisations as $row_number => $row_data) {
 			$id_check="auto_".$row_data[1];
 			if($id_check_list)$id_check_list.='|';
 			$id_check_list.=$id_check;
@@ -238,6 +242,8 @@ class procs {
 		}
 		$autorisations_users.="<input type='hidden' id='auto_id_list' name='auto_id_list' value='$id_check_list' >";
 		$form = str_replace('!!autorisations_users!!', $autorisations_users, $form);
+		
+		$form = str_replace('!!autorisations_all!!', ($row->autorisations_all ? "checked='checked'" : ""), $form);
 	
 		$combo_clas= gen_liste ("SELECT idproc_classement,libproc_classement FROM procs_classements ORDER BY libproc_classement ", "idproc_classement", "libproc_classement", "form_classement", "", $num_classement, 0, $msg['proc_clas_aucun'],0, $msg['proc_clas_aucun']) ;
 		$form = str_replace('!!classement!!', $combo_clas, $form);
@@ -303,7 +309,7 @@ class procs {
 		$linetemp = explode(";", $query_code);
 		for ($i=0;$i<count($linetemp);$i++) if (trim($linetemp[$i])) $line[]=trim($linetemp[$i]);
 		$do_reindexation=false;
-		while(list($cle, $valeur)= each($line)) {
+		foreach ($line as $cle => $valeur) {
 			if($valeur) {
 				// traitement tri des colonnes
 				if ($sortfield != "") {
@@ -313,9 +319,9 @@ class procs {
 					if ($desc == 1) $tri .= " DESC";
 					else $tri .= " ASC";
 					// on enlève les doubles espaces dans la procédure
-					$valeur = ereg_replace("/\s+/", " ", $valeur);
+					$valeur = preg_replace("/\s+/", " ", $valeur);
 					// supprime un éventuel ; à la fin de la requête
-					$valeur = ereg_replace("/;$/", "", $valeur);
+					$valeur = preg_replace("/;$/", "", $valeur);
 					// on recherche la première occurence de ORDER BY
 					$s = stristr($valeur, "order by");
 					if ($s) {
@@ -323,7 +329,7 @@ class procs {
 						// il faut qu'on sache si on aura besoin de mettre une virgule ou pas
 						if ( preg_match("#,#", $s) ) {
 							$virgule = true;
-						} else if ( ! ereg("${sortfield}", $s)) {
+						} else if ( ! preg_match("${sortfield}", $s)) {
 							$virgule = true;
 						} else {
 							$virgule = false;
@@ -508,7 +514,7 @@ class procs {
 					if($do_import) {
 						$remote_procedure = new remote_procedure($id, static::$module, static::$table);
 						$remote_procedure->import();
-						if(get_called_class() == 'procs') {
+						if(static::class == 'procs') {
 							show_procs();
 						} else {
 							static::get_display_remote_lists();
@@ -541,7 +547,7 @@ class procs {
 					echo $msg["remote_procedures_error_noaddress"];
 					break;
 				}
-				if(get_called_class() == 'procs') {
+				if(static::class == 'procs') {
 					show_procs();
 				} else {
 					static::get_display_remote_lists();

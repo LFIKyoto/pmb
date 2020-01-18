@@ -2,9 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fournisseurs.inc.php,v 1.42 2018-04-23 13:25:26 dgoron Exp $
+// $Id: fournisseurs.inc.php,v 1.45.4.3 2019-12-06 11:25:06 dbellamy Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "fournisseurs.inc.php")) die("no access");
+
+global $class_path, $include_path, $msg, $charset, $action, $id_bibli, $raison, $id, $num_cp, $comment, $siret, $naf, $rcs, $tva, $site_web, $max_coord;
+global $mod_, $no_, $lib_, $cta_, $ad1_, $ad2_, $cpo_, $vil_, $eta_, $pay_, $te1_, $te2_, $fax_, $ema_, $force, $paiement, $id_prod, $rem;
+global $chk_all_etablissements;
 
 // gestion des coordonnées des fournisseurs
 require_once("$class_path/entites.class.php");
@@ -18,28 +22,42 @@ require_once("$class_path/rubriques.class.php");
 require_once("$include_path/templates/coordonnees.tpl.php");
 require_once("$include_path/templates/fournisseurs.tpl.php");
 
-//Affiche la liste des fournisseurs pour une bibliotheque
-function show_list_coord($id_bibli) {
+
+if(isset($id_bibli)) {
+    entites::setSessionBibliId($id_bibli);
+}
+$id_bibli = entites::getSessionBibliId();
+$id_bibli = intval($id_bibli);
+
+if(!isset($id)) {
+    $id = 0;
+}
+$id = intval($id);
+
+//Affiche la liste des fournisseurs pour un etablissement
+function show_list_coord($id_bibli=0) {
+
 	global $msg, $charset;
 	global $search_form;
-	global $nb_per_page_acq;
+	global $nb_per_page_acq, $nb_per_page;
 	global $class_path;
-	global $user_input, $page, $nbr_lignes, $tri_param, $limit_param, $last_param;
-	global $tab_bib;
+	global $user_input, $page, $nbr_lignes, $last_param;
+	
 	//Creation selecteur etablissement
-	$sel_bibli ="<select class='saisie-50em' id='id_bibli' name='id_bibli' onchange=\"submit();\" >";
-	foreach($tab_bib[0] as $k=>$v) {
-		$sel_bibli.="<option value='".$v."' ";
-		if($v==$id_bibli) $sel_bibli.="selected='selected' ";
-		$sel_bibli.=">".htmlentities($tab_bib[1][$k], ENT_QUOTES, $charset)."</option>";
-	}
-	$sel_bibli.="</select>";
+	$sel_all = TRUE;
+	$sel_attr = [
+	    'class'=>'saisie-50em',
+	    'id'=>'id_bibli',
+	    'name'=>'id_bibli',
+	    'onchange'=>'submit();',
+	];
+	$sel_bibli = entites::get_hmtl_select_etablissements(SESSuserid, $id_bibli, $sel_all, $sel_attr);
 	$search_form=str_replace('<!-- sel_bibli -->', $sel_bibli,$search_form);
 	
 	//Affichage form de recherche
 	$titre = htmlentities($msg['recherche'].' : '.$msg['acquisition_ach_fou'], ENT_QUOTES, $charset);
 	$action ="./acquisition.php?categ=ach&sub=fourn&action=list&user_input=";
-	$bouton_add = "<input class='bouton' type='button' value=' ".$msg['acquisition_ajout_fourn']." ' onclick=\"document.location='./acquisition.php?categ=ach&sub=fourn&action=add&id_bibli=".$id_bibli."';\" />";
+	$bouton_add = "<input class='bouton' type='button' value=' ".$msg['acquisition_ajout_fourn']." ' onclick=\"document.location='./acquisition.php?categ=ach&sub=fourn&action=add';\" />";
 	$lien_last_fou = "";
 	$search_form = str_replace('!!form_title!!', $titre, $search_form);
 	$search_form = str_replace('!!action!!', $action, $search_form);
@@ -54,9 +72,11 @@ function show_list_coord($id_bibli) {
 	
 	//Prise en compte du formulaire de recherche
 	// nombre de références par pages
-	if ($nb_per_page_acq != "") 
-		$nb_per_page = $nb_per_page_acq ;
-	else $nb_per_page = 10;
+	if(empty($nb_per_page)) {
+		if ($nb_per_page_acq != "")
+			$nb_per_page = $nb_per_page_acq ;
+		else $nb_per_page = 10;
+	}
 	
 	// traitement de la saisie utilisateur
 
@@ -86,7 +106,7 @@ function show_list_coord($id_bibli) {
 
 	if($nbr_lignes) {
 	
-		$url_base = $_SERVER['PHP_SELF']."?categ=ach&sub=fourn&action=list&id_bibli=".$id_bibli."&user_input=".rawurlencode(stripslashes($user_input)) ;
+		$url_base = $_SERVER['PHP_SELF']."?categ=ach&sub=fourn&action=list&user_input=".rawurlencode(stripslashes($user_input)) ;
 		
 		// on lance la vraie requête
 		if(!$user_input) {
@@ -110,12 +130,18 @@ function show_list_coord($id_bibli) {
 			}
 			$parity += 1;
 			$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='".$pair_impair."'\" ";
-			$dn_javascript=" onmousedown=\"document.location='./acquisition.php?categ=ach&sub=fourn&action=modif&id_bibli=".$id_bibli."&id=".$row->id_entite."'\" ";
-	        print ("<tr class='".$pair_impair."' ".$tr_javascript." >
-						<td ".$dn_javascript." style='cursor: pointer'><i>".htmlentities($row->raison_sociale, ENT_QUOTES, $charset)."</i></td>
-						<td ><a href='./acquisition.php?categ=ach&sub=fourn&action=cond&id_bibli=".$id_bibli."&id=".$row->id_entite."' >".htmlentities($msg['acquisition_cond_fourn'],ENT_QUOTES,$charset)."</a></td>
-						<td ><a href='./acquisition.php?categ=ach&sub=fourn&action=histrel&id_bibli=".$id_bibli."&id=".$row->id_entite."' >".htmlentities($msg['acquisition_hist_rel_fou'],ENT_QUOTES,$charset)."</a></td>
-					</tr>");
+			$dn_javascript=" onmousedown=\"document.location='./acquisition.php?categ=ach&sub=fourn&action=modif&id=".$row->id_entite."'\" ";
+			$tr = "<tr class='{$pair_impair}' {$tr_javascript} >".
+					"<td {$dn_javascript} style='cursor: pointer'><i>".htmlentities($row->raison_sociale, ENT_QUOTES, $charset);
+			if(!$row->num_bibli) {
+			    $tr.= htmlentities($msg['acquisition_coord_all_in_parenthesis'], ENT_QUOTES, $charset);
+			}
+		    $tr.= "</i></td>
+						<td ><a href='./acquisition.php?categ=ach&sub=fourn&action=cond&id={$row->id_entite}' >".htmlentities($msg['acquisition_cond_fourn'],ENT_QUOTES,$charset)."</a></td>
+						<td ><a href='./acquisition.php?categ=ach&sub=fourn&action=histrel&id={$row->id_entite}' >".htmlentities($msg['acquisition_hist_rel_fou'],ENT_QUOTES,$charset)."</a></td>
+					</tr>";
+	        echo $tr;
+	        
 		}
 		print "</table>";
 		if (!$last_param) $nav_bar = aff_pagination ($url_base, $nbr_lignes, $nb_per_page, $page) ;
@@ -123,31 +149,59 @@ function show_list_coord($id_bibli) {
 	    print $nav_bar;
 	} else {
 		// la requête n'a produit aucun résultat
-		error_message($msg['acquisition_fou_rech'], str_replace('!!fou_cle!!', stripslashes($user_input), $msg['acquisition_fou_rech_error']), 0, './categ=ach&sub=fourn&action=list&id_bibli='.$id_bibli);
+		error_message($msg['acquisition_fou_rech'], str_replace('!!fou_cle!!', stripslashes($user_input), $msg['acquisition_fou_rech_error']), 0, './categ=ach&sub=fourn&action=list');
 	}
 }
 
+
 //Affiche le formulaire d'edition d'un fournisseur
-function show_coord_form($id_bibli, $id_fou= 0) {
+function show_coord_form($id_bibli = 0, $id_fou= 0) {
+    
 	global $msg;
 	global $charset;
 	global $coord_form2;
 	global $ptab, $script;
-	global $pmb_gestion_devise;
 	
-	$bibli = new entites($id_bibli);
+	$bibli_raison_sociale = $msg['acquisition_coord_all'];
+	$id_bibli = intval($id_bibli);
+	
+	if($id_bibli && !$id_fou) {
+	    $bibli = new entites($id_bibli);
+	    $bibli_raison_sociale = $bibli->raison_sociale;
+	}
+	$fournisseur = new entites($id_fou);
+	if($id_fou) {
+	    if($fournisseur->num_bibli) {
+	        $bibli = new entites($fournisseur->num_bibli);
+	        $bibli_raison_sociale = $bibli->raison_sociale;
+	        $id_bibli = $bibli->id_entite;
+	    } else {
+	        $id_bibli = 0;
+	    }
+	}
+	
 
 	$ptab[1] = $ptab[1].$ptab[11];
 	$ptab[1] = str_replace('!!adresse!!', htmlentities($msg['acquisition_adr_fou'], ENT_QUOTES, $charset), $ptab[1]);
+	$ptab[1] = str_replace('!!button_adr_fac!!', '', $ptab[1]);
 	$coord_form2 = str_replace('!!id!!', $id_fou, $coord_form2);
-	$coord_form2 = str_replace('!!id_bibli!!', $id_bibli, $coord_form2);
-	$coord_form2 = str_replace('!!lib_bibli!!', htmlentities($bibli->raison_sociale, ENT_QUOTES, $charset), $coord_form2);	
-
 	$ptab[3] = str_replace('!!id!!', $id_fou, $ptab[3]);
 
-	$fourn = new entites($id_fou);
 	if(!$id_fou) {
+	//creation
 		$coord_form2 = str_replace('!!form_title!!', htmlentities($msg['acquisition_ajout_fourn'],ENT_QUOTES,$charset), $coord_form2);
+	    $sel_all = TRUE;
+	    $sel_attr = [
+	        'id'=>'id_bibli',
+	        'name'=>'id_bibli',
+	    ];
+	    $sel_bibli = entites::get_hmtl_select_etablissements(SESSuserid, $id_bibli, $sel_all, $sel_attr);
+	    $coord_form2 = str_replace('!!lib_bibli!!', $sel_bibli, $coord_form2);
+	    
+		
+		$coord_form2 = str_replace('!!raison_suppr!!', '', $coord_form2);
+		$coord_form2 = str_replace('!!raison!!', '', $coord_form2);
+		$coord_form2 = str_replace('!!num_cp!!', '', $coord_form2);
 		
 		$coord_form2 = str_replace('!!contact!!', $ptab[1], $coord_form2);
 		$coord_form2 = str_replace('!!max_coord!!', '1', $coord_form2);
@@ -166,11 +220,39 @@ function show_coord_form($id_bibli, $id_fou= 0) {
 		$coord_form2 = str_replace('!!fax_1!!', '', $coord_form2);
 		$coord_form2 = str_replace('!!ema_1!!', '', $coord_form2);
 		$coord_form2 = str_replace('!!com_1!!', '', $coord_form2);
+		
+		$coord_form2 = str_replace('!!commentaires!!', '', $coord_form2);
+		$coord_form2 = str_replace('!!siret!!', '', $coord_form2);
+		$coord_form2 = str_replace('!!rcs!!', '', $coord_form2);
+		$coord_form2 = str_replace('!!naf!!', '', $coord_form2);
+		$coord_form2 = str_replace('!!tva!!', '', $coord_form2);
+		$coord_form2 = str_replace('!!site_web!!', '', $coord_form2);
+
+
 	} else {
+    //modification
+	    
 		$coord_form2 = str_replace('!!form_title!!', htmlentities($msg['acquisition_modif_fourn'],ENT_QUOTES,$charset), $coord_form2);
+		$coord_form2 = str_replace('!!lib_bibli!!', htmlentities($bibli_raison_sociale, ENT_QUOTES, $charset), $coord_form2);	
+		
+		if($id_bibli) {
+		    $chk_attr = [
+		        'id'=>'chk_all_etablissements',
+		        'name'=>'chk_all_etablissements',
+		        'value'=>'1',
+		    ];
+		    $chk_checked = FALSE;
+		    $chk_all_etablissements = entites::get_html_checkbox_all_etablissements($chk_checked, $chk_attr);
+		} else {
+		    $chk_all_etablissements = "<input type='hidden' id='chk_all_etablissements' name='chk_all_etablissements' value='1' />";
+		}
+		$coord_form2 = str_replace('<!-- chk_all_etablissements -->', $chk_all_etablissements, $coord_form2);
+		
+		$coord_form2 = str_replace('!!raison!!', htmlentities($fournisseur->raison_sociale,ENT_QUOTES, $charset), $coord_form2);
+		$coord_form2 = str_replace('!!num_cp!!',htmlentities($fournisseur->num_cp_client, ENT_QUOTES, $charset), $coord_form2);
 		$coord_form2 = str_replace('!!contact!!', $ptab[1], $coord_form2);
 		
-		$row = pmb_mysql_fetch_object(entites::get_coordonnees($fourn->id_entite,'1'));
+		$row = pmb_mysql_fetch_object(entites::get_coordonnees($fournisseur->id_entite,'1'));
 		if($row) {
 			$coord_form2 = str_replace('!!id1!!', $row->id_contact, $coord_form2);
 			$coord_form2 = str_replace('!!lib_1!!', htmlentities($row->libelle,ENT_QUOTES,$charset), $coord_form2);
@@ -202,7 +284,7 @@ function show_coord_form($id_bibli, $id_fou= 0) {
 			$coord_form2 = str_replace('!!ema_1!!', '', $coord_form2);
 			$coord_form2 = str_replace('!!com_1!!', '', $coord_form2);
 		}
-		$liste_coord = entites::get_coordonnees($fourn->id_entite,'0');
+		$liste_coord = entites::get_coordonnees($fournisseur->id_entite,'0');
 		$coord_form2 = str_replace('!!max_coord!!', (pmb_mysql_num_rows($liste_coord)+1), $coord_form2);
 		$i=2;
 		while ($row = pmb_mysql_fetch_object($liste_coord)) {
@@ -226,37 +308,46 @@ function show_coord_form($id_bibli, $id_fou= 0) {
 			$coord_form2 = str_replace('!!com_X!!', htmlentities($row->commentaires,ENT_QUOTES,$charset), $coord_form2);
 				
 		}
-		$coord_form2 = str_replace('<!-- bouton_sup -->', $ptab[3], $coord_form2);
-	}
-	$coord_form2 = str_replace('!!raison!!', htmlentities($fourn->raison_sociale,ENT_QUOTES, $charset), $coord_form2);
-	$coord_form2 = str_replace('!!raison_suppr!!', addslashes($fourn->raison_sociale), $coord_form2);
-	$coord_form2 = str_replace('!!num_cp!!',htmlentities($fourn->num_cp_client, ENT_QUOTES, $charset), $coord_form2);
-	$coord_form2 = str_replace('!!commentaires!!', htmlentities($fourn->commentaires,ENT_QUOTES, $charset), $coord_form2);
-	$coord_form2 = str_replace('!!siret!!', htmlentities($fourn->siret,ENT_QUOTES, $charset), $coord_form2);
-	$coord_form2 = str_replace('!!rcs!!', htmlentities($fourn->rcs,ENT_QUOTES, $charset), $coord_form2);
-	$coord_form2 = str_replace('!!naf!!', htmlentities($fourn->naf,ENT_QUOTES, $charset), $coord_form2);
-	$coord_form2 = str_replace('!!tva!!', htmlentities($fourn->tva,ENT_QUOTES, $charset), $coord_form2);
-	$coord_form2 = str_replace('!!site_web!!', htmlentities($fourn->site_web,ENT_QUOTES, $charset), $coord_form2);
+		$coord_form2 = str_replace('!!commentaires!!', htmlentities($fournisseur->commentaires,ENT_QUOTES, $charset), $coord_form2);
+		$coord_form2 = str_replace('!!siret!!', htmlentities($fournisseur->siret,ENT_QUOTES, $charset), $coord_form2);
+		$coord_form2 = str_replace('!!rcs!!', htmlentities($fournisseur->rcs,ENT_QUOTES, $charset), $coord_form2);
+		$coord_form2 = str_replace('!!naf!!', htmlentities($fournisseur->naf,ENT_QUOTES, $charset), $coord_form2);
+		$coord_form2 = str_replace('!!tva!!', htmlentities($fournisseur->tva,ENT_QUOTES, $charset), $coord_form2);
+		$coord_form2 = str_replace('!!site_web!!', htmlentities($fournisseur->site_web,ENT_QUOTES, $charset), $coord_form2);
 	
-	print confirmation_delete("./acquisition.php?categ=ach&sub=fourn&action=del&id_bibli=$id_bibli&id=");
+		$coord_form2 = str_replace('<!-- bouton_sup -->', $ptab[3], $coord_form2);
+		$coord_form2 = str_replace('!!raison_suppr!!', addslashes($fournisseur->raison_sociale), $coord_form2);
+	}
+	
+	print confirmation_delete("./acquisition.php?categ=ach&sub=fourn&action=del&id=");
 	print $script;
 	print $coord_form2;
 	
 }
 
+
 //Affiche la liste des conditions fournisseurs 
-function show_list_cond($id_bibli, $id_fou) {
+function show_list_cond($id_fou) {
+    
 	global $msg;
 	global $charset;
 	global $cond_form;
-	global $pmb_gestion_devise;
 	global $frame, $bt_add, $ptab;
 
-	$bibli = new entites($id_bibli);
+	$id_fou = intval($id_fou);
+	if(!$id_fou) {
+	    return;
+	}
+	
+	$bibli_raison_sociale = $msg['acquisition_coord_all'];
+	$fournisseur = new entites($id_fou);
+	if($fournisseur->num_bibli) {
+	    $bibli = new entites($fournisseur->num_bibli);
+	    $bibli_raison_sociale = $bibli->raison_sociale;
+	}
 	
 	$cond_form = str_replace('!!id!!', $id_fou, $cond_form);
-	$cond_form = str_replace('!!id_bibli!!', $id_bibli, $cond_form);
-	$cond_form = str_replace('!!lib_bibli!!', htmlentities($bibli->raison_sociale, ENT_QUOTES, $charset), $cond_form);	
+	$cond_form = str_replace('!!lib_bibli!!', htmlentities($bibli_raison_sociale, ENT_QUOTES, $charset), $cond_form);	
 
 	$fourn = new entites($id_fou);
 	$cond_form = str_replace('!!raison!!', htmlentities($fourn->raison_sociale ,ENT_QUOTES,$charset), $cond_form);
@@ -297,7 +388,7 @@ function show_list_cond($id_bibli, $id_fou) {
 		}
 		$parity += 1;
 		$tr_javascript=" onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" ";
-		$dn_javascript=" onmousedown=\"document.forms['condform'].setAttribute('action', './acquisition.php?categ=ach&sub=fourn&action=modrem&id_bibli=".$id_bibli."&id=".$id_fou."&id_prod=".$row->id_produit."'); document.forms['condform'].submit(); \" ";
+		$dn_javascript=" onmousedown=\"document.forms['condform'].setAttribute('action', './acquisition.php?categ=ach&sub=fourn&action=modrem&id=".$id_fou."&id_prod=".$row->id_produit."'); document.forms['condform'].submit(); \" ";
         $lig.= "<tr class='".$pair_impair."' ".$tr_javascript." style='cursor: pointer' title='".htmlentities($row->condition_remise, ENT_QUOTES, $charset)."'>
 					<td ".$dn_javascript.">".htmlentities($row->libelle, ENT_QUOTES, $charset)."</td>
 					<td ".$dn_javascript." >
@@ -311,41 +402,49 @@ function show_list_cond($id_bibli, $id_fou) {
 	
 	//Affichage bouton ajout remise
 	if (pmb_mysql_num_rows($list_no_cond) != '0') {
+	    $bt_add = str_replace('!!id_fou!!', $id_fou, $bt_add);
 		$cond_form = str_replace('<!-- bt_add -->', $bt_add, $cond_form);
 	}
 	$cond_form = str_replace('<!-- frame -->', $frame , $cond_form);
 
-	print $cond_form;
+	echo $cond_form;
+	
 }
 
+
 //Affiche le formulaire de remise par type de produits 
-function show_rem_form($id_bibli, $id_fou, $id_prod) {
+function show_rem_form($id_fou, $id_prod) {
 	global $msg;
 	global $charset;
 	global $rem_form, $bt_sup;
 	
-	$bibli = new entites($id_bibli);
+	$id_fou = intval($id_fou);
+	if(!$id_fou) {
+	    return;
+	}
 	
-	$fou = new entites($id_fou);
-	$rem_form = str_replace('!!raison!!', htmlentities($fou->raison_sociale, ENT_QUOTES, $charset), $rem_form);
+	$bibli_raison_sociale = $msg['acquisition_coord_all'];
+	$fournisseur = new entites($id_fou);
+	if($fournisseur->num_bibli) {
+	    $bibli = new entites($fournisseur->num_bibli);
+	    $bibli_raison_sociale = $bibli->raison_sociale;
+	}
+	
+	$rem_form = str_replace('!!raison!!', htmlentities($fournisseur->raison_sociale, ENT_QUOTES, $charset), $rem_form);
 	
 	if(!$id_prod) {	
 		$id_prod = 0;
 		$rem_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_rem_add'], ENT_QUOTES, $charset), $rem_form);
 
 		//Produits non remisés pour le selecteur
-		$list_no_cond = entites::listNoOffres($id_fou);
-		$sel_prod = "<select name='sel_prod' id='sel_prod'>";
-		while ($row = pmb_mysql_fetch_object($list_no_cond)) {
-			$sel_prod.="<option value='".$row->id_produit."' >".htmlentities($row->libelle, ENT_QUOTES, $charset)."</option>";
-		}
-		$sel_prod.= "</select>";
+		$sel_attr = ['id'=>'sel_prod', 'name'=>'sel_prod'];
+		$sel_prod = entites::get_html_select_types_produits_sans_remise($id_fou, $sel_attr);
 		$rem_form = str_replace('!!lib_prod!!', $sel_prod, $rem_form);
 
 		$rem_form = str_replace('!!rem!!', '0.00', $rem_form);
 		$rem_form = str_replace('!!commentaires!!', '', $rem_form);
-		
 		$rem_form = str_replace('!!bouton_sup!!', '', $rem_form);
+		
 	} else {
 		$typ= new types_produits($id_prod);
 		$rem_form = str_replace('!!form_title!!', htmlentities($msg['acquisition_rem_mod'], ENT_QUOTES, $charset), $rem_form);
@@ -358,30 +457,40 @@ function show_rem_form($id_bibli, $id_fou, $id_prod) {
 		$rem_form = str_replace('!!bouton_sup!!', $bt_sup, $rem_form);
 	}
 	$rem_form = str_replace('!!id_fou!!', $id_fou, $rem_form);
-	$rem_form = str_replace('!!id_bibli!!', $id_bibli, $rem_form);
-	$rem_form = str_replace('!!lib_bibli!!', htmlentities($bibli->raison_sociale, ENT_QUOTES, $charset), $rem_form);	
+	$rem_form = str_replace('!!lib_bibli!!', htmlentities($bibli_raison_sociale, ENT_QUOTES, $charset), $rem_form);	
 	$rem_form = str_replace('!!id_prod!!', $id_prod, $rem_form);
 	
 	print $rem_form;
 }
 
-function show_list_rel($id_bibli,$id_fou) {
+
+function show_list_rel($id_fou) {
 
 	global $msg, $charset;
 	global $histrel_form, $histrel_hrow_form, $histrel_row_form;
 	global $acquisition_gestion_tva;
 	
+	$id_fou = intval($id_fou);
+	if(!$id_fou) {
+	    return;
+	}
+	
+	$bibli_raison_sociale = $msg['acquisition_coord_all'];
+	$fournisseur = new entites($id_fou);
+	if($fournisseur->num_bibli) {
+	    $bibli = new entites($fournisseur->num_bibli);
+	    $bibli_raison_sociale = $bibli->raison_sociale;
+	}
+	
 	$tab_rel=array();
-	if ($id_fou) $tab_rel = lignes_actes::getRelancesBySupplier($id_fou);
+	$tab_rel = lignes_actes::getRelancesBySupplier($id_fou);
 	
 	$form = $histrel_form;
 	
 	$form = str_replace('!!form_title!!', htmlentities($msg['acquisition_hist_rel_fou'], ENT_QUOTES,$charset), $form);
 	
-	$bibli = new entites($id_bibli);
 	$form = str_replace('!!id!!', $id_fou, $form);
-	$form = str_replace('!!id_bibli!!', $id_bibli, $form);
-	$form = str_replace('!!lib_bibli!!', htmlentities($bibli->raison_sociale, ENT_QUOTES, $charset), $form);	
+	$form = str_replace('!!lib_bibli!!', htmlentities($bibli_raison_sociale, ENT_QUOTES, $charset), $form);	
 
 	$fourn = new entites($id_fou);
 	$form = str_replace('!!raison!!', htmlentities($fourn->raison_sociale ,ENT_QUOTES,$charset), $form);
@@ -391,7 +500,7 @@ function show_list_rel($id_bibli,$id_fou) {
 	$i=0;
 	foreach ($tab_rel as $k=>$rel) {
 		$i++;
-		if($rel[date_rel]!=$date_rel) {
+		if($rel['date_rel']!=$date_rel) {
 			$date_rel = $rel['date_rel'];
 			$form = str_replace('<!-- relances -->', $lg_form.'<!-- relances -->', $form);
 			$lg_form = $histrel_hrow_form;
@@ -436,19 +545,48 @@ print "<h1>".htmlentities($msg['acquisition_ach_ges'],ENT_QUOTES, $charset)."&nb
 
 switch($action) {
 	case 'list':
-		entites::setSessionBibliId($id_bibli);
 		show_list_coord($id_bibli);
 		break;
+		
+		
+	case 'add':
+	    show_coord_form($id_bibli, $id);
+	    break;
+	    
+	    
+	case 'modif':
+	    if(!$id || !entites::is_a_fournisseur_id($id) ) {
+	        show_list_coord($id_bibli);
+	        break;
+	    }
+	    show_coord_form($id_bibli, $id);
+	    break;
+	    
+	    
 	case 'update':
 		// vérification validité des données fournies.
-		$nbr = entites::exists_rs($raison,$id_bibli,$id);
-		if ($nbr > 0) {
-			error_form_message($raison.$msg["acquisition_raison_already_used"]);
-			break;
-		} 
-		$fourn = new entites($id);
+	    $id_etablissement = $id_bibli;
+	    if(isset($chk_all_etablissements) && $chk_all_etablissements == 1) {
+	        $id_etablissement = 0;
+	    }
+	    if(entites::is_a_fournisseur_raison_sociale($raison, $id_etablissement, $id)) {
+	        error_form_message($raison.$msg["acquisition_raison_already_used"]);
+	        break;
+	    }
+	    if($id_bibli && !entites::is_a_etablissement_id($id_bibli)) {
+	        show_coord_form($id_bibli, $id);
+	        break;
+	    }
+	    $raison = trim($raison);
+	    if($raison==='') {
+	        show_coord_form($id_bibli, $id);
+	        break;
+	    }
+	    
+	    $fourn = new entites($id);
 		$fourn->type_entite = '0';
-		$fourn->num_bibli = $id_bibli;
+		
+		$fourn->num_bibli = $id_etablissement;
 		$fourn->raison_sociale = $raison;
 		$fourn->num_cp_client = $num_cp;
 		$fourn->commentaires = $comment;
@@ -494,47 +632,61 @@ switch($action) {
 		} 
 		show_list_coord($id_bibli);
 		break;
-	case 'add':
-		show_coord_form($id_bibli);
-		break;
-	case 'modif':
-		if (entites::exists($id)) {
-			show_coord_form($id_bibli, $id);
-		} else {
-			show_list_coord($id_bibli);
-		}
-		break;
+		
+		
 	case 'del':
-		if($id) {
-			if (!$force) $force = 0;
-			$total7 = entites::has_actes($id);
-			$total8 = entites::has_abonnements($id);
-			if ((($total7+$total8)==0) || $force) {
-				entites::delete($id);
-				show_list_coord($id_bibli);
-			} else {
-				$msg_suppr_err = $msg['acquisition_fou_used'] ;
-				if ($total7) $msg_suppr_err .= "<br />- ".$msg['acquisition_fou_used_act'] ;
-				if ($total8) $msg_suppr_err .= "<br />- ".$msg['acquisition_fou_used_abt'] ;
-				
-				if (!$total7 && $total8) {
-					box_confirm_message($msg['acquisition_entite_suppr'], $msg_suppr_err, 'acquisition.php?categ=ach&sub=fourn&action=del&id_bibli='.$id_bibli.'&id='.$id.'&force=1', 'acquisition.php?categ=ach&sub=fourn', $msg['acquisition_fou_suppr_forcage_button']);
-				} else {
-					error_message($msg[321], $msg_suppr_err, 1, 'acquisition.php?categ=ach&sub=fourn');
-				}
-			}
-		} else show_list_coord($id_bibli);
-		break;
+	    if($id && entites::is_a_fournisseur_id($id)) {
+	        if (!$force) {
+	            $force = 0;
+	        }
+	        $total7 = entites::has_actes($id);
+	        $total8 = entites::has_abonnements($id);
+	        if ((($total7+$total8)==0) || $force) {
+	            entites::delete($id);
+	            show_list_coord($id_bibli);
+	        } else {
+	            $msg_suppr_err = $msg['acquisition_fou_used'] ;
+	            if ($total7) $msg_suppr_err .= "<br />- ".$msg['acquisition_fou_used_act'] ;
+	            if ($total8) $msg_suppr_err .= "<br />- ".$msg['acquisition_fou_used_abt'] ;
+	            
+	            if (!$total7 && $total8) {
+	                box_confirm_message($msg['acquisition_entite_suppr'], $msg_suppr_err, 'acquisition.php?categ=ach&sub=fourn&action=del&id_bibli='.$id_bibli.'&id='.$id.'&force=1', 'acquisition.php?categ=ach&sub=fourn', $msg['acquisition_fou_suppr_forcage_button']);
+	            } else {
+	                error_message($msg[321], $msg_suppr_err, 1, 'acquisition.php?categ=ach&sub=fourn');
+	            }
+	        }
+	    } else {
+	        show_list_coord($id_bibli);
+	    }
+	    break;
+		
+		
 	case 'cond':
-		show_list_cond($id_bibli, $id);
+	    if(!$id || !entites::is_a_fournisseur_id($id)) {
+	        show_list_coord($id_bibli);
+	        break;
+	    }
+		show_list_cond($id);
 		break;
+		
+		
 	case 'updatecond':
+	    if(!$id || !entites::is_a_fournisseur_id($id)) {
+	        show_list_coord($id_bibli);
+	        break;
+	    }
 		$fourn = new entites($id);
 		$fourn->num_paiement = $paiement;
 		$fourn->save(); 		
 		show_list_coord($id_bibli);
 		break;
+		
+		
 	case 'modrem':
+	    if(!$id || !entites::is_a_fournisseur_id($id)) {
+	        show_list_coord($id_bibli);
+	        break;
+	    }
 		$fourn = new entites($id);
 		$fourn->num_paiement = $paiement;
 		$fourn->raison_sociale = $fourn->raison_sociale;
@@ -545,39 +697,50 @@ switch($action) {
 		$fourn->tva = $fourn->tva;
 		$fourn->site_web = $fourn->site_web;
 		$fourn->save(); 		
-		show_rem_form($id_bibli, $id, $id_prod);	
+		show_rem_form($id, $id_prod);	
 		break;	
+		
+		
 	case 'updaterem':
 		$rem = str_replace(',','.',$rem);
 		if( (!is_numeric($rem)) || ($rem < 0) || ($rem >= 100) ) {
 			error_form_message($msg['acquisition_rem_err']);
 			break;
 		}
-		if (!$id_prod) $id_prod = $sel_prod;
+		if (!$id_prod) {
+		    $id_prod = $sel_prod;
+		}
 		if ($id_prod) {
 			$offre = new offres_remises($id, $id_prod);
 			$offre->remise = $rem;
 			$offre->condition_remise = $comment;
 			$offre->save();
 		}	
-		show_list_cond($id_bibli, $id);	
+		show_list_cond($id);	
 		break;
+		
+		
 	case 'deleterem':
 		offres_remises::delete($id, $id_prod);
-		show_list_cond($id_bibli, $id);
+		show_list_cond($id);
 		break;
+		
+		
 	case 'histrel':
-		show_list_rel($id_bibli,$id);
+	    if(!$id || !entites::is_a_fournisseur_id($id)) {
+	        show_list_coord($id_bibli);
+	    }
+		show_list_rel($id);
 		break;
+		
+		
 	case 'deletehistrel':
 		lignes_actes::deleteRelances($id);
-		show_list_rel($id_bibli,$id);
+		show_list_rel($id);
 		break;
+		
+		
 	default:
-		if (entites::exists($id_bibli)) {
-			show_list_coord($id_bibli);
-		} else {
-			print entites::show_list_biblio('show_list_coord');
-		}
+		show_list_coord($id_bibli);
 		break;
 }

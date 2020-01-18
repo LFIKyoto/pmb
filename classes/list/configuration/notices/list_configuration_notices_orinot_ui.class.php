@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_configuration_notices_orinot_ui.class.php,v 1.1 2018-10-12 11:59:35 dgoron Exp $
+// $Id: list_configuration_notices_orinot_ui.class.php,v 1.1.6.1 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,10 +15,7 @@ class list_configuration_notices_orinot_ui extends list_configuration_notices_ui
 	}
 	
 	protected function init_default_applied_sort() {
-		$this->applied_sort = array(
-				'by' => 'orinot_nom',
-				'asc_desc' => 'asc'
-		);
+	    $this->add_applied_sort('orinot_nom');
 	}
 	
 	protected function get_main_fields_from_sub() {

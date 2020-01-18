@@ -1,4 +1,10 @@
 <?php
+// +-------------------------------------------------+
+// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// +-------------------------------------------------+
+// $Id: clean_cache_amende.inc.php,v 1.6 2019-04-29 11:04:20 dgoron Exp $
+
+if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 $v_state=urldecode($v_state);
 

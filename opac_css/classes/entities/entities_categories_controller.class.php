@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entities_categories_controller.class.php,v 1.1 2018-10-08 13:59:39 vtouchard Exp $
+// $Id: entities_categories_controller.class.php,v 1.2 2019-07-05 12:36:24 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -119,7 +119,11 @@ class entities_categories_controller extends entities_authorities_controller {
 						$tcateg =  new category($cat[0]);
 						if(sizeof($tcateg->path_table)) {
 							for($i=0; $i < sizeof($tcateg->path_table) - 1; $i++){
-								$browser_header ? $browser_header .= '&gt;' : $browser_header = '';
+							    if ($browser_header) {
+							        $browser_header .= '&gt;';
+							    } else {
+							        $browser_header = '';
+							    }
 								$browser_header .= "<a href='";
 								$browser_header .= $this->url_base."&parent=";
 								$browser_header .= $tcateg->path_table[$i]['id'];
@@ -127,7 +131,11 @@ class entities_categories_controller extends entities_authorities_controller {
 								$browser_header .= $tcateg->path_table[$i]['libelle'];
 								$browser_header .= "</a>";
 							}
-							$browser_header ? $browser_header .= '&gt;<strong>' : $browser_header = '<strong>';
+							if ($browser_header) {
+							    $browser_header .= '&gt;<strong>';
+							} else {
+							    $browser_header = '<strong>';
+							}
 							$browser_header .= $tcateg->path_table[sizeof($tcateg->path_table) - 1]['libelle'];
 							$browser_header .= '</strong>';
 						}

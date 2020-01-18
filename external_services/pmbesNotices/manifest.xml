@@ -3,7 +3,7 @@
 ****************************************************************************************                
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)               
 ****************************************************************************************                
-$Id: manifest.xml,v 1.19 2018-01-23 15:13:18 shamel Exp $ -->                                       
+$Id: manifest.xml,v 1.21 2019-08-27 13:34:04 jlaurent Exp $ -->                                       
 <manifest>                                                                                              
         <name>pmbesNotices</name>                                                                       
         <description>msg:pmbesNotices_description</description>                                         
@@ -89,7 +89,7 @@ $Id: manifest.xml,v 1.19 2018-01-23 15:13:18 shamel Exp $ -->
                         <inputs>                                                                                             
                                 <description>msg:listNoticeExplNums_input_description</description>                          
                                 <param name="noticeId" type="scalar" dataType="integer" description="msg:listNoticeExplNums_noticeId"/>                                                                                                                   
-                                <param name="OPACUserId" type="scalar" dataType="integer" description="msg:listNoticeExplNums_OPACUserId"/>                                                                                                               
+                                <param name="OPACUserId" type="scalar" dataType="integer" description="msg:listNoticeExplNums_OPACUserId" optional="yes"  default_value = "-1"/>                                                                                                               
                         </inputs>                                                                                            
                         <outputs>                                                                                            
                                 <description>msg:listNoticeExplNums_output_description</description>                         
@@ -107,7 +107,7 @@ $Id: manifest.xml,v 1.19 2018-01-23 15:13:18 shamel Exp $ -->
                                 <param name="noticesid" type="scalar" description="msg:listNoticesExplNums_noticesid">       
                                         <param name="anoticeid" type="scalar" dataType="inteteger" description="msg:listNoticesExplNums_noticesid_anoticeid"/>                                                                                            
                                 </param>                                                                                     
-                                <param name="OPACUserId" type="scalar" dataType="integer" description="msg:listNoticesExplNums_OPACUserId"/>                                                                                                              
+                                <param name="OPACUserId" type="scalar" dataType="integer" description="msg:listNoticesExplNums_OPACUserId" optional="yes" default_value = "-1"/>                                                                                                              
                         </inputs>                                                                                            
                         <outputs>                                                                                            
                                 <description>msg:listNoticesExplNums_output_description</description>                        
@@ -126,7 +126,7 @@ $Id: manifest.xml,v 1.19 2018-01-23 15:13:18 shamel Exp $ -->
                         <inputs>                                                                                             
                                 <description>msg:listBulletinExplNums_input_description</description>                        
                                 <param name="bulletinId" type="scalar" dataType="integer" description="msg:listBulletinExplNums_bulletinId"/>                                                                                                             
-                                <param name="OPACUserId" type="scalar" dataType="integer" description="msg:listBulletinExplNums_OPACUserId"/>                                                                                                             
+                                <param name="OPACUserId" type="scalar" dataType="integer" description="msg:listBulletinExplNums_OPACUserId" optional="yes" default_value = "-1"/>                                                                                                             
                         </inputs>                                                                                            
                         <outputs>                                                                                            
                                 <description>msg:listBulletinExplNums_output_description</description>                       
@@ -144,7 +144,7 @@ $Id: manifest.xml,v 1.19 2018-01-23 15:13:18 shamel Exp $ -->
                                 <param name="bulletin_ids" type="scalar" description="msg:listBulletinsExplNums_bulletin_ids">                                                                                                                            
                                         <param name="abulletin_id" type="scalar" dataType="integer" description="msg:listBulletinsExplNums_bulletin_ids_abulletin_id"/>                                                                                   
                                 </param>                                                                                     
-                                <param name="OPACUserId" type="scalar" dataType="integer" description="msg:listBulletinsExplNums_OPACUserId"/>                                                                                                            
+                                <param name="OPACUserId" type="scalar" dataType="integer" description="msg:listBulletinsExplNums_OPACUserId" optional="yes" default_value = "-1"/>                                                                                                            
                         </inputs>                                                                                            
                         <outputs>                                                                                            
                                 <description>msg:listBulletinsExplNums_output_description</description>                      
@@ -195,7 +195,7 @@ $Id: manifest.xml,v 1.19 2018-01-23 15:13:18 shamel Exp $ -->
                                 <param name="noticesid" type="scalar" description="msg:fetch_notices_bulletins_noticesid">   
                                         <param name="anoticeid" type="scalar" dataType="inteteger" description="msg:fetch_notices_bulletins_noticesid_anoticeid"/>                                                                                        
                                 </param>                                                                                     
-                                <param name="OPACUserId" type="scalar" dataType="integer" description="msg:fetch_notices_bulletins_OPACUserId"/>                                                                                                          
+                                <param name="OPACUserId" type="scalar" dataType="integer" description="msg:fetch_notices_bulletins_OPACUserId" optional="yes" default_value = "-1"/>                                                                                                          
                         </inputs>                                                                                            
                         <outputs>                                                                                            
                                 <description>msg:fetch_notices_bulletins_output_description</description>                    
@@ -318,7 +318,7 @@ $Id: manifest.xml,v 1.19 2018-01-23 15:13:18 shamel Exp $ -->
                                 <param type="array" name="serial_ids" description="">
                                 	<param name="serial_id" type="scalar" dataType="integer" description="msg:fetchNoticeCollstates_serial_id"/>
                                 </param>
-                                <param name="OPACUserId" type="scalar" dataType="integer" description="msg:fetchNoticeCollstates_OPACUserId"/>
+                                <param name="OPACUserId" type="scalar" dataType="integer" description="msg:fetchNoticeCollstates_OPACUserId" optional="yes" default_value = "-1"/>
                         </inputs>
                         <outputs>
                                 <description/>
@@ -329,7 +329,7 @@ $Id: manifest.xml,v 1.19 2018-01-23 15:13:18 shamel Exp $ -->
                 </method>
                 <method name="fetchSerialList" rights="" version="1.0" language_independant="true">
                         <inputs>
-							<param name="OPACUserId" type="scalar" dataType="integer"/>
+							<param name="OPACUserId" type="scalar" dataType="integer" optional="yes" default_value = "-1"/>
                         </inputs>
                         <outputs>
                                 <result type="array" name="result">
@@ -386,7 +386,8 @@ $Id: manifest.xml,v 1.19 2018-01-23 15:13:18 shamel Exp $ -->
                                 <description></description>                         
                                 <param name="noticelist" type="array" description="msg:fetchNoticeListFull_noticelist">      
                                         <param name="notice_id" type="scalar" dataType="integer"/>                           
-                                </param>                                                                                   
+                                </param>
+                                <param name="OPACUserId" type="scalar" dataType="integer" description="msg:fetchNoticeListFull_OPACUserId" optional="yes" default_value = "-1"/>                                                                                                               
                         </inputs>                                                                                            
                         <outputs>                                                                                            
                                 <description>msg:fetch_bulletin_list_output_description</description>                        
@@ -400,7 +401,8 @@ $Id: manifest.xml,v 1.19 2018-01-23 15:13:18 shamel Exp $ -->
                                 <description></description>                         
                                 <param name="noticelist" type="array" description="msg:fetchNoticesAdministrative_noticelist">      
                                         <param name="notice_id" type="scalar" dataType="integer"/>                           
-                                </param>                                                                                   
+                                </param>
+                                <param name="OPACUserId" type="scalar" dataType="integer" description="msg:fetchNoticesAdministrative_OPACUserId" optional="yes"  default_value = "-1"/>                                                                                                               
                         </inputs>                                                                                            
                         <outputs>                                                                                            
                                 <description></description>                        
@@ -420,7 +422,7 @@ $Id: manifest.xml,v 1.19 2018-01-23 15:13:18 shamel Exp $ -->
 	                        <param name="tab_notice" type="array">
 	                                <param name="notice_id" type="scalar" dataType="integer"/>
 	                        </param>
-	                        <param name="forcage" type="scalar" dataType="boolean" />
+	                        <param name="forcage" type="scalar" dataType="boolean" optional="yes" default_value = "false"/>
                         </inputs>
                         <outputs>
                         	<description></description>                        

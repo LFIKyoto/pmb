@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: consolidation.class.php,v 1.17 2018-10-24 07:15:19 dgoron Exp $
+// $Id: consolidation.class.php,v 1.18 2019-04-02 13:05:50 dbellamy Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -421,31 +421,5 @@ class consolidation {
 		flush();
 	}
 	
-	public static function curl_load_file($url, $filename) {
-		global $opac_curl_available, $msg ;
-		if (!$opac_curl_available) die("PHP Curl must be available");
-		//Calcul du subst
-		$url_subst=str_replace(".xml","_subst.xml",$url);
-		$curl = curl_init();
-		curl_setopt ($curl, CURLOPT_URL, $url_subst);
-		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-		$filename_subst=str_replace(".xml","_subst.xml",$filename);
-		$fp = fopen($filename_subst, "w+");
-		curl_setopt($curl, CURLOPT_FILE, $fp);
-	
-		if(curl_exec ($curl)) {
-			fclose($fp);
-			if (curl_getinfo($curl,CURLINFO_HTTP_CODE)=="404") {
-				unset($fp);
-				@unlink($filename_subst);
-			}
-			curl_setopt ($curl, CURLOPT_URL, $url);
-			$fp = fopen($filename, "w+");
-			curl_setopt($curl, CURLOPT_FILE, $fp);
-			if(!curl_exec ($curl)) die($msg["search_perso_error_param_opac_url"]);
-		} else die($msg["search_perso_error_param_opac_url"]);
-		curl_close ($curl);
-		fclose($fp);
-	}
 }
-?>
+	

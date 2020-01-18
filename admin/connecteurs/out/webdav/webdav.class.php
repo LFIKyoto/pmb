@@ -2,10 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: webdav.class.php,v 1.29 2017-10-05 11:02:10 jpermanne Exp $
+// $Id: webdav.class.php,v 1.30 2019-06-14 10:25:46 btafforeau Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-global $class_path, $include_path,$javascript_path;
+global $class_path, $include_path, $base_path;
 require_once($class_path."/connecteurs_out.class.php");
 require_once($class_path."/connecteurs_out_sets.class.php");
 require_once($include_path."/misc.inc.php");
@@ -33,7 +33,6 @@ require_once($class_path."/rdf/arc2/ARC2.php");
 require_once($class_path."/concept.class.php");
 require_once($class_path."/index_concept.class.php");
 require_once($class_path."/titre_uniforme.class.php");
-require_once("$base_path/admin/connecteurs/out/webdav/lib/Sabre/autoload.php");//On charge de façon automatique tous les fichiers dont on a besoin
 require_once($class_path.'/nomenclature/nomenclature_voices.class.php');
 require_once($class_path.'/nomenclature/nomenclature_voice.class.php');
 require_once($class_path.'/nomenclature/nomenclature_workshop.class.php');
@@ -43,7 +42,7 @@ require_once($class_path.'/notice_relations.class.php');
 if (pmb_mysql_num_rows(pmb_mysql_query("select * from upload_repertoire "))==0) {
 	$pmb_docnum_in_directory_allow = 0;
 } else {
-	$pmb_docnum_in_directory_allow=1;
+	$pmb_docnum_in_directory_allow = 1;
 }
 
 function debug($elem,$new_file=true){
@@ -87,10 +86,9 @@ class webdav extends connecteur_out {
 	public function process($source_id, $pmb_user_id) {
 		global $class_path;
 		global $webdav_current_user_id,$webdav_current_user_name;
-		global $pmb_url_base;
 		
 		$source_object = $this->instantiate_source_class($source_id);
-		$webdav_current_user_id=0;
+		$webdav_current_user_id = 0;
 		$webdav_current_user_name = "Anonymous";
 		switch ($source_object->config['group_tree']) {
 			case 'scan_request' :
@@ -113,7 +111,7 @@ class webdav extends connecteur_out {
 		
 		if($source_object->config['authentication'] != "anonymous"){		
 			$auth = new Sabre\PMB\Auth($source_object->config['authentication']);
-			$authPlugin = new Sabre\DAV\Auth\Plugin($auth,md5($pmb_url_base));
+			$authPlugin = new Sabre\DAV\Auth\Plugin($auth);
 			// Adding the plugin to the server
 			$server->addPlugin($authPlugin);
 		}
@@ -188,7 +186,7 @@ class webdav_source extends connecteur_out_source {
 	}
 	
 	public function get_config_form() {
-		global $charset, $msg, $dbh;
+		global $charset, $msg;
 		global $base_path, $class_path;
 		
 		if(!$this->config['base_uri']){
@@ -442,7 +440,6 @@ class webdav_source extends connecteur_out_source {
 	}
 	
 	public function update_config_from_form() {
-		global $dbh;
 		global $included_sets;
 		global $group_tree_elem;
 		global $authentication;

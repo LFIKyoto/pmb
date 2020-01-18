@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: term_show.class.php,v 1.19 2017-10-18 10:22:21 ngantier Exp $
+// $Id: term_show.class.php,v 1.23 2019-07-11 13:01:58 btafforeau Exp $
 //
 // Gestion de l'affichage d'un notice d'un terme du thésaurus
 
@@ -60,7 +60,7 @@ class term_show {
 		}
 		if ($re!='') $re.=' - ';
 		//Si le libellé de la catégorie ne commence pas par "~", on affiche le libellé avec un lien sinon ~
-		if (($r->libelle[0]!='~')||($this->keep_tilde))
+		if ((substr($r->libelle, 0, 1) != '~') || ($this->keep_tilde))
 			$re.="<a href=\"".$this->url_for_term_show.'?term='.rawurlencode($r->libelle).'&id_thes='.$r->thes->id_thesaurus.'&'.$this->base_query."\">".htmlentities($r->libelle,ENT_QUOTES,$charset).'</a>';
 		else{
 			$re.='~';
@@ -181,9 +181,9 @@ class term_show {
 		while ($r1=pmb_mysql_fetch_object($resultat_1)) {
 			$t_see[$r1->categ_id]=1;//Pour les renvois vers le un noeud traité
 			//Lecture du chemin vers la catégorie
-			$renvoi=$this->get_categ_lib($r1->categ_id,$this->term).' ';
+			$renvoi = $this->get_categ_lib($r1->categ_id,$this->term).' ';
 			//Si la catégorie est une sous catégorie d'une terme "~", alors c'est un renvoi d'un terme orphelin ou on en tient pas compte
-			if (($renvoi[0]=='~')&&($r1->categ_see)&&(!$this->keep_tilde)) {
+			if ((substr($renvoi, 0, 1) == '~') && ($r1->categ_see) && (!$this->keep_tilde)) {
 				//Si le renvoi n'existe pas déjà, on l'affiche et on l'enregistre
 				if (!$t_see[$r1->categ_see]) {
 					$visible=$pl($r1->categ_id,$r1->categ_see);
@@ -192,7 +192,7 @@ class term_show {
 					$t_see[$r1->categ_see]=1;
 				}
 			} else {
-				if (($renvoi[0]!='~')||($this->keep_tilde)) {
+			    if ((substr($renvoi, 0, 1) != '~')||($this->keep_tilde)) {
 					//Si la catégorie n'est pas une sous catégorie d'un terme "~", on affiche le chemin					$visible=$pl($r1->categ_id,$r1->categ_see);
 					$visible=$pl($r1->categ_id,$r1->categ_see);
 					if ($visible["VISIBLE"]) {
@@ -208,7 +208,7 @@ class term_show {
 			}
 			
 			//Si le renvoi ne commence pas par "~" alors on affiche les sous niveaux et les catégories associées
-			if (($renvoi[0]!='~')||($this->keep_tilde)) {
+			if ((substr($renvoi, 0, 1) != '~') || ($this->keep_tilde)) {
 				//Affichage des premiers sous niveaux
 				$res.='<blockquote>';
 				//Recherche du niveau de la catégorie (0,1 ou supérieur à 1)
@@ -241,19 +241,15 @@ class term_show {
 					if ($res1!='') $res.=''.$msg['term_show_see_also'].'<blockquote><i>'.$res1.'</i></blockquote>';
 					$res.= '</blockquote>';
 				}
-				
 				//Recherche des liens d'autorités entre catégories
 				$aut_link= new aut_link(AUT_TABLE_CATEG,$r1->categ_id);
 				if(count($aut_link->aut_list)){
-					$res1 = array();
-					$source = new marc_list("relationtype_autup");
-					$tab_lib_autup = $source->table;
-					$source = new marc_list("relationtype_aut");
-					$tab_lib_aut = $source->table;
+					$res1_tab = array();
+					$source = new marc_list("aut_link");
+					$liste_type_relation = $source->table;
 					foreach ( $aut_link->aut_list as $val ) {
        					if($val["to"] == AUT_TABLE_CATEG){
 							$r_link=$this->do_query(3,$val["to_num"]);
-							
 							if(pmb_mysql_num_rows($r_link) == 1){
 								$r_link_res=pmb_mysql_fetch_object($r_link);
 								$visible=$pl($r_link_res->categ_id,$r_link_res->categ_see);
@@ -263,18 +259,18 @@ class term_show {
 								}
 								if ($visible["VISIBLE"]) {
 									$tmp=$visible["LINK"]."&nbsp;".htmlentities($info_thes,ENT_QUOTES,$charset).$this->get_categ_lib($r_link_res->categ_id, $this->term,true);
-									if($val["flag_reciproc"]){
-										$res1[$tab_lib_autup[$val["type"]]][]=$tmp;
-									}else{
-										$res1[$tab_lib_aut[$val["type"]]][]=$tmp;
+									if ($val['direction'] == 'up') {									    
+									    $res1_tab[$liste_type_relation['ascendant'][$val["type"]]][]=$tmp;
+									} else {
+									    $res1_tab[$liste_type_relation['descendant'][$val["type"]]][]=$tmp;
 									}
 								}
 							}
        					}
 					}
-					if(count($res1)){
+					if(count($res1_tab)){
 						$res.='<blockquote>'.$msg['aut_link'].' :';
-						foreach ( $res1 as $key => $value ) {
+						foreach ($res1_tab as $key => $value) {
        						$res.='<i><blockquote>'.htmlentities($key,ENT_QUOTES,$charset).' : '.implode(",",$value).'</blockquote></i>';
 						}
 						$res.= '</blockquote>';

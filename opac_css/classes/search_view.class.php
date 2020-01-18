@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_view.class.php,v 1.18 2018-12-17 13:57:26 ngantier Exp $
+// $Id: search_view.class.php,v 1.23 2019-06-19 12:23:13 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -592,15 +592,19 @@ class search_view {
 		if($opac_map_activate){
 			$layer_params = json_decode($opac_map_base_layer_params,true);
 			$baselayer =  "baseLayerType: dojox.geo.openlayers.BaseLayerType.".$opac_map_base_layer_type;
-			if(count($layer_params)){
+			if(is_array($layer_params) && count($layer_params)){
 				if($layer_params['name']) $baselayer.=",baseLayerName:\"".$layer_params['name']."\"";
 				if($layer_params['url']) $baselayer.=",baseLayerUrl:\"".$layer_params['url']."\"";
 				if($layer_params['options']) $baselayer.=",baseLayerOptions:".json_encode($layer_params['options']);
 			}
 			$size=explode("*",$opac_map_size_search_edition);
-			if(count($size)!=2)$map_size="width:800px; height:480px;";
-			else $map_size= "width:".$size[0]."; height:".$size[1].";";
-				
+			if(count($size)!=2) {
+				$map_size="width:800px; height:480px;";
+			} else {
+				if (is_numeric($size[0])) $size[0].= 'px';
+				if (is_numeric($size[1])) $size[1].= 'px';
+				$map_size= "width:".$size[0]."; height:".$size[1].";";
+			}
 			$initialFit = '';
 			$map_emprises_query = array();
 			if( $opac_map_bounding_box) {
@@ -1098,6 +1102,7 @@ class search_view {
 	public static function get_search_section_complement_isbd($id, $mode) {
 		global $msg;
 		
+		$complement = '';
 		$search_plettreaut = $_SESSION["last_module_search"]["search_plettreaut"];
 		$search_dcote = $_SESSION["last_module_search"]["search_dcote"];
 		$search_lcote = $_SESSION["last_module_search"]["search_lcote"];
@@ -1235,6 +1240,9 @@ class search_view {
 					    $es->unserialize_search($_SESSION["lq_facette_search"]["lq_search"]);
 					} else {
 						global $search;
+						if(empty($search)) {
+							$search=array();
+						}
 						$search[0]="s_1";
 						$op_="EQ";
 						 
@@ -1265,6 +1273,9 @@ class search_view {
 					
 				if($search_in_perio){
 					global $search;
+					if(empty($search)) {
+						$search=array();
+					}
 					$search[0]="f_34";
 					//opérateur
 					$op="op_0_".$search[0];
@@ -1286,7 +1297,7 @@ class search_view {
 					${$op}=$op_;
 				} else {
 					if ($get_query) {
-						if (($_SESSION["last_query"]==$get_query)&&($_SESSION["lq_facette_test"])) {
+						if (($_SESSION["last_query"]==$get_query)&&(!empty($_SESSION["lq_facette_test"]))) {
 							$es->unserialize_search($_SESSION["lq_facette_search"]["lq_search"]);
 						} else get_history($get_query);
 					}
@@ -1332,6 +1343,7 @@ class search_view {
 					global $search;
 	
 					if (!$search) {
+						$search=array();
 						$search[0]="s_2";
 						global $op_0_s_2;
 						$op_0_s_2="EQ";
@@ -1501,6 +1513,9 @@ class search_view {
 					
 				if($search_in_perio){
 					global $search;
+					if(empty($search)) {
+						$search=array();
+					}
 					$search[0]="f_34";
 					//opérateur
 					$op="op_0_".$search[0];

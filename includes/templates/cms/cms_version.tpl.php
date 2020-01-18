@@ -1,5 +1,12 @@
 <?php
+// +-------------------------------------------------+
+// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// +-------------------------------------------------+
+// $Id: cms_version.tpl.php,v 1.2 2019-05-27 12:11:12 ngantier Exp $
 
+if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
+
+global $cms_version_list, $msg, $cms_version_list_item, $cms_version_form_tpl, $base_path, $cms_version_form_del_button_tpl;
 
 $cms_version_list ="	
 <script type='text/javascript'>	

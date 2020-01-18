@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_sphinx_authorities.class.php,v 1.3 2018-07-27 14:32:26 tsamson Exp $
+// $Id: searcher_sphinx_authorities.class.php,v 1.4 2019-05-27 12:55:59 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -18,18 +18,19 @@ class searcher_sphinx_authorities extends searcher_sphinx {
  	
  	protected function get_search_indexes(){
  		global $lang;
+ 		global $sphinx_indexes_prefix;
  		$indexes = explode(',',$this->index_name);
  		$index = "";
  		foreach($indexes as $index_name){
  			if($index) $index.= ',';
- 			$index.= trim($index_name).'_'.$lang.','.trim($index_name);
+ 			$index.= $sphinx_indexes_prefix.trim($index_name).'_'.$lang.','.$sphinx_indexes_prefix.trim($index_name);
  		}
  		if(!$this->authority_type){
 	 		$result = pmb_mysql_query('select id_authperso from authperso');
 	 		if (pmb_mysql_num_rows($result)) {
 	 			while ($row = pmb_mysql_fetch_object($result)) {
 	 				if($index) $index.= ',';
-	 				$index.= 'authperso_'.$row->id_authperso.'_'.$lang.','.'authperso_'.$row->id_authperso;
+	 				$index.= $sphinx_indexes_prefix.'authperso_'.$row->id_authperso.'_'.$lang.','.$sphinx_indexes_prefix.'authperso_'.$row->id_authperso;
 	 			}
 	 		}
  		}

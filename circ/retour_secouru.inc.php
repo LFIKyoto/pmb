@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: retour_secouru.inc.php,v 1.35 2018-08-03 10:28:07 dgoron Exp $
+// $Id: retour_secouru.inc.php,v 1.38 2019-08-22 06:46:51 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -13,16 +13,7 @@ require_once("$class_path/expl_to_do.class.php");
 require_once("$class_path/pret_parametres_perso.class.php");
 require_once($class_path.'/event/events/event_loan.class.php');
 require_once($class_path.'/audit.class.php');
-
-// define pour différent flags de situation document
-define ('EX_OK', 1);
-define ('EX_INCONNU', 2);
-define ('HAS_RESA_GOOD', 4); // l'exemplaire est réservé pour ce lecteur
-define ('NON_PRETABLE', 8);
-define ('HAS_NOTE', 16);
-define ('HAS_RESA_FALSE', 32); // l'exemplaire est réservé pour un autre lecteur
-define ('ALREADY_LOANED', 64); // cet emprunteur a déjà emprunté ce document
-define ('ALREADY_BORROWED', 128); // ce document est emprunté par un autre emprunteur
+require_once($class_path.'/expl.class.php');
 
 if (!$do) {
 	$file=$_FILES['fichier_secouru']['tmp_name'];
@@ -323,6 +314,8 @@ function add_pret($id_empr, $id_expl, $cb_doc) {
 		$qt=new quota("LEND_TIME_QUOTA");
 		$struct["READER"]=$id_empr;
 		$struct["EXPL"]=$id_expl;
+		$struct["NOTI"] = exemplaire::get_expl_notice_from_id($id_expl);
+		$struct["BULL"] = exemplaire::get_expl_bulletin_from_id($id_expl);
 		$duree_pret=$qt->get_quota_value($struct);
 		if ($duree_pret==-1) $duree_pret=0; 
 	} else {
@@ -575,9 +568,9 @@ function do_retour_secouru($stuff) {
 	}
 
 	if ($stuff->expl_note)
-		print pmb_bidi("<hr /><div class='erreur'>${msg[377]} :</div><div class='message_important'>".$stuff->expl_note."</div>");
+		print pmb_bidi("<hr /><div class='erreur'>${msg[377]} :</div><div class='message_important'>".nl2br($stuff->expl_note)."</div>");
 	if ($stuff->expl_comment)
-		print pmb_bidi("<hr /><div class='erreur'>".$msg['expl_zone_comment']." :</div>".$stuff->expl_comment."<br />");
+		print pmb_bidi("<hr /><div class='erreur'>".$msg['expl_zone_comment']." :</div>".nl2br($stuff->expl_comment)."<br />");
 
 		// traitement de l'éventuelle réservation
 	if ($stuff->resa_idempr) {

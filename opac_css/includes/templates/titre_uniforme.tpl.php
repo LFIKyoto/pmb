@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: titre_uniforme.tpl.php,v 1.4 2018-01-25 10:13:28 dgoron Exp $
+// $Id: titre_uniforme.tpl.php,v 1.5 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -11,7 +11,7 @@ if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 if ( ! defined( 'TITRE_UNIFORME_TMPL' ) ) {
   define( 'TITRE_UNIFORME_TMPL', 1 );
 
-global $titre_uniforme_level2_display;
+global $titre_uniforme_level2_display, $msg;
   
 // level 2 : affichage général
 $titre_uniforme_level2_display = "

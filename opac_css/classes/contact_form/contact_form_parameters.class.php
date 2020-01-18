@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contact_form_parameters.class.php,v 1.2 2018-09-18 09:11:16 dgoron Exp $
+// $Id: contact_form_parameters.class.php,v 1.2.6.1 2019-11-07 16:10:43 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -34,10 +34,12 @@ class contact_form_parameters {
 					'firstname' => $this->_get_field('text', 1, 1),
 					'group' => $this->_get_field(),
 					'email' => $this->_get_field('email', 1, 1, 1),
-					'tel' => $this->_get_field()
+					'tel' => $this->_get_field(),
+				    'attachments' => $this->_get_field('file')
 				),
 				'recipients_mode' => 'by_persons',
-				'email_content' => '',
+			    'email_object_free_entry' => 0,
+		    	'email_content' => '',
 				'confirm_email' => 1
 		);
 	}

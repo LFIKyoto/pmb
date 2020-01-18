@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ResourceSelector.js,v 1.3 2018-12-28 16:19:06 tsamson Exp $
+// $Id: ResourceSelector.js,v 1.6.6.1 2019-11-18 11:09:13 jlaurent Exp $
 
 
 define([
@@ -34,6 +34,9 @@ define([
 			this.templateNode = dom.byId(this.templateNodeId);
 			on(this.domNode, 'keyup', lang.hitch(this, this.updateDatalist));
 			on(this.domNode, 'input', lang.hitch(this, this.updateValue));
+			if (this.valueNode.value) {
+				this.updateTemplate();
+			}
 		},
 	
 		updateDatalist: function(e) {
@@ -55,30 +58,32 @@ define([
 			this.datalist = [];
 			for (var element of data) {
 				this.datalist[element.value] = element.label;
-				domConstruct.create('option', {value: element.value, innerHTML: element.label}, this.datalistNode);
+				domConstruct.create('option', {innerHTML: element.label}, this.datalistNode);
 			}
 			this.domNode.focus();
 		},
 		
 		updateValue: function(e) {
-			if (this.datalist[this.domNode.value] == undefined) {
-				this.valueNode.value = '';
-				return false;
+			for (var id in this.datalist) {
+				if (this.datalist[id] == this.domNode.value) {
+					this.valueNode.value = id;
+					this.domNode.setCustomValidity("");
+					this.domNode.blur();
+					this.updateTemplate();
+					return true;
+				}
 			}
-			this.valueNode.value = this.domNode.value;
-			this.domNode.value = this.datalist[this.domNode.value];
-			this.domNode.blur();
-			
-			this.updateTemplate();
+			this.valueNode.value = '';
+			this.domNode.setCustomValidity("Invalid field.");
+			return false;
 		},
 		
 		updateTemplate : function() {
 			//recupération du template
-			var url = './ajax.php?module=ajax&categ=contribution&sub=get_resource_template&type='+this.completion+'&id='+this.valueNode.value;			
+			var url = './ajax.php?module=ajax&categ=contribution&sub=get_resource_template&type='+this.completion+'&id='+encodeURIComponent(this.valueNode.value);			
 			request.get(url, {
 				handleAs: 'text'
 			}).then(lang.hitch(this, function(tpl) {
-				console.log(tpl);
 				if (this.templateNode) {
 					this.templateNode.innerHTML = tpl;
 				}

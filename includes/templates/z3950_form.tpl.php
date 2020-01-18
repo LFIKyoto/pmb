@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: z3950_form.tpl.php,v 1.103 2018-04-19 20:03:16 Alexandre Exp $
+// $Id: z3950_form.tpl.php,v 1.107 2019-08-29 10:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $nb_onglets, $ptab, $msg, $base_path, $charset, $form_notice, $current_module, $zone_article_form, $bt_undo, $zone_categ_form;
 
 // template pour le form de catalogage
 
@@ -59,12 +61,26 @@ $ptab[0] = "
 		<!--	Partie de	-->
 		<div class='colonne2'>
 			<label for='f_serie' class='etiquette'>$msg[241]</label>
-			<div class='row'>
-				<input type='text' class='saisie-30emr' id='f_serie' name='f_serie' value=\"!!serie!!\" />
-				<input type='button' class='bouton' value='".$msg['parcourir']."' onclick=\"openPopUp('$base_path/select.php?what=serie&caller=notice&param1=f_serie_id&param2=f_serie', 'selector')\" />
-				<input type='button' class='bouton' value='".$msg['raz']."' onclick=\"this.form.f_serie.value='';\" />
-				<input type='hidden' name='f_serie_id' />
-			</div>
+            <div class='row'>
+    			<input type=\"radio\" name=\"serie_type\" value=\"use_existing\" !!serie_type_use_existing!! id=\"serie_type_use_existing\" /><label for=\"serie_type_use_existing\">".$msg['notice_integre_serie_use_existing']."</label>
+                <blockquote>
+    				<input type='text' class='saisie-30emr' id='f_serie' name='f_serie' value=\"!!serie!!\" completion='serie' autfield='f_serie_id' autocomplete='off' />
+    				<input type='button' class='bouton' value='".$msg['parcourir']."' onclick=\"openPopUp('$base_path/select.php?what=serie&caller=notice&param1=f_serie_id&param2=f_serie', 'selector')\" />
+    				<input type='button' class='bouton' value='".$msg['raz']."' onclick=\"this.form.f_serie.value='';\" />
+    				<input type='hidden' name='f_serie_id' id='f_serie_id' value='!!serie_id!!' />
+                </blockquote>
+    			<input type='radio' name=\"serie_type\" value=\"insert_new\" !!serie_type_insert_new!! id=\"serie_type_insert_new\" /><label for=\"serie_type_insert_new\">".$msg['notice_integre_serie_new']."</label>
+    	        <blockquote>
+                    <div class='row'>
+    			        <div class='colonne' style='margin-right:5px'>
+    						<label for='f_serie_new' class='etiquette'>".$msg['233']."</label>
+    						<div class='row'>
+    							<input type='text' class='saisie-50em' id='f_serie_new' name='f_serie_new' value=\"!!serie_new_name!!\" />
+    						</div>
+    				    </div>
+    				</div>
+                </blockquote>
+            </div>
 		</div>
 		<!--	Partie de	-->
 		<div class='colonne2'>
@@ -294,7 +310,7 @@ $ptab[1] = "
 	<input type=\"radio\" id=\"author0_type_use_existing\" !!author0_type_use_existing!! value=\"use_existing\" name=\"author0_type\" /><label for=\"author0_type_use_existing\">".$msg['notice_integre_author_use_existing']."</label>
 	<blockquote>
 	    <div class='row'>
-	        <div id='el1Child_0a' class='colonne2' id='colonne60'>
+	        <div id='el1Child_0a' class='colonne2'>
 	            <label for='f_author_name_0_existing' class='etiquette'>$msg[244]</label>
 	            <div class='row' >
 					<input type='text' completion='authors' autfield='f_aut0_existing_id' id='f_author_name_0_existing' class='saisie-30emr' name='f_author_name_0_existing' value=\"!!f_author_name_0_existing!!\" />
@@ -305,7 +321,7 @@ $ptab[1] = "
 	            </div>
 			</div>
 	        <!--    Fonction    -->
-	        <div id='el1Child_1a' class='colonne_suite' id='colonne_suite'>
+	        <div id='el1Child_1a' class='colonne_suite'>
 	            <label for='f_existing_f0' class='etiquette'>$msg[245]</label>
 	            <div class='row'>
 			        <input type='text' class='saisie-15emr' id='f_existing_f0' name='f_existing_f0' completion=\"fonction\" autfield=\"f_existing_f0_code\" value=\"!!author_function_label_0!!\" />
@@ -322,9 +338,9 @@ $ptab[1] = "
 		<div class='row'>
 			<div class='colonne2'>
 				<select name='f_author_type_0' id='f_author_type_0' onChange='changeAuthorType(0);'>
-					<option value='70'!!author_type_70_0!!>$msg[203]</option>
-					<option value='71'!!author_type_71_0!!>$msg[204]</option>
-					<option value='72'!!author_type_72_0!!>".$msg['congres_libelle']."</option>
+					<option value='70' !!author_type_70_0!!>$msg[203]</option>
+					<option value='71' !!author_type_71_0!!>$msg[204]</option>
+					<option value='72' !!author_type_72_0!!>".$msg['congres_libelle']."</option>
 				</select>
 			</div>					
 			<div class='colonne_suite'>
@@ -1283,6 +1299,7 @@ $ptab[7] = "
 	    <!--    Langues    -->
 	    <div id='el7Child_0a' class='row'>
 	        <label class='etiquette'>$msg[710]</label>
+	        <input type='button' class='bouton' value='+' onClick=\"add_lang();\"/>
 	    </div>
 	    <input type='hidden' id='max_lang' name='max_lang' value=\"!!max_lang!!\" />
 	    !!langues_repetables!!
@@ -1293,6 +1310,7 @@ $ptab[7] = "
 	    <!--    Langues    -->
 	    <div id='el7Child_1a' class='row'>
 	        <label class='etiquette'>$msg[711]</label>
+	        <input type='button' class='bouton' value='+' onClick=\"add_langorg();\"/>
 	    </div>
 	    <input type='hidden' id='max_langorg' name='max_langorg' value=\"!!max_langorg!!\" />
 	    !!languesorg_repetables!!
@@ -1312,7 +1330,7 @@ $ptab[70] = "
 		<input type='button' class='bouton' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=lang&caller=notice&p1=f_lang_code!!ilang!!&p2=f_lang!!ilang!!', 'selector')\" />
         <input type='button' class='bouton' value='".$msg['raz']."' onclick=\"this.form.f_lang!!ilang!!.value=''; this.form.f_lang_code!!ilang!!.value=''; \" />
         <input type='hidden' name='f_lang_code!!ilang!!' id='f_lang_code!!ilang!!' value='!!lang_code!!' />
-        <input type='button' class='bouton' value='+' onClick=\"add_lang();\"/>
+        <input type='button' id='button_add_f_lang_code' class='bouton' value='+' onClick=\"add_lang();\"/>
     </div>
     ";
 
@@ -1335,7 +1353,7 @@ $ptab[71] = "
 		<input type='button' class='bouton' value='".$msg['parcourir']."' onclick=\"openPopUp('./select.php?what=lang&caller=notice&p1=f_langorg_code!!ilangorg!!&p2=f_langorg!!ilangorg!!', 'selector')\" />
         <input type='button' class='bouton' value='".$msg['raz']."' onclick=\"this.form.f_langorg!!ilangorg!!.value=''; this.form.f_langorg_code!!ilangorg!!.value=''; \" />
         <input type='hidden' name='f_langorg_code!!ilangorg!!' id='f_langorg_code!!ilangorg!!' value='!!langorg_code!!' />
-        <input type='button' class='bouton' value='+' onClick=\"add_langorg();\"/>
+        <input type='button' id='button_add_f_langorg_code' class='bouton' value='+' onClick=\"add_langorg();\"/>
     </div>
     ";
 $ptab[711] = "
@@ -1519,7 +1537,7 @@ if($pmb_catalog_verif_js_integration!= ""){
 			return false;
 		}";
 }    
-	$form_notice.= "
+$form_notice.= "
 		titre0 = form.f_title_0.value; 
 		titre0 = titre0.replace(/^\s+|\s+$/g, ''); //trim la valeur
         if(titre0.length == 0) {

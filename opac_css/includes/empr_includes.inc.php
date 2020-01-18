@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr_includes.inc.php,v 1.142 2018-11-20 10:23:13 dgoron Exp $
+// $Id: empr_includes.inc.php,v 1.156.2.5 2019-11-25 11:10:09 btafforeau Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once ($base_path . '/includes/init.inc.php');
@@ -103,7 +103,7 @@ if ($first_log && empty($direct_access) && isset($_SESSION['opac_view']) && $_SE
 }
 
 // connexion en cours et paramètre de rebond ailleurs que sur le compte emprunteur
-if (($opac_show_login_form_next) && ($login) && ($first_log) && empty($direct_access) && ($lvl != 'change_password'))
+if (($opac_show_login_form_next) && ($login) && ($first_log) && empty($direct_access) && ($lvl != 'change_password') && ($lvl != 'change_profil'))
 	die("<script type='text/javascript'>document.location='$opac_show_login_form_next';</script>");
 
 if ($is_opac_included) {
@@ -154,6 +154,9 @@ if (! $tab) {
 		case 'change_password' :
 		case 'valid_change_password' :
 		case 'message' :
+		case 'change_profil' :
+		case 'renewal' :
+		case 'delete_account' :
 			$tab = 'account';
 			break;
 		case 'all' :
@@ -234,24 +237,14 @@ if ($log_ok) {
 		if ($opac_contribution_area_activate && $allow_contribution) {
 			$empr_onglet_menu .= "<li " . (($tab == "contribution_area") ? "class=\"subTabCurrent\"" : "") . "><a href='./empr.php?tab=contribution_area&lvl=contribution_area_list'>" . htmlentities($msg['empr_menu_contribution_area'], ENT_QUOTES, $charset) . "</a></li>";
 		}
-		/**
-		 * TODO tester si le pnb est configuré !
-		 */
-		if (dilicom::is_pnb_active()) {
-			$empr_onglet_menu .= "<li " . (($tab == "pnb_loan") ? "class=\"subTabCurrent\"" : "") . "><a href='./empr.php?tab=pnb_loan&lvl=pnb_loan_list'>" . htmlentities($msg['empr_menu_pnb_loan'], ENT_QUOTES, $charset) . "</a></li>";
-		}
 		if (function_exists('empr_extended_bandeau')) {
 			empr_extended_bandeau($tab);
 		}
 		$empr_onglet_menu .= '</ul>';
 		
 		print $empr_onglet_menu;
-		$subitems = '
-			<div class="row">
-				!!subonglet!!
-			</div>
-		</div>';
 		
+		$subitems ='';
 		switch ($tab) {
 			case 'loan' :
 			case 'reza' :
@@ -286,7 +279,8 @@ if ($log_ok) {
 				}
 				
 				$loan_reza_item .= "</ul>";
-				$subitems = str_replace('!!subonglet!!', $loan_reza_item, $subitems);
+				$subitems .= '<div class="row">'. $loan_reza_item .'</div>';
+				
 				break;
 			case 'dsi' :
 				// Mes abonnements
@@ -300,10 +294,18 @@ if ($log_ok) {
 				if ($opac_allow_bannette_priv && $allow_dsi_priv) {
 					$link_alert = './index.php?tab=dsi&bt_cree_bannette_priv=1&search_type_asked=extended_search';
 					if(!isset($bt_cree_bannette_priv)) $bt_cree_bannette_priv = 0;
-					$abo_item .= "<li " . (($bt_cree_bannette_priv == "1") ? "class=\"subTabCurrent\"" : "") . "><a href='" . $link_alert . "'>" . htmlentities($msg['dsi_bt_bannette_priv_empr'], ENT_QUOTES, $charset) . "</a></li>";
+					$abo_item .= "<li id='cree_bannette_priv_li' " . (($bt_cree_bannette_priv == "1") ? "class=\"subTabCurrent\"" : "") . "><a href='" . $link_alert . "'>" . htmlentities($msg['dsi_bt_bannette_priv_empr'], ENT_QUOTES, $charset) . "</a></li>";
 				}
 				$abo_item .= "</ul>";
-				$subitems = str_replace('!!subonglet!!', $abo_item, $subitems);
+				if ($opac_dsi_active && $lvl == "bannette") {
+				    $abo_item .= "<ul class='empr_subtabs empr_dsi_subtabs'>
+                                    <li><a href='#title_bannette_pub'>".$msg['dsi_bannette_pub']."</a></li>";
+				    if ($opac_allow_bannette_priv){
+        				$abo_item .= "<li><a href='#title_bannette_priv'>".$msg['dsi_bannette_priv']."</a></li>";
+				    }
+                    $abo_item .= "</ul>";
+				}
+				$subitems .= '<div class="row">'. $abo_item .'</div>';
 				break;
 			case 'sugg' :
 				// Mes suggestions
@@ -318,7 +320,7 @@ if ($log_ok) {
 					$sugg_onglet .= "<li " . (($lvl == "view_sugg") ? "class=\"subTabCurrent\"" : "") . "><a href='./empr.php?tab=sugg&lvl=view_sugg'>" . htmlentities($msg['empr_bt_view_sugg'], ENT_QUOTES, $charset) . "</a></li>";
 					$sugg_onglet .= "</ul>";
 				}
-				$subitems = str_replace('!!subonglet!!', $sugg_onglet, $subitems);
+				$subitems .= '<div class="row">'. $sugg_onglet .'</div>';
 				break;
 			case 'lecture' :
 				// Mes listes de lecture
@@ -328,10 +330,11 @@ if ($log_ok) {
 							<li " . (($lvl == "private_list") ? "class=\"subTabCurrent\"" : "") . "><a href='./empr.php?tab=lecture&lvl=private_list'>" . htmlentities($msg['list_lecture_show_my_list'], ENT_QUOTES, $charset) . "</a></li>
 							<li " . (($lvl == "public_list") ? "class=\"subTabCurrent\"" : "") . "><a href='./empr.php?tab=lecture&lvl=public_list'>" . htmlentities($msg['list_lecture_show_public_list'], ENT_QUOTES, $charset) . "</a></li>
 							<li " . (($lvl == "demande_list") ? "class=\"subTabCurrent\"" : "") . "><a href='./empr.php?tab=lecture&lvl=demande_list'>" . htmlentities($msg['list_lecture_show_my_requests'], ENT_QUOTES, $charset) . "</a></li>
+							<li><a href='./empr.php?tab=lecture&lvl=private_list&act=add_list'>" . htmlentities($msg['list_lecture_add_list'], ENT_QUOTES, $charset) . "</a></li>
 						</ul>
 					";
 				}
-				$subitems = str_replace('!!subonglet!!', $liste_onglet, $subitems);
+				$subitems .= '<div class="row">'. $liste_onglet .'</div>';
 				break;
 			case 'request' :
 				// Mes demandes de recherche
@@ -343,7 +346,7 @@ if ($log_ok) {
 						</ul>
 					";
 				}
-				$subitems = str_replace('!!subonglet!!', $demandes_onglet, $subitems);
+				$subitems .= '<div class="row">'. $demandes_onglet .'</div>';
 				break;
 			case "serialcirc" :
 				if ($opac_serialcirc_active) {
@@ -357,13 +360,13 @@ if ($log_ok) {
 								<li id='empr_menu_serialcirc_ask_copy' " . (($lvl == "copy" && ! isset($sub)) ? "class='subTabCurrent'" : "") . "><a href='./empr.php?tab=serialcirc&lvl=copy'>" . htmlentities($msg['serialcirc_ask_copy'], ENT_QUOTES, $charset) . "</a></li>
 								<li id='empr_menu_serialcirc_ask_menu' " . (($lvl == "ask" && ! isset($sub)) ? "class='subTabCurrent'" : "") . "><a href='./empr.php?tab=serialcirc&lvl=ask'>" . htmlentities($msg['serialcirc_ask_menu'], ENT_QUOTES, $charset) . "</a></li>
 							</ul>";
-					$subitems = str_replace('!!subonglet!!', $serialcirc_submenu, $subitems);
+					$subitems .= '<div class="row">'. $serialcirc_submenu .'</div>';
 					break;
 				}
 			case 'scan_requests' :
 				// Mes demandes de numérisation
-				$subitems = str_replace("!!subonglet!!", '', $subitems);
-				break;
+			    $subitems .= '<div class="row">'. '' .'</div>';
+			    break;
 			case 'contribution_area' :
 				$contribution_area_submenu = '';
 				if ($opac_contribution_area_activate && $allow_contribution) {
@@ -375,22 +378,7 @@ if ($log_ok) {
 						<li id="empr_menu_contribution_area_moderation" ' . (($lvl == 'contribution_area_moderation') ? 'class="subTabCurrent"' : '') . '><a href="./empr.php?tab=contribution_area&lvl=contribution_area_moderation">' . htmlentities($msg['empr_menu_contribution_area_moderation'], ENT_QUOTES, $charset) . '</a></li>
 					</ul>';
 				}
-				$subitems = str_replace('!!subonglet!!', $contribution_area_submenu, $subitems);
-				break;
-			case 'pnb_loan':
-				/**
-				 * TODO: tester le parametrage du PNB
-				 */
-				$pnb_loan_submenu = '';
-				if(dilicom::is_pnb_active()){
-					$pnb_loan_submenu = '
-					<ul class="empr_subtabs empr_pnb_loan_subtabs">
-						<li id="empr_menu_pnb_loan_list" ' . (($lvl == 'empr_menu_pnb_loan_list') ? 'class="subTabCurrent"' : '') . '><a href="./empr.php?tab=pnb_loan&lvl=pnb_loan_list">' . htmlentities($msg['empr_menu_pnb_loan_list'], ENT_QUOTES, $charset) . '</a></li>
-						<li id="empr_menu_pnb_devices" ' . (($lvl == 'empr_menu_pnb_devices') ? 'class="subTabCurrent"' : '') . '><a href="./empr.php?tab=pnb_loan&lvl=pnb_devices">' . htmlentities($msg['empr_menu_pnb_devices'], ENT_QUOTES, $charset) . '</a></li>
-						<li id="empr_menu_pnb_parameters" ' . (($lvl == 'empr_menu_pnb_parameters') ? 'class="subTabCurrent"' : '') . '><a href="./empr.php?tab=pnb_loan&lvl=pnb_parameters">' . htmlentities($msg['empr_menu_pnb_parameters'], ENT_QUOTES, $charset) . '</a></li>
-					</ul>';
-				}
-				$subitems = str_replace('!!subonglet!!', $pnb_loan_submenu, $subitems);
+				$subitems .= '<div class="row">'. $contribution_area_submenu .'</div>';
 				break;
 			default :
 				if (function_exists('empr_extended_tab_default')) {
@@ -398,14 +386,23 @@ if ($log_ok) {
 						break;
 				}
 				// Mon Compte
-				$my_account_item = "<ul class='empr_subtabs'>";
+				$my_account_item ='';
 				if (! $empr_ldap && $allow_pwd) {
 					$my_account_item .= "<li " . (($lvl == "change_password") ? "class=\"subTabCurrent\"" : "") . "><a id='change_password' href='./empr.php?lvl=change_password'>" . htmlentities($msg['empr_modify_password'], ENT_QUOTES, $charset) . "</a></li>";
 				}
-				$my_account_item .= "</ul>";
-				$subitems = str_replace('!!subonglet!!', $my_account_item, $subitems);
+				if(emprunteur_display::is_renewal_form_set() ){
+					$my_account_item .= "<li " . (($lvl == "change_profil" ) ? "class=\"subTabCurrent\"" : "") . "><a id='change_profil' href='./empr.php?lvl=change_profil'>" . htmlentities($msg['empr_change_profil'], ENT_QUOTES, $charset) . "</a></li>";
+				}
+				global $pmb_relance_adhesion;
+				if ($empr_active_opac_renewal && strtotime($empr_date_expiration) <= (time() + ($pmb_relance_adhesion* 86400))) {
+					$my_account_item .= "<li " . (($lvl == "renewal" ) ? "class=\"subTabCurrent\"" : "") . "><a id='renewal' href='./empr.php?lvl=renewal'>" . htmlentities($msg['empr_renewal'], ENT_QUOTES, $charset) . "</a></li>";
+				}
+				if (!empty($my_account_item)){
+				    $subitems .= '<div class="row"><ul class="empr_subtabs">' . $my_account_item . '</ul></div>';
+				}
 				break;
 		}
+		$subitems .= '</div>';
 		print $subitems;
 	}
 	switch ($lvl) {
@@ -413,10 +410,15 @@ if ($log_ok) {
 			$change_password_checked = " checked";
 			require_once ($base_path . '/empr/change_password.inc.php');
 			break;
-		case 'valid_change_password' :
-			$change_password_checked = " checked";
-			require_once ($base_path . '/empr/valid_change_password.inc.php');
+		case 'change_profil' :
+			require_once ($base_path . '/empr/change_profil.inc.php');
 			break;
+		case 'renewal' :
+			require_once ($base_path . '/empr/renewal.inc.php');
+			break;
+		case 'delete_account' :
+		    require_once ($base_path . '/empr/delete_account.inc.php');
+		    break;
 		case 'message' :
 			$message_checked = " checked";
 			require_once ($base_path . '/empr/message.inc.php');
@@ -426,11 +428,16 @@ if ($log_ok) {
 			$all_checked = " checked";
 			if (! $dest) {
 				print "<div id='empr-all'>\n";
-				print '<h3><span>' . $msg['empr_loans'] . '</span></h3>';
+				print '<h3><span>' . $msg['empr_loans'] . '</span><span id="empr_loans_number"></span></h3>';
 			}
 			$critere_requete = " AND empr.empr_login='$login' order by location_libelle, pret_retour ";
 			require_once ($base_path . '/empr/all.inc.php');
 			print "</div>";
+			if(dilicom::is_pnb_active()){
+			    print "<div id='empr-pnb_loan'>\n";
+			    require_once ($base_path . '/empr/pnb_loan.inc.php');
+			    print "</div>";			    
+			}
 			print '<div id="empr-resa">';
 			if ($allow_book) {
 				
@@ -446,7 +453,7 @@ if ($log_ok) {
 		case 'old' :
 			if (! $dest) {
 				print "<div id='empr-old'>\n";
-				print '<h3><span>' . $msg['empr_loans_old'] . '</span></h3>';
+				print '<h3><span>' . $msg['empr_loans_old'] . '</span><span id="empr_loans_old_number"></span></h3>';
 			}
 			require_once ($base_path . '/empr/old.inc.php');
 			print "</div>\n";
@@ -506,7 +513,6 @@ if ($log_ok) {
 			} else
 				print $msg['empr_no_allow_sugg'];
 			print "</div>";
-			print "<script type='text/javascript'>add_line(0);</script>";
 			break;
 		case 'import_sugg' :
 			print "<div id='empr-sugg'>\n";
@@ -618,20 +624,6 @@ if ($log_ok) {
 			}
 			print "</div>";
 			break;
-		case "pnb_devices" :
-		case "pnb_loan_list" :
-		case "pnb_parameters" :
-			/**
-			 * TODO tester le paramétrage du PNB avant d'afficher tout ça
-			 */
-			print "<div id='empr_pnb_loan'>\n";
-			if (true) {
-				require_once ($base_path . '/empr/pnb_loan.inc.php');
-			} else {
-				print $msg['empr_pnb_loan_not_activate'];
-			}
-			print "</div>";
-			break;
 		default :
 			if (function_exists('empr_extended_lvl_default')) {
 				if (empr_extended_lvl_default($lvl))
@@ -720,43 +712,9 @@ if ($opac_show_bandeaugauche == 0) {
 	$footer = str_replace('!!contenu_bandeau_2!!', $opac_facette_in_bandeau_2 ? $lvl1 . $facette : '', $footer);
 }
 
-$cms_build_info = '';
-if ($cms_build_activate == - 1) {
-	unset($_SESSION['cms_build_activate']);
-} else if ($cms_build_activate || $_SESSION['cms_build_activate']) { // issu de la gestion
-	if (isset($pageid) && $pageid) {
-		require_once ($base_path . '/classes/cms/cms_pages.class.php');
-		$cms_page = new cms_page($pageid);
-		$cms_build_info['page'] = $cms_page->get_env();
-	}
-	global $log, $infos_notice, $infos_expl, $nb_results_tab;
-	$cms_build_info['input'] = "empr.php";
-	$cms_build_info['session'] = $_SESSION;
-	$cms_build_info['post'] = $_POST;
-	$cms_build_info['get'] = $_GET;
-	$cms_build_info['lvl'] = $lvl;
-	$cms_build_info['tab'] = $tab;
-	$cms_build_info['log'] = $log;
-	$cms_build_info['infos_notice'] = $infos_notice;
-	$cms_build_info['infos_expl'] = $infos_expl;
-	$cms_build_info['nb_results_tab'] = $nb_results_tab;
-	$cms_build_info['search_type_asked'] = $search_type_asked;
-	$cms_build_info = rawurlencode(serialize(pmb_base64_encode($cms_build_info)));
-	$cms_build_info = "<input type='hidden' id='cms_build_info' name='cms_build_info' value='" . $cms_build_info . "' />";
-	$cms_build_info .= "
-	<script type='text/javascript'>
-		if(window.top.window.cms_opac_loaded){
-			window.onload = function() {
-				window.top.window.cms_opac_loaded('" . $_SERVER['REQUEST_URI'] . "');
-			}
-		}
-	</script>
-	";
-	$_SESSION['cms_build_activate'] = '1';
-}
-$footer = str_replace('!!cms_build_info!!', $cms_build_info, $footer);
-
-print $footer;
+cms_build_info(array(
+    'input' => 'empr.php',
+));
 
 // LOG OPAC
 global $pmb_logs_activate;
@@ -785,59 +743,6 @@ if ($pmb_logs_activate) {
 	$log->save();
 }
 
-if ($opac_parse_html || $cms_active) {
-	if ($opac_parse_html) {
-		$htmltoparse = parseHTML(ob_get_contents());
-	} else {
-		$htmltoparse = ob_get_contents();
-	}
-	ob_end_clean();
-	if ($cms_active) {
-		require_once ($base_path . '/classes/cms/cms_build.class.php');
-		$cms = new cms_build();
-		$htmltoparse = $cms->transform_html($htmltoparse);
-	}
-	
-	// Compression CSS
-	if ($opac_compress_css == 1 && ! $cms_active) {
-		$compressed_file_exist = file_exists('./temp/full.css');
-		require_once ($class_path . '/curl.class.php');
-		$dom = new DOMDocument();
-		$dom->encoding = $charset;
-		$dom->loadHTML($htmltoparse);
-		$css_buffer = '';
-		$links = $dom->getElementsByTagName('link');
-		$dom_css = array ();
-		for($i = 0; $i < $links->length; $i++) {
-			$dom_css[] = $links->item($i);
-			if (! $compressed_file_exist && $links->item($i)->hasAttribute('type') && $links->item($i)->getAttribute('type') == 'text/css') {
-				$css_buffer .= loadandcompresscss(html_entity_decode($links->item($i)->getAttribute('href')));
-			}
-		}
-		$styles = $dom->getElementsByTagName('style');
-		for($i = 0; $i < $styles->length; $i++) {
-			$dom_css[] = $styles->item($i);
-			if (! $compressed_file_exist) {
-				$css_buffer .= compresscss($styles->item($i)->nodeValue, '');
-			}
-		}
-		foreach ( $dom_css as $link ) {
-			$link->parentNode->removeChild($link);
-		}
-		if (! $compressed_file_exist) {
-			file_put_contents("./temp/full.css", $css_buffer);
-		}
-		$link = $dom->createElement('link');
-		$link->setAttribute('href', './temp/full.css');
-		$link->setAttribute('rel', 'stylesheet');
-		$link->setAttribute('type', 'text/css');
-		$dom->getElementsByTagName('head')->item(0)->appendChild($link);
-		$htmltoparse = $dom->saveHTML();
-	} else if (file_exists('./temp/full.css') && ! $cms_active) {
-		unlink('./temp/full.css');
-	}
-	print $htmltoparse;
-}
 /* Fermeture de la connexion */
 pmb_mysql_close($dbh);
 ?>

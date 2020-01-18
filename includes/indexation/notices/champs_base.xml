@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: champs_base.xml,v 1.45 2018-12-07 15:10:23 dgoron Exp $ -->
+$Id: champs_base.xml,v 1.49.2.4 2019-11-28 10:55:08 dgoron Exp $ -->
 
 <indexation>
 
@@ -723,6 +723,8 @@ $Id: champs_base.xml,v 1.45 2018-12-07 15:10:23 dgoron Exp $ -->
 	<!-- Concepts -->	
 	<field name="index_concept_label" id="036" datatype="concept">
 		<callable name="index_concept_label" id="01" class_path="./classes/index_concept.class.php" class_name="index_concept" method="get_concepts_labels_from_entity" parameters="1" pond="110"/>
+		<callable name="index_concept_label" id="02" class_path="./classes/index_concept.class.php" class_name="index_concept" method="get_concepts_altlabels_from_entity" parameters="1" pond="100"/>
+		<callable name="index_concept_label" id="02" class_path="./classes/index_concept.class.php" class_name="index_concept" method="get_concepts_hiddenlabels_from_entity" parameters="1" pond="100"/>
 	</field>	
 	
 	<field name="index_concept_label_autopostage" id="129" datatype="concept">
@@ -779,6 +781,22 @@ $Id: champs_base.xml,v 1.45 2018-12-07 15:10:23 dgoron Exp $ -->
 		<table>notices</table>
 	</field>
 		
+	<!-- d'exemplaires -->
+	<field name="expl_champs_perso" external="yes" id="200" datatype="custom_field" >
+		<table>expl</table>
+		<index_also_from>
+			<datatype>expl</datatype>
+		</index_also_from>
+	</field>
+	
+	<!-- de documents numériques -->
+	<field name="explnum_champs_perso" external="yes" id="300" datatype="custom_field" >
+		<table>explnum</table>
+		<index_also_from>
+			<datatype>explnum</datatype>
+		</index_also_from>
+	</field>
+	
 	<!-- les Autorités personnalisées -->
 	<!-- de notices -->
 	<field name="notice_authperso" external="yes" id="1000" datatype="authperso">
@@ -807,12 +825,12 @@ $Id: champs_base.xml,v 1.45 2018-12-07 15:10:23 dgoron Exp $ -->
 				<tablekey>id_explnum_statut</tablekey>
 				<externalfield>explnum_docnum_statut</externalfield>
 			</link>
-			<link type="n1">
+			<link type="n0">
 				<table>explnum_lenders</table>
 				<tablekey>explnum_lender_num_explnum</tablekey>
 				<externalfield>explnum_id</externalfield>
 			</link>
-			<link type="n1">
+			<link type="n0">
 				<table>explnum_location</table>
 				<tablekey>num_explnum</tablekey>
 				<externalfield>explnum_id</externalfield>
@@ -840,12 +858,12 @@ $Id: champs_base.xml,v 1.45 2018-12-07 15:10:23 dgoron Exp $ -->
 				<tablekey>id_explnum_statut</tablekey>
 				<externalfield>explnum_docnum_statut</externalfield>
 			</link>
-			<link type="n1">
+			<link type="n0">
 				<table>explnum_lenders</table>
 				<tablekey>explnum_lender_num_explnum</tablekey>
 				<externalfield>explnum_id</externalfield>
 			</link>
-			<link type="n1">
+			<link type="n0">
 				<table>explnum_location</table>
 				<tablekey>num_explnum</tablekey>
 				<externalfield>explnum_id</externalfield>
@@ -1037,5 +1055,68 @@ $Id: champs_base.xml,v 1.45 2018-12-07 15:10:23 dgoron Exp $ -->
 				</link>
 			</link>
 		</table>
+	</field>
+	<field name='nomenclature_search_nomenclature_abbreviation_bois' id="131" datatype='nomenclature'>
+		<callable name="instruments" id="01" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="code,1" pond="60"/>
+		<callable name="instruments" id="02" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="name,1" pond="60"/>
+		<callable name="instruments" id="03" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="effective,1" pond="60"/>
+		<callable name="instruments" id="04" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="formation,1" pond="60"/>
+		<callable name="instruments" id="05" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="musicstand,1" pond="60"/>
+		<callable name="instruments" id="06" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="id,1" pond="60"/>
+	</field>
+	<field name='nomenclature_search_nomenclature_abbreviation_cuivres' id="132" datatype='nomenclature'>
+		<callable name="instruments" id="01" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="code,2" pond="60"/>
+		<callable name="instruments" id="02" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="name,2" pond="60"/>
+		<callable name="instruments" id="03" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="effective,2" pond="60"/>
+		<callable name="instruments" id="04" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="formation,2" pond="60"/>
+		<callable name="instruments" id="05" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="musicstand,2" pond="60"/>
+		<callable name="instruments" id="06" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="id,2" pond="60"/>
+	</field>
+	<field name='nomenclature_search_nomenclature_abbreviation_percussions' id="133" datatype='nomenclature'>
+		<callable name="instruments" id="01" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="code,3" pond="60"/>
+		<callable name="instruments" id="02" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="name,3" pond="60"/>
+		<callable name="instruments" id="03" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="effective,3" pond="60"/>
+		<callable name="instruments" id="04" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="formation,3" pond="60"/>
+		<callable name="instruments" id="05" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="musicstand,3" pond="60"/>
+		<callable name="instruments" id="06" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="id,3" pond="60"/>
+	</field>
+	<field name='nomenclature_search_nomenclature_abbreviation_cordes' id="134" datatype='nomenclature'>
+		<callable name="instruments" id="01" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="code,4" pond="60"/>
+		<callable name="instruments" id="02" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="name,4" pond="60"/>
+		<callable name="instruments" id="03" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="effective,4" pond="60"/>
+		<callable name="instruments" id="04" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="formation,4" pond="60"/>
+		<callable name="instruments" id="05" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="musicstand,4" pond="60"/>
+		<callable name="instruments" id="06" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="id,4" pond="60"/>
+	</field>
+	<field name='nomenclature_search_instruments_no_standard' id="135" datatype='nomenclature'>
+		<callable name="instruments" id="01" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="code,exotic" pond="60"/>
+		<callable name="instruments" id="02" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="name,exotic" pond="60"/>
+		<callable name="instruments" id="03" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="effective,exotic" pond="60"/>
+		<callable name="instruments" id="04" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="formation,exotic" pond="60"/>
+		<callable name="instruments" id="05" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="musicstand,exotic" pond="60"/>
+		<callable name="instruments" id="06" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="id,exotic" pond="60"/>
+	</field>
+	<field name='nomenclature_search_instruments_workshop' id="136" datatype='nomenclature'>
+		<callable name="instruments" id="01" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="code,workshop" pond="60"/>
+		<callable name="instruments" id="02" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="name,workshop" pond="60"/>
+		<callable name="instruments" id="03" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="effective,workshop" pond="60"/>
+		<callable name="instruments" id="04" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="formation,workshop" pond="60"/>
+		<callable name="instruments" id="05" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="musicstand,workshop" pond="60"/>
+		<callable name="instruments" id="06" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_instruments_index" parameters="id,workshop" pond="60"/>
+	</field>
+	<field name='nomenclature_search_voices' id="137" datatype='nomenclature'>
+		<callable name="voices" id="01" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_voices_index" parameters="code" pond="60"/>
+		<callable name="voices" id="02" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_voices_index" parameters="name" pond="60"/>
+		<callable name="voices" id="03" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_voices_index" parameters="effective" pond="60"/>
+		<callable name="voices" id="04" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_voices_index" parameters="formation" pond="60"/>
+		<callable name="voices" id="05" class_path="./classes/nomenclature/nomenclature_record_formations.class.php" class_name="nomenclature_record_formations" method="get_voices_index" parameters="id" pond="60"/>
+	</field>
+	<field name='combine_expl_explnum' id="138">
+		<callable name="combine_expl_explnum_location" id="01" class_path="./classes/record_display.class.php" class_name="record_display" method="get_locations_list" parameters="label" pond="60"/>
+		<callable name="combine_expl_explnum_lender" id="02" class_path="./classes/record_display.class.php" class_name="record_display" method="get_lenders_list" parameters="label" pond="60"/>
+		<index_also_from>
+			<datatype>expl</datatype>
+			<datatype>explnum</datatype>
+		</index_also_from>
 	</field>
 </indexation>

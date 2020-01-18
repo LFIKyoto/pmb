@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authperso.inc.php,v 1.13 2017-10-31 09:11:34 dgoron Exp $
+// $Id: authperso.inc.php,v 1.14 2019-06-03 07:04:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $id_authperso, $id, $msg;
 
 require_once('./autorites/auth_common.inc.php');
 

@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_objects_controler.class.php,v 1.18 2018-12-20 11:00:19 mbertin Exp $
+// $Id: map_objects_controler.class.php,v 1.20 2019-05-28 10:22:54 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
     die("no access");
@@ -83,6 +83,20 @@ class map_objects_controler {
                     'ids' => $this->ids
                 );
                 break;
+            case AUT_TABLE_CATEG :
+                $items = array(
+                    'layer' => "authority",
+                    'type' => AUT_TABLE_CATEG,
+                    'ids' => $this->ids
+                );
+                break;
+            case AUT_TABLE_CONCEPT :
+                $items = array(
+                    'layer' => "authority_concept",
+                    'type' => AUT_TABLE_CONCEPT,
+                    'ids' => $this->ids
+                );
+                break;
         }
 
         $this->objects[] = $items;
@@ -159,7 +173,9 @@ class map_objects_controler {
                 case TYPE_RECORD :
                 // no break
                 case AUT_TABLE_AUTHORS :
-                // no break
+                    // no break
+                case AUT_TABLE_CONCEPT :
+                    // no break
                 default:
                     $size = explode("*", $pmb_map_size_notice_view);
                     break;

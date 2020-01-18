@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: statut.inc.php,v 1.6 2018-10-12 14:44:48 dgoron Exp $
+// $Id: statut.inc.php,v 1.7 2019-06-07 13:40:36 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -69,10 +69,17 @@ function statut_form($id=0, $gestion_libelle="", $opac_libelle="", $visible_opac
 	print confirmation_delete("./admin.php?categ=collstate&sub=statut&action=del&id=");
 	print $admin_collstate_statut_form;
 
-	}
+}
 
+$id = intval($id);
 switch($action) {
-	case 'update':
+    case 'update':
+        if(empty($form_visible_opac)) $form_visible_opac = '';
+        if(empty($form_visu_abon)) $form_visu_abon = '';
+        if(empty($form_visible_gestion)) $form_visible_gestion = '';
+        if(empty($form_gestion_libelle)) $form_gestion_libelle = '';
+        if(empty($form_opac_libelle)) $form_opac_libelle = '';
+        if(empty($form_class_html)) $form_class_html = '';
 		if ($id) {
 			if ($id==1) $visu=", archstatut_visible_gestion=1, archstatut_visible_opac='$form_visible_opac', archstatut_visible_opac_abon='$form_visu_abon' ";
 				else $visu=", archstatut_visible_gestion='$form_visible_gestion', archstatut_visible_opac='$form_visible_opac', archstatut_visible_opac_abon='$form_visu_abon' "; 

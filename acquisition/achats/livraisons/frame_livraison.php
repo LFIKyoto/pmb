@@ -2,7 +2,9 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frame_livraison.php,v 1.28 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: frame_livraison.php,v 1.31 2019-08-20 09:18:41 btafforeau Exp $
+
+global $action, $retour_liste;
 
 //Liste les lignes d'une facture
 $base_path="../../..";                            
@@ -232,6 +234,7 @@ function show_lig_liv() {
 		
 		//affichage du déjà livré sur le bon de livraison courant
 		if ($id_liv) {
+		    $nb_lig = 0;
 			$frame = str_replace('<!-- lignes -->', $frame_row_bl_header.'<!-- lignes -->', $frame);
 			$lignes_liv = actes::getLignes($id_liv);
 			$max_lig_liv = pmb_mysql_num_rows($lignes_liv);
@@ -313,13 +316,13 @@ function show_lig_bak() {
 				
 		$frame = str_replace('<!-- lignes -->', $frame_row.'<!-- lignes -->', $frame);
 		$frame = str_replace('!!no!!', $index, $frame);
-		$frame = str_replace('!!id_lig!!', $lig_aliv[$key]['id_lig'], $frame);
-		$frame = str_replace('!!id_prod!!', $lig_aliv[$key]['id_prod'], $frame);
-		$frame = str_replace('!!code!!', $lig_aliv[$key]['code'], $frame);
-		$frame = str_replace('!!hidden_lib!!', $lig_aliv[$key]['lib'], $frame);
-		$frame = str_replace('!!lib!!', nl2br($lig_aliv[$key]['lib']), $frame);
-		$frame = str_replace('!!sol!!', $lig_aliv[$key]['sol'], $frame);
-		$frame = str_replace('!!rec!!', $lig_aliv[$key]['rec'], $frame);		
+		$frame = str_replace('!!id_lig!!', $value['id_lig'], $frame);
+		$frame = str_replace('!!id_prod!!', $value['id_prod'], $frame);
+		$frame = str_replace('!!code!!', $value['code'], $frame);
+		$frame = str_replace('!!hidden_lib!!', $value['lib'], $frame);
+		$frame = str_replace('!!lib!!', nl2br($value['lib']), $frame);
+		$frame = str_replace('!!sol!!', $value['sol'], $frame);
+		$frame = str_replace('!!rec!!', $value['rec'], $frame);		
 		$index++;			
 		
 	}
@@ -335,12 +338,12 @@ function show_lig_bak() {
 			
 			$frame = str_replace('<!-- lignes -->', $frame_row_bl.'<!-- lignes -->', $frame);
 			$frame = str_replace('!!no!!', $index, $frame);
-			$frame = str_replace('!!id_lig!!', $lig_dliv[$key]['id_lig'], $frame);
-			$frame = str_replace('!!id_prod!!', $lig_dliv[$key]['id_prod'], $frame);
-			$frame = str_replace('!!code!!', $lig_dliv[$key]['code'], $frame);
-			$frame = str_replace('!!hidden_lib!!', $lig_dliv[$key]['lib'], $frame);
-			$frame = str_replace('!!lib!!', nl2br($lig_dliv[$key]['lib']), $frame);
-			$frame = str_replace('!!rec!!', $lig_dliv[$key]['rec'], $frame);		
+			$frame = str_replace('!!id_lig!!', $value['id_lig'], $frame);
+			$frame = str_replace('!!id_prod!!', $value['id_prod'], $frame);
+			$frame = str_replace('!!code!!', $value['code'], $frame);
+			$frame = str_replace('!!hidden_lib!!', $value['lib'], $frame);
+			$frame = str_replace('!!lib!!', nl2br($value['lib']), $frame);
+			$frame = str_replace('!!rec!!', $value['rec'], $frame);		
 			$index++;
 		}
 	}
@@ -440,43 +443,27 @@ function search_lig_liv() {
 	$trouve = 0;
 	$dep = false;
 	foreach($lig_aliv as $key=>$value) {
-		
-		if($lig_aliv[$key]['code'] == $barcode) {	//Code trouvé
-
+		if($value['code'] == $barcode) {	//Code trouvé
 			$trouve = $key;
-
-			if ($auto) {	//Mode incrément automatique
-								
-				if( ($lig_aliv[$key]['rec'] < $lig_aliv[$key]['sol']) ) {	
-				
+			if ($auto) {	//Mode incrément automatique					
+				if( ($value['rec'] < $value['sol']) ) {	
 					//La qté saisie est inférieure à la qté restant à recevoir >> Incrément qté saisie et sortie
-					$lig_aliv[$key]['rec'] = $lig_aliv[$key]['rec']+1;	
+				    $lig_aliv[$key]['rec'] = $value['rec']+1;	
 					$dep = false;
-					break;
-					
+					break;		
 				} else {
-					
 					//La qté saisie est égale à la quantité restant à recevoir >> On note le dépassement et on recherche plus avant 
 					$dep = true;
-				
 				}
-			
 			} else {		//Mode recherche
-
-				if( ($lig_aliv[$key]['rec'] < $lig_aliv[$key]['sol']) ) {	
-				
+				if( ($value['rec'] < $value['sol']) ) {	
 					//La qté saisie est inférieure à la qté restant à recevoir >> Sortie
 					break;
-					
 				} 			
-				//Sinon, si la quantité saisie est égale à la quantité restant à recevoir >> On recherche plus avant 
-									
+				//Sinon, si la quantité saisie est égale à la quantité restant à recevoir >> On recherche plus avant 				
 			}
-			
-		}	
-				
+		}			
 	}
-
 
 	$index = 1;	
 	$max_lig = count($lig_aliv);
@@ -497,13 +484,13 @@ function search_lig_liv() {
 				
 		$frame = str_replace('<!-- lignes -->', $frame_row.'<!-- lignes -->', $frame);
 		$frame = str_replace('!!no!!', $index, $frame);
-		$frame = str_replace('!!id_lig!!', $lig_aliv[$key]['id_lig'], $frame);
-		$frame = str_replace('!!id_prod!!', $lig_aliv[$key]['id_prod'], $frame);
-		$frame = str_replace('!!code!!', $lig_aliv[$key]['code'], $frame);
-		$frame = str_replace('!!hidden_lib!!', $lig_aliv[$key]['lib'], $frame);
-		$frame = str_replace('!!lib!!', nl2br($lig_aliv[$key]['lib']), $frame);
-		$frame = str_replace('!!sol!!', $lig_aliv[$key]['sol'], $frame);
-		$frame = str_replace('!!rec!!', $lig_aliv[$key]['rec'], $frame);		
+		$frame = str_replace('!!id_lig!!', $value['id_lig'], $frame);
+		$frame = str_replace('!!id_prod!!', $value['id_prod'], $frame);
+		$frame = str_replace('!!code!!', $value['code'], $frame);
+		$frame = str_replace('!!hidden_lib!!', $value['lib'], $frame);
+		$frame = str_replace('!!lib!!', nl2br($value['lib']), $frame);
+		$frame = str_replace('!!sol!!', $value['sol'], $frame);
+		$frame = str_replace('!!rec!!', $value['rec'], $frame);		
 		$index++;			
 		
 	}
@@ -519,12 +506,12 @@ function search_lig_liv() {
 			
 			$frame = str_replace('<!-- lignes -->', $frame_row_bl.'<!-- lignes -->', $frame);
 			$frame = str_replace('!!no!!', $index, $frame);
-			$frame = str_replace('!!id_lig!!', $lig_dliv[$key]['id_lig'], $frame);
-			$frame = str_replace('!!id_prod!!', $lig_dliv[$key]['id_prod'], $frame);
-			$frame = str_replace('!!code!!', $lig_dliv[$key]['code'], $frame);
-			$frame = str_replace('!!hidden_lib!!', $lig_dliv[$key]['lib'], $frame);
-			$frame = str_replace('!!lib!!', nl2br($lig_dliv[$key]['lib']), $frame);
-			$frame = str_replace('!!rec!!', $lig_dliv[$key]['rec'], $frame);		
+			$frame = str_replace('!!id_lig!!', $value['id_lig'], $frame);
+			$frame = str_replace('!!id_prod!!', $value['id_prod'], $frame);
+			$frame = str_replace('!!code!!', $value['code'], $frame);
+			$frame = str_replace('!!hidden_lib!!', $value['lib'], $frame);
+			$frame = str_replace('!!lib!!', nl2br($value['lib']), $frame);
+			$frame = str_replace('!!rec!!', $value['rec'], $frame);		
 			$index++;
 		}
 	}
@@ -626,13 +613,13 @@ function sup_lig_liv() {
 		
 		$frame = str_replace('<!-- lignes -->', $frame_row.'<!-- lignes -->', $frame);
 		$frame = str_replace('!!no!!', $index, $frame);
-		$frame = str_replace('!!id_lig!!', $lig_aliv[$key]['id_lig'], $frame);
-		$frame = str_replace('!!id_prod!!', $lig_aliv[$key]['id_prod'], $frame);
-		$frame = str_replace('!!code!!', $lig_aliv[$key]['code'], $frame);
-		$frame = str_replace('!!hidden_lib!!', $lig_aliv[$key]['lib'], $frame);
-		$frame = str_replace('!!lib!!', nl2br($lig_aliv[$key]['lib']), $frame);
-		$frame = str_replace('!!sol!!', $lig_aliv[$key]['sol'], $frame);
-		$frame = str_replace('!!rec!!', $lig_aliv[$key]['rec'], $frame);		
+		$frame = str_replace('!!id_lig!!', $value['id_lig'], $frame);
+		$frame = str_replace('!!id_prod!!', $value['id_prod'], $frame);
+		$frame = str_replace('!!code!!', $value['code'], $frame);
+		$frame = str_replace('!!hidden_lib!!', $value['lib'], $frame);
+		$frame = str_replace('!!lib!!', nl2br($value['lib']), $frame);
+		$frame = str_replace('!!sol!!', $value['sol'], $frame);
+		$frame = str_replace('!!rec!!', $value['rec'], $frame);		
 		$index++;
 	}
 	$frame = str_replace('!!max_lig!!', $max_lig, $frame);
@@ -647,12 +634,12 @@ function sup_lig_liv() {
 			
 			$frame = str_replace('<!-- lignes -->', $frame_row_bl.'<!-- lignes -->', $frame);
 			$frame = str_replace('!!no!!', $index, $frame);
-			$frame = str_replace('!!id_lig!!', $lig_dliv[$key]['id_lig'], $frame);
-			$frame = str_replace('!!id_prod!!', $lig_dliv[$key]['id_prod'], $frame);
-			$frame = str_replace('!!code!!', $lig_dliv[$key]['code'], $frame);
-			$frame = str_replace('!!hidden_lib!!', $lig_dliv[$key]['lib'], $frame);
-			$frame = str_replace('!!lib!!', nl2br($lig_dliv[$key]['lib']), $frame);
-			$frame = str_replace('!!rec!!', $lig_dliv[$key]['rec'], $frame);		
+			$frame = str_replace('!!id_lig!!', $value['id_lig'], $frame);
+			$frame = str_replace('!!id_prod!!', $value['id_prod'], $frame);
+			$frame = str_replace('!!code!!', $value['code'], $frame);
+			$frame = str_replace('!!hidden_lib!!', $value['lib'], $frame);
+			$frame = str_replace('!!lib!!', nl2br($value['lib']), $frame);
+			$frame = str_replace('!!rec!!', $value['rec'], $frame);		
 			$index++;
 		}
 	}
@@ -743,7 +730,7 @@ function update_liv() {
 	//Création des lignes de livraison
 	foreach ($tab_liv as $key=>$value) {
 
-		$lig_cde = new lignes_actes($tab_liv[$key]['id_lig']);
+		$lig_cde = new lignes_actes($value['id_lig']);
 		
 		
 		$lig_liv = new lignes_actes();	
@@ -758,7 +745,7 @@ function update_liv() {
 		$lig_liv->prix = $lig_cde->prix;
 		$lig_liv->tva = $lig_cde->tva;
 		$lig_liv->remise = $lig_cde->remise;
-		$lig_liv->nb = $tab_liv[$key]['rec'];
+		$lig_liv->nb = $value['rec'];
 		$lig_liv->date_cre = today();
 		$lig_liv->save();		
 

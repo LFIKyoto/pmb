@@ -1,4 +1,6 @@
 <?php
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
@@ -15,12 +17,12 @@ $page=$_SERVER['SCRIPT_NAME'];
 
 if ($dest=="TABLEAU") {
 	//Export excel
-	require_once ($class_path."/spreadsheet.class.php");
-	$worksheet = new spreadsheet();
+	require_once ($class_path."/spreadsheetPMB.class.php");
+	$worksheet = new spreadsheetPMB();
 	//formats
 	$heading_blue = array(
 		'fill' => array(
-			'type' => PHPExcel_Style_Fill::FILL_SOLID,
+			'type' => Fill::FILL_SOLID,
             'color' => array('rgb' => '00CCFF')
 		)
 	);
@@ -60,6 +62,14 @@ $sql.= "order by arc_debut desc $limit ";
 
 $req = pmb_mysql_query($sql) or die("Erreur SQL !<br />".$sql."<br />".pmb_mysql_error()); 
 $nb_elements = pmb_mysql_num_rows($req) ;
+
+if(!$dest && $nb_elements) {
+	print "<script type='text/javascript'>
+		if(document.getElementById('empr_loans_old_number')) {
+			document.getElementById('empr_loans_old_number').innerHTML = ' (".$nb_elements.")';
+		}
+	</script>";
+}
 
 if (!$dest){
 	global $opac_cart_allow;
@@ -139,9 +149,9 @@ if ($nb_elements) {
 				else $tr_javascript=" class='$pair_impair' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" onmousedown=\"document.location='./index.php?lvl=bulletin_display&id=".$data['arc_expl_bulletin']."';\" style='cursor: pointer' ";
 			$deb_ligne = "<tr $tr_javascript>";
 			echo $deb_ligne ;
-			echo "<td>".$titre."</td>";    
-			echo "<td>".$auteur."</td>";    
-			echo "<td class='center'>".$data['aff_pret_debut']."</td>"; 
+			echo "<td column_name='".htmlentities($msg["title"],ENT_QUOTES,$charset)."'>".$titre."</td>";
+			echo "<td column_name='".htmlentities($msg["author"],ENT_QUOTES,$charset)."'>".$auteur."</td>";
+			echo "<td column_name='".htmlentities($msg["date_loan"],ENT_QUOTES,$charset)."' class='center'>".$data['aff_pret_debut']."</td>"; 
 				
 			echo "</tr>\n";
 		}
@@ -191,4 +201,8 @@ if ($nb_elements) {
 		$worksheet->download('empr.xls');
 		die();
 	}
+} else {
+    if (!$dest){
+        print $msg['empr_no_loan_old'];
+    }
 }

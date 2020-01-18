@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_bretagne.inc.php,v 1.16 2018-11-22 15:34:57 dgoron Exp $
+// $Id: import_bretagne.inc.php,v 1.18 2019-07-12 10:25:27 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -88,10 +88,10 @@ function import_eleves($separateur, $dbh, $type_import){
 
             //Gestion du sexe
             switch ($tab[10]{0}) {
-                case M: 
+                case 'M': 
                     $sexe = 1;
                     break;
-                case F:
+                case 'F':
                     $sexe = 2; 
                     break;
                 default:
@@ -331,8 +331,4 @@ switch($action) {
         show_import_choix_fichier($dbh);
         break;
 }
-
 ?>
-
-
-

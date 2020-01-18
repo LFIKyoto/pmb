@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.17 2017-07-18 13:48:33 ngantier Exp $
+// $Id: main.inc.php,v 1.18 2019-06-07 08:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $no_rec_history, $class_path, $link, $link_expl, $link_explnum, $link_serial, $link_analysis, $link_bulletin, $link_explnum_serial;
+global $link_explnum_analysis, $link_explnum_bulletin, $browser_url, $rec_history, $page, $msg, $sh;
 
 if(!isset($no_rec_history)) $no_rec_history = '';
 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abts_modeles.class.php,v 1.43 2018-06-27 11:31:33 dgoron Exp $
+// $Id: abts_modeles.class.php,v 1.44 2019-07-15 14:24:31 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -275,7 +275,9 @@ class abts_modele {
 		for ($i=1; $i<8; $i++) {
 			$days_t.="<td>".$msg["week_days_short_".$i]."</td>";	
 			$tmp = '';
-			if(isset($this->days[$i-1])) $tmp = $this->days[$i-1];
+			if (substr($this->days, $i-1, 1)) {
+			    $tmp = substr($this->days, $i-1, 1);
+			}
 			$days_v.="<td><input type='checkbox' value='$i' ".(!$tmp && $this->modele_id ?"checked":"yes")." name='days[$i]'/></td>";
 		}
 		$days_v.="</tr>";
@@ -294,8 +296,10 @@ class abts_modele {
 				if (($j*(14+1)+$i+1)>31) break;
 				$days_t.="<td>".($j*(14+1)+$i+1)."</td>";
 				$tmp = '';
-				if(isset($this->day_month[($j*(15)+$i)])) $tmp = $this->day_month[($j*(15)+$i)];
-				$days_v.="<td><input type='checkbox' value='".($j*(15)+$i+1)."' ".(empty($this->day_month[($j*(15)+$i)]) && $this->modele_id ?"checked":"yes")." name='day_month[".($j*(15)+$i+1)."]'/></td>";
+				if (substr($this->day_month, $j*15+$i, 1)) {
+				    $tmp = substr($this->day_month, $j*15+$i, 1);
+				}
+				$days_v.="<td><input type='checkbox' value='".($j*(15)+$i+1)."' ".(substr($this->day_month, $j*15+$i, 1) && $this->modele_id ? "checked" : "yes")." name='day_month[".($j*(15)+$i+1)."]'/></td>";
 			}
 			$days_v.="</tr>";
 			$days_t.="</tr>";
@@ -313,7 +317,9 @@ class abts_modele {
 		for ($i=1; $i<7; $i++) {
 			$days_t.="<td>".$i."</td>";
 			$tmp = '';
-			if(isset($this->week_month[$i-1])) $tmp = $this->week_month[$i-1];
+			if (substr($this->week_month, $i-1, 1)) {
+			    $tmp = substr($this->week_month, $i-1, 1);
+			}
 			$days_v.="<td><input type='checkbox' value='$i' ".(!$tmp && $this->modele_id ?"checked":"yes")." name='week_month[$i]'/></td>";
 		}
 		$days_v.="</tr>";
@@ -334,7 +340,9 @@ class abts_modele {
 				if (($j*($nb_x)+$i+1)>($nb)) break;
 				$days_t.="<td>".($j*($nb_x)+$i+1)."</td>";
 				$tmp = '';
-				if(isset($this->week_year[($j*($nb_x)+$i)])) $tmp = $this->week_year[($j*($nb_x)+$i)];
+				if (substr($this->week_year, ($j*($nb_x)+$i), 1)) {
+				    $tmp = substr($this->week_year, ($j*($nb_x)+$i), 1);
+				}
 				$days_v.="<td><input type='checkbox' value='".($j*($nb_x)+$i+1)."' ".(!$tmp && $this->modele_id ?"checked":"yes")." name='week_year[".($j*($nb_x)+$i+1)."]'/></td>";
 			}
 			$days_v.="</tr>";
@@ -357,7 +365,9 @@ class abts_modele {
 				if (($j*($nb_x)+$i+1)>($nb)) break;
 				$days_t.="<td>".$msg[($j*($nb_x)+$i)+1006]."</td>";
 				$tmp = '';
-				if(isset($this->month_year[($j*($nb_x)+$i)])) $tmp = $this->month_year[($j*($nb_x)+$i)];
+				if (substr($this->month_year, ($j*($nb_x)+$i), 1)) {
+				    $tmp = substr($this->month_year, ($j*($nb_x)+$i), 1);
+				}
 				$days_v.="<td><input type='checkbox' value='".($j*($nb_x)+$i+1)."' ".(!$tmp && $this->modele_id ?"checked":"yes")." name='month_year[".($j*($nb_x)+$i+1)."]'/></td>";
 			}
 			$days_v.="</tr>";
@@ -688,15 +698,19 @@ ENDOFTEXT;
 					$weekofmonth=($day+7-$dayofweek)/7+1;
 	
 					//Mois dans l'année exclu
-					if(!empty($this->month_year[$month-1]))
-						if(!empty($this->week_year[$week-1]))
-							if(!empty($this->week_month[$weekofmonth-1]))
-								if($this->day_month[$day-1])
-									if(!empty($this->days[$dayofweek-1])) {
+					if (substr($this->month_year, $month-1, 1)) {
+					    if (substr($this->week_year, $week-1, 1)) {
+					        if (substr($this->week_month, $weekofmonth-1, 1)) {
+					            if (substr($this->day_month, $day-1, 1)) {
+									if (substr($this->days, $dayofweek-1, 1)) {
 										//c'est un jour prévu de réception	
 										$requete = "INSERT INTO abts_grille_modele SET num_modele='".$this->modele_id."', date_parution ='".$date."', type_serie = '1'";
 										pmb_mysql_query($requete, $dbh);
-									}							
+									}
+					            }
+					        }
+					    }
+					}
 					// Calcul de la date suivante à analyser et la sortie du while					
 					if($unite==0) $sql_add="INTERVAL ".$duree." DAY";
 					if($unite==1) $sql_add="INTERVAL ".$duree." MONTH";	

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_small_text.class.php,v 1.1 2017-01-06 16:10:51 tsamson Exp $
+// $Id: onto_common_datatype_small_text.class.php,v 1.2 2019-01-03 10:35:05 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -24,7 +24,7 @@ class onto_common_datatype_small_text extends onto_common_datatype {
 	
 	
 	public function check_value(){
-		if (is_string($this->value) && (strlen($this->value) < 256)) return true;
+		if (is_string($this->value) && (strlen($this->value) < 512)) return true;
 		return false;
 	}
 } // end of onto_common_datatype_small_text

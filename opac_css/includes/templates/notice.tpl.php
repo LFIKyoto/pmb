@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice.tpl.php,v 1.19 2018-01-25 10:13:28 dgoron Exp $
+// $Id: notice.tpl.php,v 1.20 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
+
+global $largeur, $msg;
 
 if(!isset($largeur)) $largeur = '';
 // ce fichier contient des templates indiquant comment doit s'afficher une notice

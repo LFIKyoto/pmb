@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: category.class.php,v 1.74 2018-12-20 11:00:19 mbertin Exp $
+// $Id: category.class.php,v 1.78 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -184,11 +184,11 @@ class category {
 				$this->parent_libelle = $parent->categ_libelle ;
 			} else $this->parent_libelle ; 
 	
-		} elseif(sizeof($this->path_table)) {
-			while(list($i, $l) = each($this->path_table)) {
+		} elseif (!empty($this->path_table)) {
+		    foreach ($this->path_table as $i => $l) {
 				$temp_table[] = $l['libelle'];
 			}
-			$this->parent_libelle = join(':', $temp_table);
+			$this->parent_libelle = implode(':', $temp_table);
 			$this->catalog_form = $this->parent_libelle.':'.$this->libelle;
 		} else {
 			$this->catalog_form = $this->libelle;
@@ -248,7 +248,7 @@ class category {
 	    $this->listChilds();
 	    foreach ($this->listchilds as $child) {
 	        if ($listchilds_display) $listchilds_display.= '; ';
-	        $listchilds_display.= $child[libelle];
+	        $listchilds_display.= $child['libelle'];
 	    }
 	    $renvoivoir = $this->get_renvoivoir();
 	    $data = array(
@@ -587,7 +587,18 @@ class category {
 			$aff_node_info=true;
 			$import_denied = 0;
 		}
-		if ($thesaurus_mode_pmb != 0) $title.= ' ('.htmlentities($thes->libelle_thesaurus, ENT_QUOTES, $charset).')';
+		if ($thesaurus_mode_pmb != 0) {
+		    $title.= ' ('.htmlentities($thes->libelle_thesaurus, ENT_QUOTES, $charset).')';
+		    if(!$this->id) {
+		        $thesaurus_action = static::format_url("&sub=categ_form&id=".$this->id."&parent=0");
+		        if(strpos($thesaurus_action, '&action=update&') !== false) {
+		            $thesaurus_action = str_replace('&action=update&', '&', $thesaurus_action);
+                }
+		        $category_form = str_replace('<!-- sel_thesaurus -->', thesaurus::getSelectorCategoryForm($thes->id_thesaurus, $thesaurus_action, true), $category_form);
+		    } else {
+		        $category_form = str_replace('<!-- sel_thesaurus -->', thesaurus::getSelectorCategoryForm($thes->id_thesaurus, '', false), $category_form);
+		    }
+		}
 		
 		//Traductions
 		$tab_traductions = array();

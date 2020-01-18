@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_pages.class.php,v 1.7 2017-11-07 15:21:42 ngantier Exp $
+// $Id: frbr_pages.class.php,v 1.10 2019-07-04 09:00:25 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -42,7 +42,7 @@ class frbr_pages {
 	 * Liste des pages
 	 */
 	public function get_display_content_list($entity_name='') {
-		global $msg, $base_path;
+		global $msg, $charset, $base_path;
 		
 		$display = '';
 		$parity=1;
@@ -54,15 +54,15 @@ class frbr_pages {
 			}
 			$parity++;
 			$td_css_style = "style='cursor: pointer;'";
-			$td_javascript = " onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='$pair_impair'\" ";
+			$td_javascript = " onmouseover=\"this.className='surbrillance center'\" onmouseout=\"this.className='$pair_impair center'\" ";
 			$td_javascript .= " onmousedown=\"document.location='cms.php?categ=frbr_pages&sub=edit&id=".$page->get_id()."';\" ";
 			
 			$display .= "<tr class='$pair_impair'>";
 			$display .= "<td>
-							<input type='button' class='bouton_small' value='-' onClick=\"document.location='./cms.php?categ=frbr_pages&sub=list&action=down&id=".$page->get_id()."'\"/>
-							<input type='button' class='bouton_small' value='+' onClick=\"document.location='./cms.php?categ=frbr_pages&sub=list&action=up&id=".$page->get_id()."'\"/>
+							<img src='".get_url_icon('bottom-arrow.png')."' title='".htmlentities($msg['move_bottom_arrow'], ENT_QUOTES, $charset)."' alt='".htmlentities($msg['move_bottom_arrow'], ENT_QUOTES, $charset)."' onClick=\"document.location='./cms.php?categ=frbr_pages&sub=list&action=down&id=".$page->get_id()."'\" style='cursor:pointer;'/>
+							<img src='".get_url_icon('top-arrow.png')."' title='".htmlentities($msg['move_top_arrow'], ENT_QUOTES, $charset)."' alt='".htmlentities($msg['move_top_arrow'], ENT_QUOTES, $charset)."' onClick=\"document.location='./cms.php?categ=frbr_pages&sub=list&action=up&id=".$page->get_id()."'\" style='cursor:pointer;'/>
 						</td>";
-			$display .= '<td '.$td_javascript.' '.$td_css_style.'>'.$page->get_name().'</td>';
+			$display .= '<td '.$td_javascript.' '.$td_css_style.' class="center">'.$page->get_name().'</td>';
 			$display .= '<td '.$td_javascript.' '.$td_css_style.' class="center">'.($page->get_parameter_value('records_list') ? 'X' : '').'</td>';
 			$display .= '<td '.$td_javascript.' '.$td_css_style.' class="center">'.($page->get_parameter_value('facettes_list') ? 'X' : '').'</td>';
 			$display .= '<td '.$td_javascript.' '.$td_css_style.' class="center">'.($page->get_parameter_value('isbd') ? 'X' : '').'</td>';

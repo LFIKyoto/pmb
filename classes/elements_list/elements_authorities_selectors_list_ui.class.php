@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: elements_authorities_selectors_list_ui.class.php,v 1.5 2018-10-18 09:08:07 dgoron Exp $
+// $Id: elements_authorities_selectors_list_ui.class.php,v 1.6 2019-02-12 15:10:29 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -18,6 +18,7 @@ class elements_authorities_selectors_list_ui extends elements_authorities_list_u
 	
 	protected function generate_element($element_id, $recherche_ajax_mode=0){
 		global $include_path;
+		$this->add_context_parameter('in_selector', true);
 		$authority = new authority($element_id);
 		$authority->add_context_parameter('in_selector', true);
 		$template_path = $include_path.'/templates/authorities/list/'.$authority->get_string_type_object().'.html';
@@ -25,6 +26,6 @@ class elements_authorities_selectors_list_ui extends elements_authorities_list_u
 			$template_path = $include_path.'/templates/authorities/list/'.$authority->get_string_type_object().'_subst.html';
 		}
 		$context = array('list_element' => $authority);
-		return static::render($template_path, $context);
+		return static::render($template_path, $context, $this->get_context_parameters());
 	}
 }

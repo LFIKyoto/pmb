@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: caddie.class.php,v 1.98 2018-12-20 11:00:19 mbertin Exp $
+// $Id: caddie.class.php,v 1.108.2.1 2019-10-23 12:47:33 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -65,8 +65,10 @@ class caddie extends caddie_root {
 				$this->name = $temp->name;
 				$this->comment = $temp->comment;
 				$this->autorisations = $temp->autorisations;
+				$this->autorisations_all = $temp->autorisations_all;
 				$this->classementGen = $temp->caddie_classement;
 				$this->acces_rapide = $temp->acces_rapide;
+				$this->favorite_color = $temp->favorite_color;
 				$this->creation_user_name = $temp->creation_user_name;
 				$this->creation_date = $temp->creation_date;
 			
@@ -142,12 +144,12 @@ class caddie extends caddie_root {
 	}
 	
 	// formulaire
-	public function get_form($form_action="", $form_cancel="") {
+	public function get_form($form_action="", $form_cancel="", $form_duplicate="") {
 		global $msg, $charset;
 		global $liaison_tpl;
 		global $current_print;
 		
-		$form = parent::get_form($form_action, $form_cancel);
+		$form = parent::get_form($form_action, $form_cancel, $form_duplicate);
 		$form=str_replace('!!cart_type!!', $this->get_type_form(), $form);
 		if ($this->get_idcaddie()) {
 			$info_liaisons = $this->get_links_form();
@@ -282,8 +284,10 @@ class caddie extends caddie_root {
 				'type' => $temp->type,
 				'comment' => $temp->comment,
 				'autorisations' => $temp->autorisations,
+				'autorisations_all' => $temp->autorisations_all,
 				'caddie_classement' => $temp->caddie_classement,
 				'acces_rapide' => $temp->acces_rapide,
+				'favorite_color' => $temp->favorite_color,
 				'nb_item' => $nb_item,
 				'nb_item_pointe' => $nb_item_pointe,
 				'nb_item_base' => $nb_item_base,
@@ -301,7 +305,7 @@ class caddie extends caddie_root {
 	
 	// création d'un panier vide
 	public function create_cart() {
-		$requete = "insert into caddie set name='".addslashes($this->name)."', type='".$this->type."', comment='".addslashes($this->comment)."', autorisations='".$this->autorisations."', caddie_classement='".addslashes($this->classementGen)."', acces_rapide='".$this->acces_rapide."' ";
+		$requete = "insert into caddie set name='".addslashes($this->name)."', type='".$this->type."', comment='".addslashes($this->comment)."', autorisations='".$this->autorisations."', autorisations_all='".$this->autorisations_all."', caddie_classement='".addslashes($this->classementGen)."', acces_rapide='".$this->acces_rapide."', favorite_color='".addslashes($this->favorite_color)."' ";
 		$user = $this->get_info_user();
 		if(is_object($user) && count($user)) {
 			$requete .= ", creation_user_name='".addslashes($user->name)."', creation_date='".date("Y-m-d H:i:s")."'";
@@ -309,11 +313,12 @@ class caddie extends caddie_root {
 		pmb_mysql_query($requete);
 		$this->idcaddie = pmb_mysql_insert_id();
 		$this->compte_items();
+		return $this->idcaddie;
 	}
 	
 	// sauvegarde du panier
 	public function save_cart() {
-		$query = "update caddie set name='".addslashes($this->name)."', type='".$this->type."', comment='".addslashes($this->comment)."', autorisations='".$this->autorisations."', caddie_classement='".addslashes($this->classementGen)."', acces_rapide='".$this->acces_rapide."' where ".static::get_field_name()."='".$this->get_idcaddie()."'";
+		$query = "update caddie set name='".addslashes($this->name)."', type='".$this->type."', comment='".addslashes($this->comment)."', autorisations='".$this->autorisations."', autorisations_all='".$this->autorisations_all."', caddie_classement='".addslashes($this->classementGen)."', acces_rapide='".$this->acces_rapide."', favorite_color='".addslashes($this->favorite_color)."' where ".static::get_field_name()."='".$this->get_idcaddie()."'";
 		$result = pmb_mysql_query($query);
 		return true;
 	}
@@ -578,12 +583,12 @@ class caddie extends caddie_root {
 				$explnum = new explnum($t->explnum_id);
 				fwrite($hf, $explnum->get_file_content());
 				fclose($hf);
-				$ret .= "<li>".$msg['caddie_expdocnum_wtrue']." <a href=\"".$chemin.$nomfic."\">".htmlentities($nomfic, ENT_QUOTES, $charset)."</a></li>";
+				$ret = "<li>".$msg['caddie_expdocnum_wtrue']." <a href=\"".$chemin.$nomfic."\">".htmlentities($nomfic, ENT_QUOTES, $charset)."</a></li>";
 			} else {
-				$ret .= "<li><i>".$msg['caddie_expdocnum_wfalse']." ".htmlentities($nomfic, ENT_QUOTES, $charset)."</i></li>";
+				$ret = "<li><i>".$msg['caddie_expdocnum_wfalse']." ".htmlentities($nomfic, ENT_QUOTES, $charset)."</i></li>";
 			}
 		}
-		if ($ret) return "<blockquote>".$msg['caddie_expdocnum_dir']." ".htmlentities($chemin, ENT_QUOTES, $charset)."<br /><ul>".$ret."</ul></blockquote>";
+		if (!empty($ret)) return "<blockquote>".$msg['caddie_expdocnum_dir']." ".htmlentities($chemin, ENT_QUOTES, $charset)."<br /><ul>".$ret."</ul></blockquote>";
 		else return;
 	}
 
@@ -893,47 +898,9 @@ class caddie extends caddie_root {
 	}
 	
 	static public function show_actions($id_caddie = 0, $type_caddie = 'NOTI') {
-		global $msg,$cart_action_selector,$cart_action_selector_line;
-		global $pmb_scan_request_activate, $gestion_acces_active, $pmb_transferts_actif;
-		
-		//Le tableau des actions possibles
-		$array_actions = array();
-		$array_actions[] = array('msg' => $msg["caddie_menu_action_edit_panier"], 'location' => './catalog.php?categ=caddie&sub=gestion&quoi=panier&action=edit_cart&idcaddie='.$id_caddie.'&item=0');
-		$array_actions[] = array('msg' => $msg["caddie_menu_action_suppr_panier"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=supprpanier&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
-		$array_actions[] = array('msg' => $msg["caddie_menu_action_transfert"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=transfert&action=transfert&object_type=NOTI&idcaddie='.$id_caddie.'&item=');
-		$array_actions[] = array('msg' => $msg["caddie_menu_action_edition"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=edition&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
-		if ($type_caddie == "EXPL") {
-			$array_actions[] = array('msg' => $msg["caddie_menu_action_impr_cote"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=impr_cote&action=choix_quoi&object_type=EXPL&idcaddie='.$id_caddie.'&item=0');
-		}
-		$array_actions[] = array('msg' => $msg["caddie_menu_action_export"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=export&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
-		$array_actions[] = array('msg' => $msg["caddie_menu_action_exp_docnum"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=expdocnum&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
-		$array_actions[] = array('msg' => $msg["caddie_menu_action_selection"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=selection&action=&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
-		$evt_handler = events_handler::get_instance();
-		$event = new event_users_group("users_group", "get_autorisation_del_base");
-		$evt_handler->send($event);
-		if(!$event->get_error_message()){
-			$array_actions[] = array('msg' => $msg["caddie_menu_action_suppr_base"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=supprbase&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
-		}
-		$array_actions[] = array('msg' => $msg["caddie_menu_action_reindex"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=reindex&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
-		if($gestion_acces_active){
-			$array_actions[] = array('msg' => $msg["caddie_menu_action_access_rights"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=access_rights&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
-		}
-		if((SESSrights & CIRCULATION_AUTH) && $pmb_scan_request_activate){
-			$array_actions[] = array('msg' => $msg["scan_request_record_button"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=scan_request&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie);
-		}
-		if ($pmb_transferts_actif) {
-			$array_actions[] = array('msg' => $msg["caddie_menu_action_transfert_to_location"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=transfert_to_location&action=choix_quoi&object_type=EXPL&idcaddie='.$id_caddie);
-		}
-		$event = new event_display_overload("caddie_action", "add_array_caddie_action");
-		$event->set_entity_id($id_caddie);
-		$event->set_overload_type($type_caddie);
-		$evt_handler->send($event);
-		$action_overloads_tmp=$event->get_array_action_overloads();
-		if(is_array($action_overloads_tmp) && count($action_overloads_tmp)){
-		    foreach($action_overloads_tmp as $element){
-		        $array_actions[] = $element;
-		    }
-		}
+		global $cart_action_selector,$cart_action_selector_line;
+
+		$array_actions = self::get_array_actions($id_caddie, $type_caddie);
 		//On crée les lignes du menu
 		$lines = '';
 		if(is_array($array_actions) && count($array_actions)){
@@ -949,11 +916,71 @@ class caddie extends caddie_root {
 		
 		return $to_show;
 	}
+	
+	public static function get_array_actions($id_caddie = 0, $type_caddie = 'NOTI', $actions_to_remove = array()) {
+		global $msg;
+		global $pmb_scan_request_activate, $gestion_acces_active, $pmb_transferts_actif;
+		
+		$array_actions = array();
+		if (empty($actions_to_remove['edit_cart'])) { 
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_edit_panier"], 'location' => './catalog.php?categ=caddie&sub=gestion&quoi=panier&action=edit_cart&idcaddie='.$id_caddie.'&item=0');
+		}
+		if (empty($actions_to_remove['supprpanier'])) {
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_suppr_panier"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=supprpanier&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
+		}
+		if (empty($actions_to_remove['transfert'])) {
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_transfert"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=transfert&action=transfert&object_type=NOTI&idcaddie='.$id_caddie.'&item=');
+		}
+		if (empty($actions_to_remove['edition'])) {
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_edition"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=edition&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
+		}
+		if ($type_caddie == "EXPL" && empty($actions_to_remove['impr_cote'])) {
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_impr_cote"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=impr_cote&action=choix_quoi&object_type=EXPL&idcaddie='.$id_caddie.'&item=0');
+		}
+		if (empty($actions_to_remove['export'])) {
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_export"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=export&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
+		}
+		if (empty($actions_to_remove['expdocnum'])) {
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_exp_docnum"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=expdocnum&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
+		}
+		if (empty($actions_to_remove['selection'])) {
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_selection"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=selection&action=&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
+		}
+		$evt_handler = events_handler::get_instance();
+		$event = new event_users_group("users_group", "get_autorisation_del_base");
+		$evt_handler->send($event);
+		if(!$event->get_error_message() && empty($actions_to_remove['supprbase'])){
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_suppr_base"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=supprbase&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
+		}
+		if (empty($actions_to_remove['reindex'])) {
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_reindex"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=reindex&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
+		}
+		if($gestion_acces_active && empty($actions_to_remove['access_rights'])){
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_access_rights"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=access_rights&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie.'&item=0');
+		}
+		if((SESSrights & CIRCULATION_AUTH) && $pmb_scan_request_activate && empty($actions_to_remove['scan_request'])){
+			$array_actions[] = array('msg' => $msg["scan_request_record_button"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=scan_request&action=choix_quoi&object_type=NOTI&idcaddie='.$id_caddie);
+		}
+		if ($pmb_transferts_actif && empty($actions_to_remove['transfert_to_locations'])) {
+			$array_actions[] = array('msg' => $msg["caddie_menu_action_transfert_to_location"], 'location' => './catalog.php?categ=caddie&sub=action&quelle=transfert_to_location&action=choix_quoi&object_type=EXPL&idcaddie='.$id_caddie);
+		}
+		$event = new event_display_overload("caddie_action", "add_array_caddie_action");
+		$event->set_entity_id($id_caddie);
+		$event->set_overload_type($type_caddie);
+		$evt_handler->send($event);
+		$action_overloads_tmp=$event->get_array_action_overloads();
+		if(is_array($action_overloads_tmp) && count($action_overloads_tmp)){
+			foreach($action_overloads_tmp as $element){
+				$array_actions[] = $element;
+			}
+		}
+		return $array_actions;
+	}
 		
 	public static function is_reachable($caddie_id=0) {
 		global $PMBuserid;
 		
-		$query = 'select idcaddie from caddie where idcaddie="'.$caddie_id.'" and (autorisations="'.$PMBuserid.'" or autorisations like "'.$PMBuserid.' %" or autorisations like "% '.$PMBuserid.' %" or autorisations like "% '.$PMBuserid.'")';
+		$query = 'select idcaddie from caddie where idcaddie="'.$caddie_id.'" and (autorisations="'.$PMBuserid.'" or autorisations like "'.$PMBuserid.' %" or autorisations like "% '.$PMBuserid.' %" or autorisations like "% '.$PMBuserid.'" or autorisations_all=1)';
 		$result = pmb_mysql_query($query);
 		if(pmb_mysql_num_rows($result)) {
 			return true;
@@ -1191,7 +1218,7 @@ class caddie extends caddie_root {
 				}
 			}
 		}
-		if(!sizeof($liste) || !is_array($liste)) {
+		if ((empty($liste) && !is_array($liste)) || !is_array($liste)) {
 			print $msg[399];
 			return;
 		} else {
@@ -1233,7 +1260,7 @@ class caddie extends caddie_root {
 				// début de liste
 				print $begin_result_liste;
 				print caddie::show_actions($this->get_idcaddie(),$this->type);
-				while(list($cle, $expl) = each($liste)) {
+				foreach ($liste as $cle => $expl) {
 					if (!$expl['content']) {
 						if($stuff = get_expl_info($expl['object_id'])) {
 							if (!$no_point) {
@@ -1248,7 +1275,7 @@ class caddie extends caddie_root {
 							$stuff = check_pret($stuff);
 							print pmb_bidi(print_info($stuff,0,1));
 						} else {
-							print "<strong>ID : ".$expl['object_id']."&nbsp;: ${msg[395]}</strong>";
+							print "<div class='row'><strong>ID : ".$expl['object_id']."&nbsp;: ${msg[395]}</strong></div>";
 						}
 					} else {
 						if (!$stuff = get_expl_info($expl['object_id'])) {
@@ -1282,7 +1309,7 @@ class caddie extends caddie_root {
 				// début de liste
 				print $begin_result_liste;
 				print caddie::show_actions($this->get_idcaddie(),$this->type);
-				while(list($cle, $expl) = each($liste)) {
+				foreach ($liste as $cle => $expl) {
 					if (!$no_del) $show_del=1; else $show_del=0;
 					if($bull_aff = show_bulletinage_info($expl['object_id'], 0 , $show_del, $expl['flag'],1)) {
 						print pmb_bidi($bull_aff);
@@ -1331,23 +1358,23 @@ class caddie extends caddie_root {
 		<div id='cart_".$this->get_idcaddie()."_nb_items' name='cart_".$this->get_idcaddie()."_nb_items'>
 			<div class='row'>
 				<div class='colonne3'>".$msg['caddie_contient']."</div>
-				<div class='colonne3' class='center'>".$msg['caddie_contient_total']."</div>
-				<div class='colonne_suite' class='center'>".$msg['caddie_contient_nb_pointe']."</div>
+				<div class='colonne3 center'>".$msg['caddie_contient_total']."</div>
+				<div class='colonne_suite center'>".$msg['caddie_contient_nb_pointe']."</div>
 			</div>
 			<div class='row'>
 				<div class='colonne3 align_left'>".$msg['caddie_contient_total']."</div>
-				<div class='colonne3' class='center'><b><span id='nb_item'>".$this->nb_item."</span></b></div>
-				<div class='colonne_suite' class='center'><b><span id='nb_item_pointe'>".$this->nb_item_pointe."</span></b></div>
+				<div class='colonne3 center'><b><span id='nb_item'>".$this->nb_item."</span></b></div>
+				<div class='colonne_suite center'><b><span id='nb_item_pointe'>".$this->nb_item_pointe."</span></b></div>
 			</div>
 			<div class='row'>
 				<div class='colonne3 align_left'>".$msg['caddie_contient_dont_fonds']."</div>
-				<div class='colonne3' class='center'><label class='etiquette' id='nb_item_base'>".$this->nb_item_base."</label></div>
-				<div class='colonne_suite' class='center'><label id='nb_item_base_pointe'>".$this->nb_item_base_pointe."</label></div>
+				<div class='colonne3 center'><label class='etiquette' id='nb_item_base'>".$this->nb_item_base."</label></div>
+				<div class='colonne_suite center'><label id='nb_item_base_pointe'>".$this->nb_item_base_pointe."</label></div>
 			</div>
 			<div class='row'>
 				<div class='colonne3 align_left'>".$msg['caddie_contient_dont_inconnus']."</div>
-				<div class='colonne3' class='center'><label class='etiquette' id='nb_item_blob'>".$this->nb_item_blob."</label></div>
-				<div class='colonne_suite' class='center'><label id='nb_item_blob_pointe'>".$this->nb_item_blob_pointe."</label></div>
+				<div class='colonne3 center'><label class='etiquette' id='nb_item_blob'>".$this->nb_item_blob."</label></div>
+				<div class='colonne_suite center'><label id='nb_item_blob_pointe'>".$this->nb_item_blob_pointe."</label></div>
 			</div>
 			<div class='row'></div>
 		</div>";
@@ -1460,7 +1487,7 @@ class caddie extends caddie_root {
 		if($supp_bulletin_linked_expl_num) $forcage['bulletin_linked_expl_num']=1; else $forcage['bulletin_linked_expl_num']=0;
 		
 		$res_aff_suppr_base = '';
-		while(list($cle, $object) = each($liste)) {
+		foreach ($liste as $cle => $object) {
 			// le formulaire demande de suprimmer toutes les notices liées à celle-ci
 			if($supp_notice_linked_cascade) {
 				$forcage['notice_linked']=1;
@@ -1502,6 +1529,10 @@ class caddie extends caddie_root {
 	
 	public function get_idcaddie() {
 		return $this->idcaddie;
+	}
+	
+	public function set_idcaddie($idcaddie) {
+	    $this->idcaddie = intval($idcaddie);
 	}
 	
 } // fin de déclaration de la classe caddie

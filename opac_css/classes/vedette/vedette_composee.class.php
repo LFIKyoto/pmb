@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_composee.class.php,v 1.15 2018-07-03 08:42:14 arenou Exp $
+// $Id: vedette_composee.class.php,v 1.16.6.2 2019-11-27 13:36:18 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -202,10 +202,11 @@ class vedette_composee {
 		$query='select object_type, object_id, subdivision, position from vedette_object where num_vedette = '.$this->id.' order by position';
 		$result=pmb_mysql_query($query,$dbh);
 		if(!pmb_mysql_error($dbh) && pmb_mysql_num_rows($result)){
-			while($element_from_database=pmb_mysql_fetch_object($result)){
-				$field=$this->get_at_available_field_num($element_from_database->object_type);
-				$vedette_element_class_name=$field['class_name'];
-				if($vedette_element_class_name){
+		    while($element_from_database=pmb_mysql_fetch_object($result)){
+		        if ($element_from_database->object_id) {
+					$field=$this->get_at_available_field_num($element_from_database->object_type);
+					$vedette_element_class_name=$field['class_name'];
+					if(!$vedette_element_class_name || !file_exists($class_path."/vedette/".$vedette_element_class_name.".class.php")) continue;
 					require_once($class_path."/vedette/".$vedette_element_class_name.".class.php");
 					if(isset($field['params']) && $field['params']){
 						$element=new $vedette_element_class_name($field['params'],$field["num"], $element_from_database->object_id);
@@ -213,7 +214,7 @@ class vedette_composee {
 						$element=new $vedette_element_class_name($field["num"], $element_from_database->object_id);
 					}
 					$this->add_element($element, $element_from_database->subdivision, $element_from_database->position);
-				}
+		        }
 			}
 		}
 	}
@@ -246,7 +247,7 @@ class vedette_composee {
 						unlink($tempFile);
 					}
 					//Parse le fichier dans un tableau
-					$fp=fopen($xmlFile,"r") or die("Can't find XML file $xmlFile");
+					$fp=fopen($xmlFile,"r") or die(htmlentities("Can't find XML file $xmlFile", ENT_QUOTES, $charset));
 					$xml=fread($fp,filesize($xmlFile));
 					fclose($fp);
 					$xml_2_analyze=_parser_text_no_function_($xml, 'COMPOSED_HEADINGS');
@@ -479,5 +480,31 @@ class vedette_composee {
 			}
 		}
 		return static::$grammars;
+	}
+	
+	/**
+	 * Supprime un élement dans les vedettes et met à jour le label des vedettes concernées
+	 * @param int $element_id Identifiant en base de l'élément
+	 * @param int $element_type Type de l'élément
+	 */
+	public static function delete_element_and_update_vedettes_built_with_element($element_id, $element_type) {
+	    $element_id = intval($element_id);
+	    $element_type = intval($element_type);
+	    
+	    $query = "SELECT num_vedette FROM vedette_object WHERE object_type = $element_type and object_id = $element_id";
+	    $result = pmb_mysql_query($query);
+	    if (pmb_mysql_num_rows($result)) {
+	        $query = "DELETE FROM vedette_object WHERE object_type = $element_type and object_id = $element_id";
+	        pmb_mysql_query($query);
+	        while ($row = pmb_mysql_fetch_assoc($result)) {
+	            $vedette = new vedette_composee($row["num_vedette"]);
+	            $vedette->update_label();
+	            
+	            $query = "update vedette set label = '".$vedette->get_label()."' where id_vedette = ".$vedette->get_id();
+	            pmb_mysql_query($query);
+	            
+	            vedette_link::update_objects_linked_with_vedette($vedette);
+	        }
+	    }
 	}
 }

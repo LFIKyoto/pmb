@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: perio_a2z.tpl.php,v 1.48 2018-12-03 15:00:09 dgoron Exp $
+// $Id: perio_a2z.tpl.php,v 1.50 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
-if(!isset($abt_actif)) $abt_actif = '';
+global $abt_actif, $page, $num_field_start, $numfield_end, $date_debut, $date_fin, $id, $msg, $include_path, $charset;
+
+if(!isset($abt_actif)) $abt_actif = '0';
 if(!isset($page)) $page = '';
 if(!isset($num_field_start)) $num_field_start = '';
 if(!isset($numfield_end)) $numfield_end = '';

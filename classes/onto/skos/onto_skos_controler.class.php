@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_skos_controler.class.php,v 1.80 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: onto_skos_controler.class.php,v 1.94.2.2 2019-11-20 17:00:01 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -124,14 +124,14 @@ class onto_skos_controler extends onto_common_controler {
 	 * @return int
 	 */
 	public function has_narrower($class_uri,$params){
-	    if($params->concept_scheme == -1){
+		if(empty($params->concept_scheme) || in_array(-1,$params->concept_scheme)){
 	        // Cas de tous les schémas, on veut ceux du/des schémas du concept
 	        $query = "select * where {
 	        <".$class_uri."> <http://www.w3.org/2004/02/skos/core#narrower> ?child .
             <".$class_uri."> <http://www.w3.org/2004/02/skos/core#inScheme> ?scheme .
 	        ?child <http://www.w3.org/2004/02/skos/core#inScheme> ?scheme
 	    } limit 1 offset 0";
-	    }else if($params->concept_scheme == 0){
+	    }else if(in_array(0,$params->concept_scheme)){
 	        // Cas des sans schéma
 	        $query = "select * where {
 	        <".$class_uri."> <http://www.w3.org/2004/02/skos/core#narrower> ?child .
@@ -141,7 +141,15 @@ class onto_skos_controler extends onto_common_controler {
 	        //On a bien un schéma par défaut spécifié
 	        $query = "select * where {
 			<".$class_uri."> <http://www.w3.org/2004/02/skos/core#narrower> ?child .
-			?child <http://www.w3.org/2004/02/skos/core#inScheme> <".onto_common_uri::get_uri($params->concept_scheme).">
+			?child <http://www.w3.org/2004/02/skos/core#inScheme> ?scheme .
+            filter(";
+	        $filter= "";
+	        for($i=0 ; $i<count($params->concept_scheme) ; $i++){
+	            if($filter) $filter.= " || ";
+	            $filter.= "
+                 ?scheme = <".onto_common_uri::get_uri($params->concept_scheme[$i]).">";
+	        }
+            $query.= $filter.") 
 		} limit 1 offset 0";
 	    }
 		$this->handler->data_query($query);
@@ -157,14 +165,17 @@ class onto_skos_controler extends onto_common_controler {
 	 * * @return int
 	 */
 	public function has_broader($class_uri,$params){
-	    if($params->concept_scheme == -1){
+		if (!$class_uri) {
+			return false;
+		}
+		if(empty($params->concept_scheme) || $params->concept_scheme[0] == -1){
 	        // Cas de tous les schémas, on veut ceux du/des schémas du concept
 	        $query = "select * where {
 	        <".$class_uri."> <http://www.w3.org/2004/02/skos/core#broader> ?parent .
             <".$class_uri."> <http://www.w3.org/2004/02/skos/core#inScheme> ?scheme .
 	        ?parent <http://www.w3.org/2004/02/skos/core#inScheme> ?scheme
 	    } limit 1 offset 0";
-	    }else if($params->concept_scheme == 0){
+	    }else if($params->concept_scheme[0] == 0){
 	        // Cas des sans schéma
 	        $query = "select * where {
 	        <".$class_uri."> <http://www.w3.org/2004/02/skos/core#broader> ?parent .
@@ -174,7 +185,15 @@ class onto_skos_controler extends onto_common_controler {
 	        //On a bien un schéma par défaut spécifié
 	        $query = "select * where {
 			<".$class_uri."> <http://www.w3.org/2004/02/skos/core#broader> ?parent .
-			?parent <http://www.w3.org/2004/02/skos/core#inScheme> <".onto_common_uri::get_uri($params->concept_scheme).">
+			?parent <http://www.w3.org/2004/02/skos/core#inScheme> ?scheme .
+            filter(";
+	        $filter= "";
+	        for($i=0 ; $i<count($params->concept_scheme) ; $i++){
+	            if($filter) $filter.= " || ";
+	            $filter.= "
+                 ?scheme = <".onto_common_uri::get_uri($params->concept_scheme[$i]).">";
+	        }
+            $query.= $filter.") 
 		} limit 1 offset 0";
 	    }
 		$this->handler->data_query($query);
@@ -189,14 +208,14 @@ class onto_skos_controler extends onto_common_controler {
 	 * @return array
 	 */
 	public function get_broaders($class_uri,$params){
-	    if($params->concept_scheme == -1){
+	    if($params->concept_scheme[0] == -1){
 	        // Cas de tous les schémas, on veut ceux du/des schémas du concept
 	        $query = "select * where {
 	        <".$class_uri."> <http://www.w3.org/2004/02/skos/core#broader> ?parent .
             <".$class_uri."> <http://www.w3.org/2004/02/skos/core#inScheme> ?scheme .
 	        ?parent <http://www.w3.org/2004/02/skos/core#inScheme> ?scheme
 	    }";
-	    }else if($params->concept_scheme == 0){
+	    }else if($params->concept_scheme[0] == 0){
 	        // Cas des sans schéma
 	        $query = "select * where {
 	        <".$class_uri."> <http://www.w3.org/2004/02/skos/core#broader> ?parent .
@@ -206,13 +225,20 @@ class onto_skos_controler extends onto_common_controler {
 	        //On a bien un schéma par défaut spécifié
 	        $query = "select * where {
 			<".$class_uri."> <http://www.w3.org/2004/02/skos/core#broader> ?parent .
-			?parent <http://www.w3.org/2004/02/skos/core#inScheme> <".onto_common_uri::get_uri($params->concept_scheme).">
+			?parent <http://www.w3.org/2004/02/skos/core#inScheme> ?scheme .
+            filter(";
+	        $filter= "";
+	        for($i=0 ; $i<count($params->concept_scheme) ; $i++){
+	            if($filter) $filter.= " || ";
+	            $filter.= "
+                 ?scheme = <".onto_common_uri::get_uri($params->concept_scheme[$i]).">";
+	        }
+            $query.= $filter.") 
 		}";
 	    }
 		$this->handler->data_query($query);
-		$results=$this->handler->data_result();
-		
-		if(sizeof($results)){
+ 		$results=$this->handler->data_result();
+		if(!empty($results)){
 			$return=array();
 			foreach ($results as $key=>$result){
 				$return[$key]["id"]=onto_common_uri::get_id($result->parent);
@@ -311,7 +337,7 @@ class onto_skos_controler extends onto_common_controler {
 			if(!$params->parent_id){
 				//retourne les top concepts
 				if($params->only_top_concepts){
-					if($params->concept_scheme == 0) {
+					if($params->concept_scheme[0] == 0) {
 						$more.= " .
 						?elem pmb:showInTop owl:Nothing";
 						$count_query = "select count(?elem) as ?nb where{ ?elem pmb:showInTop owl:Nothing }";
@@ -321,20 +347,36 @@ class onto_skos_controler extends onto_common_controler {
 							$result = $this->handler->data_result();
 							$this->nb_results = $result[0]->nb;
 						}
-					}else if ($params->concept_scheme != -1) {
-						$more.= " .	?elem skos:topConceptOf <".onto_common_uri::get_uri($params->concept_scheme).">";
-						$count_query = "select count(?elem) as ?nb where{ ?elem skos:topConceptOf <".onto_common_uri::get_uri($params->concept_scheme)."> }";
+					}else if ($params->concept_scheme[0] != -1) {
+						$more.= " .	?elem skos:topConceptOf ?scheme .
+                        filter(";
+            	        $filter= "";
+            	        for($i=0 ; $i<count($params->concept_scheme) ; $i++){
+            	            if($filter) $filter.= " || ";
+            	            $filter.= "
+                             ?scheme = <".onto_common_uri::get_uri($params->concept_scheme[$i]).">";
+            	        }
+                        $more.= $filter.") ";
+						$count_query = "select count(?elem) as ?nb where{ ?elem skos:topConceptOf ?scheme .
+                        filter(";
+            	        $filter= "";
+            	        for($i=0 ; $i<count($params->concept_scheme) ; $i++){
+            	            if($filter) $filter.= " || ";
+            	            $filter.= "
+                             ?scheme = <".onto_common_uri::get_uri($params->concept_scheme[$i]).">";
+            	        }
+            	        $count_query.= $filter.")}";
 						$this->handler->data_query($count_query);
 						if($this->handler->data_num_rows()){
 							$counted = true;
 							$result = $this->handler->data_result();
 							$this->nb_results = $result[0]->nb;
 						}
-					}else {
+					} else {
 						$more.= " .	?elem skos:topConceptOf ?top";
 					}
 				} else {
-					if ($params->concept_scheme == 0) {
+					if (!empty($params->concept_scheme) && $params->concept_scheme[0] == 0) {
 						// On affiche les concepts qui n'ont pas de schéma
 						$more.= " .
 						optional {
@@ -342,12 +384,18 @@ class onto_skos_controler extends onto_common_controler {
 						}
 						filter (!bound(?scheme))
 						";
-					} else if ($params->concept_scheme != -1) {
+					} else if (!empty($params->concept_scheme) && $params->concept_scheme[0] != -1) {
 						// On n'affiche qu'un schéma
 						$more.= " .
-						?elem <http://www.w3.org/2004/02/skos/core#inScheme> <".onto_common_uri::get_uri($params->concept_scheme).">
-						";
-						
+						?elem <http://www.w3.org/2004/02/skos/core#inScheme> ?scheme .
+                        filter(";
+            	        $filter= "";
+            	        for($i=0 ; $i<count($params->concept_scheme) ; $i++){
+            	            if($filter) $filter.= " || ";
+            	            $filter.= "
+                             ?scheme = <".onto_common_uri::get_uri($params->concept_scheme[$i]).">";
+            	        }
+            	        $more.= $filter.")";
 					}
 				}
 				$query.=$more;
@@ -357,7 +405,7 @@ class onto_skos_controler extends onto_common_controler {
 				$more = "
 					. ?elem <http://www.w3.org/2004/02/skos/core#broader> <".onto_common_uri::get_uri($params->parent_id).">";
 	
-				if ($params->concept_scheme == 0) {
+				if ($params->concept_scheme[0] == 0) {
 					// On affiche les concepts qui n'ont pas de schéma
 					$more.= " .
 						optional {
@@ -365,11 +413,18 @@ class onto_skos_controler extends onto_common_controler {
 						}
 						filter (!bound(?scheme))
 						";
-				} else if ($params->concept_scheme != -1) {
+				} else if ($params->concept_scheme[0] != -1) {
 					// On n'affiche qu'un schéma
 					$more.= " .
-						?elem <http://www.w3.org/2004/02/skos/core#inScheme> <".onto_common_uri::get_uri($params->concept_scheme).">  
-						";
+					?elem <http://www.w3.org/2004/02/skos/core#inScheme> ?scheme .
+                    filter(";
+        	        $filter= "";
+        	        for($i=0 ; $i<count($params->concept_scheme) ; $i++){
+        	            if($filter) $filter.= " || ";
+        	            $filter.= "
+                         ?scheme = <".onto_common_uri::get_uri($params->concept_scheme[$i]).">";
+        	        }
+        	        $more.= $filter.")";
 				
 				}
 				$query.=$more;
@@ -426,7 +481,7 @@ class onto_skos_controler extends onto_common_controler {
 				            $entity_locking->unlock_entity();
 				            $this->proceed_save(false);
 				            if ($save_and_continue) {
-				                print "<script>document.location='./".$this->get_base_resource()."categ=".$this->params->categ."&sub=".$this->params->sub."&id=".onto_common_uri::get_id($this->item->get_uri())."&parent_id=".$this->params->parent_id."&concept_scheme=".$this->params->concept_scheme."&action=duplicate';</script>";
+				                print "<script>document.location='./".$this->get_base_resource()."categ=".$this->params->categ."&sub=".$this->params->sub."&id=".onto_common_uri::get_id($this->item->get_uri())."&parent_id=".$this->params->parent_id."&concept_scheme=".implode(",",$this->params->concept_scheme)."&action=duplicate';</script>";
 				                break;
 				            }
 				            $authority_page = new skos_page_concept(onto_common_uri::get_id($this->item->get_uri()));
@@ -437,7 +492,7 @@ class onto_skos_controler extends onto_common_controler {
 				    } else{
 				        $this->proceed_save(false);
 				        if ($save_and_continue) {
-				            print "<script>document.location='./".$this->get_base_resource()."categ=".$this->params->categ."&sub=".$this->params->sub."&id=".onto_common_uri::get_id($this->item->get_uri())."&parent_id=".$this->params->parent_id."&concept_scheme=".$this->params->concept_scheme."&action=duplicate';</script>";
+				            print "<script>document.location='./".$this->get_base_resource()."categ=".$this->params->categ."&sub=".$this->params->sub."&id=".onto_common_uri::get_id($this->item->get_uri())."&parent_id=".$this->params->parent_id."&concept_scheme=".implode(",",$this->params->concept_scheme)."&action=duplicate';</script>";
 				            break;
 				        }
 				        $authority_page = new skos_page_concept(onto_common_uri::get_id($this->item->get_uri()));
@@ -457,7 +512,7 @@ class onto_skos_controler extends onto_common_controler {
 			case "search" :
 				print $this->get_menu();
 				// On met à jour le dernier schéma sélectionné
-				if (isset($this->params->concept_scheme) && ($this->params->concept_scheme !== "")) {
+				if (isset($this->params->concept_scheme) && (count($this->params->concept_scheme)> 0)) {
 					$_SESSION['onto_skos_concept_last_concept_scheme'] = $this->params->concept_scheme;
 				}
 				if (isset($this->params->only_top_concepts)) {
@@ -466,7 +521,7 @@ class onto_skos_controler extends onto_common_controler {
 				$_SESSION['onto_skos_concept_selector_last_parent_id'] = "";
 				
 				//si on peut on s'évite le processus de recherche... il est moins fluide !
-				if($this->params->user_input == "*" && $this->params->concept_scheme == -1 && $this->params->authority_statut == 0){
+				if($this->params->user_input == "*" && $this->params->concept_scheme[0] == -1 && $this->params->authority_statut == 0){
 					$this->proceed_list();
 				}else{
 					$this->proceed_search();
@@ -489,6 +544,9 @@ class onto_skos_controler extends onto_common_controler {
 				$this->item->set_uri(onto_common_uri::get_temp_uri($this->item->get_onto_class()->uri));
 				$this->proceed_edit();
 				break;
+			case "merge":
+			    $this->proceed_merge();
+			    break;
 			case "edit" :			    
 			    if(!onto_common_uri::is_temp_uri($this->item->get_uri())){
 			        $entity_locking = new entity_locking(onto_common_uri::get_id($this->item->get_uri()), TYPE_CONCEPT);
@@ -549,7 +607,7 @@ class onto_skos_controler extends onto_common_controler {
 	        $entity_locking->lock_entity();
 	        $unlock_unload_script = $entity_locking->get_polling_script();
 	    }
-		print $this->item->get_form("./".$this->get_base_resource()."categ=".$this->params->categ."&sub=".$this->params->sub."&id=".$this->params->id."&parent_id=".$this->params->parent_id."&concept_scheme=".$this->params->concept_scheme);
+		print $this->item->get_form("./".$this->get_base_resource()."categ=".$this->params->categ."&sub=".$this->params->sub."&id=".$this->params->id."&parent_id=".$this->params->parent_id."&concept_scheme=".implode(",",$this->params->concept_scheme));
 		print $unlock_unload_script;
 	}
 	
@@ -640,7 +698,7 @@ class onto_skos_controler extends onto_common_controler {
 		//on en aura besoin à la sauvegarde...
 		$_SESSION['onto_skos_concept_selector_last_parent_id'] = $this->params->parent_id;
 		//réglons rapidement ce problème... cf. dette technique
- 		print "<div id='att'></div>";
+ 		//print "<div id='att'></div>";
  		$type = $this->get_item_type_to_list($this->params,true);
 // 		print $this->item->get_form($this->params->base_url."&range=".(isset($this->params->range) ? $this->params->range : ''), $type."_selector_form", "selector_save");
  		print $this->item->get_form($this->params->base_url, '', "update");
@@ -650,7 +708,9 @@ class onto_skos_controler extends onto_common_controler {
 	 * On hook la sauvegarde pour déclencher la réindexation des éléments impactés
 	 */
 	protected function proceed_save($list=true){
-		global $dbh;
+	    global $dbh;
+	    global $pmb_map_activate;
+	    
 		$this->item->get_values_from_form();
 		
 		if (onto_common_uri::is_temp_uri($this->item->get_uri())) {
@@ -729,6 +789,11 @@ class onto_skos_controler extends onto_common_controler {
 				$authority_statut+= 0;
 				
 				$concept_id = $this->item->get_id();
+				
+				if($pmb_map_activate){
+				    $map = new map_edition_controler(AUT_TABLE_CONCEPT, $concept_id);
+				    $map->save_form();
+				}
 				$aut_link= new aut_link(AUT_TABLE_CONCEPT, $concept_id);
 				$aut_link->save_form();
 				
@@ -759,6 +824,30 @@ class onto_skos_controler extends onto_common_controler {
 			return $this->item->get_id();
 		}
 	}
+	protected function get_force_form($message) {
+	    global $current_module, $msg, $charset;
+	    
+	    return "
+			<br /><div class='erreur'>$msg[540]</div>
+			<script type='text/javascript' src='./javascript/tablist.js'></script>
+			<div class='row'>
+				<div class='colonne10'>
+					<img src='".get_url_icon('error.gif')."' class='align_left'>
+				</div>
+				<div class='colonne80'>
+					<strong>$message</strong>
+				</div>
+			</div>
+			<div class='row'>
+				<form class='form-$current_module' name='dummy'  method='post' action='" . $this->get_base_resource() . "categ=concepts&sub=concept&id=" . $this->item->get_id()  . "&parent_id=&concept_scheme=&action=confirm_delete'>
+					<input type='hidden' name='force_delete' value='1'>
+					<input type='hidden' name='ret_url' value='" . $this->get_base_resource() . "categ=concepts&sub=concept&action=edit&id=" . $this->item->get_id() . "'>
+					<input type='button' name='ok' class='bouton' value=' $msg[76] ' onClick='history.go(-1);'>
+					<input type='submit' class='bouton' name='bt_forcage' value=' ".htmlentities($msg["autorite_suppr_categ_forcage_button"], ENT_QUOTES,$charset)." '>
+				</form>					    
+			</div>
+			";
+	}
 	
 	/*
 	 * On hook la suppression pour vérifier l'utilisation au préalable
@@ -787,13 +876,12 @@ class onto_skos_controler extends onto_common_controler {
 			$message.= "<br/>".$msg['vedette_dont_del_autority'];
 		}
 		
-		
 		if(($usage = aut_pperso::delete_pperso(AUT_TABLE_CONCEPT, $this->item->get_uri(), $force_delete))){
 			// Cette autorité est utilisée dans des champs perso, impossible de supprimer
 			$deletion_allowed = false;
 			$message.= '<br />'.$msg['autority_delete_error'].'<br /><br />'.$usage['display'];
 		}
-
+		
 		if ($force_delete || $deletion_allowed) {
 			audit::delete_audit(AUDIT_CONCEPT, $this->item->get_id());
 			// On peut continuer la suppression
@@ -801,10 +889,16 @@ class onto_skos_controler extends onto_common_controler {
 			$vedette = new vedette_composee($id_vedette);
 			$vedette->delete();
 			
+			vedette_composee::delete_element_and_update_vedettes_built_with_element(onto_common_uri::get_id($this->item->get_uri()),TYPE_CONCEPT);
+			
 			//suppression des autorités liées... & des statuts des concepts
 			// liens entre autorités
 			if( get_class($this->item) == "onto_skos_concept_item"){
 			    $concept_id = $this->item->get_id();
+			    
+		        $map = new map_edition_controler(AUT_TABLE_CONCEPT, $concept_id);
+		        $map->delete();
+		        
 				$aut_link= new aut_link(AUT_TABLE_CONCEPT, $concept_id);
 				$aut_link->delete();
 				
@@ -813,12 +907,15 @@ class onto_skos_controler extends onto_common_controler {
 				
 				skos_concept::delete_autority_sources($concept_id);
 				
+				$query = "DELETE FROM index_concept where num_concept = $concept_id";
+				pmb_mysql_query($query);				
+				
 				$authority = new authority(0, $concept_id, AUT_TABLE_CONCEPT);
 				$authority->delete();
 			}
 			parent::proceed_delete($force_delete, $print);
 		} else {
-			error_message($msg[132], $message, 1, "./".$this->get_base_resource()."categ=concepts&sub=concept&action=edit&id=".onto_common_uri::get_id($this->item->get_uri()));
+		    print $this->get_force_form($message);
 		}
 	}
 	
@@ -864,20 +961,20 @@ class onto_skos_controler extends onto_common_controler {
 	 * @param string $uri
 	 * @return array
 	 */
-	public function get_informations_concept($uri){
+	public function get_informations_concept($uri) {
 		$query = "select ?scopeNote where {
-					<".$uri."> rdf:type <".self::$concept_uri."> .
+					<$uri> rdf:type <".self::$concept_uri."> .
 					optional {
-						<".$uri."> skos:scopeNote ?scopeNote
+						<$uri> skos:scopeNote ?scopeNote
 					}
 				}";
 	
 		$this->handler->data_query($query);
-		$results=$this->handler->data_result();
-		if(is_array($results) && sizeof($results)){
-			$return=array();
-			foreach ($results as $key=>$result){
-				$return[$key]["scopeNote"]=$result->scopeNote;
+		$results = $this->handler->data_result();
+		if (is_array($results) && !empty($results)) {
+			$return = array();
+			foreach ($results as $key => $result) {
+				$return[$key]["scopeNote"] = $result->scopeNote;
 			}
 			return $return;
 		}
@@ -909,10 +1006,13 @@ class onto_skos_controler extends onto_common_controler {
 		return $this->params->base_resource.($with_params? "?" : "");
 	}
 
-	protected function proceed_last(){
+	protected function proceed_last($no_print = false){
 		$ui_class_name = self::resolve_ui_class_name($this->params->sub,$this->handler->get_onto_name());
-		print $ui_class_name::get_search_form($this,$this->params);
-		print $ui_class_name::get_list($this,$this->params);
+		$result = $ui_class_name::get_search_form($this,$this->params);
+		$result.= $ui_class_name::get_list($this,$this->params);
+		$result = str_replace("!!caddie_link!!", entities_authorities_controller::get_caddie_link(), $result);
+		if(!$no_print) echo($result);
+		return $result;
 	}
 	
 	/**
@@ -954,98 +1054,80 @@ class onto_skos_controler extends onto_common_controler {
 	}
 	
 	protected function proceed_replace() {
+	    global $pmb_synchro_rdf;
+	    global $msg;
+	    
 		$by = $this->params->by;
 		if (!$by) {
-			print $this->item->get_replace_form("./".$this->get_base_resource()."categ=".$this->params->categ."&sub=".$this->params->sub."&id=".$this->params->id."&concept_scheme=".$this->params->concept_scheme);
+			print $this->item->get_replace_form("./".$this->get_base_resource()."categ=".$this->params->categ."&sub=".$this->params->sub."&id=".$this->params->id."&concept_scheme=".implode(",",$this->params->concept_scheme));
 			return;
 		}
-		global $msg;
-		global $dbh;
 		if (!is_numeric($by)) {
 			$by = onto_common_uri::get_id($by);
 		}
 		if (($this->item->get_id() == $by) ||(!$this->item->get_id())) {
 			return $msg['223'];
 		}
+		if ($by) {
 		
-		$aut_link = new aut_link(AUT_TABLE_CONCEPT, $this->item->get_id());
-		// "Conserver les liens entre autorités" est demandé
-		if ($this->params->aut_link_save) {
-			// liens entre autorités
-			$aut_link->add_link_to(AUT_TABLE_CONCEPT, $by);
-		}
-		$aut_link->delete();
-			
-		vedette_composee::replace(TYPE_CONCEPT, $this->item->get_id(), $by);
-			
-		// nettoyage d'autorities_sources
-		$query = "select id_authority_source, authority_favorite from authorities_sources where num_authority = " .$this->item->get_id() ." and authority_type = 'concept'";
-		$result = pmb_mysql_query($query);
-		if (pmb_mysql_num_rows($result)) {
-			while ( $row = pmb_mysql_fetch_object($result) ) {
-				if ($row->authority_favorite ==1) {
-					// on suprime les références si l'autorité a été importée...
-					$query = "delete from notices_authorities_sources where num_authority_source = " .$row->id_authority_source;
-					pmb_mysql_result($query);
-					$query = "delete from authorities_sources where id_authority_source = " .$row->id_authority_source;
-					pmb_mysql_result($query);
-				} else {
-					// on fait suivre le reste
-					$query = "update authorities_sources set num_authority = " .$by ." where num_authority_source = " .$row->id_authority_source;
-					pmb_mysql_query($query);
-				}
-			}
-		}
-			
-		//Remplacement dans les champs persos sélecteur d'autorité
-		aut_pperso::replace_pperso(AUT_TABLE_CONCEPT, $this->item->get_id(), $by);
-		
-		// effacement de l'identifiant unique d'autorité
-		$authority = new authority(0, $this->item->get_id(), AUT_TABLE_CONCEPT);
-		$authority->delete();
-		
-		$this->proceed_delete(true);
-		
-				
-		// Remplacement des triplets rdf
-		$query = "select ?s ?p where {
-				?s ?p <".$this->item->get_uri()."> .
-			}";
-		
-		$this->handler->data_query($query);
-		
-		if($this->handler->data_num_rows()){
-			$assertions = array();
-			$results = $this->handler->data_result();			
-			foreach($results as $result){
-				$assertions[] = $result;
-			}
-			
-			$query_insert = 'insert into <pmb> { ';
-			foreach($assertions as $assert){
-				$query_insert.= '<'.$assert['s'].'> <'.$assert['p'].'> <'.onto_common_uri::get_uri($by).'> .';
-			}
-			$query_insert.= '}';
-			$this->handler->data_query($query_insert);
-		}
-		
-		$onto_index = onto_index::get_instance($this->get_onto_name());
-		$onto_index->set_handler($this->handler);
-		$onto_index->maj($by);
-		
-		//Remplacement de l'identifiant du concept source dans la table index concept
-		$query = "update index_concept set num_concept=".$by." where num_concept=".$this->item->get_id();
-		pmb_mysql_query($query);
-		
-		/**
-		 * Réindex des éléments à la suite du remplacement des id du concept source
-		 */
-		index_concept::update_linked_elements($by);
-		
-		// mise à jour de l'oeuvre rdf
-		if ($pmb_synchro_rdf) {
-			$synchro_rdf = new synchro_rdf();
-			$synchro_rdf->replaceAuthority($this->item->get_id(), $by, 'auteur');
+    		$map = new map_edition_controler(AUT_TABLE_CONCEPT, $this->item->get_id());
+    		$map->replace($by);
+    		
+    		$aut_link = new aut_link(AUT_TABLE_CONCEPT, $this->item->get_id());
+    		// "Conserver les liens entre autorités" est demandé
+    		if ($this->params->aut_link_save) {
+    			// liens entre autorités
+    			$aut_link->add_link_to(AUT_TABLE_CONCEPT, $by);
+    		}
+    		$aut_link->delete();
+    			
+    		vedette_composee::replace(TYPE_CONCEPT, $this->item->get_id(), $by);
+    			
+    		// nettoyage d'autorities_sources
+    		$query = "select id_authority_source, authority_favorite from authorities_sources where num_authority = " .$this->item->get_id() ." and authority_type = 'concept'";
+    		$result = pmb_mysql_query($query);
+    		if (pmb_mysql_num_rows($result)) {
+    			while ( $row = pmb_mysql_fetch_object($result) ) {
+    				if ($row->authority_favorite ==1) {
+    					// on suprime les références si l'autorité a été importée...
+    					$query = "delete from notices_authorities_sources where num_authority_source = " .$row->id_authority_source;
+    					pmb_mysql_result($query);
+    					$query = "delete from authorities_sources where id_authority_source = " .$row->id_authority_source;
+    					pmb_mysql_result($query);
+    				} else {
+    					// on fait suivre le reste
+    					$query = "update authorities_sources set num_authority = " .$by ." where num_authority_source = " .$row->id_authority_source;
+    					pmb_mysql_query($query);
+    				}
+    			}
+    		}
+    			
+    		//Remplacement dans les champs persos sélecteur d'autorité
+    		aut_pperso::replace_pperso(AUT_TABLE_CONCEPT, $this->item->get_id(), $by);
+    		
+    		// effacement de l'identifiant unique d'autorité
+    		$authority = new authority(0, $this->item->get_id(), AUT_TABLE_CONCEPT);
+    		$authority->delete();
+    		
+    		$onto_index = onto_index::get_instance($this->get_onto_name());
+    		$onto_index->set_handler($this->handler);
+    		$onto_index->maj($by);
+    		
+    		//Remplacement de l'identifiant du concept source dans la table index concept
+    		$query = "update index_concept set num_concept=".$by." where num_concept=".$this->item->get_id();
+    		pmb_mysql_query($query);
+    		
+    		$this->proceed_delete(true);
+    		/**
+    		 * Réindex des éléments à la suite du remplacement des id du concept source
+    		 */
+    		index_concept::update_linked_elements($by);
+    		
+    		// mise à jour de l'oeuvre rdf
+    		if ($pmb_synchro_rdf) {
+    			$synchro_rdf = new synchro_rdf();
+    			$synchro_rdf->replaceAuthority($this->item->get_id(), $by, 'auteur');
+    		}
 		}
 	}
 	
@@ -1135,15 +1217,22 @@ class onto_skos_controler extends onto_common_controler {
 					'value' => $authority_statut_label
 			);
 		}
-		if (isset($this->params->concept_scheme) && ($this->params->concept_scheme != -1)) {
+		if (!empty($this->params->concept_scheme) && ($this->params->concept_scheme[0] != -1)) {
 			$scheme_label = $msg['skos_view_concept_no_scheme'];
-			if ($this->params->concept_scheme) {
-				$query = 'select ?label where {
-						<'.onto_common_uri::get_uri($this->params->concept_scheme).'> <'.$this->handler->get_display_label(self::$concept_scheme_uri).'> ?label
+			if (count($this->params->concept_scheme) > 0) {
+			    $scheme_label = "";
+			    $scheme_labels = [];
+			    for($i=0 ; $i<count($this->params->concept_scheme) ; $i++){
+			        $query = 'select ?label where {
+						<'.onto_common_uri::get_uri($this->params->concept_scheme[$i]).'> <'.$this->handler->get_display_label(self::$concept_scheme_uri).'> ?label
 						}';
-				$this->handler->data_query($query);
-				$results = $this->handler->data_result();
-				$scheme_label = $results[0]->label;
+			        $this->handler->data_query($query);
+			        $results = $this->handler->data_result();
+			        if($results){
+                        $scheme_labels[] = $results[0]->label;
+			        }
+			    }
+			    $scheme_label = implode(', ',$scheme_labels);
 			}
 			$human_queries[] = array(
 					'name' => $msg['search_extended_skos_concepts_scheme'],
@@ -1153,8 +1242,161 @@ class onto_skos_controler extends onto_common_controler {
 		return $human_queries;
 	}
 	
-	protected function proceed_search(){
-		parent::proceed_search();
+	protected function proceed_search($no_print=false){
+	    $result = parent::proceed_search(true);
 		$this->set_session_history($this->get_human_query(), 'classic');
+		$result = str_replace("!!caddie_link!!", entities_authorities_controller::get_caddie_link(), $result);
+		if(!$no_print) echo($result);
+	}
+	
+	protected function proceed_merge() {
+	    global $msg, $id, $pmb_synchro_rdf;
+	    
+	    $by = $this->params->by;
+	    if (!$by) {
+	        print $this->item->get_merge_form("./".$this->get_base_resource()."categ=".$this->params->categ."&sub=".$this->params->sub."&id=".$this->params->id."&concept_scheme=".implode(",",$this->params->concept_scheme));
+	        return;
+	    }
+	    
+	    if (!is_numeric($by)) {
+	        $by = onto_common_uri::get_id($by);
+	    }
+	    $uri_target = onto_common_uri::get_uri($by);
+	    $uri_source = onto_common_uri::get_uri($id);
+	    $infos_source = $this->get_concept_data($uri_source);
+	    $triples = "";
+	    foreach ($infos_source as $property => $values) {
+	        if ($property == "http://www.w3.org/2004/02/skos/core#prefLabel") {
+	            foreach ($values as $value) {
+	                $triples .= "<$uri_target> <http://www.w3.org/2004/02/skos/core#altLabel> '" . addslashes($value['object']) . "' .";
+	            }
+	        } else {
+	            foreach ($values as $value) {
+	                $triples .= "<$uri_target> <$property> ";
+	                if ($value['type'] == "uri") {
+	                    $triples .= "<${value['object']}> .";
+	                } else {
+	                    $triples .= "'" . addslashes($value['object']) . "' .";
+	                }
+	            }
+	        }
+	    }
+	    $query = "insert into <pmb> {".$triples."}";
+	    $this->handler->data_query($query);
+	    if (($this->item->get_id() == $by) ||(!$this->item->get_id())) {
+	        return $msg['223'];
+	    }
+	    
+	    $map = new map_edition_controler(AUT_TABLE_CONCEPT, $this->item->get_id());
+	    $map->replace($by);
+	    
+	    $aut_link = new aut_link(AUT_TABLE_CONCEPT, $this->item->get_id());
+        // liens entre autorités
+        $aut_link->add_link_to(AUT_TABLE_CONCEPT, $by);
+	    $aut_link->delete();
+	    
+	    vedette_composee::replace(TYPE_CONCEPT, $this->item->get_id(), $by);
+	    
+	    // nettoyage d'autorities_sources
+	    $query = "select id_authority_source, authority_favorite from authorities_sources where num_authority = " .$this->item->get_id() ." and authority_type = 'concept'";
+	    $result = pmb_mysql_query($query);
+	    if (pmb_mysql_num_rows($result)) {
+	        while ( $row = pmb_mysql_fetch_object($result) ) {
+	            if ($row->authority_favorite ==1) {
+	                // on suprime les références si l'autorité a été importée...
+	                $query = "delete from notices_authorities_sources where num_authority_source = " .$row->id_authority_source;
+	                pmb_mysql_result($query);
+	                $query = "delete from authorities_sources where id_authority_source = " .$row->id_authority_source;
+	                pmb_mysql_result($query);
+	            } else {
+	                // on fait suivre le reste
+	                $query = "update authorities_sources set num_authority = " .$by ." where num_authority_source = " .$row->id_authority_source;
+	                pmb_mysql_query($query);
+	            }
+	        }
+	    }
+	    
+	    //Remplacement dans les champs persos sélecteur d'autorité
+	    aut_pperso::replace_pperso(AUT_TABLE_CONCEPT, $this->item->get_id(), $by);
+	    
+	    // effacement de l'identifiant unique d'autorité
+	    $authority = new authority(0, $this->item->get_id(), AUT_TABLE_CONCEPT);
+	    $authority->delete();
+	    
+	    $this->proceed_delete(true);
+	    
+	    
+	    // Remplacement des triplets rdf
+	    $query = "select ?s ?p where {
+				?s ?p <".$this->item->get_uri()."> .
+			}";
+	    
+	    $this->handler->data_query($query);
+	    
+	    if($this->handler->data_num_rows()){
+	        $assertions = array();
+	        $results = $this->handler->data_result();
+	        foreach($results as $result){
+	            $assertions[] = $result;
+	        }
+	        
+	        $query_insert = 'insert into <pmb> { ';
+	        foreach($assertions as $assert){
+	            $query_insert.= '<'.$assert['s'].'> <'.$assert['p'].'> <'.onto_common_uri::get_uri($by).'> .';
+	        }
+	        $query_insert.= '}';
+	        $this->handler->data_query($query_insert);
+	    }
+	    
+	    $onto_index = onto_index::get_instance($this->get_onto_name());
+	    $onto_index->set_handler($this->handler);
+	    $onto_index->maj($by);
+	    
+	    //Remplacement de l'identifiant du concept source dans la table index concept
+	    $query = "update index_concept set num_concept=".$by." where num_concept=".$this->item->get_id();
+	    pmb_mysql_query($query);
+	    
+	    /**
+	     * Réindex des éléments à la suite du remplacement des id du concept source
+	     */
+	    index_concept::update_linked_elements($by);
+	    indexation_stack::push($this->item->get_id(), TYPE_CONCEPT);
+	    
+	    // mise à jour de l'oeuvre rdf
+	    if ($pmb_synchro_rdf) {
+	        $synchro_rdf = new synchro_rdf();
+	        $synchro_rdf->replaceAuthority($this->item->get_id(), $by, 'auteur');
+	    }
+	    print "<script>document.location='./".$this->get_base_resource()."categ=see&sub=".$this->params->sub."&id=$by&parent_id=".$this->params->parent_id."&concept_scheme=".implode(",",$this->params->concept_scheme)."';</script>";
+	}
+	
+	/**
+	 * renvoie les informations d'un noeud
+	 *
+	 * @param string $uri
+	 * @return array
+	 */
+	public function get_concept_data($uri) {
+	    $query = "select * where {
+					<$uri> ?p ?o
+				}";
+	    
+	    $this->handler->data_query($query);
+	    $results = $this->handler->data_result();
+	    if (is_array($results) && !empty($results)) {
+	        $return = array();
+	        foreach ($results as $result) {
+	            if (empty($return[$result->p])) {
+	                $return[$result->p] = [];
+	            }
+	            $return[$result->p][] = array(
+	                'object' => $result->o, 
+	                'lang' => (!empty($result->o_lang) ? $result->o_lang : ''),
+	                'type' => $result->o_type
+	            );
+	        }
+	        return $return;
+	    }
+	    return array();
 	}
 }

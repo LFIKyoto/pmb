@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sphinx_records_indexer.class.php,v 1.5 2018-07-16 09:44:44 arenou Exp $
+// $Id: sphinx_records_indexer.class.php,v 1.6 2019-05-27 12:55:59 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -22,6 +22,8 @@ class sphinx_records_indexer extends sphinx_indexer {
 	}
 	
 	public function fillExplnumIndex($explnum_id=0){
+	    global $sphinx_indexes_prefix;
+	    
 		$options['size'] = 80;
 		$object_id+=0;
 		
@@ -41,8 +43,8 @@ class sphinx_records_indexer extends sphinx_indexer {
 			if(!$explnum_id) print ProgressBar::start(pmb_mysql_num_rows($res),"EXPLNUMS",$options);
 			while ($object=pmb_mysql_fetch_object($res)) {
 				//purge...
-				pmb_mysql_query('delete from records_explnums where id = '.$object->id,$this->getDBHandler());
-				$query = 'insert into records_explnums (id,content,num_record) values('.$object->id.',\''.addslashes($object->content).'\',\''.$object->num_record.'\')';
+				pmb_mysql_query('delete from '.$sphinx_indexes_prefix.'records_explnums where id = '.$object->id,$this->getDBHandler());
+				$query = 'insert into '.$sphinx_indexes_prefix.'records_explnums (id,content,num_record) values('.$object->id.',\''.addslashes($object->content).'\',\''.$object->num_record.'\')';
 				if(!pmb_mysql_query($query,$this->getDBHandler())){
 					print $table. ' : '.pmb_mysql_error($this->getDBHandler()). "\n".$query;die;
 				}

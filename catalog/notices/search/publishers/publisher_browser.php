@@ -2,7 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: publisher_browser.php,v 1.12 2017-11-22 11:07:34 dgoron Exp $
+// $Id: publisher_browser.php,v 1.13 2019-06-07 08:05:39 btafforeau Exp $
+
+global $base_path, $base_auth, $base_title, $ancre, $coll_parent, $ed_parent, $j_offset, $browser_url, $open_folder, $closed_folder, $up_folder;
+global $document, $requete, $image, $limite_affichage, $restriction, $msg;
 
 // page d'affichage du browser de collections
 
@@ -66,8 +69,8 @@ if($coll_parent) {
 	$requete .= " AND collections.collection_id=sub_collections.sub_coll_parent";
 	$requete .= " AND sub_collections.sub_coll_parent=$coll_parent";
 	$requete .= " ORDER BY sub_collections.sub_coll_name";
-	$result = pmb_mysql_query($requete, $dbh);
-	$item = $item=pmb_mysql_fetch_object($result);
+	$result = pmb_mysql_query($requete);
+	$item = pmb_mysql_fetch_object($result);
 	print "<a href='$browser_url?ed_parent=".$item->ed_id."'>$up_folder</a>...<br />";
 	print $open_folder."<a href='#' onClick=\"".select('publisher', $item->ed_id)."\">".$item->ed_name."</a><br />";
 	print "<div style='margin-left:18px'>$open_folder";
@@ -90,7 +93,7 @@ if($coll_parent) {
 		$requete .= " AND publishers.ed_id=$ed_parent";
 		$requete .= " ORDER BY collections.collection_name";
 
-		$result = pmb_mysql_query($requete, $dbh);
+		$result = pmb_mysql_query($requete);
 		$item = pmb_mysql_fetch_object($result);
 		print $open_folder."<a href='#' onClick=\"".select('publisher', $item->ed_id)."\">".$item->ed_name.'</a><br />';
 		if($item->sub_coll_id && $item->sub_coll_parent==$item->collection_id)
@@ -117,7 +120,7 @@ if($coll_parent) {
 		$requete .= " ON publishers.ed_id=collections.collection_parent";
 		$requete .= " GROUP BY ed_name ORDER BY ed_name $restriction ";
 
-		$result = pmb_mysql_query($requete, $dbh);
+		$result = pmb_mysql_query($requete);
 
 		while($editeur=pmb_mysql_fetch_object($result)) {
 			if($editeur->collection_id)
@@ -132,7 +135,7 @@ if($coll_parent) {
 	} // fin clause ed_parent
 } // fin clause coll_parent
 
-pmb_mysql_close($dbh);
+pmb_mysql_close();
 
 // affichage du footer
 print "</div></body></html>";

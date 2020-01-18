@@ -2,14 +2,20 @@
 // +-------------------------------------------------+
 // ? 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl.tpl.php,v 1.92 2018-11-13 15:37:56 ngantier Exp $
+// $Id: expl.tpl.php,v 1.95 2019-07-02 12:07:27 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $cb, $id, $expl_new, $msg, $current_module, $expl_script, $antivol_form, $pmb_rfid_driver, $pmb_rfid_serveur_url, $expl_form, $charset, $expl_msg_form, $expl_pointage_base, $expl_pointage, $expl_cb_tmpl, $expl_cb_tmpl_recep, $expl_cb_retour_tmpl, $expl_pret, $expl_view_form, $expl_create_update_date_form, $expl_create_update_date_form, $expl_filing_return_date_form;
+global $pmb_antivol;
+global $pmb_rfid_activate;
+global $pmb_numero_exemplaire_auto;
+global $PMBuserid;
+global $pmb_form_expl_editables;
 
 if(!isset($cb)) $cb = '';
 if(!isset($id)) $id = '';
 
-global $pmb_numero_exemplaire_auto;
 //if($pmb_numero_exemplaire_auto>0) $num_exemplaire_test="if(eval(form.option_num_auto.checked == false ))";
 if($pmb_numero_exemplaire_auto==1 || $pmb_numero_exemplaire_auto==2) {
 	$num_exemplaire_test="var r=false;try { r=form.option_num_auto.checked;} catch(e) {};if(r==false) ";
@@ -17,7 +23,6 @@ if($pmb_numero_exemplaire_auto==1 || $pmb_numero_exemplaire_auto==2) {
 	$num_exemplaire_test="";
 }
 // permet d'autoriser un no exemplaire vide en mode rfid
-global $pmb_rfid_activate;
 if ($pmb_rfid_activate==1 ) {
 	$num_exemplaire_rfid_test="if(0)";	
 } else {
@@ -78,7 +83,6 @@ function test_form(form) {
 </script>
 ";
 
-global $pmb_antivol;
 if($pmb_antivol) {
 	$antivol_form="
 		<!-- type antivol -->
@@ -185,8 +189,6 @@ $rfid_script_catalog
 	<h3>$msg[300]</h3>
 </div>
 <div class='right'>";
-global $PMBuserid;
-global $pmb_form_expl_editables;
 if ($PMBuserid==1 && $pmb_form_expl_editables==1){
 	$expl_form.="<input type='button' class='bouton_small' value='".$msg["catal_edit_format"]."' id=\"bt_inedit\"/>";
 }
@@ -290,9 +292,9 @@ $expl_form.="</div>
 	
 		<!-- prix et date -->
 		<div id='el0Child_6' class='row'>
-			<div id='el0Child_6_a' class='colonne3' movable='yes' title=\"".htmlentities($msg['4050'], ENT_QUOTES, $charset)."\">
+			<div id='el0Child_6_a' class='colonne3' movable='yes' title=\"".htmlentities($msg['expl_price'], ENT_QUOTES, $charset)."\">
 				<div class='row'>
-					<label class='etiquette' for='f_ex_prix'>".$msg['4050']."</label>
+					<label class='etiquette' for='f_ex_prix'>".$msg['expl_price']."</label>
 				</div>
 				<div class='row'>
 					<input type='text' class='text' name='f_ex_prix' id='f_ex_prix' value=\"!!prix!!\" />
@@ -328,7 +330,11 @@ $expl_form.="</div>
 </form>
 <script type='text/javascript' src='./javascript/ajax.js' ></script>
 <script type=\"text/javascript\">
-	document.forms['expl'].elements['f_ex_cote'].focus();
+    var dom_node_f_ex_cote = document.forms['expl'].elements['f_ex_cote']; 
+	dom_node_f_ex_cote.focus();
+    if(dom_node_f_ex_cote.value.length) {
+        dom_node_f_ex_cote.setSelectionRange(dom_node_f_ex_cote.value.length, dom_node_f_ex_cote.value.length);
+    }
 	ajax_parse_dom();
 </script>
 ";

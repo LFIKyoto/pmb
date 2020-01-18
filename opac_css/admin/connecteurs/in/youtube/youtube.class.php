@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: youtube.class.php,v 1.10 2017-07-12 15:15:02 tsamson Exp $
+// $Id: youtube.class.php,v 1.11 2019-06-19 09:01:55 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -111,7 +111,9 @@ class youtube extends connector {
 	}
 
 	public function get_notice_infos(){
-		$infos = array();
+	    $infos = array();
+	    $infos['title'] = '';
+		$infos['author'] = '';
 		//on va chercher le titre de la notice...
 		$query = "select tit1 from notices where notice_id = ".$this->noticeToEnrich;
 		$result = pmb_mysql_query($query);

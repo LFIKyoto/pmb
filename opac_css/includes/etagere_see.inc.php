@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: etagere_see.inc.php,v 1.65 2018-06-14 10:19:16 dgoron Exp $
+// $Id: etagere_see.inc.php,v 1.68 2019-06-18 12:38:07 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -18,7 +18,7 @@ if ($id) {
 	//enregistrement de l'endroit actuel dans la session
 	rec_last_authorities();
 	//Récupération des infos de l'étagère
-	$id+=0;
+	$id = intval($id);
 	$etagere = new etagere($id);
 	
 	print pmb_bidi(($etagere->thumbnail_url?"<img src='".$etagere->thumbnail_url."' border='0' class='thumbnail_etagere' alt='".$etagere->get_translated_name()."'>":"")."<h3><span>".$etagere->get_translated_name()."</span></h3>\n");
@@ -113,6 +113,9 @@ if ($id) {
 		
 		//affinage
 		//enregistrement de l'endroit actuel dans la session
+		if(empty($_SESSION["last_module_search"])) {
+		    $_SESSION["last_module_search"] = array();
+		}
 		$_SESSION["last_module_search"]["search_mod"]="etagere_see";
 		$_SESSION["last_module_search"]["search_id"]=$id;
 		$_SESSION["last_module_search"]["search_page"]=$page;
@@ -157,7 +160,7 @@ print "</div><!-- fermeture #aut_details -->\n";
 //FACETTES
 $facettes_tpl = '';
 //comparateur de facettes : on ré-initialise
-$_SESSION['facette']="";
+$_SESSION['facette']=array();
 if($nbr_lignes){
 	require_once($base_path.'/classes/facette_search.class.php');
 	$query = "select distinct notice_id from caddie_content, etagere_caddie, notices $acces_j $statut_j ";

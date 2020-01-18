@@ -2,9 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc.tpl.php,v 1.27 2017-11-21 12:00:59 dgoron Exp $
+// $Id: serialcirc.tpl.php,v 1.28 2019-05-27 11:55:20 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $biblio_name, $pmb_lecteurs_localises, $msg, $charset, $current_module, $serialcirc_circ_pdf_diffusion;
+global $serialcirc_circ_form, $serialcirc_circ_liste_location, $serialcirc_circ_liste, $serialcirc_pointage_form, $serialcirc_circ_liste_alerter;
+global $serialcirc_circ_liste_alerter_tr, $serialcirc_circ_liste_is_alerted_tr, $serialcirc_circ_liste_circuler, $serialcirc_circ_liste_circuler_tr;
+global $serialcirc_circ_liste_circulation, $serialcirc_circ_liste_circulation_rotative_tr, $serialcirc_circ_liste_circulation_star_tr, $serialcirc_circ_liste_retard;
+global $serialcirc_circ_liste_retard_tr, $serialcirc_circ_liste_retard_rotative_tr, $serialcirc_circ_liste_retard_star_tr, $serialcirc_copy, $serialcirc_copy_tr;
+global $serialcirc_copy_ok_tr, $serialcirc_circ_liste_reservation, $serialcirc_circ_liste_reservation_tr, $serialcirc_circ_cb_notfound, $serialcirc_circ_cb_info;
 
 if(!isset($biblio_name)) $biblio_name = '';
 if(!isset($pmb_lecteurs_localises)) $pmb_lecteurs_localises = 0;

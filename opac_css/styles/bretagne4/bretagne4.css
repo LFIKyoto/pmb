@@ -1,7 +1,7 @@
 /* +--------------------------------------------------------------------------+
 // 2013 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bretagne4.css,v 1.12 2013-12-20 08:44:06 wlair Exp $ */
+// $Id: bretagne4.css,v 1.18 2017-07-18 13:38:06 wlair Exp $ */
 
 
 /* ---------------------------------------------------------------------------*/
@@ -19,7 +19,9 @@ body#pmbopac {
 	background-position: center top;
 	background-image: url("./images/fond.gif");
 }
-
+body#pmbopac.popup {
+	background: #ffffff;
+}
 body {
 	font-family: Arial, Trebuchet, Helvetica, Sans Serif;
 	font-size: 12px;
@@ -61,7 +63,6 @@ body.cart_info_body {
 	font-family : arial, verdana, helvetica, sans-serif;
 	margin: 0px;
 	font-size: 13px;
-	color: #56881C;
 }
 
 
@@ -361,8 +362,8 @@ input.login, input.password {
 #main_hors_footer {
 	min-height: 415px;
 	margin-bottom: 10px;
+	overflow: hidden;
 }
-
 
 /* ---------------------------------------------------------------------------*/
 /*                                Main_header                                 */
@@ -911,6 +912,14 @@ tr.surbrillance a {
 	font-family: 'Merienda',cursive;
 }
 
+ul ul li {
+    margin-left: 20px;
+}
+
+ul ul ul li {
+    margin-left: 40px;
+}
+
 
 /*****************Selections******************/
 
@@ -994,27 +1003,34 @@ tr.surbrillance a {
 
 
 #cms_module_recordslist_99 .bx-prev {
-    background-image: url("./images/prev.png");
-    background-position: center center;
-    background-repeat: no-repeat;
-    height: 33px;
-    width: 18px;
+    height: 0px;
+    width: 0px;
     z-index: 999;
     position: absolute;
     top: 35%;
     left: 0px;
+    border-style: solid;
+    border-width: 15px;    
+    border-top-color:transparent!important;
+    border-bottom-color:transparent!important;
+    border-left-color: transparent!important;
+    border-right-color:#4180b5;
+
 }
 
 #cms_module_recordslist_99 .bx-next {
-    background-image: url("./images/next.png");
-    background-position: center center;
-    background-repeat: no-repeat;
-    height: 33px;
-    width: 18px;
+    height: 0px;
+    width: 0px;
     z-index: 999;
     position: absolute;
     top: 35%;
     right: 0px;
+    border-style: solid;
+    border-width: 15px;    
+    border-top-color:transparent!important;
+    border-bottom-color:transparent!important;
+    border-left-color: #4180b5; 
+    border-right-color:transparent!important;
 }
 
 
@@ -1115,7 +1131,12 @@ tr.surbrillance a {
 	-webkit-box-shadow: 1px 1px 5px #cccccc;
 	box-shadow: 1px 1px 5px #cccccc;
 }
-
+.Cote,
+.record_bul_info a,
+.in_notCourte a{
+	color:#c90000;
+	font-weight:bold;	
+}
 
 /* ---------------------------------------------------------------------------*/
 /* ---------------------------------------------------------------------------*/
@@ -1345,4 +1366,23 @@ text-decoration:underline;
 		transition: all 0.3s ease-in-out;
 	}
 	
+}
+
+/******** 31122 exemplaire en reduit ************/
+
+.parentNotCourte #zone_exemplaires {
+    margin-top:15px;
+}
+
+.footer_notice {
+    margin: 5px 0;
+}
+
+#blocNotice_descr ul.onglets_isbd_publicNot li a:hover{
+   color:#fff;
+   transition:none;
+}
+
+#blocNotice_descr ul.onglets_isbd_publicNot .isbd_public_active a {
+    color: #fff;
 }

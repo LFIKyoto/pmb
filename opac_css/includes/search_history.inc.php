@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_history.inc.php,v 1.31 2018-11-22 14:36:01 ngantier Exp $
+// $Id: search_history.inc.php,v 1.32 2019-06-06 13:20:13 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($include_path."/rec_history.inc.php");
 
-print "<div class='search_history_container'>";
+print "<div id='search_history_container' class='search_history_container'>";
 if ($_SESSION["nb_queries"]) {
 	print "<script>
 		var history_all_checked = false;

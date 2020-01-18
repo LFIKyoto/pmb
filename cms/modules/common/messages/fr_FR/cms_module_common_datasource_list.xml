@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_common_datasource_list.xml,v 1.8 2018-05-25 12:05:27 dgoron Exp $ -->
+$Id: cms_module_common_datasource_list.xml,v 1.8.6.1 2019-10-24 08:04:40 dgoron Exp $ -->
 
 <XMLlist>
 	<entry code="cms_module_common_datasource_list_limit">Nombres d'éléments maximum à renvoyer</entry>
@@ -35,4 +35,5 @@ $Id: cms_module_common_datasource_list.xml,v 1.8 2018-05-25 12:05:27 dgoron Exp 
 	<entry code="cms_module_common_datasource_list_sort_by_default">Défaut</entry>
 	<entry code="cms_module_common_datasource_list_sort_by_name">Libellé</entry>
 	<entry code="cms_module_common_datasource_list_sort_by_idetagere">Identifiant</entry>
+	<entry code="cms_module_common_datasource_list_sort_by_rand()">Aléatoire</entry>
 </XMLlist>

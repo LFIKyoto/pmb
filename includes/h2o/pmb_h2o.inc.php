@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmb_h2o.inc.php,v 1.32 2018-12-17 23:09:30 ccraig Exp $
+// $Id: pmb_h2o.inc.php,v 1.36.2.4 2019-11-08 07:46:08 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 require_once($include_path."/h2o/h2o.php");
@@ -112,16 +112,30 @@ class pmb_DateFilters extends FilterCollection {
 	}
 }
 
+class pmb_CoreFilters extends FilterCollection {
+
+	public static function url_proxy($string, $from=''){
+		global $opac_url_base;
+		
+		$url_proxy = $opac_url_base."pmb.php?url=".urlencode($string);
+		if($from) {
+			$url_proxy .= "&from=".$from;
+		}
+		$url_proxy .= "&hash=".md5($string.$from);
+		return $url_proxy;
+	}
+}
+
 class Sqlvalue_Tag extends H2o_Node{
 	private $struct_name;
 	
 	
-	function __construct($argstring, $parser, $position){
+	public function __construct($argstring, $parser, $position){
 		$this->struct_name = $argstring;
 		$this->pmb_query = $parser->parse('endsqlvalue');
 	}
 	
-	function render($context,$stream){
+	public function render($context,$stream){
 		global $dbh;
 		
 		$query_stream = new StreamWriter;
@@ -144,14 +158,14 @@ class Sparqlvalue_Tag extends H2o_Node{
 	private $struct_name;
 	private $endpoint;
 
-	function __construct($argstring, $parser, $position){
+	public function __construct($argstring, $parser, $position){
 		$params = explode(" ",$argstring);
 		$this->struct_name = $params[0];
 		$this->endpoint = $params[1];
 		$this->sparql_query = $parser->parse('endsparqlvalue');
 	}
 
-	function render($context,$stream){
+	public function render($context,$stream){
 		global $dbh;
 		global $class_path;
 
@@ -172,17 +186,17 @@ class Sparqlvalue_Tag extends H2o_Node{
 class Tplnotice_Tag extends H2o_Node{
 	private $id_tpl;
 
-	function __construct($argstring, $parser, $position){
+	public function __construct($argstring, $parser, $position){
 		$this->id_tpl = $argstring;
 		$this->pmb_notice = $parser->parse('endtplnotice');
 	}
 
-	function render($context,$stream){
+	public function render($context,$stream){
 		global $class_path;
 		$query_stream = new StreamWriter;
 		$this->pmb_notice->render($context, $query_stream);
 		$notice_id = $query_stream->close();
-		$notice_id = $notice_id+0;
+		$notice_id = (int) $notice_id;
 		$query = "select count(notice_id) from notices where notice_id=".$notice_id;
 		$result = pmb_mysql_query($query);
 		if($result && pmb_mysql_result($result, 0)){
@@ -197,11 +211,11 @@ class Tplnotice_Tag extends H2o_Node{
 
 class Imgbase64_Tag extends H2o_Node{
     private $argument;
-    function __construct($argstring, $parser, $pos = 0) {
+    public function __construct($argstring, $parser, $pos = 0) {
         $this->argument = $argstring;
     }
     
-    function render($context, $stream) {
+    public function render($context, $stream) {
         global $charset;
         $path = $this->argument;
         try{
@@ -209,6 +223,30 @@ class Imgbase64_Tag extends H2o_Node{
         }catch(Exception $e){
         }
     }
+}
+
+function pmb_H2O_recurse_object($object,$property){
+    if(is_object($object)){
+        if ((isset($object->{$property}) || method_exists($object, '__get'))) {
+            return $object->{$property};
+        }
+        if (method_exists($object, $property)) {
+            return call_user_func_array(array($object, $property), array());
+        }
+        if (method_exists($object, "get_".$property)) {
+            return call_user_func_array(array($object, "get_".$property), array());
+        }
+        if (method_exists($object, "get".ucfirst($property))) {
+            return call_user_func_array(array($object, "get".ucfirst($property)), array());
+        } 
+        if (method_exists($object, "is_".$property)) {
+            return call_user_func_array(array($object, "is_".$property), array());
+        }
+        if (method_exists($object, "is".ucfirst($property))) {
+            return call_user_func_array(array($object, "is".ucfirst($property)), array());
+        }
+    }
+    return null;
 }
 
 
@@ -253,7 +291,7 @@ function cmsLookup($name,$context){
 		if($id && is_numeric($id)){
 			$cms_class = 'cms_'.$type;
 			$obj = new $cms_class($id);
-			
+			$obj = $obj->format_datas();
 			for($i=0 ; $i<count($attributes) ; $i++){
 				$attribute = $attributes[$i];
 				if(is_array($obj)){
@@ -295,34 +333,53 @@ function globalLookup($name, $context) {
 function recursive_lookup($name,$context) {
 	$obj = null;
 	$attributes = explode('.', $name);
-	// On regarde si on a directement une instance d'objet, dans le cas des boucles for
-	if (is_object($value = $context->getVariable(substr($attributes[0], 1))) && (count($attributes) > 1)) {
-		$obj = $value;
-		$property = str_replace($attributes[0].'.', '', $name);
-		$attributes = explode(".",$property);
-		for($i=0 ; $i<count($attributes) ; $i++){
-			$attribute = $attributes[$i];
-			if(is_array($obj)){
-				$obj = (isset($obj[$attribute]) ? $obj[$attribute] : null);
-			} else if(is_object($obj)){
-				if (is_object($obj) && (isset($obj->{$attribute}) || method_exists($obj, '__get'))) {
-					$obj = $obj->{$attribute};
-				} else if (method_exists($obj, $attribute)) {
-					$obj = call_user_func_array(array($obj, $attribute), array());
-				} else if (method_exists($obj, "get_".$attribute)) {
-					$obj = call_user_func_array(array($obj, "get_".$attribute), array());
-				} else if (method_exists($obj, "is_".$attribute)) {
-					$obj = call_user_func_array(array($obj, "is_".$attribute), array());
-				} else {
-					$obj = null;
-				}
-			} else{
-				$obj = null;
-				break;
-			}
-		}
+	$first=true;
+
+	// on fait une "récursion" sur chaque attribut
+	for($i=0 ; $i<count($attributes) ; $i++){
+	    $attribute = $attributes[$i];
+	    //le premier commence par ":"
+	    if($i=== 0){
+	        $attribute = substr($attributes[0], 1);
+	    }
+	    //Au premier coup, le premier attributt peut lui aussi être en "lazyload"
+	    if($first){
+	        //On regarde dans le contexte
+    	    foreach ($context->scopes as $layers) {
+    	    	if (isset($layers[$attribute])) {
+    	    		$obj = $layers[$attribute];
+    	    		$first = false;
+    	    		break;
+    	    	} 
+    	        // Pour chaque élément poussé dans le contexte
+        	    foreach ($layers as $layer){
+        	        // On regarde si c'est dans un objet
+        	        $obj = pmb_H2O_recurse_object($layer,$attribute);
+        	        if($obj !== null){
+        	            // On s'assure de ne pas repasser dans ce cas pour le reste de la "récursion"
+        	            $first = false;
+        	            break(2);
+        	        }
+        	    }
+        	}
+	    }else{
+	        // La récupération d'un élement de tableau ne fonctionne que pour le premier "niveau", après c'est à vérifier à la main
+	        if(is_array($obj)){
+	            if(isset($obj[$attribute])){
+	                $obj = $obj[$attribute];
+	            }else{
+	                $obj=null;
+	            }
+	        }else{
+	            $obj = pmb_H2O_recurse_object($obj,$attribute);
+	        }
+	    }
+	    // Si obj est null à cet instant, on évite de continuer le traitement pour rien
+	    if($obj === null){
+	        return null;
+	    }
 	}
-	return $obj;
+    return $obj;
 }
 
 
@@ -392,7 +449,7 @@ function env_varsLookup($name, $context) {
 	$datas['env_vars']['opac_url'] = $opac_url_base;
 	$datas['env_vars']['browser'] = cms_module_root::get_browser();
 	$datas['env_vars']['platform'] = cms_module_root::get_platform();
-
+	$datas['env_vars']['server_addr'] = $_SERVER['SERVER_ADDR'];
 
 	$code = str_replace(":env_vars.","",$name);
 	if ($code != $name && isset($datas['env_vars'][$code])) {
@@ -419,18 +476,20 @@ class H2o_collection {
 		}
 		if (!isset(static::$h2o_collection[$file][serialize($options)])) {
 			static::$h2o_collection[$file][serialize($options)] = new H2o($file, $options);
-		}else{
+		} else {
 			$e = new Exception();
 			$trace = $e->getTrace();
 			$loop = false;
-			for($i=2 ; $i<count($trace) ; $i++){
-				if($trace[$i]['function'] == $trace[1]['function']){
-					if(isset($trace[$i]['argument']) && ($trace[$i]['argument'][0] == $trace[1]['argument'][0])){
-						$loop = true;
+			$count_trace = count($trace);
+			for ($i = 2; $i < $count_trace; $i++) {
+				if ($trace[$i]['function'] == $trace[1]['function']) {
+				    $loop = true;
+					if (isset($trace[$i]['argument']) && ($trace[$i]['argument'] != $trace[1]['argument'])) {
+                        $loop = false;
 					}
 				}
 			}
-			if($loop){
+			if ($loop) {
 				return new H2o($file, $options);
 			}
 		}
@@ -454,6 +513,7 @@ h2o::addTag(array("tplnotice"));
 h2o::addTag(array("imgbase64"));
 h2o::addFilter(array('pmb_StringFilters'));
 h2o::addFilter(array('pmb_DateFilters'));
+h2o::addFilter(array('pmb_CoreFilters'));
 
 H2o::addLookup("imgLookup");
 H2o::addLookup("globalLookup");

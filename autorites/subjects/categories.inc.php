@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: categories.inc.php,v 1.12 2018-08-29 12:16:08 apetithomme Exp $
+// $Id: categories.inc.php,v 1.13 2019-06-03 07:04:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $parent, $id_thes, $class_path, $msg, $id;
 
 if(!isset($parent)) {
 	$parent = 0;

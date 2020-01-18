@@ -2,17 +2,13 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_bannettes_diffusion_ui.class.php,v 1.2 2018-12-28 09:16:20 dgoron Exp $
+// $Id: list_bannettes_diffusion_ui.class.php,v 1.4.2.1 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/list/bannettes/list_bannettes_ui.class.php");
 
 class list_bannettes_diffusion_ui extends list_bannettes_ui {
-		
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	protected function get_form_title() {
 		global $msg;
@@ -23,6 +19,11 @@ class list_bannettes_diffusion_ui extends list_bannettes_ui {
 		$this->columns = array();
 	}
 		
+	protected function init_available_filters() {
+		parent::init_available_filters();
+		$this->available_filters['main_fields']['type'] = 'dsi_bannette_type';
+	}
+	
 	/**
 	 * Header de la liste
 	 */
@@ -170,6 +171,16 @@ class list_bannettes_diffusion_ui extends list_bannettes_ui {
 							} else
 				           		return false;
 				    	}
+                        function valid_test_form() {
+                            var checkbox_list = document.getElementsByName('liste_bannette[]');
+                            for (let checkbox of checkbox_list) {
+                                if (checkbox.checked) {
+                                    return true;
+                                }
+                            }
+                            alert('".$msg['dsi_form_unvalid']."');
+                            return false;
+                        }
 					</script>";
 		//Affichage de la liste des objets
 		$display .= "<table id='".$this->objects_type."_list' width='100%' class='sortable'>";
@@ -192,18 +203,18 @@ class list_bannettes_diffusion_ui extends list_bannettes_ui {
 					<div class='row'>&nbsp;</div>
 					<div class='row'>
 						<div class='left'>
-							<input type='button' class='bouton' name='bt_vider' value=\"".$msg['dsi_ban_vider']."\" onclick=\"this.form.suite.value='vider'; this.form.submit();\" />
-							<input type='button' class='bouton' name='bt_remplir' value=\"".$msg['dsi_ban_remplir']."\" onclick=\"this.form.suite.value='remplir'; this.form.submit();\" />
-							<input type='button' class='bouton' name='bt_voircontenu' value=\"".$msg['dsi_ban_visualiser']."\" onclick=\"this.form.suite.value='visualiser'; this.form.submit();\" />
-							<input type='button' class='bouton' name='bt_diffuser' value=\"".$msg['dsi_ban_diffuser']."\" onclick=\"if(confirm_dsi_ban_diffuser()){this.form.suite.value='diffuser'; this.form.submit();}\" />
-							<input type='button' class='bouton' name='bt_diffuser' value=\"".$msg['dsi_dif_full_auto']."\" onclick=\"if(confirm_dsi_dif_full_auto()){this.form.suite.value='full_auto'; this.form.submit();}\" />
+							<input type='button' class='bouton' name='bt_vider' value=\"".$msg['dsi_ban_vider']."\" onclick=\"if(valid_test_form()){this.form.suite.value='vider'; this.form.submit();}\" />
+							<input type='button' class='bouton' name='bt_remplir' value=\"".$msg['dsi_ban_remplir']."\" onclick=\"if(valid_test_form()){this.form.suite.value='remplir'; this.form.submit();}\" />
+							<input type='button' class='bouton' name='bt_voircontenu' value=\"".$msg['dsi_ban_visualiser']."\" onclick=\"if(valid_test_form()){this.form.suite.value='visualiser'; this.form.submit();}\" />
+							<input type='button' class='bouton' name='bt_diffuser' value=\"".$msg['dsi_ban_diffuser']."\" onclick=\"if(valid_test_form() && confirm_dsi_ban_diffuser()){this.form.suite.value='diffuser'; this.form.submit();}\" />
+							<input type='button' class='bouton' name='bt_diffuser' value=\"".$msg['dsi_dif_full_auto']."\" onclick=\"if(valid_test_form() && confirm_dsi_dif_full_auto()){this.form.suite.value='full_auto'; this.form.submit();}\" />
 							<input type='hidden' name='suite' value='' />
 							<input type='hidden' name='id_classement' value='".$this->filters['id_classement']."' />
 							<input type='hidden' name='".$this->objects_type."_name' value='".$this->filters['name']."' />
 						</div>
 						<div class='right'>
-							<input type='button' class='bouton' name='gen_document' value=\"".$msg["dsi_ban_gen_document"]."\" onclick=\"this.form.suite.value='gen_document'; this.form.submit();\" />	
-							<input type='button' class='bouton' name='bt_exporter' value=\"".$msg['dsi_ban_exporter_diff']."\" onclick=\"this.form.suite.value='exporter'; this.form.submit();\" />
+							<input type='button' class='bouton' name='gen_document' value=\"".$msg["dsi_ban_gen_document"]."\" onclick=\"if(valid_test_form()){this.form.suite.value='gen_document'; this.form.submit();}\" />	
+							<input type='button' class='bouton' name='bt_exporter' value=\"".$msg['dsi_ban_exporter_diff']."\" onclick=\"if(valid_test_form()){this.form.suite.value='exporter'; this.form.submit();}\" />
 						</div>
 					</div>
 				</div>

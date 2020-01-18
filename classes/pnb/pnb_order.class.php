@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pnb_order.class.php,v 1.6 2018-06-29 09:47:33 ngantier Exp $
+// $Id: pnb_order.class.php,v 1.6.6.1 2019-11-08 11:28:01 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -25,6 +25,8 @@ class pnb_order {
 	protected $offer_duration;
 	protected $offer_formated_date;
 	protected $offer_formated_date_end;
+	protected $nb_current_loans;
+	private static $loans_infos = [];
 	
 	public function __construct($id = 0){
 		$id += 0;
@@ -123,7 +125,35 @@ class pnb_order {
 		$notice = new mono_display($this->num_notice);
 		return $notice->header;
 	}
-
+	public function get_nb_current_loans() {
+	    $query = "SELECT count(pret_idexpl) FROM pnb_orders_expl join pnb_orders on pnb_order_num= id_pnb_order join pret on pret_pnb_flag=1 and pret_idexpl = pnb_order_expl_num WHERE id_pnb_order = '" . $this->id. "' ";
+ 	    $result = pmb_mysql_query($query);
+ 	    if(pmb_mysql_num_rows($result)){
+ 	        return pmb_mysql_result($result,0,0);
+ 	    }
+	    return 0;
+	}
+	
+	public function get_loans_completed_number() {
+	    if(!isset(self::$loans_infos[$this->get_line_id()] )){
+	        self::$loans_infos[$this->get_line_id()] = dilicom::get_instance()->get_loan_status(array($this->get_line_id()));
+	    }
+	    if (isset(self::$loans_infos[$this->get_line_id()] ['loanResponseLine'][0]['nta'])) {
+	        return self::$loans_infos[$this->get_line_id()] ['loanResponseLine'][0]['nta'];
+	    }
+	    return '';
+	}
+	
+	public function get_loans_in_progress() {
+	    if(!isset(self::$loans_infos[$this->get_line_id()] )){
+	        self::$loans_infos[$this->get_line_id()] = dilicom::get_instance()->get_loan_status(array($this->get_line_id()));
+	    }
+	    if (isset(self::$loans_infos[$this->get_line_id()] ['loanResponseLine'][0]['nus1'])) {
+	        return self::$loans_infos[$this->get_line_id()] ['loanResponseLine'][0]['nus1'];
+	    }
+	    return '0';
+	}
+	
 	public static function get_loans_number_by_order_line_id($line_id) {
 	    $query = "SELECT count(id_pnb_loan) as loans_number FROM pnb_loans WHERE pnb_loan_order_line_id = '" . $line_id . "' ";	
 		$result = pmb_mysql_query($query);

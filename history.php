@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: history.php,v 1.47 2018-08-17 10:33:03 ccraig Exp $
+// $Id: history.php,v 1.48 2019-02-20 14:39:07 dgoron Exp $
 
 //Transmission ensuite du fichier converti
 $base_path = ".";
@@ -146,11 +146,13 @@ if ($alert) {
 print "<input type='hidden' name='act' value=''/>";
 if (isset($_SESSION["session_history"]) && count($_SESSION["session_history"])) {
 	print $begin_result_liste."&nbsp;";
-	print "<a href='#' onClick=\"document.history_form.act.value='del'; document.history_form.submit(); return false;\"><img src='".get_url_icon('suppr_coche.gif')."' alt=\"".$msg["histo_del_selected"]."\" title=\"".$msg["histo_del_selected"]."\" /></a>&nbsp;";
-	print "<a href='#' onClick=\"document.history_form.act.value='delall'; document.history_form.submit(); return false;\"><img src='".get_url_icon('suppr_all.gif')."' alt=\"".$msg["histo_del_histo"]."\" title=\"".$msg["histo_del_histo"]."\" /></a>&nbsp;";
-	print "&nbsp;<a href='#' onClick=\"document.history_form.act.value='save'; document.history_form.submit(); return false;\"><img src='".get_url_icon('save.gif')."' alt=\"".$msg["histo_save_histo"]."\" title=\"".$msg["histo_save_histo"]."\" /></a>&nbsp;";
+	print "<a href='#' onClick=\"document.history_form.act.value='save'; document.history_form.submit(); return false;\"><img src='".get_url_icon('save.gif')."' alt=\"".$msg["histo_save_histo"]."\" title=\"".$msg["histo_save_histo"]."\" /></a>&nbsp;";
 	print "&nbsp;<a href='#' onClick=\"document.history_form.act.value='export'; document.history_form.submit(); return false;\"><img src='".get_url_icon('upload.gif')."' alt=\"".$msg["histo_export_selected"]."\" title=\"".$msg["histo_export_selected"]."\" /></a>&nbsp;";
-	print "&nbsp;<a href='#' onClick=\"document.history_form.act.value='import'; document.history_form.submit(); return false;\"><img src='".get_url_icon('download.gif')."' alt=\"".$msg["histo_import_searches"]."\" title=\"".$msg["histo_import_searches"]."\" /></a><br />";
+	print "&nbsp;<a href='#' onClick=\"document.history_form.act.value='import'; document.history_form.submit(); return false;\"><img src='".get_url_icon('download.gif')."' alt=\"".$msg["histo_import_searches"]."\" title=\"".$msg["histo_import_searches"]."\" /></a>";
+	print "<span class='right'>";
+	print "<a href='#' onClick=\"document.history_form.act.value='del'; document.history_form.submit(); return false;\"><img src='".get_url_icon('suppr_coche.gif')."' alt=\"".$msg["histo_del_selected"]."\" title=\"".$msg["histo_del_selected"]."\" /></a>&nbsp;";
+	print "&nbsp;<a href='#' onClick=\"document.history_form.act.value='delall'; document.history_form.submit(); return false;\"><img src='".get_url_icon('suppr_all.gif')."' alt=\"".$msg["histo_del_histo"]."\" title=\"".$msg["histo_del_histo"]."\" /></a><br />";
+	print "</span>";
 	for ($i=count($_SESSION["session_history"])-1; $i>=0; $i--) {
 		$javascript_template ="
 		<div id=\"el!!id!!Parent\" class=\"notice-parent\">

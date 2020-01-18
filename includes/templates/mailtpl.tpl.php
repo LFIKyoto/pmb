@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mailtpl.tpl.php,v 1.15 2018-12-18 09:15:05 dgoron Exp $
+// $Id: mailtpl.tpl.php,v 1.18.6.1 2019-11-06 11:24:01 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $mailtpl_list_tpl, $mailtpl_attachments_form_tpl, $msg, $charset, $mailtpl_list_line_tpl, $mailtpl_form_resavars, $mailtpl_form_selvars, $mailtpl_form_sel_img, $mailtpl_form_tpl, $pmb_javascript_office_editor;
+global $current_module, $pdflettreresa_resa_prolong_email;
 
 $mailtpl_list_tpl="	
 <h1>".htmlentities($msg["admin_mailtpl_title"], ENT_QUOTES, $charset)."</h1>			
@@ -53,8 +56,10 @@ $mailtpl_form_selvars="
 		<option value=!!empr_name_and_adress!!>".htmlentities($msg["selvars_empr_name_and_adress"],ENT_QUOTES, $charset)."</option>
 		<option value=!!empr_dated!!>".htmlentities($msg["selvars_empr_dated"],ENT_QUOTES, $charset)."</option>
 		<option value=!!empr_datef!!>".htmlentities($msg["selvars_empr_datef"],ENT_QUOTES, $charset)."</option>
+		<option value=!!empr_nb_days_before_expiration!!>".htmlentities($msg["selvars_empr_nb_days_before_expiration"],ENT_QUOTES, $charset)."</option>
 		<option value=!!empr_all_information!!>".htmlentities($msg["selvars_empr_all_information"],ENT_QUOTES, $charset)."</option>
 		<option value='".htmlentities("<a href='".$opac_url_base."empr.php?code=!!code!!&emprlogin=!!login!!&date_conex=!!date_conex!!'>".$msg["selvars_empr_auth_opac"]."</a>",ENT_QUOTES, $charset)."'>".$msg["selvars_empr_auth_opac"]."</option>
+		<option value='".htmlentities("<a href='".$opac_url_base."empr.php?lvl=renewal&code=!!code!!&emprlogin=!!login!!&date_conex=!!date_conex!!'>".$msg["selvars_empr_auth_opac_subscribe_link"]."</a>",ENT_QUOTES, $charset)."'>".$msg["selvars_empr_auth_opac_subscribe_link"]."</option>
 	</optgroup>
 	<optgroup label='".htmlentities($msg["selvars_empr_group_loc"],ENT_QUOTES, $charset)."'>
 		<option value=!!empr_loc_name!!>".htmlentities($msg["selvars_empr_loc_name"],ENT_QUOTES, $charset)."</option>
@@ -202,3 +207,55 @@ $mailtpl_form_tpl="
 <div class='row'></div>
 </form>		
 ";
+		
+$mailtpl_attachments_form_tpl="
+<div class='row'>
+	<label class='etiquette' >".$msg["empr_mailing_form_message_piece_jointe"]." (".ini_get('upload_max_filesize').")</label>
+</div>
+<div id='add_pieces'>
+	<input type='hidden' id='nb_piece' value='1'/>
+	<div class='row' id='piece_1'>
+		<input type='file' id='pieces_jointes_mailing_1' name='pieces_jointes_mailing[]' class='saisie-80em' size='60'/><input class='bouton' type='button' value='X' onclick='document.getElementById(\"pieces_jointes_mailing_1\").value=\"\"'/>
+		<input class='bouton' type='button' value='+' onClick=\"add_pieces_jointes_mailing();\"/>
+	</div>
+</div>
+<script type='text/javascript'>
+	function add_pieces_jointes_mailing(){
+		var nb_piece=document.getElementById('nb_piece').value;
+		nb_piece= (nb_piece*1) + 1;
+		
+		var template = document.getElementById('add_pieces');
+		
+		var divpiece=document.createElement('div');
+   		divpiece.className='row';
+   		divpiece.setAttribute('id','piece_'+nb_piece);
+   		template.appendChild(divpiece);
+   		document.getElementById('nb_piece').value=nb_piece;
+   		
+   		var inputfile=document.createElement('input');
+   		inputfile.setAttribute('type','file');
+   		inputfile.setAttribute('name','pieces_jointes_mailing[]');
+   		inputfile.setAttribute('id','pieces_jointes_mailing_'+nb_piece);
+   		inputfile.setAttribute('class','saisie-80em');
+   		inputfile.setAttribute('size','60');
+   		divpiece.appendChild(inputfile);
+   		
+   		var inputfile=document.createElement('input');
+   		inputfile.setAttribute('type','button');
+   		inputfile.setAttribute('value','X');
+   		inputfile.setAttribute('onclick','del_pieces_jointes_mailing('+nb_piece+');');
+   		inputfile.setAttribute('class','bouton');
+   		divpiece.appendChild(inputfile);
+	}
+	
+	function del_pieces_jointes_mailing(nb_piece){
+		var parent = document.getElementById('add_pieces');
+		var child = document.getElementById('piece_'+nb_piece);
+		parent.removeChild(child);
+		
+		var nb_piece=document.getElementById('nb_piece').value;
+		nb_piece= (nb_piece*1) - 1;
+		document.getElementById('nb_piece').value=nb_piece;
+		
+	}
+</script>";

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum.class.php,v 1.110 2018-11-26 15:48:23 dgoron Exp $
+// $Id: explnum.class.php,v 1.119.2.1 2019-10-09 13:00:17 dgoron Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
 	die("no access");
 
@@ -57,7 +57,13 @@ if (! defined('EXPLNUM_CLASS')) {
 		protected $explnum_create_date;
 		protected $explnum_update_date;
 		protected $explnum_file_size;
-		
+
+        /**
+         * Instance de parametres_perso associée
+		 * @var parametres_perso
+		 */
+ 		protected $p_perso;
+            
 		// constructeur
 		public function __construct($id = 0, $id_notice = 0, $id_bulletin = 0) {
 			$this->explnum_id = $id+0;
@@ -80,10 +86,10 @@ if (! defined('EXPLNUM_CLASS')) {
 				$this->explnum_repertoire = 0;
 			}
 		}
-		
+
 		protected function fetch_data() {
 			global $pmb_indexation_docnum_default, $deflt_explnum_statut, $deflt_lenders;
-			
+
 			$this->explnum_nom = '';
 			$this->explnum_mimetype = '';
 			$this->explnum_url = '';
@@ -102,7 +108,7 @@ if (! defined('EXPLNUM_CLASS')) {
 			$this->explnum_update_date = '0000-00-00 00:00:00';
 			$this->explnum_file_size = 0;
 			$this->unzipped_files = array();
-			
+
 			if ($this->explnum_id) {
 				$requete = "SELECT explnum_id, explnum_notice, explnum_bulletin, explnum_nom, explnum_mimetype, explnum_extfichier, explnum_url, explnum_data, explnum_vignette,
 				explnum_statut, explnum_index_sew, explnum_index_wew, explnum_repertoire, explnum_nomfichier, explnum_path, repertoire_nom, repertoire_path, group_concat(num_location SEPARATOR ',') as loc, explnum_docnum_statut,
@@ -134,7 +140,8 @@ if (! defined('EXPLNUM_CLASS')) {
 					$this->explnum_create_date = $item->explnum_create_date;
 					$this->explnum_update_date = $item->explnum_update_date;
 					$this->explnum_file_size = $item->explnum_file_size;
-						
+
+					$this->lenders = array();
 					$query = 'select explnum_lender_num_lender from explnum_lenders where explnum_lender_num_explnum=' . $this->explnum_id;
 					$result_lender = pmb_mysql_query($query);
 					if (pmb_mysql_num_rows($result_lender)) {
@@ -145,7 +152,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				}
 			}
 		}
-		
+
 		/*
 		 * Construction du formulaire
 		 */
@@ -161,7 +168,7 @@ if (! defined('EXPLNUM_CLASS')) {
 			global $base_path;
 			global $thesaurus_concepts_active;
 			global $pmb_type_audit;
-			
+
 			$form = str_replace('!!action!!', $action, $form);
 			$form = str_replace('!!explnum_id!!', $this->explnum_id, $form);
 			$form = str_replace('!!bulletin!!', $this->explnum_bulletin, $form);
@@ -173,11 +180,11 @@ if (! defined('EXPLNUM_CLASS')) {
 			} else {
 				$form = str_replace('!!disabled_url!!', "", $form);
 			}
-			
+
 			// Gestion de l'interface d'indexation
 			if ($pmb_indexation_docnum) {
 				$checkbox = "<div id='el0Child_6' class='row' movable='yes' title=\"" . htmlentities($msg['docnum_a_indexer'], ENT_QUOTES, $charset) . "\">
-				 		<input type='checkbox' id='ck_index' value='1' name='ck_index' $this->explnum_index /><label for='ck_index'>" . $msg['docnum_a_indexer'] . "</label>	
+				 		<input type='checkbox' id='ck_index' value='1' name='ck_index' $this->explnum_index /><label for='ck_index'>" . $msg['docnum_a_indexer'] . "</label>
 				 	</div>
 				 ";
 				if ($this->explnum_index_sew != '' && $this->explnum_index_wew != '') {
@@ -186,7 +193,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				 		 if(!form.ck_index.checked) {
 				 		 	conf = confirm(\"" . $msg['docnum_suppr_index'] . "\");
 				 			return conf;
-				 		 } 
+				 		 }
 				 		 return true;
 				 	}</script>
 				 	";
@@ -200,18 +207,18 @@ if (! defined('EXPLNUM_CLASS')) {
 				$form = str_replace("!!ck_indexation!!", "", $form);
 				$form = str_replace("!!submit_action!!", "return testing_file(" . $this->explnum_id . ");", $form);
 			}
-			
+
 			// Gestion de l'interface de segmentation
 			if ($pmb_diarization_docnum) {
 				$checkbox = "<div id='el0Child_7' class='row' movable='yes' title=\"" . htmlentities($msg['diarize_explnum'], ENT_QUOTES, $charset) . "\">
-				 		<input type='checkbox' id='ck_diarization' value='1' name='ck_diarization' /><label for='ck_diarization'>" . $msg['diarize_explnum'] . "</label>	
+				 		<input type='checkbox' id='ck_diarization' value='1' name='ck_diarization' /><label for='ck_diarization'>" . $msg['diarize_explnum'] . "</label>
 				 	</div>
 				 ";
 				$form = str_replace('!!ck_diarization!!', $checkbox, $form);
 			} else {
 				$form = str_replace("!!ck_diarization!!", "", $form);
 			}
-			
+
 			// Gestion du scanner
 			if (($pmb_scan_pmbws_client_url) && ($pmb_scan_pmbws_url)) {
 				$scan_addon = "
@@ -231,7 +238,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				<input type='hidden' id='scanned_texte' name='scanned_texte' value=''/>";
 				$form = str_replace('<!-- !!scan_button!! -->', $scan_addon, $form);
 			}
-			
+
 			// Ajout du bouton d'association s'il y a des segments en base
 			$associer = "";
 			$fct = "";
@@ -244,7 +251,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				}
 				if ($nb > 0) {
 					$associer = "<input type='button' class='bouton' value=\"" . $msg['associate_speakers'] . "\" name='associate_speakers' id='associate_speakers' onClick=\"document.location = '" . $base_path . "/catalog.php?categ=explnum_associate&explnum_id=" . $this->explnum_id . "';\" />";
-					
+
 					if ($pmb_diarization_docnum) {
 						// On ajoute une confirmation pour une deuxième segmentation => perte des associations
 						$fct = "<script type='text/javascript'>
@@ -256,7 +263,7 @@ if (! defined('EXPLNUM_CLASS')) {
 									}
 								}
 							}
-							
+
 							document.getElementById('ck_diarization').addEventListener('change', conf_diarize_again, false);
 						</script>";
 					}
@@ -264,11 +271,12 @@ if (! defined('EXPLNUM_CLASS')) {
 			}
 			$form = str_replace("!!associate_speakers!!", $associer, $form);
 			$form = str_replace("!!fct_conf_diarize_again!!", $fct, $form);
-			
+
 			// Champs persos
-			$p_perso = new parametres_perso("explnum");
-			if (! $p_perso->no_special_fields) {
-				$perso_ = $p_perso->show_editable_fields($this->explnum_id);
+            $this->get_p_perso();
+            $perso = '';
+            if (!$this->p_perso->no_special_fields) {
+                $perso_ = $this->p_perso->show_editable_fields($this->explnum_id);
 				for($i = 0; $i < count($perso_["FIELDS"]); $i++) {
 					if (($i == count($perso_["FIELDS"]) - 1) && ($i % 2 == 0))
 						$element_class = 'row';
@@ -285,9 +293,9 @@ if (! defined('EXPLNUM_CLASS')) {
 				$perso = "\n<script>function check_form() { return true; }</script>\n";
 			}
 			$form = str_replace("!!champs_perso!!", $perso, $form);
-			
+
 			$form = str_replace("!!rights_form!!", $this->get_rights_form(), $form);
-			
+
 			// Ajout du bouton supprimer si modification
 			if ($this->explnum_id && $suppr) {
 				$supprimer = "
@@ -304,7 +312,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				$supprimer = "";
 			}
 			$form = str_replace('!!supprimer!!', $supprimer, $form);
-			
+
 			// Gestion du statut de notice
 			if ($pmb_explnum_statut == '1') {
 				$explnum_statut_form = "&nbsp;<input type='checkbox' id='f_statut_chk' name='f_statut_chk' value='1' ";
@@ -313,7 +321,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				$explnum_statut_form .= "/>&nbsp;<label class='etiquette' for='f_statut_chk'>" . htmlentities($msg['explnum_statut_msg'], ENT_QUOTES, $charset) . "</label>";
 				$form = str_replace('<!-- explnum_statut -->', $explnum_statut_form, $form);
 			}
-			
+
 			// Conserver la vignette
 			if ($this->explnum_vignette)
 				$form = str_replace('!!vignette_existante!!', "&nbsp;<input type='checkbox' checked='checked' name='conservervignette' id='conservervignette' value='1'>&nbsp;<label for='conservervignette'>" . $msg['explnum_conservervignette'] . "</label>", $form);
@@ -332,18 +340,18 @@ if (! defined('EXPLNUM_CLASS')) {
 			}
 			$selector_mimetype .= "</select>";
 			$form = str_replace('!!mimetype_list!!', $selector_mimetype, $form);
-			
+
 			// Intégration de la gestion de l'interface de l'upload
 			if ($pmb_docnum_in_directory_allow) {
 				$div_up = "<div class='row'>";
 				if ($pmb_docnum_in_database_allow)
 					$div_up .= "<input type='radio' name='up_place' id='base' value='0' !!check_base!!/> <label for='base'>$msg[upload_repertoire_sql]</label>";
-				
+
 				$div_up .= "	<input type='radio' name='up_place' id='upload' value='1' !!check_up!! />
 								<label for='upload'>$msg[upload_repertoire_server]
 									<input type='text' name='path' id='path' class='saisie-50emr' value='!!path!!' /><input type='button' class='bouton' name='upload_path' id='upload_path' value='...' onclick='upload_openFrame(event)'/>
-								</label> 
-								<input type='hidden' name='id_rep' id='id_rep' value='!!id_rep!!' /> 
+								</label>
+								<input type='hidden' name='id_rep' id='id_rep' value='!!id_rep!!' />
 							</div>";
 				$form = str_replace('!!div_upload!!', $div_up, $form);
 				$up = new upload_folder($this->explnum_repertoire);
@@ -358,7 +366,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				}
 				$form = str_replace('!!path!!', htmlentities($nom_chemin, ENT_QUOTES, $charset), $form);
 				$form = str_replace('!!id_rep!!', htmlentities($this->explnum_repertoire, ENT_QUOTES, $charset), $form);
-				
+
 				if ($this->explnum_rep_nom || $this->isEnUpload()) {
 					$form = str_replace('!!check_base!!', '', $form);
 					$form = str_replace('!!check_up!!', "checked='checked'", $form);
@@ -369,7 +377,7 @@ if (! defined('EXPLNUM_CLASS')) {
 			} else {
 				$form = str_replace('!!div_upload!!', '', $form);
 			}
-			
+
 			// Ajout du selecteur de localisation
 			if ($explnum_id) {
 				if (! $this->explnum_location) {
@@ -387,18 +395,18 @@ if (! defined('EXPLNUM_CLASS')) {
 				global $deflt_docs_location;
 				$liste_id[0] = $deflt_docs_location;
 			}
-			
+
 			$docloc = new docs_location();
 			$selector_location = $docloc->gen_multiple_combo($liste_id);
-			
+
 			$form = str_replace('!!location_explnum!!', "<div class='row'><label class='etiquette'>" . htmlentities($msg['empr_location'], ENT_QUOTES, $charset) . "</label></div>" . $selector_location, $form);
-			
+
 			$form = str_replace('!!lenders!!', lender::gen_multiple_combo_box($this->lenders), $form);
-			
+
 			// statut
 			$select_statut = gen_liste_multiple("select id_explnum_statut, gestion_libelle from explnum_statut order by 2", "id_explnum_statut", "gestion_libelle", "id_explnum_statut", "f_explnum_statut", "", $this->explnum_docnum_statut, "", "", "", "", 0);
 			$form = str_replace('!!statut_list!!', $select_statut, $form);
-			
+
 			$explnum_licence_selector = explnum_licence::get_licence_selector(explnum_licence::get_explnum_licence_profiles($this->explnum_id));
 			if ($explnum_licence_selector) {
 				$explnum_licence_selector = "
@@ -412,9 +420,9 @@ if (! defined('EXPLNUM_CLASS')) {
 						    <div class='row'>&nbsp;</div>
 						</div>";
 			}
-			
+
 			$form = str_replace('!!explnum_licence_selectors!!', $explnum_licence_selector, $form);
-			
+
 			// Indexation concept
 			if ($thesaurus_concepts_active == 1) {
 				$index_concept = new index_concept($this->explnum_id, TYPE_EXPLNUM);
@@ -422,7 +430,7 @@ if (! defined('EXPLNUM_CLASS')) {
 			} else {
 				$form = str_replace('!!index_concept_form!!', "", $form);
 			}
-			
+
 			if($pmb_type_audit && $this->explnum_id) {
 				$form = str_replace('!!link_audit!!', audit::get_dialog_button($this->explnum_id, AUDIT_EXPLNUM), $form);
 			} else {
@@ -435,32 +443,32 @@ if (! defined('EXPLNUM_CLASS')) {
 		 */
 		public function explnum_form($action, $annuler = '', $suppr = '') {
 			global $explnum_form;
-			
+
 			// $action .= '&id='.$this->explnum_id;
-			
+
 			$this->fill_form($explnum_form, $action, $suppr);
-			
+
 			// action du bouton annuler
 			if (! $annuler)
 				// default : retour à la liste des exemplaires
 				$annuler = './catalog.php?categ=expl&id=' . $this->id_notice;
-			
+
 			$explnum_form = str_replace('!!annuler_action!!', $annuler, $explnum_form);
-			
+
 			// affichage
 			return $explnum_form;
 		}
-		
+
 		/*
 		 * Mise à jour des documents numériques
 		 */
 		public function mise_a_jour($f_notice, $f_bulletin, $f_nom, $f_url, $retour, $conservervignette, $f_statut_chk, $f_explnum_statut, $book_lender_id = array(), $forcage = 0, $f_url_vignette='') {
 			global $multi_ck, $base_path, $iframe;
-			
+
 			$this->recuperer_explnum($f_notice, $f_bulletin, $f_nom, $f_url, $retour, $conservervignette, $f_statut_chk, $f_explnum_statut, $forcage, $f_url_vignette);
 			if ($multi_ck) {
 				// Gestion multifichier
-				
+
 				$this->unzip($base_path . "/temp/" . $this->infos_docnum["userfile_moved"]);
 				if (! is_array($this->unzipped_files) || ! count($this->unzipped_files)) { // Si la décompression n'a pas fonctionnée on reprend le fonctionnement normal
 					$this->infos_docnum["nom"] = "-x-x-x-x-";
@@ -476,7 +484,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				$this->analyser_docnum();
 				$this->update(!$iframe);
 			}
-			
+
 			if ($f_notice) {
 				// Mise a jour de la table notices_mots_global_index
 				notice::majNoticesMotsGlobalIndex($f_notice, "explnum");
@@ -509,7 +517,7 @@ if (! defined('EXPLNUM_CLASS')) {
 			$event = new event_explnum("explnum", "before_delete");
 			$event->set_explnum($this);
 			$evt_handler->send($event);
-			
+
 			if ($this->isEnUpload()) {
 				$up = new upload_folder($this->explnum_repertoire);
 				$chemin = str_replace("//", "/", $this->explnum_rep_path . $this->explnum_path . $this->explnum_nomfichier);
@@ -519,35 +527,35 @@ if (! defined('EXPLNUM_CLASS')) {
 			}
 			$requete = "DELETE FROM explnum WHERE explnum_id=" . $this->explnum_id;
 			pmb_mysql_query($requete);
-			
+
 			audit::delete_audit(AUDIT_EXPLNUM, $this->explnum_id);
-			
+
 			// on oublie pas la localisation associé
 			$requete = "delete from explnum_location where num_explnum = " . $this->explnum_id;
 			pmb_mysql_query($requete);
-			
+
 			// Suppression des segments et locuteurs
 			$requete = "delete from explnum_speakers where explnum_speaker_explnum_num = " . $this->explnum_id;
 			pmb_mysql_query($requete);
-			
+
 			$requete = "delete from explnum_segments where explnum_segment_explnum_num = " . $this->explnum_id;
 			pmb_mysql_query($requete);
-			
+
 			// Nettoyage demande de numérisation
 			$requete = "delete from scan_request_explnum where scan_request_explnum_num_explnum = " . $this->explnum_id;
 			pmb_mysql_query($requete);
-			
+
 			// Nettoyage indexation concepts
 			$index_concept = new index_concept($this->explnum_id, TYPE_EXPLNUM);
 			$index_concept->delete();
-			
+
 			// Nettoyage des régimes de licence
 			explnum_licence::delete_explnum_licence_profiles($this->explnum_id);
-			
+
 			// Supression des champs perso
-			$p_perso = new parametres_perso("explnum");
-			$p_perso->delete_values($this->explnum_id);
-			
+            $this->get_p_perso();
+            $this->p_perso->delete_values($this->explnum_id);
+
 			// On recalcule l'index global pour la notice
 			if ($this->explnum_notice) {
 				// Mise a jour de la table notices_mots_global_index
@@ -569,23 +577,26 @@ if (! defined('EXPLNUM_CLASS')) {
 
 		protected function save_lenders() {
 			global $book_lender_id;
-			
+
 			$query = "delete from explnum_lenders where explnum_lender_num_explnum='" . $this->explnum_id . "'";
 			pmb_mysql_query($query);
-			if (count($book_lender_id)) {
-				foreach ($book_lender_id as $lender_id) {
-					$query = 'insert into explnum_lenders set explnum_lender_num_explnum=' . $this->explnum_id . ', explnum_lender_num_lender=' . $lender_id;
-					pmb_mysql_query($query);
-				}
+			if (isset($book_lender_id) && is_array($book_lender_id) && count($book_lender_id)) {
+			    if ((count($book_lender_id) == 1) && ($book_lender_id[0] == - 1)) {
+			    } else {
+			        foreach ($book_lender_id as $lender_id) {
+			            $query = 'insert into explnum_lenders set explnum_lender_num_explnum=' . $this->explnum_id . ', explnum_lender_num_lender=' . $lender_id;
+			            pmb_mysql_query($query);
+			        }
+			    }
 			}
 		}
-		
+
 		/**
 		 * On enregistre la ou les localisations
 		 */
 		protected function save_locations() {
 			global $loc_selector;
-			
+
 			$query = "delete from explnum_location where num_explnum='" . $this->explnum_id . "'";
 			pmb_mysql_query($query);
 			if ((count($loc_selector) == 1) && ($loc_selector[0] == - 1)) {
@@ -596,14 +607,14 @@ if (! defined('EXPLNUM_CLASS')) {
 				}
 			}
 		}
-		
+
 		public function save() {
 			global $id_rep, $up_place;
 			global $gestion_acces_active, $gestion_acces_empr_docnum;
 			global $res_prf, $chk_rights, $prf_rad, $r_rad;
 			global $pmb_diarization_docnum;
 			global $thesaurus_concepts_active;
-			
+
 			if (empty($this->params["erreur"])) {
 				$update = false;
 				if ($this->explnum_id) {
@@ -632,7 +643,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				, explnum_update_date=sysdate() ";
 				$query.= ", explnum_file_size = '".$this->explnum_file_size."'";
 				$query .= $limiter;
-				
+
 				pmb_mysql_query($query);
 				if(!$this->explnum_id) {
 					$this->explnum_id = pmb_mysql_insert_id();
@@ -640,10 +651,10 @@ if (! defined('EXPLNUM_CLASS')) {
 				} else {
 					audit::insert_modif (AUDIT_EXPLNUM, $this->explnum_id);
 				}
-				
+
 				$this->save_lenders();
 				$this->save_locations();
-				
+
 				// traitement des droits acces user_docnum
 				if ($gestion_acces_active == 1 && $gestion_acces_empr_docnum == 1) {
 					$ac = new acces();
@@ -654,30 +665,33 @@ if (! defined('EXPLNUM_CLASS')) {
 						$dom_3->storeUserRights(0, $this->explnum_id, $res_prf, $chk_rights, $prf_rad, $r_rad);
 					}
 				}
-				
+
 				// Segmentation du document
 				if ($pmb_diarization_docnum) {
 					$this->diarization_docnum();
 				}
 				
+				$this->get_p_perso();
+				$this->p_perso->rec_fields_perso($this->explnum_id);
+
 				// Indexation concepts
 				if ($thesaurus_concepts_active == 1) {
 					$index_concept = new index_concept($this->explnum_id, TYPE_EXPLNUM);
 					$index_concept->save();
 				}
-				
+
 				explnum_licence::save_explnum_licence_profiles($this->explnum_id);
 				return true;
 			} else {
 				return false;
 			}
 		}
-		
+
 		protected function update_explnum_vignette($explnum_vignette) {
 			$query = "update explnum set explnum_vignette='" . addslashes($explnum_vignette) . "' where explnum_id='" . $this->explnum_id . "'";
 			pmb_mysql_query($query);
 		}
-		
+
 		/*
 		 * Mise à jour de l'exemplaire numérique
 		 */
@@ -686,7 +700,15 @@ if (! defined('EXPLNUM_CLASS')) {
 			global $current_module, $pmb_explnum_statut;
 			global $id_rep, $up_place;
 			global $mime_vign;
-			
+
+           	 /**
+             * Publication d'un évenement avant la mise à jour
+             */
+            $evt_handler = events_handler::get_instance();
+            $event = new event_explnum("explnum", "before_update");
+            $event->set_explnum($this);
+            $evt_handler->send($event);
+
 			$update = false;
 			if ($this->explnum_id) {
 				$update = true;
@@ -703,15 +725,15 @@ if (! defined('EXPLNUM_CLASS')) {
 					$this->explnum_mimetype = stripslashes($this->infos_docnum["mime"]);
 				}
 				if ($this->params["maj_data"]) {
-					if (! $this->params["is_upload"]) {
-						$this->explnum_data = $this->infos_docnum["contenu"];
+					if (!isset($this->params["is_upload"]) || !$this->params["is_upload"]) {
+						$this->explnum_data = (isset($this->infos_docnum["contenu"]) ? $this->infos_docnum["contenu"] : '');
 					} else {
 						$this->explnum_data = '';
 					}
 					$this->explnum_nomfichier = $this->infos_docnum["userfile_name"];
 					$this->explnum_extfichier = $this->infos_docnum["userfile_ext"];
 				}
-				if ($this->params["maj_vignette"] && ! $this->params["conservervignette"]) {
+				if ($this->params["maj_vignette"] && (!isset($this->params["conservervignette"]) || !$this->params["conservervignette"])) {
 					$this->explnum_vignette = $this->infos_docnum["contenu_vignette"];
 				}
 				if ($pmb_explnum_statut == '1') {
@@ -719,18 +741,18 @@ if (! defined('EXPLNUM_CLASS')) {
 				}
 				$this->explnum_repertoire = (($up_place) ? $id_rep : 0);
 				$this->explnum_path = $this->infos_docnum["path"];
-				$this->explnum_docnum_statut = (($this->params["explnum_statut"]) ? $this->params["explnum_statut"] : 1);
+				$this->explnum_docnum_statut = ((isset($this->params["explnum_statut"]) && $this->params["explnum_statut"]) ? $this->params["explnum_statut"] : 1);
 				if ($this->params["maj_data"]) {
 					$this->explnum_file_size = $this->get_file_size(true);
 				}
 			}
 			$saved = $this->save();
-			if ($saved) {				
+			if ($saved) {
 				// Indexation du document
 				global $pmb_indexation_docnum;
 				if ($pmb_indexation_docnum) {
 					$vign_index = $this->indexer_docnum();
-					if (! $mime_vign && ! $this->params["conservervignette"] && ! $this->infos_docnum["vignette_name"]) {
+					if (! $mime_vign && (!isset($this->params["conservervignette"]) || !$this->params["conservervignette"]) && (!isset($this->infos_docnum["vignette_name"]) || !$this->infos_docnum["vignette_name"])) {
 						if ($vign_index) {
 							$this->update_explnum_vignette($vign_index);
 						} else {
@@ -754,7 +776,7 @@ if (! defined('EXPLNUM_CLASS')) {
 						$this->update_explnum_vignette($contenu_vignette);
 					}
 				}
-				
+
 				/**
 				 * Publication d'un évenement après la mise à jour
 				 */
@@ -762,7 +784,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				$event = new event_explnum("explnum", "after_update");
 				$event->set_explnum($this);
 				$evt_handler->send($event);
-				
+
 				// on reaffiche l'ISBD
 				if ($with_print) {
 					print "<div class='row'><div class='msg-perio'>" . $msg['maj_encours'] . "</div></div>";
@@ -806,7 +828,7 @@ if (! defined('EXPLNUM_CLASS')) {
 		 */
 		public function indexer_docnum() {
 			global $scanned_texte, $ck_index;
-			
+
 			if (! $this->explnum_id && $ck_index) {
 				$id_explnum = $this->explnum_id;
 				$indexation = new indexation_docnum($id_explnum, $scanned_texte);
@@ -826,12 +848,12 @@ if (! defined('EXPLNUM_CLASS')) {
 		 */
 		protected function diarization_docnum() {
 			global $ck_diarization;
-			
+
 			if (in_array($this->infos_docnum['mime'], array(
 					"audio/mpeg",
 					"audio/ogg",
 					"video/mp4",
-					"video/webm" 
+					"video/webm"
 			))) {
 				if ($ck_diarization) {
 					$diarization = new diarization_docnum($this);
@@ -839,11 +861,11 @@ if (! defined('EXPLNUM_CLASS')) {
 				}
 			}
 		}
-		
+
 		public static function clean_explnum_file_name($filename){
-			
+
 			$filename = convert_diacrit($filename);
-			$filename = preg_replace('/[^\x20-\x7E]/','_', $filename);			
+			$filename = preg_replace('/[^\x20-\x7E]/','_', $filename);
 			$filename = str_replace(',', '_', $filename);
 			return $filename;
 		}
@@ -854,7 +876,7 @@ if (! defined('EXPLNUM_CLASS')) {
 		public function analyser_docnum() {
 			global $path, $id_rep, $up_place, $base_path;
 			$is_upload = false;
-			
+
 			if (! $this->infos_docnum["nom"]) {
 			    if ($this->infos_docnum["userfile_name"])
 			        $this->infos_docnum["nom"] = $this->infos_docnum["userfile_name"];
@@ -863,7 +885,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				else
 					$this->infos_docnum["nom"] = "-x-x-x-x-";
 			}
-			
+
 			$path = stripslashes($path);
 			$upfolder = new upload_folder($id_rep);
 			$chemin = '';
@@ -880,10 +902,10 @@ if (! defined('EXPLNUM_CLASS')) {
 					} else {
 						$file_name = $upfolder->formate_nom_to_path($path) . $this->infos_docnum["userfile_name"];
 					}
-					
+
 					$chemin = $upfolder->formate_path_to_save($chemin_hasher ? $chemin_hasher : $path);
 					$file_name = $upfolder->encoder_chaine($file_name);
-					
+
 					$nom_tmp = $this->infos_docnum["userfile_name"];
 					$continue = true;
 					$compte = 1;
@@ -930,7 +952,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				}
 				fclose($fp);
 			}
-			
+
 			// Dans le cas d'une modification, on regarde si il y a eu un déplacement du stockage
 			if ($this->explnum_id) {
 				if ($this->isEnBase() && ($up_place && $path != '')) {
@@ -956,7 +978,7 @@ if (! defined('EXPLNUM_CLASS')) {
 					$this->params["maj_data"] = true;
 				}
 			}
-			
+
 			$this->params["is_upload"] = $is_upload;
 			$this->infos_docnum["contenu"] = $contenu;
 			$this->infos_docnum["path"] = $chemin;
@@ -978,26 +1000,26 @@ if (! defined('EXPLNUM_CLASS')) {
 		public function recuperer_explnum($f_notice, $f_bulletin, $f_nom, $f_url, $retour, $conservervignette = 0, $f_statut_chk = 0, $f_explnum_statut = 1, $forcage = 0, $f_url_vignette='') {
 			global $scanned_image, $scanned_image_ext, $base_path;
 			global $f_new_name, $mime_vign;
-			
+
 			$maj_mimetype = 0;
 			$maj_data = 0;
 			$maj_vignette = 0;
 			$fic = 0;
-			
+
 			$this->infos_docnum = array();
 			$this->params = array();
-			
+
 			create_tableau_mimetype();
-			
+
 			$erreur = 0;
 			$userfile_name = $_FILES['f_fichier']['name'];
 			$userfile_temp = $_FILES['f_fichier']['tmp_name'];
 			$userfile_moved = basename($userfile_temp);
-			
+
 			$vignette_name = $_FILES['f_vignette']['name'];
 			$vignette_temp = $_FILES['f_vignette']['tmp_name'];
 			$vignette_moved = basename($vignette_temp);
-			
+
 			$userfile_name = preg_replace("/ |'|\\|\"|\//m", "_", $userfile_name);
 			$vignette_name = preg_replace("/ |'|\\|\"|\//m", "_", $vignette_name);
 			$contenu_vignette = "";
@@ -1122,7 +1144,7 @@ if (! defined('EXPLNUM_CLASS')) {
 						$erreur++;
 					}
 				}
-				
+
 				if (! $f_url && ! $fic)
 					$erreur++;
 				if ($f_url) {
@@ -1133,7 +1155,7 @@ if (! defined('EXPLNUM_CLASS')) {
 						$mimetype = "application/data";
 				}
 				$maj_mimetype = 1;
-				
+
 				move_uploaded_file($vignette_temp, $base_path . '/temp/' . $vignette_moved);
 				if (! $mime_vign) {
 					if (! $f_url_vignette) {
@@ -1144,7 +1166,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				}
 				$maj_vignette = 1;
 			}
-			
+
 			if ($mime_vign && ! $conservervignette) {
 				global $prefix_url_image;
 				if ($prefix_url_image)
@@ -1171,7 +1193,7 @@ if (! defined('EXPLNUM_CLASS')) {
 			$this->infos_docnum["userfile_moved"] = $userfile_moved;
 			$this->infos_docnum["vignette_name"] = $vignette_name;
 			$this->infos_docnum["vignette_moved"] = $vignette_moved;
-			
+
 			$this->params["error"] = $erreur;
 			$this->params["maj_mimetype"] = $maj_mimetype;
 			$this->params["maj_data"] = $maj_data;
@@ -1214,7 +1236,7 @@ if (! defined('EXPLNUM_CLASS')) {
 		 */
 		public function remove_from_base($chemin, $upfolder, $id_rep) {
 			$content = $this->explnum_data;
-			
+
 			$chemin_hasher = "";
 			if ($upfolder->isHashing()) {
 				$rep = $upfolder->hachage($this->explnum_nomfichier);
@@ -1222,7 +1244,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				$chemin_hasher = $upfolder->formate_path_to_nom($rep);
 			}
 			$chemin_query = $upfolder->formate_path_to_save($chemin_hasher ? $chemin_hasher : $chemin);
-			
+
 			$nom_tmp = $this->explnum_nomfichier;
 			$continue = true;
 			$compte = 1;
@@ -1240,10 +1262,10 @@ if (! defined('EXPLNUM_CLASS')) {
 					$continue = false;
 				}
 			} while ( $continue );
-			
+
 			// on renomme aussi le champ dans la table
 			$this->infos_docnum["userfile_name"] = $nom_tmp;
-			
+
 			$new_path = "";
 			if ($upfolder->isHashing()) {
 				$hashname = $upfolder->hachage($nom_tmp);
@@ -1255,7 +1277,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				$file_path = $upfolder->encoder_chaine($upfolder->formate_nom_to_path($chemin) . $nom_tmp);
 			}
 			file_put_contents($file_path, $content);
-			
+
 			return $new_path;
 		}
 
@@ -1268,8 +1290,8 @@ if (! defined('EXPLNUM_CLASS')) {
 			$path = $up->repertoire_path . $this->explnum_path . $this->explnum_nomfichier;
 			$path = str_replace('//', '/', $path);
 			$path = $up->encoder_chaine($path);
-			
-			if (file_exists($path)) {
+
+			if (is_file($path)) {
 				$contenu = file_get_contents($path);
 				unlink($path);
 			}
@@ -1283,7 +1305,7 @@ if (! defined('EXPLNUM_CLASS')) {
 			$nom_fich = ($this->explnum_nomfichier != "" ? $this->explnum_nomfichier : $this->explnum_nom);
 			$old_path = $this->explnum_rep_nom . $this->explnum_path;
 			$old_path = str_replace('//', '/', $old_path);
-			
+
 			if ($rep->isHashing()) {
 				$new_rep = $rep->hachage($nom_fich);
 				if (! is_dir($new_rep))
@@ -1291,19 +1313,19 @@ if (! defined('EXPLNUM_CLASS')) {
 			} else {
 				$new_rep = $new_path;
 			}
-			
+
 			$up = new upload_folder($this->explnum_repertoire);
 			$old_path = $up->formate_nom_to_path($old_path);
 			$ancien_fichier = $up->encoder_chaine($old_path . $nom_fich);
 			$nouveau_fichier = $rep->encoder_chaine($new_rep . $nom_fich);
-			
+
 			if (! file_exists($nouveau_fichier) && ($nouveau_fichier != $ancien_fichier)) {
 				rename($ancien_fichier, $nouveau_fichier);
 				if (file_exists($ancien_fichier))
 					unlink($ancien_fichier);
 				$nom_rep = $new_path;
 			}
-			
+
 			return (isset($nom_rep) && $nom_rep ? $nom_rep : $new_rep);
 		}
 
@@ -1313,22 +1335,22 @@ if (! defined('EXPLNUM_CLASS')) {
 		public function copy_to($new_dir_id = 0, $rename = false) {
 			$ret = false;
 			$old_dir_id = $this->explnum_repertoire;
-			
+
 			if ($old_dir_id && $new_dir_id) {
-				
+
 				$old_dir = new upload_folder($old_dir_id);
 				$new_dir = new upload_folder($new_dir_id);
-				
+
 				$old_file_name = ($this->explnum_nomfichier != '' ? $this->explnum_nomfichier : $this->explnum_nom);
 				if ($rename) {
 					$new_file_name = $this->rename();
 				} else {
 					$new_file_name = $old_file_name;
 				}
-				
+
 				$old_path = $old_dir->repertoire_path . $this->explnum_path;
 				$old_path = str_replace('//', '/', $old_path);
-				
+
 				if ($new_dir->isHashing()) {
 					$new_sub_dir = $new_dir->hachage($new_file_name);
 					if (! is_dir($new_sub_dir))
@@ -1338,7 +1360,7 @@ if (! defined('EXPLNUM_CLASS')) {
 					$new_path = $new_dir->repertoire_path;
 				}
 				$new_path = str_replace('//', '/', $new_path);
-				
+
 				$old_file = $old_dir->encoder_chaine($old_path . $old_file_name);
 				$new_file = $new_dir->encoder_chaine($new_path . $new_file_name);
 				if (file_exists($new_file)) {
@@ -1351,16 +1373,16 @@ if (! defined('EXPLNUM_CLASS')) {
 					}
 				}
 			} else if ($new_dir_id) {
-				
+
 				$new_dir = new upload_folder($new_dir_id);
-				
+
 				$old_file_name = ($this->explnum_nomfichier != '' ? $this->explnum_nomfichier : $this->explnum_nom);
 				if ($rename) {
 					$new_file_name = $this->rename();
 				} else {
 					$new_file_name = $old_file_name;
 				}
-				
+
 				if ($new_dir->isHashing()) {
 					$new_sub_dir = $new_dir->hachage($new_file_name);
 					if (! is_dir($new_sub_dir))
@@ -1383,14 +1405,14 @@ if (! defined('EXPLNUM_CLASS')) {
 			}
 			return ($ret) ? $new_file : $ret;
 		}
-		
+
 		// fournit un nom de fichier unique
 		public function rename() {
 			$new_file_name = 'file_' . md5(microtime()) . (($this->explnum_extfichier) ? '.' . $this->explnum_extfichier : '');
 			return $new_file_name;
 		}
 
-		static function static_rename($ext = '') {
+		public static function static_rename($ext = '') {
 			$new_file_name = 'file_' . md5(microtime()) . (($ext) ? '.' . $ext : '');
 			return $new_file_name;
 		}
@@ -1400,27 +1422,27 @@ if (! defined('EXPLNUM_CLASS')) {
 		 */
 		public function unzip($filename) {
 			global $up_place, $path, $id_rep, $charset, $base_path;
-			
+
 			$zip = new zip($filename);
 			$zip->readZip();
 			$cpt = 0;
 			if ($up_place && $path != '') {
 				$up = new upload_folder($id_rep);
 			}
-			
+
 			if (is_array($zip->entries) && count($zip->entries)) {
 				foreach ( $zip->entries as $file ) {
 					$file_name_for_get_file_content = $file['fileName'];
-					
+
 					$encod = mb_detect_encoding($file['fileName'], "UTF-8,ISO-8859-1");
 					if ($encod && ($encod == 'UTF-8') && ($charset == "iso-8859-1")) {
 						$file['fileName'] = utf8_decode($file['fileName']);
 					} elseif ($encod && ($encod == 'ISO-8859-1') && ($charset == "utf-8")) {
 						$file['fileName'] = utf8_encode($file['fileName']);
 					}
-					
+
 					$file['fileName'] = static::clean_explnum_file_name($file['fileName']);
-					
+
 					if ($up_place && $path != '') {
 						$chemin = $path;
 						if ($up->isHashing()) {
@@ -1464,7 +1486,7 @@ if (! defined('EXPLNUM_CLASS')) {
 						fwrite($fh, $zip->getFileContent($file['fileName']));
 						$base = true;
 					}
-					
+
 					$this->unzipped_files[$cpt]['chemin'] = $chemin;
 					$this->unzipped_files[$cpt]['nom'] = $file['fileName'];
 					$this->unzipped_files[$cpt]['base'] = $base;
@@ -1478,18 +1500,19 @@ if (! defined('EXPLNUM_CLASS')) {
 		 */
 		public function analyse_multifile() {
 			global $id_rep;
-			
+
 			create_tableau_mimetype();
 			$repup = new upload_folder($id_rep);
-			if (is_array($this->unzipped_files) && count($this->unzipped_files)) {
-				for($i = 0; $i < sizeof($this->unzipped_files); $i++) {
+			if (is_array($this->unzipped_files) && !empty($this->unzipped_files)) {
+			    $nb_unzipped_files = count($this->unzipped_files);
+			    for ($i = 0; $i < $nb_unzipped_files; $i++) {
 					$this->infos_docnum['userfile_name'] = $this->unzipped_files[$i]['nom'];
 					if ($repup->isHashing()) {
 						$hashname = $repup->hachage($this->infos_docnum['userfile_name']);
 						$chemin = $repup->formate_path_to_save($repup->formate_path_to_nom($hashname));
 					} else
 						$chemin = $repup->formate_path_to_save($this->unzipped_files[$i]["chemin"]);
-					
+
 					if ($this->unzipped_files[$i]['base']) {
 						$this->infos_docnum['contenu'] = file_get_contents($this->unzipped_files[$i]['chemin']);
 						$this->infos_docnum['path'] = '';
@@ -1502,7 +1525,7 @@ if (! defined('EXPLNUM_CLASS')) {
 						$ext = extension_fichier($this->infos_docnum['userfile_name']);
 						$this->infos_docnum['userfile_ext'] = $ext;
 					}
-					
+
 					if ($this->unzipped_files[$i]['base']) {
 						$this->infos_docnum['contenu_vignette'] = construire_vignette("", $this->infos_docnum['userfile_name']);
 					} else {
@@ -1515,7 +1538,7 @@ if (! defined('EXPLNUM_CLASS')) {
 					if (! $mimetype)
 						$mimetype = "application/data";
 					$this->infos_docnum['mime'] = $mimetype;
-					
+
 					if ($this->unzipped_files[$i]['base']) {
 						unlink($this->unzipped_files[$i]['chemin']);
 					}
@@ -1537,9 +1560,9 @@ if (! defined('EXPLNUM_CLASS')) {
 			global $ck_index;
 			global $id_rep, $up_place;
 			global $pmb_indexation_docnum_default;
-			
+
 			$up_place = $upload_place;
-			
+
 			create_tableau_mimetype();
 			if (!isset($ck_index)) {
 			    $ck_index = $pmb_indexation_docnum_default;
@@ -1558,7 +1581,7 @@ if (! defined('EXPLNUM_CLASS')) {
 			$this->infos_docnum["contenu_vignette"] = construire_vignette('', substr($filename, strrpos($filename, "/")));
 			$this->infos_docnum["userfile_name"] = static::clean_explnum_file_name($name);
 			$this->infos_docnum["userfile_ext"] = extension_fichier($name);
-			
+
 			if ($up_place && $id_rep != 0) {
 				$upfolder = new upload_folder($id_rep);
 				$chemin_hasher = "/";
@@ -1615,7 +1638,7 @@ if (! defined('EXPLNUM_CLASS')) {
 				// enregistrement en base
 				$this->infos_docnum["contenu"] = file_get_contents($filename);
 			}
-			
+
 			$this->params["maj_mimetype"] = true;
 			$this->params["maj_data"] = true;
 			$this->params["maj_vignette"] = true;
@@ -1630,11 +1653,11 @@ if (! defined('EXPLNUM_CLASS')) {
 			$event = new event_explnum("explnum", "before_get_file_content");
 			$event->set_explnum($this);
 			$evt_handler->send($event);
-			
+
 			if (! $this->explnum_id) {
 				exit();
 			}
-			
+
 			if ($this->explnum_data && ($this->explnum_data != 'NULL')) {
 				$data = $this->explnum_data;
 			} else if ($this->explnum_path) {
@@ -1651,15 +1674,15 @@ if (! defined('EXPLNUM_CLASS')) {
 					}
 				}
 			}
-			
+
 			return $data;
 		}
 
 		public function get_is_file() {
-			$path = '';			
+			$path = '';
 			if (! $this->explnum_id) {
 				return '';
-			}				
+			}
 			if ($this->explnum_data && ($this->explnum_data != 'NULL')) {
 				return '';
 			} else if ($this->explnum_path) {
@@ -1670,9 +1693,9 @@ if (! defined('EXPLNUM_CLASS')) {
 					return $path;
 				}
 			}
-			return '';			
+			return '';
 		}
-		
+
 		public function get_file_name() {
 			$nomfichier = "";
 			if ($this->explnum_nomfichier) {
@@ -1710,23 +1733,23 @@ if (! defined('EXPLNUM_CLASS')) {
 		public function get_create_date() {
 			return $this->explnum_create_date;
 		}
-		
+
 		public function get_update_date() {
 			return $this->explnum_update_date;
 		}
-		
+
 		public function get_rights_form() {
 			global $msg, $charset;
 			global $gestion_acces_active, $gestion_acces_empr_docnum;
 			global $gestion_acces_empr_docnum_def;
-			
+
 			if ($gestion_acces_active != 1)
 				return '';
 			$ac = new acces();
-			
+
 			$form = '';
 			$c_form = "
-		<div id='el8Child_0' class='row' movable='yes' title=\"<!-- domain_name -->\">	
+		<div id='el8Child_0' class='row' movable='yes' title=\"<!-- domain_name -->\">
 			<div class='row'>&nbsp;</div>
 			<div class='row'>
 				<label class='etiquette'><!-- domain_name --></label>
@@ -1741,22 +1764,22 @@ if (! defined('EXPLNUM_CLASS')) {
 				<div class='row'><!-- rights_tab --></div>
 			</div>
 		</div>";
-			
+
 			if ($gestion_acces_empr_docnum == 1) {
-				
+
 				$r_form = $c_form;
 				$dom_3 = $ac->setDomain(3);
 				$r_form = str_replace('<!-- domain_name -->', htmlentities($dom_3->getComment('long_name'), ENT_QUOTES, $charset), $r_form);
 				if ($this->explnum_id) {
-					
+
 					// profil ressource
 					$def_prf = $dom_3->getComment('res_prf_def_lib');
 					$res_prf = $dom_3->getResourceProfile($this->explnum_id);
 					$q = $dom_3->loadUsedResourceProfiles();
-					
+
 					// Recuperation droits generiques utilisateur
 					$user_rights = $dom_3->getDomainRights(0, $res_prf);
-					
+
 					if ($user_rights & 2) {
 						$p_sel = gen_liste($q, 'prf_id', 'prf_name', 'res_prf[3]', '', $res_prf, '0', $def_prf, '0', $def_prf);
 						$p_rad = "<input type='radio' name='prf_rad[3]' value='R' ";
@@ -1770,7 +1793,7 @@ if (! defined('EXPLNUM_CLASS')) {
 					} else {
 						$r_form = str_replace('<!-- prf_rad -->', htmlentities($dom_3->getResourceProfileName($res_prf), ENT_QUOTES, $charset), $r_form);
 					}
-					
+
 					// droits/profils utilisateurs
 					if ($user_rights & 1) {
 						$r_rad = "<input type='radio' name='r_rad[3]' value='R' ";
@@ -1782,7 +1805,7 @@ if (! defined('EXPLNUM_CLASS')) {
 						$r_rad .= ">" . htmlentities($msg['dom_rad_def'], ENT_QUOTES, $charset) . "</input>";
 						$r_form = str_replace('<!-- r_rad -->', $r_rad, $r_form);
 					}
-					
+
 					// recuperation profils utilisateurs
 					$t_u = array();
 					$t_u[0] = $dom_3->getComment('user_prf_def_lib'); // niveau par defaut
@@ -1793,29 +1816,29 @@ if (! defined('EXPLNUM_CLASS')) {
 							$t_u[$row->prf_id] = $row->prf_name;
 						}
 					}
-					
+
 					// recuperation des controles dependants de l'utilisateur
 					$t_ctl = $dom_3->getControls(0);
-					
+
 					// recuperation des droits
 					$t_rights = $dom_3->getResourceRights($this->explnum_id);
-					
+
 					if (count($t_u)) {
-						
+
 						$h_tab = "<div class='dom_div'><table class='dom_tab'><tr>";
 						foreach ( $t_u as $k => $v ) {
 							$h_tab .= "<th class='dom_col'>" . htmlentities($v, ENT_QUOTES, $charset) . "</th>";
 						}
 						$h_tab .= "</tr><!-- rights_tab --></table></div>";
-						
+
 						$c_tab = '<tr>';
 						foreach ( $t_u as $k => $v ) {
-							
+
 							$c_tab .= "<td><table style='border:1px solid;'><!-- rows --></table></td>";
 							$t_rows = "";
-							
+
 							foreach ( $t_ctl as $k2 => $v2 ) {
-								
+
 								$t_rows .= "
 								<tr>
 									<td style='width:25px;' ><input type='checkbox' name='chk_rights[3][" . $k . "][" . $k2 . "]' value='1' ";
@@ -1850,7 +1873,7 @@ if (! defined('EXPLNUM_CLASS')) {
 			if (!$explnum_path) $explnum_path = $this->explnum_path;
 			if (!$explnum_repertoire) $explnum_repertoire = $this->explnum_repertoire;
 			if (!$explnum_nomfichier) $explnum_nomfichier = $this->explnum_nomfichier;
-			
+
 			if ($explnum_data && ($explnum_data != 'NULL')) {
 				$this->explnum_signature = md5($explnum_data);
 			} else if ($full_path) {
@@ -1869,19 +1892,19 @@ if (! defined('EXPLNUM_CLASS')) {
 			}
 			return $this->explnum_signature;
 		}
-		
+
 		public function get_statut_libelle() {
 			$statut_libelle = '';
-			
+
 			$res = pmb_mysql_query("SELECT gestion_libelle FROM explnum_statut WHERE id_explnum_statut=".$this->explnum_docnum_statut);
 			if ($res && pmb_mysql_num_rows($res)) {
 				$statut_libelle = pmb_mysql_result($res, 0, 0);
 			}
 			return $statut_libelle;
 		}
-		
+
 		public static function get_default_upload_directory(){
-		    $query = "select repertoire_id from upload_repertoire 
+		    $query = "select repertoire_id from upload_repertoire
                      join users on users.deflt_upload_repertoire=upload_repertoire.repertoire_id
                      and users.username='" . SESSlogin . "'";
 		    $result = pmb_mysql_query($query);
@@ -1890,16 +1913,16 @@ if (! defined('EXPLNUM_CLASS')) {
 		    }
 		    return false;
 		}
-		
+
 		public static function get_drop_zone($entity_id, $entity_type, $bul_id = ''){
 		    global $explnum_drop_zone;
 		    $explnum_drop_zone_filled = str_replace('!!entity_id!!', $entity_id, $explnum_drop_zone);
 		    $explnum_drop_zone_filled = str_replace('!!entity_type!!', $entity_type, $explnum_drop_zone_filled);
 		    $explnum_drop_zone_filled = str_replace('!!bul_id!!', $bul_id, $explnum_drop_zone_filled);
-		    
+
 		    return $explnum_drop_zone_filled;
 		}
-		
+
 		public static function getBytes($val) {
 		    $val = trim($val);
 		    $last = strtolower($val[strlen($val) - 1]);
@@ -1913,16 +1936,20 @@ if (! defined('EXPLNUM_CLASS')) {
 		    }
 		    return $val;
 		}
-		
+
 		public static function create_doc_from_file(){
-		    global $fnc;
+		    global $charset;
+			global $fnc;
 		    global $record_id;
 		    global $bulletin_id;
 		    global $id_rep;
 		    global $pmb_indexation_docnum_default;
 		    $headers = getallheaders();
+		    if($charset == 'utf-8') {
+		    	$headers['X-File-Name'] = utf8_encode($headers['X-File-Name']);
+		    }
 		    $protocol = $_SERVER["SERVER_PROTOCOL"];
-		    
+
 		    if (!isset($headers['Content-Length'])) {
 		    	if (!isset($headers['CONTENT_LENGTH'])) {
 		    		if (!isset($headers['X-File-Size'])) {
@@ -1935,13 +1962,14 @@ if (! defined('EXPLNUM_CLASS')) {
 		    		$headers['Content-Length']=$headers['CONTENT_LENGTH'];
 		    	}
 		    }
-		    
+
 		    if (isset($headers['X-File-Size'], $headers['X-File-Name'])) {
-		        
+
 		        $file = new stdClass();
-		        $file->name = preg_replace('/[^ \.\w_\-]*/', '', basename($headers['X-File-Name']));
+		        $file->name = basename($headers['X-File-Name']);
+		        $file->filename = preg_replace('/[^ \.\w_\-\(\)]*/', '', basename(reg_diacrit($headers['X-File-Name'])));
 		        $file->size = preg_replace('/\D*/', '', $headers['X-File-Size']);
-		        
+
 		        $maxUpload = static::getBytes(ini_get('upload_max_filesize')); // can only be set in php.ini and not by ini_set()
 		        $maxPost = static::getBytes(ini_get('post_max_size'));         // can only be set in php.ini and not by ini_set()
 		        $memoryLimit = static::getBytes(ini_get('memory_limit'));
@@ -1949,29 +1977,29 @@ if (! defined('EXPLNUM_CLASS')) {
 		            $limit = min($maxUpload, $maxPost, $memoryLimit);
 		        }else{
 		            $limit = min($maxUpload, $maxPost);
-		        }		        
+		        }
 		        if ($headers['Content-Length'] > $limit) {
 		            header($protocol.' 403 Forbidden');
 		            exit('File size to big. Limit is '.$limit. ' bytes.');
 		        }
-		        
+
 		        $i=1;
-		        $fileName = $file->name;
-		        while(file_exists("./temp/".$file->name)){
+		        $fileName = $file->filename;
+		        while(file_exists("./temp/".$file->filename)){
 		            if($i==1){
-		                $file->name = substr($file->name,0,strrpos($file->name,"."))."_".$i.substr($file->name,strrpos($file->name,"."));
+		                $file->filename = substr($file->filename,0,strrpos($file->filename,"."))."_".$i.substr($file->filename,strrpos($file->filename,"."));
 		            }else{
-		                $file->name = substr($file->name,0,strrpos($file->name,($i-1).".")).$i.substr($file->name,strrpos($file->name,"."));
+		                $file->filename = substr($file->filename,0,strrpos($file->filename,($i-1).".")).$i.substr($file->filename,strrpos($file->filename,"."));
 		            }
 		            $i++;
 		        }
 		        $file->content = file_get_contents("php://input");
-		        
+
 		        if (mb_strlen($file->content) > $limit) {
 		            header($protocol.' 403 Forbidden');
 		            return false;
 		        }
-		        $numWrittenBytes = file_put_contents("./temp/".$file->name, $file->content);
+		        $numWrittenBytes = file_put_contents("./temp/".$file->filename, $file->content);
 		        if ($numWrittenBytes !== false) {
 		            header($protocol.' 201 Created');
 	                if($bulletin_id){
@@ -1984,7 +2012,7 @@ if (! defined('EXPLNUM_CLASS')) {
 	                    return false;
 	                }
 	                $id_rep = explnum::get_default_upload_directory();
-		            $explnum->get_file_from_temp("./temp/".$file->name, $file->name, true);
+		            $explnum->get_file_from_temp("./temp/".$file->filename, $file->name, true);
 		            if($pmb_indexation_docnum_default){
 		                global $ck_index;
                         $ck_index = 1;
@@ -2000,11 +2028,11 @@ if (! defined('EXPLNUM_CLASS')) {
 		        exit('Correct headers are not set.');
 		    }
 		}
-		
+
 		public function get_display_link(){
 		    /**
-		     * Si un bulletin possède un document numérique 
-		     * il a forcement une notice associée 
+		     * Si un bulletin possède un document numérique
+		     * il a forcement une notice associée
 		     */
 
 		    if($this->explnum_bulletin){
@@ -2026,8 +2054,24 @@ if (! defined('EXPLNUM_CLASS')) {
 		    }
 		    return '';
 		}
-		
+
+            /**
+             * 
+             * @param parametres_perso $p_perso
+             */
+            public function set_p_perso(parametres_perso $p_perso) {
+            	$this->p_perso = $p_perso;
+            }
+            
+            public function get_p_perso() {
+            	if (isset($this->p_perso)) {
+            		return $this->p_perso;
+            	}
+            	$this->p_perso = new parametres_perso("explnum");
+            	return $this->p_perso;
+            }
+            
 	}
-	
+
 	// fin de la classe explnum
-} # fin de définition                             
+} # fin de définition

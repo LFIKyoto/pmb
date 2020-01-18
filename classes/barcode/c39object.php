@@ -33,9 +33,9 @@ Contact author at: barcode@mribti.com
     
   class C39Object extends BarcodeObject {
    var $mCharSet, $mChars;
-   function C39Object($Width, $Height, $Style, $Value)
+   function __construct($Width, $Height, $Style, $Value)
    {
-     $this->BarcodeObject($Width, $Height, $Style);
+     parent::__construct($Width, $Height, $Style);
 	 $this->mValue   = $Value;
 	 $this->mChars   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. *$/+%";
 	 $this->mCharSet = array
@@ -90,7 +90,7 @@ Contact author at: barcode@mribti.com
    function GetCharIndex ($char)
    {
     for ($i=0;$i<44;$i++) {
-	  if ($this->mChars[$i] == $char)
+	  if (substr($this->mChars, $i, 1) == $char)
 	     return $i;
 	 }
 	 return -1;

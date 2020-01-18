@@ -2,7 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sort.tpl.php,v 1.18 2017-11-30 14:33:09 dgoron Exp $
+// $Id: sort.tpl.php,v 1.19.6.1 2019-09-12 10:38:36 dgoron Exp $
+
+if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $show_tris_form, $msg, $ligne_tableau_tris, $ligne_tableau_tris_etagere, $ligne_tableau_tris_rss_flux, $show_sel_form;
 
 // les templates pour l'écran d'affichage de la liste des tris
 $show_tris_form="<body class='catalog'><div id='contenu-frame'>
@@ -61,7 +65,7 @@ $ligne_tableau_tris = "
 							</td>
 						</tr>
 ";
-$ligne_tableau_tris_etagere = "
+$ligne_tableau_tris_etagere = $ligne_tableau_tris_rss_flux = "
 						<tr class='!!pair_impair!!' onmouseover=\"this.className='surbrillance'\" onmouseout=\"this.className='!!pair_impair!!'\" style='cursor: pointer'>
 							<td style='width:90%' alt='".$msg['appliq_tri']."' title='".$msg['appliq_tri']."' onClick=\"parent.document.getElementById('history').style.display='none';parent.window.getSort('!!id_tri!!','!!descname_tri!!'); return false;\">
 									!!nom_tri!!

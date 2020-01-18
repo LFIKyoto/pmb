@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: devis.inc.php,v 1.54 2018-09-25 13:22:30 dgoron Exp $
+// $Id: devis.inc.php,v 1.56 2019-07-31 09:12:24 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $id_dev, $id_exer, $id_bibli, $class_path, $include_path, $base_path, $msg, $charset, $action, $chk, $sugchk, $by_mail;
 
 if(!isset($id_dev)) $id_dev = 0; else $id_dev += 0;
 if(!isset($id_exer)) $id_exer = 0; else $id_exer += 0;
@@ -25,6 +27,7 @@ require_once ("$class_path/notice.class.php");
 require_once("$class_path/sel_display.class.php");
 require_once("$class_path/lettre_devis.class.php");
 require_once($class_path."/list/accounting/list_accounting_devis_ui.class.php");
+require_once($class_path."/mail/accounting/mail_accounting_devis.class.php");
 require_once("$class_path/user.class.php");
 
 //Affiche la liste des devis pour un etablissement
@@ -728,34 +731,15 @@ function print_dev($id_bibli=0, $id_dev=0, $by_mail=FALSE) {
 	if ( $by_mail==FALSE || !($acquisition_pdfdev_by_mail && strpos($bib_coord->email,'@') && strpos($fou_coord->email,'@')) ) {
 		$no_mail=TRUE;
 	} else {
-		$dest_name='';
-		if($fou_coord->libelle) {
-			$dest_name = $fou_coord->libelle;
-		} else {
-			$dest_name = $fou->raison_sociale;
-		}
-		if($fou_coord->contact) $dest_name.=" ".$fou_coord->contact;
-		$dest_mail=$fou_coord->email;
-		$obj_mail = $acquisition_pdfdev_obj_mail;
-		$text_mail = $acquisition_pdfdev_text_mail;
-		$bib_name = $bib_coord->raison_sociale;
-		$bib_mail = $bib_coord->email;
-
-		$lettre = lettreDevis_factory::make();
-		$lettre->doLettre($id_bibli,$id_dev);
-		$piece_jointe=array();
-		$piece_jointe[0]['contenu']=$lettre->getLettre('S');
-		$piece_jointe[0]['nomfichier']=$lettre->getFileName();
-
-		//         mailpmb($to_nom="", $to_mail,   $obj="",   $corps="",  $from_name="", $from_mail, $headers, $copie_CC="", $copie_BCC="", $faire_nl2br=0, $pieces_jointes=array())
-		$res_envoi=mailpmb($dest_name, $dest_mail, $obj_mail, $text_mail ,$bib_name, $bib_mail, "Content-Type: text/plain; charset=\"$charset\"", '', $PMBuseremailbcc, 1, $piece_jointe);
+	    $mail_accounting_devis = new mail_accounting_devis();
+	    $res_envoi = $mail_accounting_devis->send_mail($id_bibli, $id_dev);
 		if (!$res_envoi) {
 			$no_mail=TRUE;
 		}
 		if (!$no_mail) {
-			print "<h3>".sprintf($msg["acquisition_print_emailsucceed"],$dest_mail)."</h3>";
+		    print "<h3>".sprintf($msg["acquisition_print_emailsucceed"],$mail_accounting_devis->get_dest_mail())."</h3>";
 		} else {
-			print "<h3>".sprintf($msg["acquisition_print_emailfailed"],$dest_mail)."</h3>";
+		    print "<h3>".sprintf($msg["acquisition_print_emailfailed"],$mail_accounting_devis->get_dest_mail())."</h3>";
 		}
 	}
 	if ($no_mail) {

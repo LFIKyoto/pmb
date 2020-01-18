@@ -3,7 +3,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.8 2015-10-05 10:12:21 vtouchard Exp $ -->
+$Id: manifest.xml,v 1.10 2019-08-28 06:48:51 ngantier Exp $ -->
 
 <manifest>
 	<name>pmbesSelfServices</name>
@@ -23,7 +23,7 @@ $Id: manifest.xml,v 1.8 2015-10-05 10:12:21 vtouchard Exp $ -->
 				<description>msg:self_checkout_inputs_description</description>
 				<param name="expl_cb" type="scalar" dataType="string" description="msg:self_checkout_expl_cb"/>
 				<param name="id_empr" type="scalar" dataType="integer" description="msg:self_checkout_id_empr"/>
-				<param name="pmbUserId" type="scalar" dataType="integer" description="msg:self_checkout_pmbUserId"/>
+				<param name="pmbUserId" type="scalar" dataType="integer" description="msg:self_checkout_pmbUserId" optional="yes" default_value="-1"/>
 			</inputs>
 			<outputs>
 				<description>msg:self_checkout_outputs_description</description>
@@ -50,7 +50,7 @@ $Id: manifest.xml,v 1.8 2015-10-05 10:12:21 vtouchard Exp $ -->
 			<inputs>
 				<description>msg:self_checkin_inputs_description</description>
 				<param name="expl_cb" type="scalar" dataType="string" description="msg:self_checkin_expl_cb"/>
-				<param name="pmbUserId" type="scalar" dataType="integer" description="msg:self_checkin_pmbUserId"/>
+				<param name="pmbUserId" type="scalar" dataType="integer" description="msg:self_checkin_pmbUserId" optional="yes" default_value="-1"/>
 			</inputs>
 			<outputs>
 				<description>msg:self_checkin_outputs_description</description>
@@ -65,10 +65,13 @@ $Id: manifest.xml,v 1.8 2015-10-05 10:12:21 vtouchard Exp $ -->
 			</outputs>
 		</method>
 		<method name="self_renew" comment="msg:self_renew_description" rights="" version="1.0" language_independant="false">	
+			<pmb_requirements>
+				<pmb_requirement start_path="class" file="expl.class.php"/>
+			</pmb_requirements>
 			<inputs>
 				<description>msg:self_renew_inputs_description</description>
 				<param name="expl_cb" type="scalar" dataType="string" description="msg:self_renew_expl_cb"/>
-				<param name="pmbUserId" type="scalar" dataType="integer" description="msg:self_renew_pmbUserId"/>
+				<param name="pmbUserId" type="scalar" dataType="integer" description="msg:self_renew_pmbUserId" optional="yes"  default_value="-1"/>
 			</inputs>
 			<outputs>
 				<description>msg:self_renew_outputs_description</description>
@@ -83,8 +86,8 @@ $Id: manifest.xml,v 1.8 2015-10-05 10:12:21 vtouchard Exp $ -->
 			<inputs>
 				<description>msg:self_checkout_bibloto_inputs_description</description>
 				<param name="expl_cb" type="scalar" dataType="string" description="msg:self_checkout_expl_cb"/>
-				<param name="empr_cb" type="scalar" dataType="string" description="msg:self_checkout_bibloto_empr_cb"/>
-				<param name="confirm" type="scalar" dataType="boolean" description="msg:self_checkout_bibloto_confirm"/>
+				<param name="empr_cb" type="scalar" dataType="string" description="msg:self_checkout_bibloto_empr_cb" optional="yes"/>
+				<param name="confirm" type="scalar" dataType="boolean" description="msg:self_checkout_bibloto_confirm" optional="yes"  default_value="1"/>
 			</inputs>
 			<outputs>
 				<description>msg:self_checkout_bibloto_outputs_description</description>

@@ -2,9 +2,10 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: module_frbr.tpl.php,v 1.12 2018-03-19 14:49:42 vtouchard Exp $
+// $Id: module_frbr.tpl.php,v 1.13 2019-05-27 09:42:35 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+global $module_frbr_left_menu, $module_frbr_cataloging_content, $module_frbr_cataloging_schemes, $msg;
 
 $module_frbr_left_menu = "
 <div id='menu'>

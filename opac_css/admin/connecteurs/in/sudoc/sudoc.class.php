@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sudoc.class.php,v 1.6 2017-01-30 14:09:09 dgoron Exp $
+// $Id: sudoc.class.php,v 1.9 2019-06-18 12:31:05 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -80,6 +80,7 @@ class sudoc extends connector {
 		$mes_pp= new parametres_perso("notices");
 		$mes_pp->get_values($notice_id);
 		$values = $mes_pp->values;
+		$ppn = '';
 		foreach ( $values as $field_id => $vals ) {
 			if($mes_pp->t_fields[$field_id]['TYPE'] == "resolve"){
 				$field_options = $mes_pp->t_fields[$field_id]['OPTIONS'][0];
@@ -120,7 +121,7 @@ class sudoc extends connector {
 			return $this->build_error();
 		} else {
 			$hits = yaz_hits($id);
-			$hits+=0;
+			$hits = intval($hits);
 			if($hits){
 				$rec = yaz_record($id,1,"raw");
 				$record = new iso2709_record($rec);
@@ -131,9 +132,9 @@ class sudoc extends connector {
 				
 				$lines="";
 				
-				$document->document_type = $record->inner_guide[dt];
-				$document->bibliographic_level = $record->inner_guide[bl];
-				$document->hierarchic_level = $record->inner_guide[hl];		
+				$document->document_type = $record->inner_guide['dt'];
+				$document->bibliographic_level = $record->inner_guide['bl'];
+				$document->hierarchic_level = $record->inner_guide['hl'];
 				if ($document->hierarchic_level=="") {
 					if ($document->bibliographic_level=="s") $document->hierarchic_level="1";
 					if ($document->bibliographic_level=="m") $document->hierarchic_level="0";

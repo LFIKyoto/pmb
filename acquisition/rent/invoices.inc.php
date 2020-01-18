@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: invoices.inc.php,v 1.4 2016-02-19 15:54:50 dgoron Exp $
+// $Id: invoices.inc.php,v 1.5 2019-05-28 15:00:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $msg, $charset, $action, $id_bibli, $id, $ids;
 
 require_once($class_path.'/entites.class.php');
 require_once($class_path.'/rent/rent_invoices.class.php');

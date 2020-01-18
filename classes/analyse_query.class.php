@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: analyse_query.class.php,v 1.88 2018-11-29 09:04:17 dgoron Exp $
+// $Id: analyse_query.class.php,v 1.91.2.1 2019-11-27 10:50:13 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -163,21 +163,21 @@ class analyse_query {
 		return $words_empty_free;
 	}
 	
-	public function calcul_term(&$t,$mot,$litteral,$ponderation) {		
+	public function calcul_term(&$t, $mot, $litteral, $ponderation) {		
 		// Littéral ?	
-		if($litteral) {
+		if (!empty($litteral)) {
 			// Oui c'est un mot littéral
-			$t->word=$mot;
-			$t->literal=1;
+			$t->word = $mot;
+			$t->literal = 1;
 			// fin
 			return;
 		} else {
 			// Non ce n'est pas un mot littéral
 			// Un espace dans le mot?
-			if(strchr($mot, ' ')) {
+			if (strstr($mot, ' ')) {
 				// Oui ula un espace
-				$t->word=$mot;
-				$t->literal=1;
+				$t->word = $mot;
+				$t->literal = 1;
 				// fin
 				return;				
 			} else {
@@ -343,9 +343,9 @@ class analyse_query {
  	}
 	
 	//Affichage sous forme RPN du résultat de l'analyse
-	public function show_analyse_rpn($tree="") {
+	public function show_analyse_rpn($tree = array()) {
 		//Si tree vide alors on prend l'arbre de la classe
-		if ($tree=="") $tree=$this->tree;
+		if (empty($tree)) $tree=$this->tree;
 		$r="";
 		//Pour chaque branche ou feuille de l'arbre
 		for ($i=0; $i<count($tree); $i++) {
@@ -366,8 +366,8 @@ class analyse_query {
 	}
 
 	//Affichage sous forme mathématique logique du résultat de l'analyse
-	public function show_analyse($tree="") {
-		if ($tree=="") $tree=$this->tree;
+	public function show_analyse($tree = array()) {
+		if (empty($tree)) $tree=$this->tree;
 		$r="";
 		for ($i=0; $i<count($tree); $i++) {
 			if ($tree[$i]->operator) $r.=$tree[$i]->operator." ";
@@ -1019,7 +1019,7 @@ class analyse_query {
 		$literals = array();
 		$queries = array();
 		if($objects_ids){
-			if(count($terms)){
+			if(is_array($terms) && count($terms)){
 				foreach($terms as $term){
 					if(!$term->literal){
 						if(!in_array($term,$words)) {
@@ -1245,12 +1245,12 @@ class analyse_query {
 					$query.=' ('.$this->build_sphinx_query($tree[$i]->sub).')';
 				}else{				
 					if($tree[$i]->literal){
-						$query.= '"'.$tree[$i]->word.'"';
+						$query.= '"'.encoding_normalize::utf8_normalize($tree[$i]->word).'"';
 					}else{
 						if($tree[$i]->start_with == 1){
 							$query.='^';
 						}
-						$query.= $tree[$i]->word;
+						$query.= encoding_normalize::utf8_normalize($tree[$i]->word);
 					}
 				}				
 			}

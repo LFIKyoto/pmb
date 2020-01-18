@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: faq_question.class.php,v 1.11 2018-07-25 12:15:55 dgoron Exp $
+// $Id: faq_question.class.php,v 1.14 2019-07-30 13:38:30 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/templates/faq_question.tpl.php");
@@ -27,7 +27,7 @@ class faq_question  {
 	public $aff_date_answer = "" ;
 
 	public function __construct($id=0){
-		$this->id = $id*1;
+		$this->id = intval($id);
 		$this->fetch_datas();
 	}
 	
@@ -212,7 +212,7 @@ class faq_question  {
 			for ($i=0 ; $i<$max_categ ; $i++){
 				$categ_id = 'f_categ_id'.$i;
 				global ${$categ_id};
-				if((${$categ_id}*1) > 0){
+				if(intval(${$categ_id}) > 0){
 					$this->descriptors[] = ${$categ_id};
 				}
 			}
@@ -274,20 +274,16 @@ class faq_question  {
 		return $result;
 	}
 	
-	public function delete(){
-		if($this->id){
-			$query = "delete from faq_questions_categories where num_faq_question = ".$this->id;
+	public static function delete($id=0){
+		$id = intval($id);
+		if($id){
+			$query = "delete from faq_questions_categories where num_faq_question = ".$id;
+			pmb_mysql_query($query);
+			$query = "delete from faq_questions where id_faq_question = ".$id;
 			$result = pmb_mysql_query($query);
 			if($result){
-				$query = "delete from faq_questions where id_faq_question = ".$this->id;
-				$result = pmb_mysql_query($query);
-				if($result){
-					$this->id = 0;
-					$this->fetch_datas();
-					return true;
-				}
+				return true;
 			}
-			print $query;
 		}
 		return false;
 	}

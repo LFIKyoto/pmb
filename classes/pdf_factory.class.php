@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pdf_factory.class.php,v 1.5 2017-06-30 14:08:17 dgoron Exp $
+// $Id: pdf_factory.class.php,v 1.6 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -17,7 +17,7 @@ class pmb2FPDF extends FPDF {
 	public $msg_footer = '';
 	public $npage = 1;
 	
-	function Footer() {
+	public function Footer() {
 		
 		global $msg;
 
@@ -53,7 +53,7 @@ class pmb2UFPDF extends UFPDF {
 	public $msg_footer = '';
 	public $npage = 1;
 	
-	function Footer() {
+	public function Footer() {
 		
 		global $msg;
 

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map.inc.php,v 1.8 2017-07-25 09:33:48 ngantier Exp $
+// $Id: map.inc.php,v 1.9 2019-05-29 12:03:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $search_id, $cluster, $sub, $wkt_map_hold, $loc_ids, $action, $indice;
 
 require_once($class_path."/map/map_search_controler.class.php");
 require_once($class_path."/map/map_search_controler_location.class.php");

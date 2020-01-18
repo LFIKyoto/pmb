@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: SubTabConceptNavigate.js,v 1.2 2018-11-23 16:31:07 arenou Exp $
+// $Id: SubTabConceptNavigate.js,v 1.3 2019-01-14 15:34:20 arenou Exp $
 
 
 define([
@@ -71,7 +71,7 @@ define([
 		onDownloadEnd: function(){
 			this.inherited(arguments);
 			var params = {};
-			if(this.parameters.conceptSchemes){
+			if(this.parameters.conceptSchemes && this.parameters.conceptSchemes.length > 0 ){
 				params = {conceptSchemes: this.parameters.conceptSchemes};
 			}
 			this.tree = new ConceptsTree(params);

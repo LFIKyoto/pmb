@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: interface_form.class.php,v 1.9 2018-04-26 14:52:32 tsamson Exp $
+// $Id: interface_form.class.php,v 1.9.6.1 2019-11-08 15:18:08 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -26,6 +26,34 @@ class interface_form {
 	
 	public function __construct($name = ''){
 		$this->name = $name;
+	}
+	
+	public function get_display_field_text($label, $value) {
+	    global $charset;
+	    $display = "
+        <div class='row'>
+            <div class='row'>
+                <label class='etiquette'>".htmlentities($label, ENT_QUOTES, $charset)."</label>
+            </div>
+            <div class='row'>
+                ".htmlentities($value, ENT_QUOTES, $charset)."
+            </div>
+        </div>";
+	    return $display;
+	}
+	
+	public function get_display_field_url($label, $value) {
+	    global $charset;
+	    $display = "
+        <div class='row'>
+            <div class='row'>
+                <label class='etiquette'>".htmlentities($label, ENT_QUOTES, $charset)."</label>
+            </div>
+            <div class='row'>
+                <a href='".$value."' target='_blank'>".htmlentities($value, ENT_QUOTES, $charset)."</a>
+            </div>
+        </div>";
+	    return $display;
 	}
 	
 	public function get_display($ajax = false) {

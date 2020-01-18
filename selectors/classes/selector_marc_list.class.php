@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: selector_marc_list.class.php,v 1.4 2017-12-08 09:32:10 jpermanne Exp $
+// $Id: selector_marc_list.class.php,v 1.5 2019-08-01 13:16:35 btafforeau Exp $
   
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -128,10 +128,11 @@ class selector_marc_list extends selector {
 			$tmp=array_map("strtoupper",$tmp);//On met en majuscule
 			
 			$present = pmb_preg_grep("/^$char/i", $tmp);
-			if(sizeof($present) && strcasecmp($letter, $char))
+			if (!empty($present) && strcasecmp($letter, $char)) {
 				$display_list .= "<a href='".static::get_base_url()."&letter=$char'>$char</a> ";
-			else if(!strcasecmp($letter, $char))
+			} else if(!strcasecmp($letter, $char)) {
 				$display_list .= "<strong><u>$char</u></strong> ";
+			}
 		}
 		$display_list .= "</div><hr />";
 		$display = array();

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: extended.inc.php,v 1.117 2018-04-20 09:26:39 dgoron Exp $
+// $Id: extended.inc.php,v 1.122 2019-08-06 08:55:19 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $base_path, $class_path;
 
 // second niveau de recherche OPAC sur titre
 // inclusion classe pour affichage notices (level 1)
@@ -18,32 +20,11 @@ require_once($class_path."/map/map_search_controler.class.php");
 require_once($class_path."/shorturl/shorturl_type_search.class.php");
 require_once($class_path."/sort.class.php");
 
-global $es;
-global $searcher;
-global $facette_test;
-global $opac_allow_external_search;
-global $opac_allow_affiliate_search;
-global $opac_visionneuse_allow;
-global $search_result_extended_affiliate_lvl2_head;
-global $tab;
-global $opac_allow_bannette_priv;
-global $allow_dsi_priv;
-global $opac_search_results_per_page;
-global $opac_notices_depliable;
-global $filtre_compare;
-global $begin_result_liste;
-global $link_to_print_search_result;
-global $link_to_visionneuse;
-global $opac_search_allow_refinement;
-global $opac_short_url;
-global $pmb_logs_activate;
-global $debut;
-global $search_result_extended_affiliate_lvl2_head_wo_link;
-global $page;
-global $add_cart_link;
-global $opac_simple_search_suggestions;
-global $count;
-global $opac_nb_max_tri;
+global $es, $searcher, $facette_test, $opac_allow_external_search, $opac_allow_affiliate_search, $opac_visionneuse_allow, $search_result_extended_affiliate_lvl2_head;
+global $tab, $opac_allow_bannette_priv, $allow_dsi_priv, $opac_search_results_per_page, $opac_notices_depliable, $filtre_compare, $begin_result_liste;
+global $link_to_print_search_result, $link_to_visionneuse, $opac_search_allow_refinement, $opac_short_url, $pmb_logs_activate, $debut;
+global $search_result_extended_affiliate_lvl2_head_wo_link, $page, $add_cart_link, $opac_simple_search_suggestions, $count, $opac_nb_max_tri, $from_see;
+global $msg, $l_typdoc, $reinit_compare, $opac_autolevel2;
 
 $es=new search();
 
@@ -119,7 +100,10 @@ if(!$opac_allow_affiliate_search || ($opac_allow_affiliate_search && $tab == "ca
 	
 	// pour la DSI - création d'une alerte
 	if ($opac_allow_bannette_priv && $allow_dsi_priv && ((isset($_SESSION['abon_cree_bannette_priv']) && $_SESSION['abon_cree_bannette_priv']==1) || $opac_allow_bannette_priv==2)) {
-		$sr_form.= "<input type='button' class='bouton' name='dsi_priv' value=\"$msg[dsi_bt_bannette_priv]\" onClick=\"document.form_values.action='./empr.php?lvl=bannette_creer'; document.form_values.submit();\"><span class=\"espaceResultSearch\">&nbsp;</span>";
+	    $sr_form.= $es->make_hidden_search_form('./index.php?lvl=more_results&mode=extended', 'bannette_priv_form_values', '', false);
+	    $sr_form.= $es->make_hidden_opac_view_form_content();
+	    $sr_form.= "</form>";
+	    $sr_form.= "<input type='button' class='bouton' name='dsi_priv' value=\"$msg[dsi_bt_bannette_priv]\" onClick=\"document.bannette_priv_form_values.action='./empr.php?lvl=bannette_creer'; document.bannette_priv_form_values.submit();\"><span class=\"espaceResultSearch\">&nbsp;</span>";
 	}
 	
 	// pour la DSI - Modification d'une alerte
@@ -190,7 +174,7 @@ if(!$opac_allow_affiliate_search || ($opac_allow_affiliate_search && $tab == "ca
 	//enregistrement de l'endroit actuel dans la session
 	if ($_SESSION["last_query"]) {	$n=$_SESSION["last_query"]; } else { $n=$_SESSION["nb_queries"]; }
 	
-	if(count($_SESSION['facette'])==0){
+	if(empty($_SESSION['facette']) || count($_SESSION['facette'])==0){
 		$_SESSION["notice_view".$n]["search_mod"]="extended";
 		$_SESSION["notice_view".$n]["search_page"]=$page;
 	}
@@ -243,9 +227,11 @@ if(!$opac_allow_affiliate_search || ($opac_allow_affiliate_search && $tab == "ca
 		$sr_form.= aff_notice(-1);
 		$nb=0;
 		$recherche_ajax_mode=0;
-		for ($i =0 ; $i<count($notices);$i++){
-			if($i>4)$recherche_ajax_mode=1;
-			$sr_form.= pmb_bidi(aff_notice($notices[$i], 0, 1, 0, "", "", 0, 0, $recherche_ajax_mode));
+		if(isset($notices) && is_array($notices) && count($notices)){
+			for ($i =0 ; $i<count($notices);$i++){
+				if($i>4)$recherche_ajax_mode=1;
+				$sr_form.= pmb_bidi(aff_notice($notices[$i], 0, 1, 0, "", "", 0, 0, $recherche_ajax_mode));
+			}
 		}
 		$sr_form.= aff_notice(-2);
 	}
@@ -342,11 +328,8 @@ print $sr_form;
 function extended_get_current_search_map($mode_search=0){
 	global $opac_map_activate;
 	global $opac_map_max_holds;
-	global $dbh;
-	global $javascript_path;
 	global $opac_map_size_search_result;
 	global $page;
-	global $aut_id;
 	$map = "";
 	if($opac_map_activate==1 || $opac_map_activate==2){
 		$map_hold = null;

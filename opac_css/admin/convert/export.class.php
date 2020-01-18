@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: export.class.php,v 1.40 2018-02-20 09:35:07 dbellamy Exp $
+// $Id: export.class.php,v 1.46 2019-06-10 08:57:12 btafforeau Exp $
 
 //Export d'une notice PMB en XML PMB MARC
 
@@ -108,7 +108,7 @@ class export {
 		}
 		if ($value == "" && is_array($sub_fields)) {
 			$flag_s = 0;
-			while (list ($key, $val) = each($sub_fields)) {
+			foreach ($sub_fields as $key => $val) {
 				if(is_array($val)){
 				  foreach($val as $valeur){
 				  	$s = array();
@@ -136,7 +136,7 @@ class export {
 	//Generation XML de la prochaine notice (renvoi true si prochaine notice, false si plus de notices disponibles)
 	public function get_next_notice($lender = "", $td = array(), $sd = array(), $keep_expl = false, $params=array(), $force_diffusion=false, $keep_explnum=false) {
 		global $include_path, $lang;
-		global $opac_show_book_pics;
+		global $opac_show_book_pics, $opac_map_activate;
 		global $dbh,$charset;
 		
 		unset($this->xml_array);
@@ -518,7 +518,7 @@ class export {
 
 			//Vignette
 			if ($opac_show_book_pics) {
-				$vignette=get_vignette($this -> notice_list[$this -> current_notice]);
+				$vignette=get_vignette($this -> notice_list[$this -> current_notice], true);
 				if ($vignette) {
 					$this->add_field("896","  ",array("a"=>$vignette));
 				}
@@ -559,7 +559,24 @@ class export {
                       $this -> add_field("606"," 1",$subfields);
                 }
             }
-			
+                        
+            // Map emprises
+            if (!empty($params['exp_export_map']) && $opac_map_activate) {
+                $requete = "SELECT AsText(map_emprise_data)
+    						FROM map_emprises
+    						WHERE map_emprise_obj_num = '".$res->notice_id."'
+    						AND map_emprise_type  = 11
+    						ORDER BY map_emprise_order";
+                $resultat = pmb_mysql_query($requete);
+                if (pmb_mysql_num_rows($resultat)) {
+                    $subfields = array();
+                    while ($row = pmb_mysql_fetch_array($resultat)) {
+                        $subfields["w"][] = $row[0];
+                    }
+                    $this->add_field("940", "  ", $subfields);
+                }
+            }          
+            
 			//Champs perso de notice traite par la table notice_custom
 			$this->processing_cp("notices",$res->notice_id);
 
@@ -595,7 +612,7 @@ class export {
 							}
 							$list_options[] = "bl:".$notice_mere->niveau_biblio.$notice_mere->niveau_hierar;
 							$list_options[] = "id:".$notice_mere->notice_id;
-							if($parent['rank']) $list_options[] = "rank:".$parent['rank'];
+							if($parent->get_rank()) $list_options[] = "rank:".$parent->get_rank();
 							if($parent->get_relation_type()) $list_options[] = "type_lnk:".$parent->get_relation_type();
 							$list_options[] = 'lnk:parent';
 							$subfields["9"] = $list_options;
@@ -682,7 +699,7 @@ class export {
 							$list_titre[] = ($notice_fille->tit1) ? $notice_fille->tit1 : " ";
 							$list_options[] = "bl:".$notice_fille->niveau_biblio.$notice_fille->niveau_hierar;
 							$list_options[] = "id:".$notice_fille->notice_id;
-							if($child['rank']) $list_options[] = "rank:".$child['rank'];
+							if($child->get_rank()) $list_options[] = "rank:".$child->get_rank();
 							if($child->get_relation_type()) $list_options[] = "type_lnk:".$child->get_relation_type();
 							$list_options[] = 'lnk:child';
 							$subfields["9"] = $list_options;
@@ -1074,7 +1091,7 @@ class export {
 			$subfields = array();
 			global $export996 ;
 			$export996 = array() ;
-			if(function_exists(export_traite_exemplaires)) $subfields = export_traite_exemplaires ($ex);
+			if(function_exists('export_traite_exemplaires')) $subfields = export_traite_exemplaires ($ex);
 			$this -> add_field("995", "  ", $subfields);
 			//J'ajoute dans le sous champs 996 tous ce qu'il faut à l'exemlaire pour le reconstruire
 			foreach($ex as $key => $value) {

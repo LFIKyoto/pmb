@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype.class.php,v 1.3 2018-12-28 16:19:06 tsamson Exp $
+// $Id: onto_common_datatype.class.php,v 1.8 2019-08-20 15:11:35 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -151,19 +151,19 @@ abstract class onto_common_datatype {
 				$data=stripslashes_array($data);
 				if (($data["value"] !== null) && ($data["value"] !== '')) {
 					$data_properties = array();
-					if ($data["lang"]) {
+					if (!empty($data["lang"])) {
 						$data_properties["lang"] = $data["lang"];
 					}
-					if ($data["type"] == "http://www.w3.org/2000/01/rdf-schema#Literal") {
+					if (isset($data["type"]) && $data["type"] == "http://www.w3.org/2000/01/rdf-schema#Literal") {
 						$data_properties["type"] = "literal";
 					} else {
 						$data_properties["type"] = "uri";
 					}
-					if ($data["display_label"]) {
+					if (!empty($data["display_label"])) {
 						$data_properties["display_label"] = $data["display_label"];
 					}
-					$class_name = get_called_class();
-					$datatypes[$property->uri][] = new $class_name($data["value"], $data["type"], $data_properties);
+					$class_name = static::class;
+					$datatypes[$property->uri][] = new $class_name($data["value"], (isset($data["type"]) ? $data["type"] : null), $data_properties);
 				}
 			}
 		}

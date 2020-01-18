@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: common.tpl.php,v 1.10 2017-10-20 12:50:06 ngantier Exp $
+// $Id: common.tpl.php,v 1.11 2019-06-05 13:13:19 btafforeau Exp $
 
 // template for PMB OPAC
 
@@ -45,7 +45,7 @@
 //Récupération du login
 if (!$_SESSION["user_code"]) {
 	//Si pas de session
-	$cb_=$msg[common_tpl_cardnumber_default];
+	$cb_=$msg['common_tpl_cardnumber_default'];
 	} else {
 		//Récupération des infos de connection
 		$cb_=$_SESSION["user_code"];

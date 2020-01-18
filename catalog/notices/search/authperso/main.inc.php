@@ -1,6 +1,9 @@
 <?php
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $no_rec_history, $link, $link_expl, $link_explnum, $link_serial, $link_analysis, $link_bulletin, $link_explnum_serial, $link_explnum_analysis;
+global $link_explnum_bulletin, $browser_url, $mode, $rec_history, $page, $msg, $id_authperso;
+
 if(!isset($no_rec_history)) $no_rec_history = '';
 
 // page de switch recherche titre de série

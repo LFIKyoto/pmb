@@ -2,9 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: explnum_associate.tpl.php,v 1.1 2014-01-10 15:46:42 apetithomme Exp $
+// $Id: explnum_associate.tpl.php,v 1.2 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $explnum_associate_background_svg, $explnum_associate_background_svg_posX, $explnum_associate_background_svg_posY, $explnum_associate_background_svg_width, $explnum_associate_background_svg_height;
+global $explnum_associate_timescale_svg, $explnum_associate_timescale_svg_posX, $explnum_associate_timescale_svg_posY, $explnum_associate_timescale_svg_width, $explnum_associate_timescale_svg_height;
+global $explnum_associate_speakers_svg, $explnum_associate_speakers_svg_posX, $explnum_associate_speakers_svg_posY, $explnum_associate_speakers_svg_width, $explnum_associate_speakers_svg_height;
+global $explnum_associate_segments_svg, $explnum_associate_segments_svg_posX, $explnum_associate_segments_svg_posY, $explnum_associate_segments_svg_width, $explnum_associate_segments_svg_height;
+global $explnum_associate_cursor_svg, $explnum_associate_cursor_svg_posX, $explnum_associate_cursor_svg_posY, $explnum_associate_cursor_svg_width, $explnum_associate_cursor_svg_height;
 
 // Code svg pour le fond
 $explnum_associate_background_svg = '<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="14.3228" y1="13.313" x2="179.5859" y2="82.085">

@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_search_controler.class.php,v 1.27 2018-12-20 11:00:19 mbertin Exp $
+// $Id: map_search_controler.class.php,v 1.33 2019-06-06 13:05:45 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
     die("no access");
@@ -13,6 +13,7 @@ require_once($class_path . "/map/map_objects_controler.class.php");
 require_once($class_path . "/search.class.php");
 require_once($class_path . "/searcher.class.php");
 require_once($class_path . "/analyse_query.class.php");
+require_once "$class_path/encoding_normalize.class.php";
 
 /**
  * class map_search_controler
@@ -102,13 +103,13 @@ class map_search_controler {
         $objects = array();
 
         $current_search = $this->get_mode();
-        if (isset($_SESSION["session_history"][$current_search]) && $_SESSION["session_history"][$current_search]["NOTI"]["GET"]["mode"] != "") {
+        if (isset($_SESSION["session_history"][$current_search]) && isset($_SESSION["session_history"][$current_search]["NOTI"]) && $_SESSION["session_history"][$current_search]["NOTI"]["GET"]["mode"] != "") {
             $mode_search = $_SESSION["session_history"][$current_search]["NOTI"]["GET"]["mode"];
             switch ($mode_search) {
                 case 1 :
                 case 2 :
                 case 9 :
-                	if (count($_SESSION["session_history"][$current_search]["NOTI"]["TEXT_LIST_QUERY"])) {
+                    if (isset($_SESSION["session_history"][$current_search]["NOTI"]["TEXT_LIST_QUERY"]) && count($_SESSION["session_history"][$current_search]["NOTI"]["TEXT_LIST_QUERY"])) {
                 		foreach($_SESSION["session_history"][$current_search]["NOTI"]["TEXT_LIST_QUERY"] as $query) {
                 			@pmb_mysql_query($query);
                 		}
@@ -137,12 +138,27 @@ class map_search_controler {
                                 'ids' => $categ_ids
                             );
                         }
+                        $requete = "select distinct map_emprise_obj_num from map_emprises
+                                join index_concept on map_emprises.map_emprise_obj_num=index_concept.num_concept and index_concept.type_object = 1
+                                where index_concept.type_object = 1 and index_concept.num_object in (" . implode(",", $notices_ids) . ")";
+                        $result = pmb_mysql_query($requete, $dbh);
+                        if (pmb_mysql_num_rows($result)) {
+                            $concept_ids = array();
+                            while ($row = pmb_mysql_fetch_object($result)) {
+                                $concept_ids[] = $row->map_emprise_obj_num;
+                            }
+                            $objects[] = array(
+                                'layer' => "authority_concept",
+                                'type' => 10,
+                                'ids' => $concept_ids
+                            );
+                        }
                     }
                     break;
                 case 0 :
                 case 11 :
                     if ($_SESSION["session_history"][$current_search]["NOTI"]["TEXT_QUERY"]) {
-                    	if (count($_SESSION["session_history"][$current_search]["NOTI"]["TEXT_LIST_QUERY"])) {
+                        if (!empty($_SESSION["session_history"][$current_search]["NOTI"]["TEXT_LIST_QUERY"]) && count($_SESSION["session_history"][$current_search]["NOTI"]["TEXT_LIST_QUERY"])) {
                     		foreach($_SESSION["session_history"][$current_search]["NOTI"]["TEXT_LIST_QUERY"] as $query) {
                     			@pmb_mysql_query($query);
                     		}
@@ -173,6 +189,21 @@ class map_search_controler {
                                     'ids' => $categ_ids
                                 );
                             }
+                            $requete = "select distinct map_emprise_obj_num from map_emprises 
+                                join index_concept on map_emprises.map_emprise_obj_num=index_concept.num_concept and index_concept.type_object = 1 
+                                where index_concept.type_object = 1 and index_concept.num_object in (" . implode(",", $notices_ids) . ")";
+                            $result = pmb_mysql_query($requete, $dbh);
+                            if (pmb_mysql_num_rows($result)) {
+                                $concept_ids = array();
+                                while ($row = pmb_mysql_fetch_object($result)) {
+                                    $concept_ids[] = $row->map_emprise_obj_num;
+                                }
+                                $objects[] = array(
+                                    'layer' => "authority_concept",
+                                    'type' => 10,
+                                    'ids' => $concept_ids
+                                );
+                            }
                         }
                     }
                     break;
@@ -200,6 +231,21 @@ class map_search_controler {
                                 'layer' => "authority",
                                 'type' => 2,
                                 'ids' => $categ_ids
+                            );
+                        }
+                        $requete = "select distinct map_emprise_obj_num from map_emprises
+                                join index_concept on map_emprises.map_emprise_obj_num=index_concept.num_concept and index_concept.type_object = 1
+                                where index_concept.type_object = 1 and index_concept.num_object in (" . implode(",", $notices_ids) . ")";
+                        $result = pmb_mysql_query($requete, $dbh);
+                        if (pmb_mysql_num_rows($result)) {
+                            $concept_ids = array();
+                            while ($row = pmb_mysql_fetch_object($result)) {
+                                $concept_ids[] = $row->map_emprise_obj_num;
+                            }
+                            $objects[] = array(
+                                'layer' => "authority_concept",
+                                'type' => 10,
+                                'ids' => $concept_ids
                             );
                         }
                     }
@@ -270,6 +316,21 @@ class map_search_controler {
                                 'ids' => $categ_ids
                             );
                         }
+                        $requete = "select distinct map_emprise_obj_num from map_emprises
+                                join index_concept on map_emprises.map_emprise_obj_num=index_concept.num_concept and index_concept.type_object = 1
+                                where index_concept.type_object = 1 and index_concept.num_object in (" . implode(",", $notices_ids) . ")";
+                        $result = pmb_mysql_query($requete, $dbh);
+                        if (pmb_mysql_num_rows($result)) {
+                            $concept_ids = array();
+                            while ($row = pmb_mysql_fetch_object($result)) {
+                                $concept_ids[] = $row->map_emprise_obj_num;
+                            }
+                            $objects[] = array(
+                                'layer' => "authority_concept",
+                                'type' => 10,
+                                'ids' => $concept_ids
+                            );
+                        }
                     }
                     break;
                 default:
@@ -303,6 +364,21 @@ class map_search_controler {
                                         'layer' => "authority",
                                         'type' => 2,
                                         'ids' => $categ_ids
+                                    );
+                                }
+                                $requete = "select distinct map_emprise_obj_num from map_emprises
+                                join index_concept on map_emprises.map_emprise_obj_num=index_concept.num_concept and index_concept.type_object = 1
+                                where index_concept.type_object = 1 and index_concept.num_object in (" . implode(",", $notices_ids) . ")";
+                                $result = pmb_mysql_query($requete, $dbh);
+                                if (pmb_mysql_num_rows($result)) {
+                                    $concept_ids = array();
+                                    while ($row = pmb_mysql_fetch_object($result)) {
+                                        $concept_ids[] = $row->map_emprise_obj_num;
+                                    }
+                                    $objects[] = array(
+                                        'layer' => "authority_concept",
+                                        'type' => 10,
+                                        'ids' => $concept_ids
                                     );
                                 }
                             }
@@ -357,7 +433,7 @@ class map_search_controler {
                     }
                     break;
             }
-        }
+        }        
         return $objects;
     }
 
@@ -377,8 +453,8 @@ class map_search_controler {
         $json = array();
         if ($this->model) {
             $json = $this->model->get_holds_informations($this->objects[$indice]['layer']);
-            return json_encode($json);
         }
+        return encoding_normalize::json_encode($json);
     }
 
     public function get_json_informations() {

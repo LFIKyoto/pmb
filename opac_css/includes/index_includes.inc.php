@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index_includes.inc.php,v 1.168 2018-11-21 10:48:33 dgoron Exp $
+// $Id: index_includes.inc.php,v 1.180.2.4 2019-12-06 08:09:52 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -41,7 +41,7 @@ if($opac_opac_view_activate){
 		if ($current_opac_view!=$opac_view*1) {
 			//on change de vue donc :
 			//on stocke le tri en cours pour la vue en cours
-			$_SESSION["last_sortnotices_view_".$current_opac_view]=$_SESSION["last_sortnotices"];
+		    $_SESSION["last_sortnotices_view_".$current_opac_view]=(isset($_SESSION["last_sortnotices"]) ? $_SESSION["last_sortnotices"] : '');
 			if (isset($_SESSION["last_sortnotices_view_".($opac_view*1)])) {
 				//on a déjà un tri pour la nouvelle vue, on l'applique
 				$_SESSION["last_sortnotices"] = $_SESSION["last_sortnotices_view_".($opac_view*1)];
@@ -75,49 +75,18 @@ if (!isset($_SESSION["nb_sortnotices"]) || !$_SESSION["nb_sortnotices"]) $_SESSI
 
 //Mettre le tri de l'étagère en session avant l'affichage du sélecteur de tris
 if (($lvl=='etagere_see') && ($id)) {
-	$id+=0;
+    $id = intval($id);
 	$requete="select idetagere,name,comment,id_tri from etagere where idetagere=$id";
 	$resultat=pmb_mysql_query($requete);
 	$r=pmb_mysql_fetch_object($resultat);
-	if(($r->id_tri) && !(isset($_GET["sort"]))) {
-		//Le tri est défini en gestion, on l'ajoute aux tris dispos en OPAC si nécessaire
-		$res_tri = pmb_mysql_query("SELECT * FROM tris WHERE id_tri=".$r->id_tri);
-		if (pmb_mysql_num_rows($res_tri)) {
-			$last = "";
-			$row_tri = pmb_mysql_fetch_object($res_tri);
-			if ($_SESSION["nb_sortnotices"]<=0) {
-				$_SESSION["sortnotices".$_SESSION["nb_sortnotices"]]=$row_tri->tri_par;
-				if ($row_tri->nom_tri) {
-					$_SESSION["sortnamenotices".$_SESSION["nb_sortnotices"]]=$row_tri->nom_tri;
-				}
-				$last = 0;
-				$_SESSION["nb_sortnotices"]++;
-			} else {
-				$bool=false;
-				for ($i=0;$i<$_SESSION["nb_sortnotices"];$i++) {
-					if ($_SESSION["sortnotices".$i] == $row_tri->tri_par) {
-						$bool=true;
-						$last = $i;
-					}
-				}
-				if (!$bool) {
-					$_SESSION["sortnotices".$_SESSION["nb_sortnotices"]] = $row_tri->tri_par;
-					if ($row_tri->nom_tri) {
-						$_SESSION["sortnamenotices".$_SESSION["nb_sortnotices"]] = $row_tri->nom_tri;
-					}
-					$last = $_SESSION["nb_sortnotices"];
-					$_SESSION["nb_sortnotices"]++;
-				}
-			}
-			$_SESSION["last_sortnotices"]="$last";
-		}
-	}elseif(isset($_GET["sort"])){
-		$_SESSION["last_sortnotices"]=$_GET["sort"];
-	}
+	require_once($base_path.'/classes/sort.class.php');
+	$dSort = new dataSort('notices', 'session');
+	$dSort->applyTri($r->id_tri);
 }
 
 //L'usager a demandé à voir plus de résultats dans sa liste paginée
-if(isset($nb_per_page_custom) && $nb_per_page_custom*1) {
+if(isset($nb_per_page_custom) && intval($nb_per_page_custom)) {
+	$nb_per_page_custom=intval($nb_per_page_custom);
 	$opac_nb_aut_rec_per_page = $nb_per_page_custom;
 	$opac_search_results_per_page = $nb_per_page_custom;
 	$opac_bull_results_per_page = $nb_per_page_custom;
@@ -154,13 +123,24 @@ if(isset($code)) {
 	require_once($base_path.'/includes/empr_func.inc.php');
 	$log_ok=connexion_empr();
 	if($log_ok) $_SESSION["connexion_empr_auto"]=1;
+} elseif(empty($_SESSION["user_code"]) && !empty($_POST['login'])) {
+    $log_ok=connexion_empr();
+}
+// tentative de connexion echouée : redirection vers le formulaire de connexion
+if(isset($_POST['login']) && isset($_POST['password']) && !$log_ok) {
+    print "
+    <form action='".$base_path."/empr.php' method='post' name='myredirectform'>
+        <input type='text' name='login' value=''><br />
+        <input type='password' name='password' value=''/>
+    </form>
+    <script type='text/javascript'>document.forms['myredirectform'].submit();</script>";
 }
 
 //Premier accès ??
 if ($search_type_asked) $_SESSION["search_type"]=$search_type_asked;
 
 if(!isset($autolevel1)) $autolevel1 = '';
-if (($_SESSION["search_type"]=="")||((($lvl=="")||($lvl=="index"))&&($search_type_asked==""))||(($opac_autolevel2)&&($autolevel1))) {
+if (empty($_SESSION["search_type"]) || (( $lvl=="" || $lvl=="index") && $search_type_asked=="") || ($opac_autolevel2  && $autolevel1)) {
 	$_SESSION["search_type"]="simple_search";
 	//suppression du tableau facette
 	unset($_SESSION['facette']);
@@ -304,7 +284,7 @@ if($lvl != "search_segment" && ($opac_autolevel2 || !empty($from_permalink))){
 require_once($base_path.'/includes/navigator.inc.php');
 
 $link_to_print_search_result = "<span class=\"printSearchResult\">
-<a href='#' onClick=\"openPopUp('".$base_path."/print.php?lvl=search&current_search=".($_SESSION['last_query']+0)."','print'); w.focus(); return false;\" title=\"".$msg["histo_print_current_page"]."\">
+<a href='#' onClick=\"openPopUp('".$base_path."/print.php?lvl=search&current_search=".(intval($_SESSION['last_query']))."','print'); w.focus(); return false;\" title=\"".$msg["histo_print_current_page"]."\">
 	<img src='".get_url_icon('print.gif')."' style='border:0px' class='align_bottom' alt=\"".$msg["histo_print_current_page"]."\"/>
 </a>
 </span>";
@@ -422,7 +402,7 @@ switch($lvl) {
 		require_once($base_path.'/includes/show_list.inc.php');
 		break;
 	case 'section_see':
-		if ($opac_sur_location_activate==1 && !$location)require_once($base_path.'/includes/show_sur_location.inc.php');
+		if ($opac_sur_location_activate==1 && empty($location))require_once($base_path.'/includes/show_sur_location.inc.php');
 		else require_once($base_path.'/includes/show_localisation.inc.php');
 		break;
 	case 'rss_see':
@@ -502,6 +482,8 @@ switch($lvl) {
 	case 'contribution_area':
 		if($opac_contribution_area_activate && $allow_contribution) {
 			require_once($base_path.'/includes/contribution_area.inc.php');
+		} else {
+			print $msg['empr_contribution_area_unauthorized'];
 		}
 		break;
 	case 'collstate_bulletins_display':
@@ -529,42 +511,6 @@ switch($lvl) {
 		require_once($base_path.'/includes/index.inc.php');
 		break;
 }
-
-$cms_build_info = '';
-if($cms_build_activate == -1){
-	unset($_SESSION["cms_build_activate"]);
-}else if($cms_build_activate || $_SESSION["cms_build_activate"]){ // issu de la gestion	
-	if(isset($pageid) && $pageid){
-		require_once($base_path."/classes/cms/cms_pages.class.php");
-		$cms_page= new cms_page($pageid);
-		$cms_build_info['page']=$cms_page->get_env();
-	}
-	global $log, $infos_notice, $infos_expl, $nb_results_tab;
-	$cms_build_info['input']="index.php";
-	$cms_build_info['session']=$_SESSION;
-	$cms_build_info['post']=$_POST;
-	$cms_build_info['get']=$_GET;
-	$cms_build_info['lvl']=$lvl;
-	$cms_build_info['tab']=(isset($tab) ? $tab : '');	
-	$cms_build_info['log']=$log;
-	$cms_build_info['infos_notice']=$infos_notice;
-	$cms_build_info['infos_expl']=$infos_expl;
-	$cms_build_info['nb_results_tab']=$nb_results_tab;
-	$cms_build_info['search_type_asked']=$search_type_asked;
-	$cms_build_info=rawurlencode(serialize(pmb_base64_encode($cms_build_info)));
-	$cms_build_info= "<input type='hidden' id='cms_build_info' name='cms_build_info' value='".$cms_build_info."' />";
-	$cms_build_info.="	
-	<script type='text/javascript'>
-		if(window.top.window.cms_opac_loaded){
-			window.onload = function() {
-				window.top.window.cms_opac_loaded('".$_SERVER['REQUEST_URI']."');
-			}
-		}
-	</script>
-	";
-	$_SESSION["cms_build_activate"]="1";
-}
-$footer=str_replace("!!cms_build_info!!",$cms_build_info,$footer);	
 
 if($pmb_logs_activate){
 	//Enregistrement du log
@@ -633,6 +579,7 @@ if ($opac_show_bandeau_2==0) {
 } else {
 	$bandeau_2_contains= "<div id=\"bandeau_2\">!!contenu_bandeau_2!!</div>";	
 }
+if (!isset($facettes_tpl)) $facettes_tpl = '';
 //affichage du bandeau de gauche si $opac_show_bandeaugauche = 1
 if ($opac_show_bandeaugauche==0) {
 	$footer= str_replace("!!contenu_bandeau!!",$bandeau_2_contains,$footer);
@@ -695,66 +642,9 @@ if ($opac_show_bandeaugauche==0) {
 	$footer=str_replace("!!contenu_bandeau!!",($opac_accessibility ? $accessibility : "").$home_on_left.$loginform.$meteo.($opac_facette_in_bandeau_2?"":$lvl1.$facette).$adresse,$footer);
 	$footer= str_replace("!!contenu_bandeau_2!!",$opac_facette_in_bandeau_2?$lvl1.$facette:"",$footer);
 } 
-print $footer;
-if($opac_parse_html || $cms_active){	
-	if($opac_parse_html){
-		$htmltoparse= parseHTML(ob_get_contents());
-	}else{
-		$htmltoparse= ob_get_contents();
-	}
+cms_build_info(array(
+    'input' => 'index.php',
+));
 
-	ob_end_clean();
-	if ($cms_active) {
-		require_once($base_path."/classes/cms/cms_build.class.php");
-		$cms=new cms_build();
-		$htmltoparse = $cms->transform_html($htmltoparse);
-	}
-	
-	//Compression CSS
-	if($opac_compress_css == 1 && !$cms_active){
-		if($charset=='utf-8') $htmltoparse = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]'.
-				'|[\x00-\x7F][\x80-\xBF]+'.
-				'|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*'.
-				'|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})'.
-				'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
-				'?', $htmltoparse );
-		$compressed_file_exist = file_exists("./temp/full.css");
-		require_once($class_path."/curl.class.php");
-		$dom = new DOMDocument();
-		$dom->encoding = $charset;
-		$dom->loadHTML($htmltoparse);
-		$css_buffer = "";
-		$links = $dom->getElementsByTagName("link");
-		$dom_css = array();
-		for($i=0 ; $i<$links->length ; $i++){
-			$dom_css[] = $links->item($i);
-			if(!$compressed_file_exist && $links->item($i)->hasAttribute("type") && $links->item($i)->getAttribute("type") == "text/css"){
-				$css_buffer.= loadandcompresscss(html_entity_decode($links->item($i)->getAttribute("href")));
-			}
-		}
-		$styles = $dom->getElementsByTagName("style");
-		for($i=0 ; $i<$styles->length ; $i++){
-			$dom_css[] = $styles->item($i);
-			if(!$compressed_file_exist){
-				$css_buffer.= compresscss($styles->item($i)->nodeValue,"");
-			}
-		}
-		foreach($dom_css as $link){
-			$link->parentNode->removeChild($link);
-		}
-		if(!$compressed_file_exist){
-			file_put_contents("./temp/full.css",$css_buffer);
-		}
-		$link = $dom->createElement("link");
-		$link->setAttribute("href", "./temp/full.css");
-		$link->setAttribute("rel", "stylesheet");
-		$link->setAttribute("type", "text/css");
-		$dom->getElementsByTagName("head")->item(0)->appendChild($link);
-		$htmltoparse = $dom->saveHTML();
-	}else if (file_exists("./temp/full.css") && !$cms_active){
-		unlink("./temp/full.css");
-	}
-	print $htmltoparse;
-}
 pmb_mysql_close($dbh);
 ?>

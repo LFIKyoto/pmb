@@ -2,7 +2,7 @@
  // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: options_query_authorities.php,v 1.9 2017-11-07 16:09:51 ngantier Exp $
+// $Id: options_query_authorities.php,v 1.10 2019-01-14 15:34:20 arenou Exp $
 
 //Gestion des options de type text
 $base_path = "../..";
@@ -41,10 +41,11 @@ if ($first == 1) {
 	else
 		$param['MULTIPLE'][0]['value']="no";
 
-	$param["ID_SCHEME_CONCEP"][0]['value'] = $ID_SCHEME_CONCEP;
+	for($i=0 ; $i<count($ID_SCHEME_CONCEP) ; $i++){
+	    $param["ID_SCHEME_CONCEP"][$i]['value'] = $ID_SCHEME_CONCEP[$i];
+	}
 
 	$options = array_to_xml($param, "OPTIONS");
-	
 	print"
 	<script>
 	opener.document.formulaire.".$name."_options.value='".str_replace("\n", "\\n", addslashes($options)) ."';
@@ -144,14 +145,17 @@ if ($first == 1) {
 	$onto_handler = new onto_handler($class_path."/rdf/skos_pmb.rdf", "arc2", $onto_store_config, "arc2", $data_store_config,$tab_namespaces,'http://www.w3.org/2004/02/skos/core#prefLabel','http://www.w3.org/2004/02/skos/core#ConceptScheme');
 	
 	$params=new onto_param();
-	if($param["DATA_TYPE"]["0"]["value"]==9 && $param["ID_SCHEME_CONCEP"][0]['value'])
-		$params->concept_scheme=$param["ID_SCHEME_CONCEP"][0]['value'];
-	else{
-		$params->concept_scheme=$deflt_concept_scheme;
+	if($param["DATA_TYPE"]["0"]["value"]==9 && $param["ID_SCHEME_CONCEP"][0]['value'] !== ''){
+	    $params->concept_scheme = array();
+	    for($i=0 ; $i<count($param["ID_SCHEME_CONCEP"]) ; $i++){
+            $params->concept_scheme[]=$param["ID_SCHEME_CONCEP"][$i]['value'];
+	    }
+	}else{
+		$params->concept_scheme=[$deflt_concept_scheme];
 	}
 	$onto_controler=new onto_skos_controler($onto_handler, $params);
 	
-	$onto_scheme_list_selector=onto_skos_concept_ui::get_scheme_list_selector($onto_controler, $params,true,'','ID_SCHEME_CONCEP');
+	$onto_scheme_list_selector=onto_skos_concept_ui::get_scheme_list_selector($onto_controler, $params,true,'','ID_SCHEME_CONCEP','',true);
 	
 	
 	//Formulaire	

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: indexation_authperso.class.php,v 1.6 2018-06-06 08:21:28 dgoron Exp $
+// $Id: indexation_authperso.class.php,v 1.7 2019-06-24 10:27:53 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -24,7 +24,7 @@ class indexation_authperso extends indexation_authority {
 		if(is_array(static::$xml_indexation[$this->type]) && count(static::$xml_indexation[$this->type])){
 			foreach (static::$xml_indexation[$this->type]['FIELD'] as $i=>$field){
 				static::$xml_indexation[$this->type]['FIELD'][$i]['ID'] = str_replace('!!id_authperso!!', $this->id_authperso, $field['ID']);
-				if(is_array($field['TABLE'])){
+				if(isset($field['TABLE']) && is_array($field['TABLE'])){
 					foreach ($field['TABLE'] as $j=>$table){
 						if(isset($table['LINK']) && is_array($table['LINK'])){
 							foreach ($table['LINK'] as $k=>$link){

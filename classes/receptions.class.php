@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: receptions.class.php,v 1.9 2017-04-19 12:37:03 dgoron Exp $
+// $Id: receptions.class.php,v 1.11.2.1 2019-11-22 16:19:39 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -78,7 +78,7 @@ class receptions {
 			$this->filtre_lignes.= "and lignes_actes.num_rubrique in ('".implode("','",$tab_rub)."') ";
 		}
 		
-		if (is_array($lgstat_filter) && count($lgstat_filter)) {
+		if (is_array($lgstat_filter) && count($lgstat_filter) && $lgstat_filter[0]) {
 			$this->filtre_lignes.= "and lignes_actes.statut in ('".implode("','",$lgstat_filter)."') ";
 		}
 		
@@ -169,7 +169,7 @@ class receptions {
 					} else {
 										
 						//$members_actes = $aq->get_query_members("actes","numero","index_acte", "id_acte");
-						$members_actes='0';
+						$members_actes = array('where' => '0');
 						
 						$members_lignes = $aq->get_query_members("lignes_actes","code","index_ligne", "id_ligne");
 						$members_global = $aq->get_query_members("notices_global_index","infos_global","index_infos_global","num_notice");
@@ -238,9 +238,10 @@ class receptions {
 								$this->t_list[$i][$j]['libelle'] = $row->libelle;
 								$this->t_list[$i][$j]['statut'] = $row->statut;
 								$this->t_list[$i][$j]['commentaires_gestion'] = $row->commentaires_gestion;
-								$this->t_list[$i][$j]['commentaires_opac'] = $row->commentaires_opac;															}
+								$this->t_list[$i][$j]['commentaires_opac'] = $row->commentaires_opac;
 								$this->t_list[$i][$j]['num_produit'] = $row->num_produit;
 								$this->t_list[$i][$j]['num_acquisition'] = $row->num_acquisition;
+							}
 						}
 					}
 				}

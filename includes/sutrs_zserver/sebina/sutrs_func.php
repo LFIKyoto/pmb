@@ -5,7 +5,7 @@
 // authors: Marco Vaninetti, Massimo Mancini
 // state: experimental ;-)
 // +-------------------------------------------------+
-// $Id: sutrs_func.php,v 1.15 2017-07-10 13:46:57 ngantier Exp $
+// $Id: sutrs_func.php,v 1.16 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "sutrs_func.php")) die("no access");
 
@@ -147,7 +147,7 @@ function from_sutrs($ss,$campo){
 
 	// copy $dato values to associative array $campi which keys are standard and in english 
 	reset($campo);
-	while (list($k,$v)=each($campo)){
+	foreach ($campo as $k => $v) {
 		$campi[$k]=$dato[$v];
 	}
 
@@ -285,7 +285,7 @@ function sut_autfn($a,$at){
 	//printr($af,'','AF');
 	reset($fun);
 	$end = false;
-	while (list($cf,$ff)=each($fun)){
+	foreach ($fun as $cf => $ff) {
 		$ff=str_replace('/','\/',$ff);
 		for ($k=0;$k<count($af);$k++){
 			if ($af[$k]){	

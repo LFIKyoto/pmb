@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sphinx_explnums_indexer.class.php,v 1.4 2018-10-19 12:48:25 arenou Exp $
+// $Id: sphinx_explnums_indexer.class.php,v 1.5.6.1 2019-11-27 10:54:05 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -11,6 +11,8 @@ require_once $class_path.'/sphinx/sphinx_indexer.class.php';
 class sphinx_explnums_indexer extends sphinx_indexer {
 	
 	public function fillIndex($explnum_id=0){
+	    global $sphinx_indexes_prefix;
+	    
 		$options = array('size' => 80);
 		$explnum_id+=0;
 
@@ -45,8 +47,8 @@ class sphinx_explnums_indexer extends sphinx_indexer {
                 $res = pmb_mysql_query($noti_query.$explnums_noti_ids[$i]);
                 $object=pmb_mysql_fetch_object($res);
                 //purge...
-                pmb_mysql_query('delete from records_explnums where id = '.$object->id,$this->getDBHandler());
-                $query = 'insert into records_explnums (id,content,num_record) values('.$object->id.',\''.addslashes($object->content).'\',\''.$object->num_record.'\')';
+                pmb_mysql_query('delete from '.$sphinx_indexes_prefix.'records_explnums where id = '.$object->id,$this->getDBHandler());
+                $query = 'insert into '.$sphinx_indexes_prefix.'records_explnums (id,content,num_record) values('.$object->id.',\''.addslashes(encoding_normalize::utf8_normalize($object->content)).'\',\''.$object->num_record.'\')';
                 if(!pmb_mysql_query($query,$this->getDBHandler())){
                     print $table. ' : '.pmb_mysql_error($this->getDBHandler()). "\n".$query;die;
                 }
@@ -57,8 +59,8 @@ class sphinx_explnums_indexer extends sphinx_indexer {
 	        for($i=0 ; $i<count($explnums_bull_ids) ; $i++){
 	            $res = pmb_mysql_query($bull_query.$explnums_bull_ids[$i]);
 	            $object=pmb_mysql_fetch_object($res);
-                pmb_mysql_query('delete from records_explnums where id = '.$object->id,$this->getDBHandler());
-                $query = 'insert into records_explnums (id,content,num_record) values('.$object->id.',\''.addslashes($object->content).'\',\''.$object->num_record.'\')';
+	            pmb_mysql_query('delete from '.$sphinx_indexes_prefix.'records_explnums where id = '.$object->id,$this->getDBHandler());
+	            $query = 'insert into '.$sphinx_indexes_prefix.'records_explnums (id,content,num_record) values('.$object->id.',\''.addslashes(encoding_normalize::utf8_normalize($object->content)).'\',\''.$object->num_record.'\')';
                 if(!pmb_mysql_query($query,$this->getDBHandler())){
                     print $table. ' : '.pmb_mysql_error($this->getDBHandler()). "\n".$query;die;
                 }
@@ -72,8 +74,9 @@ class sphinx_explnums_indexer extends sphinx_indexer {
 
 	public function getIndexConfFile()
 	{
-		global $sphinx_indexes_path;
-		$index_name = 'records_explnums';
+	    global $sphinx_indexes_path;
+	    global $sphinx_indexes_prefix;
+	    $index_name = $sphinx_indexes_prefix.'records_explnums';
 		$conf = '
 #########################################
 #   PMB AUTOMATIC INDEX CONTSTRUCTION   #

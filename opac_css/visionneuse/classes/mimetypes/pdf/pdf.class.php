@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pdf.class.php,v 1.12 2017-07-21 12:41:19 vtouchard Exp $
+// $Id: pdf.class.php,v 1.13 2019-08-08 06:42:15 jlaurent Exp $
 
 require_once($visionneuse_path."/classes/mimetypes/affichage.class.php");
 
@@ -79,8 +79,8 @@ class pdf extends affichage{
 	public function getParamsPerso(){
 		$params = $this->driver->getClassParam('pdf');
 		$this->unserializeParams($params);
-		if($this->parameters['size_x'] == 0) $this->parameters['size_x'] = $this->driver->getParam("maxX");
-		if($this->parameters['size_y'] == 0) $this->parameters['size_y'] = $this->driver->getParam("maxY");
+		if(empty($this->parameters['size_x'])) $this->parameters['size_x'] = $this->driver->getParam("maxX");
+		if(empty($this->parameters['size_y'])) $this->parameters['size_y'] = $this->driver->getParam("maxY");
 	}
 	
 	public function unserializeParams($paramsToUnserialized){

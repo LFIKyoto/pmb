@@ -2,14 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lastfm.class.php,v 1.12 2017-11-30 14:33:09 dgoron Exp $
+// $Id: lastfm.class.php,v 1.14 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
 require_once($class_path."/connecteurs.class.php");
 require_once($class_path."/curl.class.php");
-require_once($class_path."/nusoap/nusoap.php");
 
 class lastfm extends connector {
 	//propriétés internes
@@ -30,9 +29,7 @@ class lastfm extends connector {
 	}
     
     public function source_get_property_form($source_id) {
-		global $charset;
-		global $pmb_url_base;
-		global $token;
+        global $charset, $api_key, $pmb_url_base, $token, $secret_key, $token_saved;
     	
     	$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {

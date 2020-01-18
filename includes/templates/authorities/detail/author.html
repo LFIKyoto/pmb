@@ -1,6 +1,6 @@
 {% extends 'gabarit.html' %}
 
-<!-- $Id: author.html,v 1.1 2018-02-16 15:45:42 apetithomme Exp $ -->
+<!-- $Id: author.html,v 1.2 2019-04-02 08:32:30 dgoron Exp $ -->
 
 {% block detail %}
 	{% if element.author_comment %}
@@ -10,6 +10,16 @@
 			</div>
 			<div class="aut_display_cell">
 				{{ element.author_comment | nl2br }}
+			</div>
+		</div>
+	{% endif %}
+	{% if element.author_isni %}
+		<div class="aut_display_row">
+			<div class="aut_display_cell">
+				<b>{{ msg.author_isni }} :</b>
+			</div>
+			<div class='aut_display_cell'>
+				{{element.author_isni }}
 			</div>
 		</div>
 	{% endif %}

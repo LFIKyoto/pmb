@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_agenda_view_calendar.class.php,v 1.17 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: cms_module_agenda_view_calendar.class.php,v 1.18.6.2 2019-11-04 10:54:54 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -82,20 +82,21 @@ class cms_module_agenda_view_calendar extends cms_module_common_view{
 			$date_time = mktime(0,0,0);
 			$calendar = array();
 			foreach($datas['events'] as $event){
-				if(isset($event['event_start']) && $event['event_start']){
+			    $event->id_event = $event->id;
+				if(!empty($event->event_start)){
  					$events[] =$event;
-					if(!in_array($event['calendar'],$calendar)){
-						$calendar[] = $event['calendar'];
+					if(!in_array($event->calendar,$calendar)){
+						$calendar[] = $event->calendar;
 						$legend.="
 							<div style='float:left;'>
-								<div style='float:left;width:1em;height:1em;background-color:".$event['color']."'></div>
-								<div style='float:left;'>&nbsp;".$this->format_text($event['calendar'])."&nbsp;&nbsp;</div>
+								<div style='float:left;width:1em;height:1em;background-color:".$event->color."'></div>
+								<div style='float:left;'>&nbsp;".$this->format_text($event->calendar)."&nbsp;&nbsp;</div>
 							</div>";
 					}
-					$styles[$event['id_type']] = $event['color'];
-					if($nb_displayed<$this->parameters['nb_displayed_events_under'] && ($event['event_start']['time']>= $date_time || $event['event_end']['time']>= $date_time)){
+					$styles[$event->id_type] = $event->color;
+					if($nb_displayed<$this->parameters['nb_displayed_events_under'] && ($event->event_start['time']>= $date_time || $event->event_end['time']>= $date_time)){
 						$event_list.="
-				<li><a href='".$this->get_constructed_link("event",$event['id'])."' title='".$this->format_text($event['calendar'])."'><span class='cms_module_agenda_event_".$event['id_type']."'>".$this->get_date_to_display($event['event_start']['format_value'],$event['event_end']['format_value'])."</span> : ".$this->format_text($event['title'])."</a></li>";
+				<li><a href='".$this->get_constructed_link("event",$event->id)."' title='".$this->format_text($event->calendar)."'><span class='cms_module_agenda_event_".$event->id_type."'>".$this->get_date_to_display($event->event_start['format_value'],$event->event_end['format_value'])."</span> : ".$this->format_text($event->title)."</a></li>";
 						$nb_displayed++;
 					}
 				}
@@ -160,9 +161,9 @@ class cms_module_agenda_view_calendar extends cms_module_common_view{
 							start_day = new Date(event['event_start']['time']*1000);
 							if(event['event_end']){
 								end_day = new Date(event['event_end']['time']*1000);
-							}
+							}else end_day = false;
 							//juste une date ou dates debut et fin
-							if(date.difference(value, start_day, 'day') == 0 || (start_day && end_day && date.difference(value, start_day, 'day') <= 0 &&date.difference(value, end_day, 'day') >= 0 )){
+							if(date.difference(value, start_day, 'day') == 0 || (start_day && end_day && date.difference(value, start_day, 'day') <= 0 && date.difference(value, end_day, 'day') >= 0 )){
 								current_events.push(event);
 							}
 							start_day = end_day = false;
@@ -170,7 +171,7 @@ class cms_module_agenda_view_calendar extends cms_module_common_view{
 						if(current_events.length == 1){
 							//un seul evenement sur la journee, on l'affiche directement
 							var link = '".$this->get_constructed_link("event","!!id!!")."';
-							document.location = link.replace('!!id!!',current_events[0]['id']);
+							document.location = link.replace('!!id!!',current_events[0]['id_event']);
 						}else if (current_events.length > 1){
 							//plusieurs evenements, on affiche la liste...
 							var month = value.getMonth()+1;

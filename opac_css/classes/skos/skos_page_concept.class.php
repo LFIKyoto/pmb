@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: skos_page_concept.class.php,v 1.13 2017-10-11 14:22:16 tsamson Exp $
+// $Id: skos_page_concept.class.php,v 1.14 2019-09-04 13:44:02 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -38,6 +38,7 @@ class skos_page_concept extends authority_page {
 	
 	protected function get_title_recordslist() {
 		global $msg, $charset;
+		return htmlentities($msg['authperso_doc_auth_title'], ENT_QUOTES, $charset);
 		return "";
 	}
 }

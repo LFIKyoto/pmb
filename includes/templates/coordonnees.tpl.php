@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: coordonnees.tpl.php,v 1.29 2017-11-22 11:07:34 dgoron Exp $
+// $Id: coordonnees.tpl.php,v 1.33.2.1 2019-11-04 10:54:00 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $coord_form;
+global $current_module, $msg, $charset, $ptab, $script;
 
 //	------------------------------------------------------------------------------
 //	$coord_form : template form des coordonnées des bibliothèques 
@@ -253,10 +256,23 @@ $ptab[1] = "
 				</div>
 			</div>
 		</div>
+		!!button_adr_fac!!
 	</div>
 
 	<br />
 ";
+
+$ptab[12] = "
+        <div class='row'>
+			<div class='colonne' style='width:95%;'>
+				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
+					&nbsp;
+				</div>
+				<div class='colonne_suite'>
+					<input type='button' class='bouton' id='button_resume_[1]' name='button_resume_[1]' value='".htmlentities($msg['acquisition_adr_liv_resume'])."' onclick=\"copy_coord_el('1', '2'); \" />
+				</div>
+			</div>
+		</div>";
 
 $ptab[10] = "
 	<div id='el2Child' class='row'>
@@ -384,6 +400,17 @@ $ptab[10] = "
 				</div>
 				<div class='colonne_suite'>
 					<input type='text' class='saisie-60em' id='ema_[2]' name='ema_[2]' value='!!ema_2!!' onchange=\"mod_coord_el('2'); \" />
+				</div>
+			</div>
+		</div>
+							
+		<div class='row'>
+			<div class='colonne' style='width:95%;'>
+				<div class='colonne10' style='text-align:right; margin-right:0.25em'>
+					&nbsp;
+				</div>
+				<div class='colonne_suite'>
+					<input type='button' class='bouton' id='button_resume_[2]' name='button_resume_[2]' value='".htmlentities($msg['acquisition_adr_fac_resume'])."' onclick=\"copy_coord_el('2', '1'); \" />
 				</div>
 			</div>
 		</div>
@@ -571,6 +598,22 @@ function test_form(form)
 	return true;
 }
 
+function copy_coord_el(el, target) {
+	document.getElementById('mod_['+target+']').value='1'; //Indique que l'élement est modifié
+	document.getElementById('lib_['+target+']').value = document.getElementById('lib_['+el+']').value;
+	document.getElementById('cta_['+target+']').value = document.getElementById('cta_['+el+']').value;
+	document.getElementById('ad1_['+target+']').value = document.getElementById('ad1_['+el+']').value;
+	document.getElementById('ad2_['+target+']').value = document.getElementById('ad2_['+el+']').value;
+	document.getElementById('cpo_['+target+']').value = document.getElementById('cpo_['+el+']').value;
+	document.getElementById('vil_['+target+']').value = document.getElementById('vil_['+el+']').value;
+	document.getElementById('eta_['+target+']').value = document.getElementById('eta_['+el+']').value;
+	document.getElementById('pay_['+target+']').value = document.getElementById('pay_['+el+']').value;
+	document.getElementById('te1_['+target+']').value = document.getElementById('te1_['+el+']').value;
+	document.getElementById('te2_['+target+']').value = document.getElementById('te2_['+el+']').value;
+	document.getElementById('fax_['+target+']').value = document.getElementById('fax_['+el+']').value;
+	document.getElementById('ema_['+target+']').value = document.getElementById('ema_['+el+']').value;
+}
+				
 function raz_coord_el(el) {
 	document.getElementById('mod_['+el+']').value='-1'; //Indique que l'élement est supprimé
 	document.getElementById('lib_['+el+']').value='';
@@ -585,7 +628,7 @@ function raz_coord_el(el) {
 	document.getElementById('te2_['+el+']').value='';
 	document.getElementById('fax_['+el+']').value='';
 	document.getElementById('ema_['+el+']').value='';
-    }
+}
     
 function raz_coord() {
 	var el = this.getAttribute('id').substring(4);
@@ -602,7 +645,7 @@ function raz_coord() {
 	document.getElementById('te2_['+el+']').value='';
 	document.getElementById('fax_['+el+']').value='';
 	document.getElementById('ema_['+el+']').value='';
-    }
+}
     
 function mod_coord_el(el) {
 	document.getElementById('mod_['+el+']').value='1'; //Indique que l'élement est modifié
@@ -1070,4 +1113,3 @@ template.appendChild(ret2);
 </script>";
 
 ?>
-

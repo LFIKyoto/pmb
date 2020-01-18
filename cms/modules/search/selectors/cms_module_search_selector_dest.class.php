@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_search_selector_dest.class.php,v 1.5 2016-09-20 10:25:42 apetithomme Exp $
+// $Id: cms_module_search_selector_dest.class.php,v 1.6 2019-02-28 08:22:16 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -19,7 +19,7 @@ class cms_module_search_selector_dest extends cms_module_common_selector{
 					<label for=''>".$this->format_text($this->msg['cms_module_search_selector_search_dest_dests'])."</label>
 				</div>
 				<div class='colonne-suite'>";
-		$form.=$this->gen_select();
+		$form.=$this->gen_checkboxes();
 		$form.="
 				</div>
 			</div>";
@@ -28,8 +28,50 @@ class cms_module_search_selector_dest extends cms_module_common_selector{
 	}
 	
 	public function save_form(){
-		$this->parameters = $this->get_value_from_form("dests");
+		$dests_order = $this->get_value_from_form("dests_order");
+		$dests = $this->get_value_from_form("dests");
+		asort($dests_order);
+		$this->parameters = array();
+		foreach ($dests_order as $key=>$dest_order) {
+			if(in_array($key, $dests)) {
+				$this->parameters[] = $key;
+			}
+		}
 		return parent ::save_form();
+	}
+	
+	protected function gen_checkboxes(){
+		global $charset;
+		
+		$dests = $this->get_dests_list();
+		if(!empty($this->parameters)) {
+			$sorted_dests = array();
+			foreach ($this->parameters as $key => $name) {
+				if($dests[$name]) {
+					$sorted_dests[$name] = $dests[$name];
+				}
+			}
+			$dests = array_merge($sorted_dests, $dests);
+		}
+		$checkboxes = "<table>";
+		$order = 1;
+		foreach($dests as $key => $name){
+			$checkboxes.="
+				<tr>
+					<td style='width:5%'>
+						<input type='text' id='".$this->get_form_value_name("dests_order")."_".$key."' name='".$this->get_form_value_name("dests_order")."[".$key."]' class='saisie-5em' value='".$order."' />
+					</td>
+					<td class='center' style='width:5%'>
+						<input type='checkbox' id='".$this->get_form_value_name("dests")."_".$key."' name='".$this->get_form_value_name("dests")."[]' value='".$key."' ".(in_array($key,$this->parameters) ? "checked='checked'" : "")." />
+					</td>
+					<td style='width:40%'>
+						".$this->format_text($name)."
+					</td>
+				</tr>";
+			$order++;
+		}
+		$checkboxes .= "</table>";
+		return $checkboxes;
 	}
 	
 	protected function gen_select(){

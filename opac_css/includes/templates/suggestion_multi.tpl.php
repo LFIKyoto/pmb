@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestion_multi.tpl.php,v 1.8 2018-01-25 10:13:28 dgoron Exp $
+// $Id: suggestion_multi.tpl.php,v 1.9 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -10,6 +10,7 @@ global $multi_sug_form;
 global $opac_sugg_categ;
 global $opac_sugg_categ_default;
 global $acquisition_sugg_categ;
+global $base_path, $msg, $charset, $include_path;
 
 require_once($base_path.'/classes/suggestions_categ.class.php');
 

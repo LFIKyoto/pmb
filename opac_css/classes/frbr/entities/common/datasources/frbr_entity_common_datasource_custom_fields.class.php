@@ -2,21 +2,21 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_common_datasource_custom_fields.class.php,v 1.1 2018-03-28 09:23:58 dgoron Exp $
+// $Id: frbr_entity_common_datasource_custom_fields.class.php,v 1.4 2019-08-19 09:27:30 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 
 class frbr_entity_common_datasource_custom_fields extends frbr_entity_common_datasource {
-	
+
 	protected $custom_list;
-	
+
 	public function __construct($id=0){
 		parent::__construct($id);
 	}
-	
+
 	public function get_sub_datasources(){
-		if(get_called_class() != 'frbr_entity_common_datasource_custom_fields') {
+	    if(static::class != 'frbr_entity_common_datasource_custom_fields') {
 			return array();
 		} else {
 			return array(
@@ -34,7 +34,7 @@ class frbr_entity_common_datasource_custom_fields extends frbr_entity_common_dat
 			);
 		}
 	}
-	
+
 	protected function get_entity_type_from_data_type($data_type) {
 		switch ($data_type) {
 			case 1:
@@ -68,7 +68,7 @@ class frbr_entity_common_datasource_custom_fields extends frbr_entity_common_dat
 				return 'authperso';
 		}
 	}
-	
+
 	protected function get_prefixes() {
 		return array(
 				'author',
@@ -80,15 +80,16 @@ class frbr_entity_common_datasource_custom_fields extends frbr_entity_common_dat
 				'indexint',
 				'skos',
 				'tu',
-				'authperso'
+				'authperso',
+	            'expl'
 		);
 	}
-	
+
 	protected function get_custom_list() {
 		if(!isset($this->custom_list)) {
 			$this->custom_list = array();
 			foreach ($this->get_prefixes() as $prefix) {
-				$query = "select idchamp, titre, options from ".$prefix."_custom where type='query_auth' order by name";
+				$query = "select idchamp, titre, options, datatype from ".$prefix."_custom where type='query_auth' order by name";
 				$result = pmb_mysql_query($query);
 				while($row = pmb_mysql_fetch_assoc($result)) {
 					$options = _parser_text_no_function_($row['options']);
@@ -100,27 +101,28 @@ class frbr_entity_common_datasource_custom_fields extends frbr_entity_common_dat
 		}
 		return $this->custom_list;
 	}
-	
+
 	protected function get_custom_list_selector() {
 		global $charset;
-		
+
 		if(!isset($this->parameters->prefix)) $this->parameters->prefix = '';
 		if(!isset($this->parameters->id)) $this->parameters->id = 0;
+		if(!isset($this->parameters->datatype)) $this->parameters->datatype = 'integer';
 		
 		$custom_list = $this->get_custom_list();
 		$selector = "<select name='datanode_datasource_custom_field'>";
 		foreach ($custom_list as $prefix=>$customs) {
 			foreach ($customs as $custom) {
-				$selector .= "<option value='".$prefix."|||".$custom['idchamp']."' ".($this->parameters->prefix.'|||'.$this->parameters->id == $prefix."|||".$custom['idchamp'] ? "selected='selected'" : "").">".htmlentities($custom['titre'], ENT_QUOTES, $charset)."</option>";
+			    $selector .= "<option value='".$prefix."|||".$custom['idchamp']."|||".$custom['datatype']."' ".($this->parameters->prefix.'|||'.$this->parameters->id.'|||'.$this->parameters->datatype == $prefix."|||".$custom['idchamp']."|||".$custom['datatype'] ? "selected='selected'" : "").">".htmlentities($custom['titre'], ENT_QUOTES, $charset)."</option>";
 			}
 		}
 		$selector .= "</select>";
 		return $selector;
 	}
-	
+
 	public function get_form(){
 		$form = parent::get_form();
-		if(get_called_class() != 'frbr_entity_common_datasource_custom_fields') {
+		if(static::class != 'frbr_entity_common_datasource_custom_fields') {
 			$form .= "
 			<div class='row'>
 				<div class='colonne3'>
@@ -133,20 +135,27 @@ class frbr_entity_common_datasource_custom_fields extends frbr_entity_common_dat
 		}
 		return $form;
 	}
-	
+
 	public function save_form(){
 		global $datanode_datasource_custom_field;
 		$custom_field = explode('|||', $datanode_datasource_custom_field);
 		$this->parameters->prefix = $custom_field[0];
 		$this->parameters->id = $custom_field[1];
+		$this->parameters->datatype = $custom_field[2];
 		return parent::save_form();
 	}
-	
+
 	/*
 	 * Récupération des données de la source...
 	 */
 	public function get_datas($datas=array()){
-		$query = "select ".$this->parameters->prefix."_custom_integer as id, ".$this->parameters->prefix."_custom_origine as parent from ".$this->parameters->prefix."_custom_values where ".$this->parameters->prefix."_custom_champ = ".$this->parameters->id." and ".$this->parameters->prefix."_custom_origine in (".implode(',', $datas).")";
+	    $datatype = 'integer';
+	    $qid = "select datatype from ".$this->parameters->prefix."_custom where idchamp=".$this->parameters->id;
+	    $rid = pmb_mysql_query($qid);
+	    if($rid) {
+	       $datatype = pmb_mysql_result($rid,0,0);
+	    }
+		$query = "select ".$this->parameters->prefix."_custom_".$datatype." as id, ".$this->parameters->prefix."_custom_origine as parent from ".$this->parameters->prefix."_custom_values where ".$this->parameters->prefix."_custom_champ = ".$this->parameters->id." and ".$this->parameters->prefix."_custom_origine in (".implode(',', $datas).")";
 		$datas = $this->get_datas_from_query($query);
 		$datas = parent::get_datas($datas);
 		return $datas;

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entity_locking.inc.php,v 1.2 2018-09-19 15:19:18 vtouchard Exp $
+// $Id: entity_locking.inc.php,v 1.3 2019-05-29 12:03:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $sub, $entity_id, $entity_type, $user_id;
 
 require_once($class_path."/entity_locking.class.php");
 

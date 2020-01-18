@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2005 Guillaume Boitel g.boitel@wanadoo.fr
 // +-------------------------------------------------+
-// $Id: create_proc.class.php,v 1.12 2017-11-21 12:00:59 dgoron Exp $
+// $Id: create_proc.class.php,v 1.13 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -111,7 +111,7 @@ class create_proc {
 		//Champs fixes
 		reset($this->list_fields);
 		$open_optgroup=0;
-		while (list($id,$lf)=each($this->list_fields)) {
+		foreach ($this->list_fields as $id => $lf) {
 			if ($lf["SEPARATOR"]) {
 				if ($open_optgroup) $this->r.="</optgroup>\n";
 				$this->r.="<optgroup label='".htmlentities($lf["SEPARATOR"],ENT_QUOTES,$charset)."' class='erreur'>\n";
@@ -125,7 +125,7 @@ class create_proc {
 		if (!$this->pp->no_special_fields) {
 			$this->r.="<optgroup label='".$msg["search_custom"]."' class='erreur'>\n";
 			reset($this->pp->t_fields);
-			while (list($id,$pf)=each($this->pp->t_fields)) {
+			foreach ($this->pp->t_fields as $id => $pf) {
 				$this->r.="<option value='p_".$id."' style='color:#000000'>".htmlentities($pf["TITRE"],ENT_QUOTES,$charset)."</option>\n";
 			}
 			$this->r.="</optgroup>\n";
@@ -226,7 +226,7 @@ class create_proc {
 		//Champs fixes
 		reset($this->list_fields);
 		$open_optgroup=0;
-		while (list($id,$lf)=each($this->list_fields)) {
+		foreach ($this->list_fields as $id => $lf) {
 			if ($lf["SEPARATOR"]) {
 				if ($open_optgroup) $this->r.="</optgroup>\n";
 				$this->r.="<optgroup label='".htmlentities($lf["SEPARATOR"],ENT_QUOTES,$charset)."' class='erreur'>\n";
@@ -240,7 +240,7 @@ class create_proc {
 		if (!$this->pp->no_special_fields) {
 			$this->r.="<optgroup label='".$msg["search_custom"]."' class='erreur'>\n";
 			reset($this->pp->t_fields);
-			while (list($id,$pf)=each($this->pp->t_fields)) {
+			foreach ($this->pp->t_fields as $id => $pf) {
 				$this->r.="<option value='p_".$id."' style='color:#000000'>".htmlentities($pf["TITRE"],ENT_QUOTES,$charset)."</option>\n";
 			}
 			$this->r.="</optgroup>\n";
@@ -352,7 +352,7 @@ class create_proc {
 		//Champs fixes
 		reset($this->list_fields);
 		$open_optgroup=0;
-		while (list($id,$lf)=each($this->list_fields)) {
+		foreach ($this->list_fields as $id => $lf) {
 			if ($lf["SEPARATOR"]) {
 				if ($open_optgroup) $this->r.="</optgroup>\n";
 				$this->r.="<optgroup label='".htmlentities($lf["SEPARATOR"],ENT_QUOTES,$charset)."' class='erreur'>\n";
@@ -367,7 +367,7 @@ class create_proc {
 		if (!$this->pp->no_special_fields) {
 			$this->r.="<optgroup label='".$msg["search_custom"]."' class='erreur'>\n";
 			reset($this->pp->t_fields);
-			while (list($id,$pf)=each($this->pp->t_fields)) {
+			foreach ($this->pp->t_fields as $id => $pf) {
 				if((in_array("p_".$id, $this->print_field)===false) || "p_".$id == $delete_id) // Ne pas afficher un champ déjà présent (sauf si il vient d'être suprimé)
 				$this->r.="<option value='p_".$id."' style='color:#000000'>".htmlentities($pf["TITRE"],ENT_QUOTES,$charset)."</option>\n";
 			}
@@ -684,7 +684,7 @@ class create_proc {
 			$autorisation[]=array(0,$all_userid,$all_username);
 			}
 		$autorisations_users="";
-		while (list($row_number, $row_data) = each($autorisation)) {
+		foreach ($autorisation as $row_number => $row_data) {
 			if ($row_data[0]) $autorisations_users.="<input type='checkbox' name='userautorisation[]' value='".$row_data[1]."' checked class='checkbox'>&nbsp;".$row_data[2]."&nbsp;&nbsp;";
 			else $autorisations_users.="<input type='checkbox' name='userautorisation[]' value='".$row_data[1]."' class='checkbox'>&nbsp;".$row_data[2]."&nbsp;&nbsp;";
 		}

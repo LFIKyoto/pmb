@@ -2,13 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rubriques.class.php,v 1.27 2017-07-10 12:17:03 dgoron Exp $
+// $Id: rubriques.class.php,v 1.29 2019-08-20 09:18:41 btafforeau Exp $
 
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
+global $class_path, $base_path, $line;
+
 require_once("$class_path/actes.class.php");
 require_once("$base_path/acquisition/achats/func_achats.inc.php");
+
 
 class rubriques{
 	
@@ -30,6 +33,7 @@ class rubriques{
 		}
 	}
 	
+	
 	// charge une rubrique à partir de la base.
 	public function load(){
 		$q = "select * from rubriques where id_rubrique = '".$this->id_rubrique."' ";
@@ -44,6 +48,7 @@ class rubriques{
 		$this->autorisations = $obj->autorisations;
 	}
 	
+	
 	// enregistre une rubrique en base.
 	public function save(){
 		if ($this->libelle == '' || !$this->num_budget) die("Erreur de création rubriques");
@@ -53,13 +58,13 @@ class rubriques{
 			$q = "update rubriques set num_budget = '".$this->num_budget."', num_parent = '".$this->num_parent."', libelle = '".$this->libelle."', ";
 			$q.= "commentaires = '".$this->commentaires."', montant = '".$this->montant."', num_cp_compta = '".$this->num_cp_compta."', autorisations = '".$this->autorisations."' ";
 			$q.= "where id_rubrique = '".$this->id_rubrique."' ";
-			$r = pmb_mysql_query($q);
+			pmb_mysql_query($q);
 			
 		} else {
 			
 			$q = "insert into rubriques set num_budget = '".$this->num_budget."', num_parent = '".$this->num_parent."', libelle = '".$this->libelle."', ";
 			$q.= "commentaires = '".$this->commentaires."', montant = '".$this->montant."', num_cp_compta = '".$this->num_cp_compta."', autorisations = '".$this->autorisations."' ";
-			$r = pmb_mysql_query($q);
+			pmb_mysql_query($q);
 			$this->id_rubrique = pmb_mysql_insert_id();
 			
 		}
@@ -71,7 +76,7 @@ class rubriques{
 		if(!$id_rubrique) return; 	
 
 		$q = "delete from rubriques where id_rubrique = '".$id_rubrique."' ";
-		$r = pmb_mysql_query($q);
+		pmb_mysql_query($q);
 	}
 	
 	//calcule le montant engagé pour une rubrique budgétaire
@@ -490,5 +495,184 @@ class rubriques{
 		}
 		return $res;
 	}
+	
+	
+	//Affiche les sous-rubriques d'une rubrique
+	public static function afficheSousRubriques($bud, $id_rub, &$form, $indent=0) {
+	    
+	    global $msg, $charset;
+	    global $view_lig_rub_form, $lig_rub_img, $lig_indent;
+	    global $acquisition_gestion_tva;
+	    
+	    switch ($acquisition_gestion_tva) {
+	        case '0' :;
+	        case '2' :
+	            $htttc=htmlentities($msg['acquisition_ttc'], ENT_QUOTES, $charset);
+	            $k_htttc='ttc';
+	            $k_htttc_autre='ht';
+	            break;
+	        default:
+	            $htttc=htmlentities($msg['acquisition_ht'], ENT_QUOTES, $charset);
+	            $k_htttc='ht';
+	            $k_htttc_autre='ttc';
+	            break;
+	    }
+	    $id_bud = $bud->id_budget;
+	    $q = budgets::listRubriques($id_bud, $id_rub);
+	    $list_n = pmb_mysql_query($q);
+	    while(($row=pmb_mysql_fetch_object($list_n))){
+	        $form = str_replace('<!-- sous_rub'.$id_rub.' -->', $view_lig_rub_form.'<!-- sous_rub'.$id_rub.' -->', $form);
+	        $marge = '';
+	        for($i=0;$i<$indent;$i++){
+	            $marge.= $lig_indent;
+	        }
+	        $form = str_replace('<!-- marge -->', $marge, $form);
+	        
+	        $nb_sr = rubriques::countChilds($row->id_rubrique);
+	        if ($nb_sr) {
+	            $form = str_replace('<!-- img_plus -->', $lig_rub_img, $form);
+	        } else {
+	            $form = str_replace('<!-- img_plus -->', '', $form);
+	        }
+	        $form = str_replace('<!-- sous_rub -->', '<!-- sous_rub'.$row->id_rubrique.' -->', $form);
+	        $form = str_replace('!!id_rub!!', $row->id_rubrique, $form);
+	        $form = str_replace('!!id_parent!!', $row->num_parent, $form);
+	        $libelle = htmlentities($row->libelle, ENT_QUOTES, $charset);
+	        $form = str_replace('!!lib_rub!!', $libelle, $form);
+	        
+	        //montant total
+	        $mnt['tot'][$k_htttc]=$row->montant;
+	        //montant a valider
+	        $mnt['ava'] = rubriques::calcAValider($row->id_rubrique);
+	        //montant engage
+	        $mnt['eng'] = rubriques::calcEngage($row->id_rubrique);
+	        //montant facture
+	        $mnt['fac'] = rubriques::calcFacture($row->id_rubrique);
+	        //montant paye
+	        $mnt['pay'] = rubriques::calcPaye($row->id_rubrique);
+	        //solde
+	        $mnt['sol'][$k_htttc]=$mnt['tot'][$k_htttc]-$mnt['eng'][$k_htttc];
+	        
+	        $lib_mnt = array();
+	        $lib_mnt_autre = array();
+	        foreach($mnt as $k=>$v) {
+	            $lib_mnt[$k]=number_format($v[$k_htttc],2,'.',' ');
+	            if($acquisition_gestion_tva && $k!="tot" && $k!="sol") {
+	                $lib_mnt_autre[$k]=number_format($v[$k_htttc_autre],2,'.',' ');
+	            }
+	        }
+	        if ($bud->type_budget == TYP_BUD_GLO ) {
+	            $lib_mnt['tot']='&nbsp;';
+	            $lib_mnt['sol']='&nbsp;';
+	        }
+	        foreach ($lib_mnt as $k => $v) {
+	            if (!$acquisition_gestion_tva || empty($lib_mnt_autre[$k])) {
+	                $form = str_replace('!!mnt_'.$k.'!!', $v, $form);
+	            } elseif ($acquisition_gestion_tva) {
+	                $form = str_replace('!!mnt_'.$k.'!!', $v."<br />".$lib_mnt_autre[$k], $form);
+	            }
+	            
+	        }
+	        if ($nb_sr) {
+	            static::afficheSousRubriques($bud, $row->id_rubrique, $form, $indent+1);
+	        }
+	    }
+	}
+	
+	
+	//Export excel des sous-rubriques d'une rubrique
+	static public function printSousRubriques($bud, $id_rub, &$worksheet, $indent=0) {
+	    
+	    global $msg, $charset;
+	    global $acquisition_gestion_tva,$line;
+	    
+	    switch ($acquisition_gestion_tva) {
+	        case '0' :;
+	        case '2' :
+	            $htttc=$msg['acquisition_ttc'];
+	            $k_htttc='ttc';
+	            $k_htttc_autre='ht';
+	            break;
+	        default:
+	            $htttc=$msg['acquisition_ht'];
+	            $k_htttc='ht';
+	            $k_htttc_autre='ttc';
+	            break;
+	    }
+	    $id_bud = $bud->id_budget;
+	    $q = budgets::listRubriques($id_bud, $id_rub);
+	    $list_n = pmb_mysql_query($q);
+	    while(($row=pmb_mysql_fetch_object($list_n))){
+	        
+	        $marge = '';
+	        for($i=0;$i<$indent;$i++){
+	            $marge.= "      ";
+	        }
+	        
+	        //montant total
+	        $mnt['tot'][$k_htttc]=$row->montant;
+	        //montant a valider
+	        $mnt['ava'] = rubriques::calcAValider($row->id_rubrique);
+	        //montant engage
+	        $mnt['eng'] = rubriques::calcEngage($row->id_rubrique);
+	        //montant facture
+	        $mnt['fac'] = rubriques::calcFacture($row->id_rubrique);
+	        //montant paye
+	        $mnt['pay'] = rubriques::calcPaye($row->id_rubrique);
+	        //solde
+	        $mnt['sol'][$k_htttc]=$mnt['tot'][$k_htttc]-$mnt['eng'][$k_htttc];
+	        
+	        $lib_mnt = array();
+	        $lib_mnt_autre = array();
+	        foreach($mnt as $k=>$v) {
+	            $lib_mnt[$k]=number_format($v[$k_htttc],2,'.','');
+	            if($acquisition_gestion_tva && $k!="tot" && $k!="sol") {
+	                $lib_mnt_autre[$k]=number_format($v[$k_htttc_autre],2,'.','');
+	            }
+	        }
+	        if ($bud->type_budget == TYP_BUD_GLO ) {
+	            $lib_mnt['tot']='';
+	            $lib_mnt['sol']='';
+	        }
+	        
+	        $line++;
+	        $worksheet->write($line,0,$marge.$row->libelle);
+	        $worksheet->write($line,1,$lib_mnt["tot"]);
+	        $worksheet->write($line,2,$lib_mnt["ava"]);
+	        $worksheet->write($line,3,$lib_mnt["eng"]);
+	        $worksheet->write($line,4,$lib_mnt["fac"]);
+	        $worksheet->write($line,5,$lib_mnt["pay"]);
+	        $worksheet->write($line,6,$lib_mnt["sol"]);
+	        
+	        if($acquisition_gestion_tva) {
+	            $line++;
+	            if (!empty($lib_mnt_autre["tot"])) {
+	                $worksheet->write($line,1,$lib_mnt_autre["tot"]);
+	            }
+	            if (!empty($lib_mnt_autre["ava"])) {
+	                $worksheet->write($line,2,$lib_mnt_autre["ava"]);
+	            }
+	            if (!empty($lib_mnt_autre["eng"])) {
+	                $worksheet->write($line,3,$lib_mnt_autre["eng"]);
+	            }
+	            if (!empty($lib_mnt_autre["fac"])) {
+	                $worksheet->write($line,4,$lib_mnt_autre["fac"]);
+	            }
+	            if (!empty($lib_mnt_autre["pay"])) {
+	                $worksheet->write($line,5,$lib_mnt_autre["pay"]);
+	            }
+	            if (!empty($lib_mnt_autre["sol"])) {
+	                $worksheet->write($line,6,$lib_mnt_autre["sol"]);
+	            }
+	        }
+	        
+	        $nb_sr = static::countChilds($row->id_rubrique);
+	        if ($nb_sr) {
+	            static::printSousRubriques($bud, $row->id_rubrique, $worksheet, $indent+1);
+	        }
+	    }
+	}
+	
+	
 }
-?>
+

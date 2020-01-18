@@ -2,7 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: start_export_caddie.php,v 1.31 2018-07-25 06:19:18 dgoron Exp $
+// $Id: start_export_caddie.php,v 1.34.2.1 2019-09-19 08:29:16 dgoron Exp $
+
+global $base_path, $base_auth, $base_title, $include_path, $class_path, $specialexport, $output_type, $idcaddie, $charset, $first, $output_params;
+global $n_current, $elt_flag, $elt_no_flag, $keep_expl, $msg, $keep_explnum, $export_type, $lender, $td, $sd;
 
 //Exécution de l'export
 $base_path = "../..";
@@ -97,6 +100,7 @@ if ($first != 1) {
 	$output_instance = start_export::get_instance_from_output_type($output_type);
 
 	//Création du fichier de sortie
+	if (empty($output_params['SUFFIX'])) $output_params['SUFFIX'] = '';
 	$file_out = $nom_fic."_".$origine.".".$output_params['SUFFIX']."~";
 } else {
 	//Récupération du répertoire
@@ -121,6 +125,8 @@ if (empty($n_current))
 
 //Récupération des notices
 $n_notices=0;
+//Pour le cas ou on est sur un panier d'exemplaire afin de ne pas exporter les autres exemplaires des notices associées
+$expl_a_exporter=array();
 //Pour le cas ou on a un panier d'exemplaire avec des exemplaires de bulletin
 $bulletin_a_exporter=array();
 switch ($myCart->type) {
@@ -151,6 +157,8 @@ switch ($myCart->type) {
 		for ($i=0; $i<count($liste_no_flag); $i++) {
 			$liste[]=$liste_no_flag[$i];
 		}
+		//Exemplaires à exporter
+		$expl_a_exporter = $liste;
 		$requete="create temporary table expl_cart_id (id integer) ENGINE=MyISAM ";
 		pmb_mysql_query($requete);
 		for ($i=0; $i<count($liste); $i++) {
@@ -220,19 +228,17 @@ if ($first!=1) {
 	$fo = fopen("$base_path/temp/".$file_out, "w+");
 	//Entête
 	if(isset($output_params['SCRIPT'])) {
-		$class_name = str_replace('.class.php', '', $output_params['SCRIPT']);
-		if(class_exists($class_name)) {
-			$export_instance = new $class_name();
-			fwrite($fo, $export_instance->_get_header_($output_params));
-		} else {
-			fwrite($fo, _get_header_($output_params));
-		}
+	    $class_name = str_replace('.class.php', '', $output_params['SCRIPT']);
+	}
+	
+	if(is_object($output_instance)) {
+	    fwrite($fo, $output_instance->_get_header_($output_params));
+	} elseif (isset($class_name) && class_exists($class_name)) {
+	    $export_instance = new $class_name();
+	    fwrite($fo, $export_instance->_get_header_($output_params));
 	} else {
-		if(is_object($output_instance)) {
-			fwrite($fo, $output_instance->_get_header_($output_params));
-		} else {
-			fwrite($fo, _get_header_($output_params));
-		}
+	    $def = new convert_output();
+	    fwrite($fo, $def->_get_header_($output_params));
 	}
 	fclose($fo);
 } 
@@ -257,9 +263,9 @@ $resultat=pmb_mysql_query($requete);
 $no_notice=pmb_mysql_result($resultat,0,0)*1+1;
 
 $z = 0;
-if($_SESSION["param_export"]["notice_exporte"]) $notice_exporte = $_SESSION["param_export"]["notice_exporte"]; 
+if(!empty($_SESSION["param_export"]["notice_exporte"])) $notice_exporte = $_SESSION["param_export"]["notice_exporte"]; 
 else $notice_exporte=array();
-if($_SESSION["param_export"]["bulletin_exporte"]) $bulletin_exporte = $_SESSION["param_export"]["bulletin_exporte"]; 
+if(!empty($_SESSION["param_export"]["bulletin_exporte"])) $bulletin_exporte = $_SESSION["param_export"]["bulletin_exporte"]; 
 else $bulletin_exporte=array();
 while (($z<200)&&(($n_current+$z)<count($liste))) {
 	$id=$liste[$n_current+$z];
@@ -277,6 +283,10 @@ while (($z<200)&&(($n_current+$z)<count($liste))) {
 			}
 		}
 		$params = $param->get_parametres($param->context);
+		//Pour le cas ou on exporte les exemplaires du panier d'exemplaires uniquement
+		if(count($expl_a_exporter)) {
+			$params['export_only_expl_ids'] = $expl_a_exporter;
+		}
 		if ($keep_explnum) {
 			$params['explnum'] = 1;
 		}
@@ -304,14 +314,15 @@ while (($z<200)&&(($n_current+$z)<count($liste))) {
 		$requete = "insert into import_marc (no_notice, notice, origine) values($no_notice,'".addslashes($e_notice)."', '$origine')";
 		pmb_mysql_query($requete);
 		$no_notice++;
-		$z ++;
+		$z++;
 	} else {
-		for($i=0; $i<sizeof($e_notice);$i++) {
+	    $nb_notices = count($e_notice);
+		for ($i = 0; $i < $nb_notices; $i++) {
 			$requete = "insert into import_marc (no_notice, notice, origine) values($no_notice,'".addslashes($e_notice[$i])."', '$origine')";
 			pmb_mysql_query($requete);
 			$no_notice++;
 		}
-		$z ++;
+		$z++;
 	}
 }
 

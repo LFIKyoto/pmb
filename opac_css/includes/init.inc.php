@@ -2,11 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: init.inc.php,v 1.12 2018-10-23 12:26:15 apetithomme Exp $
+// $Id: init.inc.php,v 1.13.4.1 2019-11-28 14:39:12 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "1");
+global $include_path, $base_path, $class_path, $javascript_path, $lvl, $user_query, $opac_view, $search_type_asked, $current_module;
+
+if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "1");
 
 //Chemins par défaut de l'application (il faut initialiser $base_path relativement à l'endroit où s'exécute le script)
 $include_path=$base_path."/includes";
@@ -30,6 +32,8 @@ if (!defined('TYPE_CMS_ARTICLE')) 	define('TYPE_CMS_ARTICLE',14);
 if (!defined('TYPE_LOCATION'))		define('TYPE_LOCATION',15);
 if (!defined('TYPE_SUR_LOCATION'))	define('TYPE_SUR_LOCATION',16);
 if (!defined('TYPE_CONCEPT'))		define('TYPE_CONCEPT',17);
+if (!defined('TYPE_ONTOLOGY'))		define('TYPE_ONTOLOGY',18);
+if (!defined('TYPE_DOCWATCH'))		define('TYPE_DOCWATCH',19);
 
 // A n'utiliser QUE dans le contexte des MAP
 if (!defined( 'TYPE_RECORD' )) 		define('TYPE_RECORD',11);
@@ -46,4 +50,7 @@ if(!isset($user_query)) $user_query = '';
 if(!isset($opac_view)) $opac_view = '';
 if(!isset($search_type_asked)) $search_type_asked = '';
 if(!isset($current_module)) $current_module = '';
+
+// Chargement de l'autoload des librairies externes
+require_once $base_path.'/vendor/autoload.php';
 ?>

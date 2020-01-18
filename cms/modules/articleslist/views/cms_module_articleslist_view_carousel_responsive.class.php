@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_articleslist_view_carousel_responsive.class.php,v 1.3 2016-09-20 10:25:41 apetithomme Exp $
+// $Id: cms_module_articleslist_view_carousel_responsive.class.php,v 1.3.10.1 2019-09-17 09:59:20 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -51,7 +51,7 @@ class cms_module_articleslist_view_carousel_responsive extends cms_module_common
 		for($i=0 ; $i<count($ids) ; $i++){
 			$article = new cms_article($ids[$i]);
 			$infos = $article->format_datas();
-			$infos['link'] = $this->get_constructed_link("article",$infos['id']);
+			$infos->link = $this->get_constructed_link("article",$infos->id);
 			$datas['records'][]=$infos;
 		}
 		return parent::render($datas);

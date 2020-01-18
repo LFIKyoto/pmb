@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: clean.php,v 1.38 2018-06-19 11:18:57 dgoron Exp $
+// $Id: clean.php,v 1.41 2019-04-29 11:04:20 dgoron Exp $
 
 $base_path="../..";                            
 $base_auth = "ADMINISTRATION_AUTH";  
@@ -50,6 +50,9 @@ if(!$spec) {
 	$spec += (isset($index_authorities) ? $index_authorities : 0);
 	$spec += (isset($gen_signature_docnum) ? $gen_signature_docnum : 0);
 	$spec += (isset($delete_empr_passwords) ? $delete_empr_passwords : 0);
+	$spec += (isset($clean_records_thumbnail) ? $clean_records_thumbnail : 0);
+	$spec += (isset($gen_aut_link) ? $gen_aut_link : 0);
+	$spec += (isset($clean_cache_temporary_files) ? $clean_cache_temporary_files : 0);
 }
 if($spec) {
 	if($spec & CLEAN_NOTICES) {
@@ -120,6 +123,12 @@ if($spec) {
 		include('./gen_signature_docnum.inc.php');
 	} elseif ($spec & DELETE_EMPR_PASSWORDS){
 		include('./delete_empr_passwords.inc.php');
+	} elseif ($spec & CLEAN_RECORDS_THUMBNAIL){
+		include('./clean_records_thumbnail.inc.php');
+	} elseif ($spec & GEN_AUT_LINK){
+	    include('./gen_aut_link.inc.php');
+	} elseif ($spec & CLEAN_CACHE_TEMPORARY_FILES) {
+		include('./clean_cache_temporary_files.inc.php');
 	}
 } else {
 	if(!isset($v_state)) $v_state = '';

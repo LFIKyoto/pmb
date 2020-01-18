@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authorities_collection.class.php,v 1.10 2018-10-15 16:24:20 arenou Exp $
+// $Id: authorities_collection.class.php,v 1.11 2019-06-06 13:05:45 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -79,6 +79,7 @@ class authorities_collection {
 			    self::$authorities[$authority_type][$authority_id] = new categories($authority_id,$params['lang'],$params['for_indexation']);
 			    break;
 			case AUT_TABLE_AUTHORITY :
+			    if (!isset($params['num_object'])) $params['num_object'] = '';
 			    if($authority_id > 0){
 			        $aut = new authority($authority_id);
 			    }else{

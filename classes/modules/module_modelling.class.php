@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: module_modelling.class.php,v 1.10 2018-10-08 15:18:58 apetithomme Exp $
+// $Id: module_modelling.class.php,v 1.12 2019-01-17 08:15:10 apetithomme Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -429,7 +429,7 @@ class module_modelling extends module{
 	}
 	
 	public function proceed_ajax_computed_fields() {
-		global $sub, $computed_field_id, $field_num;
+		global $sub, $computed_field_id, $field_num, $entity_type;
 		switch($sub){
 			case 'save':
 				$computed_field = new computed_field($computed_field_id);
@@ -443,8 +443,53 @@ class module_modelling extends module{
 				}
 				print encoding_normalize::json_encode($computed_field->get_data());
 				break;
+			case 'get_entity_properties':
+				$return = array();
+				$onto = contribution_area::get_ontology();
+				$classes = $onto->get_classes();
+				foreach($classes as $class){
+					if($class->pmb_name == $entity_type){
+						$properties_uri = $onto->get_class_properties($class->uri);
+						foreach ($properties_uri as $property_uri) {
+							$property = $onto->get_property($class->uri, $property_uri);
+							$return[] = array(
+									'name' => $property->label,
+									'id' => $property->pmb_name,
+									'entity' => $class->pmb_name
+							);
+						}
+						if (is_array($class->sub_class_of)) {
+							foreach($class->sub_class_of as $parent_uri) {
+								$properties_uri = $onto->get_class_properties($parent_uri);
+								foreach ($properties_uri as $property_uri) {
+									$property = $onto->get_property($parent_uri, $property_uri);
+									$return[] = array(
+											'name' => $property->label,
+											'id' => $property->pmb_name,
+											'entity' => $class->pmb_name
+									);
+								}
+								
+							}
+						}
+						break;
+					}
+				}
+				usort($return, array($this, 'sort_entities_properties'));
+				print encoding_normalize::json_encode($return);
+				break;
 			default:
 				break;
 		}
+	}
+	
+	protected function sort_entities_properties($a, $b) {
+		if ($a['name'] < $b['name']) {
+			return -1;
+		}
+		if ($a['name'] > $b['name']) {
+			return 1;
+		}
+		return 0;
 	}
 } // end of concept

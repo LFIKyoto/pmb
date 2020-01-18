@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: skos_view_concepts.class.php,v 1.16 2018-08-23 15:09:39 tsamson Exp $
+// $Id: skos_view_concepts.class.php,v 1.18 2019-08-28 08:14:10 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -115,7 +115,7 @@ class skos_view_concepts {
 	}
 	
 	/**
-	 * Retourne l'affichage des termes associés d'un concept
+	 * Retourne l'affichage des relations associatives d'un concept
 	 * @param skos_concepts_list $concepts_list Liste des parents
 	 * @return string
 	 */
@@ -128,6 +128,24 @@ class skos_view_concepts {
 	        'title' => skos_onto::get_property_label("http://www.w3.org/2004/02/skos/core#Concept", "http://www.w3.org/2004/02/skos/core#related"),
 	        'elements' => self::get_sorted_concepts($concepts, false)
 	    );
+	    return self::render($datas, "skos_view_concepts_related_list", 0);
+	}
+	
+	/**
+	 * Retourne l'affichage des termes associés d'un concept
+	 * @param skos_concepts_list $concepts_list Liste des parents
+	 * @return string
+	 */
+	static public function get_related_match_list($concepts_list) {
+	    global $thesaurus_concepts_concept_in_line;
+	    
+	    $concepts = $concepts_list->get_concepts();
+	    
+	    $datas = array(
+	        'title' => skos_onto::get_property_label("http://www.w3.org/2004/02/skos/core#Concept", "http://www.w3.org/2004/02/skos/core#relatedMatch"),
+	        'elements' => self::get_sorted_concepts($concepts, false)
+	    );
+	    //on garde le même template que pour les relation associatives (skos_view_concepts_related_list)
 	    return self::render($datas, "skos_view_concepts_related_list", 0);
 	}
 	
@@ -166,7 +184,7 @@ class skos_view_concepts {
 		foreach ($concepts as $concept) {
 			$schemes = $concept->get_schemes();
 			if (count($schemes)) {
-				$scheme = implode(',', $schemes);
+				$scheme = implode(' / ', $schemes);
 			} else {
 				$scheme = $msg['skos_view_concept_no_scheme'];
 			}

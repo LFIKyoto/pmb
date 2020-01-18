@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_expor_import_erreur_pmb.inc.php,v 1.6 2018-01-09 08:54:31 jpermanne Exp $
+// $Id: func_expor_import_erreur_pmb.inc.php,v 1.8 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -266,8 +266,9 @@ function traite_exemplaires () {
 	// lu en 010$d de la notice
 	$price = $prix[0];
 	
+	$nb_infos_996 = count($info_996);
 	// la zone 995 est répétable
-	for ($nb_expl = 0; $nb_expl < sizeof ($info_996); $nb_expl++) {
+	for ($nb_expl = 0; $nb_expl < $nb_infos_996; $nb_expl++) {
 		/* RAZ expl */
 		$expl = array();
 		
@@ -468,7 +469,7 @@ function export_traite_exemplaires ($ex=array()) {
 	$export996['d'] = $ex -> expl_codestat;
 
 	$export996['v'] = $ex -> location_libelle;
-	$export996['w'] = $ex -> ldoc_codage_import;
+	$export996['w'] = $ex -> locdoc_codage_import;
 
 	$export996['x'] = $ex -> section_libelle;
 	$export996['y'] = $ex -> sdoc_codage_import;

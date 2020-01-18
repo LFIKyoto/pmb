@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: skos_view_concepts.tpl.php,v 1.4 2018-08-22 16:04:59 tsamson Exp $
+// $Id: skos_view_concepts.tpl.php,v 1.5 2019-05-27 10:24:30 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 global $skos_view_concepts_list_in_notice;
@@ -10,7 +10,7 @@ global $skos_view_concepts_list_in_authority;
 global $skos_view_concepts_narrowers_list;
 global $skos_view_concepts_broaders_list;
 global $skos_view_concepts_composed_concepts_list;
-global $skos_view_concepts_related_list;
+global $skos_view_concepts_related_list, $skos_view_concepts_schemes_list;
 
 
 $skos_view_concepts_list_in_notice = "

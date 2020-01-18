@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_datasource_rss.class.php,v 1.16 2018-04-19 11:58:55 dgoron Exp $
+// $Id: docwatch_datasource_rss.class.php,v 1.18.2.3 2019-11-21 12:40:38 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -32,6 +32,7 @@ class docwatch_datasource_rss extends docwatch_datasource{
 		if($link){
 			$datas = array();
 			@ini_set("zend.ze1_compatibility_mode", "0");
+			$old_errors_value = false;
 			$informations = array();
 			$loaded=false;
 			$aCurl = new Curl();
@@ -41,7 +42,6 @@ class docwatch_datasource_rss extends docwatch_datasource{
 			if(!isset($this->parameters['nb_max_elements'])) $this->parameters['nb_max_elements']=0;
 			if($flux && $content->headers['Status-Code'] == 200){
 				$rss = new domDocument();
-				$old_errors_value = false;
 				if(libxml_use_internal_errors(true)){
 					$old_errors_value = true;
 				}
@@ -76,14 +76,18 @@ class docwatch_datasource_rss extends docwatch_datasource{
 								if($this->parameters['nb_max_elements']==0 || $i < $this->parameters['nb_max_elements']){
 									$informations['items'][$count]=$this->get_informations($rss_items->item($i),$elements,false);
 									if($ns["dc"]){
-										$namespace_dc_date = $rss->getElementsByTagNameNS($ns["dc"], 'date')->item($i)->nodeValue;
-										if($namespace_dc_date){
-											$informations['items'][$count]['pubDate'] = str_replace(array("T","Z"), " ", $namespace_dc_date);
-										}
-										$namespace_dc_subject = $rss->getElementsByTagNameNS($ns["dc"], 'subject')->item($i)->nodeValue;
-										if($namespace_dc_subject){
-											$informations['items'][$count]['subject'] = $namespace_dc_subject;
-										}
+									    if(is_object($rss->getElementsByTagNameNS($ns["dc"], 'date')->item($i))) {
+									        $namespace_dc_date = $rss->getElementsByTagNameNS($ns["dc"], 'date')->item($i)->nodeValue;
+									        if($namespace_dc_date){
+									            $informations['items'][$count]['pubDate'] = str_replace(array("T","Z"), " ", $namespace_dc_date);
+									        }
+									    }
+									    if(is_object($rss->getElementsByTagNameNS($ns["dc"], 'subject')->item($i))) {
+    										$namespace_dc_subject = $rss->getElementsByTagNameNS($ns["dc"], 'subject')->item($i)->nodeValue;
+    										if($namespace_dc_subject){
+    											$informations['items'][$count]['subject'] = $namespace_dc_subject;
+    										}
+									    }
 									}
 									$count++;
 								}
@@ -103,7 +107,8 @@ class docwatch_datasource_rss extends docwatch_datasource{
 									'title',
 									'link',
 									'published',
-									'content'
+									'content',
+							        'updated', 
 							);
 							for($i=0 ; $i<$entries->length ; $i++){
 								if($this->parameters['nb_max_elements']==0 || $i < $this->parameters['nb_max_elements']){
@@ -115,18 +120,27 @@ class docwatch_datasource_rss extends docwatch_datasource{
 							$data = array();
 							$data["type"] = "rss";
 							$data["title"] = $rss_item["title"];
-							$data["summary"] = $rss_item["description"];
+							if(is_array($rss_item["description"])) {
+								$data["summary"] = $rss_item["description"][0];
+							} else {
+								$data["summary"] = $rss_item["description"];
+							}
 							if(!isset($rss_item["content"])) $rss_item["content"] = '';
 							$data["content"] = $rss_item["content"];
 							$data["url"] = $rss_item["link"];
-							if($rss_item["pubDate"]) $data["publication_date"] = date ( 'Y-m-d H:i:s' , strtotime($rss_item["pubDate"]));
-							else $data["publication_date"] ="";
-														
+							//traitement de la date
+							$date = '';
+							if(!empty($rss_item['pubDate'])){
+							    $date = $rss_item['pubDate'];
+							}else if(!empty($rss_item["updated"])){
+							    $date = $rss_item['updated'];
+							}
+							$data["publication_date"] = date('Y-m-d H:i:s',strtotime($date));
 							$data["logo_url"] = $informations["url"];
 							$data["descriptors"] = "";
-							if(isset($rss_item["category"]) && is_array($rss_item["category"])){
+							if (isset($rss_item["category"]) && is_array($rss_item["category"])) {
 								$data["tags"] = array_map("strip_tags", $rss_item["category"]);
-							}else{
+							}elseif (isset($rss_item["category"])) {
 								$data["tags"] = strip_tags($rss_item["category"]);
 							}
 							$datas[] = $data;
@@ -167,11 +181,16 @@ class docwatch_datasource_rss extends docwatch_datasource{
 		
 		foreach($elements as $element){
 			$items = $node->getElementsByTagName($element);
-			if($items->length == 1 || $first_only){
-				$informations[$element] = $this->charset_normalize($items->item(0)->nodeValue,"utf-8");
+			if(isset($items->item(0)->nodeValue) && ($items->length == 1 || $first_only)){
+			    $informations[$element] = $this->charset_normalize(preg_replace('/\s+/',' ',$items->item(0)->nodeValue),"utf-8");
 			}else{
+			    $informations[$element] = array();
 				for($i=0 ; $i<$items->length ; $i++){
-					$informations[$element][] = $this->charset_normalize($items->item($i)->nodeValue,"utf-8");
+				    $informations[$element][] = $this->charset_normalize(preg_replace('/\s+/',' ',$items->item($i)->nodeValue),"utf-8");
+				}
+				$informations[$element] = array_unique($informations[$element]);
+				if(count($informations[$element]) === 1){
+				    $informations[$element] = $informations[$element][0];
 				}
 			}
 		}

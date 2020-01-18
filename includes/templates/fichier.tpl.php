@@ -2,10 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fichier.tpl.php,v 1.4 2016-03-29 15:31:33 arenou Exp $
+// $Id: fichier.tpl.php,v 1.5 2019-05-27 12:26:22 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $msg, $plugins, $fichier_layout, $current_module, $fichier_layout_end, $charset;
+global $fichier_menu, $fichier_menu_display, $fichier_menu_collecter, $fichier_menu_pointer, $fichier_menu_actions;
 
 $fichier_menu = "
 <div id='menu'>

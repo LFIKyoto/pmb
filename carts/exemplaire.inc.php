@@ -2,13 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: exemplaire.inc.php,v 1.15 2016-09-06 15:36:28 dgoron Exp $
+// $Id: exemplaire.inc.php,v 1.17 2019-05-29 12:42:11 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $item, $msg, $aff, $action, $idcaddie, $include_child, $current_print;
+
 if($item) {
 	$requete = "SELECT expl_notice, expl_bulletin FROM exemplaires WHERE expl_id='$item' ";
-	$result = @pmb_mysql_query($requete, $dbh);
+	$result = @pmb_mysql_query($requete);
 	if(pmb_mysql_num_rows($result)) {
 		$temp = pmb_mysql_fetch_object($result);
 		$expl = get_expl_info($item,0);
@@ -34,32 +36,33 @@ if($item) {
 	$aff.= "</div>";
 
 	print '<strong>'.pmb_bidi($aff_reduit).'</strong><br />';
-	switch($action) {
-		case 'add_item':
-			if($idcaddie)$caddie[0]=$idcaddie;		
-			foreach($caddie  as $idcaddie) {
-				$myCart = new caddie($idcaddie);
-				if($include_child) {					
-				$tab_list_child=notice::get_list_child($item);
-				if(count($tab_list_child))
-					foreach ($tab_list_child as $notice_id) {
-						$myCart->add_item($notice_id,"EXPL");					
-					}		
-				} else	$myCart->add_item($item,"EXPL");
-				$myCart->compte_items();
-			}	
-			print "<script type='text/javascript'>window.close();</script>"; 
-			break;
-		case 'new_cart':
-			break;
-		case 'del_cart':
-		case 'valid_new_cart':		
-		default:
-			print pmb_bidi($aff);
-			aff_paniers($item, "EXPL", "./cart.php?", "add_item", $msg["caddie_add_EXPL"], "", 0, 1, 1);
-			break;
-		}
-	} else {
-		print "<h1>".$msg["fonct_no_accessible"]."</h1>";
-	}
-
+}
+switch($action) {
+    case 'add_item':
+        if($idcaddie)$caddie[0]=$idcaddie;
+        foreach($caddie  as $idcaddie) {
+            $myCart = new caddie($idcaddie);
+            if($include_child) {
+                $tab_list_child=notice::get_list_child($item);
+                if(count($tab_list_child))
+                    foreach ($tab_list_child as $notice_id) {
+                        $myCart->add_item($notice_id,"EXPL");
+                    }
+            } else	$myCart->add_item($item,"EXPL");
+            $myCart->compte_items();
+        }
+        print "<script type='text/javascript'>window.close();</script>";
+        break;
+    case 'new_cart':
+        break;
+    case 'del_cart':
+    case 'valid_new_cart':
+    default:
+        if(isset($current_print) && $current_print) {
+            $action="print_prepare";
+            require_once("./print_cart.php");
+        } else {
+            aff_paniers($item, "EXPL", "./cart.php?", "add_item", $msg["caddie_add_EXPL"], "", 0, 1, 1);
+        }
+        break;
+}

@@ -108,7 +108,7 @@ class H2o_Parser {
     }
 
     # Parse arguments
-    static public function parseArguments($source = null, $fpos = 0){
+    public static function parseArguments($source = null, $fpos = 0){
         $parser = new ArgumentLexer($source, $fpos);
         $result = array();
         $current_buffer = &$result;
@@ -159,9 +159,9 @@ class H2o_Parser {
 }
 
 class H2O_RE {
-    static $whitespace, $seperator, $parentheses, $pipe, $filter_end, $operator, $boolean, $number,  $string, $i18n_string, $name, $named_args;
+    public static $whitespace, $seperator, $parentheses, $pipe, $filter_end, $operator, $boolean, $number,  $string, $i18n_string, $name, $named_args;
 
-    static public function init() {
+    public static function init() {
         $r = 'strip_regex';
 
         self::$whitespace   = '/\s+/m';

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pmbesContributions.class.php,v 1.4 2017-06-27 12:50:14 apetithomme Exp $
+// $Id: pmbesContributions.class.php,v 1.5 2019-07-05 13:37:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -26,7 +26,7 @@ class pmbesContributions extends external_services_api_class{
 	public $error=false;		//Y-a-t-il eu une erreur
 	public $error_message="";	//Message correspondant à l'erreur
 	
-	function form_general_config() {
+	public function form_general_config() {
 		return false;
 	}
 	

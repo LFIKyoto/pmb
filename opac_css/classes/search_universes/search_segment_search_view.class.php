@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_segment_search_view.class.php,v 1.7 2018-10-04 13:24:12 vtouchard Exp $
+// $Id: search_segment_search_view.class.php,v 1.7.6.2 2019-11-08 11:07:11 tsamson Exp $
 if (stristr ( $_SERVER ['REQUEST_URI'], ".class.php" ))
 	die ( "no access" );
 
@@ -66,6 +66,7 @@ class search_segment_search_view extends search_view {
 		global $opac_focus_user_query;
 		global $opac_search_other_function;
 		global $id;
+		global $charset;
 		
 		$form = "
         <div id='search_segment_form_container'>
@@ -74,7 +75,7 @@ class search_segment_search_view extends search_view {
     			<br />
     			<input type='hidden' name='surligne' value='!!surligne!!'/>";
     			$form .= "
-    				<input type='text' name='user_query' class='text_query' value=\"" . static::$user_query . "\" size='65' />\n";
+    				<input type='text' name='user_query' class='text_query' value=\"" . htmlentities(stripslashes(static::$user_query), ENT_QUOTES, $charset) . "\" size='65' />\n";
     		$form .= "
     				<input type='submit' name='ok' value='" . $msg ["142"] . "' class='boutonrechercher'/>\n";
     		$form .= "</form>
@@ -91,16 +92,17 @@ class search_segment_search_view extends search_view {
 	    global $msg;
 	    global $include_path;
 	    global $base_path;
+	    global $charset;
 	    
 	    $form = "
-        <div id='search'>
+        <div id='search' class='segment_search'>
             <div class='row' id='segmentSearchParent'>        
                 <img class='img_plus' src=\"./getgif.php?nomgif=plus\" name=\"imEx\" id=\"segmentSearchImg\" title=\"".$msg['expandable_notice']."\" alt=\"".$msg['expandable_notice']."\" border=\"0\" onClick=\"expandBase('segmentSearch', true); return false;\" hspace=\"3\" />
                 <span class='segment_search_refine' onClick=\"expandBase('segmentSearch', true); return false;\">".$msg["search_segment_refine_search"]."</span>
             </div>
             <div class='row' id='segmentSearchChild' style='display:none;'>
                 <form name='search_input' action='".static::format_url("lvl=search_result")."' method='post' onSubmit=\"if (search_input.user_query.value.length == 0) { search_input.user_query.value='*'; return true; }\">
-    				<input type='text' name='user_query' class='text_query' value=\"".static::$user_query."\" size='65' />
+    				<input type='text' name='user_query' class='text_query' value=\"".htmlentities(stripslashes(static::$user_query), ENT_QUOTES, $charset)."\" size='65' />
     				<input type='submit' name='ok' value='".$msg["142"]."' class='boutonrechercher'/>
                 </form>
             </div>

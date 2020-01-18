@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bul_replace.inc.php,v 1.4 2017-09-06 12:29:08 dgoron Exp $
+// $Id: bul_replace.inc.php,v 1.5 2019-07-12 10:25:27 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -14,4 +14,4 @@ $entities_bulletinage_controller->set_serial_id($serial_id);
 $entities_bulletinage_controller->set_action('replace');
 $entities_bulletinage_controller->proceed();
 
-?>		
+?>

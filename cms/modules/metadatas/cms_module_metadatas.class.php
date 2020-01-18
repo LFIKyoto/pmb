@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_metadatas.class.php,v 1.9 2017-11-30 10:00:36 dgoron Exp $
+// $Id: cms_module_metadatas.class.php,v 1.11 2019-07-18 13:40:02 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -357,7 +357,7 @@ class cms_module_metadatas extends cms_module_common_module {
 		return $form;
 	}
 	
-	function execute_ajax(){
+	public function execute_ajax(){
 		global $charset;
 		global $do;
 		global $metadatas;
@@ -371,13 +371,13 @@ class cms_module_metadatas extends cms_module_common_module {
 			case "del_tab" :
 				global $suppr_element;
 				
-				if(!isset($this->managed_datas['module']['metadatas'][$metadatas]) || !isset($this->managed_datas['module']['metadatas'][$metadatas]['items'])){
+				if (!isset($this->managed_datas['module']['metadatas'][$metadatas]['items'])) {
 					$items = array(
 							'identifier' => 'id',
 							'label' => 'title',
 							'items' => array()
 					);
-				}else {
+				} else {
 					$items = array(
 							'identifier' => 'id',
 							'label' => 'title',
@@ -410,13 +410,13 @@ class cms_module_metadatas extends cms_module_common_module {
 			case "save_tab" :
 				global $elements;
 				
-				if(!isset($this->managed_datas['module']['metadatas'][$metadatas]) || !isset($this->managed_datas['module']['metadatas'][$metadatas]['items'])){
+				if (!isset($this->managed_datas['module']['metadatas'][$metadatas]['items'])) {
 					$items = array(
 							'identifier' => 'id',
 							'label' => 'title',
 							'items' => array()
 					);
-				}else {
+				} else {
 					$items = array(
 							'identifier' => 'id',
 							'label' => 'title',
@@ -450,12 +450,12 @@ class cms_module_metadatas extends cms_module_common_module {
 		return $response;
 	}
 	
-	function get_next_item_id($metadatas){
+	public function get_next_item_id($metadatas){
 		$max =  $this->_get_max_item_id($this->managed_datas['module']['metadatas'][$metadatas]['items'],0)+1;
 		return $max;
 	}
 	
-	function _get_max_item_id($items,$max){
+	public function _get_max_item_id($items,$max){
 		if(is_array($items)){
 			foreach($items as $item){
 				if(isset($item['children']) && count($item['children'])){

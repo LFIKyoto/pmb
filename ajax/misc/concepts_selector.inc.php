@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: concepts_selector.inc.php,v 1.1 2018-10-08 16:41:53 arenou Exp $
+// $Id: concepts_selector.inc.php,v 1.3 2019-05-29 12:03:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $parent_id, $scheme_id, $page, $msg;
 
 //En fonction de $categ, il inclut les fichiers correspondants
 
@@ -15,11 +17,21 @@ $autoloader->add_register('onto_class');
 
 $query = "";
 
-$parent_id+=0;
-$scheme_id+=0;
+if(isset($parent_id)){
+    $parent_id = intval($parent_id);
+}else{
+    $parent_id =0;
+}
+if(isset($scheme_id)){
+    $scheme_id = intval($scheme_id);
+}
 // TODO utiliser un paramètre utilisateur existant ?
 $limit=30;
-$page+=0;
+if(isset($page)){
+    $page = intval($page);
+}else{
+    $page=0;
+}
 if($page == 0){
     $page=1;
 }
@@ -54,14 +66,14 @@ $store = skos_datastore::get_store();
 $results = $store->query($query.' limit '.$limit.' offset '.$limit*($page-1) );
 $results = $store->get_result();
 // var_dump($results);
-if($results[0]->scheme && $page == 1){
+if(isset($results[0]->scheme) && $page == 1){
     $datas[] = [
         'id' => '0',
         'type' => 'root',
     ];
 }
 for($i=0 ; $i<count($results) ; $i++){
-    if($results[$i]->scheme){
+    if(isset($results[$i]->scheme)){
         $datas[] = [
             'id' => onto_common_uri::get_id($results[$i]->scheme),
             'type'=> 'scheme',

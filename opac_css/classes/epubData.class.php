@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: epubData.class.php,v 1.4 2017-06-30 14:08:17 dgoron Exp $
+// $Id: epubData.class.php,v 1.5 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -98,7 +98,7 @@ class epubData {
 				}
 			}
 			//on va chercher les metas
-			$xmlMeta = $xml->children(OPF, false)->metadata->children(DC, false);
+			$xmlMeta = $xml->children('OPF', false)->metadata->children('DC', false);
 			foreach ($xmlMeta as $k=>$v) {
 				$this->metas[$this->decodeCharset($k)] = $this->decodeCharset($v);
 			}

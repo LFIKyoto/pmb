@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: upload_folder.class.php,v 1.13 2017-12-27 09:47:01 apetithomme Exp $
+// $Id: upload_folder.class.php,v 1.15 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -24,7 +24,7 @@ class upload_folder {
 	public function __construct($id=0, $action=''){
 		global $dbh;
 		
-		$this->repertoire_id = $id+0;
+		$this->repertoire_id = intval($id);
 		$this->action = $action;	
 		
 		if($this->repertoire_id){
@@ -262,23 +262,23 @@ class upload_folder {
 	/**
 	 * Construit les noeuds de l'arborescence
 	 */
-	public function getNodes($chemin='', $id, &$tree){		
-
-		if($chemin && is_dir($chemin)){			
-			if(($files = @scandir($chemin)) !== false){
-				for($i=0;$i<sizeof($files);$i++){
-					if($files[$i] != '.' && $files[$i] != '..'){
+	public function getNodes($chemin = '', $id, &$tree) {
+		if (!empty($chemin) && is_dir($chemin)) {			
+			if (($files = @scandir($chemin)) !== false) {
+			    $nb_files = count($files);
+				for ($i = 0; $i < $nb_files; $i++) {
+					if ($files[$i] != '.' && $files[$i] != '..') {
 						$id_noeud = $id."_".$i;
 						$id_parent = $id;
 						$dir_name = $files[$i];
 						$path = $chemin.$dir_name."/"; 
-						if(is_dir($path)){
-							$id_copy = explode("_",$id_parent);
+						if (is_dir($path)) {
+							$id_copy = explode("_", $id_parent);
 							$up = new upload_folder($id_copy[1]);
 							//$tree .= "tab_libelle[\"$id_noeud\"] = \"".$up->decoder_chaine(addslashes($up->formate_path_to_nom($path))). "\";";
 							$tree .= "tab_libelle[\"$id_noeud\"] = \"".addslashes($up->formate_path_to_nom($chemin).$up->decoder_chaine($dir_name)."/"). "\";";   
-							$tree .="_dt_fiel_.add('$id_noeud','$id_parent','".addslashes($up->decoder_chaine($dir_name))."','','javascript:copy_to_div(\'".$id_noeud."\',\'".$up->repertoire_id."\');');\n";	
-							$this->getNodes($path,$id_noeud, $tree);
+							$tree .="_dt_fiel_.add('$id_noeud','$id_parent','".addslashes($up->decoder_chaine($dir_name))."','','javascript:copy_to_div(\'$id_noeud\',\'$up->repertoire_id\');');\n";	
+							$this->getNodes($path, $id_noeud, $tree);
 						}
 					}
 				}

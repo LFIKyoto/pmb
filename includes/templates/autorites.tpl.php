@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: autorites.tpl.php,v 1.53 2018-12-27 14:51:51 dgoron Exp $
+// $Id: autorites.tpl.php,v 1.54 2019-05-27 16:04:40 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $autorites_menu, $msg, $pmb_use_uniform_title, $thesaurus_concepts_active, $plugins, $autorites_menu_panier_gestion, $autorites_menu_panier_collecte, $autorites_menu_panier_pointage;
+global $autorites_menu_panier_action, $autorites_layout, $current_module, $autorites_layout_end, $user_query, $categ, $autorites_forcing_form, $autorites_unlocking_request;
 
 // $autorites_menu : menu page autorités
 $autorites_menu = "
@@ -65,7 +68,7 @@ $autorites_menu .= $plugins->get_menu('autorites')."</div>
 // ---------------------------------------------------------------------------
 // $autorites_menu_panier_gestion : menu gestion des paniers en autorites
 $autorites_menu_panier_gestion = "
-<h1>$msg[caddie_menu] <span>> $msg[caddie_menu_gestion] > <!--!!sous_menu_choisi!! --></span></h1>
+<h1>$msg[caddie_menu] <span> $msg[caddie_menu_gestion] > <!--!!sous_menu_choisi!! --></span></h1>
 <div class='hmenu'>
 	<span".ongletSelect("categ=caddie&sub=gestion&quoi=panier").">
 		<a title='$msg[caddie_menu_gestion_panier]' href='./autorites.php?categ=caddie&sub=gestion&quoi=panier'>

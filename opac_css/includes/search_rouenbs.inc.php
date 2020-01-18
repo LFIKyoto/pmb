@@ -77,18 +77,19 @@ function search_other_function_clause() {
 
 	$r = "";
 	$where = "";
-	$t_m=array();
+	$t_m_tab = array();
+	$t_m = "";
 	if (count($typdoc_multi)) {
 		reset($typdoc_multi);
 		// on ne remplit pas le tableau si la valeur 'tout type de document' est sélectionnée
 		if (!in_array('', $typdoc_multi)) {
 			$typdoc_multi = array_flip($typdoc_multi);
-			while (list($key,$val)=each($typdoc_multi)) {
-				$t_m[]=$key;
+			foreach ($typdoc_multi as $key => $val) {
+			    $t_m_tab[]=$key;
 			}
 			$typdoc_multi = array_flip($typdoc_multi);
 		}
-		$t_m=implode("','",$t_m);
+		$t_m=implode("','",$t_m_tab);
 		if ($t_m) {
 			$t_m="'".$t_m."'";
 			$where .= " and typdoc in (".$t_m.")";
@@ -135,7 +136,7 @@ function search_other_function_human_query($n) {
 		$doctype = new marc_list('doctype');
 		reset($typdoc_multi);
 		$t_d=array();
-		while (list($key,$val)=each($typdoc_multi)) {
+		foreach ($typdoc_multi as $key => $val) {
 			$t_d[]=$doctype->table[$val];
 		}
 		$r.=implode(", ",$t_d);
@@ -151,15 +152,15 @@ function search_other_function_human_query($n) {
 }
 
 function search_other_function_post_values() {
-	global $typdoc_multi;
+	global $typdoc_multi, $charset;
 	global $rbs_bibli;
 	$retour = "";
 	if (is_array($typdoc_multi) && count($typdoc_multi)) {
 		foreach($typdoc_multi as $v) {
-			$retour.= "<input type='hidden' name='typdoc_multi[]' value='".$v."' />\n";
+		    $retour.= "<input type='hidden' name='typdoc_multi[]' value='".htmlentities($v, ENT_QUOTES, $charset)."' />\n";
 		}
 	}
-	$retour .= "<input type=\"hidden\" name=\"rbs_bibli\" value=\"$rbs_bibli\">\n";
+	$retour .= "<input type=\"hidden\" name=\"rbs_bibli\" value=\"".htmlentities($rbs_bibli, ENT_QUOTES, $charset)."\">\n";
 	
 	return $retour;
 }

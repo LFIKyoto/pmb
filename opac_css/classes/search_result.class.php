@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_result.class.php,v 1.8 2018-07-26 09:24:17 tsamson Exp $
+// $Id: search_result.class.php,v 1.12 2019-06-21 08:00:06 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -60,7 +60,7 @@ class search_result {
 		global $get_query, $launch_search, $mode;
 		global $opac_show_results_first_page;
 		global $surligne;
-		global $base_path;
+		global $base_path, $charset;
 		
 		search_view::set_search_type(static::$search_type);
 		search_view::set_user_query(static::$user_query);
@@ -74,7 +74,7 @@ class search_result {
 		
 		//Activation surlignage
 		if ($opac_show_results_first_page) {
-			$search_tabs_form=str_replace("!!surligne!!",(isset($surligne) ? $surligne : ''),$search_tabs_form);
+		    $search_tabs_form=str_replace("!!surligne!!",(isset($surligne) ? htmlentities($surligne ,ENT_QUOTES,$charset) : ''),$search_tabs_form);
 		} else {
 			$search_tabs_form=str_replace("!!surligne!!","",$search_tabs_form);
 		}
@@ -111,7 +111,7 @@ class search_result {
 	
 	public static function get_display_simple_result() {
 		global $msg, $charset;
-		global $base_path;
+		global $base_path, $class_path, $include_path;
 		
 		global $look_TITLE,
 		$look_AUTHOR,
@@ -252,7 +252,7 @@ class search_result {
 			$aq=new analyse_query(stripslashes(static::$user_query),0,0,1,1,$opac_stemming_active);
 			if ($aq->error) {
 				print pmb_bidi(sprintf($msg["searcher_syntax_error_desc"],$aq->current_car,$aq->input_html,$aq->error_message)."<br /><br />");
-				break;
+				return false;
 			}
 		
 			$total_results = static::get_display_simple_result();
@@ -319,7 +319,17 @@ class search_result {
 		global $class_path;
 		global $mode;
 		global $opac_autolevel2;
-		global $inclure_recherche;
+		global $inclure_recherche;		
+		global $opac_allow_affiliate_search;
+		global $facette_test;
+		global $opac_show_suggest;
+		global $opac_resa_popup;
+		global $opac_allow_external_search;
+		global $opac_autolevel2;
+		global $get_query;
+		global $nb_all_results;
+		global $search_error_message;
+		global $nb_result_external;
 		
 		print $inclure_recherche;
 		print static::get_display_search_tabs_form();
@@ -336,16 +346,6 @@ class search_result {
 					static::proceed_simple_search();
 					break;
 				case "extended_search":
-					global $opac_allow_affiliate_search;
-					global $facette_test;
-					global $opac_show_suggest;
-					global $opac_resa_popup;
-					global $opac_allow_external_search;
-					global $opac_autolevel2;
-					global $get_query;
-					global $nb_all_results;
-					global $search_error_message;
-					
 					$allow_search_affiliate_and_external=true;
 					if($opac_allow_affiliate_search || $opac_allow_external_search){
 						$es_uni=new search("search_fields_unimarc");
@@ -381,17 +381,7 @@ class search_result {
 					if (static::$user_query=="*") echo $tag->listeAlphabetique();
 					else echo $tag->chercheTag(static::$user_query);
 					break;
-				case "extended_search_authorities":
-					global $opac_allow_affiliate_search;
-					global $facette_test;
-					global $opac_show_suggest;
-					global $opac_resa_popup;
-					global $opac_allow_external_search;
-					global $opac_autolevel2;
-					global $get_query;
-					global $nb_all_results;
-					global $search_error_message;
-						
+				case "extended_search_authorities":						
 					$nb_result_extended = static::get_display_level1_authorities_search('extended', 'level1_authorities_extended_search');
 					break;
 		

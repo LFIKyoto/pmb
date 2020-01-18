@@ -1,5 +1,5 @@
 // gestion des listes "collapsibles" en Javascript
-// $Id: tablist.js,v 1.38 2018-10-29 16:01:03 ngantier Exp $
+// $Id: tablist.js,v 1.42 2019-07-17 07:09:47 dgoron Exp $
 
 if(!base_path) var base_path = '.';
 var imgOpened = new Image();
@@ -186,8 +186,10 @@ function expandAll(context) {
   
   var tempCollCnt = tempColl.length;
   for (var i = 0; i < tempCollCnt; i++) {
-     if (tempColl[i].previousElementSibling.style.display != 'none')
+     if (tempColl[i].previousElementSibling.style.display != 'none') {
     	 tempColl[i].style.display = 'block';
+    	 setItemLocalStorage('pmb-expand-'+tempColl[i].id, tempColl[i].style.display);
+     }
      var callback = tempColl[i].getAttribute("callback");
      if(callback){
    	  window[callback]();
@@ -201,7 +203,9 @@ function expandAll(context) {
   tempColl    = context.querySelectorAll('img[name="imEx"]');
   tempCollCnt = tempColl.length;
   for (var i = 0; i < tempCollCnt; i++) {
-	  tempColl[i].src = imgOpened.src;
+	  if(Array.prototype.slice.call(tempColl[i].parentElement.classList).indexOf('notice-parent') != -1 || Array.prototype.slice.call(tempColl[i].parentElement.classList).indexOf('parent')!= -1 || Array.prototype.slice.call(tempColl[i].parentElement.parentElement.classList).indexOf('notice-parent') != -1 || Array.prototype.slice.call(tempColl[i].parentElement.parentElement.classList).indexOf('parent') != -1) {
+		  tempColl[i].src = imgOpened.src;
+	  }
   }
 }
 
@@ -214,6 +218,7 @@ function collapseAll(context) {
   var tempCollCnt = tempColl.length;
   for (var i = 0; i < tempCollCnt; i++) {
      tempColl[i].style.display = 'none';
+     setItemLocalStorage('pmb-expand-'+tempColl[i].id, tempColl[i].style.display);
   }
   tempColl    = context.querySelectorAll('img[name="imEx"]');
   tempCollCnt = tempColl.length;
@@ -237,10 +242,25 @@ function initIt() {
   var tempCollCnt = tempColl.length;
   for (var i = 0; i < tempCollCnt; i++) {
  	if(tempColl[i].hasAttribute('startOpen')){
+ 		var localStorageItem = null;
+ 		if(typeof window.localStorage != 'undefined') {
+ 			try {
+ 				localStorageItem = parseInt(window.localStorage.getItem('pmb-expand-'+tempColl[i].id));
+ 			} catch(e) {
+ 			}
+ 		}
 		if (tempColl[i].getAttribute('startOpen') == 'Yes' ) {
-	 		expandBase (tempColl[i].id.substring(0,tempColl[i].id.indexOf('Child')), true);
+			if(localStorageItem != null && !isNaN(localStorageItem) && !localStorageItem) {
+	 			collapseBase (tempColl[i].id.substring(0,tempColl[i].id.indexOf('Child')));
+	 		} else {
+	 			expandBase (tempColl[i].id.substring(0,tempColl[i].id.indexOf('Child')), true);
+	 		}
 	 	} else {
-	 		tempColl[i].style.display = 'none';
+	 		if(localStorageItem != null && !isNaN(localStorageItem) && localStorageItem) {
+	 			expandBase (tempColl[i].id.substring(0,tempColl[i].id.indexOf('Child')), true);
+	 		} else {
+	 			tempColl[i].style.display = 'none';
+	 		}
 	 	}
 	  }
   }
@@ -277,8 +297,8 @@ function expandBase_ajax(el, unexpand,	mono_display_cmd) {
   else if (unexpand) {
     whichEl.style.display  = 'none';
     whichIm.src            = imgClosed.src;
-    
   }
+  setItemLocalStorage('pmb-expand-'+el+'Child', whichEl.style.display);
   if(callback){
 	  window[callback]();
   }
@@ -303,6 +323,7 @@ function expandBase(el, unexpand) {
     whichEl.style.display  = 'none';
     if (whichIm)whichIm.src            = imgClosed.src;
   }
+  setItemLocalStorage('pmb-expand-'+el+'Child', whichEl.style.display);
   if(callback){
 	  window[callback]();
   }
@@ -312,12 +333,52 @@ function expandBase(el, unexpand) {
   publishDojoResize();
 } // end of the 'expandBase()' function
 
+function collapseBase(el) {
+  if (!isDOM)
+    return;
+  var whichEl = document.getElementById(el + 'Child');
+  var whichIm = document.getElementById(el + 'Img');
+  whichEl.style.display  = 'none';
+  if (whichIm)whichIm.src            = imgClosed.src;
+  setItemLocalStorage('pmb-expand-'+el+'Child', whichEl.style.display);
+  if(typeof ajax_resize_elements == "function"){
+	  ajax_resize_elements();
+  }
+  publishDojoResize();
+} // end of the 'collapseBase()' function
+
 function publishDojoResize(){
 	if(typeof require == "function"){
 		  require(['dojo/topic'], function(topic){
 			  topic.publish('tablist', 'tablist', 'expand');
 		  });  
 	  }
+}
+
+function setItemLocalStorage(name, value) {
+	try {
+		if(typeof window.localStorage != 'undefined') {
+			if(value == 'none') {
+				window.localStorage.setItem(name, 0);
+			} else if(value == 'block') {
+				window.localStorage.setItem(name, 1);
+			} else {
+				window.localStorage.setItem(name, value);
+			}
+			
+		}
+	} catch(e) {
+	    if(e.name == "NS_ERROR_FILE_CORRUPTED") {
+	        console.log("Sorry, it looks like your browser storage has been corrupted. Please clear your storage by going to Tools -> Clear Recent History -> Cookies and set time range to 'Everything'. This will remove the corrupted browser storage across all sites.");
+	    }
+	}
+}
+
+function checkAllObjects(action, name) {
+	var elements = document.querySelectorAll("input[name='"+name+"']");
+	elements.forEach(function(element) {
+		element.checked = (action === "check");
+	})
 }
 
 //on pr�vient les doubles inclusions du fichier selon le contexte...

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: aut_link.class.php,v 1.17 2018-10-08 13:59:39 vtouchard Exp $
+// $Id: aut_link.class.php,v 1.19 2019-07-03 12:38:52 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 // gestion des liens entre autorités
@@ -75,25 +75,28 @@ class aut_link {
 		}
 		$this->aut_list=array();		
 			
-		$rqt="select * from aut_link where (aut_link_from='".$this->aut_table."'	and aut_link_from_num='".$this->id."' )
-		or ( aut_link_to='".$this->aut_table."' and aut_link_to_num='".$this->id."' and aut_link_reciproc=1 )
-		order by aut_link_type ";
+		$rqt="select * from aut_link where (aut_link_from='".$this->aut_table."' and aut_link_from_num='".$this->id."')
+		order by aut_link_type, aut_link_string_start_date, aut_link_string_end_date, aut_link_rank";
 		$aut_res=pmb_mysql_query($rqt, $dbh);
 		$i=0;
-		while($row = pmb_mysql_fetch_object($aut_res)){
+		while ($row = pmb_mysql_fetch_object($aut_res)) {
 			$i++;
-			$this->aut_list[$i]['to']=$row->aut_link_to;
-			$this->aut_list[$i]['to_num']=$row->aut_link_to_num;
-			$this->aut_list[$i]['type']=$row->aut_link_type;
-			$this->aut_list[$i]['reciproc']=$row->aut_link_reciproc;
-			$this->aut_list[$i]['comment']=$row->aut_link_comment;
+			$this->aut_list[$i]['to'] = $row->aut_link_to;
+			$this->aut_list[$i]['to_num'] = $row->aut_link_to_num;
+			$this->aut_list[$i]['type'] = $row->aut_link_type;
+			$this->aut_list[$i]['comment'] = $row->aut_link_comment;
+			$this->aut_list[$i]['string_start_date'] = $row->aut_link_string_start_date;
+			$this->aut_list[$i]['string_end_date'] = $row->aut_link_string_end_date;
+			$this->aut_list[$i]['start_date'] = $row->aut_link_start_date;
+			$this->aut_list[$i]['end_date'] = $row->aut_link_end_date;
+			$this->aut_list[$i]['rank'] = $row->aut_link_rank;
+			$this->aut_list[$i]['direction'] = $row->aut_link_direction;
+			$this->aut_list[$i]['reverse_link_num'] = $row->aut_link_reverse_link_num;
 						
-			if(($this->aut_table==$row->aut_link_to ) and ($this->id == $row->aut_link_to_num)) {
-				$this->aut_list[$i]['flag_reciproc']=1;
-				$this->aut_list[$i]['to']=$row->aut_link_from;
-				$this->aut_list[$i]['to_num']=$row->aut_link_from_num;
+			if($this->aut_list[$i]['reverse_link_num']) {
+				$this->aut_list[$i]['flag_reciproc'] = 1;
 			} else {
-				$this->aut_list[$i]['flag_reciproc']=0;
+				$this->aut_list[$i]['flag_reciproc'] = 0;
 			}
 			
 			switch($this->aut_list[$i]['to']){
@@ -153,12 +156,8 @@ class aut_link {
 					}
 				break;
 			}
-			if($this->aut_list[$i]["flag_reciproc"]){
-				$type_relation=new marc_select("relationtype_autup","f_aut_link_type$i", $this->aut_list[$i]['type']);
-			}else {
-				$type_relation=new marc_select("relationtype_aut","f_aut_link_type$i", $this->aut_list[$i]['type']);
-			}
-			$this->aut_list[$i]['relation_libelle']=$type_relation->libelle;
+			$relation = new marc_select("aut_link","f_aut_link_type$i", $this->aut_list[$i]['type']);
+			$this->aut_list[$i]['relation_libelle'] = $relation->libelle;
 		}
 	}
 
@@ -170,7 +169,7 @@ class aut_link {
 		global $msg;
 
 		if(!count($this->aut_list)) return"";
-
+		$aut_link_table_select = array();
 		$aut_link_table_select[AUT_TABLE_AUTHORS]='./index.php?lvl=author_see&id=!!to_num!!';		
 		$aut_link_table_select[AUT_TABLE_CATEG]='./index.php?lvl=categ_see&id=!!to_num!!';
 		$aut_link_table_select[AUT_TABLE_PUBLISHERS]='./index.php?lvl=publisher_see&id=!!to_num!!';
@@ -182,26 +181,38 @@ class aut_link {
 		$aut_link_table_select[AUT_TABLE_CONCEPT]='./index.php?lvl=concept_see&id=!!to_num!!';
 		$aut_link_table_select[AUT_TABLE_AUTHPERSO]='./index.php?lvl=authperso_see&id=!!to_num!!';
 		
-		$marc_table=marc_list_collection::get_instance("relationtype_aut");
-		$liste_type_relation = $marc_table->table;
-		$marc_tableup=marc_list_collection::get_instance("relationtype_autup");
-		$liste_type_relationup = $marc_tableup->table;
+		$marc = marc_list_collection::get_instance("aut_link");
+		$liste_type_relation = $marc->table;
+		
 		$aff="<ul>";
 		foreach ($this->aut_list as $aut) {
-			$aff.="<li>";
-			if($aut['flag_reciproc']) {
-				$aff.=$liste_type_relationup[$aut['type']]." : ";
-			} else	{
-				$aff.=$liste_type_relation[$aut['type']]." : ";
-			}
+		    $aff.="<li>";
+		    if($aut['direction'] == 'up') {
+		        $aff.= $liste_type_relation['ascendant'][$aut['type']]." : ";
+		    } else	{
+		        $aff.= $liste_type_relation['descendant'][$aut['type']]." : ";
+		    }
 			if($aut['to'] > 1000) {
 				$link=str_replace("!!to_num!!",$aut['to_num'],$aut_link_table_select[AUT_TABLE_AUTHPERSO]);
 			} else {
 				$link=str_replace("!!to_num!!",$aut['to_num'],$aut_link_table_select[$aut['to']]);
 			}
 			$aff.=" <a href='".$link."'>".$aut['libelle']."</a>";
+			$aff_dates = '';
+			if ($aut['string_start_date']) {
+			    $aff_dates.= $aut['string_start_date'];
+			}
+			if ($aff_dates && $aut['string_end_date']) {
+			    $aff_dates.= ' - ';
+			}
+			if ($aut['string_end_date']) {
+			    $aff_dates.= $aut['string_end_date'];
+			}
+			if ($aff_dates && !$aut['comment']) {
+			    $aff.= " (" . $aff_dates . ")";
+			}
 			if($aut['comment']) {
-				$aff.=" (".$aut['comment'].")";
+			    $aff.= " (" . $aff_dates . ' ' . $aut['comment'] . ")";
 			}
 			$aff.="</li>";
 		}

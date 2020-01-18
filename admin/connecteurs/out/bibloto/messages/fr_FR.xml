@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: fr_FR.xml,v 1.22 2018-10-19 10:21:25 vtouchard Exp $ -->
+$Id: fr_FR.xml,v 1.26 2019-08-22 13:33:22 ngantier Exp $ -->
 
 <XMLlist>
 <entry code="bibloto_service_endpoint">Adresse du web service</entry>
@@ -24,6 +24,9 @@ $Id: fr_FR.xml,v 1.22 2018-10-19 10:21:25 vtouchard Exp $ -->
 <entry code="bibloto_resa_activate">Afficher les réservations</entry>
 <entry code="bibloto_resa_activate_yes">Oui</entry>
 <entry code="bibloto_resa_activate_no">Non</entry>
+<entry code="bibloto_email_activate">Afficher le bouton de mail</entry>
+<entry code="bibloto_email_activate_yes">Oui</entry>
+<entry code="bibloto_email_activate_no">Non</entry>
 <entry code="bibloto_printer_activate">Impression du ticket de prêt</entry>
 <entry code="bibloto_printer_activate_yes">Oui</entry>
 <entry code="bibloto_printer_activate_no">Non</entry>
@@ -61,8 +64,10 @@ $Id: fr_FR.xml,v 1.22 2018-10-19 10:21:25 vtouchard Exp $ -->
 <entry code="bibloto_msg_checkout_button_value">Prêt</entry>
 <entry code="bibloto_msg_checkin_button">Libellé du bouton de retour</entry>
 <entry code="bibloto_msg_checkin_button_value">Retour</entry>
-<entry code="bibloto_msg_resa_button">Réservations</entry>
-<entry code="bibloto_msg_resa_button_value">Libellé du bouton de réservation</entry>
+<entry code="bibloto_msg_resa_button">Libellé du bouton de réservation</entry>
+<entry code="bibloto_msg_resa_button_value">Réservations</entry>
+<entry code="bibloto_msg_email_button">Libellé du bouton de mail</entry>
+<entry code="bibloto_msg_email_button_value">Envoyer un mail</entry>
 <entry code="bibloto_msg_printer_button">Libellé du bouton d'impression du ticket de prêt</entry>
 <entry code="bibloto_msg_exit_button">Libellé du bouton de retour à la page d'accueil</entry>
 <entry code="bibloto_msg_exit_button_value">Déconnexion</entry>
@@ -86,7 +91,9 @@ $Id: fr_FR.xml,v 1.22 2018-10-19 10:21:25 vtouchard Exp $ -->
 <entry code="bibloto_msg_dialog_checkout_possible_value">Empruntable</entry>
 <entry code="bibloto_msg_dialog_checkout_ok">Message de prêt effectué</entry>
 <entry code="bibloto_msg_dialog_checkout_ok_value">Prêt effectué</entry>
-<entry code="bibloto_msg_dialog_checkout_no">Message d'erreur de prêt</entry>
+<entry code="bibloto_msg_dialog_checkout_no">Message d'erreur de prêt. Appliquable pour tous les refus de prêts ? </entry>
+<entry code="bibloto_msg_dialog_checkout_no_yes">Oui</entry>
+<entry code="bibloto_msg_dialog_checkout_no_no">Non</entry>
 <entry code="bibloto_msg_dialog_checkout_no_value">Vous ne pouvez pas emprunter ce document !</entry>
 <entry code="bibloto_msg_dialog_checkin_ok">Message de retour effectué</entry>
 <entry code="bibloto_msg_dialog_checkin_ok_value">Retour effectué</entry>
@@ -96,7 +103,7 @@ $Id: fr_FR.xml,v 1.22 2018-10-19 10:21:25 vtouchard Exp $ -->
 <entry code="bibloto_msg_dialog_antivol_error">Message d'erreur d'antivol</entry>
 <entry code="bibloto_msg_dialog_antivol_error_value">La commande d'antivol n'a pas répondu. Veuillez re-déposer le document !</entry>
 <entry code="bibloto_msg_dialog_exit">Libellé du bouton terminer</entry>
-<entry code="bibloto_timeout_disconnect">Timeout de déconnection en secondes</entry>
+<entry code="bibloto_timeout_disconnect">Timeout de déconnexion en secondes</entry>
 <entry code="bibloto_home_tpl">Template de la page d'accueil</entry>
 <entry code="bibloto_empr_tpl">Template de la fiche emprunteur</entry>
 <entry code="bibloto_msg_checkout_valid_button">Libellé du bouton de validation du prêt</entry>
@@ -109,4 +116,25 @@ $Id: fr_FR.xml,v 1.22 2018-10-19 10:21:25 vtouchard Exp $ -->
 <entry code="bibloto_msg_no_user_found_value">Aucun utilisateur trouvé</entry>
 <entry code="bibloto_msg_search_title">Message affiché en titre de recherche</entry>
 <entry code="bibloto_msg_search_title_value">Recherchez votre nom pour vous connecter</entry>
+<entry code="pmb_username">Identifiant pour l'authentification</entry>
+<entry code="pmb_password">Mot de passe pour l'authentification</entry>
+<entry code="pmb_connexion_phrase">Phrase de connexion utilisée pour l'authentification</entry>
+<entry code="bibloto_css">CSS</entry>
+<entry code="bibloto_msg_resa_date_title">Libellé date de la liste des réservations</entry>
+<entry code="bibloto_msg_resa_confirme_title">Libellé 'confirmé' de la liste des réservations</entry>
+<entry code="bibloto_msg_expl_title">Libellé du titre des exemplaires</entry>
+<entry code="bibloto_msg_expl_statut">Libellé du statut des exemplaires</entry>
+<entry code="bibloto_msg_expl_date_checkout">Libellé de la date de prêt des exemplaires</entry>
+<entry code="bibloto_msg_expl_date_checkin">Libellé de la date de retour des exemplaires</entry>
+<entry code="bibloto_msg_expl_rendu">Libellé du l'état 'rendu' des exemplaires</entry>
+<entry code="bibloto_msg_expl_checkout_list_title">Libellé de la liste de prêts</entry>
+<entry code="bibloto_nb_jours_retard">Nombre de jours avant d'afficher l'alerte d'un retour de prêt en retard</entry>
+<entry code="bibloto_msg_resa_date_title_value">Mes réservations</entry>
+<entry code="bibloto_msg_resa_confirme_title_value">Confirmé</entry>
+<entry code="bibloto_msg_expl_checkout_list_title_value">Titre</entry>
+<entry code="bibloto_msg_msg_expl_statut_value">Statut</entry>
+<entry code="bibloto_msg_expl_date_checkout_value">Date de prêt</entry>
+<entry code="bibloto_msg_expl_date_checkin_value">Date de retour</entry>
+<entry code="bibloto_msg_expl_rendu_value">Rendu</entry>
+<entry code="bibloto_msg_expl_title_value">Titre</entry>
 </XMLlist>

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa.inc.php,v 1.33 2016-12-29 13:39:37 dgoron Exp $
+// $Id: resa.inc.php,v 1.36 2019-05-29 12:12:29 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $aff_alerte, $msg;
 
 $temp_aff = resa_a_traiter() . resa_a_ranger() . resa_depassees_a_traiter(). resa_planning_a_traiter();
 
@@ -135,12 +137,24 @@ function resa_planning_a_traiter() {
 		$query = "SELECT count(*) ";
 		$query.= "FROM resa_planning ";
 		$query.= "WHERE resa_remaining_qty!=0 ";
+		$query.= "and resa_validee=0 ";
 		$query.= "and resa_loc_retrait = $expl_loc ";
-		$query.= "and (date_format(resa_date_debut,'%Y%m%d')*1 + $pmb_resa_planning_toresa ) > date_format(curdate(),'%Y%m%d')*1 ";
+		$query.= "and datediff(resa_date_debut, curdate()) <= ".$pmb_resa_planning_toresa;
+		
+		$result = pmb_mysql_query($query);
+		if ($result && pmb_mysql_result($result,0,0)) {
+			$ret .= "<li><a href='./circ.php?categ=resa_planning&sub=all&montrerquoi=invalidees' target='_parent'>".$msg['resa_planning_to_validate']."</a></li>" ;
+		}
+		$query = "SELECT count(*) ";
+		$query.= "FROM resa_planning ";
+		$query.= "WHERE resa_remaining_qty!=0 ";
+		$query.= "and resa_validee=1 ";
+		$query.= "and resa_loc_retrait = $expl_loc ";
+		$query.= "and datediff(resa_date_debut, curdate()) <= ".$pmb_resa_planning_toresa;
 
 		$result = pmb_mysql_query($query);
 		if ($result && pmb_mysql_result($result,0,0)) {
-			$ret = "<li><a href='./circ.php?categ=resa_planning&sub=all' target='_parent'>".$msg['resa_planning_todo']."</a></li>" ;
+			$ret .= "<li><a href='./circ.php?categ=resa_planning&sub=all' target='_parent'>".$msg['resa_planning_todo']."</a></li>" ;
 		}
 	}
 	return $ret;

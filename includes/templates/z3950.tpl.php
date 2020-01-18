@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: z3950.tpl.php,v 1.8 2015-11-22 18:32:16 Alexandre Exp $
+// $Id: z3950.tpl.php,v 1.9 2019-05-27 12:20:21 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $z3950_search_tpl, $current_module, $msg;
 
 $z3950_search_tpl= "
 <form class='form-$current_module' id='z3950_search' method='post' action='./catalog.php?categ=z3950&action=search' name='recherche'>

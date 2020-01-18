@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_authority.class.php,v 1.10 2017-12-22 13:31:51 apetithomme Exp $
+// $Id: notice_authority.class.php,v 1.11 2019-02-18 13:45:53 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -272,7 +272,6 @@ class notice_authority extends iso2709_authorities implements notice_authority_g
 				// Forme associée - Lieu d'édition	
 				case $zone."60" :
 				default :
-					continue;
 					break;
 			}
 		}

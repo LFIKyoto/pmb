@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: atalandeuni2uniiso_input.class.php,v 1.1 2018-07-25 06:19:18 dgoron Exp $
+// $Id: atalandeuni2uniiso_input.class.php,v 1.2 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -35,7 +35,7 @@ class atalandeuni2uniiso_input extends convert_input {
 			$fcontents=substr($fcontents,$i1+3);
 		}
 		
-		while (list($key,$val)=each($notices)) {
+		foreach ($notices as $key => $val) {
 			$notice=implode(chr(0x01).chr(0x0A),$val);
 			$notice.=chr(0x01).chr(0x0A);
 			$requete="insert into import_marc (no_notice, notice, origine) values($n,'".addslashes($notice)."','$origine')";

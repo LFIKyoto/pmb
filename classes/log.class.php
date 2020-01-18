@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: log.class.php,v 1.2 2013-01-23 15:01:30 dbellamy Exp $
+// $Id: log.class.php,v 1.3 2019-07-05 13:25:14 btafforeau Exp $
 
 class log {
 	
@@ -12,7 +12,7 @@ class log {
 	public static $log_now = false;
 	
 	
-	static function print_message($msg='') {
+	public static function print_message($msg='') {
 		
 		if (is_array($msg) && count($msg)) {
 			if(self::$log_format=='html') {
@@ -34,7 +34,7 @@ class log {
 	} 
 	
 	
-	static function print_log() {
+	public static function print_log() {
 		
 		if(!self::$log_msg) return;
 		if (self::$log_file) {
@@ -45,7 +45,7 @@ class log {
 	}
 		
 	
-	static function reset() {
+	public static function reset() {
 		if (self::$log_file) {
 			@unlink(self::$log_file);
 		}

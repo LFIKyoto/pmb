@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pnb.inc.php,v 1.2 2018-06-28 12:34:27 ngantier Exp $
+// $Id: pnb.inc.php,v 1.3 2019-05-29 12:03:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $sub, $action, $record_id, $line_id;
 
 require_once($class_path."/pnb/pnb_record_orders.class.php");
 

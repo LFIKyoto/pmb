@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes.class.php,v 1.51 2018-10-19 15:06:56 dgoron Exp $
+// $Id: demandes.class.php,v 1.53 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -49,6 +49,7 @@ class demandes {
 	public $dmde_read_opac=0;
 	public $last_modified=0;
 	public $notice=0;
+	public $num_user = '';
 	
 	/**
 	 * Identifiant de la notice liée
@@ -99,7 +100,7 @@ class demandes {
 				$this->dmde_read_opac = $dmde->dmde_read_opac;
 				$this->num_linked_notice = $dmde->num_linked_notice;
 				
-				if(!count($this->allowed_actions)){
+				if(!$this->allowed_actions || !count($this->allowed_actions)){
 					$workflow = new workflow('ACTIONS');
 					$this->allowed_actions = $workflow->getTypeList();
 					$allowed_actions = array();
@@ -154,7 +155,7 @@ class demandes {
 			$this->deadline_demande = '0000-00-00';
 			$this->sujet_demande = '';
 			$this->num_demandeur = 0;
-			$this->num_user = array();
+			$this->num_user = '';
 			$this->progression = 0;
 			$this->date_prevue = '0000-00-00';
 			$this->theme_demande = 0;
@@ -175,7 +176,7 @@ class demandes {
 				}
 			}
 		}
-		if(!sizeof($this->workflow)){
+		if(!$this->workflow){
 			$this->workflow = new workflow('DEMANDES','INITIAL');
 			$this->liste_etat = $this->workflow->getStateList();
 		}
@@ -360,7 +361,7 @@ class demandes {
 		$header_champs_perso = "";
 		$p_perso=new parametres_perso("demandes");
 		reset($p_perso->t_fields);
-		while (list($key,$val)=each($p_perso->t_fields)) {
+		foreach ($p_perso->t_fields as $key => $val) {
 			if($val["OPAC_SHOW"]) $header_champs_perso .= "<th class='empr_demandes_col_".$val["NAME"]."'>".htmlentities($val["TITRE"],ENT_QUOTES,$charset)."</th>";
 		}
 		
@@ -565,9 +566,6 @@ class demandes {
 		global $iduser, $progression, $demandes_statut_notice;
 		global $demandes_init_workflow;
 		
-		if(!$iduser && $demandes_init_workflow==="1"){
-			$iduser=$GLOBALS['PMBuserid'];
-		}
 		if(!$date_prevue)$date_prevue=$date_debut;
 		if(!$date_fin)$date_fin=$date_debut;
 		
@@ -577,7 +575,7 @@ class demandes {
 		$demande->date_demande = $date_debut;
 		$demande->date_prevue = $date_prevue;
 		$demande->deadline_demande = $date_fin;
-		$demande->num_user = $iduser;
+		$demande->num_user = '';
 		$demande->progression = $progression;
 		$demande->num_demandeur = $idempr;
 		$demande->type_demande = $id_type;
@@ -641,7 +639,7 @@ class demandes {
 		//Enregistrement dans demandes_users
 		$date_creation=date("Y-m-d",time());
 		
-		if($demande->id_demande && sizeof($demande->num_user)){
+		if($demande->id_demande && $demande->num_user){
 			$query = "UPDATE demandes_users SET users_statut=0 WHERE num_user NOT IN (".implode(',',$demande->num_user).") AND num_demande='".$demande->id_demande."'";
 			pmb_mysql_query($query,$dbh);
 			$query = "UPDATE demandes_users SET users_statut=1 WHERE num_user IN (".implode(',',$demande->num_user).") AND num_demande='".$demande->id_demande."'";

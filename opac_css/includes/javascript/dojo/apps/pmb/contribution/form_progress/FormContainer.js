@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: FormContainer.js,v 1.13 2018-12-28 16:19:06 tsamson Exp $
+// $Id: FormContainer.js,v 1.16 2019-04-03 13:26:18 tsamson Exp $
 
 
 define([
@@ -14,6 +14,7 @@ define([
         'dijit/layout/TabContainer',
         'dijit/layout/ContentPane',
         'dojo/query',
+        'dojo/io-query',
         'apps/pmb/contribution/Contribution',
         'dojo/ready',
         'apps/pmb/gridform/FormEdit',
@@ -23,7 +24,7 @@ define([
         'dojo/dom-geometry',
         'dojo/dom-construct',
         'dojo/dom-style'
-        ], function(declare, dom, on, lang, xhr, domForm, TabContainer, ContentPane, query, Contribution, ready, FormEdit, topic, registry, domAttr, geometry, domConstruct, domStyle){
+        ], function(declare, dom, on, lang, xhr, domForm, TabContainer, ContentPane, query, ioQuery, Contribution, ready, FormEdit, topic, registry, domAttr, geometry, domConstruct, domStyle){
 		return declare([TabContainer], {
 			standby : null,
 			overlayDiv: null,
@@ -47,7 +48,16 @@ define([
 			},
 			
 			formClicked:function(widget){
-				var formURL = widget.get("data-form_url"); 
+				var formURL = widget.get("data-form_url");
+				
+				var hiddenValue = dom.byId(this.fillIdFinder(widget.get('id')) + "_value");
+				if (hiddenValue.value) {
+					var parameters = formURL.split("?");
+					var objURL = ioQuery.queryToObject(parameters[1]);
+					objURL.id = hiddenValue.value; 
+					parameters[1] = ioQuery.objectToQuery(objURL);
+					formURL = parameters[0] + "?" + parameters[1];
+				}
 				var formTitle = widget.get("data-form_title");
 				
 				var formType = 'contribution_area_form_';
@@ -100,13 +110,7 @@ define([
 			fillField: function(data){
 				//Contenu de data.data: array("uri" => $this->item->get_uri(), "displayLabel" => $display_label)
 				var nodeToFill = registry.byId(data.widgetId).nodeClickedId;
-				if (nodeToFill) {					
-					var displayLabel = registry.byId(nodeToFill+'_display_label');
-					if (displayLabel) {
-						displayLabel.store.addData([{id : data.response.displayLabel, datas : data.response.displayLabel, value : data.response.uri}]);
-						displayLabel.set("item", {id:data.response.displayLabel, datas:data.response.displayLabel, value:data.response.uri});
-						
-					}
+				if (nodeToFill) {
 					domAttr.set(nodeToFill+'_display_label', 'value', data.response.displayLabel);
 					domAttr.set(nodeToFill+'_value', 'value', data.response.uri);
 				}

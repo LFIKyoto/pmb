@@ -1,0 +1,14 @@
+<a href="http://lfkyoto.org/pmb/opac_css/index.php?lvl=categ_see&id=2581&main=1&id_thes=1"><h1>Bandes-dessinées</h1></a>
+
+
+<ul id='carousel_{{id}}'>
+	{% for record in records %}
+		<li class='{{id}}_item'>
+			<a href='{{record.link}}' alt='{{record.title}}' title='{{record.title}}'>
+				<img src='{{record.vign}}'/>
+				<br />
+			</a>
+		</li>
+	{% endfor %}
+</ul>
+

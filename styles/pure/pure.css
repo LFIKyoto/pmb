@@ -2,7 +2,7 @@
 /* +--------------------------------------------------------------------------+
 // 2017 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pure.css,v 1.38 2018-11-06 10:57:37 acarteret Exp $ */
+// $Id: pure.css,v 1.41.6.1 2019-12-01 15:45:12 Alexandre Exp $ */
 
 /*------------------------------------------------------------------------------------------*/
 
@@ -189,6 +189,27 @@ div[class^='dijit'] {
     box-sizing: initial;
 }
 
+.pure.dsi div[class^='dijit'].dijitPopup {
+    z-index: 1600!important;
+}
+
+.pure.claro.dsi .dijitTextBox#widget_categ {
+    max-height: initial;
+    border: 0px;
+}
+
+.pure.claro.dsi .dijitTextBox#widget_categ form[name="form_categ"] {
+    margin: 0;
+}
+
+.pure.claro.dsi .dijitContentPane form[name="docwatch_datasource"] {
+    height:auto!important;   
+}
+
+.pure.claro.dsi .dijitTextBox#widget_categ .dijitButton {
+    vertical-align: top;
+}
+
 div[class^='dijit'][style*='z-index: 950'] {
     z-index: 1500 !important;
 }
@@ -273,6 +294,10 @@ li.current {
 #navbar a.current.dashboard,
 #navbar .dashboard {
     color: #666;
+}
+
+#navbar li#navbar-dashboard.current {
+    display: none;
 }
 
 #navbar .dashboard {}
@@ -412,6 +437,10 @@ div#extra2.uk-active {
 
 div#conteneur {
     position: relative;
+}
+
+div#conteneur.acquisition .ux-table-simili .colonne10 {
+    width: 10%;
 }
 
 div#contenu {
@@ -1044,6 +1073,10 @@ form {
     border-color: #bce8f1;
 }
 
+.pure.claro .dijitTextBox {
+    
+}
+
 .pure .label {
     font-size: 1em;
     margin-left: 3px;
@@ -1395,6 +1428,7 @@ select:not([multiple]):not([size]):disabled {
 }
 
 input[type="text"],
+input[type="date"],
 select:not([size]) {
     box-sizing: border-box;
     margin: 0;
@@ -1491,7 +1525,7 @@ input[type='button'],
     text-transform: none;
     display: inline-block;
     box-sizing: border-box;
-    padding: 0 15px;
+    padding: 0 10px;
     vertical-align: middle;
     font-size: 0.875rem;
     line-height: 28px;
@@ -3782,23 +3816,14 @@ body.abonnement_parution_edition .left {
 
 #div_alert{
     font-size: 14px;
-
     background-color: rgba(239, 63, 63, 0.15);
-
     padding: 0px 0px;
-
     margin: 0;
-
-        margin-bottom: 0px;
-
+    margin-bottom: 0px;
     box-shadow: 0px 2px 1px 0px rgba(0, 0, 0, 0.03);
-
     margin-bottom: 6px;
-
     color: red;
-
     display: block;
-
     border: solid 1px #ef3f3f;
 }
 

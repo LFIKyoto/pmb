@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: fr_FR.xml,v 1.5 2018-08-06 11:59:02 plmrozowski Exp $ -->
+$Id: fr_FR.xml,v 1.7 2019-05-11 10:14:45 dgoron Exp $ -->
 
 <!DOCTYPE XMLlist SYSTEM "../../../../includes/XMLlist.dtd" >
 <XMLlist>
@@ -65,6 +65,11 @@ $Id: fr_FR.xml,v 1.5 2018-08-06 11:59:02 plmrozowski Exp $ -->
   <entry code="top_level_domain_description">Retourne le le domaine de premier niveau</entry>
   <entry code="top_level_domain_input_description"></entry>
   <entry code="top_level_domain_output_description"></entry>
+  
+  <!-- #host_ip_info($param, $parser); -->
+  <entry code="host_ip_info_description">Retourne les informations sur la position géographique de l'utilisateur</entry>
+  <entry code="host_ip_info_input_description">param[0]=nom de la propriété JSON récupérée via un appel cURL sur http://ip-api.com/json/[IP]</entry>
+  <entry code="host_ip_info_output_description"></entry>
   
   <!-- #var_post($param, $parser); -->
   <entry code="var_post_description">Retourne une valeur de la variable $_POST</entry>

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: caddie_ajax.inc.php,v 1.10 2018-11-06 13:12:31 dgoron Exp $
+// $Id: caddie_ajax.inc.php,v 1.12 2019-06-05 09:04:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $include_path, $class_path, $sub, $idcaddie, $action, $id_item, $object_type, $caddie, $object, $object_id;
 
 // functions particulières à ce module
 require_once("./catalog/caddie/caddie_func.inc.php");
@@ -43,23 +45,31 @@ switch($sub) {
 		}
 		break;
 	default:
-		$idcaddie=substr($caddie,5);
-		$object_type=substr($object,0,4);
-		$object_id=substr($object,10);
-		$idcaddie = caddie::check_rights($idcaddie) ;
-		
-		if ($idcaddie) {
-			$myCart = new caddie($idcaddie);
-			switch($action) {
-				case 'delete':
-					$myCart->del_item($object_id);
-					break;
-				default:
-					$myCart->add_item($object_id,$object_type);
-					break;
-			}
-			$myCart->compte_items();
-		} else die("Failed: "."obj=".$object." caddie=".$caddie);
-		print $myCart->nb_item;
+		switch($action) {
+			case "list":
+				require_once($class_path.'/caddie/caddie_root_lists_controller.class.php');
+				caddie_root_lists_controller::proceed_ajax($object_type, 'caddie');
+				break;
+			default:
+				$idcaddie=substr($caddie,5);
+				$object_type=substr($object,0,4);
+				$object_id=substr($object,10);
+				$idcaddie = caddie::check_rights($idcaddie) ;
+				
+				if ($idcaddie) {
+					$myCart = new caddie($idcaddie);
+					switch($action) {
+						case 'delete':
+							$myCart->del_item($object_id);
+							break;
+						default:
+							$myCart->add_item($object_id,$object_type);
+							break;
+					}
+					$myCart->compte_items();
+				} else die("Failed: "."obj=".$object." caddie=".$caddie);
+				print $myCart->nb_item;
+				break;
+		}
 		break;
 }

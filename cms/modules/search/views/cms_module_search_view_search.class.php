@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_search_view_search.class.php,v 1.26 2018-11-19 10:17:28 ngantier Exp $
+// $Id: cms_module_search_view_search.class.php,v 1.27.4.1 2019-09-11 09:08:27 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($include_path."/h2o/h2o.php");
@@ -11,7 +11,7 @@ class cms_module_search_view_search extends cms_module_common_view{
 	protected $cadre_parent;
 	
 	public function __construct($id=0){
-		parent::__construct($id+0);
+	    parent::__construct((int) $id);
 	}
 	
 	public function get_form(){
@@ -246,11 +246,11 @@ class cms_module_search_view_search extends cms_module_common_view{
 		if(!isset($this->parameters) || !is_array($this->parameters)){
 			$this->parameters=array();
 		}
-		$this->parameters['help'] = $cms_module_search_view_help+0;
+		$this->parameters['help'] = (int) $cms_module_search_view_help;
 		$this->parameters['title'] = stripslashes($cms_module_search_view_title);
-		$this->parameters['link_search_advanced'] = $cms_module_search_view_link_search_advanced+0;
+		$this->parameters['link_search_advanced'] = (int) $cms_module_search_view_link_search_advanced;
 		$this->parameters['input_placeholder'] = stripslashes($cms_module_search_view_input_placeholder);
-		$this->parameters['nofill'] = $cms_module_search_view_nofill+0;		
+		$this->parameters['nofill'] = (int) $cms_module_search_view_nofill;		
 		$others_links = array();
 		$nb_others_link = 0; 
 		if(is_array($cms_module_search_view_others_links)) {
@@ -258,7 +258,7 @@ class cms_module_search_view_search extends cms_module_common_view{
 				if($other_link['url'] != '') {
 					$others_links[$nb_others_link]['url'] = $other_link['url'];
 					$others_links[$nb_others_link]['label'] = stripslashes($other_link['label']);
-					$others_links[$nb_others_link]['linktarget'] = $other_link['linktarget']+0;
+					$others_links[$nb_others_link]['linktarget'] = (int) $other_link['linktarget'];
 					$nb_others_link++;
 				}
 			}
@@ -325,13 +325,13 @@ class cms_module_search_view_search extends cms_module_common_view{
 		$html.=$authpersos->get_simple_seach_list_tpl_hiden();
 		if ($this->parameters['title']) {
 			$html.="
-			<h4 class='searchbox_title'>".htmlentities($this->parameters['title'],ENT_QUOTES,$charset)."</h4>";
+			<h4 class='searchbox_title'>".htmlentities(get_msg_to_display($this->parameters['title']),ENT_QUOTES,$charset)."</h4>";
 		}
 		$html.="<span class='research_inputs'>";
 		if($opac_simple_search_suggestions){
 			$html.= "
 				<script type='text/javascript' src='$include_path/javascript/ajax.js'></script>
-				<input type='text' name='user_query' id='".$this->get_module_dom_id()."_user_query_lib' value='".($this->parameters['nofill'] == 1 ? '' :stripslashes(htmlentities($user_query,ENT_QUOTES,$charset)))."' expand_mode='1' completion='suggestions' disableCompletion='false' word_only='no' placeholder='".(isset($this->parameters['input_placeholder']) ? stripslashes(htmlentities($this->parameters['input_placeholder'],ENT_QUOTES,$charset)) : '')."'/>
+				<input type='text' name='user_query' id='".$this->get_module_dom_id()."_user_query_lib' value='".($this->parameters['nofill'] == 1 ? '' :stripslashes(htmlentities($user_query,ENT_QUOTES,$charset)))."' expand_mode='1' completion='suggestions' disableCompletion='false' word_only='no' placeholder='".(isset($this->parameters['input_placeholder']) ? stripslashes(htmlentities(get_msg_to_display($this->parameters['input_placeholder'],ENT_QUOTES,$charset))) : '')."'/>
 				<script type='text/javascript'>
 					function ".$this->get_module_dom_id()."_toggleCompletion(destValue){
 						if((destValue.indexOf('view_') == -1) && (destValue != '0')){

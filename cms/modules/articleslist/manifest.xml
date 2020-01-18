@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.14 2018-03-20 10:00:40 dgoron Exp $ -->
+$Id: manifest.xml,v 1.15 2019-05-20 10:28:43 arenou Exp $ -->
 
 <manifest>
 	<name lang="fr_FR">Liste d'articles</name>
@@ -27,6 +27,7 @@ $Id: manifest.xml,v 1.14 2018-03-20 10:00:40 dgoron Exp $ -->
 			<datasource>cms_module_common_datasource_articles_by_article_categories</datasource>
 			<datasource>cms_module_common_datasource_articles_by_section_categories</datasource>
 			<datasource>cms_module_common_datasource_articles_by_categories</datasource>
+			<datasource>cms_module_common_datasource_articles_by_section_cp</datasource>
 			<datasource conditionParam="thesaurus_concepts_active">cms_module_common_datasource_articles_by_concepts</datasource>
 		</datasources>
 		<filters>

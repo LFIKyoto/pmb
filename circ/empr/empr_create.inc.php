@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr_create.inc.php,v 1.16 2017-02-21 16:19:24 dgoron Exp $
+// $Id: empr_create.inc.php,v 1.17 2019-03-25 11:42:02 dgoron Exp $
 
 // récupération code barre en vue saisie d'un emprunteur (modifié F CEROVETTI 12/2007 pour marcher aussi avec ALPHANUMERIQUE )
 // corrigé et augmenté par Eric ROBERT
@@ -29,7 +29,7 @@ $cb_a_creer = '';
 if ($pmb_num_carte_auto_array[0] == "1" ) {
 	$requete="DELETE from empr_temp where sess not in (select SESSID from sessions)";
 	pmb_mysql_query($requete,$dbh);
-	$rqt = "select max(empr_cb+1) as max_cb FROM (select empr_cb from empr UNION select cb FROM empr_temp WHERE sess <>'".SESSid."') tmp";
+	$rqt = "select max(CAST(empr_cb AS UNSIGNED))+1 as max_cb FROM (select empr_cb from empr UNION select cb FROM empr_temp WHERE sess <>'".SESSid."') tmp";
 	$res = pmb_mysql_query($rqt, $dbh);
 	$cb_initial = pmb_mysql_fetch_object($res);
 	$cb_a_creer = (string)$cb_initial->max_cb;

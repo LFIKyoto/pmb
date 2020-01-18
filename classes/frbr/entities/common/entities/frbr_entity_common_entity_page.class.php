@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_common_entity_page.class.php,v 1.16 2017-10-04 14:21:00 tsamson Exp $
+// $Id: frbr_entity_common_entity_page.class.php,v 1.17 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -119,7 +119,7 @@ class frbr_entity_common_entity_page extends frbr_entity_common_entity {
 					switch ($ligne->page_content_type) {
 						case "backbone":
 							$this->backbone = array(
-							'id' => $ligne->id_page_content+0,
+							'id' => (int) $ligne->id_page_content,
 							'name' => $ligne->page_content_object,
 							'data' => json_decode($ligne->page_content_data)
 							);

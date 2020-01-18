@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype_marclist.class.php,v 1.3 2017-07-07 08:00:28 apetithomme Exp $
+// $Id: onto_common_datatype_marclist.class.php,v 1.4 2019-03-25 11:20:12 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -40,6 +40,13 @@ class onto_common_datatype_marclist  extends onto_common_datatype {
 		$display_label = $this->offsetget_value_property("display_label");
 		if ($display_label) {
 			return $display_label;
+		}
+		elseif (is_array($this->value)) {
+			foreach($this->value as $key => $value) {
+				if (isset($value)) {
+					return $value;
+				}
+			}
 		}
 		return $this->value;
 	}

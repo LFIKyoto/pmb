@@ -2,10 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_enrichment.inc.php,v 1.6 2017-02-07 12:00:23 dgoron Exp $
+// $Id: ajax_enrichment.inc.php,v 1.7 2019-06-05 09:45:45 ngantier Exp $
 
 require_once($class_path."/enrichment.class.php");
 require_once($class_path."/parametres_perso.class.php");
+
+if (!isset($enrichPage)) $enrichPage = 1;
+if (!isset($enrich_params)) $enrich_params = array();
+if (!isset($action)) $action = '';
+if (!isset($type)) $type = '';
+$id = intval($id);
+
 $return = array(
 	'state' => 0,
 	'notice_id' => $id,

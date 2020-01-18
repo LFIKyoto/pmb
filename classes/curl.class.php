@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: curl.class.php,v 1.19 2018-09-26 14:59:56 mbertin Exp $
+// $Id: curl.class.php,v 1.20 2019-04-02 13:05:50 dbellamy Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -143,11 +143,6 @@ class Curl {
 		return strlen($contenu);
 	}
 	
-	/*public function getHeader($curl,$contenu_header){
-				
-		return strlen($contenu_header);
-	}*/
-	
 	# Protected
 	public function request($method, $url, $vars = array()) {
 		
@@ -253,44 +248,6 @@ class CurlResponse {
 	public function __toString() {
 		return $this->body;
 	}
-}
  
-/**
-* http_build_query exists from PHP >= 5.0
-* If !function_exists then declare it.
-*/
-if(!function_exists('http_build_query')) {
-	
-	/**
-	* Generate URL-encoded query string.
-	* See http://php.net/http_build_query for more details.
-	*
-	* @param mixed $formdata
-	* @param string $numeric_prefix
-	* @param string $arg_separator
-	* @param string $key
-	* @return string
-	* @link http://php.net/http_build_query
-	*/
-	function http_build_query($formdata, $numeric_prefix = null, $arg_separator = null, $key = null) {
-		$res = array();
-		
-		foreach ((array)$formdata as $k => $v) {
-			$tmp_key = urlencode(is_int($k) ? $numeric_prefix.$k : $k);
-			if ($key !== null) {
-				$tmp_key = $key.'['.$tmp_key.']';
-			}
-			if (is_array($v) || is_object($v)) {
-				$res[] = http_build_query($v, null, $arg_separator, $tmp_key);
-			} else {
-				$res[] = $tmp_key . "=" . urlencode($v);
-			}
-		}
-		
-		if ($arg_separator === null) {
-		  $arg_separator = ini_get("arg_separator.output");
-		}
-		
-		return implode($arg_separator, $res);
-	}
 }
+		

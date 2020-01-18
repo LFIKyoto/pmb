@@ -2,14 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: google_book.class.php,v 1.7 2017-07-12 15:15:02 tsamson Exp $
+// $Id: google_book.class.php,v 1.9 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
 require_once($class_path."/connecteurs.class.php");
 require_once($class_path."/curl.class.php");
-require_once($class_path."/nusoap/nusoap.php");
 
 class google_book extends connector {
 	//Variables internes pour la progression de la récupération des notices
@@ -70,8 +69,8 @@ class google_book extends connector {
     
     public function make_serialized_source_properties($source_id) {
     	global $width,$height;
-    	$t["width"]=$width+0;
-    	$t["height"]=$height+0;
+    	$t["width"] = (int) $width;
+    	$t["height"] = (int) $height;
     	
     	$this->sources[$source_id]["PARAMETERS"]=serialize($t);
 	}

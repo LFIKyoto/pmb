@@ -5,7 +5,7 @@
 ****************************************************************************************
 © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: cms_module_common_module.xml,v 1.15 2017-01-23 16:09:56 ngantier Exp $ -->
+$Id: cms_module_common_module.xml,v 1.17.2.2 2019-11-06 14:07:00 jlaurent Exp $ -->
 
 <XMLlist>
 	<entry code="cms_module_datasource_choice">Choisissez une source de donnée</entry>
@@ -61,4 +61,7 @@ $Id: cms_module_common_module.xml,v 1.15 2017-01-23 16:09:56 ngantier Exp $ -->
 	<entry code="cms_module_common_module_cache_all">Systématique</entry>
 	<entry code="cms_module_common_module_css_class">Classe CSS</entry>
 	<entry code="cms_module_common_condition_lang">Langues de l'OPAC</entry>
+	<entry code="cms_module_common_condition_readers_categories">Catégories de lecteurs</entry>
+	<entry code="cms_module_common_condition_readers_statuses">Statuts de lecteurs</entry>
+	<entry code="cms_module_common_view_breadcrumb">Fil d'Arianne</entry>
 </XMLlist>

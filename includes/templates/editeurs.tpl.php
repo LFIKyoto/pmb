@@ -2,17 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: editeurs.tpl.php,v 1.49 2018-01-24 10:54:46 vtouchard Exp $
+// $Id: editeurs.tpl.php,v 1.53 2019-05-27 15:09:40 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $publisher_form;
-global $collections_list_tpl;
-global $publisher_replace;
-
-global $pmb_form_authorities_editables;
-global $PMBuserid;
-global $pmb_autorites_verif_js;
+global $publisher_form, $collections_list_tpl, $publisher_replace, $pmb_form_authorities_editables, $PMBuserid, $pmb_autorites_verif_js, $base_path, $msg, $current_module;
+global $charset;
 
 // $publisher_form : form saisie éditeur
 
@@ -30,9 +25,12 @@ $publisher_form.= "
 	});
 </script>
 <script type='text/javascript'>
-<!--
-	function test_form(form)
-	{
+	function test_form(form) {
+		if (typeof check_form == 'function') {
+			if (!check_form()) {
+				return false;
+			}
+		}
 	";
 	if ($pmb_autorites_verif_js != "") {
 		$publisher_form.= "
@@ -62,7 +60,6 @@ function confirm_delete() {
 		w=window.open(document.getElementById(id).value);
 		w.focus();
 	}
--->
 </script>
 <script type='text/javascript'>
 	document.title='!!document_title!!';
@@ -99,7 +96,7 @@ function confirm_delete() {
         		<label class='etiquette' for='form_nom'>".$msg["editeur_nom"]."</label>
         		</div>
         	<div class='row'>
-        		<input type='text' class='saisie-80em' name='ed_nom' value=\"!!ed_nom!!\" />
+        		<input type='text' class='saisie-80em' name='ed_nom' value=\"!!ed_nom!!\" data-pmb-deb-rech='1'/>
     		</div>
         </div>
 		<!-- adr1 -->
@@ -193,7 +190,9 @@ function confirm_delete() {
 <div class='row'>
 	<div class='left'>
 		<input type='button' class='bouton' value='$msg[76]' id='btcancel' onClick=\"unload_off();document.location='!!cancel_action!!';\" />
-		<input type='button' value='$msg[77]' class='bouton' id='btsubmit' onClick=\"if (test_form(this.form)) this.form.submit();\" />
+		<input type='button' value='$msg[77]' class='bouton' id='btsubmit' onClick=\"document.getElementById('save_and_continue').value=0; if (test_form(this.form)) this.form.submit();\" />
+        <input type='hidden' name='save_and_continue' id='save_and_continue' value='' />
+		<input type='button' id='update_continue' class='bouton' value='" . $msg['save_and_continue'] . "' onClick=\"document.getElementById('save_and_continue').value=1;if (test_form(this.form)) this.form.submit();\" />
 		!!remplace!!
 		!!voir_notices!!
 		!!audit_bt!!

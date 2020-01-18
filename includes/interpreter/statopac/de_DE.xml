@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- $Id: de_DE.xml,v 1.26 2018-05-23 14:19:48 dgoron Exp $ -->
+<!-- $Id: de_DE.xml,v 1.29 2019-07-19 08:02:14 dgoron Exp $ -->
 <XMLlist>
 <!-- Types de page  -->
 <entry code="1">Search</entry>
@@ -36,6 +36,7 @@
 <entry code="33">Pixel blanc</entry>
 <entry code="34">Univers</entry>
 <entry code="35">Segment</entry>
+<entry code="36">PNB</entry>
 
 <!-- Sous-Types de page  -->
 <entry code="101">Quick Search</entry>
@@ -138,6 +139,7 @@
 <entry code="1901">Phototheque</entry>
 <entry code="2001">Téléchargement d'un document numérique</entry>
 <entry code="2002">Affichage d'un document numérique</entry>
+<entry code="2003">Téléchargement d'un document numérique du portfolio</entry>
 <entry code="2101">Autorités personnalisées</entry>
 <entry code="2201">Navigateur de périodiques</entry>
 <entry code="2301">Bannettes</entry>
@@ -150,8 +152,11 @@
 <entry code="2903">Affichage d'un bulletin dans un résultat de recherche</entry>
 <entry code="2904">Affichage d'un article dans un résultat de recherche</entry>
 <entry code="3001">Url externe</entry>
-<entry code="3301">Recherche univers</entry>
-<entry code="3401">Recherche segment</entry>
+<entry code="3401">Recherche univers</entry>
+<entry code="3501">Recherche segment</entry>
+<entry code="3601">Prêts numérique en cours</entry>
+<entry code="3602">Mes périphériques de lecture</entry>
+<entry code="3603">Paramètres</entry>
 <!-- Types d'url cliquées  -->
 <entry code="external_url_notice">Url sur la notice</entry>
 <entry code="external_url_autor">Url sur l'autorité</entry>

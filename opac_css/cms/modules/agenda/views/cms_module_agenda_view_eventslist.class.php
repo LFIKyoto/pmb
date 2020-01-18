@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_agenda_view_eventslist.class.php,v 1.8 2018-08-24 08:44:59 plmrozowski Exp $
+// $Id: cms_module_agenda_view_eventslist.class.php,v 1.8.6.1 2019-11-04 10:54:54 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -57,9 +57,9 @@ le {{event.event_start.format_value}}
 		$render_datas['events'] = array();
 		$articles = array();
 		foreach($datas['events'] as $event){
-			$event['link'] = $this->get_constructed_link("article",$event['id']);
+			$event->link = $this->get_constructed_link("article",$event->id);
 			$render_datas['events'][]=$event;
-			$articles[] = $event['id'];
+			$articles[] = $event->id;
 		}
 		//on rappelle le tout...
 		$parent_render = parent::get_render_datas($articles);

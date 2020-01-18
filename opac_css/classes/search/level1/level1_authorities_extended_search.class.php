@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: level1_authorities_extended_search.class.php,v 1.1 2018-05-16 15:52:07 vtouchard Exp $
+// $Id: level1_authorities_extended_search.class.php,v 1.2 2019-06-20 08:34:26 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -77,7 +77,9 @@ class level1_authorities_extended_search extends level1_authorities_search {
     				$champ=$es->fixedfields[$s[1]]["TITLE"];
     			} elseif ($s[0]=="s") {
     				$champ=$es->specialfields[$s[1]]["TITLE"];
-    			} else {
+    			} elseif ($s[0]=="authperso")  {
+    			    // TO DO
+    			}else {
     				$champ=$es->pp->t_fields[$s[1]]["TITRE"];
     			}
     			if (((string)$field[0]=="" && (string)$field1[0]=="") && (!isset($es->op_empty[${$op}]))) {

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_affichage.phototheque.class.php,v 1.49 2018-10-19 15:06:56 dgoron Exp $
+// $Id: notice_affichage.phototheque.class.php,v 1.51 2019-07-10 06:44:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -18,7 +18,7 @@ class notice_affichage_custom_mixte_photos extends notice_affichage
 {
 	
 	// generation du header----------------------------------------------------
-	function do_header($id_tpl=0) {
+	public function do_header($id_tpl=0) {
 		global $opac_notice_reduit_format ;
 		
 		$perso_voulus = array();
@@ -82,7 +82,7 @@ class notice_affichage_custom_mixte_photos extends notice_affichage
 	}	
 	
 	// generation de l'isbd----------------------------------------------------
-	function do_isbd($short=0,$ex=1) {
+	public function do_isbd($short=0,$ex=1) {
 		global $dbh;
 		global $msg;
 		global $tdoc;
@@ -155,13 +155,26 @@ class notice_affichage_custom_mixte_photos extends notice_affichage
 	
 		if($this->notice->ed2_id) {
 			$editeur = new publisher($this->notice->ed2_id);
-			$editeurs ? $editeurs .= '&nbsp;: '.inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur)) : $editeurs = inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			if ($editeurs) {
+			    $editeurs .= '&nbsp;: '.inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			} else {
+			    $editeurs = inslink($editeur->get_isbd(),  str_replace("!!id!!", $this->notice->ed2_id, $this->lien_rech_editeur));
+			}
 		}
 	
-		if($this->notice->year) $editeurs ? $editeurs .= ', '.$this->notice->year : $editeurs = $this->notice->year;
-		elseif ($this->notice->niveau_biblio == 'm' && $this->notice->niveau_hierar == 0) 
-			$editeurs ? $editeurs .= ', [s.d.]' : $editeurs = "[s.d.]";
-	
+		if($this->notice->year) {
+		    if ($editeurs) {
+		        $editeurs .= ', '.$this->notice->year;
+		    } else {
+		        $editeurs = $this->notice->year;
+		    }
+		} elseif ($this->notice->niveau_biblio == 'm' && $this->notice->niveau_hierar == 0) {
+		    if ($editeurs) {
+		        $editeurs .= ', [s.d.]';
+		    } else {
+		        $editeurs = "[s.d.]";
+		    }
+		}
 		if($editeurs) $this->notice_isbd .= "&nbsp;.&nbsp;-&nbsp;$editeurs";
 		
 		// zone de la collation
@@ -232,7 +245,7 @@ class notice_affichage_custom_mixte_photos extends notice_affichage
 
 			
 	// fonction d'affichage de la suite ISBD ou PUBLIC : partie commune, pour eviter la redondance de calcul
-	function aff_suite() {
+	public function aff_suite() {
 		global $msg;
 		global $charset;
 		
@@ -301,7 +314,7 @@ class notice_affichage_custom_mixte_photos extends notice_affichage
 		
 			
 	// fonction d'affichage des exemplaires, resa et expl_num
-	function aff_resa_expl() {
+	public function aff_resa_expl() {
 		global $opac_resa ;
 		global $opac_max_resa ;
 		global $opac_show_exemplaires, $opac_url_base ;
@@ -363,7 +376,7 @@ class notice_affichage_custom_mixte_photos extends notice_affichage
 
 		
 	// fonction de generation du tableau des exemplaires
-	static function expl_list($type,$id,$bull_id=0,$build_ifempty=1) {	
+	public static function expl_list($type,$id,$bull_id=0,$build_ifempty=1) {	
 		global $dbh;
 		global $msg, $charset;
 		global $expl_list_header, $expl_list_footer, $opac_url_base;
@@ -447,7 +460,7 @@ class notice_affichage_custom_mixte_photos extends notice_affichage
 	
 // generation du de l'affichage simple sans onglet ----------------------------------------------
 //	si $depliable=1 alors inclusion du parent / child
-function genere_simple($depliable=1, $what='ISBD') {
+public function genere_simple($depliable=1, $what='ISBD') {
 	global $msg, $charset;
 	global $dbh; 
 	global $cart_aff_case_traitement;
@@ -628,7 +641,7 @@ function genere_simple($depliable=1, $what='ISBD') {
 
 class notice_affichage_id_photos extends notice_affichage_custom_mixte_photos {
 	
-	function aff_suite() {	
+	public function aff_suite() {	
 		global $msg;
 		global $charset;
 		

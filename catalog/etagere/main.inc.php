@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.8 2017-05-06 12:03:22 dgoron Exp $
+// $Id: main.inc.php,v 1.9 2019-06-05 09:04:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $include_path, $class_path, $sub, $database_window_title, $msg, $baseLink, $categ, $action;
 
 // functions particulières à ce module
 require_once("$include_path/templates/etagere.tpl.php");

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: noeuds.class.php,v 1.61 2018-10-23 12:26:15 apetithomme Exp $
+// $Id: noeuds.class.php,v 1.64 2019-08-05 11:46:08 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -204,6 +204,24 @@ class noeuds{
 			$q = "update noeuds set num_renvoi_voir = '0' where num_renvoi_voir = '".$id_noeud."' ";
 			pmb_mysql_query($q);
 			
+			//suppression des associations avec le contenu éditorial
+			$q = "delete from cms_articles_descriptors where num_noeud = '".$id_noeud."' ";
+			pmb_mysql_query($q);
+			$q = "delete from cms_sections_descriptors where num_noeud = '".$id_noeud."' ";
+			pmb_mysql_query($q);
+			
+			//suppression des associations avec les items de veilles
+			$q = "delete from docwatch_items_descriptors where num_noeud = '".$id_noeud."' ";
+			pmb_mysql_query($q);
+			
+			//suppression des associations avec les bannettes
+			$q = "delete from bannettes_descriptors where num_noeud = '".$id_noeud."' ";
+			pmb_mysql_query($q);
+			
+			//suppression des associations avec les campagnes de mails
+			$q = "delete from campaigns_descriptors where num_noeud = '".$id_noeud."' ";
+			pmb_mysql_query($q);
+			
 			// Supprime le noeud.
 			$q = "delete from noeuds where id_noeud = '".$id_noeud."' ";
 			pmb_mysql_query($q);
@@ -322,14 +340,15 @@ class noeuds{
 		if($r && pmb_mysql_num_rows($r)){
 			$path=pmb_mysql_result($r, 0, 0);
 		}
-		if ($path){ 
+		if (!empty($path)){ 
 			$id_list=explode('/',$path);
 			krsort($id_list);
 			return $id_list;		
 		}
 		$thes = thesaurus::getByEltId($id_noeud);
 
-		$id_top = $thes->num_noeud_racine;
+		$id_top = !empty($thes) ? $thes->num_noeud_racine : null;
+
 		$i = 0;		
 		$id_list[$i] = $id_noeud;
 		while (true) {
@@ -577,15 +596,37 @@ class noeuds{
 			}
 		}
 		
+		// nettoyage indexation concepts
+		$index_concept = new index_concept($this->id_noeud, TYPE_CATEGORY);
+		$index_concept->delete();
+		
+		//remplacement des associations avec le contenu éditorial
+		$q = "UPDATE ignore cms_articles_descriptors SET num_noeud='".$by."' where num_noeud = '".$this->id_noeud."' ";
+		pmb_mysql_query($q);
+		$q = "UPDATE ignore cms_sections_descriptors SET num_noeud='".$by."' where num_noeud = '".$this->id_noeud."' ";
+		pmb_mysql_query($q);
+		
+		//remplacement des associations avec les items de veilles
+		$q = "UPDATE ignore docwatch_items_descriptors SET num_noeud='".$by."' where num_noeud = '".$this->id_noeud."' ";
+		pmb_mysql_query($q);
+		
+		//remplacement des associations avec les bannettes
+		$q = "UPDATE ignore bannettes_descriptors SET num_noeud='".$by."' where num_noeud = '".$this->id_noeud."' ";
+		pmb_mysql_query($q);
+		
+		//remplacement des associations avec les campagnes de mails
+		$q = "UPDATE ignore campaigns_descriptors SET num_noeud='".$by."' where num_noeud = '".$this->id_noeud."' ";
+		pmb_mysql_query($q);
+		
 		//Remplacement dans les champs persos sélecteur d'autorité
 		aut_pperso::replace_pperso(AUT_TABLE_CATEG, $this->id_noeud, $by);
-		
-		//On supprime le noeuds
-		static::delete($this->id_noeud);
 		
 		// effacement de l'identifiant unique d'autorité
 		$authority = new authority(0, $this->id_noeud, AUT_TABLE_CATEG);
 		$authority->delete();
+		
+		//On supprime le noeuds
+		static::delete($this->id_noeud);		
 
 		foreach ($notices_to_index as $notice_id) {
 			notice::majNoticesGlobalIndex($notice_id);

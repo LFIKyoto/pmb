@@ -6,9 +6,7 @@
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-
-global $tpl_form_facette; 
-global $pmb_opac_view_activate;
+global $tpl_form_facette, $tpl_form_facette_authperso_selector, $pmb_opac_view_activate, $msg, $current_module, $charset;
 
 $tpl_form_facette= "
 <script type='text/javascript' src='./javascript/http_request.js'></script>
@@ -35,10 +33,21 @@ $tpl_form_facette= "
 		var div = document.getElementById('liste2');
 		div.innerHTML = response;
 	}
+	
+	function load_authperso_fields(id_champs){
+		var xhr_object=  new http_request();					
+		xhr_object.request('./ajax.php?module=admin&categ=opac&sub=lst_fields_!!sub!!&type=!!type!!',true,\"authperso_id=\"+document.getElementById('list_authperso').value+\"&field=\"+id_champs,'true',authpersoCallBack,0,0)
+	}
+	
+	function authpersoCallBack(response){						
+		var div = document.getElementById('list_fields');
+		div.innerHTML = response;
+	}
 </script>
 <form class='form-$current_module' id='facette_form' name='facette_form' method='post' action='./admin.php?categ=opac&sub=!!sub!!&type=!!type!!&action=save&id=!!id!!' onSubmit='return check_form_facette()'>
 	<h3>!!libelle!!</h3>
 	<div class='form-contenu'>
+        !!authperso_selector!!
 		<div class='row'>
 			<label for='label_facette'>".htmlentities($msg['intitule_facette'],ENT_QUOTES,$charset)."</label>
 		</div>
@@ -48,7 +57,7 @@ $tpl_form_facette= "
 		<div class='row'>
 			<label for='list_crit'>".htmlentities($msg['list_crit_form_facette'],ENT_QUOTES,$charset)."</label>
 		</div>
-		<div class='row'>
+		<div class='row' id='list_fields'>
 			!!liste1!!
 		</div>
 		<div id='liste2' class='row'></div>
@@ -122,6 +131,17 @@ $tpl_form_facette .= "</br />
 	</div>
 	<div class='row'></div>
 </form>";
+
+$tpl_form_facette_authperso_selector = "
+    <div class='row'>
+		<label for='list_authperso'>".htmlentities($msg['authperso'],ENT_QUOTES,$charset)."</label>
+	</div>
+	<div class='row'>
+        <select name='authperso_id' id='list_authperso' onchange='load_authperso_fields(0)'>
+		  !!authperso_options!!
+        </select>
+	</div>
+";
 
 // $tpl_vue_facettes=
 // "

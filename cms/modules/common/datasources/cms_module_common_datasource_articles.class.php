@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_datasource_articles.class.php,v 1.8 2016-09-21 13:09:44 vtouchard Exp $
+// $Id: cms_module_common_datasource_articles.class.php,v 1.8.10.1 2019-10-24 08:04:40 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -30,7 +30,8 @@ class cms_module_common_datasource_articles extends cms_module_common_datasource
 			"publication_date",
 			"id_article",
 			"article_title",
-			"article_order"
+			"article_order",
+		    "rand()"
 		);
 	}
 	

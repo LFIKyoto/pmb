@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // ? 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_ldap.inc.php,v 1.18 2017-11-21 12:01:00 dgoron Exp $
+// $Id: import_ldap.inc.php,v 1.20 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -61,7 +61,7 @@ function users_ldap($gid){
 	$r = ldap_search($conn, LDAP_BASEDN,$filter,$fields,0,0);
 
 	$info = ldap_get_entries($conn, $r);
-	ldap_close($conn);
+	ldap_unbind($conn);
 
 # DEBUG
 #	printr ($info);
@@ -133,54 +133,53 @@ function users_ldap($gid){
 
 
 // return the gidnumber of a ldap group
-function gid_ldap($grp){
-	global $charset,$ldap_encoding_utf8;
-	$ret=0;
+function gid_ldap($grp) {
+	global $charset, $ldap_encoding_utf8;
+	$ret = 0;
 	$fields = array('gidnumber');
-	$conn = ldap_connect( LDAP_SERVER, LDAP_PORT);
+	$conn = ldap_connect(LDAP_SERVER, LDAP_PORT);
 	ldap_set_option($conn, LDAP_OPT_PROTOCOL_VERSION, LDAP_PROTO);
 	$b = ldap_bind($conn);
 	//Gestion encodage
-	if(($ldap_encoding_utf8) && ($charset != "utf-8")){
-		$grp=utf8_encode($grp);
-	}elseif((!$ldap_encoding_utf8) && ($charset == "utf-8")){
-		$grp=utf8_decode($grp);
+	if (!empty($ldap_encoding_utf8) && $charset != "utf-8") {
+		$grp = utf8_encode($grp);
+	} elseif (empty($ldap_encoding_utf8) && $charset == "utf-8") {
+		$grp = utf8_decode($grp);
 	}
-	$r = ldap_search($conn, LDAP_BASEDN, "cn=$grp",$fields);
+	$r = ldap_search($conn, LDAP_BASEDN, "cn=$grp", $fields);
 	$info = ldap_get_entries($conn, $r);
-	ldap_close($conn);
-	$ret=$info[0]['gidnumber'][0];
+	ldap_unbind($conn);
+	$ret = $info[0]['gidnumber'][0];
 	//Gestion encodage
-	if(($ldap_encoding_utf8) && ($charset != "utf-8")){
-		$ret=utf8_decode($ret);
-	}elseif((!$ldap_encoding_utf8) && ($charset == "utf-8")){
-		$ret=utf8_encode($ret);
+	if (!empty($ldap_encoding_utf8) && $charset != "utf-8") {
+		$ret = utf8_decode($ret);
+	} elseif (empty($ldap_encoding_utf8) && $charset == "utf-8") {
+		$ret = utf8_encode($ret);
 	}
 	return $ret;
 }
 
 // check id server ldap is ok
-function ldap_ok(){
+function ldap_ok() {
 	global $msg;
-	$ldap_error=1;
-	$ret=0;
-	if (LDAP_SERVER){
-		$conn=@ldap_connect(LDAP_SERVER,LDAP_PORT);  // must be a valid LDAP server!
+	$ldap_error = 1;
+	$ret = 0;
+	if (LDAP_SERVER) {
+		$conn = @ldap_connect(LDAP_SERVER, LDAP_PORT);  // must be a valid LDAP server!
 		ldap_set_option($conn, LDAP_OPT_PROTOCOL_VERSION, LDAP_PROTO);
-		if ($conn) {
-			$x=@ldap_read($conn,LDAP_BASEDN,LDAP_FILTER);
-			if (preg_match('/resource/i',(string)$x))
-			{
-				$ldap_error=0;
-				$ret=1;
-				ldap_close($conn);
+		if (!empty($conn)) {
+			$x = @ldap_read($conn, LDAP_BASEDN, LDAP_FILTER);
+			if (preg_match('/resource/i', (string) $x))	{
+				$ldap_error = 0;
+				$ret = 1;
+				ldap_unbind($conn);
 			}
 		}
-		if ($ldap_error) {
+		if (!empty($ldap_error)) {
 			print "<h2>".$msg["ldap_error"]."</h2>";
 			print "<h2>".$msg["ldap_erro2"]."</h2>";
 		}
-	}else{
+	} else {
 		print "<h2>".$msg["ldap_noserver"]."</h2>";
 	}
 	return $ret;
@@ -317,7 +316,7 @@ function show_users_ldap($uu,$pag,$npp) {
 
 
 //------------------- main -------------------
-$op=$_POST[btsubmit];
+$op=$_POST['btsubmit'];
 switch($action)
 {
 	case 'ldapOK':
@@ -339,7 +338,7 @@ switch($action)
 					show_users_ldap($uu,$pag,$npp);
 					break;
 
-				case $msg[del_ldap_usr]:
+				case $msg['del_ldap_usr']:
 					$xx=$_POST['usrdel'];
 					$uu=$_POST['uu'];
 					$pag=$_POST['pag'];
@@ -350,7 +349,7 @@ switch($action)
 					}
 					show_users_ldap($uu,$pag,$npp);
 					break;
-				case $msg[import_ldap_exe]:
+				case $msg['import_ldap_exe']:
 					$uu=$_POST['uu'];
 					$uu=str_replace(';',"\n",$uu);
 #					$uu=str_replace('|',',',$uu);

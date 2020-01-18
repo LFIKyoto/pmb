@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: selector_oeuvre_event.class.php,v 1.1 2018-12-11 07:58:46 dgoron Exp $
+// $Id: selector_oeuvre_event.class.php,v 1.2 2019-08-09 14:45:51 btafforeau Exp $
   
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -52,19 +52,25 @@ class selector_oeuvre_event extends selector_authperso {
 		global $msg;
 		global $action;
 		global $authperso_id;
+		global $param1;
 	
-		$authpersos= authpersos::get_oeuvre_event_authpersos();
-		if (!count($authpersos)){
+		$authpersos = authpersos::get_oeuvre_event_authpersos();
+		if (empty($authpersos)) {
 			print $msg['oeuvre_event_sel_no'];
 			exit;
 		}
-		if(!$authperso_id)$authperso_id=$authpersos[0]['id'];
+		if (!empty($param1)) {
+		    $authperso_id = $param1;
+		}
+		if (empty($authperso_id)) {
+		    $authperso_id = $authpersos[0]['id'];
+		}
 		
-		switch($action){
+		switch($action) {
 			default:
 				parent::proceed();
+				break;
 		}
 	}
-	
 }
 ?>

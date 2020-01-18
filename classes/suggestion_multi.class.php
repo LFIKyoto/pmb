@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestion_multi.class.php,v 1.20 2017-11-23 15:21:46 ngantier Exp $
+// $Id: suggestion_multi.class.php,v 1.21 2019-05-27 16:11:52 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -190,11 +190,12 @@ class suggestion_multi{
 						$uni = new suggestions_unimarc(${$unimarc});
 						$req .= ", notice_unimarc ='".addslashes($uni->sugg_uni_notice)."'";							
 					} 
-					pmb_mysql_query($req,$dbh);	
+					pmb_mysql_query($req,$dbh);
+					$num_suggestion = pmb_mysql_insert_id();
 					
 					if (is_object($uni)) $uni->delete();
 						
-					$sug_orig = new suggestions_origine($id_user, pmb_mysql_insert_id());
+					$sug_orig = new suggestions_origine($id_user, $num_suggestion);
 					$sug_orig->type_origine = $type_user;
 					$sug_orig->save();
 					

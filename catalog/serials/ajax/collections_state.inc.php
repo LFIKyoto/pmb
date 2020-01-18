@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: collections_state.inc.php,v 1.13 2018-07-25 11:52:25 dgoron Exp $
+// $Id: collections_state.inc.php,v 1.14 2019-06-07 09:00:19 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -20,6 +20,7 @@ function ajax_calculate_collections_state() {
 	
 	$execute_query=pmb_mysql_query($rqt);
 	$compt=pmb_mysql_num_rows($execute_query);
+	if(!$compt) return '';
 	$temp="";
 	$i=0;
 	$debut="";
@@ -52,6 +53,7 @@ function ajax_calculate_collections_state() {
 		}
 	}
 	//si tous les bulletins ont des exemplaires associés, on prend l'intégralité de la liste
+	
 	if ($i==$compt) {
 		$all="";
 		$all.=$t[$debut];

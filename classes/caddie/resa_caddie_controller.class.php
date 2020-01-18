@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa_caddie_controller.class.php,v 1.2 2018-10-18 09:08:07 dgoron Exp $
+// $Id: resa_caddie_controller.class.php,v 1.4 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -27,11 +27,11 @@ class resa_caddie_controller extends caddie_controller {
 	}
 	
 	public static function set_id_empr($id_empr) {
-		static::$id_empr = $id_empr+0;
+		static::$id_empr = (int) $id_empr;
 	}
 	
 	public static function set_groupID($groupID) {
-		static::$groupID = $groupID+0;
+	    static::$groupID = (int) $groupID;
 	}
 	
 	public static function get_constructed_link($sub='', $sub_categ='', $action='', $idcaddie=0, $args_others='') {
@@ -61,7 +61,7 @@ class resa_caddie_controller extends caddie_controller {
 		global $id_empr;
 		global $groupID;
 	
-		if(!sizeof($liste) || !is_array($liste)) {
+		if ((empty($liste) && !is_array($liste)) || !is_array($liste)) {
 			print $msg[399];
 			return;
 		} else {

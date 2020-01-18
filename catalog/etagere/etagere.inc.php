@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: etagere.inc.php,v 1.21 2017-03-16 15:07:27 dgoron Exp $
+// $Id: etagere.inc.php,v 1.22.4.1 2019-10-23 12:30:58 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $action, $idetagere;
 
 switch ($action) {
 	case 'new_etagere':
@@ -15,6 +17,11 @@ switch ($action) {
 		$myEtagere = new etagere($idetagere);
 		print $myEtagere->get_form();
 		break;
+	case 'duplicate_etagere':
+	    $myEtagere = new etagere($idetagere);
+	    $myEtagere->idetagere = 0;
+	    print $myEtagere->get_form();
+	    break;
 	case 'del_etagere':
 		$myEtagere= new etagere($idetagere);
 		$myEtagere->delete();

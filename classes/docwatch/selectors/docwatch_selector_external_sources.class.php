@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_selector_external_sources.class.php,v 1.3 2017-08-23 07:29:05 ngantier Exp $
+// $Id: docwatch_selector_external_sources.class.php,v 1.4 2019-06-13 15:26:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -69,7 +69,7 @@ class docwatch_selector_external_sources extends docwatch_selector {
 		global $docwatch_selector_external_sources_select;
 		global $docwatch_selector_external_sources_limit;
 		$this->parameters['external_sources'] = $docwatch_selector_external_sources_select;
-		$this->parameters['nb_max_elements'] = $docwatch_selector_external_sources_limit+0;
+		$this->parameters['nb_max_elements'] = (int) $docwatch_selector_external_sources_limit;
 	}
 	
 	

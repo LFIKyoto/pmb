@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: make_sugg.inc.php,v 1.22 2018-08-02 13:51:47 dgoron Exp $
+// $Id: make_sugg.inc.php,v 1.23.4.1 2019-10-09 13:33:49 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -111,7 +111,7 @@ $sug_form.= "
 			</td>
 		</tr>
 		<tr>
-			<td class='cell_header align_right' vertical-align=top>".htmlentities($msg["empr_sugg_comment"], ENT_QUOTES, $charset)."<br /><i>".htmlentities($msg["empr_sugg_comment_jt"], ENT_QUOTES, $charset)."</i></td>
+			<td class='cell_header align_right' vertical-align=top>".htmlentities($msg["empr_sugg_comment"], ENT_QUOTES, $charset)."</td>
 			<td>
 				<textarea id=\"comment\" name=\"comment\" cols=\"50\" rows='4'>".htmlentities($sugg->commentaires, ENT_QUOTES, $charset)."</textarea>
 			</td>
@@ -119,7 +119,7 @@ $sug_form.= "
 		<tr>
 			<td class='cell_header align_right'>".htmlentities($msg["empr_sugg_datepubli"], ENT_QUOTES, $charset)."</td>
 			<td>
-				<input type='text' id='date_publi' name='date_publi' value='$sugg->date_publi'>
+				<input type='text' id='date_publi' name='date_publi' value='".($sugg->date_publi != '0000-00-00' ? $sugg->date_publi : '')."' size='50' placeholder='".htmlentities($msg['format_date_input_text_placeholder'], ENT_QUOTES, $charset)."'>
 				<input type='button' class='bouton' id='date_publi_sug' name='date_publi_sug' value='...' onClick=\"window.open('./select.php?what=calendrier&caller=empr_sugg&param1=date_publi&param2=date_publi&auto_submit=NO&date_anterieure=YES', 'date_publi', 'toolbar=no, dependent=yes, width=250,height=250, resizable=yes')\"/>
 			</td>
 		</tr>

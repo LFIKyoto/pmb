@@ -21,7 +21,7 @@
 // ATTENTION, cette classe a été sérieusement débogguée par rapport à l'original. Les corrections ont été réalisées par PMB Services.
 // © PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: iso2709.class.php,v 1.19 2018-12-20 14:00:06 mbertin Exp $
+// $Id: iso2709.class.php,v 1.22 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -185,7 +185,7 @@ class iso2709_record {
 		// récupération des champs
 		$m = substr($this->full_record, $this->inner_guide["ba"], strlen($this->full_record) - $this->inner_guide["ba"]);
 		if($m) {
-			while(list($cle, $valeur)=each($this->inner_directory)) {
+		    foreach ($this->inner_directory as $cle => $valeur) {
 				$this->inner_data[$cle] = array(
 								'label' => $this->inner_directory[$cle]["label"],
 								'content' => substr($this->full_record, $this->inner_guide["ba"] + $valeur["adress"], $valeur["length"])
@@ -419,7 +419,7 @@ class iso2709_record {
 				break;
 			}
 	
-		if(is_array($content) && sizeof($content)) {
+		if(!empty($content)) {
 			$content = $this->ISO_encode($content).$this->field_end; 
 	
 			// ajout des éventuels indicateurs
@@ -633,7 +633,7 @@ class iso2709_record {
 	
 		// test des fin de champs
 		// on retourne false si un champ ne finit pas par l'IS3
-		while(list($cle, $valeur) = each($this->inner_data)) {
+		foreach ($this->inner_data as $cle => $valeur) {
 			if(!preg_match("/".$this->rgx_field_end."$/", $valeur["content"])) {
 				$txt_error = '[error : format] notice '.$txt.'perdue : Le champ '.$cle.' ne finit pas par le caractère de fin de champ';
 				$this->errors[] = ($charset=='utf-8'?utf8_encode($txt_error):$txt_error);
@@ -857,11 +857,7 @@ class iso2709_record {
 				$chaine=str_replace(array(chr(0xC2).chr(0x98),chr(0xC2).chr(0x9C)),"", $chaine);//Caractères "Début du non-classement" et "Fin du non-classement" supprimés
 			}
 			if ($charset !=='utf-8'){
-				if(function_exists("mb_convert_encoding")){
-					$chaine = mb_convert_encoding($chaine,"Windows-1252","UTF-8");
-				}else{
-					$chaine = utf8_decode($chaine);
-				}
+				$chaine = pmb_utf8_decode($chaine);
 			}
 			return $chaine;
 		}
@@ -872,11 +868,7 @@ class iso2709_record {
 			$chaine=iso2709_record::ISO_646_5426_decode($chaine);
 		}
 		if ($charset == 'utf-8'){
-			if(function_exists("mb_convert_encoding") && ((strpos($chaine,chr(0x92)) !== false) || (strpos($chaine,chr(0x93)) !== false) || (strpos($chaine,chr(0x9c)) !== false) || (strpos($chaine,chr(0x8c)) !== false))){//Pour les caractères windows
-				$chaine = mb_convert_encoding($chaine,"UTF-8","Windows-1252");
-			}else{
-				$chaine = utf8_encode($chaine);
-			}
+			$chaine = pmb_utf8_encode($chaine);
 		}
 		return $chaine;
 	}

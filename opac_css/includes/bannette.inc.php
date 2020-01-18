@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannette.inc.php,v 1.14 2017-11-14 13:50:24 dgoron Exp $
+// $Id: bannette.inc.php,v 1.15 2019-01-16 10:45:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -19,17 +19,17 @@ print "<div id='aut_details' class='aut_details_bannette'>\n";
 $bannette = new bannette($id_bannette);
 if ($id_bannette){
 	print "<h3><span>".$bannette->comment_public."</span></h3><br />";
-	$aff = pmb_bidi(affiche_bannette ("$id_bannette", 0, "./empr.php?lvl=bannette&id_bannette=!!id_bannette!!")) ; 
+	$aff = pmb_bidi(affiche_bannette($id_bannette, 0, "./empr.php?lvl=bannette&id_bannette=!!id_bannette!!")) ;
+	if($aff){
+		if ($opac_bannette_notices_depliables) print $begin_result_liste ;
+		print $aff;
+	} else {
+		print $msg['empr_no_alerts'];
+	}
 }else{ 
-	print "<h3><span>".$msg['accueil_bannette']."</span></h3><br />";
-	$aff = pmb_bidi(affiche_bannette ("", $opac_bannette_nb_liste, "./empr.php?lvl=bannette&id_bannette=!!id_bannette!!")) ;
-}
-
-if($aff){
+	$aff = pmb_bidi(affiche_bannettes($opac_bannette_nb_liste, "./empr.php?lvl=bannette&id_bannette=!!id_bannette!!")) ;
 	if ($opac_bannette_notices_depliables) print $begin_result_liste ;
 	print $aff;
-} else {
-	print $msg['empr_no_alerts'];
 }
 print "</div><!-- fermeture #aut_see -->\n";	
 ?>

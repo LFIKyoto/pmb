@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.1 2018-06-08 08:10:27 vtouchard Exp $ -->
+$Id: manifest.xml,v 1.1.6.1 2019-11-12 14:42:09 arenou Exp $ -->
 <manifest>
 	<name>pmbesLoans</name>
 	<description>msg:Loans_functions_description</description>
@@ -21,6 +21,20 @@ $Id: manifest.xml,v 1.1 2018-06-08 08:10:27 vtouchard Exp $ -->
 			</inputs>
 			<outputs>
 				<description>msg:loanBook_output_description</description>
+				<!-- -<result name="result" type="scalar" dataType="type_a_definir" description="msg:filterLoansReaders_result"/> -->
+			</outputs>
+		</method>
+		<method name="returnBook" rights="" version="1.0" comment="msg:returnBook_description" language_independant="true">
+			<pmb_requirements>
+				<pmb_requirement start_path="class" file="pnb/pnb.class.php"/>
+			</pmb_requirements>
+			<inputs>
+				<description>msg:retunBook_input_description</description>
+				<param name="emprId" type="scalar" dataType="string" description="msg:returnBook_emprId"/>
+				<param name="explId" type="scalar" dataType="string" description="msg:returnBook_explId"/>
+			</inputs>
+			<outputs>
+				<description>msg:returnBook_output_description</description>
 				<!-- -<result name="result" type="scalar" dataType="type_a_definir" description="msg:filterLoansReaders_result"/> -->
 			</outputs>
 		</method>

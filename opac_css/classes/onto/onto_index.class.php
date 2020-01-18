@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_index.class.php,v 1.2 2017-05-06 07:36:47 dgoron Exp $
+// $Id: onto_index.class.php,v 1.2.8.1 2019-09-20 09:42:04 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,7 +14,10 @@ require_once($class_path."/onto/onto_handler.class.php");
  * Cette classe permet de mettre à plat un index d'un élément d'une ontologie accessible dans notre schéma relationel
 */
 class onto_index extends indexation {
-	/**
+	
+
+    static protected $instances = array();
+/**
 	 * handler
 	 *
 	 * @var onto_handler
@@ -313,5 +316,21 @@ class onto_index extends indexation {
 		return true;
 	}
 	
-
+	/**
+	 * Methode qui retourne l'instance de la classe d'indexation correspondant à l'ontologie
+	 * @param string $onto_name
+	 * @return onto_common_index
+	 */
+	public static function get_instance($onto_name = "common"){
+	    $prefix="onto_";
+	    $suffixe = "_index";
+	    $instance_name = $prefix."common".$suffixe;
+	    if($onto_name && class_exists($prefix.$onto_name.$suffixe)){
+	        $instance_name = $prefix.$onto_name.$suffixe;
+	    }
+	    if (!isset(self::$instances[$instance_name])) {
+	        self::$instances[$instance_name] = new $instance_name();
+	    }
+	    return self::$instances[$instance_name];
+	}
 }

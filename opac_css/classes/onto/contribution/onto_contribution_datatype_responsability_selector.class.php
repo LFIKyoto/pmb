@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_contribution_datatype_responsability_selector.class.php,v 1.2 2018-12-28 16:19:06 tsamson Exp $
+// $Id: onto_contribution_datatype_responsability_selector.class.php,v 1.5.4.1 2019-11-25 12:52:58 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -96,15 +96,25 @@ class onto_contribution_datatype_responsability_selector  extends onto_common_da
                     $responsablity_uri = onto_common_uri::get_new_uri($opac_url_base."responsability#");
                     $data_properties["object_assertions"] = array(
                         new onto_assertion($responsablity_uri, 'http://www.pmbservices.fr/ontology#has_author', $data["value"], "", array('type'=>"uri")),
-                        new onto_assertion($responsablity_uri, 'http://www.pmbservices.fr/ontology#author_function', $data["author_function"], "", array('type'=>"literal"))
+                        new onto_assertion($responsablity_uri, 'http://www.pmbservices.fr/ontology#author_function', $data["function_value"], "", array('type'=>"literal"))
                     );                    
-                    $class_name = get_called_class();
+                    $class_name = static::class;
                     //$datatypes[$property->uri][] = new $class_name($responsablity_uri, $data["type"], $data_properties);
                     $datatypes[$property->uri][] = new $class_name($responsablity_uri, 'http://www.pmbservices.fr/ontology#responsability', $data_properties);
                 }
             }
         }
         return $datatypes;
+	}
+	
+	public function get_raw_value() {
+	    //si c'est un tableau, on retourne la première valeur dans le cas générale
+	    if (is_array($this->value)) {
+	        foreach ($this->value as $key => $value) {
+                return $value;
+	        }
+	    }
+	    return $this->value;
 	}
  
 } // end of onto_common_datatype_resource_selector

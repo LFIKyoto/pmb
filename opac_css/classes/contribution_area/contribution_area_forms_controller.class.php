@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution_area_forms_controller.class.php,v 1.15 2018-12-21 13:12:14 apetithomme Exp $
+// $Id: contribution_area_forms_controller.class.php,v 1.17.6.1 2019-11-25 12:52:58 ngantier Exp $
 if (stristr ( $_SERVER ['REQUEST_URI'], ".class.php" ))
 	die ( "no access" );
 
@@ -120,16 +120,32 @@ class contribution_area_forms_controller {
 	}
 	
 	public static function show_result() {
-		global $handleAs;
 		$results = self::search_in_store ();
 		$returns = array();
-		if (isset($handleAs) && $handleAs == "json") {
-			foreach ( $results as $uri => $result ) {	
-				//datas : valeur utilisée pour la recherche et l'affichage
-				//id : valeur cachée qui sera posté dans le champ 'display_label'
-				//value : utilisée pour remplir le champ caché 'value'  			
-				$returns[] = array("id" => $result['http://www.pmbservices.fr/ontology#displayLabel'], "datas" => $result['http://www.pmbservices.fr/ontology#displayLabel'], "value" => $uri);
-			}
+		foreach ( $results as $uri => $result ) {	
+			//datas : valeur utilisée pour la recherche et l'affichage
+			//id : valeur cachée qui sera posté dans le champ 'display_label'
+		    //value : utilisée pour remplir le champ caché 'value'
+		    
+		    switch ($result['http://www.w3.org/1999/02/22-rdf-syntax-ns#type']) {
+		        case 'http://www.pmbservices.fr/ontology#author' :
+		            $label = $result['http://www.pmbservices.fr/ontology#displayLabel'];
+		            if(!empty($result['http://www.pmbservices.fr/ontology#author_first_name'])) {
+		                $label .= ', ' . $result['http://www.pmbservices.fr/ontology#author_first_name'];
+		            }
+		            break;
+		        case 'http://www.pmbservices.fr/ontology#publisher' :
+		            $label = $result['http://www.pmbservices.fr/ontology#displayLabel'];
+		            if (!empty($result["http://www.pmbservices.fr/ontology#town"])) {
+		                $label .= ' ('.$result["http://www.pmbservices.fr/ontology#town"].')';
+		            }
+		            break;
+		        default:
+		            $label = $result['http://www.pmbservices.fr/ontology#displayLabel'];
+		            break;
+		    }
+		    
+			$returns[] = array("label" => $label, "id" => $result['http://www.pmbservices.fr/ontology#displayLabel'], "datas" => $result['http://www.pmbservices.fr/ontology#displayLabel'], "value" => $uri);
 		}
 		return $returns;
 	}
@@ -159,8 +175,12 @@ class contribution_area_forms_controller {
 				}
 				$results [$row->s] [explode('#', $row->p)[1]] = htmlentities($row->o,ENT_QUOTES,$charset);
 				
-				if (!isset($results [$row->s]["uri_id"])) {
-					$results [$row->s]["uri_id"] = onto_common_uri::get_id($row->s);
+				if (empty($results[$row->s]["uri_id"])) {
+				    $uri_id = onto_common_uri::get_id($row->s);
+				    if (empty($uri_id)) {
+				        $uri_id = onto_common_uri::set_new_uri($row->s);
+				    }
+				    $results[$row->s]["uri_id"] = $uri_id;
 				}
 			}
 		}
@@ -208,8 +228,12 @@ class contribution_area_forms_controller {
 					}
 					$results[$row->s][explode('#', $row->p)[1]] = htmlentities($row->o,ENT_QUOTES,$charset);
 					
-					if (!isset($results[$row->s]["uri_id"])) {
-						$results[$row->s]["uri_id"] = onto_common_uri::get_id($row->s);
+					if (empty($results[$row->s]["uri_id"])) {
+					    $uri_id = onto_common_uri::get_id($row->s);
+					    if (empty($uri_id)) {
+					        $uri_id = onto_common_uri::set_new_uri($row->s);
+					    }
+					    $results[$row->s]["uri_id"] = $uri_id;
 					}
 					
 					if (!isset($results[$row->s]["contributor"])) {
@@ -362,7 +386,7 @@ class contribution_area_forms_controller {
 				$properties_array['area'] = self::get_area_infos($properties_array['area']);
 			}
 			//id de l'entité en base SQL
-			if ($properties_array['identifier']) {
+			if (!empty($properties_array['identifier'])) {
 				if (isset($properties_array['bibliographical_lvl']) && $properties_array['bibliographical_lvl'] == 'b') {
 					$properties_array['link'] = self::get_link_from_type($properties_array['type'], $properties_array['identifier'], true);
 				} else {
@@ -391,7 +415,7 @@ class contribution_area_forms_controller {
 				}
 			}			
 			//infos du contributeur
-			if ($properties_array['contributor']) {
+			if (!empty($properties_array['contributor'])) {
 				$properties_array['contributor'] = self::get_contributor_infos($properties_array['contributor']);
 			}
 				

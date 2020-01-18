@@ -1,6 +1,6 @@
 <?php
 
-global $mails_waiting_form_tpl;
+global $mails_waiting_form_tpl, $current_module, $base_path, $charset, $msg;
 
 $mails_waiting_form_tpl="
 <form class='form-".$current_module."' id='mails_waiting_form' name='mails_waiting_form'  method='post' action=\"".$base_path."/admin.php?categ=mails_waiting&action=save\" >

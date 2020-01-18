@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_requests.class.php,v 1.8 2017-11-07 16:06:19 ngantier Exp $
+// $Id: rent_requests.class.php,v 1.8.6.1 2019-11-22 14:55:58 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,10 +14,6 @@ require_once($class_path."/editor.class.php");
 require_once($include_path."/templates/rent/rent_requests.tpl.php");
 
 class rent_requests extends rent_accounts {
-	
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	/**
 	 * Affichage du formulaire de recherche

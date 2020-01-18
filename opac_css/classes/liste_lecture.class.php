@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: liste_lecture.class.php,v 1.57 2018-12-26 13:13:23 ngantier Exp $
+// $Id: liste_lecture.class.php,v 1.66.2.1 2019-11-08 09:12:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -18,6 +18,7 @@ class liste_lecture {
 	public $login;
 	public $display='';
 	public $notices=array();
+	public $notices_create_date = array();
 	public $action='';
 	public $nom_liste='';
 	public $description='';
@@ -36,50 +37,51 @@ class liste_lecture {
 	public function __construct($id_liste=0, $act=''){
 		$this->login = $_SESSION['user_code'];
 		$this->num_empr = $this->get_num_empr($this->login);
-		$this->id_liste = $id_liste;
+		$this->id_liste = intval($id_liste);
 		$this->action = $act;
-		if($this->id_liste){
-			$req = "select opac_liste_lecture.*, if(abo_liste_lecture.num_empr is null,0,1) as subscribed from opac_liste_lecture 
-				join empr on opac_liste_lecture.num_empr=empr.id_empr 
-				left join abo_liste_lecture on (abo_liste_lecture.num_liste=opac_liste_lecture.id_liste and abo_liste_lecture.num_empr='".$this->num_empr."') where id_liste='".$this->id_liste."'";
-			$res = pmb_mysql_query($req);
-			if(pmb_mysql_num_rows($res)){
-				$liste = pmb_mysql_fetch_object($res);
-				$this->nom_liste = $liste->nom_liste;
-				$this->description=$liste->description;
-				$this->public=$liste->public;
-				$this->num_owner = $liste->num_empr;
-				$this->readonly=$liste->read_only;
-				$this->confidential=$liste->confidential;
-				$this->tag=$liste->tag;
-				$this->subscribed = $liste->subscribed;
-				if($liste->notices_associees) 
-					$this->notices = explode(",",$liste->notices_associees);
-				else $this->notices = array();
-			} else {
-				$this->nom_liste = '';
-				$this->description='';
-				$this->public=0;
-				$this->num_owner = 0;
-				$this->readonly=0;
-				$this->notices = array();	
-				$this->confidential=0;
-				$this->tag='';
-				$this->subscribed = 0;
-			}
-		} else {
-			$this->nom_liste = '';
-			$this->description='';
-			$this->public=0;
-			$this->num_owner = 0;
-			$this->readonly=0;
-			$this->notices = array();		
-			$this->confidential=0;
-			$this->tag='';
-			$this->subscribed = 0;
-		}
-			
+		$this->fetch_data();
 		$this->proceed();
+	}
+	
+	protected function fetch_data() {
+	    $this->nom_liste = '';
+	    $this->description='';
+	    $this->public=0;
+	    $this->num_owner = 0;
+	    $this->readonly=0;
+	    $this->notices = array();
+	    $this->notices_create_date = array();
+	    $this->confidential=0;
+	    $this->tag='';
+	    $this->subscribed = 0;
+	    if ($this->id_liste) {
+	        $req = "select opac_liste_lecture.*, if(abo_liste_lecture.num_empr is null,0,1) as subscribed from opac_liste_lecture
+				join empr on opac_liste_lecture.num_empr=empr.id_empr
+				left join abo_liste_lecture on (abo_liste_lecture.num_liste=opac_liste_lecture.id_liste and abo_liste_lecture.num_empr='".$this->num_empr."') where id_liste='".$this->id_liste."'";
+	        $res = pmb_mysql_query($req);
+	        if(pmb_mysql_num_rows($res)){
+	            $liste = pmb_mysql_fetch_object($res);
+	            $this->nom_liste = $liste->nom_liste;
+	            $this->description=$liste->description;
+	            $this->public=$liste->public;
+	            $this->num_owner = $liste->num_empr;
+	            $this->readonly=$liste->read_only;
+	            $this->confidential=$liste->confidential;
+	            $this->tag=$liste->tag;
+	            $this->subscribed = $liste->subscribed;
+	            
+	            $this->notices = array();
+	            $this->notices_create_date = array();
+	            $query = "select * from opac_liste_lecture_notices where opac_liste_lecture_num=" . $this->id_liste;
+	            $result = pmb_mysql_query($query);
+	            if (pmb_mysql_num_rows($result)) {
+	                while ($row = pmb_mysql_fetch_object($result)) {
+	                    $this->notices[] = $row->opac_liste_lecture_notice_num;
+	                    $this->notices_create_date[$row->opac_liste_lecture_notice_num] = $row->opac_liste_lecture_create_date;
+	                }
+	            }
+	        } 
+	    } 
 	}
 	
 	protected function proceed(){
@@ -236,12 +238,18 @@ class liste_lecture {
 				pmb_mysql_query($rqt);
 				$rqt = "delete from abo_liste_lecture where num_liste='".$list_ck[$i]."'";
 				pmb_mysql_query($rqt);
+				$query = "delete from opac_liste_lecture_notices where opac_liste_lecture_num=" . $list_ck[$i];
+				pmb_mysql_query($query);
 			}
 		} elseif($this->id_liste) {
 			$rqt = "delete from opac_liste_lecture where id_liste='".$this->id_liste."'";
 			pmb_mysql_query($rqt);
 			$rqt = "delete from abo_liste_lecture where num_liste='".$this->id_liste."'";
 			pmb_mysql_query($rqt);
+			$query = "delete from opac_liste_lecture_notices where opac_liste_lecture_num=" . $this->id_liste;
+			pmb_mysql_query($query);
+			$this->id_liste = 0;
+			$this->fetch_data();
 		}
 	}
 	
@@ -250,20 +258,11 @@ class liste_lecture {
 	 */
 	protected function supprimer_coche(){
 		global $notice;
-		
-		for ($i=0; $i<count($notice); $i++) {
-			$as=array_search($notice[$i],$this->notices);
-			if (($as!==null)&&($as!==false)) {
-				//Décalage
-				for ($j=$as+1; $j<count($this->notices); $j++) {
-					$this->notices[$j-1]=$this->notices[$j];
-				}
-				unset($this->notices[count($this->notices)-1]);
-			}
-		}
-		$rqt = "update opac_liste_lecture set notices_associees='".implode(',',$this->notices)."' where id_liste='".$this->id_liste."'"; 
-		pmb_mysql_query($rqt);
-
+				
+		$query = "DELETE FROM opac_liste_lecture_notices WHERE opac_liste_lecture_num=" . $this->id_liste . " 
+            AND opac_liste_lecture_notice_num IN(" . implode(',', $notice) . ")";
+		pmb_mysql_query($query);
+        $this->fetch_data();
 	}
 	
 	/**
@@ -294,7 +293,7 @@ class liste_lecture {
 	/**
 	 * récupération de l'id selon le login
 	 */
-	function get_num_empr($login){
+	public function get_num_empr($login){
 		if($login){
 			$rqt = "select id_empr from empr where empr_login='".addslashes($login)."'";
 			$res = pmb_mysql_query($rqt);
@@ -307,18 +306,30 @@ class liste_lecture {
 	/**
 	 * Enregistre une liste de lecture 
 	 */
-	function enregistrer(){
+	public function enregistrer(){
 		global $list_name, $list_comment, $notice_filtre, $cb_share, $cb_readonly, $cb_confidential, $list_tag;
 		
+		$list_name = strip_tags($list_name);
+		$list_comment = strip_tags($list_comment);
+		$list_tag = strip_tags($list_tag);
 		if(!$this->id_liste){
-			$rqt="insert into opac_liste_lecture (notices_associees,description, public, num_empr, nom_liste, read_only, confidential, tag) 
-				values ('".$notice_filtre."', '".$list_comment."','".($cb_share ? 1 : 0)."', '".$this->num_empr."', '".$list_name."', '".($cb_readonly ? 1 : 0)."', '".($cb_confidential ? 1 : 0)."', '".$list_tag."')";
+			$rqt="insert into opac_liste_lecture (description, public, num_empr, nom_liste, read_only, confidential, tag) 
+				values ('".$list_comment."','".($cb_share ? 1 : 0)."', '".$this->num_empr."', '".$list_name."', '".($cb_readonly ? 1 : 0)."', '".($cb_confidential ? 1 : 0)."', '".$list_tag."')";
 			pmb_mysql_query($rqt);
+			$this->id_liste = pmb_mysql_insert_id();
 		} elseif($this->id_liste) {
-			$rqt="update opac_liste_lecture set notices_associees='".$notice_filtre."', description='".$list_comment."', public='".($cb_share ? 1 : 0)."', 
+			$rqt="update opac_liste_lecture set description='".$list_comment."', public='".($cb_share ? 1 : 0)."', 
 				nom_liste='".$list_name."', read_only='".($cb_readonly ? 1 : 0)."', confidential='".($cb_confidential ? 1 : 0)."', tag='".$list_tag."' where id_liste='".$this->id_liste."'";
 			pmb_mysql_query($rqt);
 		}
+		$notices_associees = explode(",", $notice_filtre);
+		foreach ($notices_associees as $notice_id) {
+		    if ($notice_id) {
+		        $query = "INSERT INTO opac_liste_lecture_notices SET opac_liste_lecture_num=". $this->id_liste . ",opac_liste_lecture_notice_num=" . $notice_id;
+		        pmb_mysql_query($query);
+		    }
+		}
+		$this->fetch_data();
 	}
 	
 	/**
@@ -335,9 +346,10 @@ class liste_lecture {
 		
 		$notice_liste = array_merge($notices,$cart);
 		
-		$rqt = "update opac_liste_lecture set notices_associees='".implode(',',$notice_liste)."' where id_liste='".$this->id_liste."'";
-		pmb_mysql_query($rqt);
-		
+		foreach ($notice_liste as $notice_id) {
+		    $query = "INSERT INTO opac_liste_lecture_notices SET opac_liste_lecture_num=". $this->id_liste . ",opac_liste_lecture_notice_num=" . $notice_id;
+		    pmb_mysql_query($query);
+		}
 		$this->notices = $notice_liste;
 	}
 	
@@ -353,7 +365,7 @@ class liste_lecture {
 		if(pmb_mysql_num_rows($result)) {
 			if(!in_array($id_notice, $this->notices)) {
 				$this->notices[] = $id_notice;
-				$query = "update opac_liste_lecture set notices_associees='".implode(',',$this->notices)."' where id_liste='".$this->id_liste."'";
+				$query = "INSERT INTO opac_liste_lecture_notices SET opac_liste_lecture_num=". $this->id_liste . ",opac_liste_lecture_notice_num=" . $id_notice;
 				pmb_mysql_query($query);
 				return true;
 			}
@@ -364,7 +376,7 @@ class liste_lecture {
 	/**
 	 * Extraire la liste dans le panier
 	 */
-	function extraire_vers_panier(){
+	public function extraire_vers_panier(){
 		$cart = array();		
 		$notices = $this->notices;
 		for($i=0;$i<sizeof($notices);$i++){
@@ -500,7 +512,7 @@ class liste_lecture {
 		
 		global $liste_gestion, $liste_lecture_gestion_boutons, $dbh, $charset, $msg, $opac_search_results_per_page, $cart_aff_case_traitement, $page, $opac_shared_lists_readonly, $opac_show_suggest,$opac_allow_multiple_sugg;
 		global $opac_shared_lists_add_empr;
-		global $affich_tris_result_liste, $pmb_nb_max_tri;
+		global $pmb_nb_max_tri;
 		
 		$affich='';
 		
@@ -561,7 +573,7 @@ class liste_lecture {
 			}
 //			$affich.= "</form>";
 			$affich.= "</blockquote>";
-			$affich.= $this->aff_navigation_notices($this->filtered_notices, $this->id_liste, 'view');
+			$navbar = $this->aff_navigation_notices($this->filtered_notices, $this->id_liste, 'view');
 				
 			//Gestion des checkbox
 			if($this->public) {
@@ -583,6 +595,8 @@ class liste_lecture {
 				$liste_gestion = str_replace('!!checked_only!!','checked',$liste_gestion);
 			else $liste_gestion = str_replace('!!checked_only!!','',$liste_gestion);
 			$liste_gestion = str_replace('!!notice_filtre!!', htmlentities(implode(',',$this->filtered_notices),ENT_QUOTES,$charset),$liste_gestion);
+			$liste_gestion = str_replace('!!page!!', htmlentities($page, ENT_QUOTES, $charset), $liste_gestion);
+			$liste_gestion = str_replace('!!nb_per_page_custom!!', htmlentities($opac_search_results_per_page, ENT_QUOTES, $charset), $liste_gestion);
 			$liste_gestion = str_replace('!!list_tag!!',$this->gen_selector_tags(),$liste_gestion);
 			
 			//Ajout de lecteurs à la liste
@@ -616,10 +630,11 @@ class liste_lecture {
 			$list_inscrit = str_replace('!!list_inscrit!!', $this->get_display_empr(), $list_inscrit);
 			$liste_gestion = str_replace('!!inscrit_list!!',$list_inscrit,$liste_gestion);
 			
-			$liste_gestion = str_replace('!!search!!', $this->get_display_search(), $liste_gestion);
+			$liste_gestion = str_replace('!!search!!', "<div class='reading_list_search_container'>" . $this->get_display_search() . "</div>", $liste_gestion);
 		}
 
-		$liste_gestion = str_replace('!!liste_notice!!',$affich,$liste_gestion);
+		$liste_gestion = str_replace('!!liste_notice!!', "<div class='row'>" . $affich . "</div>", $liste_gestion);
+		$liste_gestion = str_replace('!!navbar!!', $navbar, $liste_gestion);
 		print $liste_gestion;
 	}
 
@@ -691,11 +706,11 @@ class liste_lecture {
 		}
 		
 		//Recherche
-		$liste_lecture_consultation = str_replace('!!search!!', $this->get_display_search(), $liste_lecture_consultation);
+		$liste_lecture_consultation = str_replace('!!search!!', "<div class='reading_list_search_container'>" . $this->get_display_search() . "</div>", $liste_lecture_consultation);
 		$this->search_in_list();
 		//Gestion de la liste des notices et de la pagination
 		if($page=="")$page=1;
-		$affich .= "<span><b>".sprintf($msg["show_cart_n_notices"],count($this->filtered_notices))."</b></span>";
+		$affich = "<span><b>".sprintf($msg["show_cart_n_notices"],count($this->filtered_notices))."</b></span>";
 
 		$affich.= $this->gestion_tri('consultation');
 		
@@ -716,32 +731,34 @@ class liste_lecture {
 		$affich.= $this->aff_navigation_notices($this->filtered_notices, $this->id_liste, 'consultation');
 		
 		$liste_lecture_consultation = str_replace('!!notice_filtre!!', htmlentities(implode(',',$this->filtered_notices),ENT_QUOTES,$charset),$liste_lecture_consultation);
-		$liste_lecture_consultation = str_replace('!!liste_notice!!',$affich,$liste_lecture_consultation);
+		$liste_lecture_consultation = str_replace('!!page!!', htmlentities($page, ENT_QUOTES, $charset), $liste_lecture_consultation);
+		$liste_lecture_consultation = str_replace('!!nb_per_page_custom!!', htmlentities($opac_search_results_per_page, ENT_QUOTES, $charset), $liste_lecture_consultation);
+		$liste_lecture_consultation = str_replace('!!liste_notice!!', "<div class='row'>" . $affich . "</div>", $liste_lecture_consultation);
 		
 		print $liste_lecture_consultation;
 	}
 	
 	private function gestion_tri($sub = 'consultation') {
-		global $affich_tris_result_liste, $pmb_nb_max_tri;
-		
+		global $pmb_nb_max_tri, $msg;
 		//Tri
 		$affich = '';
-		if (isset($_GET['sort'])) {
-			$_SESSION['last_sortnotices'] = $_GET['sort'];
+		if (isset($_SESSION["last_sortreading_list"]) && !isset($_GET['sort'])) {
+		    $_GET['sort'] = $_SESSION["last_sortreading_list"];
 		}
-		if (isset($_SESSION['last_sortnotices']) && $_SESSION['last_sortnotices'] != '') {
-			$sort = new sort('notices', 'session');
+		if (isset($_GET['sort'])) {
+			$_SESSION["last_sortreading_list"] = $_GET['sort'];
+			$sort = new sort('reading_list', 'session');
 			$sql = "SELECT notice_id FROM notices WHERE notice_id IN (";
 			for ($z = 0; $z < count($this->filtered_notices); $z++) {
 				$sql.= "'" . $this->filtered_notices[$z] . "',";
 			}
 			$sql = substr($sql, 0, strlen($sql) - 1) . ")";
 		
-			$sql = $sort->appliquer_tri($_SESSION['last_sortnotices'], $sql, 'notice_id', 0, 0);
+			$sql = $sort->appliquer_tri($_SESSION["last_sortreading_list"], $sql, 'notice_id', 0, 0);
 		} else {
 			$sql = "select notice_id from notices where notice_id in ('" . implode("','",$this->filtered_notices) . "') order by tit1";
 		}
-		$res = pmb_mysql_query($sql, $dbh);
+		$res = pmb_mysql_query($sql);
 		$this->filtered_notices = array();
 		while ($r = pmb_mysql_fetch_object($res)) {
 			$this->filtered_notices[] = $r->notice_id;
@@ -751,69 +768,33 @@ class liste_lecture {
 					'sub' => $sub,
 					'id_liste' => $this->id_liste,
 			)));
+			$affich_tris_result_liste = sort::show_tris_selector("reading_list");
 			$affich_tris_result_liste = str_replace('!!page_en_cours!!', 'lvl=show_list&params=' . $params . '&id_liste=' . $this->id_liste, $affich_tris_result_liste);
 			$affich_tris_result_liste = str_replace('!!page_en_cours1!!', 'lvl=show_list&params=' . $params . '&sub=' . $sub . '&id_liste=' . $this->id_liste, $affich_tris_result_liste);
 			$affich.=  $affich_tris_result_liste;
 		}
-		if (isset($_SESSION['last_sortnotices']) && $_SESSION['last_sortnotices'] != '') {
-			$affich.=  "<span class='sort'>" . $msg['tri_par'] . ' ' . $sort->descriptionTriParId($_SESSION['last_sortnotices']) . '<span class="espaceCartAction">&nbsp;</span></span>';
+		if (isset($_GET['sort'])) {
+			$affich.=  "<span class='sort'>" . $msg['tri_par'] . ' ' . $sort->descriptionTriParId($_SESSION["last_sortreading_list"]) . '<span class="espaceCartAction">&nbsp;</span></span>';
 		}
 		return $affich;
 	}
 	/**
 	 * Affiche la barre de navigation des notices
 	 */
-	public function aff_navigation_notices($notices=array(),$id_liste, $sub){
-		global $opac_search_results_per_page, $msg, $page;
-		
-		$affichage ='';
-		$nbepages = ceil(count($notices)/$opac_search_results_per_page);
-		$suivante = $page+1;
-		$precedente = $page-1;
-	
-		// affichage du lien précédent si nécéssaire
-		$affichage .= "<hr /><table style='border:0px' class='center'><tr>";
-	
-		// affichage du lien pour retour au début
-		if($precedente > 1) {
-			$affichage .= "<td style='width:14px' class='center'><a href=\"index.php?lvl=show_list&sub=$sub&id_liste=$id_liste&page=1\"><img src=\"".get_url_icon('first.png')."\"";
-			$affichage .= " style='border:0px' alt=\"$msg[start]\"";
-			$affichage .= " title=\"$msg[first_page]\"></a></td>";
-		} else {
-			$affichage .= "<td style='width:14px' class='center'><img src=\"".get_url_icon('first-grey.png')."\">";
-		}
-	
-		if($precedente > 0) {
-			$affichage .= "<td style='width:14px' class='center'><a href=\"index.php?lvl=show_list&sub=$sub&id_liste=$id_liste&page=$precedente\"><img src=\"".get_url_icon('prev.png')."\"";
-			$affichage .= " style='border:0px' alt=\"$msg[prec]\"";
-			$affichage .= " title=\"$msg[prec]\"></a></td>";
-		} else {
-			$affichage .= "<td style='width:14px' class='center'><img src=\"".get_url_icon('prev-grey.png')."\">";
-		}
-	
-		$affichage .= "<td class='center'>$msg[page] $page/$nbepages</td>";
-	
-		// lien suivant
-		if($suivante<=$nbepages) {
-			$affichage .= "<td style='width:14px' class='center'><a href=\"index.php?lvl=show_list&sub=$sub&id_liste=$id_liste&page=$suivante\"><img src=\"".get_url_icon('next.png')."\"";
-			$affichage .= " style='border:0px' alt=\"$msg[next]\"";
-			$affichage .= " title=\"$msg[next]\"></a></td>";
-		} else {
-			$affichage .= "<td style='width:14px' class='center'><img src=\"".get_url_icon('next-grey.png')."\">";
-		}
-	
-		// affichage du lien vers la fin
-		if($suivante < $nbepages) {
-			$affichage .= "<td style='width:14px' class='center'><a href=\"index.php?lvl=show_list&sub=$sub&id_liste=$id_liste&page=$nbepages\"><img src=\"".get_url_icon('last.png')."\"";
-			$affichage .= " style='border:0px' alt=\"$msg[end]\"";
-			$affichage .= " title=\"$msg[end]\"></a></td>";
-		} else {
-			$affichage .= "<td style='width:14px' class='center'><img src=\"".get_url_icon('last-grey.png')."\">";
-		}
-	
-		$affichage .= "</tr></table><br />";
-		
-		return $affichage;
+	public function aff_navigation_notices($notices = array(), $id_liste, $sub) {
+	    global $opac_search_results_per_page, $page;
+	    
+	    $count = count($notices);
+	    if (empty($count)) {
+	        return '';
+	    }
+		$catal_navbar = "<div class='row'>&nbsp;</div>";
+	    $url_page = "javascript:document.liste_lecture.page.value=!!page!!;document.liste_lecture.action=\"./index.php?lvl=show_list&sub=$sub&id_liste=$id_liste\";document.liste_lecture.submit()";
+	    $nb_per_page_custom_url = "javascript:document.liste_lecture.nb_per_page_custom.value=!!nb_per_page_custom!!";
+	    $action = "javascript:document.liste_lecture.page.value=document.form.page.value;document.liste_lecture.action = \"./index.php?lvl=show_list&sub=$sub&id_liste=$id_liste\";document.liste_lecture.submit()";
+	    
+	    $catal_navbar .= "<div id='navbar_list'>\n<div style='text-align:center'>".printnavbar($page, $count, $opac_search_results_per_page, $url_page, $nb_per_page_custom_url, $action)."</div></div>";
+		return $catal_navbar;
 	}
 	
 	protected function fetch_empr() {
@@ -833,12 +814,12 @@ class liste_lecture {
 	}
 	
 	public function get_display_empr() {
-		global $msg;
+		global $msg, $charset;
 		
 		$display = '';
 		if(count($this->empr)) {
 			foreach ($this->empr as $empr) {
-			    $display .= "<img style='border:0px' class='align_top' src='".get_url_icon('cross.png', 1)."' alt='".htmlentities($msg["list_lecture_delete_subscriber"] ,ENT_QUOTES, $charset)."'  onclick=\"delete_from_liste('".$this->id_liste."','".$empr->id_empr."');\" />";
+			    $display .= "<img style='border:0px' class='align_top' src='".get_url_icon('cross.png', 1)."' alt='".htmlentities($msg["list_lecture_delete_subscriber"] ,ENT_QUOTES, $charset)."'  onclick=\"delete_from_liste('".$this->id_liste."','".$empr->id_empr."');\" /> ";
 				$display .= $empr->nom."<br />";
 			}
 		} else {
@@ -857,10 +838,10 @@ class liste_lecture {
 	
 	/**
 	 * envoi du mail d'inscription
-	 * @param unknown $id_empr
+	 * @param int $id_empr
 	 */
 	protected function send_subscribe_mail($id_empr) {
-		global $msg, $opac_url_base, $opac_connexion_phrase, $empr_nom, $empr_prenom,$empr_mail;
+		global $msg, $charset, $opac_url_base, $opac_connexion_phrase, $empr_nom, $empr_prenom,$empr_mail;
 		
 		$inscrit = $this->empr[$id_empr];
 		$objet = sprintf($msg['list_lecture_objet_subscribe_mail'],$inscrit->nom_liste);
@@ -929,10 +910,10 @@ class liste_lecture {
 	
 	/**
 	 * envoi du mail de désinscription
-	 * @param unknown $id_empr
+	 * @param int $id_empr
 	 */
 	protected function send_unsubscribe_mail($id_empr) {
-		global $msg, $opac_url_base, $opac_connexion_phrase, $empr_nom, $empr_prenom,$empr_mail;
+		global $msg, $charset, $opac_url_base, $opac_connexion_phrase, $empr_nom, $empr_prenom,$empr_mail;
 	
 		$inscrit = $this->empr[$id_empr];
 		$objet = sprintf($msg['list_lecture_objet_unsubscribe_mail'],$inscrit->nom_liste);
@@ -1044,12 +1025,11 @@ class liste_lecture {
 		$display = "
 			<div class='row'>
 				".$msg['list_lecture_search_in_list']."
-				<br /><input class='text_query' type='text' size='65' name='user_query' id='user_query' value='".stripslashes($user_query)."'>";
+				<br /><input class='text_query' type='text' size='65' name='user_query' id='user_query' value='".stripslashes($user_query)."'> ";
 		if($opac_avis_allow && $allow_avis) {
 			$display .= "<input id='avis_search' type='checkbox' value='1' name='avis_search' ".($avis_search ? "checked='checked'" : "")."> <label for='avis_search'>".$msg['list_lecture_avis_search']."</label>";	
 		}		
 		$display .= "</div>
-			<div class='row'>&nbsp;</div>
 			<div class='row'>
 				<input class='boutonrechercher' type='submit' name='search' value='".$msg[10]."' >		
 			</div>";
@@ -1096,5 +1076,23 @@ class liste_lecture {
 			return true;
 		}
 	}
+	
+	public function sort_notices($notices_id) {
+	    if (isset($_GET['sort'])) {
+	        $_SESSION['last_sortreading_list'] = $_GET['sort'];
+	    }
+	    if (isset($_SESSION['last_sortreading_list']) && $_SESSION['last_sortreading_list'] != '') {
+	        $sort = new sort('reading_list', 'session');
+	        $query = "SELECT notice_id FROM notices WHERE notice_id IN (" . implode(',', $notices_id) . ")";
+	        $query = $sort->appliquer_tri($_SESSION['last_sortreading_list'], $query, 'notice_id', 0, 0);
+	    } else {
+	        $query = "SELECT notice_id FROM notices WHERE notice_id IN (" . implode(",", $notices_id) . ") ORDER BY tit1";
+	    }
+	    $res = pmb_mysql_query($query);
+	    $filtered_notices = array();
+	    while ($row = pmb_mysql_fetch_object($res)) {
+	        $filtered_notices[] = $row->notice_id;
+	    }
+	    return $filtered_notices;
+	}
 }
-?>

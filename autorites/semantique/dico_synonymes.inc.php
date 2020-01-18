@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // ï¿? 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dico_synonymes.inc.php,v 1.11 2018-09-21 09:48:14 dgoron Exp $action $mot
+// $Id: dico_synonymes.inc.php,v 1.13 2019-08-01 13:16:36 btafforeau Exp $action $mot
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $word_search, $word_selected, $clause, $limit, $include_path, $class_path, $baseurl, $page, $aff_liste_mots, $action, $mot_js, $aff_modif_mot;
+global $mot, $aff_mot_lie, $mots_lies, $msg, $id_mot, $word_code_selected, $max_word, $nb_per_page, $nb_per_page_gestion, $tri, $letter, $charset;
 
 if (!isset($word_search)) $word_search = "";
 if (!isset($word_selected)) $word_selected = "";
@@ -119,14 +122,14 @@ switch ($action) {
 		
 			//suppression des enregistrements existants
 			$rqt_del = "delete from linked_mots where num_mot='".$word_code_selected."' ";
-			$res_del = pmb_mysql_query($rqt_del, $dbh);
+			$res_del = pmb_mysql_query($rqt_del);
 			//insertion du mot et de ses synonymes
 			$rqt_ins = "insert into linked_mots (num_mot, num_linked_mot, type_lien, ponderation) VALUES ";
 						
 			//récupération des synonymes affectés au mot
 			for ($i=0;$i<count($f_words) ; $i++) {
 				$valeurs="('".$word_code_selected."','".$f_words[$i]."','1','0.5')";
-				$res_ins=pmb_mysql_query($rqt_ins.$valeurs,$dbh);
+				$res_ins=pmb_mysql_query($rqt_ins.$valeurs);
 			}
 			$letter=convert_diacrit(pmb_strtolower(pmb_substr($word_selected,0,1)));
 		}
@@ -152,9 +155,9 @@ switch ($action) {
 			$execute_query=pmb_mysql_query($rqt);
 			if (!pmb_mysql_num_rows($execute_query)) {
 				$rqt_del = "delete from mots where id_mot='".$id_mot."' ";
-				@pmb_mysql_query($rqt_del, $dbh);
+				@pmb_mysql_query($rqt_del);
 				$rqt_del = "delete from linked_mots where num_mot='".$id_mot."' ";
-				@pmb_mysql_query($rqt_del, $dbh);	
+				@pmb_mysql_query($rqt_del);	
 				//$letter=convert_diacrit(pmb_strtolower(pmb_substr($mot,0,1)));
 			} else print "<script> alert('".addslashes($msg["other_word_syn_error"])."'); document.location='./autorites.php?categ=semantique&sub=synonyms&id_mot=$id_mot&mot=$mot&action=view';</script>";
 		} else print "<script> alert('".$msg["word_error"]."'); </script>";
@@ -237,21 +240,26 @@ if ($action!='view') {
 				} elseif (!array_search($letter,$alphabet)) $letter="My";
 					
 				// affichage d'un sommaire par lettres
-				$affichage_lettres="<div class='row'>";
+				$affichage_lettres = "<div class='row'>";
 				
-				if (count($alphabet_num)) {
-					if ($letter=='My') $affichage_lettres.="<strong><u>#</u></strong> ";
-						else $affichage_lettres.="<a href='$baseurl&letter=My'>#</a> ";
+				if (!empty($alphabet_num)) {
+				    if ($letter == 'My') {
+				        $affichage_lettres .= "<strong><u>#</u></strong> ";
+				    } else {
+				        $affichage_lettres .= "<a href='$baseurl&letter=My'>#</a> ";
+				    }
 				}
-				foreach($alphabet as $char) {
+				foreach ($alphabet as $char) {
 					$present = pmb_preg_grep("/^$char/i", $words_for_syn1);
-					if(sizeof($present) && strcasecmp($letter, $char))
-						$affichage_lettres.="<a href='$baseurl&letter=$char'>$char</a> ";
-					else if(!strcasecmp($letter, $char))
-						$affichage_lettres.="<strong><u>$char</u></strong> ";
-					else $affichage_lettres.="<span class='gris'>".$char."</span> ";
+					if (!empty($present) && strcasecmp($letter, $char)) {
+						$affichage_lettres .= "<a href='$baseurl&letter=$char'>$char</a> ";
+					} elseif (!strcasecmp($letter, $char)) {
+						$affichage_lettres .= "<strong><u>$char</u></strong> ";
+					} else {
+					    $affichage_lettres .= "<span class='gris'>$char</span> ";
+					}
 				}
-				$affichage_lettres.="</div>";
+				$affichage_lettres .= "</div>";
 		
 				//affichage des mots
 				

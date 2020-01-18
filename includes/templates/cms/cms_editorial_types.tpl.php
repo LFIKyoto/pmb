@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_types.tpl.php,v 1.2 2016-08-12 13:52:00 vtouchard Exp $
+// $Id: cms_editorial_types.tpl.php,v 1.3 2019-05-27 10:36:18 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $cms_editorial_type_form, $current_module, $msg, $cms_editorial_type_form_std_label, $cms_editorial_type_form_generic_label;
 
 $cms_editorial_type_form ="
 <form method='post' class='form-$current_module' name='cms_editorial_type_form' action='!!action!!&action=save'>

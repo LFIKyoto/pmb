@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice.inc.php,v 1.10 2017-11-21 12:01:00 dgoron Exp $
+// $Id: notice.inc.php,v 1.11 2019-05-29 12:03:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $include_path, $id, $gestion_acces_active, $gestion_acces_user_notice, $PMBuserid, $charset, $msg, $current, $show_expl, $show_explnum, $show_map;
+global $pmb_book_pics_show, $pmb_book_pics_url;
 
 require_once("$class_path/serial_display.class.php");
 require_once("$class_path/mono_display.class.php");
@@ -25,7 +28,7 @@ if ($id) {
 	} else {
 		$display = '';
 		$requete = "SELECT * FROM notices WHERE notice_id=$id LIMIT 1";
-		$resultat = pmb_mysql_query($requete,$dbh);
+		$resultat = pmb_mysql_query($requete);
 		if ($resultat) {
 			if(pmb_mysql_num_rows($resultat)) {
 				$notice = pmb_mysql_fetch_object($resultat);

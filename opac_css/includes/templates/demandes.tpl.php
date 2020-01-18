@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes.tpl.php,v 1.24 2018-01-25 10:13:28 dgoron Exp $
+// $Id: demandes.tpl.php,v 1.25 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -14,6 +14,7 @@ global $form_modif_demande;
 global $form_consult_dmde;
 global $form_linked_record;
 global $form_consult_linked_record;
+global $msg, $current_module;
 
 $form_liste_demande ="
 <script src='./includes/javascript/dynamic_element.js' type='text/javascript'></script>

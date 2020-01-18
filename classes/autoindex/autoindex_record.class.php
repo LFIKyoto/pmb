@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: autoindex_record.class.php,v 1.17 2018-04-18 09:12:33 tsamson Exp $
+// $Id: autoindex_record.class.php,v 1.19 2019-07-05 13:25:15 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -254,7 +254,7 @@ class autoindex_record extends autoindex_document {
 			} else {
 				$combo .= "<option value='' >--</option>";
 			}
-			while(list($cle, $value) = each($clang)) {
+			foreach ($clang as $cle => $value) {
 				// arabe seulement si on est en utf-8
 				if (($charset != 'utf-8' and $user_lang != 'ar') or ($charset == 'utf-8')) {
 					if(strcmp($cle, $user_lang) != 0) {
@@ -315,7 +315,7 @@ class autoindex_record extends autoindex_document {
 		return $tpl_index_auto;
 	}
 		
-	function index_list(){
+	public function index_list(){
 		global $charset,$base_path,$base_url;
 		global $categ_browser_autoindex;
 		global $thesaurus_mode_pmb;

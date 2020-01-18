@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: toutapprendre.class.php,v 1.8 2017-09-09 14:37:12 apetithomme Exp $
+// $Id: toutapprendre.class.php,v 1.9 2019-06-11 06:53:05 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -145,7 +145,7 @@ class toutapprendre extends connector {
 	 			'|[\x00-\x7F][\x80-\xBF]+'.
 	 			'|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*'.
 	 			'|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})'.
-	 			'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
+	 			'|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/',
 	 			'?', $xml );	 	 
 	 	
 	 	@ini_set("zend.ze1_compatibility_mode", "0");

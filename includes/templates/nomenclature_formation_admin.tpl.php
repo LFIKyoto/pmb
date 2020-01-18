@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_formation_admin.tpl.php,v 1.8 2017-11-07 15:34:41 ngantier Exp $
+// $Id: nomenclature_formation_admin.tpl.php,v 1.9 2019-05-27 14:55:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $nomenclature_formation_list_tpl, $msg, $charset, $nomenclature_formation_list_line_tpl, $nomenclature_formation_form_tpl, $current_module, $nomenclature_formation_type_list_tpl;
+global $nomenclature_formation_type_list_line_tpl, $nomenclature_formation_type_form_tpl;
 
 $nomenclature_formation_list_tpl="	
 <script type='text/javascript' src='./javascript/sorttable.js'></script>			

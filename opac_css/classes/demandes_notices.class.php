@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_notices.class.php,v 1.6 2017-09-20 08:45:21 dgoron Exp $
+// $Id: demandes_notices.class.php,v 1.8 2019-07-10 06:44:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class demandes_notices {
 	
-	static function majNoticesTotal($notice){	
+	public static function majNoticesTotal($notice){	
 		$info=self::indexation_prepare($notice);
 		self::majNotices($notice);
 		self::majNoticesGlobalIndex($notice);
@@ -16,7 +16,7 @@ class demandes_notices {
 		self::indexation_restaure($info);
 	}
 	
-	static function indexation_prepare($notice){
+	public static function indexation_prepare($notice){
 		global $lang,$include_path;
 		global $pmb_indexation_lang;
 		global $empty_word;
@@ -46,7 +46,7 @@ class demandes_notices {
 		}
 	}
 	
-	static function majNotices($notice){
+	public static function majNotices($notice){
 		global $pmb_keyword_sep;
 		if($notice){
 			$query = pmb_mysql_query("SELECT notice_id,tparent_id,tit1,tit2,tit3,tit4,index_l, n_gen, n_contenu, n_resume, tnvol, indexation_lang FROM notices WHERE notice_id='".$notice."'");
@@ -78,7 +78,7 @@ class demandes_notices {
 		}
 	}
 	
-	static function majNoticesGlobalIndex($notice, $NoIndex = 1) {
+	public static function majNoticesGlobalIndex($notice, $NoIndex = 1) {
 		global $dbh;
 			
 		pmb_mysql_query("delete from notices_global_index where num_notice = ".$notice." AND no_index = ".$NoIndex,$dbh);
@@ -105,7 +105,7 @@ class demandes_notices {
 		pmb_mysql_query("insert into notices_global_index SET num_notice=".$notice.",no_index =".$NoIndex.", infos_global='".addslashes($infos_global)."', index_infos_global='".addslashes($infos_global_index)."'" , $dbh);
 	}
 	
-	static function majNoticesMotsGlobalIndex($notice, $datatype='all') {
+	public static function majNoticesMotsGlobalIndex($notice, $datatype='all') {
 		global $include_path;
 		global $dbh;
 		global $lang;
@@ -146,7 +146,7 @@ class demandes_notices {
 			
 		//analyse des donnees des tables
 		$temp_not=array();
-		$temp_not['t'][0][0]=$tableau['REFERENCE'][0][value] ;
+		$temp_not['t'][0][0]=$tableau['REFERENCE'][0]['value'] ;
 		$temp_ext=array();
 		$temp_marc=array();
 		$champ_trouve=false;
@@ -211,7 +211,7 @@ class demandes_notices {
 			//Recherche des champs directs
 			if($datatype=='all') {
 				$tab_req[0]["rqt"]= "select ".implode(',',$temp_not['f'][0])." from ".$temp_not['t'][0][0];
-				$tab_req[0]["rqt"].=" where ".$tableau['REFERENCEKEY'][0][value]."='".$notice."'";
+				$tab_req[0]["rqt"].=" where ".$tableau['REFERENCEKEY'][0]['value']."='".$notice."'";
 				$tab_req[0]["table"]=$temp_not['t'][0][0];
 			}
 			foreach($temp_ext as $k=>$v) {
@@ -322,7 +322,7 @@ class demandes_notices {
 								break;
 						}
 					}
-					$where=" where ".$temp_not['t'][0][0].".".$tableau['REFERENCEKEY'][0][value]."=".$notice;
+					$where=" where ".$temp_not['t'][0][0].".".$tableau['REFERENCEKEY'][0]['value']."=".$notice;
 					if($table['FILTER']){
 						foreach ( $table['FILTER'] as $filter ) {
 							if($tmp=trim($filter["value"])){
@@ -778,7 +778,7 @@ class demandes_notices {
 		}
 	}
 		
-	static function indexation_restaure($info){
+	public static function indexation_restaure($info){
 		global $lang;
 		global $pmb_indexation_lang;
 		global $empty_word;

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Collection.php,v 1.42 2017-10-05 11:02:10 jpermanne Exp $
+// $Id: Collection.php,v 1.46 2019-08-09 07:58:50 dgoron Exp $
 namespace Sabre\PMB;
 
 use Sabre\DAV;
@@ -16,11 +16,12 @@ class Collection extends DAV\Collection {
 	protected static $acces;
 	protected static $domain = array();
 	
-	function __construct($config){
+	public function __construct($config){
 		$this->config = $config;
 	}
 	
-	function get_code_from_name($name){
+	public function get_code_from_name($name){
+	    global $matches;
 		$val="";
 		if(preg_match("/\((T|R|[NTCSIEL][0-9]{1,})\)$/i",$name,$matches)){
 			$val=$matches[1];
@@ -30,7 +31,7 @@ class Collection extends DAV\Collection {
 		return $val;
 	}
 	
-	function get_notice_by_meta($name,$filename){
+	public function get_notice_by_meta($name,$filename){
 		\create_tableau_mimetype();
 		$mimetype = \trouve_mimetype($filename,extension_fichier($name));
 		//on commence avec la gymnatisque des métas...
@@ -63,14 +64,14 @@ class Collection extends DAV\Collection {
 	}
 	
 	protected function load_class_mapper($class_name){
-		global $base_path,$include_path,$class_path,$javascript_path;
+		global $class_path;
 		require_once($class_path."/webdav_mapper/".$class_name.".class.php");
 	}
 	
-	function set_parent($parent){
+	public function set_parent($parent){
 		$this->parentNode = $parent;
 	}
-	function getChildren(){
+	public function getChildren(){
 		global $msg, $tdoc;
 		
 		$children = array();
@@ -96,7 +97,7 @@ class Collection extends DAV\Collection {
 				$children = $node->getChildren();
 				break;
 			case "typdoc" :
-				if (!sizeof($tdoc)) $tdoc = new \marc_list('doctype');
+				if (empty($tdoc)) $tdoc = new \marc_list('doctype');
 				foreach($tdoc->table as $label){
 					$children[] = new PMB\Typdoc(PMB\Typdoc::format_typdoc($label). " (T)" ,$this->config); 
 				}
@@ -160,7 +161,7 @@ class Collection extends DAV\Collection {
 		return $children;
 	}
 	
-	function getChild($name){
+	public function getChild($name){
 		switch($name){
 			case "[Notices]" :
 				$child = new PMB\Notices($this->getNotices(),$this->config);
@@ -217,7 +218,7 @@ class Collection extends DAV\Collection {
 						$row = pmb_mysql_fetch_object($result);
 						$child = new PMB\Explnum("(E".$row->explnum_id.")");
 					}else{
-						throw new DAV\Exception\FileNotFound('File not found: ' . $name);
+					    throw new DAV\Exception\NotFound('File not found: ' . $name);
 					}
 					break;
 				}
@@ -226,7 +227,7 @@ class Collection extends DAV\Collection {
 	}
 	
 	
-	function childExists($name){
+	public function childExists($name){
 		//pour les besoin des tests, on veut passer par la méthode de création...
 		return false;
 		switch($name){
@@ -267,11 +268,11 @@ class Collection extends DAV\Collection {
 		}
 	}
 	
-	function getName(){
+	public function getName(){
 		//must be defined
 	}
 	
-	function createFile($name, $data = null) {
+	public function createFile($name, $data = null) {
 		if($this->check_write_permission()){
 			global $base_path;
 			global $id_rep;
@@ -296,7 +297,7 @@ class Collection extends DAV\Collection {
 			if(!file_exists($filename)){
 				//Erreur de copie du fichier
 				unlink($filename);
-				throw new Sabre_DAV_Exception_FileNotFound('Empty file (filename ' . $filename . ')');
+				throw new DAV\Exception\NotFound('Empty file (filename ' . $filename . ')');
 			}
 			if(!filesize($filename)){
 				//Premier PUT d'un client Windows...
@@ -326,6 +327,25 @@ class Collection extends DAV\Collection {
 			$id_rep = $this->config['upload_rep'];
 			$explnum->get_file_from_temp($filename,$name,$this->config['up_place']);
 			$explnum->params['explnum_statut'] = $this->config['default_docnum_statut'];
+			
+			//Enregistrement en base - Le contenu existe déjà sous cette notice
+			if(!empty($explnum->infos_docnum["contenu"])) {
+			    $query = "SELECT explnum_notice,explnum_id from explnum
+                        WHERE explnum_notice = ".$notice_id."
+                        AND explnum_bulletin = ".$bulletin_id."
+                        AND explnum_nom = '".addslashes($explnum->infos_docnum["nom"])."'
+                        AND explnum_data = '".addslashes($explnum->infos_docnum["contenu"])."'";
+			    $result = pmb_mysql_query($query);
+			    if(pmb_mysql_num_rows($result) > 1) {
+			        while ($row = pmb_mysql_fetch_object($result)) {
+			            $old_docnum = new \explnum($row->explnum_id);
+			            $old_docnum->delete();
+			        }
+			    } elseif(pmb_mysql_num_rows($result) == 1) {
+			        $row = pmb_mysql_fetch_object($result);
+			        $explnum->explnum_id = $row->explnum_id;
+			    }
+			}
 			$explnum->update();
 			if(file_exists($filename)){
 				unlink($filename);
@@ -346,7 +366,7 @@ class Collection extends DAV\Collection {
 	}
 	
 	
-	function update_notice($notice_id){
+	public function update_notice($notice_id){
 		global $pmb_type_audit;
 		global $webdav_current_user_name,$webdav_current_user_id;
 		global $gestion_acces_active, $gestion_acces_user_notice, $gestion_acces_empr_notice;
@@ -386,11 +406,11 @@ class Collection extends DAV\Collection {
 		}
 	}
 	
-	function update_notice_infos($notice_id){
+	public function update_notice_infos($notice_id){
 		//must be defined
 	}
 	
-	function filterNotices($query){
+	public function filterNotices($query){
 		//on remonte d'abord les parents...
 		$current = $this;
 		$parents = array();
@@ -508,7 +528,7 @@ class Collection extends DAV\Collection {
 		$this->restricted_objects = implode(",",$this->notices);
 	}
 	
-	function filterExplnums($query){
+	public function filterExplnums($query){
 		global $gestion_acces_active,$gestion_acces_empr_docnum;
 		global $webdav_current_user_id;
 		
@@ -542,11 +562,11 @@ class Collection extends DAV\Collection {
 		return $query;
 	}
 	
-	function getNotices(){
+	public function getNotices(){
 		return array();
 	}
 	
-	function check_write_permission(){
+	public function check_write_permission(){
 		global $webdav_current_user_id;
 		if($this->config['write_permission']){
 			$tab = array();

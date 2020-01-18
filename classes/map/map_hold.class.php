@@ -3,13 +3,12 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: map_hold.class.php,v 1.11 2016-11-05 14:49:07 ngantier Exp $
+// $Id: map_hold.class.php,v 1.12.6.1 2019-09-19 17:02:39 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
     die("no access");
 require_once($class_path . "/map/map_hold.class.php");
 require_once($class_path . "/map/map_coord.class.php");
-;
 
 /**
  * class map_hold
@@ -79,6 +78,10 @@ abstract class map_hold {
      * @access protected
      */
     protected $center;
+    
+    protected $record;
+    
+    protected $color;
 
     /**
      *
@@ -107,8 +110,8 @@ abstract class map_hold {
             $infos = array();
             $coord = $coords[$i];
             $infos = explode(" ", $coord);
-            //on ne met pas la dernière coordonnée
-            if ($i < (count($coords) - 1)) {
+            //on ne met pas la dernière coordonnée, c'est la même que la 1ere
+            if (0 == $i || $coords[0] != $coords[$i]) {
                 $this->coords[] = new map_coord($infos[0], $infos[1]);
             }
         }
@@ -280,6 +283,14 @@ abstract class map_hold {
     public function set_num_object($num_object) {
         $this->num_object = $num_object;
     }
+    
+    public function set_record($ids) {
+        $this->record = $ids;
+    }
+    
+    public function get_record() {
+        return $this->record;
+    }
 
     public function set_wkt($wkt) {
         $this->wkt = $wkt;
@@ -308,6 +319,10 @@ abstract class map_hold {
 
     public function set_center($center) {
         $this->center = $center;
+    }
+    
+    public function set_color($color) {
+        $this->color = $color;
     }
 }
 

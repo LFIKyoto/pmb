@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sticks_sheet.tpl.php,v 1.4 2018-08-10 08:54:15 dgoron Exp $
+// $Id: sticks_sheet.tpl.php,v 1.5 2019-05-27 10:45:29 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $sticks_sheet_form, $msg, $base_path, $charset, $stick_sheet_stick_select_button, $stick_sheet_stick_select_button_script;
 
 $sticks_sheet_form = "
 <script type='text/javascript'>

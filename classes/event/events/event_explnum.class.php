@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: event_explnum.class.php,v 1.2 2017-05-11 10:09:25 arenou Exp $
+// $Id: event_explnum.class.php,v 1.3 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -32,7 +32,7 @@ class event_explnum extends event {
 	
 	public function set_contenu_vignette($contenu_vignette) {
 		$this->contenu_vignette = $contenu_vignette;
-		return this;
+		return $this;
 	}
 	
 	/**

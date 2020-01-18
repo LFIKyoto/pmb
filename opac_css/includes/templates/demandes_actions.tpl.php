@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: demandes_actions.tpl.php,v 1.12 2018-01-25 10:13:28 dgoron Exp $
+// $Id: demandes_actions.tpl.php,v 1.14 2019-08-27 10:15:58 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -11,6 +11,7 @@ global $form_modif_action;
 global $form_consult_action;
 global $form_see_docnum;
 global $form_communication;
+global $msg, $current_module;
 
 $form_liste_action ="
 <script src='./includes/javascript/demandes.js' type='text/javascript'></script>
@@ -235,7 +236,7 @@ $form_modif_action = "
 <script type='text/javascript'>
 	function test_form(form) {	
 	
-		if(isNaN(form.progression.value) || form.progression.value > 100){
+		if(isNaN(form.progression.value) || form.progression.value > 100 || form.progression.value < 0){
 	    	alert(\"$msg[demandes_progres_ko]\");
 			return false;
 	    }

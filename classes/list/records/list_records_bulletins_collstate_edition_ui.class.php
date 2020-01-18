@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_records_bulletins_collstate_edition_ui.class.php,v 1.1 2018-12-28 13:15:31 dgoron Exp $
+// $Id: list_records_bulletins_collstate_edition_ui.class.php,v 1.1.6.2 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,21 +10,13 @@ require_once($class_path."/list/records/list_records_bulletins_ui.class.php");
 require_once($include_path."/templates/list/records/list_records_bulletins_collstate_edition_ui.tpl.php");
 
 class list_records_bulletins_collstate_edition_ui extends list_records_bulletins_ui {
-		
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	/**
 	 * Initialisation de la pagination par défaut
 	 */
 	protected function init_default_pager() {
-		$this->pager = array(
-				'page' => 1,
-				'nb_per_page' => 100,
-				'nb_results' => 0,
-				'nb_page' => 1
-		);
+		parent::init_default_pager();
+		$this->pager['nb_per_page'] = 100;
 	}
 	
 	protected function init_default_columns() {

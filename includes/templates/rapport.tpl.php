@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rapport.tpl.php,v 1.3 2009-10-13 07:29:33 kantin Exp $
+// $Id: rapport.tpl.php,v 1.5 2019-05-27 12:55:34 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $form_rapport, $msg, $current_module;
 
 $form_rapport = "
 <script src='./javascript/drag_n_drop.js' type='text/javascript'></script>

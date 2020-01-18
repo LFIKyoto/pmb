@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: connecteurs_out_sets.class.php,v 1.18 2018-02-09 10:43:18 apetithomme Exp $
+// $Id: connecteurs_out_sets.class.php,v 1.20 2019-06-10 10:05:02 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -245,7 +245,7 @@ class connector_out_set_noticecaddie extends connector_out_set {
 		if (!is_array($set_included_caddies))
 			$set_included_caddies=array($set_included_caddies);
 			
-		array_walk($set_included_caddies, create_function('&$a', '$a+=0;'));//Soyons sûr de ne stocker que des entiers dans le tableau.
+		array_walk($set_included_caddies, function(&$a) {$a = intval($a);});//Soyons sûr de ne stocker que des entiers dans le tableau.
 		$this->config["included_caddies"] = !$this->config["include_full_base"] ? $set_included_caddies : array();
 		$this->config["include_full_base"] = isset($set_includefullbase);
 		return;
@@ -273,7 +273,7 @@ class connector_out_set_noticecaddie extends connector_out_set {
 			$sql = "SELECT ".$this->cache->id.", notice_id FROM notices";
 		}
 		else {
-			array_walk($this->config["included_caddies"], create_function('&$a', '$a+=0;'));//Soyons sûr de ne stocker que des entiers dans le tableau.
+		    array_walk($this->config["included_caddies"], function(&$a) {$a = intval($a);});//Soyons sûr de ne stocker que des entiers dans le tableau.
 			$sql = "SELECT distinct ".$this->cache->id.", object_id FROM caddie_content WHERE caddie_id IN (".implode(",", $this->config["included_caddies"]).")";
 		}
 		
@@ -471,7 +471,7 @@ class connector_out_set_noticemulticritere extends connector_out_set {
 	    		$r.="<input type='hidden' name='".$field_."[]' value='".htmlentities($field[$j],ENT_QUOTES,$charset)."'/>";
 	    	}
 	    	reset($fieldvar);
-	    	while (list($var_name,$var_value)=each($fieldvar)) {
+	    	foreach ($fieldvar as $var_name => $var_value) {
 	    		for ($j=0; $j<count($var_value); $j++) {
 	    			$r.="<input type='hidden' name='".$fieldvar_."[".$var_name."][]' value='".htmlentities($var_value[$j],ENT_QUOTES,$charset)."'/>";
 	    		}
@@ -521,7 +521,7 @@ class connector_out_set_explcaddie extends connector_out_set {
 		if (!is_array($set_included_caddies))
 			$set_included_caddies=array($set_included_caddies);
 			
-		array_walk($set_included_caddies, create_function('&$a', '$a+=0;'));//Soyons sûr de ne stocker que des entiers dans le tableau.
+		array_walk($set_included_caddies, function(&$a) {$a = intval($a);});//Soyons sûr de ne stocker que des entiers dans le tableau.
 		$this->config["included_caddies"] = !$this->config["include_full_base"] ? $set_included_caddies : array();
 		$this->config["include_full_base"] = isset($set_includefullbase);
 		return;
@@ -549,7 +549,7 @@ class connector_out_set_explcaddie extends connector_out_set {
 			$sql = "SELECT ".$this->cache->id.", expl_id FROM exemplaires";
 		}
 		else {
-			array_walk($this->config["included_caddies"], create_function('&$a', '$a+=0;'));//Soyons sûr de ne stocker que des entiers dans le tableau.
+		    array_walk($this->config["included_caddies"], function(&$a) {$a = intval($a);});//Soyons sûr de ne stocker que des entiers dans le tableau.
 			$sql = "SELECT distinct ".$this->cache->id.", object_id FROM caddie_content WHERE caddie_id IN (".implode(",", $this->config["included_caddies"]).")";
 		}
 		
@@ -589,7 +589,7 @@ class connector_out_set_emprcaddie extends connector_out_set {
 		if (!is_array($set_included_caddies))
 			$set_included_caddies=array($set_included_caddies);
 			
-		array_walk($set_included_caddies, create_function('&$a', '$a+=0;'));//Soyons sûr de ne stocker que des entiers dans le tableau.
+		array_walk($set_included_caddies, function(&$a) {$a = intval($a);});//Soyons sûr de ne stocker que des entiers dans le tableau.
 		$this->config["included_caddies"] = $set_included_caddies;
 		return;
 	}
@@ -602,7 +602,7 @@ class connector_out_set_emprcaddie extends connector_out_set {
 	public function update_cache() {
 		global $dbh;
 		
-		array_walk($this->config["included_caddies"], create_function('&$a', '$a+=0;'));//Soyons sûr de ne stocker que des entiers dans le tableau.
+		array_walk($this->config["included_caddies"], function(&$a) {$a = intval($a);});//Soyons sûr de ne stocker que des entiers dans le tableau.
 		$sql = "SELECT distinct ".$this->cache->id.", object_id FROM empr_caddie_content WHERE empr_caddie_id IN (".implode(",", $this->config["included_caddies"]).")";
 		
 		$this->cache->updatedb_from_sqlselect($sql);

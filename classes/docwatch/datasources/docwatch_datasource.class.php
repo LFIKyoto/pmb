@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docwatch_datasource.class.php,v 1.41 2018-05-02 10:22:47 arenou Exp $
+// $Id: docwatch_datasource.class.php,v 1.43.4.1 2019-11-21 12:40:38 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -97,8 +97,9 @@ class docwatch_datasource extends docwatch_root{
 	 * @access public
 	 */
 	public function __construct($id=0) {
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 		$this->fetch_datas();
+		parent::__construct($id);
 	} // end of member function __construct
 	
 	/**
@@ -147,7 +148,7 @@ class docwatch_datasource extends docwatch_root{
 				if(pmb_mysql_num_rows($result)){
 					$this->selectors = array();
 					while($row=pmb_mysql_fetch_object($result)){
-						$this->selectors[$row->id_selector+0] = $row->selector_type;
+					    $this->selectors[(int) $row->id_selector] = $row->selector_type;
 					}
 				}
 			}
@@ -189,12 +190,13 @@ class docwatch_datasource extends docwatch_root{
 		$form.= "
 					</select>
 				</div>
-				<div id='selector_content' data-dojo-type='dijit/layout/ContentPane' ".($selector_href!= "" ? "data-dojo-props='preload:true,href:\"".$selector_href."\"'" : "")."></div>
+				<div id='selector_content' data-dojo-type='dojox/layout/ContentPane' ".($selector_href!= "" ? "data-dojo-props='preload:true,href:\"".$selector_href."\"'" : "")."></div>
 				<div class='row'></div>
 			</div>
 			<div class='row'>
 				<div class='left'>
-					<button data-dojo-type='dijit/form/Button' type='submit' >".htmlentities($msg['dsi_docwatch_datasource_submit'],ENT_QUOTES,$charset)."</button>	
+					<button data-dojo-type='dijit/form/Button' type='submit' >".htmlentities($msg['dsi_docwatch_datasource_submit'],ENT_QUOTES,$charset)."</button>
+					".($this->id ? "<button data-dojo-type='dijit/form/Button' id='docwatch_datasource_form_duplicate'>".htmlentities($msg['dsi_docwatch_datasource_duplicate'],ENT_QUOTES,$charset)."</button>" : "")."		
 				</div>";
 		if($this->id){
 			$form.=" 
@@ -215,7 +217,7 @@ class docwatch_datasource extends docwatch_root{
 			<label for='docwatch_datasource_title'>".htmlentities($msg['dsi_docwatch_datasource_title'],ENT_QUOTES,$charset)."</label>
 		</div>
 		<div class='row'>
-			<input type='text' data-dojo-type='dijit/form/TextBox' required='true' name='docwatch_datasource_title' value='".htmlentities($this->get_title(),ENT_QUOTES,$charset)."'/>
+			<input type='text' data-dojo-type='dijit/form/TextBox' required='true' id='docwatch_datasource_title' name='docwatch_datasource_title' value='".htmlentities($this->get_title(),ENT_QUOTES,$charset)."'/>
 		</div>
 		<div class='row'>&nbsp;</div>
 		<div class='row'>
@@ -455,8 +457,12 @@ class docwatch_datasource extends docwatch_root{
 				$item->set_type($items_datas[$i]['type']);
 				if($this->clean_html){
 					$item->set_title(strip_tags($items_datas[$i]['title']));
-					$item->set_summary(strip_tags($items_datas[$i]['summary']));
-					$item->set_content(strip_tags($items_datas[$i]['content']));
+					if(isset($items_datas[$i]['summary'])) {
+					    $item->set_summary(strip_tags($items_datas[$i]['summary']));
+					}
+					if(isset($items_datas[$i]['content'])) {
+					   $item->set_content(strip_tags($items_datas[$i]['content']));
+					}
 				} else {
 					$item->set_title($items_datas[$i]['title']);
 					$item->set_summary($items_datas[$i]['summary']);
@@ -597,6 +603,17 @@ class docwatch_datasource extends docwatch_root{
 	
 	public function set_num_watch($num_watch) {
 	  $this->num_watch = $num_watch*1;
+	}
+	
+	public function change_parameter_selector_to_type() {
+		if(intval($this->parameters["selector"][0])) {
+			$query = "select selector_type from docwatch_selectors where id_selector = ".$this->parameters["selector"][0];
+			$result = pmb_mysql_query($query);
+			if(pmb_mysql_num_rows($result)) {
+				$row = pmb_mysql_fetch_object($result);
+				$this->parameters["selector"][0] = $row->selector_type;
+			}
+		}
 	}
 	
 	public function get_is_up_to_date() {

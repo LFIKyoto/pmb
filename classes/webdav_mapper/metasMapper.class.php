@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: metasMapper.class.php,v 1.5 2017-10-05 11:02:10 jpermanne Exp $
+// $Id: metasMapper.class.php,v 1.6 2019-02-18 14:29:35 arenou Exp $
 
 
 class metasMapper {
@@ -171,9 +171,9 @@ class metasMapper {
 				if($map_field==$meta_field){
 					if(method_exists($this, $map['function'])){
 						if($map['field_type'] == "notice"){
-							$this->data[$map['field']]=$this->$map['function']($this->data[$map['field']],$meta_value,$map['params']);
+						    $this->data[$map['field']]=$this->{$map['function']}($this->data[$map['field']],$meta_value,$map['params']);
 						}else{
-							$this->data[$map['field_type']][$map['field']]=$this->$map['function']($this->data[$map['field']],$meta_value,$map['params']);
+						    $this->data[$map['field_type']][$map['field']]=$this->{$map['function']}($this->data[$map['field']],$meta_value,$map['params']);
 						}
 					}else{
 						if($map['field_type'] == "notice"){

@@ -23,19 +23,20 @@ class H2o {
     public $context;
     public $loader = false;
 
-    static $tags = array();
-    static $filters = array();
-    static $extensions = array();
+    public static $tags = array();
+    public static $filters = array();
+    public static $extensions = array();
 
     static public function getOptions($options = array()) {
     	global $base_path;
+    	global $cms_active, $cms_cache_ttl;
     	
         return array_merge(array(
             'loader'            =>       'file',
             'cache'             =>      'file',     // file | apc | memcache
         	'cache_dir'			=>		$base_path.'/temp',
             'cache_prefix'      =>      'h2o_',
-            'cache_ttl'         =>      3600,     // file | apc | memcache
+            'cache_ttl'         =>      ($cms_active ? $cms_cache_ttl : 3600),     // file | apc | memcache
             'searchpath'        =>      false,
             'autoescape'        =>      false,
 

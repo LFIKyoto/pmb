@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: abts_status.class.php,v 1.1 2018-01-29 14:52:30 ngantier Exp $
+// $Id: abts_status.class.php,v 1.2 2019-06-07 13:48:35 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -84,6 +84,7 @@ class abts_status{
 			);
 		}
 		
+		$couleur = array();
 		$form = str_replace("!!form_title!!", $form_title, $form);
 		for ($i=1;$i<=20; $i++) {
 			if ($statut['class_html'] == "statutnot".$i){
@@ -100,7 +101,8 @@ class abts_status{
 		
 		$couleurs=implode("",$couleur);
 		$form = str_replace("!!class_html!!", $couleurs, $form);
-
+		
+		if(empty($statut['bulletinage_active'])) $statut['bulletinage_active'] = '';
 		$form = str_replace("!!bulletinage_active_checked!!", ($statut['bulletinage_active'] ? 'checked=checked' : ''), $form);
 		
 		$form = str_replace("!!gestion_libelle!!", htmlentities($statut['label'],ENT_QUOTES,$charset),$form);

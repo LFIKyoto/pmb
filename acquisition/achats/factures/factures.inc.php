@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: factures.inc.php,v 1.42 2018-05-26 06:51:26 dgoron Exp $
+// $Id: factures.inc.php,v 1.43 2019-05-28 15:12:23 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $include_path, $msg, $charset, $action, $id_bibli, $id_cde, $id_fac;
 
 // gestion des factures
 require_once("$class_path/entites.class.php");

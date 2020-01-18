@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: calendrier_func.inc.php,v 1.17 2018-04-23 13:31:15 ccraig Exp $
+// $Id: calendrier_func.inc.php,v 1.20 2019-07-18 12:48:24 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -97,7 +97,9 @@ function admin_calendar_gestion($date = '', $navbar=0, $url_maj_base='', $base_u
 	$ouvert = array();
 	$rqt_date_ouverture = "select date_ouverture, ouvert, commentaire from ouvertures where date_format(date_ouverture, '%Y')='".substr($date,0,4)."' and num_location=$loc_id " ;
 	$resultatdate_ouverture=pmb_mysql_query($rqt_date_ouverture);
-	while ($resdate_ouverture=pmb_mysql_fetch_object($resultatdate_ouverture)) $ouvert[$resdate_ouverture->date_ouverture] = array ("ouvert" => $resdate_ouverture->ouvert, "commentaire" => $resdate_ouverture->commentaire) ;
+	while ($resdate_ouverture=pmb_mysql_fetch_object($resultatdate_ouverture)) {
+		$ouvert[$resdate_ouverture->date_ouverture] = array ("ouvert" => $resdate_ouverture->ouvert, "commentaire" => $resdate_ouverture->commentaire) ;
+	}
 	
 	// Default Params
 	$param_d['calendar_id']		= 1; // Calendar ID
@@ -126,9 +128,9 @@ function admin_calendar_gestion($date = '', $navbar=0, $url_maj_base='', $base_u
 	$monthes_name = array('',$msg[1006],$msg[1007],$msg[1008],$msg[1009],$msg[1010],$msg[1011],$msg[1012],$msg[1013],$msg[1014],$msg[1015],$msg[1016],$msg[1017]);
 	$days_name = array('',$msg[1018],$msg[1019],$msg[1020],$msg[1021],$msg[1022],$msg[1023],$msg[1024]);
 	
-	while (list($key, $val) = each($param_d)) {
+	foreach($param_d as $key => $val) {
 		if (isset($params[$key])) $param[$key] = $params[$key];
-		else $param[$key] = $param_d[$key];
+		else $param[$key] = $val;
 	}
 	$param['calendar_columns'] = ($param['show_day']) ? 7 : $param['calendar_columns'];
 	
@@ -238,12 +240,15 @@ function admin_calendar_gestion($date = '', $navbar=0, $url_maj_base='', $base_u
 		} else {
 			$commentaire='';
 		}
-		if (isset($ouvert[$current_year.'-'.$current_month_2.'-'.$i_2]['ouvert']) && $ouvert[$current_year.'-'.$current_month_2.'-'.$i_2]['ouvert']==1) {
-			// 			print_r($ouvert);die;
+		if (isset($ouvert[$current_year.'-'.$current_month_2.'-'.$i_2]['ouvert']) && $ouvert[$current_year.'-'.$current_month_2.'-'.$i_2]['ouvert'] == 1) {
 			$class='lien_date';
 			$url_maj = $url_maj_base."&action=F&loc=".$loc_id."&date=" ;
 		} else {
-			$class = '';
+			if (isset($ouvert[$current_year.'-'.$current_month_2.'-'.$i_2]['ouvert']) && $ouvert[$current_year.'-'.$current_month_2.'-'.$i_2]['ouvert'] == 0) {
+				$class = 'lien_date_hs';
+			} else {
+				$class = '';
+			}
 			$url_maj = $url_maj_base."&action=O&loc=".$loc_id."&date=" ;
 		}
 		

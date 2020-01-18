@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: analysis_form.inc.php,v 1.2 2017-08-04 14:05:03 dgoron Exp $
+// $Id: analysis_form.inc.php,v 1.3 2019-05-28 15:00:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $include_path, $class_path, $id_sug, $id_analysis, $analysis_type_form;
 
 require_once($include_path."/templates/serials.tpl.php");
 require_once($class_path."/serials.class.php");

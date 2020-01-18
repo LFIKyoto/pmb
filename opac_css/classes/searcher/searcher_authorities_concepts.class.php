@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_authorities_concepts.class.php,v 1.4 2018-10-12 10:16:18 tsamson Exp $
+// $Id: searcher_authorities_concepts.class.php,v 1.6 2019-07-08 15:10:49 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -57,5 +57,25 @@ class searcher_authorities_concepts extends searcher_autorities {
 	
 	protected function _get_pert($return_query = false) {
 		return $this->get_pert_result($return_query);
+	}
+	
+	protected function get_full_results_query(){
+	    return '
+            SELECT DISTINCT id_authority 
+            FROM authorities 
+            JOIN skos_fields_global_index ON id_item = num_object 
+            AND code_champ = 1 
+            AND type_object = 10
+            ORDER BY value
+        ';
+	}
+	
+	public function get_full_query(){
+	    if($this->user_query !== '*' && $this->get_result()){
+	        $query = $this->_get_pert(true);
+	    }else{
+	        $query = $this->get_full_results_query();
+	    }
+	    return $query;
 	}
 }

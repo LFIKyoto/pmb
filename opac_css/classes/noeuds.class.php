@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: noeuds.class.php,v 1.15 2017-07-10 13:55:21 dgoron Exp $
+// $Id: noeuds.class.php,v 1.16 2019-07-31 07:02:07 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -138,6 +138,24 @@ class noeuds{
 		$q = "update noeuds set num_renvoi_voir = '0' where num_renvoi_voir = '".$id_noeud."' ";
 		pmb_mysql_query($q);
 		
+			//suppression des associations avec le contenu éditorial
+			$q = "delete from cms_articles_descriptors where num_noeud = '".$id_noeud."' ";
+			pmb_mysql_query($q);
+			$q = "delete from cms_sections_descriptors where num_noeud = '".$id_noeud."' ";
+			pmb_mysql_query($q);
+			
+			//suppression des associations avec les items de veilles
+			$q = "delete from docwatch_items_descriptors where num_noeud = '".$id_noeud."' ";
+			pmb_mysql_query($q);
+			
+			//suppression des associations avec les bannettes
+			$q = "delete from bannettes_descriptors where num_noeud = '".$id_noeud."' ";
+			pmb_mysql_query($q);
+			
+			//suppression des associations avec les campagnes de mails
+			$q = "delete from campaigns_descriptors where num_noeud = '".$id_noeud."' ";
+			pmb_mysql_query($q);
+			
 		// Supprime le noeud.
 		$q = "delete from noeuds where id_noeud = '".$id_noeud."' ";
 		pmb_mysql_query($q);

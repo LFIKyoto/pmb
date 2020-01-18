@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl_update.inc.php,v 1.32 2017-08-04 07:24:04 dgoron Exp $
+// $Id: expl_update.inc.php,v 1.33 2019-06-05 09:04:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $expl_id, $msg, $sub, $f_ex_cb, $org_cb, $f_ex_nbparts, $f_ex_location, $f_ex_section, $id, $id_form, $retour, $current_module;
 
 require_once($class_path."/notice.class.php");
 require_once($class_path."/expl.class.php");
@@ -22,7 +24,7 @@ if ($nberrors) {
 switch($sub) {
 	case 'create':
 		$requete = "SELECT count(1) FROM exemplaires WHERE expl_cb='$f_ex_cb' ";
-		$res = pmb_mysql_query($requete, $dbh);
+		$res = pmb_mysql_query($requete);
 		$nbr_lignes = pmb_mysql_result($res, 0, 0);
 		$nbr_lignes ? $valid_requete = FALSE : $valid_requete = TRUE;
 		$libelle = $msg[4007];
@@ -30,7 +32,7 @@ switch($sub) {
 	case 'update':
 		// ceci teste si l'exemplaire cible existe bien
 		$requete = "SELECT expl_id FROM exemplaires WHERE expl_cb='$org_cb' ";
-		$res = pmb_mysql_query($requete, $dbh);
+		$res = pmb_mysql_query($requete);
 		$nbr_lignes = pmb_mysql_num_rows($res);
 		$nbr_lignes ? $valid_requete = TRUE : $valid_requete = FALSE;
 		if ($nbr_lignes) $expl_id = pmb_mysql_result($res,0,0);
@@ -38,7 +40,7 @@ switch($sub) {
 		// remplacement code-barre : test sur le nouveau numéro
 		if($org_cb != $f_ex_cb) {
 			$requete = "SELECT count(1) FROM exemplaires WHERE expl_cb='$f_ex_cb' ";
-			$res = pmb_mysql_query($requete, $dbh);
+			$res = pmb_mysql_query($requete);
 			$nbr_lignes = pmb_mysql_result($res, 0, 0);
 			$nbr_lignes ? $valid_requete = FALSE : $valid_requete = TRUE;
 		}

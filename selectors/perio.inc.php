@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: perio.inc.php,v 1.9 2017-11-21 14:23:55 dgoron Exp $
+// $Id: perio.inc.php,v 1.10.4.1 2019-12-04 08:33:56 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -19,6 +19,7 @@ function show_results ($user_input, $nbr_lignes=0, $page=0, $id = 0) {
 	global $msg;
 	global $no_display ;
 	global $charset;
+	global $niveau_biblio, $modele_id, $serial_id;
 	
 	// on récupére le nombre de lignes qui vont bien
 	if($user_input=="") {
@@ -33,7 +34,7 @@ function show_results ($user_input, $nbr_lignes=0, $page=0, $id = 0) {
 		$requete = "select count(notice_id) from notices where (".$members["where"]." or code like '".stripslashes($user_input)."') and notice_id!='".$no_display."' and niveau_biblio='s' and niveau_hierar='1'";
 	}
 	
-	$res = pmb_mysql_query($requete, $dbh);
+	$res = pmb_mysql_query($requete);
 	$nbr_lignes = @pmb_mysql_result($res, 0, 0);
 
 	if(!$page) $page=1;
@@ -48,26 +49,34 @@ function show_results ($user_input, $nbr_lignes=0, $page=0, $id = 0) {
 			$requete = "select notice_id, tit1, code, ".$members["select"]." as pert from notices where (".$members["where"]." or code like '".stripslashes($user_input)."') and notice_id!='".$no_display."' and niveau_biblio='s' and niveau_hierar='1' group by notice_id order by pert desc, index_serie, tnvol, index_sew, code limit $debut,$nb_per_page";
 		}
 
-		$res = @pmb_mysql_query($requete, $dbh);
-		print "<table><tr>";
-		while(($notice=pmb_mysql_fetch_object($res))) {
-			$notice_entry = $notice->tit1."&nbsp;".$notice->code;
-			print "
+		$res = @pmb_mysql_query($requete);
+		if($niveau_biblio && $modele_id && $serial_id){
+		    while(($notice=pmb_mysql_fetch_object($res))) {
+		        $location="./catalog.php?categ=serials&sub=modele&act=copy&modele_id=$modele_id&serial_id=$serial_id&new_serial_id=".$notice->notice_id;
+		        $mono_display = new mono_display($notice->notice_id, 0, '', 0, '', '', '',0, 0, 0, 0,"", 0, false, true);
+		        print "
+				<div class='row'>
+					<div class='left'>
+						<a href='#' onclick=\"copier_modele('$location')\">".$mono_display->header_texte."</a>
+					</div>
+					<div class='right'>
+					".htmlentities($mono_display->notice->code,ENT_QUOTES,$charset)."
+					</div>
+				</div>";
+		    }
+		} else {
+		    print "<table><tr>";
+		    while(($notice=pmb_mysql_fetch_object($res))) {
+		        print "
 				<tr>
 					<td>
 						<a href='#' onclick=\"set_parent('$caller', '$notice->notice_id', '".htmlentities(addslashes($notice->tit1),ENT_QUOTES,$charset)." ($notice->code)')\">".htmlentities($notice->tit1,ENT_QUOTES,$charset)."</a></td>
 					<td>$notice->code</td>";
-			print "</tr>";
+		        print "</tr>";
+		    }
+		    print "</table>";
 		}
-		print "</table>";
 		pmb_mysql_free_result($res);
-
-		// constitution des liens
-
-		$nbepages = ceil($nbr_lignes/$nb_per_page);
-		$suivante = $page+1;
-		$precedente = $page-1;
-
 	}
 		// affichage de la pagination
 		

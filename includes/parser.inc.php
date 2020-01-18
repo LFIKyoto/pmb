@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: parser.inc.php,v 1.23 2018-11-29 07:59:47 dgoron Exp $
+// $Id: parser.inc.php,v 1.26 2019-06-19 08:03:40 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -21,7 +21,7 @@ function _recursive_(&$indice, $niveau, &$param, &$tag_count, &$vals) {
 	if ($indice > $nb_vals)
 		exit;
 	while ($indice < $nb_vals) {
-		list ($key, $val) = each($vals);
+	    $val = $vals[$indice];
 		$indice ++;
 		if (!isset($tag_count[$val["tag"]]))
 			$tag_count[$val["tag"]] = 0;
@@ -83,8 +83,7 @@ function _parser_($nom_fichier, $fonction, $rootelement) {
 				exit;
 			}
 			$param_var = $param[$rootelement][0];
-			for ($i = 0; $i < count($param_var); $i ++) {
-				list ($key, $val) = each($param_var);
+			foreach ($param_var as $key => $val) {
 				if (isset($fonction[$key])) {
 					for ($j = 0; $j < count($val); $j ++) {
 						$param_fonction = $val[$j];
@@ -125,8 +124,7 @@ function _parser_text_($xml, $fonction, $rootelement) {
 				exit;
 			}
 			$param_var = $param[$rootelement][0];
-			for ($i = 0; $i < count($param_var); $i ++) {
-				list ($key, $val) = each($param_var);
+			foreach ($param_var as $key => $val) {
 				if (isset($fonction[$key])) {
 					for ($j = 0; $j < count($val); $j ++) {
 						$param_fonction = $val[$j];
@@ -209,7 +207,7 @@ function recurse_xml($param, $level,$tagname,$lowercase=false) {
 	$ret_sub="";
 	$value="";
 	if ($param=="") $param=array();
-	while (list($key,$val)=each($param)) {
+	foreach ($param as $key => $val) {
 		if (is_array($val)) {
 			for ($i=0; $i<count($val); $i++) {
 				if ($lowercase) $key1=strtolower($key); else $key1=$key;

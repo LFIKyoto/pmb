@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: selector_authorities.class.php,v 1.9 2018-11-27 14:51:21 ngantier Exp $
+// $Id: selector_authorities.class.php,v 1.10 2019-06-11 08:53:57 btafforeau Exp $
   
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -147,7 +147,7 @@ class selector_authorities extends selector {
 	
 	protected function get_add_label() {
 		global $msg;
-		return $msg[get_called_class().'_add'];
+		return $msg[static::class.'_add'];
 	}
 	
 	protected function get_search_form() {
@@ -210,7 +210,7 @@ class selector_authorities extends selector {
 	
 	protected function get_message_not_found() {
 		global $msg;
-		return $msg['no_'.str_replace('selector_', '', get_called_class()).'_found'];
+		return $msg['no_'.str_replace('selector_', '', static::class).'_found'];
 	}
 	
 	protected function get_change_link($display_mode) {

@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_bannetteslist.class.php,v 1.10 2017-07-26 07:57:50 dgoron Exp $
+// $Id: cms_module_common_view_bannetteslist.class.php,v 1.12 2019-05-22 15:54:21 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 class cms_module_common_view_bannetteslist extends cms_module_common_view_django{
 	
+	protected $render_already_generated = false;
 	
 	public function __construct($id=0){
 		parent::__construct($id);
@@ -29,8 +30,21 @@ class cms_module_common_view_bannetteslist extends cms_module_common_view_django
 ";
 	}
 	
-	public function get_form(){
+	protected function get_record_template_form() {
 		if(!isset($this->parameters['used_template'])) $this->parameters['used_template'] = '';
+		$form = "
+		<div class='row'>
+			<div class='colonne3'>
+				<label for='cms_module_common_view_django_template_record_content'>".$this->format_text($this->msg['cms_module_common_view_django_template_record_content'])."</label>
+			</div>
+			<div class='colonne-suite'>
+				".notice_tpl::gen_tpl_select("cms_module_common_view_django_template_record_content",$this->parameters['used_template'])."
+			</div>
+		</div>";
+		return $form;
+	}
+	
+	public function get_form(){
 		if(!isset($this->parameters['css'])) $this->parameters['css'] = '';
 		if(!isset($this->parameters['nb_notices'])) $this->parameters['nb_notices'] = '';
 		$form="
@@ -52,16 +66,9 @@ class cms_module_common_view_bannetteslist extends cms_module_common_view_django
 		$form.="
 			</div>
 		</div>".
-			parent::get_form()
-				."
-		<div class='row'>
-			<div class='colonne3'>
-				<label for='cms_module_common_view_django_template_record_content'>".$this->format_text($this->msg['cms_module_common_view_django_template_record_content'])."</label>
-			</div>
-			<div class='colonne-suite'>
-				".notice_tpl::gen_tpl_select("cms_module_common_view_django_template_record_content",$this->parameters['used_template'])."
-			</div>
-		</div>
+			parent::get_form();
+		$form .= $this->get_record_template_form();	
+		$form .= "
 		<div class='row'>
 			<div class='colonne3'>
 				<label for='cms_module_bannetteslist_view_bannetteslist_css'>".$this->format_text($this->msg['cms_module_bannetteslist_view_bannetteslist_css'])."</label>
@@ -83,7 +90,7 @@ class cms_module_common_view_bannetteslist extends cms_module_common_view_django
 	
 	public function save_form(){
 		global $cms_module_common_view_bannetteslist_nb_notices;
-		global $cms_module_bannetteslist_view_bannetteslist_css;		
+		global $cms_module_bannetteslist_view_bannetteslist_css;
 		global $cms_module_common_view_django_template_record_content;
 		
 		$this->save_constructor_link_form("bannette");
@@ -94,9 +101,8 @@ class cms_module_common_view_bannetteslist extends cms_module_common_view_django
 		return parent::save_form();
 	}
 		
-	
 	public function render($datas){
-		global $dbh;			
+		global $dbh;
 		global $opac_url_base;
 		global $opac_show_book_pics;
 		global $opac_book_pics_url;
@@ -105,6 +111,11 @@ class cms_module_common_view_bannetteslist extends cms_module_common_view_django
 		global $opac_bannette_notices_format;
 		global $opac_bannette_notices_order;
 		global $liens_opac;
+		
+		// Déjà généré dans une classe fille
+		if($this->render_already_generated) {
+			return parent::render($datas);
+		}
 		
 		if(!$opac_notice_affichage_class){
 			$opac_notice_affichage_class ="notice_affichage";

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_skos_concept_ui.class.php,v 1.42 2018-09-19 09:00:39 arenou Exp $
+// $Id: onto_skos_concept_ui.class.php,v 1.47 2019-05-29 14:06:42 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -57,13 +57,12 @@ class onto_skos_concept_ui extends onto_common_ui{
 	 * 
 	 * @return string $selector
 	 */
-	public static function get_scheme_list_selector($controler,$params,$empty=false,$onchange='',$name='',$id=''){
+	public static function get_scheme_list_selector($controler,$params,$empty=false,$onchange='',$name='',$id='',$multiple=false){
 		global $msg,$charset,$lang,$base_path,$ontology_tpl;
-		
 		if($params->action=='list_selector'){
 			$list=$controler->get_scheme_list();
-			if($params->unique_scheme && $params->concept_scheme != -1){
-				return "<input type='hidden' name='".$name."' value='".$params->concept_scheme."' />";
+			if($params->unique_scheme && $params->concept_scheme[0] != -1){
+			    return "<input type='hidden' name='".$name.($multiple ? "[]" : "")."' value='".$params->concept_scheme[0]."' />";
 			}
 			
 			$selector_options = '';
@@ -76,7 +75,7 @@ class onto_skos_concept_ui extends onto_common_ui{
 			$option = str_replace("!!scheme_list_selector_name!!",$name , $option);
 			$option = str_replace("!!scheme_list_selector_onchange!!", $onchange , $option);
 			$selected='';
-			if($params->concept_scheme == -1){
+			if(in_array(-1,$params->concept_scheme)){
 				$selected='checked';
 			}
 			$option= str_replace("!!scheme_list_selector_options_selected!!", $selected, $option);
@@ -86,10 +85,10 @@ class onto_skos_concept_ui extends onto_common_ui{
 			$option = $ontology_tpl['scheme_radio_selector'];
 			$option = str_replace("!!scheme_list_selector_options_value!!",'0' , $option);
 			$option = str_replace("!!scheme_list_selector_options_label!!", $msg["onto_skos_concept_no_scheme"], $option);
-			$option = str_replace("!!scheme_list_selector_name!!",$name , $option);
+			$option = str_replace("!!scheme_list_selector_name!!",$name, $option);
 			$option = str_replace("!!scheme_list_selector_onchange!!", $onchange , $option);
 			$selected='';
-			if($params->concept_scheme == 0){
+			if(in_array(0,$params->concept_scheme)){
 				$selected = 'checked';
 			}
 			$option = str_replace("!!scheme_list_selector_options_selected!!", $selected, $option);
@@ -101,7 +100,7 @@ class onto_skos_concept_ui extends onto_common_ui{
 				$scheme_id = onto_common_uri::get_id($uri);
 				
 				$selected = '';
-				if($scheme_id==$params->concept_scheme){
+				if((in_array($scheme_id,$params->concept_scheme))){
 					$selected = 'checked';
 				}
 				
@@ -121,15 +120,19 @@ class onto_skos_concept_ui extends onto_common_ui{
 	
 			return $selector_options;
 		}else{
-			$selector=$ontology_tpl['scheme_list_selector'];
+		    $selector=$ontology_tpl['scheme_list_selector'];
+		    if($multiple){
+		        $selector = str_replace('!!multiple!!','multiple="yes"',$selector);
+		    } 
+ 			$selector = str_replace('!!multiple!!','',$selector);
 			
 			$selector = str_replace("!!scheme_list_selector_onchange!!",$onchange , $selector);
-			$selector = str_replace("!!scheme_list_selector_name!!",$name , $selector);
+			$selector = str_replace("!!scheme_list_selector_name!!",$name.($multiple ? "[]" : "") , $selector);
 			$selector = str_replace("!!scheme_list_selector_id!!",$id , $selector);
 			
 			$list=$controler->get_scheme_list();
-			if(isset($params->unique_scheme) && $params->unique_scheme && $params->concept_scheme !=-1){
-				return "<input type='hidden' name='".$name."' value='".$params->concept_scheme."' />";
+			if(isset($params->unique_scheme) && $params->unique_scheme && $params->concept_scheme[0] !=-1){
+				return "<input type='hidden' name='".$name."' value='".implode(",",$params->concept_scheme)."' />";
 			}
 			
 			$selector_options='';
@@ -140,7 +143,7 @@ class onto_skos_concept_ui extends onto_common_ui{
 			$option= str_replace("!!scheme_list_selector_options_value!!",'-1' , $option);
 			$option= str_replace("!!scheme_list_selector_options_label!!", $msg["onto_skos_concept_all_concepts"], $option);
 			$selected='';
-			if($params->concept_scheme == -1){
+			if(count($params->concept_scheme) == 0 || in_array(-1,$params->concept_scheme)){
 				$selected='selected="selected"';
 			}
 			$option= str_replace("!!scheme_list_selector_options_selected!!", $selected, $option);
@@ -151,20 +154,20 @@ class onto_skos_concept_ui extends onto_common_ui{
 			$option= str_replace("!!scheme_list_selector_options_value!!",'0' , $option);
 			$option= str_replace("!!scheme_list_selector_options_label!!", $msg["onto_skos_concept_no_scheme"], $option);
 			$selected='';
-			if($params->concept_scheme == 0){
+			if(in_array('0',$params->concept_scheme)){
 				$selected='selected="selected"';
 			}
 			$option= str_replace("!!scheme_list_selector_options_selected!!", $selected, $option);
 			$selector_options.=$option;
-			
 			foreach($list['elements'] as $uri=>$scheme){
 					
 				$option=$ontology_tpl['scheme_list_selector_option'];
 				$scheme_id=onto_common_uri::get_id($uri);
 					
 				$selected='';
-				if($scheme_id==$params->concept_scheme){
-					$selected='selected="selected"';
+				
+				if(in_array($scheme_id,$params->concept_scheme)){
+				    $selected = 'selected="selected"';
 				}
 					
 				if(isset($scheme[$lang]) && $scheme[$lang]!=''){
@@ -203,7 +206,7 @@ class onto_skos_concept_ui extends onto_common_ui{
 					$return.=' > ';
 				}
 				
-				$return.="<a href='$base_path/".$controler->get_base_resource()."categ=".$params->categ."&sub=".$params->sub."&action=".$params->action."&concept_scheme=".$params->concept_scheme."&parent_id=".$parent_id."'>".$controler->get_data_label(onto_common_uri::get_uri($parent_id)).'</a>';
+				$return.="<a href='$base_path/".$controler->get_base_resource()."categ=".$params->categ."&sub=".$params->sub."&action=".$params->action."&concept_scheme=".implode(",",$params->concept_scheme)."&parent_id=".$parent_id."'>".$controler->get_data_label(onto_common_uri::get_uri($parent_id)).'</a>';
 			}
 		}
 		return $return;
@@ -235,6 +238,10 @@ class onto_skos_concept_ui extends onto_common_ui{
 		$form = $ontology_tpl['skos_concept_search_form'];
 		$form = str_replace('!!skos_concept_search_form_action!!', $base_path.'/'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&id=&action=search', $form);
 		$form = str_replace('!!skos_concept_search_form_last_concepts_link!!', $base_path.'/'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&id=&action=last', $form);
+				
+		$lien_imprimer_concepts = "&nbsp;<a href='#' onClick=\"openPopUp('./print_concepts.php?current_print=2&action=print_prepare&scheme_id=' + document.getElementById('id_concept_scheme').value, 'print'); return false;\">" . $msg['print_concepts'] . "</a> ";
+		$form = str_replace('<!-- imprimer_concepts -->', $lien_imprimer_concepts, $form);
+		
 		$form = str_replace('!!skos_concept_search_form_title!!', $title, $form);
 		$form = str_replace('<!-- sel_authority_statuts -->', authorities_statuts::get_form_for(AUT_TABLE_CONCEPT, ($authority_statut+0), true), $form);
 		$form = str_replace('!!skos_concept_search_form_selector!!', self::get_scheme_list_selector($controler, $params,false,$onchange_scheme_list_selector,$name_scheme_list_selector,$id_scheme_list_selector), $form);
@@ -253,12 +260,12 @@ class onto_skos_concept_ui extends onto_common_ui{
 			$add_msg = sprintf($msg['onto_common_add'], $controler->get_label($params->sub));
 		}
 		$form = str_replace('!!skos_concept_search_form_user_input!!',stripslashes(htmlentities($params->user_input,ENT_QUOTES,$charset)),$form);
-		$form = str_replace('!!skos_concept_search_form_concept_onclick!!','document.location=\'./'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&id=&action=edit&concept_scheme='.$params->concept_scheme.'&parent_id='.$params->parent_id.'\'', $form);
+		$form = str_replace('!!skos_concept_search_form_concept_onclick!!','document.location=\'./'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&id=&action=edit&concept_scheme='.implode(",",$params->concept_scheme).'&parent_id='.$params->parent_id.'\'', $form);
 		$form = str_replace('!!skos_concept_search_form_concept_value!!',htmlentities($add_msg,ENT_QUOTES,$charset), $form);
 		
-		$form = str_replace('!!skos_concept_search_form_composed_onclick!!','document.location=\'./'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&id=&action=edit&composed=composed&concept_scheme='.$params->concept_scheme.'&parent_id='.$params->parent_id.'\'', $form);
+		$form = str_replace('!!skos_concept_search_form_composed_onclick!!','document.location=\'./'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&id=&action=edit&composed=composed&concept_scheme='.implode(",",$params->concept_scheme).'&parent_id='.$params->parent_id.'\'', $form);
 		
-		$form = str_replace('!!skos_concept_search_form_href!!', $base_path.'/'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&action='.$params->action.'&concept_scheme='.$params->concept_scheme, $form);
+		$form = str_replace('!!skos_concept_search_form_href!!', $base_path.'/'.$controler->get_base_resource().'categ='.$params->categ.'&sub='.$params->sub.'&action='.$params->action.'&concept_scheme='.implode(",",$params->concept_scheme), $form);
 		
 		$form = str_replace('!!skos_concept_search_form_breadcrumb!!', self::get_breadcrumb($controler,$params) ,$form);
 		
@@ -274,23 +281,25 @@ class onto_skos_concept_ui extends onto_common_ui{
 	public static function get_list($controler,$params){
 		global $msg,$charset,$base_path,$ontology_tpl,$lang;
 		global $authority_statut;
-		global $concept_scheme;
 		
 		if ($params->action != 'last') {
 			$elements = $controler->get_list_elements($params);
 		} else {
 			$elements = $controler->get_last_elements();
 		}
-		$list="<h3>".$elements['nb_total_elements']." ".$msg['onto_skos_concept_nb_results']."</h3>".entities_authorities_controller::get_caddie_link().$ontology_tpl['skos_concept_list'];
+		$list="<h3>".$elements['nb_total_elements']." ".$msg['onto_skos_concept_nb_results'] . "</h3>!!caddie_link!!" . $ontology_tpl['skos_concept_list'];
  		$list=str_replace("!!list_header!!", htmlentities($msg['103'],ENT_QUOTES,$charset), $list);
  		$list=str_replace("!!list_header_utilisation!!", htmlentities($msg['voir_notices_assoc'],ENT_QUOTES,$charset), $list);
 		
 		$list_content='';
 		foreach($elements['elements'] as $uri => $item){
 		    $id = onto_common_uri::get_id($uri);
+		    if (!$id) {
+		        $id = onto_common_uri::set_new_uri($uri);
+		    }
 			if($controler->has_narrower($uri,$params)){	
 				$line=$ontology_tpl['skos_concept_list_line_folder'];
-				$line=str_replace("!!list_line_folder_href!!",$base_path."/".$controler->get_base_resource()."categ=".$params->categ."&sub=".$params->sub."&action=".$params->action."&parent_id=".$id."&concept_scheme=".$params->concept_scheme , $line);
+				$line=str_replace("!!list_line_folder_href!!",$base_path."/".$controler->get_base_resource()."categ=".$params->categ."&sub=".$params->sub."&action=".$params->action."&parent_id=".$id."&concept_scheme=".implode(",",$params->concept_scheme) , $line);
 			}else{
 				$line=$ontology_tpl['skos_concept_list_line_doc'];
 			}
@@ -358,11 +367,11 @@ class onto_skos_concept_ui extends onto_common_ui{
 			//$concept = new concept($id);
 			
 			if(!empty($params->selector_context)){
-				$line = str_replace("!!list_line_onclick!!", "onclick=\"set_parent('".$params->caller."', '".$params->element."', '".$uri."', '".htmlentities($authority->get_isbd(), ENT_QUOTES, $charset)."', '".$params->type."', '".$params->callback."');\"", $line);
+				$line = str_replace("!!list_line_onclick!!", "onclick=\"set_parent('".$params->caller."', '".$params->element."', '".$uri."', '".addslashes(htmlentities($authority->get_isbd(), ENT_NOQUOTES, $charset))."', '".$params->type."', '".$params->callback."');\"", $line);
 				$line = str_replace("!!list_line_href!!", "#", $line);
 			}else{
 				$line = str_replace("!!list_line_onclick!!", '', $line);
-				$line = str_replace("!!list_line_href!!",$base_path."/".$controler->get_base_resource()."categ=".$params->categ."&sub=".$params->sub."&action=edit&id=".$id."&parent_id=".$params->parent_id."&concept_scheme=".$params->concept_scheme , $line);
+				$line = str_replace("!!list_line_href!!",$base_path."/".$controler->get_base_resource()."categ=".$params->categ."&sub=".$params->sub."&action=edit&id=".$id."&parent_id=".$params->parent_id."&concept_scheme=".implode(",",$params->concept_scheme), $line);
 				$line = str_replace("!!list_line_basket!!", $authority->get_caddie(), $line);
 				
 			}
@@ -374,7 +383,7 @@ class onto_skos_concept_ui extends onto_common_ui{
 		}
 		
 		$list=str_replace("!!list_content!!",$list_content , $list);
-		$list=str_replace("!!list_pagination!!",aff_pagination("./".$controler->get_base_resource()."categ=".$params->categ."&sub=".$params->sub."&action=".$params->action."&concept_scheme=".$params->concept_scheme."&parent_id=".$params->parent_id."&user_input=".$params->user_input.($authority_statut ? '&authority_statut='.$authority_statut : ''),$elements['nb_total_elements'],$elements['nb_onto_element_per_page'], $params->page, 10, false, true ) , $list);
+		$list=str_replace("!!list_pagination!!",aff_pagination("./".$controler->get_base_resource()."categ=".$params->categ."&sub=".$params->sub."&action=".$params->action."&concept_scheme=".implode(",",$params->concept_scheme)."&parent_id=".$params->parent_id."&user_input=".$params->user_input.($authority_statut ? '&authority_statut='.$authority_statut : ''),$elements['nb_total_elements'],$elements['nb_onto_element_per_page'], $params->page, 10, false, true ) , $list);
 		
 		return $list;
 	}
@@ -443,7 +452,7 @@ class onto_skos_concept_ui extends onto_common_ui{
 				$elements_form.= $current_element_form;
 			}
 			$list = str_replace("!!elements_form!!", $elements_form, $list);
-			$list = str_replace("!!aff_pagination!!", aff_pagination($params->base_url."&deb_rech=".$params->deb_rech."&concept_scheme=".$params->concept_scheme."&parent_id=".$params->parent_id,$elements['nb_total_elements'],$elements['nb_onto_element_per_page'], $params->page, 10, true, true ), $list);
+			$list = str_replace("!!aff_pagination!!", aff_pagination($params->base_url."&deb_rech=".$params->deb_rech."&concept_scheme=".implode(",",$params->concept_scheme)."&parent_id=".$params->parent_id,$elements['nb_total_elements'],$elements['nb_onto_element_per_page'], $params->page, 10, true, true ), $list);
 		}else{
 			$list = $msg["1915"];
 		}
@@ -517,9 +526,9 @@ class onto_skos_concept_ui extends onto_common_ui{
 			}
 			$button_add = str_replace("!!add_button_label!!", $add_msg, $button_add);
 			if($pmb_popup_form_display_mode == 2) {
-				$onclick = "document.location=\"./".$params->base_url."&concept_scheme=".$params->concept_scheme."&parent_id=".$params->parent_id."&action=edit\"";
+			    $onclick = "document.location=\"./".$params->base_url."&concept_scheme=".implode(",",$params->concept_scheme)."&parent_id=".$params->parent_id."&action=edit\"";
 			} else {
-				$onclick = "document.location=\"./".$params->base_url."&concept_scheme=".$params->concept_scheme."&parent_id=".$params->parent_id."&action=selector_add\"";
+			    $onclick = "document.location=\"./".$params->base_url."&concept_scheme=".implode(",",$params->concept_scheme)."&parent_id=".$params->parent_id."&action=selector_add\"";
 			}			
 			$button_add = str_replace("!!add_button_onclick!!", $onclick, $button_add);
 		}

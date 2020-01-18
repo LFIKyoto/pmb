@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_section.class.php,v 1.42 2018-03-13 16:36:11 apetithomme Exp $
+// $Id: cms_section.class.php,v 1.44.2.2 2019-10-25 07:00:47 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -11,7 +11,8 @@ require_once($class_path.'/audit.class.php');
 
 class cms_section extends cms_editorial {
 	public $num_parent;		// id du parent
-	function __construct($id=0,$num_parent=0){
+	
+	public function __construct($id=0,$num_parent=0){
 		//on gère les propriétés communes dans la classe parente
 		parent::__construct($id,"section");
 
@@ -180,6 +181,7 @@ class cms_section extends cms_editorial {
 				}
 			}
 		}
+		return $id;
 	}
 	
 	public function get_parent_selector(){
@@ -234,58 +236,28 @@ class cms_section extends cms_editorial {
 	}
 	
 	public function format_datas($get_children= true,$get_articles = true,$filter = true, $get_parent=false){
-		global $thesaurus_concepts_active;
-		$documents = array();
-		$this->get_documents();
-		foreach($this->documents_linked as $id_doc){
-			$document = new cms_document($id_doc);
-			$documents[] = $document->format_datas();
-		}
-		$result = array(
-			'id' => $this->id,
-			'num_parent' =>$this->num_parent,
-			'title' => $this->title,
-			'resume' => $this->resume,
-			'logo' => $this->logo->format_datas(),
-			'publication_state' => $this->publication_state,
-			'start_date' => $this->start_date,
-			'end_date' => $this->end_date,
-			'descriptors' => $this->get_descriptors(),
-			'num_type' => $this->num_type,
-			'fields_type' => $this->get_fields_type(),
-			'type' => $this->type_content,
-			'create_date' => format_date($this->create_date),
-			'documents' => $documents,
-			'nb_documents' => count($documents),
-			'last_update_date' => format_date($this->last_update_date),
-			'permalink' => $this->get_permalink(),
-			'social_media_sharing' => $this->get_social_media_block()
-		);
-		if($thesaurus_concepts_active == 1){
-			$result['concepts'] = $this->index_concept->get_concepts();
-		}
-		if($get_children){
-			$result['children'] = $this->get_children($filter);
-		}
-		if($get_articles){
-			$result['articles'] = $this->get_articles($filter);
-		}
-		if ($get_parent && $result['num_parent']) {
-			$cms_parent_section = new cms_section($result['num_parent']);
-			$result['parent'] = $cms_parent_section->format_datas(false, false);
-		}
-		return $result;
+	    $cms_editorial_data = new cms_editorial_data($this->id, $this->type);
+	    return $cms_editorial_data;
 	}
 	
 	public function get_children($filter){
 		global $dbh;
 		$children = array();
 		if($this->id){
-			$query = "select id_section from cms_sections JOIN cms_editorial_publications_states ON section_publication_state=id_publication_state where section_num_parent = ".$this->id;
+			$query = "
+                SELECT id_section 
+                FROM cms_sections 
+                JOIN cms_editorial_publications_states ON section_publication_state=id_publication_state 
+                WHERE section_num_parent = ".$this->id;
 			if($filter){
-				$query.= " and ((section_start_date != 0 and to_days(section_start_date)<=to_days(now()) and to_days(section_end_date)>=to_days(now()))||(section_start_date != 0 and section_end_date =0 and to_days(section_start_date)<=to_days(now()))||(section_start_date = 0 and to_days(section_end_date)>=to_days(now()))||(section_start_date = 0 and section_end_date = 0)) and (editorial_publication_state_opac_show=1".(!$_SESSION['id_empr_session'] ? " and editorial_publication_state_auth_opac_show = 0" : "").") ";;
+				$query.= " 
+                AND ((section_start_date != 0 AND to_days(section_start_date)<=to_days(now()) AND to_days(section_end_date)>=to_days(now())) 
+                OR (section_start_date != 0 AND section_end_date =0 AND to_days(section_start_date)<=to_days(now()))
+                OR (section_start_date = 0 AND to_days(section_end_date)>=to_days(now()))
+                OR (section_start_date = 0 AND section_end_date = 0)) 
+                AND (editorial_publication_state_opac_show=1".(!$_SESSION['id_empr_session'] ? " AND editorial_publication_state_auth_opac_show = 0" : "").") ";
 			}
-			$query .= " order by section_order";
+			$query .= " ORDER BY section_order";
 			$result = pmb_mysql_query($query,$dbh);
 			if(pmb_mysql_num_rows($result)){
 				while ($row = pmb_mysql_fetch_object($result)){
@@ -348,7 +320,7 @@ class cms_section extends cms_editorial {
 		global $msg;
 		if($force_delete){			
 			$check_children = "select id_section from cms_sections where section_num_parent ='".$this->id."'";
-			$res = pmb_mysql_query($check_children,$dbh);
+			$res = pmb_mysql_query($check_children);
 			if(pmb_mysql_num_rows($res)){
 				while($obj = pmb_mysql_fetch_object($res)){
 					$section = new cms_section($obj->id_section);
@@ -356,7 +328,7 @@ class cms_section extends cms_editorial {
 				}
 			}
 			$check_article = "select id_article from cms_articles where num_section ='".$this->id."'";
-			$res = pmb_mysql_query($check_article,$dbh);
+			$res = pmb_mysql_query($check_article);
 			if(pmb_mysql_num_rows($res)>0){
 				while($obj = pmb_mysql_fetch_object($res)){
 					$article = new cms_article($obj->id_article);

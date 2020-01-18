@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_publications_states.tpl.php,v 1.4 2017-10-19 14:42:59 dgoron Exp $
+// $Id: cms_editorial_publications_states.tpl.php,v 1.5 2019-05-27 10:36:51 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $cms_editorial_publication_state_form;
+global $cms_editorial_publication_state_form, $current_module, $msg;
 
 $cms_editorial_publication_state_form ="
 <form method='post' class='form-$current_module' name='cms_editorial_publication_state_form' action='!!action!!&action=save'>

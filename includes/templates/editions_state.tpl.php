@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: editions_state.tpl.php,v 1.3 2015-01-08 08:14:00 jpermanne Exp $
+// $Id: editions_state.tpl.php,v 1.4 2019-05-27 13:03:56 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $editions_state_form, $current_module, $base_path, $msg, $editions_state_form_tabs, $charset, $edition_state_render, $edition_state_filter_form;
 
 $editions_state_form="
 <form class='form-$current_module' name='editions_state_form' method='post' action='".$base_path."/edit.php?categ=state&action=save&id=!!id!!'>

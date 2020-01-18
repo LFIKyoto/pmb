@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_item.class.php,v 1.9 2018-12-18 08:01:47 apetithomme Exp $
+// $Id: onto_common_item.class.php,v 1.13 2019-03-21 10:45:51 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -82,7 +82,7 @@ class onto_common_item {
 	public function order_datatypes(){
 		//on ordonne les datatypes
 		$temp_datatype_tab=array();
-		if(sizeof($this->datatypes)){
+		if($this->datatypes && sizeof($this->datatypes)){
 			foreach($this->datatypes as $key=>$datatypes){
 				foreach($datatypes as $datatype){
 					$temp_datatype_tab[$key][$datatype->get_datatype_ui_class_name()][]=$datatype;
@@ -342,8 +342,14 @@ class onto_common_item {
 				//comptage des valeurs pour les cardinalités
 				if($datatype->get_value() != ""){
 					if ($lang = $datatype->get_lang()) {
+						if (empty($nb_values[$property_uri][$lang])) {
+							$nb_values[$property_uri][$lang] = 0;
+						}
 						$nb_values[$property_uri][$lang]++;
 					} else {
+						if (empty($nb_values[$property_uri]['default'])) {
+							$nb_values[$property_uri]['default'] = 0;
+						}
 						$nb_values[$property_uri]['default']++;
 					}
 				}
@@ -356,7 +362,7 @@ class onto_common_item {
 			$max = $restriction->get_max();
 			
 			// comptage des valeurs en prenant en compte les langues
-			if (count($nb_values[$property_uri])) {
+			if (!empty($nb_values[$property_uri]) && is_array($nb_values[$property_uri])) {
 				$strict_nb_value = max($nb_values[$property_uri]);
 			} else {
 				$strict_nb_value = 0;
@@ -522,17 +528,17 @@ class onto_common_item {
 		$label = "";
 		$default_label = "";
 	 	if(count($values) == 1){
-			$label = $values[0]->get_value();	 		
+			$label = $values[0]->get_formated_value();	 		
 	 	}else if(count($values) > 1){
 	 		foreach($values as $value){
 	 			if($value->offsetget_value_property("lang") == ""){
-	 				$default_label = $value->get_value();
+	 			    $default_label = $value->get_formated_value();
 	 			}
 	 			if(!$default_label){
-	 				$default_label = $value->get_value();
+	 			    $default_label = $value->get_formated_value();
 	 			}
 	 			if($value->offsetget_value_property("lang") == substr($lang,0,2)){
-	 				$label = $value->get_value();
+	 			    $label = $value->get_formated_value();
 	 			}
 	 		}
 	 		if(!$label) $label = $default_label;

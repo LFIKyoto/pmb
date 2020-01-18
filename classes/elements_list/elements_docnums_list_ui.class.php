@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: elements_docnums_list_ui.class.php,v 1.4 2018-10-18 09:08:07 dgoron Exp $
+// $Id: elements_docnums_list_ui.class.php,v 1.5 2019-02-12 15:10:29 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -34,7 +34,7 @@ class elements_docnums_list_ui extends elements_list_ui {
 			$template_path = $include_path.'/templates/explnum_in_list_subst.tpl.html';
 		}
 		$context = array('list_element' => $docnum, 'list_element_record' => $record);
-		return static::render($template_path, $context);
+		return static::render($template_path, $context, $this->get_context_parameters());
 	}
 	
 	public function is_expandable() {

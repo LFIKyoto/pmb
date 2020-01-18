@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: categorie.class.php,v 1.41 2018-07-27 14:32:26 tsamson Exp $
+// $Id: categorie.class.php,v 1.44 2019-06-18 08:35:09 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -21,7 +21,8 @@ class categorie {
 	public $has_child		= 	0;		// nombre d'enfants de la catégorie
 	public $has_notices	=	0;		// nombre de notices utilisant la catégorie
 	public $thes;						// thésaurus lié à la catégorie
-	
+	public $comment;	
+	public $note;
 	/**
 	 * Rendu HTML du fil d'Arianne
 	 * @var string
@@ -49,8 +50,8 @@ class categorie {
 	
 	// constructeur
 	public function __construct($id) {
-		$this->id = $id;
-		if ($id) $this->get_data();
+		$this->id = intval($id);
+		if ($this->id) $this->get_data();
 	}
 
 	public function get_data() {
@@ -74,13 +75,14 @@ class categorie {
 		$query.= "limit 1";
 		$result = pmb_mysql_query($query, $dbh);
 		
-		$current = pmb_mysql_fetch_object($result);
-		$this->libelle 	= $current->libelle_categorie;
-		$this->parent	= $current->num_parent;
-		$this->voir		= $current->num_renvoi_voir;
-		$this->note		= $current->note_application;
-		$this->comment  = $current->comment_public;
-		
+		if (pmb_mysql_num_rows($result)) {
+    		$current = pmb_mysql_fetch_object($result);
+    		$this->libelle 	= $current->libelle_categorie;
+    		$this->parent	= $current->num_parent;
+    		$this->voir		= $current->num_renvoi_voir;
+    		$this->note		= $current->note_application;
+    		$this->comment  = $current->comment_public;
+		}
 			
 		// on regarde si la catégorie à des enfants
 		$query = "select count(1) from noeuds where num_parent = '".$this->id."' ";
@@ -123,7 +125,7 @@ class categorie {
 		$path_array = categories::listAncestors($parent_id, $lang);
 	
 		$ret = '';
-		while(list($cle, $valeur) = each($path_array)) {
+		foreach ($path_array as $cle => $valeur) {
 			$ret .= $sep."<a href='".static::format_url("index.php?lvl=categ_see&id=${valeur['num_noeud']}".($main?"&main=".$main:""))."'>";
 			$ret .= $valeur['libelle_categorie'].'</a>';
 		}
@@ -166,7 +168,7 @@ class categorie {
 		if ($this->id == $this->thes->num_noeud_racine) $result = categories::listChilds($this->id, $lang, 0, $opac_categories_sub_mode);
 		else 
 		$result = categories::listChilds($this->id, $lang, 1, $opac_categories_sub_mode);
-		
+		$l = '';
 		if(pmb_mysql_num_rows($result) < $opac_categories_nb_col_subcat) {
 
 			// nombre de sous-catégories réduit

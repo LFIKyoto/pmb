@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_concepts.tpl.php,v 1.14 2018-12-17 23:09:30 ccraig Exp $
+// $Id: vedette_concepts.tpl.php,v 1.15 2019-04-19 09:40:05 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
@@ -25,7 +25,7 @@ var vedette_concepts = {
 	// vedette_composee_element_order : ordre de l\'element
 	prefix: "['.$msg["vedette_concepts"].']",
 	create_box : function(caller_property_name, parent, vedette_composee_subdivision_id, vedette_composee_element_order, id, label, rawlabel, vedette_composee_order, params) {
-		params = JSON.parse(params);
+		params = (params ? JSON.parse(params) : {});
         
         if (typeof params.concept_scheme == "undefined") {
             params.concept_scheme = -1;

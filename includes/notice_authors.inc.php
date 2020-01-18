@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_authors.inc.php,v 1.13 2018-07-09 15:07:07 arenou Exp $
+// $Id: notice_authors.inc.php,v 1.15 2019-03-06 14:10:57 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -77,7 +77,8 @@ function gen_authors_header($responsabilites, $separator=',') {
 
 // constitution de la mention de responsabilité
 function gen_authors_isbd($responsabilites, $print_mode=0) {
-	global $fonction_auteur, $pmb_notice_author_functions_grouping;
+    global $fonction_auteur, $pmb_notice_author_functions_grouping;
+    global $pmb_authors_qualification;
 
 	$libelle_mention_resp = '';
 	$mention_resp = array() ;
@@ -86,60 +87,90 @@ function gen_authors_isbd($responsabilites, $print_mode=0) {
 	if ($as!== FALSE && $as!== NULL) {
 		$auteur_0 = $responsabilites["auteurs"][$as];
 		$auteur = authorities_collection::get_authority(AUT_TABLE_AUTHORS,$auteur_0["id"]);
+		$authority_instance = authorities_collection::get_authority(AUT_TABLE_AUTHORITY, 0, [ 'num_object' => $auteur_0["id"], 'type_object' => AUT_TABLE_AUTHORS]);
+		
 		if ($print_mode) {
-			$resp_lib = $auteur->get_isbd();
+		    $resp_lib = $authority_instance->get_isbd();
 		}else {
-			$resp_lib = $auteur->isbd_entry_lien_gestion;
+		    $resp_lib = $authority_instance->build_isbd_entry_lien_gestion();
 			if($auteur->author_web_link) {
 				$resp_lib.= ' '.$auteur->author_web_link;
 			}
 		}
+		$qualification = '';
+		if ($pmb_authors_qualification) {		    
+		    $qualif_id = vedette_composee::get_vedette_id_from_object($auteur_0["id_responsability"], TYPE_NOTICE_RESPONSABILITY_PRINCIPAL);
+		    if($qualif_id){
+		        $qualif = new vedette_composee($qualif_id);
+		        $qualification = ' (' . $qualif->get_label() .')';
+		    }
+		}
 		if ($auteur_0["fonction"]) {
-			$author_list_functions[$resp_lib][] = $fonction_auteur[$auteur_0["fonction"]];
-			$mention_resp[] = $resp_lib.", ".$fonction_auteur[$auteur_0["fonction"]];
+		    $author_list_functions[$resp_lib][] = $fonction_auteur[$auteur_0["fonction"]] . $qualification;
+			$mention_resp[] = $resp_lib.", ".$fonction_auteur[$auteur_0["fonction"]] . $qualification;
 		}else {
 			$author_list_functions[$resp_lib][] = '';
-			$mention_resp[] = $resp_lib;
+			$mention_resp[] = $resp_lib . $qualification;
 		}
 	}
 	$as = array_keys ($responsabilites["responsabilites"], "1");
 	for ($i = 0 ; $i < count($as) ; $i++) {
 		$auteur_1 = $responsabilites["auteurs"][$as[$i]];
 		$auteur = authorities_collection::get_authority(AUT_TABLE_AUTHORS,$auteur_1["id"]);
+		$authority_instance = authorities_collection::get_authority(AUT_TABLE_AUTHORITY, 0, [ 'num_object' => $auteur_1["id"], 'type_object' => AUT_TABLE_AUTHORS]);
+		
 		if ($print_mode) {
-			$resp_lib = $auteur->get_isbd();
+		    $resp_lib = $authority_instance->get_isbd();
 		}else {
-			$resp_lib = $auteur->isbd_entry_lien_gestion;
+		    $resp_lib = $authority_instance->build_isbd_entry_lien_gestion();
 			if($auteur->author_web_link) {
 				$resp_lib.= ' '.$auteur->author_web_link;
 			}
 		}
+		$qualification = '';
+		if ($pmb_authors_qualification) {
+		    $qualif_id = vedette_composee::get_vedette_id_from_object($auteur_1["id_responsability"], TYPE_NOTICE_RESPONSABILITY_AUTRE);
+		    if($qualif_id){
+		        $qualif = new vedette_composee($qualif_id);
+		        $qualification = ' (' . $qualif->get_label() .')';
+		    }
+		}
 		if ($auteur_1["fonction"]) {
-			$author_list_functions[$resp_lib][] = $fonction_auteur[$auteur_1["fonction"]];
-			$mention_resp[] = $resp_lib.", ".$fonction_auteur[$auteur_1["fonction"]];
+		    $author_list_functions[$resp_lib][] = $fonction_auteur[$auteur_1["fonction"]] . $qualification;
+		    $mention_resp[] = $resp_lib.", ".$fonction_auteur[$auteur_1["fonction"]] . $qualification;
 		}else {
 			$author_list_functions[$resp_lib][] = '';
-			$mention_resp[] = $resp_lib;
+			$mention_resp[] = $resp_lib . $qualification;
 		}
 	}
 	$as = array_keys ($responsabilites["responsabilites"], "2");
 	for ($i = 0 ; $i < count($as) ; $i++) {
 		$auteur_2 = $responsabilites["auteurs"][$as[$i]];
-		$auteur = authorities_collection::get_authority(AUT_TABLE_AUTHORS,$auteur_2["id"]);
+		$auteur = authorities_collection::get_authority(AUT_TABLE_AUTHORS,$auteur_2["id"]);		
+		$authority_instance = authorities_collection::get_authority(AUT_TABLE_AUTHORITY, 0, [ 'num_object' => $auteur_2["id"], 'type_object' => AUT_TABLE_AUTHORS]);
+		
 		if ($print_mode) {
-			$resp_lib = $auteur->get_isbd();
+		    $resp_lib = $authority_instance->get_isbd();
 		}else {
-			$resp_lib = $auteur->isbd_entry_lien_gestion;
+		    $resp_lib = $authority_instance->build_isbd_entry_lien_gestion();
 			if($auteur->author_web_link) {
 				$resp_lib.= ' '.$auteur->author_web_link;
 			}
 		}
+		$qualification = '';
+		if ($pmb_authors_qualification) {
+		    $qualif_id = vedette_composee::get_vedette_id_from_object($auteur_2["id_responsability"], TYPE_NOTICE_RESPONSABILITY_SECONDAIRE);
+		    if($qualif_id){
+		        $qualif = new vedette_composee($qualif_id);
+		        $qualification = ' (' . $qualif->get_label() .')';
+		    }
+		}
 		if ($auteur_2["fonction"]) {
-			$author_list_functions[$resp_lib][] = $fonction_auteur[$auteur_2["fonction"]];
-			$mention_resp[] = $resp_lib.", ".$fonction_auteur[$auteur_2["fonction"]];
+		    $author_list_functions[$resp_lib][] = $fonction_auteur[$auteur_2["fonction"]] . $qualification;
+			$mention_resp[] = $resp_lib.", ".$fonction_auteur[$auteur_2["fonction"]] . $qualification;
 		}else {
 			$author_list_functions[$resp_lib][] = '';
-			$mention_resp[] = $resp_lib;
+			$mention_resp[] = $resp_lib . $qualification;
 		}
 	}
 	

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: types_produits.class.php,v 1.15 2017-04-25 15:22:13 dgoron Exp $
+// $Id: types_produits.class.php,v 1.16 2019-05-31 08:07:24 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,7 +16,7 @@ class types_produits{
 
 	 
 	//Constructeur.	 
-	public function types_produits($id_produit= 0) {
+	public function __construct($id_produit= 0) {
 		$this->id_produit = $id_produit+0;
 		if ($this->id_produit) {
 			$this->load();	

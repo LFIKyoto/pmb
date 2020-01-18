@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mono_display_unimarc.class.php,v 1.58 2018-12-27 16:06:03 dgoron Exp $
+// $Id: mono_display_unimarc.class.php,v 1.61 2019-07-31 14:46:04 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -428,16 +428,20 @@ class mono_display_unimarc {
 		if ($this->collections) {
 			$collections = $this->collections[0]["name"];
 		}
-		$editeurs=array();
+		$editeurs_tab=array();
 		for ($i=0; $i<count($this->publishers); $i++) {
-			$editeurs[] = $this->publishers[$i]["name"].(!empty($this->publishers[$i]["city"]) ? " (".$this->publishers[$i]["city"].")" : "");
+		    $editeurs_tab[] = $this->publishers[$i]["name"].(!empty($this->publishers[$i]["city"]) ? " (".$this->publishers[$i]["city"].")" : "");
 		}
-		$editeurs=implode("&nbsp;; ",$editeurs);
+		$editeurs=implode("&nbsp;; ",$editeurs_tab);
 		
-		if($this->notice->year) 
-			$editeurs ? $editeurs .= ', '.$this->notice->year : $editeurs = $this->notice->year;
-		else 
-			$editeurs ? $editeurs .= ', [s.d.]' : $editeurs = "[s.d.]";
+		if($editeurs !== ''){
+		    $editeurs .= ', ';
+		}
+		if(!empty($this->notice->year)) {
+		    $editeurs .= $this->notice->year;
+		}else{
+		    $editeurs.= "[s.d.]";
+		}
 	
 		$this->isbd .= ".&nbsp;-&nbsp;$editeurs";
 		
@@ -814,6 +818,7 @@ class mono_display_unimarc {
 						break;
 					//Editeur
 					case "210":
+					case "219":
 						if($l->field_order!=$lpfo) {
 							$lpfo=$l->field_order;
 							$n_ed++;

@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: parse_format.class.php,v 1.17 2018-10-02 13:05:53 apetithomme Exp $
+// $Id: parse_format.class.php,v 1.21 2019-08-29 10:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
 	die("no access");
 
+global $include_path;
 
 require_once ($include_path . "/misc.inc.php");
 
@@ -173,11 +174,7 @@ class parse_format {
 					
 					switch ($cmd[$i]) {
 						case '$' :
-							if($param_name[$param_number])$param_name[$param_number] .= $this->exec($cmd, $i);
-							else $param_name[$param_number]= $this->exec($cmd, $i);
-							break;
 						case '#' :
-							
 							if($param_name[$param_number])$param_name[$param_number] .= $this->exec($cmd, $i);
 							else $param_name[$param_number]= $this->exec($cmd, $i);
 							break;
@@ -248,7 +245,7 @@ class parse_format {
 
 	
 	public function exec_cmd_conso() {
-
+	    $ret='';
 		$cmd=$this->cmd;
 		$strlen_cmd = strlen($cmd);
 		//$ret = "";

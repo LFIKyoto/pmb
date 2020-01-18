@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: catalog.xml,v 1.32 2018-11-02 10:42:20 pmbs Exp $ -->
+$Id: catalog.xml,v 1.33 2019-06-03 09:53:53 arenou Exp $ -->
 
 <catalog>
 	<item name="Z 39.50" path="z3950" id="1"/>
@@ -40,4 +40,7 @@ $Id: catalog.xml,v 1.32 2018-11-02 10:42:20 pmbs Exp $ -->
 	<item name="Isidore" path="isidore" id="31"/>
 	<item name="Flux RSS" path="fluxrss" id="32"/>
         <item name="Legifrance" path="legifrance" id="33"/>
+        <item name="Dalloz" path="dalloz" id="34"/>
+        <item name="Mediawiki" path="mediawiki" id="35"/>
+        <item name="Isidore API" path="isidoreapi" id="36"/>
 </catalog>

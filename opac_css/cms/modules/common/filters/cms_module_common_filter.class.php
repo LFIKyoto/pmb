@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_filter.class.php,v 1.9 2017-07-28 10:28:16 dgoron Exp $
+// $Id: cms_module_common_filter.class.php,v 1.9.6.2 2019-11-06 14:07:00 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -184,17 +184,21 @@ class cms_module_common_filter extends cms_module_root{
 			pmb_mysql_query($query);
 			//sélecteur
 			$selector_by_id = $selector_from_id = 0;
-			for($i=0 ; $i<count($this->selectors['by']) ; $i++){
-				if($this->parameters['selector']['by'] == $this->selectors['by'][$i]['name']){
-					$selector_by_id = $this->selectors['by'][$i]['id'];
-					break;
-				}
+			if (!empty($this->selectors['by'])){
+    			for($i=0 ; $i<count($this->selectors['by']) ; $i++){
+    				if($this->parameters['selector']['by'] == $this->selectors['by'][$i]['name']){
+    					$selector_by_id = $this->selectors['by'][$i]['id'];
+    					break;
+    				}
+    			}
 			}
-			for($i=0 ; $i<count($this->selectors['from']) ; $i++){
-				if($this->parameters['selector']['from'] == $this->selectors['from'][$i]['name']){
-					$selector_from_id = $this->selectors['from'][$i]['id'];
-					break;
-				}
+			if (!empty($this->selectors['from'])){
+    			for($i=0 ; $i<count($this->selectors['from']) ; $i++){
+    				if($this->parameters['selector']['from'] == $this->selectors['from'][$i]['name']){
+    					$selector_from_id = $this->selectors['from'][$i]['id'];
+    					break;
+    				}
+    			}
 			}
 			if($this->parameters['selector']['by'] && $this->parameters['selector']['from']){
 				$selector_from = new $this->parameters['selector']['from']($selector_from_id);
@@ -322,7 +326,7 @@ class cms_module_common_filter extends cms_module_root{
 			}
 			foreach($datas as $article_id){
 				$fields->get_values($article_id);
-				if(is_array($fields->values[$field_from['field']]) && in_array($field_by,$fields->values[$field_from['field']])){
+				if(isset($fields->values[$field_from['field']]) && is_array($fields->values[$field_from['field']]) && in_array($field_by,$fields->values[$field_from['field']])){
 					$filtered_datas[] = $article_id;
 				}
 			}

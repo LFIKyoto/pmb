@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- $Id: sort.xml,v 1.1.4.3 2019-11-04 11:17:15 tsamson Exp $ -->
+<sort>	
+	<!--Date de Parution-->
+	<field name="date_parution" type="text" typefield="select" id="19">
+		<table>
+			<filter>(ufield = '902' and usubfield='b')</filter>
+			<tablefield>i_value</tablefield>
+		</table>
+	</field>
+</sort>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_segment_facets.class.php,v 1.11 2018-07-26 09:28:36 tsamson Exp $
+// $Id: search_segment_facets.class.php,v 1.12 2019-06-10 15:17:16 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,7 +16,7 @@ class search_segment_facets extends facettes {
 	protected $segment_search;
 
 	public function __construct($objects_ids = '') {
-	    $num_segment = func_get_args()[1] * 1;
+	    $num_segment = (!empty(func_get_args()[1]) ? intval(func_get_args()[1]) : 0);
 	    if ($num_segment) {
 	        $this->num_segment = $num_segment;
 	    }

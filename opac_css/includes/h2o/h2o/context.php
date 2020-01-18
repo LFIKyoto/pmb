@@ -11,7 +11,7 @@ class H2o_Context implements ArrayAccess {
     public $autoescape = true;
     
     private $arrayMethods = array('first'=> 0, 'last'=> 1, 'length'=> 2, 'size'=> 3);
-    static $lookupTable = array();
+    public static $lookupTable = array();
     
     public function __construct($context = array(), $options = array()){
         if (is_object($context))

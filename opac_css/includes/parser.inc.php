@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: parser.inc.php,v 1.21 2018-11-29 07:59:47 dgoron Exp $
+// $Id: parser.inc.php,v 1.24 2019-06-11 08:53:16 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -21,7 +21,7 @@ function _recursive_(&$indice, $niveau, &$param, &$tag_count, &$vals) {
 	if ($indice > $nb_vals)
 		exit;
 	while ($indice < $nb_vals) {
-		list ($key, $val) = each($vals);
+	    $val = $vals[$indice];
 		$indice ++;
 		if (!isset($tag_count[$val["tag"]]))
 			$tag_count[$val["tag"]] = 0;
@@ -83,14 +83,13 @@ function _parser_($nom_fichier, $fonction, $rootelement) {
 				exit;
 			}
 			$param_var = $param[$rootelement][0];
-			for ($i = 0; $i < count($param_var); $i ++) {
-				list ($key, $val) = each($param_var);
+			foreach ($param_var as $key => $val) {
 				if (isset($fonction[$key])) {
 					for ($j = 0; $j < count($val); $j ++) {
 						$param_fonction = $val[$j];
 						if(is_array($fonction[$key])){
 							//si on a un tableau, on rapelle un objet
-							$fonction[$key]['obj']->$fonction[$key]['method']($param_fonction);
+						    $fonction[$key]['obj']->{$fonction[$key]['method']}($param_fonction);
 						}else{
 							//sinon, c'est comme avant...
 							eval($fonction[$key]."(\$param_fonction);");
@@ -130,14 +129,13 @@ function _parser_text_($xml, $fonction, $rootelement) {
 				exit;
 			}
 			$param_var = $param[$rootelement][0];
-			for ($i = 0; $i < count($param_var); $i ++) {
-				list ($key, $val) = each($param_var);
+			foreach ($param_var as $key => $val) {
 				if (isset($fonction[$key])) {
 					for ($j = 0; $j < count($val); $j ++) {
 						$param_fonction = $val[$j];
 						if(is_array($fonction[$key])){
 							//si on a un tableau, on rapelle un objet
-							$fonction[$key]['obj']->$fonction[$key]['method']($param_fonction);
+						    $fonction[$key]['obj']->{$fonction[$key]['method']}($param_fonction);
 						}else{
 							eval($fonction[$key]."(\$param_fonction);");
 						}
@@ -217,7 +215,7 @@ function recurse_xml($param, $level,$tagname) {
 		$ret_sub="";
 		$value="";
 		if ($param=="") $param=array();
-		while (list($key,$val)=each($param)) {
+		foreach ($param as $key => $val) {
 			if (is_array($val)) {
 				for ($i=0; $i<count($val); $i++) {
 					$ret_sub.=recurse_xml($val[$i],$level+1,$key)."</".$key.">\n";

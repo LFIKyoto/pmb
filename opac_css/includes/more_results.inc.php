@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: more_results.inc.php,v 1.109 2018-09-13 08:51:07 dgoron Exp $
+// $Id: more_results.inc.php,v 1.112 2019-06-18 07:47:27 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -73,11 +73,11 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 	} else {
 		if($tab!="affiliate"){
 			//hack un peu tordu pour un clic sur une facette depuis une page autorité...
-			if($mode == "extended" && strpos($_SERVER['HTTP_REFERER'],$_SESSION['last_module_search']['search_mod']) !== false && !$search_type_asked){
+		    if($mode == "extended" && isset($_SESSION['last_module_search']) && strpos($_SERVER['HTTP_REFERER'],$_SESSION['last_module_search']['search_mod']) !== false && !$search_type_asked){
 				if(strpos($_SERVER['HTTP_REFERER'],$_SESSION['last_module_search']['search_mod']) !== false ){
 					if($_SESSION['last_module_search']['need_new_search']){
 						//ajout de la recherche dans l'historique 
-						$_SESSION["nb_queries"]=$_SESSION["nb_queries"]+1;
+						$_SESSION["nb_queries"] = intval($_SESSION["nb_queries"]) + 1;
 						$n=$_SESSION["nb_queries"];
 						$_SESSION["notice_view".$n]=$_SESSION["last_module_search"];
 						$_SESSION["human_query".$n] = search_view::get_last_human_query();
@@ -88,7 +88,7 @@ if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 			}
 		}
 		
-		if ($_SESSION["new_last_query"]) {
+		if (!empty($_SESSION["new_last_query"])) {
 			$_SESSION["last_query"]=$_SESSION["new_last_query"];
 			$_SESSION["new_last_query"]="";
 			unset($_SESSION["facette"]);

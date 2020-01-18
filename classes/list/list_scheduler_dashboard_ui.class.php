@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_scheduler_dashboard_ui.class.php,v 1.7 2018-11-13 10:11:49 dgoron Exp $
+// $Id: list_scheduler_dashboard_ui.class.php,v 1.9.6.1 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,10 +13,6 @@ require_once($class_path.'/scheduler/scheduler_task.class.php');
 
 class list_scheduler_dashboard_ui extends list_ui {
 	
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
-	
 	protected function _get_query_base() {
 		$query = 'SELECT id_tache as id, num_type_tache, libelle_tache as label, start_at as date_start, end_at as date_end, status as state, msg_statut, calc_next_date_deb, calc_next_heure_deb, commande, indicat_progress as progress
 				from taches
@@ -26,6 +22,23 @@ class list_scheduler_dashboard_ui extends list_ui {
 	
 	protected function add_object($row) {
 		$this->objects[] = $row;
+	}
+	
+	/**
+	 * Initialisation des filtres disponibles
+	 */
+	protected function init_available_filters() {
+		$this->available_filters =
+		array('main_fields' =>
+				array(
+						'types' => 'scheduler_types',
+						'labels' => 'scheduler_labels',
+						'states' => 'scheduler_states',
+						'date' => 'scheduler_dates',
+						
+				)
+		);
+		$this->available_filters['custom_fields'] = array();
 	}
 	
 	/**
@@ -42,6 +55,13 @@ class list_scheduler_dashboard_ui extends list_ui {
 				'ids' => array()
 		);
 		parent::init_filters($filters);
+	}
+	
+	protected function init_default_selected_filters() {
+		$this->add_selected_filter('types');
+		$this->add_selected_filter('labels');
+		$this->add_selected_filter('states');
+		$this->add_selected_filter('date');
 	}
 	
 	/**
@@ -66,10 +86,7 @@ class list_scheduler_dashboard_ui extends list_ui {
 	 * Initialisation du tri par défaut appliqué
 	 */
 	protected function init_default_applied_sort() {
-		$this->applied_sort = array(
-				'by' => 'date_next',
-				'asc_desc' => 'desc'
-		);
+	    $this->add_applied_sort('date_next', 'desc');
 	}
 	
 	/**
@@ -78,7 +95,7 @@ class list_scheduler_dashboard_ui extends list_ui {
 	 * @param $b
 	 */
 	protected function _compare_objects($a, $b) {
-		$sort_by = $this->applied_sort['by'];
+	    $sort_by = $this->applied_sort[0]['by'];
 		switch ($sort_by) {
 			case 'date_start':
 			case 'date_end':
@@ -107,22 +124,6 @@ class list_scheduler_dashboard_ui extends list_ui {
 			default:
 				return parent::_compare_objects($a, $b);
 		}
-	}
-	
-	/**
-	 * Affichage des filtres du formulaire de recherche
-	 */
-	public function get_search_filters_form() {
-		global $list_scheduler_dashboard_ui_search_filters_form_tpl;
-		
-		$search_filters_form = $list_scheduler_dashboard_ui_search_filters_form_tpl;
-		$search_filters_form = str_replace('!!types_selector!!', $this->get_types_selector(), $search_filters_form);
-		$search_filters_form = str_replace('!!labels_selector!!', $this->get_labels_selector(), $search_filters_form);
-		$search_filters_form = str_replace('!!states_selector!!', $this->get_states_selector(), $search_filters_form);
-		$search_filters_form = str_replace('!!date_start!!', $this->filters['date_start'], $search_filters_form);
-		$search_filters_form = str_replace('!!date_end!!', $this->filters['date_end'], $search_filters_form);
-		$search_filters_form = str_replace('!!objects_type!!', $this->objects_type, $search_filters_form);
-		return $search_filters_form;
 	}
 	
 	/**
@@ -209,7 +210,7 @@ class list_scheduler_dashboard_ui extends list_ui {
 		$this->add_column('command');
 	}
 	
-	protected function get_types_selector() {
+	protected function get_search_filter_types() {
 		global $msg, $charset;
 	
 		scheduler_tasks::parse_catalog();
@@ -223,7 +224,7 @@ class list_scheduler_dashboard_ui extends list_ui {
 		return $selector;
 	}
 	
-	protected function get_labels_selector() {
+	protected function get_search_filter_labels() {
 		global $msg, $charset;
 	
 		$selector = "<select name='".$this->objects_type."_labels[]' multiple='3'>";
@@ -238,7 +239,7 @@ class list_scheduler_dashboard_ui extends list_ui {
 		return $selector;
 	}
 	
-	protected function get_states_selector() {
+	protected function get_search_filter_states() {
 		global $msg, $charset;
 	
 		$selector = "<select name='".$this->objects_type."_states[]' multiple='3'>";
@@ -251,6 +252,10 @@ class list_scheduler_dashboard_ui extends list_ui {
 		}
 		$selector .= "</select>";
 		return $selector;
+	}
+	
+	protected function get_search_filter_date() {
+		return $this->get_search_filter_interval_date('date');
 	}
 	
 	/**
@@ -467,29 +472,27 @@ class list_scheduler_dashboard_ui extends list_ui {
 		return $display;
 	}
 	
-	protected function get_grouped_objects() {
+	protected function get_grouped_label($object, $property) {
 		global $msg;
 		
-		$grouped_objects = array();
-		foreach ($this->objects as $object) {
-			switch($this->applied_group[0]) {
-				case 'date_start':
-				case 'date_end':
-				case 'date_next':
-					$grouped_objects[substr($object->{$this->applied_group[0]},0,10)][] = $object;
-					break;
-				case 'state':
-					$grouped_objects[$msg['planificateur_state_'.$object->state]][] = $object;
-					break;
-				case 'progress':
-					$grouped_objects[$object->progress.'%'][] = $object;
-					break;
-			}
+		$grouped_label = '';
+		switch($property) {
+			case 'date_start':
+			case 'date_end':
+			case 'date_next':
+				$grouped_label = substr($object->{$this->applied_group[0]},0,10);
+				break;
+			case 'state':
+				$grouped_label = $msg['planificateur_state_'.$object->state];
+				break;
+			case 'progress':
+				$grouped_label = $object->progress.'%';
+				break;
+			default:
+				$grouped_label = parent::get_grouped_label($object, $property);
+				break;
 		}
-		if(!count($grouped_objects)) {
-			$grouped_objects = parent::get_grouped_objects();
-		}
-		return $grouped_objects;
+		return $grouped_label;
 	}
 	
 	public function get_export_icons() {

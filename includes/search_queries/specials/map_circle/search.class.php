@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.4 2018-12-14 16:20:14 ngantier Exp $
+// $Id: search.class.php,v 1.6 2019-05-16 13:40:02 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -49,7 +49,7 @@ class map_circle{
     	global ${$radius_};
     	$radius=${$radius_}[0][0];
     	
-    	$r.="
+    	$r ="
  	    " . $msg['search_extended_map_circle_center'] . "  
     	<input type='text' id='center_" . $valeur_ . "' name='" . $valeur_ . "[]' value='" . $valeur[0] . "'><br>
  	    " . $msg['search_extended_map_circle_radius'] . "  
@@ -141,5 +141,14 @@ class map_circle{
     		} 
     	}
     	return $valeur;		
+    }
+    
+    public static function check_visibility() {
+    	global $pmb_map_activate;
+    	if($pmb_map_activate) {
+    		return true;
+    	} else {
+    		return false;
+    	}
     }
 }

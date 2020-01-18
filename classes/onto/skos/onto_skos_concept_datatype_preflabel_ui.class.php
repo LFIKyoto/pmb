@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_skos_concept_datatype_preflabel_ui.class.php,v 1.9 2018-10-12 14:16:04 tsamson Exp $
+// $Id: onto_skos_concept_datatype_preflabel_ui.class.php,v 1.10 2019-08-14 08:02:58 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -42,7 +42,7 @@ class onto_skos_concept_datatype_preflabel_ui extends onto_common_datatype_small
 		$form=str_replace("!!skos_concept_card_ui_parent_form!!", parent::get_form($item_uri, $property, $restrictions, $datas, $instance_name, $flag), $form);
 		$form=str_replace("!!skos_concept_card_ui_derived_form!!", $vedette_ui->get_form($property->pmb_name, 0, $instance_name, $property->range[0]), $form);
 		
-		$form=str_replace("!!onto_row_label!!", htmlentities($property->label ,ENT_QUOTES,$charset), $form);
+		$form=str_replace("!!onto_row_label!!", htmlentities($property->get_label() ,ENT_QUOTES,$charset), $form);
 		$form=str_replace("!!instance_name!!", htmlentities($instance_name ,ENT_QUOTES,$charset), $form);
 		$form=str_replace("!!property_name!!", htmlentities($property->pmb_name ,ENT_QUOTES,$charset), $form);
 		
@@ -136,9 +136,9 @@ class onto_skos_concept_datatype_preflabel_ui extends onto_common_datatype_small
 							break;
 	 				}
 					if (this.subdivision_error) {
-						this.message = this.message.replace("%s","'.addslashes($property->label).' (" + this.subdivision_error + ")");
+						this.message = this.message.replace("%s","'.addslashes($property->get_label()).' (" + this.subdivision_error + ")");
 					} else {
-						this.message = this.message.replace("%s","'.addslashes($property->label).'");
+						this.message = this.message.replace("%s","'.addslashes($property->get_label()).'");
 					}			
 					return this.message;
 				} else {

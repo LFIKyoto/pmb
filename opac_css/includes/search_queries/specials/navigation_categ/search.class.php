@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.4 2017-07-12 15:15:01 tsamson Exp $
+// $Id: search.class.php,v 1.5 2019-06-18 08:31:48 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,7 +16,7 @@ class navigation_categ_search {
 
 	//Constructeur
     public function __construct($id,$n_ligne,$params,&$search) {
-    	$this->id=$id;
+    	$this->id = intval($id);
     	$this->n_ligne=$n_ligne;
     	$this->params=$params;
     	$this->search=&$search;
@@ -46,11 +46,8 @@ class navigation_categ_search {
     	$nb_level_parents=$_SESSION["last_module_search"]["search_nb_level_parents"];
     	
     	//recuperation du thesaurus session
-    	if (!$id_thes) {
-    		$id_thes = thesaurus::getSessionThesaurusId();
-    	} else {
-    		thesaurus::setSessionThesaurusId($id_thes);
-    	}
+    	$id_thes = thesaurus::getSessionThesaurusId();
+    	
     	$thes = new thesaurus($id_thes);
     	$id_top = $thes->num_noeud_racine;
     	
@@ -78,7 +75,7 @@ class navigation_categ_search {
     	}
     	
     	$q = "select path from noeuds where id_noeud = '".$id."' ";
-    	$r = pmb_mysql_query($q, $dbh);
+    	$r = pmb_mysql_query($q);
     	if($r && pmb_mysql_num_rows($r)){
     		$path=pmb_mysql_result($r, 0, 0);
     		$nb_pere=substr_count($path,'/');

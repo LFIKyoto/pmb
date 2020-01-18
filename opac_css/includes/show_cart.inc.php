@@ -2,45 +2,52 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: show_cart.inc.php,v 1.72 2018-05-03 12:44:07 dgoron Exp $
+// $Id: show_cart.inc.php,v 1.80 2019-07-29 09:00:36 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $msg, $charset, $base_path, $count, $opac_nb_max_tri, $raz_cart, $action, $notice, $opac_search_results_per_page, $page;
+global $opac_allow_download_docnums, $opac_shared_lists, $allow_liste_lecture, $id_empr, $opac_show_suggest, $opac_allow_multiple_sugg;
+global $allow_sugg, $opac_resa, $opac_resa_planning, $opac_resa_cart, $opac_resa_popup, $opac_scan_request_activate, $allow_scan_request;
+global $opac_export_allow, $opac_notices_depliable, $begin_result_liste, $cart_aff_case_traitement, $nb_per_page_custom;
+
 // pour export panier
-require_once($base_path.'/admin/convert/start_export.class.php');
+require_once("$base_path/admin/convert/start_export.class.php");
 
 if (isset($_GET['sort'])) {
-	$_SESSION['last_sortnotices']=$_GET['sort'];
+	$_SESSION['last_sortnotices'] = $_GET['sort'];
 }
-if (isset($count) && $count>$opac_nb_max_tri) {
-	$_SESSION['last_sortnotices']='';
+if (isset($count) && $count > $opac_nb_max_tri) {
+	$_SESSION['last_sortnotices'] = '';
 }
 
-$cart_=(isset($_SESSION['cart']) ? $_SESSION['cart'] : array());
+$cart_ = (isset($_SESSION['cart']) ? $_SESSION['cart'] : array());
 
-if (isset($raz_cart) && $raz_cart) {
-	$cart_=array();
-	$_SESSION['cart']=$cart_;
+if (!empty($raz_cart)) {
+	$cart_ = array();
+	$_SESSION['cart'] = $cart_;
 }
 
 //Traitement des actions
-if(!isset($action)) $action = '';
-if ($action) {
-	switch ($action) {
-		case 'del':
-			for ($i=0; $i<count($notice); $i++) {
-				$as=array_search($notice[$i],$cart_);
-				if (($as!==null)&&($as!==false)) {
-					//Décalage
-					for ($j=$as+1; $j<count($cart_); $j++) {
-						$cart_[$j-1]=$cart_[$j];
-					}
-					unset($cart_[count($cart_)-1]);
+if (!isset($action)) {
+    $action = '';
+}
+if (!empty($action)) {
+    if ($action == 'del') {
+		for ($i = 0; $i < count($notice); $i++) {
+			$as = array_search($notice[$i], $cart_);
+			if ($as !== null && $as !== false) {
+				//Décalage
+				for ($j = $as + 1; $j < count($cart_); $j++) {
+					$cart_[$j - 1] = $cart_[$j];
 				}
+				unset($cart_[count($cart_) - 1]);
 			}
-			$_SESSION['cart']=$cart_;
-			if (ceil(count($cart_)/$opac_search_results_per_page)<$page) $page=count($cart_)/$opac_search_results_per_page;
-			break;
+		}
+		$_SESSION['cart'] = $cart_;
+		if (ceil(count($cart_) / $opac_search_results_per_page) < $page) {
+		    $page = count($cart_) / $opac_search_results_per_page;
+		}
 	}
 }
 
@@ -88,7 +95,7 @@ function confirm_transform(){
 		}
 	}
 	if(!is_check){
-		alert('".$msg['list_lecture_no_ck']."');
+		alert(pmbDojo.messages.getMessage('opac', 'list_lecture_no_ck'));
 		return false;
 	}
 	return is_check;
@@ -98,13 +105,14 @@ function confirm_transform(){
 
 print '<div id="cart_action">';
 
-if (!isset($page) || $page=='') $page=1;
-if (count($cart_)) {
-
+if (!isset($page) || $page == '') {
+    $page = 1;
+}
+if (!empty($cart_)) {
 	//gestion des notices externes (sauvegarde)
 	$cart_ext = array();
-	for($i=0;$i<sizeof($cart_);$i++){
-		if(strpos($cart_[$i],'es') !== false){
+	for ($i = 0; $i < sizeof($cart_); $i++){
+		if (strpos($cart_[$i], 'es') !== false) {
 			$cart_ext[] = $cart_[$i];
 		}
 	}
@@ -118,7 +126,7 @@ if (count($cart_)) {
 	<span class=\"espaceCartAction\">&nbsp;</span>
 	<input type='button' id='show_cart_checked_all' class='bouton' value=\"".$msg['show_cart_check_all']."\" title=\"".$msg['show_cart_check_all']."\" onClick=\"check_uncheck_all_cart();\" />";
 
-	if($opac_allow_download_docnums) {
+	if (!empty($opac_allow_download_docnums)) {
 		print "
 		 <script type='text/javascript' >
 			function download_docnum() {
@@ -162,14 +170,14 @@ if (count($cart_)) {
 			<input type='button' id='docnum_download_checked' class='bouton' value=\"".$msg['docnum_download_checked']."\" title=\"".$msg['docnum_download_checked']."\" onClick=\"download_docnum_notice_checked();\" />
 			<div id='http_response'></div>";
 	}
-	if($opac_shared_lists && $allow_liste_lecture && $id_empr){
+	if (!empty($opac_shared_lists) && !empty($allow_liste_lecture) && !empty($id_empr)) {
 		print 
 		"<br /><br />
 			<input type='button' id='list_lecture_transform_caddie' class='bouton' value=\"".$msg['list_lecture_transform_caddie']."\" title=\"".$msg['list_lecture_transform_caddie_title']."\" onClick=\"document.location='./index.php?lvl=show_list&sub=transform_caddie'\" />
 			<span class=\"espaceCartAction\">&nbsp;</span>
 			<input type='button' id='list_lecture_transform_checked' class='bouton' value=\"".$msg['list_lecture_transform_checked']."\" title=\"".$msg['list_lecture_transform_checked_title']."\" onClick=\"document.cart_form.action='./index.php?lvl=show_list&sub=transform_check';if(confirm_transform()) document.cart_form.submit(); else return false;\" />";
 	}
-	if ($opac_show_suggest && $opac_allow_multiple_sugg && $allow_sugg && $id_empr) {
+	if (!empty($opac_show_suggest) && !empty($opac_allow_multiple_sugg) && !empty($allow_sugg) && !empty($id_empr)) {
 		print "
 		 <script type='text/javascript' >
 		 function notice_checked(){
@@ -187,7 +195,7 @@ if (count($cart_)) {
 				}
 			}
 			if(!is_check){
-				alert('".$msg['list_lecture_no_ck']."');
+				alert(pmbDojo.messages.getMessage('opac', 'list_lecture_no_ck'));
 				return false;
 			}
 
@@ -198,27 +206,29 @@ if (count($cart_)) {
 		print '<br /><br />';
 		print "<input type='button' id='transform_caddie_to_multisugg' class='bouton' value=\"".$msg['transform_caddie_to_multisugg']."\" title=\"".$msg['transform_caddie_to_multisugg_title']."\" onClick=\"document.getElementById('div_src_sugg').style.display='';\" />";
 		print "<span class=\"espaceCartAction\">&nbsp;</span>
-		<input type='button' id='transform_caddie_notice_to_multisugg' class='bouton' value=\"".$msg['transform_caddie_notice_to_multisugg']."\" title=\"".$msg['transform_caddie_notice_to_multisugg_title']."\" onClick=\"if(notice_checked()){ document.getElementById('div_src_sugg').style.display='';} else return false; \" />";
+		<input type='button' id='transform_caddie_notice_to_multisugg' class='bouton' value=\"".$msg['transform_caddie_notice_to_multisugg']."\" title=\"".$msg['transform_caddie_notice_to_multisugg']."\" onClick=\"if(notice_checked()){ document.getElementById('div_src_sugg').style.display='';} else return false; \" />";
 		print '<div class="row" id="div_src_sugg" style="display:none" >';
 		print '<label class="etiquette">'.$msg['empr_sugg_src'].': </label>';
 		//Affichage du selecteur de source
 		$req = 'select * from suggestions_source order by libelle_source';
-		$res= pmb_mysql_query($req,$dbh);
-		$option = '<option value="0" selected="selected">'.htmlentities($msg['empr_sugg_no_src'],ENT_QUOTES,$charset).'</option>';
-		while(($src=pmb_mysql_fetch_object($res))){
-			$option .= '<option value="'.$src->id_source.'" >'.htmlentities($src->libelle_source,ENT_QUOTES,$charset).'</option>';
+		$res = pmb_mysql_query($req);
+		$option = '<option value="0" selected="selected">'.htmlentities($msg['empr_sugg_no_src'], ENT_QUOTES, $charset).'</option>';
+		while ($src = pmb_mysql_fetch_object($res)) {
+			$option .= "<option value='$src->id_source'>".htmlentities($src->libelle_source, ENT_QUOTES, $charset)."</option>";
 		}
-		$selecteur = '<select id="sug_src" name="sug_src">'.$option.'</select>';
+		$selecteur = "<select id='sug_src' name='sug_src'>$option</select>";
 		print $selecteur;
 		print "<input type='button' class='bouton' value=\"".$msg[11]."\" onClick=\"document.cart_form.action='./empr.php?lvl=transform_to_sugg&act=transform_caddie&sug_src='+document.getElementById('sug_src').value;document.cart_form.submit();\" />";
 		print '</div>';
 	}
 
 	//resas
-	if($opac_resa && $opac_resa_planning!=1 && $id_empr && $opac_resa_cart) {
-
+	if (!isset($id_empr)) {
+	    $id_empr = '';
+	}
+	if (!empty($opac_resa) && $opac_resa_planning != 1 && !empty($id_empr) && !empty($opac_resa_cart)) {
 		print '<br /><br />';
-		if($opac_resa_popup){
+		if (!empty($opac_resa_popup)) {
 			print "<input type='button' id='show_cart_reserve' class='bouton' value=\"".$msg['show_cart_reserve']."\" title=\"".$msg['show_cart_reserve_title']."\"
 					onClick=\"
 						w=window.open('./do_resa.php?lvl=resa_cart&sub=resa_cart','doresa','scrollbars=yes,width=900,height=300,menubar=0,resizable=yes'); w.focus(); return false;
@@ -250,7 +260,7 @@ if (count($cart_)) {
 							return false;
 						}
 					\" />";
-		}else{
+		} else {
 			print "<input type='button' id='show_cart_reserve' class='bouton' value=\"".$msg['show_cart_reserve']."\" title=\"".$msg['show_cart_reserve_title']."\" onClick=\"
 						document.location='./do_resa.php?lvl=resa_cart&sub=resa_cart';
 					\" /><span class=\"espaceCartAction\">&nbsp;</span>
@@ -281,11 +291,9 @@ if (count($cart_)) {
 		}
 
 	//resas planifiees
-	} elseif($opac_resa && $opac_resa_planning=='1' && $id_empr && $opac_resa_cart) {
-
+	} elseif(!empty($opac_resa) && $opac_resa_planning == '1' && !empty($id_empr) && !empty($opac_resa_cart)) {
 		print '<br /><br />';
-		if($opac_resa_popup){
-
+		if ($opac_resa_popup) {
 			print "<input type='button' id='show_cart_reserve' class='bouton' value=\"".$msg['show_cart_reserve']."\" title=\"".$msg['show_cart_reserve_title']."\"
 					onClick=\"
 						w=window.open('./do_resa.php?lvl=resa_cart&sub=resa_cart','doresa','scrollbars=yes,width=900,height=300,menubar=0,resizable=yes'); w.focus(); return false;
@@ -317,9 +325,7 @@ if (count($cart_)) {
 							return false;
 						}
 					\" />";
-
 		} else {
-
 			print "<input type='button' id='show_cart_reserve' class='bouton' value=\"".$msg['show_cart_reserve']."\" title=\"".$msg['show_cart_reserve_title']."\" onClick=\"
 						document.location='./do_resa.php?lvl=resa_cart&sub=resa_planning_cart';
 					\" /><span class=\"espaceCartAction\">&nbsp;</span>
@@ -345,76 +351,86 @@ if (count($cart_)) {
 							alert('".$msg['resa_no_doc_selected']."')
 							return false;
 						}
-
 					\" />";
 		}
 	}
 
 	// Demande de numérisation
-	if ($opac_scan_request_activate && $allow_scan_request && $id_empr) {
+	if (!empty($opac_scan_request_activate) && !empty($allow_scan_request) && !empty($id_empr)) {
 		print "<br /><br /><input type='button' id='scan_request_from_caddie' class='bouton' value=\"".$msg["scan_request_from_caddie"]."\" title=\"".$msg["scan_request_from_caddie_title"]."\" onClick=\"document.location='./empr.php?tab=scan_requests&lvl=scan_request&sub=edit&from=caddie'\" /><span class=\"espaceCartAction\">&nbsp;</span>
 		<input type='button' id='scan_request_from_checked' class='bouton' value=\"".$msg["scan_request_from_checked"]."\" title=\"".$msg["scan_request_from_checked_title"]."\" onClick=\"document.cart_form.action='./empr.php?tab=scan_requests&lvl=scan_request&sub=edit&from=checked';if(confirm_transform()) document.cart_form.submit(); else return false;\" />";
 	}
 	
 	//Tri
-	if (isset($_SESSION['last_sortnotices']) && $_SESSION['last_sortnotices'] != '') {
-		$sort=new sort('notices','session');
+	if (!empty($_SESSION['last_sortnotices'])) {
+		$sort = new sort('notices', 'session');
 		$sql = "SELECT notice_id FROM notices WHERE notice_id IN (";
-		for ($z=0; $z<count($cart_); $z++) {
-			$sql.="'". $cart_[$z]."',";
+		for ($z = 0; $z < count($cart_); $z++) {
+			$sql .= "'". $cart_[$z] ."',";
 		}
 		$sql = substr($sql, 0, strlen($sql) - 1) .")";
-
-		$sql=$sort->appliquer_tri($_SESSION['last_sortnotices'],$sql,'notice_id',0,0);
+		$sql = $sort->appliquer_tri($_SESSION['last_sortnotices'], $sql, 'notice_id', 0, 0);
 	} else {
-		$sql="select notice_id from notices where notice_id in ('".implode("','",$cart_)."') order by tit1";
+		$sql = "select notice_id from notices where notice_id in ('".implode("','", $cart_)."') order by tit1";
 	}
 
-	$res=pmb_mysql_query($sql,$dbh);
-	$cart_=array();
-	while ($r=pmb_mysql_fetch_object($res)) {
-		$cart_[]=$r->notice_id;
+	$res = pmb_mysql_query($sql);
+	$cart_ = array();
+	while ($r = pmb_mysql_fetch_object($res)) {
+		$cart_[] = $r->notice_id;
 	}
-	if($cart_ext) $cart_ = array_merge($cart_,$cart_ext);
-	$_SESSION['cart']=$cart_;
+	if (!empty($cart_ext)) {
+	    $cart_ = array_merge($cart_, $cart_ext);
+	}
+	$_SESSION['cart'] = $cart_;
 
-	if (($opac_export_allow=='1') || (($opac_export_allow=='2') && ($_SESSION['user_code']))) {
-		$nb_fiche=0;
-		$nb_fiche_total=count($cart_);
+	if ($opac_export_allow == '1' || ($opac_export_allow == '2' && $_SESSION['user_code'])) {
+		$nb_fiche = 0;
+		$nb_fiche_total = count($cart_);
 
-		for ($z=0; $z<$nb_fiche_total; $z++) {
-			if (substr($cart_[$z],0,2)!="es"){
+		for ($z = 0; $z < $nb_fiche_total; $z++) {
+			if (substr($cart_[$z], 0, 2) != "es") {
 				// Exclure de l'export (opac, panier) les fiches interdites de diffusion dans administration, Notices > Origines des notices NG72
-				$sql="select 1 from origine_notice,notices where notice_id = '$cart_[$z]' and origine_catalogage = orinot_id and orinot_diffusion='1' ";
+				$sql = "select 1 from origine_notice,notices where notice_id = '$cart_[$z]' and origine_catalogage = orinot_id and orinot_diffusion='1'";
 			} else {
-				$requete = "SELECT source_id FROM external_count WHERE rid=".addslashes(substr($cart_[$z],2));
-				$myQuery = pmb_mysql_query($requete, $dbh);
+				$requete = "SELECT source_id FROM external_count WHERE rid=".addslashes(substr($cart_[$z], 2));
+				$myQuery = pmb_mysql_query($requete);
 				$source_id = pmb_mysql_result($myQuery, 0, 0);
-				$sql="select 1 from entrepot_source_$source_id where recid='".addslashes(substr($cart_[$z],2))."' group by ufield,usubfield,field_order,subfield_order,value";
+				$sql = "select 1 from entrepot_source_$source_id where recid='".addslashes(substr($cart_[$z], 2))."' group by ufield,usubfield,field_order,subfield_order,value";
 			}
-			$res=pmb_mysql_query($sql,$dbh);
-			if ($ligne=pmb_mysql_fetch_array($res))
+			$res = pmb_mysql_query($sql);
+			if (!empty(pmb_mysql_fetch_array($res))) {
 				$nb_fiche++;
+			}
 		}
-		if ($nb_fiche!=$nb_fiche_total) {
-			$msg_export_partiel = str_replace ('!!nb_export!!',$nb_fiche, $msg[export_partiel]);
-			$msg_export_partiel = str_replace ('!!nb_total!!',$nb_fiche_total, $msg_export_partiel);
+		if ($nb_fiche != $nb_fiche_total) {
+			$msg_export_partiel = str_replace ('!!nb_export!!', $nb_fiche, $msg['export_partiel']);
+			$msg_export_partiel = str_replace ('!!nb_total!!', $nb_fiche_total, $msg_export_partiel);
 			$js_export_partiel = "if (confirm('".addslashes($msg_export_partiel)."')) {";
-		} else $js_export_partiel = "if (true) {";
+		} else {
+		    $js_export_partiel = "if (true) {";
+		}
 
 		print "<form name='export_form'><br />";
-		$radio = "<br />
-			<input type='radio' name='radio_exp' id='radio_exp_all' value='0' checked /><label for='radio_exp_all'>".htmlentities($msg['export_cart_all'],ENT_QUOTES,$charset)."</label>
-			<input type='radio' name='radio_exp' id='radio_exp_sel' value='1' /><label for='radio_exp_sel'>".htmlentities($msg['export_cart_selected'],ENT_QUOTES,$charset)."</label>
+		$radio = "
+		<br />
+		<div class='cart_radio_export_all'>
+		    <input type='radio' name='radio_exp' id='radio_exp_all' value='0' checked />
+		    <label for='radio_exp_all'>".htmlentities($msg['export_cart_all'], ENT_QUOTES, $charset)."</label>
+		</div>
+		<div class='cart_radio_export_sel'>
+    		<input type='radio' name='radio_exp' id='radio_exp_sel' value='1' />
+    		<label for='radio_exp_sel'>".htmlentities($msg['export_cart_selected'], ENT_QUOTES, $charset)."</label>
+		</div>
 		";
 
 		$exp = start_export::get_exports();
 		$selector_exp = "<select name='typeexport'>" ;
-		for ($i=0;$i<count($exp);$i++) {
+		for ($i = 0; $i < count($exp); $i++) {
 			$selector_exp .= "<option value='".$exp[$i]['ID']."'>".$exp[$i]['NAME']."</option>";
 		}
 		$selector_exp .= "</select>" ;
-		print sprintf($msg['show_cart_export']."<span class=\"espaceCartAction\">&nbsp;</span>",$selector_exp.$radio);
+		print sprintf($msg['show_cart_export']."<span class=\"espaceCartAction\">&nbsp;</span>", $selector_exp.$radio);
 		print "<script type='text/javascript' >
 			function getNoticeSelected(){
 				if(document.getElementById('radio_exp_sel').checked){
@@ -428,7 +444,7 @@ if (count($cart_)) {
 						}
 					}
 					if(!hasSelected) {
-						alert('".$msg['list_lecture_no_ck']."');
+						alert(pmbDojo.messages.getMessage('opac', 'list_lecture_no_ck'));
 						return false;
 					} else return items;
 				}
@@ -442,38 +458,44 @@ if (count($cart_)) {
 
 print '</div>';
 
-if (count($cart_)) {
+if (!empty($cart_)) {
 	print '<h3 class="title_basket">
 			<span>'.$msg['show_cart_content'].'</span>
-			: <b>'.sprintf($msg['show_cart_n_notices'],count($cart_)).'</b>
+			: <b>'.sprintf($msg['show_cart_n_notices'], count($cart_)).'</b>
 			</h3>';
 
 	print '<div class="search_result">';
-	if ($opac_notices_depliable) print $begin_result_liste;
+	if (!empty($opac_notices_depliable)) {
+	    print $begin_result_liste;
+	}
 
-	if (count($cart_)<=$pmb_nb_max_tri) {
-		$affich_tris_result_liste = str_replace('!!page_en_cours!!','lvl=show_cart',$affich_tris_result_liste);
-		$affich_tris_result_liste = str_replace('!!page_en_cours1!!','lvl=show_cart',$affich_tris_result_liste);
+	if (count($cart_) <= $opac_nb_max_tri) {
+		$affich_tris_result_liste = sort::show_tris_selector();
+		$affich_tris_result_liste = str_replace('!!page_en_cours!!', 'lvl=show_cart', $affich_tris_result_liste);
+		$affich_tris_result_liste = str_replace('!!page_en_cours1!!', 'lvl=show_cart', $affich_tris_result_liste);
 		print $affich_tris_result_liste;
 	}
 	
-	if (isset($_SESSION['last_sortnotices']) && $_SESSION['last_sortnotices'] != '')
+	if (!empty($_SESSION['last_sortnotices'])) {
 		print "<span class='sort'>".$msg['tri_par'].' '.$sort->descriptionTriParId($_SESSION['last_sortnotices']).'<span class="espaceCartAction">&nbsp;</span></span>';
-
+	}
+	
 	print '<blockquote>';
 
 	// case à cocher de suppression transférée dans la classe notice_affichage
 	$cart_aff_case_traitement = 1 ;
-	print '<form action="./index.php?lvl=show_cart&action=del&page='.$page.'" method="post" name="cart_form">';
-	for ($i=(($page-1)*$opac_search_results_per_page); (($i<count($cart_))&&($i<($page*$opac_search_results_per_page))); $i++) {
-		if (substr($cart_[$i],0,2)!='es') {
-			print pmb_bidi(aff_notice($cart_[$i],1));
+	print "<form action='./index.php?lvl=show_cart&action=del&page=$page' method='post' name='cart_form'>";
+	for ($i = (($page - 1) * $opac_search_results_per_page); ($i < count($cart_) && ($i < ($page * $opac_search_results_per_page))); $i++) {
+		if (substr($cart_[$i], 0, 2) != 'es') {
+			print pmb_bidi(aff_notice($cart_[$i], 1));
 		} else {
-			print pmb_bidi(aff_notice_unimarc(substr($cart_[$i],2),1));
+			print pmb_bidi(aff_notice_unimarc(substr($cart_[$i], 2), 1));
 		}
 	}
 	print '</form></blockquote></div>';
-
+	if(!isset($nb_per_page_custom)) {
+	    $nb_per_page_custom = '';
+	}
 	print '<div id="cart_navbar"><hr /><div style="text-align:center">'.printnavbar($page, count($cart_), $opac_search_results_per_page, './index.php?lvl=show_cart&page=!!page!!&nbr_lignes='.count($cart_).($nb_per_page_custom ? "&nb_per_page_custom=".$nb_per_page_custom : '')).'</div></div>';
 } else {
 	print '<h3><span>'.$msg['show_cart_is_empty'].'</span></h3>';

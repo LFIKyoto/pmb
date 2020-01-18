@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_empr.class.php,v 1.1 2018-11-22 15:34:57 dgoron Exp $
+// $Id: import_empr.class.php,v 1.2 2019-06-05 13:57:14 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -35,7 +35,10 @@ class import_empr extends import_entities {
 	}
 	
 	public static function gestion_groupe($lib_groupe, $empr_cb) {
-	
+		$lib_groupe = trim($lib_groupe);
+		if(!$lib_groupe) {
+			return;
+		}
 		$sel = pmb_mysql_query("SELECT id_groupe from groupe WHERE libelle_groupe = '".addslashes($lib_groupe)."'");
 		$nb_enreg_grpe = pmb_mysql_num_rows($sel);
 	

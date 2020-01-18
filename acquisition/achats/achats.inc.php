@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: achats.inc.php,v 1.8 2011-06-06 08:04:26 dbellamy Exp $
+// $Id: achats.inc.php,v 1.9 2019-05-28 15:00:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $sub;
 
 switch($sub) {
 	case 'devi':

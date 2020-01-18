@@ -2,13 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: make_multi_sugg.inc.php,v 1.4 2016-08-19 08:33:49 ngantier Exp $
+// $Id: make_multi_sugg.inc.php,v 1.7 2019-06-18 07:57:06 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
 require_once($base_path."/classes/suggestion_multi.class.php");
 
+if (!isset($action)) $action = '';
+if (!isset($act)) $act = '';
 if($action) $act=$action;
+if (!isset($notices)) $notices = array();
 $sug = new suggestion_multi($notices); 
 
 switch($act){
@@ -19,7 +22,7 @@ switch($act){
 		print "</div>";		
 		break;
 	case 'transform_caddie':
-		if(count($notice)){
+	    if(!empty($notice) && is_array($notice) && count($notice)){
 			if(count($notice)==1){ // fomulaire unique
 				$id_notice = $notice[0];
 				$form_action = 'empr.php';

@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: func_other_rameau_first_level.inc.php,v 1.15 2016-09-07 08:35:37 mbertin Exp $
+// $Id: func_other_rameau_first_level.inc.php,v 1.16 2019-02-18 15:10:49 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -76,7 +76,7 @@ function traite_categories_for_form($tableau_600="",$tableau_601="",$tableau_602
 
 	return array(
 		"form" => "<input type='hidden' name='rameau' value='".htmlentities($champ_rameau,ENT_QUOTES,$charset)."' />",
-		"message" => "Rameau sera intégré en catégorie au premier niveau : ".htmlentities($champ_rameau,ENT_QUOTES,$charset)
+		"message" => "Rameau sera int&eacute;gr&eacute; en cat&eacute;gorie au premier niveau : ".htmlentities($champ_rameau,ENT_QUOTES,$charset)
 	);
 }
 

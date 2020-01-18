@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannette_abon.class.php,v 1.10 2018-12-26 11:22:32 ngantier Exp $
+// $Id: bannette_abon.class.php,v 1.10.6.1 2019-09-26 15:41:01 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -33,28 +33,32 @@ class bannette_abon{
 		}
 	}
 	
-	public function save_bannette_abon($bannette_abon) {
-		$tableau_bannettes = $this->tableau_gerer_bannette("PUB");
+	public function save_bannette_abon($bannette_abon, $filtered_list=array()) {
+	    $tableau_bannettes = $this->tableau_gerer_bannette("PUB");
 		foreach ($tableau_bannettes as $bannette) {
-			pmb_mysql_query("delete from bannette_abon where num_empr = '" . $this->num_empr . "' and num_bannette = '".$bannette->id_bannette."' ");
-			if (isset($bannette_abon[$bannette->id_bannette]) && $bannette_abon[$bannette->id_bannette]) {
-				pmb_mysql_query("replace into bannette_abon (num_empr, num_bannette) values ('" . $this->num_empr . "', '".$bannette->id_bannette."')");
-			}
+		    if(!count($filtered_list) || in_array($bannette->id_bannette, $filtered_list)) {
+		        pmb_mysql_query("delete from bannette_abon where num_empr = '" . $this->num_empr . "' and num_bannette = '".$bannette->id_bannette."' ");
+		        if (isset($bannette_abon[$bannette->id_bannette]) && $bannette_abon[$bannette->id_bannette]) {
+		            pmb_mysql_query("replace into bannette_abon (num_empr, num_bannette) values ('" . $this->num_empr . "', '".$bannette->id_bannette."')");
+		        }
+		    }
 		}
 	}
 	
-	public function delete_bannette_abon($bannette_abon) {
+	public function delete_bannette_abon($bannette_abon, $filtered_list=array()) {
 		$tableau_bannettes = $this->tableau_gerer_bannette("PRI");
 		foreach ($tableau_bannettes as $bannette) {
-			if (isset($bannette_abon[$bannette->id_bannette]) && $bannette_abon[$bannette->id_bannette]) {
-				pmb_mysql_query("delete from bannette_abon where num_empr = '" . $this->num_empr . "' and num_bannette = '".$bannette->id_bannette."' ");
-				pmb_mysql_query("delete from bannette_contenu where num_bannette='".$bannette->id_bannette."' ");
-				$req_eq = pmb_mysql_query("select num_equation from bannette_equation where num_bannette = '".$bannette->id_bannette."' ");
-				$eq = pmb_mysql_fetch_object($req_eq);
-				pmb_mysql_query("delete from equations where id_equation = '" . $eq->num_equation . "' ");
-				pmb_mysql_query("delete from bannette_equation where num_bannette = '".$bannette->id_bannette."' ");
-				pmb_mysql_query("delete from bannettes where id_bannette = '".$bannette->id_bannette."' ");
-			}
+		    if(!count($filtered_list) || in_array($bannette->id_bannette, $filtered_list)) {
+    			if (isset($bannette_abon[$bannette->id_bannette]) && $bannette_abon[$bannette->id_bannette]) {
+    				pmb_mysql_query("delete from bannette_abon where num_empr = '" . $this->num_empr . "' and num_bannette = '".$bannette->id_bannette."' ");
+    				pmb_mysql_query("delete from bannette_contenu where num_bannette='".$bannette->id_bannette."' ");
+    				$req_eq = pmb_mysql_query("select num_equation from bannette_equation where num_bannette = '".$bannette->id_bannette."' ");
+    				$eq = pmb_mysql_fetch_object($req_eq);
+    				pmb_mysql_query("delete from equations where id_equation = '" . $eq->num_equation . "' ");
+    				pmb_mysql_query("delete from bannette_equation where num_bannette = '".$bannette->id_bannette."' ");
+    				pmb_mysql_query("delete from bannettes where id_bannette = '".$bannette->id_bannette."' ");
+    			}
+		    }
 		}
 	}
 	

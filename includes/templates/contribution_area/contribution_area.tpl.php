@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution_area.tpl.php,v 1.15 2018-12-28 16:27:31 tsamson Exp $
+// $Id: contribution_area.tpl.php,v 1.18 2019-05-27 09:55:43 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $contribution_area_list_tpl, $msg, $charset, $contribution_area_list_line_tpl, $contribution_area_add_button;
+global $contribution_area_delete_button, $contribution_area_form, $current_module, $contribution_area_form_definition, $contribution_area_computed_form;
 
 $contribution_area_list_tpl="
 <table>
@@ -109,10 +112,13 @@ $contribution_area_computed_form = "
 		!!area_title!!
 	</h3>
 </div>
+<script src='./javascript/ace/ace.js' type='text/javascript' charset='utf-8'></script>
+<script src='./javascript/ace/theme-eclipse.js' type='text/javascript' charset='utf-8'></script>
+<script src='./javascript/ace/mode-javascript.js' type='text/javascript' charset='utf-8'></script>
 <div data-dojo-type='dijit/layout/BorderContainer' data-dojo-props='splitter:true' style='height:800px;width:100%;'>
 	<div data-dojo-type='dijit/layout/ContentPane' data-dojo-props='region:\"left\", splitter:true' style='height:100%;width:200px;'>
 		<input type='hidden' id='contribution_area_num' name='contribution_area_num' value='!!id!!'/>
-		<div data-dojo-id='computedFieldsStore' data-dojo-type='apps/contribution_area/computed_fields/Store' data-dojo-props='data:!!graph_data_store!!,availableEntities:!!available_entities_data!!,computedFields:!!computed_fields!!, environmentFields : !!environment_fields!!'></div>
+		<div data-dojo-id='computedFieldsStore' data-dojo-type='apps/contribution_area/computed_fields/Store' data-dojo-props='data:!!graph_data_store!!,availableEntities:!!available_entities_data!!,computedFields:!!computed_fields!!,environmentFields:!!environment_fields!!,emprFields:!!empr_fields!!'></div>
 		<div data-dojo-id='computedFieldsModel' data-dojo-type='dijit/tree/ObjectStoreModel' data-dojo-props='store: computedFieldsStore, query: {type: \"root\"}, rootId:\"root\"'></div>
 		<div data-dojo-id='scenariosComputedTree' data-dojo-type='apps/contribution_area/computed_fields/Tree' data-dojo-props='model: computedFieldsModel' ></div>
 	</div>

@@ -2,13 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: end_import.php,v 1.19 2017-11-22 11:07:33 dgoron Exp $
+// $Id: end_import.php,v 1.20 2019-01-17 13:44:06 dgoron Exp $
 
 //Fin de la conversion
 $base_path = "../..";
 $base_auth = "ADMINISTRATION_AUTH|CATALOGAGE_AUTH";
 $base_title = "\$msg[ie_import_running]";
 require ($base_path."/includes/init.inc.php");
+
+require_once($class_path."/import/import_entities.class.php");
+require_once ($class_path."/import/import_records.class.php");
+require_once ($class_path."/import/import_expl.class.php");
 
 $percent=100;
 echo "<h3>$msg[admin_conversion_end1] $import_type_l $msg[admin_conversion_end2].</h3><br />\n";

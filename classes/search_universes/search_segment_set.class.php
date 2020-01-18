@@ -1,9 +1,8 @@
 <?php
-use GuzzleHttp\json_encode;
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_segment_set.class.php,v 1.3 2018-04-13 14:30:33 vtouchard Exp $
+// $Id: search_segment_set.class.php,v 1.5.2.1 2019-09-12 07:52:20 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -66,7 +65,8 @@ class search_segment_set {
 	public function get_form() {
 	    global $msg, $charset, $base_url;
 	    global $search_segment_set_form;
-	    
+
+	    $authperso_id = 0;
 	    if (empty($search_segment_set_form))  {
 	        return '';
 	    }
@@ -74,8 +74,12 @@ class search_segment_set {
 	    $search_segment_set_form = str_replace('!!segment_id!!', $this->num_segment, $search_segment_set_form);
 	    $search_segment_set_form = str_replace('!!segment_type!!', $this->get_search_type_from_segment_type(), $search_segment_set_form);	    
 	    $search_segment_set_form = str_replace('!!segment_set_human_query!!', $this->get_human_query(), $search_segment_set_form);	    
-	    $search_segment_set_form = str_replace('!!segment_set_data_set!!', $this->get_data_set(), $search_segment_set_form);	    
-	    
+	    $search_segment_set_form = str_replace('!!segment_set_data_set!!', $this->get_data_set(), $search_segment_set_form);	
+
+	    if (intval($this->type) > 1000) {
+	        $authperso_id = intval($this->type) - 1000;
+	    }
+	    $search_segment_set_form = str_replace('!!authperso_id!!', $authperso_id, $search_segment_set_form);
 	    return $search_segment_set_form;
 	}
 		
@@ -164,5 +168,10 @@ class search_segment_set {
 		$this->table_tempo = $this->search_instance->make_search($prefix);
 		
 		return $this->table_tempo;
+	}
+	
+	public function delete_data_set(){
+	    $this->data_set = "";
+	    $this->human_query = "";
 	}
 }

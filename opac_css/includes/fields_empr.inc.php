@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fields_empr.inc.php,v 1.105 2018-10-08 13:59:40 vtouchard Exp $
+// $Id: fields_empr.inc.php,v 1.121.2.3 2019-11-21 09:56:16 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -180,7 +180,7 @@ function aff_query_auth_empr($field,&$check_scripts,$script="") {
     $ret = "";
     if(empty($ajax_js_already_included)){
         $ajax_js_already_included = true;
-        $ret.="<script src='javascript/ajax.js'></script>";
+        $ret.="<script src='./includes/javascript/ajax.js'></script>";
     }
     
     if (($n==0)||($options['MULTIPLE'][0]['value']!="yes")) $n=1;
@@ -351,7 +351,7 @@ function aff_query_auth_empr_search($field,&$check_scripts,$varname) {
     $ret = "";
     if(empty($ajax_js_already_included)){
         $ajax_js_already_included = true;
-        $ret = "<script src='javascript/ajax.js'></script>";
+        $ret = "<script src='./includesjavascript/ajax.js'></script>";
     }
     
     $val_dyn=3;
@@ -483,7 +483,7 @@ function aff_date_box_empr($field,&$check_scripts) {
         }
         $ret .= "<div>
 				<input type='text' style='width: 10em;' name='".$field['NAME']."[]' id='".$field['NAME']."_val_".$count."' value='".$val."'
-						data-dojo-type='dijit/form/DateTextBox' required='false' />
+						data-dojo-type='dijit/form/DateTextBox' constraints=\"{datePattern:'".getDojoPattern($msg['format_date'])."'}\" required='false' />
 				<input class='bouton' type='button' value='X' onClick='empty_dojo_calendar_by_id(\"".$field['NAME']."_val_".$count."\");'/>";
         if (isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value'] && !$count)
             $ret .= '<input class="bouton" type="button" value="+" onclick="add_custom_date_box_(\''.$afield_name.'\', \''.addslashes($field['NAME']).'\',\''.(!$options["DEFAULT_TODAY"][0]["value"] ? formatdate(date("Ymd",time())).'\',\''.date("Y-m-d",time()) : '').'\')">';
@@ -541,15 +541,25 @@ function aff_date_box_empr_search($field,&$check_scripts,$varname) {
     global $msg;
     
     $values=$field['VALUES'];
-    $d=explode("-",$values[0]);
-    if (!@checkdate($d[1],$d[2],$d[0])) {
-        $val='';
-    } else {
-        $val=$values[0];
-    }
-    $ret="
-		<div id='".$varname."_start_part[]' style='display: inline-block;'>
-			<input type='text' style='width: 10em;' name='".$varname."[]' id='".$varname."[]' value='".$val."'  data-dojo-type='dijit/form/DateTextBox' required='false' />
+	$ret="
+		<div id='".$varname."_start_part[]' style='display: inline-block;'>";
+	if(!isset($field['OP'])) $field['OP'] = '';
+	switch ($field['OP']) {
+		case 'LESS_THAN_DAYS':
+		case 'MORE_THAN_DAYS':
+			$ret.="<input type='text' style='width: 10em;' name='".$varname."[]' id='".$varname."[]' value='".$values[0]."' /> ".htmlentities($msg['days'], ENT_QUOTES, $charset);
+			break;
+		default:
+			$d=explode("-",$values[0]);
+			if (!@checkdate($d[1],$d[2],$d[0])) {
+				$val='';
+			} else {
+				$val=$values[0];
+			}
+			$ret.="<input type='text' style='width: 10em;' name='".$varname."[]' id='".$varname."[]' value='".$val."'  data-dojo-type='dijit/form/DateTextBox' constraints=\"{datePattern:'".getDojoPattern($msg['format_date'])."'}\" required='false' />";
+			break;
+	}
+	$ret.="
 		</div>";
     
     $values=$field['VALUES1'];
@@ -561,7 +571,7 @@ function aff_date_box_empr_search($field,&$check_scripts,$varname) {
     }
     $ret.="
 		<div id='".$varname."_end_part[]' style='display: inline-block;'>
-			 - <input type='text' style='width: 10em;' name='".$varname."_1[]' id='".$varname."_1[]' value='".$val."'  data-dojo-type='dijit/form/DateTextBox' required='false' />
+			 - <input type='text' style='width: 10em;' name='".$varname."_1[]' id='".$varname."_1[]' value='".$val."'  data-dojo-type='dijit/form/DateTextBox' constraints=\"{datePattern:'".getDojoPattern($msg['format_date'])."'}\" required='false' />
 		</div>";
     return $ret;
 }
@@ -602,8 +612,9 @@ function aff_text_empr($field,&$check_scripts) {
     global $msg;
     
     $options=$field['OPTIONS'][0];
-    $values=$field['VALUES'];
-    if(!isset($values[0])) $values[0] = '';
+    $values = array();   
+    if(!isset($field['VALUES'][0])) $values[0] = '';
+    else $values=$field['VALUES'];
     $ret="<input id=\"".$field['NAME']."\" type=\"text\" size=\"".$options['SIZE'][0]['value']."\" maxlength=\"".$options['MAXSIZE'][0]['value']."\" name=\"".$field['NAME']."[]\" value=\"".htmlentities($values[0],ENT_QUOTES,$charset)."\">";
     if ($field['MANDATORY']==1) $check_scripts.="if (document.forms[0].elements[\"".$field['NAME']."[]\"].value==\"\") return cancel_submit(\"".sprintf($msg["parperso_field_is_needed"],$field['ALIAS'])."\");\n";
     return $ret;
@@ -749,7 +760,7 @@ function aff_list_empr($field,&$check_scripts,$script="") {
                             elseif ($r[$_custom_prefixe_."_custom_list_value"]==$options['DEFAULT_VALUE'][0]['value']) $ret.=" checked=checked";
                         }
                     }
-                    $ret.=" value='".$r[$_custom_prefixe_."_custom_list_value"]."'/><span id='lib_".$field['NAME']."_".$r[$_custom_prefixe_."_custom_list_value"]."'>&nbsp;".$r[$_custom_prefixe_."_custom_list_lib"]."</span>";
+                    $ret.=" value='".$r[$_custom_prefixe_."_custom_list_value"]."'/><span id='lib_".$field['NAME']."_".$r[$_custom_prefixe_."_custom_list_value"]."'><label for='".$field['NAME']."_".$r[$_custom_prefixe_."_custom_list_value"]."'>&nbsp;".$r[$_custom_prefixe_."_custom_list_lib"]."</label></span>";
                     $i++;
                 }
             }
@@ -792,15 +803,16 @@ function aff_list_empr($field,&$check_scripts,$script="") {
         if ($values) {
             $values_received=$values;
             $values=array();
+            $list_values=array();
             $requete="select ".$_custom_prefixe_."_custom_list_value, ".$_custom_prefixe_."_custom_list_lib from ".$_custom_prefixe_."_custom_lists where ".$_custom_prefixe_."_custom_champ=".$field['ID']." order by ordre";
             $resultat=pmb_mysql_query($requete);
-            $i=0;
             while ($r=pmb_mysql_fetch_array($resultat)) {
-                $as=array_search($r[$_custom_prefixe_."_custom_list_value"],$values_received);
-                if (($as!==null)&&($as!==false)) {
-                    $values[$i]=$r[$_custom_prefixe_."_custom_list_value"];
-                    $libelles[$i]=$r[$_custom_prefixe_."_custom_list_lib"];
-                    $i++;
+                $list_values[$r[$_custom_prefixe_."_custom_list_value"]] = $r[$_custom_prefixe_."_custom_list_lib"];
+            }
+            foreach ($values_received as $value_received) {
+                if (array_key_exists($value_received, $list_values)) {
+                    $values[]=$value_received;
+                    $libelles[]=$list_values[$value_received];
                 }
             }
         } else {
@@ -834,7 +846,7 @@ function aff_list_empr($field,&$check_scripts,$script="") {
 			}
 			function fonction_raz_".$field["NAME"]."() {
 				name=this.getAttribute('id').substring(4);
-				document.getElementById(name).value=0;
+				document.getElementById(name).value='';
 				document.getElementById('f_'+name).value='';
 			}
 			function add_".$field["NAME"]."() {
@@ -912,36 +924,69 @@ function aff_list_empr_search($field,&$check_scripts,$varname,$script="") {
     $values=$field['VALUES'];
     if ($values=="") $values=array();
     if ($options["AUTORITE"][0]["value"]!="yes") {
-        $ret="<select id=\"".$varname."\" name=\"".$varname;
-        $ret.="[]";
-        $ret.="\" ";
-        if ($script) $ret.=$script." ";
-        $ret.="multiple";
-        $ret.=" data-form-name='".$varname."' >\n";
-        if (($options['UNSELECT_ITEM'][0]['VALUE']!="")) {
-            $requete="select * from ".$_custom_prefixe_."_custom_values where ".$_custom_prefixe_."_custom_champ=".$field[ID]." and ".$_custom_prefixe_."_custom_".$field[DATATYPE]."='".$options[UNSELECT_ITEM][0][VALUE]."'";
+        if ($options["CHECKBOX"][0]["value"]=="yes"){
+            $ret = "";
+            if ($options['MULTIPLE'][0]['value']=="yes") $type = "checkbox";
+            else $type = "radio";
+            if (($options['UNSELECT_ITEM'][0]['VALUE']!="")&&($options['UNSELECT_ITEM'][0]['value']!="")) {
+                $ret.= "<input id='".$varname."_".$options['UNSELECT_ITEM'][0]['VALUE']."' type='$type' name='".$varname."[]' checked=checked";
+                $ret.=" value='".$options['UNSELECT_ITEM'][0]['VALUE']."' /><span id='lib_".$field['NAME']."_".$options['UNSELECT_ITEM'][0]['VALUE']."'>&nbsp;".$options['UNSELECT_ITEM'][0]['value']."</span>";
+            }
+            $requete="select ".$_custom_prefixe_."_custom_list_value, ".$_custom_prefixe_."_custom_list_lib from ".$_custom_prefixe_."_custom_lists where ".$_custom_prefixe_."_custom_champ=".$field['ID']." order by ordre";
             $resultat=pmb_mysql_query($requete);
-            if (pmb_mysql_num_rows($resultat)) {
-                $ret.="<option value=\"".htmlentities($options[UNSELECT_ITEM][0][VALUE],ENT_QUOTES,$charset)."\">".htmlentities($options[UNSELECT_ITEM][0][value],ENT_QUOTES,$charset)."</option>\n";
+            if ($resultat) {
+                $i=0;
+                $limit = (isset($options['CHECKBOX_NB_ON_LINE'][0]['value']) ? $options['CHECKBOX_NB_ON_LINE'][0]['value'] : 4);
+                while ($r=pmb_mysql_fetch_array($resultat)) {
+                    if($limit && $i>0 && $i%$limit == 0) $ret.="<br />";
+                    $ret.= "<input id='".$varname."_".$r[$_custom_prefixe_."_custom_list_value"]."' type='$type' name='".$varname."[]'";
+                    if (count($values)) {
+                        $as=in_array($r[$_custom_prefixe_."_custom_list_value"],$values);
+                        if (($as!==FALSE)&&($as!==NULL)) $ret.=" checked=checked";
+                    } else {
+                        //Recherche de la valeur par défaut s'il n'y a pas de choix vide
+                        if (($options['UNSELECT_ITEM'][0]['VALUE']=="") || ($options['UNSELECT_ITEM'][0]['value']=="")) {
+                            //si aucune valeur par défaut, on coche le premier pour les boutons de type radio
+                            if (($i==0)&&($type=="radio")&&($options['DEFAULT_VALUE'][0]['value']=="")) $ret.=" checked=checked";
+                            elseif ($r[$_custom_prefixe_."_custom_list_value"]==$options['DEFAULT_VALUE'][0]['value']) $ret.=" checked=checked";
+                        }
+                    }
+                    $ret.=" value='".$r[$_custom_prefixe_."_custom_list_value"]."'/><span id='lib_".$field['NAME']."_".$r[$_custom_prefixe_."_custom_list_value"]."'>&nbsp;".$r[$_custom_prefixe_."_custom_list_lib"]."</span>";
+                    $i++;
+                }
             }
-        }
-        $requete="select ".$_custom_prefixe_."_custom_list_value, ".$_custom_prefixe_."_custom_list_lib from ".$_custom_prefixe_."_custom_lists where ".$_custom_prefixe_."_custom_champ=".$field['ID']." order by ordre";
-        $resultat=pmb_mysql_query($requete);
-        if ($resultat) {
-            $i=0;
-            while ($r=pmb_mysql_fetch_array($resultat)) {
-                $options['ITEMS'][0]['ITEM'][$i]['VALUE']=$r[$_custom_prefixe_."_custom_list_value"];
-                $options['ITEMS'][0]['ITEM'][$i]['value']=$r[$_custom_prefixe_."_custom_list_lib"];
-                $i++;
+        } else {
+            $ret="<select id=\"".$varname."\" name=\"".$varname;
+            $ret.="[]";
+            $ret.="\" ";
+            if ($script) $ret.=$script." ";
+            $ret.="multiple";
+            $ret.=" data-form-name='".$varname."' >\n";
+            if (($options['UNSELECT_ITEM'][0]['VALUE']!="")) {
+                $requete="select * from ".$_custom_prefixe_."_custom_values where ".$_custom_prefixe_."_custom_champ=".$field['ID']." and ".$_custom_prefixe_."_custom_".$field['DATATYPE']."='".$options['UNSELECT_ITEM'][0]['VALUE']."'";
+                $resultat=pmb_mysql_query($requete);
+                if (pmb_mysql_num_rows($resultat)) {
+                    $ret.="<option value=\"".htmlentities($options['UNSELECT_ITEM'][0]['VALUE'],ENT_QUOTES,$charset)."\">".htmlentities($options['UNSELECT_ITEM'][0]['value'],ENT_QUOTES,$charset)."</option>\n";
+                }
             }
+            $requete="select ".$_custom_prefixe_."_custom_list_value, ".$_custom_prefixe_."_custom_list_lib from ".$_custom_prefixe_."_custom_lists where ".$_custom_prefixe_."_custom_champ=".$field['ID']." order by ordre";
+            $resultat=pmb_mysql_query($requete);
+            if ($resultat) {
+                $i=0;
+                while ($r=pmb_mysql_fetch_array($resultat)) {
+                    $options['ITEMS'][0]['ITEM'][$i]['VALUE']=$r[$_custom_prefixe_."_custom_list_value"];
+                    $options['ITEMS'][0]['ITEM'][$i]['value']=$r[$_custom_prefixe_."_custom_list_lib"];
+                    $i++;
+                }
+            }
+            for ($i=0; $i<count($options['ITEMS'][0]['ITEM']); $i++) {
+                $ret.="<option value=\"".htmlentities($options['ITEMS'][0]['ITEM'][$i]['VALUE'],ENT_QUOTES,$charset)."\"";
+                $as=array_search($options['ITEMS'][0]['ITEM'][$i]['VALUE'],$values);
+                if (($as!==FALSE)&&($as!==NULL)) $ret.=" selected";
+                $ret.=">".htmlentities($options['ITEMS'][0]['ITEM'][$i]['value'],ENT_QUOTES,$charset)."</option>\n";
+            }
+            $ret.= "</select>\n";
         }
-        for ($i=0; $i<count($options['ITEMS'][0]['ITEM']); $i++) {
-            $ret.="<option value=\"".htmlentities($options['ITEMS'][0]['ITEM'][$i]['VALUE'],ENT_QUOTES,$charset)."\"";
-            $as=array_search($options['ITEMS'][0]['ITEM'][$i]['VALUE'],$values);
-            if (($as!==FALSE)&&($as!==NULL)) $ret.=" selected";
-            $ret.=">".htmlentities($options['ITEMS'][0]['ITEM'][$i]['value'],ENT_QUOTES,$charset)."</option>\n";
-        }
-        $ret.= "</select>\n";
     } else {
         $ret="<script>
 			function fonction_selecteur_".$varname."() {
@@ -951,7 +996,7 @@ function aff_list_empr_search($field,&$check_scripts,$varname,$script="") {
 			}
 			function fonction_raz_".$varname."() {
 				name=this.getAttribute('id').substring(4);
-				document.getElementById(name).value=0;
+				document.getElementById(name).value='';
 				document.getElementById('f_'+name).value='';
 			}
 			function add_".$varname."() {
@@ -1104,7 +1149,17 @@ function val_list_empr($field,$val) {
     if(!isset($val[0])) $val[0] = '';
     if($val[0] != null){
         $val_r=array_flip($val);
-        $val_c=array_intersect_key($options_[$_custom_prefixe_][$field['ID']],$val_r);
+        if ($field["OPTIONS"][0]["AUTORITE"][0]["value"]!="yes") {
+            $val_c=array_intersect_key($options_[$_custom_prefixe_][$field['ID']],$val_r);
+        } else {
+            // CP de type "Autorité", nous conservons l'ordre de saisie
+            $val_c=array();
+            foreach ($val_r as $key_r=>$value_r) {
+                if(!empty($options_[$_custom_prefixe_][$field['ID']][$key_r])) {
+                    $val_c[$key_r] = $options_[$_custom_prefixe_][$field['ID']][$key_r];
+                }
+            }
+        }
         if ($val_c=='') {
             $val_c=array();
         }
@@ -1119,6 +1174,7 @@ function aff_query_list_empr($field,&$check_scripts,$script="") {
     global $charset;
     global $_custom_prefixe_;
     global $base_path;
+	global $lang;
     
     $ret = '';
     $values=$field['VALUES'];
@@ -1130,7 +1186,9 @@ function aff_query_list_empr($field,&$check_scripts,$script="") {
         if ($options["CHECKBOX"][0]["value"]=="yes"){
             if ($options['MULTIPLE'][0]['value']=="yes") $type = "checkbox";
             else $type = "radio";
-            $resultat=pmb_mysql_query($options['QUERY'][0]['value']);
+			//on rajoute la langue si besoin dans le requete
+			$query = str_replace('$lang', $lang, $options['QUERY'][0]['value']);
+			$resultat=pmb_mysql_query($query);
             if ($resultat) {
                 $i=0;
                 $ret="<table><tr>";
@@ -1154,7 +1212,9 @@ function aff_query_list_empr($field,&$check_scripts,$script="") {
             if (($options['UNSELECT_ITEM'][0]['VALUE']!="")||($options['UNSELECT_ITEM'][0]['value']!="")) {
                 $ret.="<option value=\"".htmlentities($options['UNSELECT_ITEM'][0]['VALUE'],ENT_QUOTES,$charset)."\">".htmlentities($options['UNSELECT_ITEM'][0]['value'],ENT_QUOTES,$charset)."</option>\n";
             }
-            $resultat=pmb_mysql_query($options['QUERY'][0]['value']);
+			//on rajoute la langue si besoin dans le requete
+			$query = str_replace('$lang', $lang, $options['QUERY'][0]['value']);
+			$resultat=pmb_mysql_query($query);
             while ($r=pmb_mysql_fetch_row($resultat)) {
                 $ret.="<option value=\"".htmlentities($r[0],ENT_QUOTES,$charset)."\"";
                 $as=array_search($r[0],$values);
@@ -1170,7 +1230,9 @@ function aff_query_list_empr($field,&$check_scripts,$script="") {
             $values_received=$values;
             $values_received_bis=$values;
             $values=array();
-            $resultat=pmb_mysql_query($options['QUERY'][0]['value']);
+			//on rajoute la langue si besoin dans le requete
+			$query = str_replace('$lang', $lang, $options['QUERY'][0]['value']);
+			$resultat=pmb_mysql_query($query);
             $i=0;
             while ($r=pmb_mysql_fetch_row($resultat)) {
                 $as=array_search($r[0],$values_received);
@@ -1318,7 +1380,7 @@ function aff_query_list_empr_search($field,&$check_scripts,$varname,$script="") 
 			}
 			function fonction_raz_".$varname."() {
 				name=this.getAttribute('id').substring(4);
-				document.getElementById(name).value=0;
+				document.getElementById(name).value='';
 				document.getElementById('f_'+name).value='';
 			}
 			function add_".$varname."() {
@@ -1428,51 +1490,45 @@ function chk_query_list_empr($field,&$check_message) {
     return 1;
 }
 
-function val_query_list_empr($field,$val) {
-    global $charset,$pmb_perso_sep;
+function val_query_list_empr($field, $val) {
+    global $charset, $pmb_perso_sep;
     
-    if ($val=="") return "";
-    $val_c="";
-    if (($field["OPTIONS"][0]["FIELD0"][0]["value"])&&($field["OPTIONS"][0]["FIELD1"][0]["value"])&&($field["OPTIONS"][0]["OPTIMIZE_QUERY"][0]["value"]=="yes")) {
-		if(is_array($val) && count($val)) {
-       	 	$val_ads=array_map("addslashes",$val);
-        	$requete="select * from (".$field['OPTIONS'][0]['QUERY'][0]['value'].") as sub1 where ".$field["OPTIONS"][0]["FIELD0"][0]["value"]." in (BINARY '".implode("',BINARY '",$val_ads)."')";
-        	$resultat=pmb_mysql_query($requete);
+    if ($val == "") return "";
+    $val_c = [];
+    $options_ = [];
+    if (($field["OPTIONS"][0]["FIELD0"][0]["value"]) && ($field["OPTIONS"][0]["FIELD1"][0]["value"]) && ($field["OPTIONS"][0]["OPTIMIZE_QUERY"][0]["value"] == "yes")) {
+		if (is_array($val) && count($val)) {
+       	 	$val_ads = array_map("addslashes",$val);
+        	$requete = "select * from (".$field['OPTIONS'][0]['QUERY'][0]['value'].") as sub1 where ".$field["OPTIONS"][0]["FIELD0"][0]["value"]." in (BINARY '".implode("',BINARY '",$val_ads)."')";
+        	$resultat = pmb_mysql_query($requete);
         	if ($resultat && pmb_mysql_num_rows($resultat)) {
-           		 while ($r=pmb_mysql_fetch_row($resultat)) {
-                	$val_c[]=$r[1];
+           		 while ($r = pmb_mysql_fetch_row($resultat)) {
+                	$val_c[] = $r[1];
             	}
         	}
 		}
     } else {
-        $resultat=pmb_mysql_query($field['OPTIONS'][0]['QUERY'][0]['value']);
-        if($resultat && pmb_mysql_num_rows($resultat)){
-            while ($r=pmb_mysql_fetch_row($resultat)) {
-                $options_[$r[0]]=$r[1];
+        $resultat = pmb_mysql_query($field['OPTIONS'][0]['QUERY'][0]['value']);
+        if ($resultat && pmb_mysql_num_rows($resultat)) {
+            while ($r = pmb_mysql_fetch_row($resultat)) {
+                $options_[$r[0]] = $r[1];
+            }
+        }        
+        for ($i = 0; $i < count($val); $i++) {
+            if (isset($options_[$val[$i]])) {
+                $val_c[] = $options_[$val[$i]];
             }
         }
-        
-        for ($i=0; $i<count($val); $i++) {
-            if(isset($val[$i])) {
-                $val_c[$i]=$options_[$val[$i]];
-            }
-        }
-    }
-    
-    if ($val_c=="") $val_c=array();
-    $val_=implode($pmb_perso_sep,$val_c);
+    } 
+    $val_ = implode($pmb_perso_sep, $val_c);
     return $val_;
 }
 
 function aff_text_i18n_empr($field,&$check_scripts) {
     global $charset, $base_path;
-    global $msg, $langue_doc;
+	global $msg;
     
-    if (!count($langue_doc)) {
-        $langue_doc = marc_list_collection::get_instance('lang');
-        $langue_doc = $langue_doc->table;
-    }
-    
+	$langue_doc = get_langue_doc();
     $options=$field['OPTIONS'][0];
     $values=$field['VALUES'];
     $afield_name = $field["ID"];
@@ -1572,13 +1628,8 @@ function aff_text_i18n_empr_search($field,&$check_scripts,$varname) {
     global $charset;
     global $msg;
     global $base_path;
-    global $langue_doc;
     
-    if (!count($langue_doc)) {
-        $langue_doc = marc_list_collection::get_instance('lang');
-        $langue_doc = $langue_doc->table;
-    }
-    
+	$langue_doc = get_langue_doc();
     $options=$field['OPTIONS'][0];
     $values=$field['VALUES'];
     if(!is_array($values)) {
@@ -1622,13 +1673,8 @@ function chk_text_i18n_empr($field,&$check_message) {
 
 function val_text_i18n_empr($field,$value) {
     global $charset,$pmb_perso_sep;
-    global $langue_doc;
     
-    if (!count($langue_doc)) {
-        $langue_doc = marc_list_collection::get_instance('lang');
-        $langue_doc = $langue_doc->table;
-    }
-    
+	$langue_doc = get_langue_doc();
     $value=format_output($field,$value);
     if (!$value) $value=array();
     
@@ -1798,7 +1844,8 @@ function aff_filter_list_empr($field,$varname,$multiple) {
             if (($as!==FALSE)&&($as!==NULL)) $ret.=" selected";
         } else {
             //Recherche de la valeur par défaut
-            if ($options['ITEMS'][0]['ITEM'][$i]['VALUE']==$options['DEFAULT_VALUE'][0]['value']) $ret.=" selected";
+        	//Désactivation au 20/05/19 - Demande #69211
+            //if ($options['ITEMS'][0]['ITEM'][$i]['VALUE']==$options['DEFAULT_VALUE'][0]['value']) $ret.=" selected";
         }
         $ret.=">".htmlentities($options['ITEMS'][0]['ITEM'][$i]['value'],ENT_QUOTES,$charset)."</option>\n";
     }
@@ -1976,7 +2023,7 @@ function aff_url_empr($field,&$check_scripts){
 				chklnk.setAttribute('onclick','cp_chklnk_".$field['NAME']."('+cpt+',this);');
 				document.getElementById('customfield_text_'+field_id).value = cpt*1 +1;
 				var link = document.createElement('input');
-		        link.setAttribute('name',field_name+'[link]['+cpt+']');
+		        link.setAttribute('name',field_name+'[link][]');
 		        link.setAttribute('id',field_name+'_link'+cpt);
 		        link.setAttribute('type','text');
 				link.setAttribute('class','saisie-30em');
@@ -1985,14 +2032,14 @@ function aff_url_empr($field,&$check_scripts){
 				link.setAttribute('onchange','cp_chklnk_".$field['NAME']."('+cpt+',this);');
 				var lib_label = document.createTextNode('".$msg['persofield_url_linklabel']."');
 				var lib = document.createElement('input');
-		        lib.setAttribute('name',field_name+'[linkname]['+cpt+']');
+		        lib.setAttribute('name',field_name+'[linkname][]');
 		        lib.setAttribute('id',field_name+'_linkname'+cpt);
 		        lib.setAttribute('type','text');
 				lib.setAttribute('class','saisie-15em');
 		        lib.setAttribute('size',field_size);
 		        lib.setAttribute('value','');
 				var target = document.createElement('input');
-				target.setAttribute('name',field_name+'[linktarget]['+cpt+']');
+				target.setAttribute('name',field_name+'[linktarget][]');
 		        target.setAttribute('id',field_name+'_linktarget'+cpt);
 		        target.setAttribute('type','checkbox');
 		        target.setAttribute('value','1');
@@ -2337,7 +2384,7 @@ function aff_marclist_empr($field,&$check_scripts,$script="") {
 			}
 			function fonction_raz_".$field["NAME"]."() {
 				name=this.getAttribute('id').substring(4);
-				document.getElementById(name).value=0;
+				document.getElementById(name).value='';
 				document.getElementById('f_'+name).value='';
 			}
 			function add_".$field["NAME"]."() {
@@ -2518,7 +2565,7 @@ function aff_marclist_empr_search($field,&$check_scripts,$varname){
 			}
 			function fonction_raz_".$varname."() {
 				name=this.getAttribute('id').substring(4);
-				document.getElementById(name).value=0;
+				document.getElementById(name).value='';
 				document.getElementById('f_'+name).value='';
 			}
 			function add_".$varname."() {
@@ -2599,13 +2646,9 @@ function aff_marclist_empr_search($field,&$check_scripts,$varname){
 
 function aff_q_txt_i18n_empr($field,&$check_scripts) {
     global $charset, $base_path;
-    global $msg, $langue_doc;
+	global $msg;
     
-    if (!count($langue_doc)) {
-        $langue_doc = marc_list_collection::get_instance('lang');
-        $langue_doc = $langue_doc->table;
-    }
-    
+	$langue_doc = get_langue_doc();
     $options=$field['OPTIONS'][0];
     $values=$field['VALUES'];
     $afield_name = $field["ID"];
@@ -2757,13 +2800,8 @@ function aff_q_txt_i18n_empr_search($field,&$check_scripts,$varname) {
     global $charset;
     global $msg;
     global $base_path;
-    global $langue_doc;
     
-    if (!count($langue_doc)) {
-        $langue_doc = marc_list_collection::get_instance('lang');
-        $langue_doc = $langue_doc->table;
-    }
-    
+	$langue_doc = get_langue_doc();	
     $options=$field['OPTIONS'][0];
     $values=$field['VALUES'];
     $_custom_prefixe_=$field["PREFIX"];
@@ -2847,12 +2885,8 @@ function chk_q_txt_i18n_empr($field,&$check_message) {
 
 function val_q_txt_i18n_empr($field,$value) {
     global $charset,$pmb_perso_sep;
-    global $langue_doc;
     
-    if (!count($langue_doc)) {
-        $langue_doc = marc_list_collection::get_instance('lang');
-        $langue_doc = $langue_doc->table;
-    }
+	$langue_doc = get_langue_doc();
     $_custom_prefixe_ = $field['PREFIX'];
     $requete="select ".$_custom_prefixe_."_custom_list_value, ".$_custom_prefixe_."_custom_list_lib from ".$_custom_prefixe_."_custom_lists where ".$_custom_prefixe_."_custom_champ=".$field['ID']." order by ordre";
     $resultat=pmb_mysql_query($requete);
@@ -2893,9 +2927,11 @@ function aff_date_inter_empr($field,&$check_scripts) {
     $ret = "";
     
     foreach ($values as $value) {
+        $timestamp_begin = '';
+        $timestamp_end = '';
         $dates = explode("|",$value);
-        $timestamp_begin = $dates[0];
-        $timestamp_end = $dates[1];
+        if (isset($dates[0])) $timestamp_begin = $dates[0];
+        if (isset($dates[1])) $timestamp_end = $dates[1];
         
         if (!$timestamp_begin && !$timestamp_end && !$options["DEFAULT_TODAY"][0]["value"]) {
             $time = time();
@@ -3034,11 +3070,14 @@ function aff_date_inter_empr_search($field,&$check_scripts,$varname) {
     global $charset;
     global $msg;
     
+    $timestamp_begin = '';
+    $timestamp_end = '';
     $values=$field['VALUES'];
-    $dates = explode("|",$values[0]);
-    $timestamp_begin = $dates[0];
-    $timestamp_end = $dates[1];
-    
+    if(!empty($values[0])) {
+        $dates = explode("|",$values[0]);
+        if (isset($dates[0])) $timestamp_begin = $dates[0];        
+        if (isset($dates[1])) $timestamp_end = $dates[1];
+    }    
     if (!$timestamp_begin && !$timestamp_end) {
         $time = time();
         $date_begin = date("Y-m-d",$time);
@@ -3330,7 +3369,7 @@ function get_authority_isbd_from_field($field, $id=0) {
             $isbd .= html_entity_decode($aut->get_isbd(),ENT_QUOTES, $charset);
             break;
         case 9://Concept
-            if($id*1==0){
+            if(!is_numeric($id)){
                 $id = onto_common_uri::get_id($id);
             }
             if(!$id) break;
@@ -3420,7 +3459,7 @@ function get_authority_details_from_field($field, $id=0) {
         case 8:// titre uniforme
             return authorities_collection::get_authority('titre_uniforme', $id);
         case 9://Concept
-            if($id*1==0){
+            if(!is_numeric($id)){
                 $id = onto_common_uri::get_id($id);
             }
             if(!$id) break;
@@ -3448,28 +3487,28 @@ function aff_date_flottante_empr($field, &$check_scripts) {
     
     $ret .= "
 		<script>
-			function date_flottante_type_onchange(count) {
-				var type = document.getElementById('".$field['NAME']."_' + count + '_date_type').value;
+			function date_flottante_type_onchange(field_name) {
+				var type = document.getElementById(field_name + '_date_type').value;
 				switch(type) {
 					case '4' : // interval date
-						document.getElementById('".$field['NAME']."_' + count + '_date_begin_zone_label').style.display = '';
-						document.getElementById('".$field['NAME']."_' + count + '_date_end_zone').style.display = '';
+						document.getElementById(field_name + '_date_begin_zone_label').style.display = '';
+						document.getElementById(field_name + '_date_end_zone').style.display = '';
 						break;
 					case '0' : // vers
 					case '1' : // avant
 					case '2' : // après
 					case '3' : // date précise
 					default :
-						document.getElementById('".$field['NAME']."_' + count + '_date_begin_zone_label').style.display = 'none';
-						document.getElementById('".$field['NAME']."_' + count + '_date_end_zone').style.display = 'none';
+						document.getElementById(field_name + '_date_begin_zone_label').style.display = 'none';
+						document.getElementById(field_name + '_date_end_zone').style.display = 'none';
 						break;
 				}
 			}
 						    
-			function date_flottante_reset_fields(count) {
-				document.getElementById('".$field['NAME']."_' + count + '_date_begin').value = '';
-				document.getElementById('".$field['NAME']."_' + count + '_date_end').value = '';
-				document.getElementById('".$field['NAME']."_' + count + '_comment').value = '';
+			function date_flottante_reset_fields(field_name) {
+				document.getElementById(field_name + '_date_begin').value = '';
+				document.getElementById(field_name + '_date_end').value = '';
+				document.getElementById(field_name + '_comment').value = '';
 			}
 		</script>
 		";
@@ -3481,10 +3520,10 @@ function aff_date_flottante_empr($field, &$check_scripts) {
         // exemple: 1|||1950|||1960|||commentaires
         $data = explode("|||", $value);
         
-        $date_type = $data[0];
-        $date_begin = $data[1];
-        $date_end = $data[2];
-        $comment = $data[3];
+		$date_type = (!empty($data[0]) ? $data[0] : "");
+		$date_begin = (!empty($data[1]) ? $data[1] : "");
+		$date_end = (!empty($data[2]) ? $data[2] : "");
+		$comment = (!empty($data[3]) ? $data[3] : "");
         
         if (!$date_begin && !$date_end && !$options["DEFAULT_TODAY"][0]["value"]) {
             $time = time();
@@ -3498,7 +3537,7 @@ function aff_date_flottante_empr($field, &$check_scripts) {
             //$date_end = date("Y-m-d", $date_end);
         }
         $ret .= "<div>
-					<select id='" . $field['NAME'] . "_" . $count . "_date_type' name='" . $field['NAME'] . "[" . $count . "][date_type]' onchange=\"date_flottante_type_onchange(" . $count . ");\">
+					<select id='" . $field['NAME'] . "_" . $count . "_date_type' name='" . $field['NAME'] . "[" . $count . "][date_type]' onchange=\"date_flottante_type_onchange('" . $field['NAME'] . '_' . $count . "');\">
  						<option value='0' " . (!$date_type ? ' selected ' : '') . ">" . $msg['parperso_option_duration_type0'] . "</option>
  						<option value='1' " . ($date_type == 1 ? ' selected ' : '') . ">" . $msg['parperso_option_duration_type1'] . "</option>
  						<option value='2' " . ($date_type == 2 ? ' selected ' : '') . ">" . $msg['parperso_option_duration_type2'] . "</option>
@@ -3515,13 +3554,13 @@ function aff_date_flottante_empr($field, &$check_scripts) {
 					</span>
 					<label>" . $msg['parperso_option_duration_comment'] . "</label>
 					<input type='text' id='" . $field['NAME'] . "_" . $count . "_comment' name='" . $field['NAME'] . "[" . $count . "][comment]' value='" . htmlentities($comment, ENT_QUOTES, $charset) . "' class='saisie-30em'/>
-					<input class='bouton' type='button' value='X' onClick='date_flottante_reset_fields(" . $count . ");'/>";
+					<input class='bouton' type='button' value='X' onClick=\"date_flottante_reset_fields('" . $field['NAME'] . '_' . $count . "');\"/>";
         if (isset($options['REPEATABLE'][0]['value']) && $options['REPEATABLE'][0]['value'] && !$count) {
             $ret .= '<input class="bouton" type="button" value="+" onclick="add_custom_date_flottante_(\'' . $afield_name . '\', \'' . addslashes($field['NAME']) . '\',\'' . $options["DEFAULT_TODAY"][0]["value"] . '\')" >';
         }
         $ret .= "</div>
 		<script>
-			date_flottante_type_onchange(" . $count . ");
+			date_flottante_type_onchange('" . $field['NAME'] . '_' . $count . "');
 		</script>";
         $count++;
     }
@@ -3549,8 +3588,10 @@ function aff_date_flottante_empr_search($field, &$check_scripts, $varname) {
     global $charset;
     global $msg;
     
-    $date_begin = $field['VALUES'][0];
-    $date_end = $field['VALUES1'][0];
+    $date_begin = '';
+    $date_end = '';
+    if (!empty($field['VALUES'][0])) $date_begin = $field['VALUES'][0];
+    if (!empty($field['VALUES1'][0])) $date_end = $field['VALUES1'][0];
     $return = "
 			<div>
  				<span id='" . $varname . "_date_begin_zone'>
@@ -3656,13 +3697,22 @@ function val_date_flottante_empr($field, $value) {
                 $return .= $msg['parperso_option_duration_entre']." " . $interval[1] . " ".$msg['parperso_option_duration_et']." " . $interval[2];
                 break;
             default:
-                $return .= $interval[1];
+				if (!empty($interval[1])) $return .= $interval[1];
                 break;
         }
         // Commentaire
-        if ($interval[3]) {
+		if (!empty($interval[3])) {
             $return .= " (" . $interval[3] . ")";
         }
     }
     return $return;
+}
+function get_langue_doc() {
+    global $langue_doc;
+    
+    if (!isset($langue_doc) || !count($langue_doc)) {
+        $langue_doc = marc_list_collection::get_instance('lang');
+        $langue_doc = $langue_doc->table;
+    }
+    return $langue_doc;
 }

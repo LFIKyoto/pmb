@@ -2,10 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl_create.inc.php,v 1.23 2018-08-27 14:34:57 apetithomme Exp $
+// $Id: expl_create.inc.php,v 1.24 2019-06-05 09:04:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
+global $msg, $noex, $option_num_auto, $id, $pmb_droits_explr_localises, $explr_visible_mod;
 
 // gestion des exemplaires
 
@@ -13,7 +14,7 @@ print "<h1>".$msg[290]."</h1>";
 
 // on checke si l'exemplaire n'existe pas déjà
 $requete = "SELECT count(1) FROM exemplaires WHERE expl_cb='$noex'";
-$res = pmb_mysql_query($requete, $dbh);
+$res = pmb_mysql_query($requete);
 
 if((!pmb_mysql_result($res, 0, 0)) || (!empty($option_num_auto) && ($noex==''))) {
 	$notice = new mono_display($id, 1, './catalog.php?categ=modif&id=!!id!!', FALSE);

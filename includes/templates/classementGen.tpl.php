@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: classementGen.tpl.php,v 1.2 2016-06-15 12:43:33 jpermanne Exp $
+// $Id: classementGen.tpl.php,v 1.3 2019-05-27 14:55:51 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $classementGen_selector, $classementGen_list_table_header, $classementGen_list_table_row, $classementGen_list_table_footer, $classementGen_form_edit, $msg, $current_module;
 
 // templates pour la gestion des classements
 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external_services_converters.class.php,v 1.27 2018-02-08 16:32:06 dgoron Exp $
+// $Id: external_services_converters.class.php,v 1.31.4.1 2019-09-23 09:15:34 mbertin Exp $
 
 //
 //Convertisseurs et cacheur de formats des résultats des services externes
@@ -14,7 +14,7 @@ require_once("$class_path/external_services_caches.class.php");
 require_once("$class_path/mono_display.class.php");
 
 if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
-	if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "0");
+    if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "0");
 	require_once($include_path.'/xslt-php4-to-php5.inc.php');
 }
 
@@ -44,7 +44,7 @@ class external_services_converter {
 			$this->results = array();
 			return;
 		}
-		array_walk($objects, create_function('&$a', '$a+=0;'));//Soyons sûr de ne stocker que des entiers dans le tableau.
+		array_walk($objects, function(&$a) {$a = intval($a);});//Soyons sûr de ne stocker que des entiers dans le tableau.
 		$objects = array_unique($objects);
 		
 		if (!$objects) {
@@ -127,6 +127,9 @@ class external_services_converter_notices extends external_services_converter {
 		if ($this->params["include_authorite_ids"]) {
 			$parametres["include_authorite_ids"] = true;
 		}
+		if (!empty($this->params["map"])) {
+		    $parametres["map"] = true;
+		}
 		$parametres["docnum"]=1;
 		$keep_expl = isset($this->params["include_items"]) && $this->params["include_items"];
 		while($xmlexport->get_next_notice("", array(), array(), $keep_expl, $parametres)) {
@@ -182,6 +185,9 @@ class external_services_converter_notices extends external_services_converter {
 		}
 		if ($this->params["include_authorite_ids"]) {
 			$parametres["include_authorite_ids"] = true;
+		}
+		if (!empty($this->params["map"])) {
+		    $parametres["map"] = true;
 		}
 		$parametres["docnum"]=1;
 		$keep_expl = isset($this->params["include_items"]) && $this->params["include_items"];
@@ -244,6 +250,9 @@ class external_services_converter_notices extends external_services_converter {
 		}
 		if ($this->params["include_authorite_ids"]) {
 			$parametres["include_authorite_ids"] = true;
+		}
+		if (!empty($this->params["map"])) {
+		    $parametres["map"] = true;
 		}
 		$parametres["docnum"]=1;
 		$keep_expl = isset($this->params["include_items"]) && $this->params["include_items"];
@@ -308,6 +317,9 @@ class external_services_converter_notices extends external_services_converter {
 		if ($this->params["include_authorite_ids"]) {
 			$parametres["include_authorite_ids"] = true;
 		}
+		if (!empty($this->params["map"])) {
+		    $parametres["map"] = true;
+		}
 		$parametres["docnum"]=1;
 		$keep_expl = isset($this->params["include_items"]) && $this->params["include_items"];
 		while($xmlexport->get_next_notice("", array(), array(), $keep_expl, $parametres)) {
@@ -335,6 +347,24 @@ class external_services_converter_notices extends external_services_converter {
 				foreach ($aresult["f"] as &$af) {
 					$af["ind"] = isset($af["ind"]) ? $af["ind"] : "";
 					$af["id"] = isset($af["id"]) ? $af["id"] : "";
+					$af["value"] = isset($af["value"]) ? $af["value"] : "";
+					//La classe export exporte ses données dans la charset de la base.
+					//Convertissons si besoin
+					if($af["value"]){
+    					if ($charset!='utf-8' && $target_charset == 'utf-8'){
+    					    if(function_exists("mb_convert_encoding")){
+    					        $af["value"] = mb_convert_encoding($af["value"],"UTF-8","Windows-1252");
+    					    }else{
+    					        $af["value"] = utf8_encode($af["value"]);
+    					    }
+    					}else if ($charset=='utf-8' && $target_charset != 'utf-8'){
+    					    if(function_exists("mb_convert_encoding")){
+    					        $af["value"] = mb_convert_encoding($af["value"],"Windows-1252","UTF-8");
+    					    }else{
+    					        $af["value"] = utf8_decode($af["value"]);
+    					    }
+    					}
+					}
 					$af["s"] = isset($af["s"]) ? $af["s"] : array();
 					foreach ($af["s"] as &$as) {
 						$as["value"] = isset($as["value"]) ? $as["value"] : "";
@@ -392,6 +422,9 @@ class external_services_converter_notices extends external_services_converter {
 		}
 		if ($this->params["include_authorite_ids"]) {
 			$parametres["include_authorite_ids"] = true;
+		}
+		if (!empty($this->params["map"])) {
+		    $parametres["map"] = true;
 		}
 		$parametres["docnum"]=1;
 		$keep_expl = isset($this->params["include_items"]) && $this->params["include_items"];
@@ -511,19 +544,44 @@ class external_services_converter_notices extends external_services_converter {
 	
 	//Utilise les fonctions de admin/convert pour faire une conversion perso
 	public function convert_batch_to_adminconvert_script($notices_to_convert, $the_conversion, $target_charset) {
-		global $base_path, $charset, $opac_url_base;
+	    global $base_path, $class_path, $charset, $opac_url_base;
 		if (!$notices_to_convert) //Rien à faire? On fait rien
 			return;
 
 		//Un petit tour en xml dans le charset de la base et après on invoque la classe de conversion
-		$this->convert_batch_to_pmb_xml($notices_to_convert, $charset);
-
-		$conv = new convert("", $the_conversion["position"], true);
+			$special_export = false;
+			if($the_conversion['special_export'] =='yes') {
+			    //L'export est special et utilise la fonction _export_ dans le fichier export.inc.php du repertoire de conversion
+			    try {
+			        $export_file = ("$base_path/admin/convert/imports/{$the_conversion['path']}/export.inc.php");
+			        if(file_exists($export_file) && !function_exists('_export_')) {
+			            require_once($export_file);
+			        }
+			        if(function_exists('_export_')) {
+			            $special_export = true;
+			        }
+			    } catch (Exception $e) {}
+			    
+			}
+			
+			if($special_export==true) {
+			    
+			    $keep_expl = isset($this->params["include_items"]) && $this->params["include_items"];
+			    foreach($notices_to_convert as $k=>$v) {
+			        $this->results[$v] = _export_($v, $keep_expl);
+			    }
+			    
+			}else {
+			    //Si erreur, on utilise la fonction d'export standard
+			    $this->convert_batch_to_pmb_xml($notices_to_convert, $charset);
+			}
+			
+			$conv = new convert("", $the_conversion["position"], true);
 
 		foreach ($notices_to_convert as $anotice_id) {
 			if (!$this->results[$anotice_id])
 				continue;
-			$conv->prepared_notice = $xml_header.$this->results[$anotice_id];
+			$conv->prepared_notice = $this->results[$anotice_id];
 			$converted_version = $conv->transform(true);
 			
 			if ($the_conversion["output_charset"] == 'utf-8' && $target_charset != 'utf-8'){
@@ -761,11 +819,13 @@ class external_services_converter_notices extends external_services_converter {
 							if (!$only_xml || (strtolower($output_type) == 'xml')) {
 								//Oui? on l'ajoute au resultat
 								$conv_charset = isset($params["PARAMS"][0]["OUTPUT"][0]["CHARSET"]) ? $params["PARAMS"][0]["OUTPUT"][0]["CHARSET"] : 'iso-8859-1';
+								$special_export = isset($params["PARAMS"][0]["INPUT"][0]["SPECIALEXPORT"]) ? $params["PARAMS"][0]["INPUT"][0]["SPECIALEXPORT"]  : '';
 								$result[] = array(
 									"position" => $count,
 									"caption" => $aconverttype["EXPORTNAME"],
 									"path" => $path,
-									"output_charset" => $conv_charset
+									"output_charset" => $conv_charset,
+								    	"special_export" => $special_export,
 								);
 							}
 						}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: skos_concept.class.php,v 1.36 2018-10-16 09:50:56 dgoron Exp $
+// $Id: skos_concept.class.php,v 1.41.2.1 2019-12-03 10:32:33 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -161,17 +161,54 @@ class skos_concept {
 	 * @var string
 	 */
 	private $definition;
+	
 	/**
-	 * Termes associés
+	 * Relations associées
 	 * @var skos_concepts_list $related
 	 */
 	private $related;
 	
 	/**
-	 * template des termes associés du concept
+	 * template des relations associées du concept
 	 * @var string
 	 */
 	private $related_list;
+	
+	/**
+	 * termes associés
+	 * @var skos_concepts_list $related
+	 */
+	private $related_match;
+	
+	/**
+	 * template des termes associés du concept
+	 * @var string
+	 */
+	private $related_match_list;
+	
+	/**
+	 * Note historique
+	 * @var string
+	 */
+	private $history_note;
+	
+	/**
+	 * Exemple
+	 * @var string
+	 */
+	private $example;
+	
+	/**
+	 * Carte associée
+	 * @var map_objects_controler
+	 */
+	private $map = null;
+	
+	/**
+	 * Info de la carte associée
+	 * @var map_info
+	 */
+	private $map_info = null;
 	
 	/**
 	 * Constructeur d'un concept
@@ -305,9 +342,11 @@ class skos_concept {
 		if (!$this->narrowers) {
 			$this->narrowers = new skos_concepts_list();
 	
-			$query = "select * where {
-				<".$this->uri."> <http://www.w3.org/2004/02/skos/core#narrower> ?narrower
-			}";
+			$query = "select ?narrower where {
+				<".$this->uri."> <http://www.w3.org/2004/02/skos/core#narrower> ?narrower .
+                ?narrower skos:prefLabel ?narrower_label . 
+			}
+            order by ?narrower_label";
 			
 			skos_datastore::query($query);
 			if(skos_datastore::num_rows()){
@@ -338,9 +377,11 @@ class skos_concept {
 		if (!$this->broaders) {
 			$this->broaders = new skos_concepts_list();
 	
-			$query = "select * where {
-				<".$this->uri."> <http://www.w3.org/2004/02/skos/core#broader> ?broader
-			}";
+			$query = "select ?broader where {
+				<".$this->uri."> <http://www.w3.org/2004/02/skos/core#broader> ?broader .
+                ?broader skos:prefLabel ?broader_label . 
+			}
+            order by ?broader_label";
 			
 			skos_datastore::query($query);
 			if(skos_datastore::num_rows()){
@@ -364,13 +405,23 @@ class skos_concept {
 	}
 	
 	/**
-	 * Retourne le rendu HTML des termes associés
+	 * Retourne le rendu HTML des relations associatives
 	 */
 	public function get_related_list() {	    
 	    if (!isset($this->related_list)) {
 	        $this->related_list = skos_view_concepts::get_related_list($this->get_related());
 	    }
 	    return $this->related_list;
+	}
+	
+	/**
+	 * Retourne le rendu HTML des termes associés
+	 */
+	public function get_related_match_list() {	    
+	    if (!isset($this->related_match_list)) {
+	        $this->related_match_list = skos_view_concepts::get_related_match_list($this->get_related_match());
+	    }
+	    return $this->related_match_list;
 	}
 	
 	/**
@@ -394,6 +445,40 @@ class skos_concept {
 			$this->indexed_notices = explode(",",$filter->get_results());
 		}
 		return $this->indexed_notices;
+	}
+	
+	/**
+	 * Charge les données de carthographie
+	 */
+	private function fetch_map() {
+	    global $pmb_map_activate;
+	    
+	    if ($pmb_map_activate) {
+	        $this->map = new map_objects_controler(AUT_TABLE_CONCEPT, array($this->id));
+	        $this->map_info = new map_info($this->id);
+	    }
+	}
+	
+	/**
+	 * Retourne la carte associée
+	 * @return map_objects_controler
+	 */
+	public function get_map() {
+	    if (!$this->map) {
+	        $this->fetch_map();
+	    }
+	    return $this->map;
+	}
+	
+	/**
+	 * Retourne les infos de la carte associée
+	 * @return map_info
+	 */
+	public function get_map_info() {
+	    if (!$this->map_info) {
+	        $this->fetch_map();
+	    }
+	    return $this->map_info;
 	}
 	
 	/**
@@ -777,7 +862,7 @@ class skos_concept {
 			if(skos_datastore::num_rows()){
 				$results = skos_datastore::get_result();
 				foreach($results as $key=>$result){
-					if($result->note_lang==substr($lang,0,2)){
+					if(isset($result->note_lang) && $result->note_lang==substr($lang,0,2)){
 						$this->note = $result->note;
 						break;
 					}
@@ -806,7 +891,7 @@ class skos_concept {
 	        if(skos_datastore::num_rows()){
 	            $results = skos_datastore::get_result();
 	            foreach($results as $key=>$result){
-	                if($result->definition_lang==substr($lang,0,2)){
+	                if(isset($result->definition_lang) && $result->definition_lang==substr($lang,0,2)){
 	                    $this->definition = $result->definition;
 	                    break;
 	                }
@@ -821,7 +906,67 @@ class skos_concept {
 	}
 	
 	/**
-	 * retourne les termes associés
+	 * Retourne la note historique
+	 * @return string
+	 */
+	public function get_history_note() {
+		global $lang;
+		
+		if (empty($this->history_note)) {
+			$this->history_note = '';
+			$query = "select * where {
+				<".$this->uri."> <http://www.w3.org/2004/02/skos/core#historyNote> ?historyNote
+			}";
+			skos_datastore::query($query);
+			if(skos_datastore::num_rows()){
+				$results = skos_datastore::get_result();
+				foreach($results as $key=>$result){
+					if($result->historyNote_lang==substr($lang,0,2)){
+						$this->history_note = $result->historyNote;
+						break;
+					}
+				}
+				//pas de langue de l'interface trouvée
+				if (!$this->history_note){
+					$this->history_note = $result->historyNote;
+				}
+			}
+		}
+		return $this->history_note;
+	}
+	
+	/**
+	 * Retourne l'exemple
+	 * @return string
+	 */
+	public function get_example() {
+		global $lang;
+		
+		if (empty($this->example)) {
+			$this->example = '';
+			$query = "select * where {
+				<".$this->uri."> <http://www.w3.org/2004/02/skos/core#example> ?example
+			}";
+			skos_datastore::query($query);
+			if(skos_datastore::num_rows()){
+				$results = skos_datastore::get_result();
+				foreach($results as $key=>$result){
+				    if(isset($result->example_lang) && $result->example_lang==substr($lang,0,2)){
+						$this->example = $result->example;
+						break;
+					}
+				}
+				//pas de langue de l'interface trouvée
+				if (!$this->example){
+					$this->example = $result->example;
+				}
+			}
+		}
+		return $this->example;
+	}
+	
+	/**
+	 * retourne les relations associatives
 	 * @return skos_concepts_list
 	 */
 	public function get_related() {
@@ -842,5 +987,110 @@ class skos_concept {
 	        }
 	    }
 	    return $this->related;
+	}
+	
+	/**
+	 * retourne les termes associés
+	 * @return skos_concepts_list
+	 */
+	public function get_related_match() {
+	    if (isset($this->related_match)) {
+	        return $this->related_match;
+	    }
+	    $this->related_match = new skos_concepts_list();
+	    
+	    $query = "select ?related_match where {
+			<".$this->uri."> <http://www.w3.org/2004/02/skos/core#relatedMatch> ?related_match
+		}";
+	    
+	    skos_datastore::query($query);
+	    if(skos_datastore::num_rows()){
+	        $results = skos_datastore::get_result();
+	        foreach($results as $result){
+	            $this->related_match->add_concept(new skos_concept(0, $result->related_match));
+	        }
+	    }
+	    return $this->related_match;
+	}
+	
+	public function __get($name) {
+	    $parameters=array();
+	    switch(true){
+	        // Si la propriété existe
+	        case !empty($this->{$name}) :
+	            return $this->{$name};
+	            // si la méthode existe...
+	        case method_exists($this, $name) :
+	            return $this->{$name}();
+	            // Si la méthode get existe
+	        case method_exists($this, "get_".$name) :
+	            return call_user_func_array(array($this, "get_".$name),$parameters);
+	            // Si la méthode set existe
+	        case method_exists($this, "is_".$name) :
+	            return call_user_func_array(array($this, "is_".$name),$parameters);
+	        default :
+	            return null;
+	    }
+	}
+	/**
+	 * Fonction interne pour l'affiche dans les éditions de listes
+	 */
+	public function get_edit_narrowers(){
+	    $narrowers_list=  [];
+	    foreach($this->get_narrowers()->get_concepts() as $narrower){
+	        $narrowers_list[]= $narrower->display_label;
+	    }
+	    return $narrowers_list;
+	}
+	/**
+	 * Fonction interne pour l'affiche dans les éditions de listes
+	 */
+	public function get_edit_broaders(){
+	    $broaders_list=  [];
+	    foreach($this->get_broaders()->get_concepts() as $broaders){
+	        $broaders_list[]= $broaders->display_label;
+	    }
+	    return $broaders_list;
+	}
+	
+	
+	public static function get_properties(){
+	    $props = skos_onto::get_properties_labels("http://www.w3.org/2004/02/skos/core#Concept");
+	    $properties = [
+	        'altlabel',
+	        'note',
+	        'id',
+	        'uri',
+	        'display_label',
+	        'note',
+	        'schemes',
+	        'vedette',
+	        'narrowers',
+	        'broaders',
+	        'composed_concepts',
+	        'indexed_notices',
+	        'indexed_authorities',
+	        'scope_note',
+	        //'related',
+	        //'related_match',
+	        'altlabel',
+	        'definition',
+	        'handler',
+	        'history_note',
+	        'example',
+	        'map',
+	        'map_info'
+	    ];
+	    $return['display_label'] = $props['http://www.w3.org/2004/02/skos/core#prefLabel']['label'];
+	    $return['edit_narrowers'] = $props['http://www.w3.org/2004/02/skos/core#narrower']['label'];
+	    $return['edit_broaders'] = $props['http://www.w3.org/2004/02/skos/core#broader']['label'];
+	    foreach ($props as $value) {
+	        if (in_array($value['pmb_name'], $properties)){
+	            $return[$value['pmb_name']] = $value['label'];
+	        }
+	    }
+	    
+	    return $return;
+	    
 	}
 }

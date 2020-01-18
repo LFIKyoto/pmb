@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: Contribution.js,v 1.11 2018-12-18 08:01:48 apetithomme Exp $
+// $Id: Contribution.js,v 1.13 2019-04-03 13:01:37 tsamson Exp $
 
 define([
         'dojo/_base/declare',
@@ -22,7 +22,11 @@ define([
 		prefixURI : null,
 		constructor: function(nodeId) {
 			this.nodeId = nodeId;
-			this.prefixURI = query("#prefix_uri",this.nodeId)[0].value;
+			var prefix = query("#prefix_uri",this.nodeId);
+			this.prefixURI = "";
+			if (prefix.length) {
+				this.prefixURI = prefix[0].value;
+			}
 			this.init();
 		},
 		init: function() {
@@ -109,6 +113,9 @@ define([
 				}
 			}
 			if(error_message != ""){
+				var div = document.createElement('div');
+				div.innerHTML = error_message;
+				error_message = div.firstChild.nodeValue;
 				alert(error_message);
 				return false;
 			}

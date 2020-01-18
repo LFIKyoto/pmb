@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_index.class.php,v 1.7 2018-12-28 16:27:31 tsamson Exp $
+// $Id: onto_common_index.class.php,v 1.8 2019-06-06 10:12:40 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -80,7 +80,7 @@ class onto_common_index extends indexation {
 	}
 	
 	protected function analyse_indexation(){
-	    if(count($this->infos) == 0){
+	    if(empty($this->infos) || count($this->infos) == 0){
 	        $cache = cache_factory::getCache();
 	        $ontology = $this->handler->get_ontology();
 	        $this->classes = $this->handler->get_classes();

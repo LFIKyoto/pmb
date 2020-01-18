@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: level1_search.class.php,v 1.25 2018-04-18 14:50:52 dgoron Exp $
+// $Id: level1_search.class.php,v 1.26 2019-01-15 14:14:59 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -147,7 +147,9 @@ class level1_search {
 		
 		$search_terms = $aq->get_positive_terms($aq->tree);
 		//On enlève le dernier terme car il s'agit de la recherche booléenne complète
-		unset($search_terms[count($search_terms)-1]);
+		if(is_array($search_terms) && count($search_terms)){
+			unset($search_terms[count($search_terms)-1]);
+		}
 		
 		$pert=$members["select"]." as pert";
 		$tri="order by pert desc, index_serie, tnvol, index_sew";

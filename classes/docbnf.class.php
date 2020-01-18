@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: docbnf.class.php,v 1.2 2017-02-28 12:28:34 dgoron Exp $
+// $Id: docbnf.class.php,v 1.3 2019-06-06 09:56:19 btafforeau Exp $
 
 
 if (stristr ($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
@@ -88,7 +88,7 @@ class docbnf {
 			$doc =  $this->refnum->getElementsByTagName('document')->item(0);
 			$this->ref = $doc->getAttribute("identifiant");
 		}
-		return $this>ref;
+		return $this->ref;
 	}
 	
 	public function getArkNumber(){
@@ -102,7 +102,7 @@ class docbnf {
  				}
  			}
 		}
-		return $this>arkNumber;
+		return $this->arkNumber;
 	}
 	
 	public function getNbPages(){

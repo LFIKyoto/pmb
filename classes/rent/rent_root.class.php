@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_root.class.php,v 1.11 2017-11-21 12:01:00 dgoron Exp $
+// $Id: rent_root.class.php,v 1.11.6.1 2019-11-22 14:55:58 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -104,24 +104,35 @@ class rent_root {
 	}
 	
 	/**
+	 * Ajout d'un tri
+	 */
+	protected function add_applied_sort($by, $asc_desc='asc') {
+	    if(empty($this->applied_sort)) {
+	        $this->applied_sort = array();
+	    }
+	    array_push($this->applied_sort, array('by' => $by, 'asc_desc' => $asc_desc));
+	}
+	
+	/**
 	 * Initialisation du tri appliqué
 	 */
 	public function init_applied_sort($applied_sort=array()) {
-		$this->applied_sort = array(
-				'by' => 'id',
-				'asc_desc' => 'desc'
-		);
-		if(isset($_SESSION['rent_'.$this->objects_type.'_applied_sort']['by'])) {
-			$this->applied_sort['by'] = $_SESSION['rent_'.$this->objects_type.'_applied_sort']['by'];
-			if(isset($_SESSION['rent_'.$this->objects_type.'_applied_sort']['asc_desc'])) {
-				$this->applied_sort['asc_desc'] = $_SESSION['rent_'.$this->objects_type.'_applied_sort']['asc_desc'];
+	    $this->add_applied_sort('id', 'desc');
+		if(isset($_SESSION['rent_'.$this->objects_type.'_applied_sort'][0]['by'])) {
+		    $this->applied_sort[0]['by'] = $_SESSION['rent_'.$this->objects_type.'_applied_sort'][0]['by'];
+			if(isset($_SESSION['rent_'.$this->objects_type.'_applied_sort'][0]['asc_desc'])) {
+			    $this->applied_sort[0]['asc_desc'] = $_SESSION['rent_'.$this->objects_type.'_applied_sort'][0]['asc_desc'];
 			} else {
-				$this->applied_sort['asc_desc'] = 'asc';
+			    $this->applied_sort[0]['asc_desc'] = 'asc';
 			}
 		}
 		if(count($applied_sort)){
 			foreach ($applied_sort as $key => $val){
-				$this->applied_sort[$key]=$val;
+			    if(is_array($val)) {
+			        $this->applied_sort[$key] = $val;
+			    } else {
+			        $this->applied_sort[0][$key]=$val;
+			    }
 			}
 		}
 		//Sauvegarde du tri appliqué en session
@@ -201,7 +212,7 @@ class rent_root {
 	 * Tri des objets
 	 */
 	protected function _sort() {
-		if($this->applied_sort['asc_desc'] == 'desc') {
+	    if($this->applied_sort[0]['asc_desc'] == 'desc') {
 			usort($this->objects, array($this, "_compare_objects"));
 			$this->objects= array_reverse($this->objects);
 		} else {
@@ -231,7 +242,7 @@ class rent_root {
 	
 	/**
 	 * Construction dynamique des cellules du header 
-	 * @param unknown $name
+	 * @param string $name
 	 */
 	protected function _get_cell_header($name) {
 		return '';
@@ -308,8 +319,9 @@ class rent_root {
 	 * Sauvegarde du tri appliqué en session
 	 */
 	public function set_applied_sort_in_session() {
-		foreach ($this->applied_sort as $name=>$applied_sort) {
-			$_SESSION['rent_'.$this->objects_type.'_applied_sort'][$name] = $applied_sort;
+	    $_SESSION['rent_'.$this->objects_type.'_applied_sort'] = array();
+		foreach ($this->applied_sort as $applied_sort) {
+			$_SESSION['rent_'.$this->objects_type.'_applied_sort'][] = $applied_sort;
 		}
 	}
 	

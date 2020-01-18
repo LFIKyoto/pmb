@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: external_services.class.php,v 1.19 2018-05-31 08:48:15 dgoron Exp $
+// $Id: external_services.class.php,v 1.23.2.1 2019-11-26 10:25:00 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -39,7 +39,7 @@ héritent de ^             ^ hérite de                  .------------------------
             |             |
             |     .---------------.               .-------------------------------.
             |     |  es_catalog   |               |       external_services       |
-            |     |---------------|[1]            |-------------------------------|
+            |     |---------------|file_put_contents[1]            |-------------------------------|
             '-----| contient des  |<--------------| gère les différentes méthodes |
             ^     | groupes       |               | et génère le proxy associé    |
             |     '---------------'               '-------------------------------'
@@ -89,16 +89,19 @@ class es_parameter extends es_base {
 	public $datatype="string";
 	public $nodename="PARAM";
 	public $optional=false;
+	public $default_value;
 	
 	//Pour les paramètres structure : un tableau de type es_parametre;
 	public $struct=array();
 	
 	//Constructeur
-	public function __construct($param="") {
-		if (is_array($param)) {
+	public function __construct($param = array()) {
+	    if (is_array($param)) {
 			$this->name=$param["NAME"];
 			if(isset($param["DATATYPE"])) $this->datatype=$param["DATATYPE"];
 			if(isset($param["OPTIONAL"])) $this->optional=$param["OPTIONAL"];
+			if(isset($param["DEFAULT_VALUE"])) $this->default_value=$param["DEFAULT_VALUE"];
+			
 			//Selon le type (param ou result), ça change
 			$classname = get_class($this);
 			switch($param["TYPE"]) {
@@ -186,8 +189,8 @@ class es_requirement extends es_base {
 	public $version="";
 
 	//Constructeur
-	public function __construct($param="") {
-		if (is_array($param)) {
+	public function __construct($param = array()) {
+		if (is_array($param) && !empty($param)) {
 			$this->group=$param["GROUP"];
 			$this->name=$param["NAME"];
 			$this->version=$param["VERSION"];
@@ -205,8 +208,8 @@ class es_pmb_requirement extends es_base {
 	public $file="";
 
 	//Constructeur
-	public function __construct($param="") {
-		if (is_array($param)) {
+	public function __construct($param = array()) {
+		if (is_array($param) && !empty($param)) {
 			$this->start_path=$param["START_PATH"];
 			$this->file=$param["FILE"];
 		}
@@ -243,8 +246,8 @@ class es_method extends es_base {
 	//Défini si la méthode a besoin des messages localisés
 	public $language_independant=false;
 	
-	public function __construct($method="",$group="") {
-		if (is_array($method)) {
+	public function __construct($method = array(), $group="") {
+		if (is_array($method) && !empty($method)) {
 			if (!$group) {
 				$this->set_error(ES_METHOD_NO_GROUP_DEFINED,"No group defined");
 				return;
@@ -270,7 +273,7 @@ class es_method extends es_base {
 			}
 			if(isset($method["INPUTS"][0]["PARAM"])) {
 				for ($i=0; $i<count($method["INPUTS"][0]["PARAM"]); $i++) {
-					$parameter=$method["INPUTS"][0]["PARAM"][$i];
+					$parameter=$method["INPUTS"][0]["PARAM"][$i];					
 					$p=new es_parameter($parameter);
 					if (!$p->error) 
 						$this->inputs[]=$p;
@@ -430,13 +433,13 @@ class es_catalog extends es_base {
 				$catalog_file=$base_path."/external_services/catalog_subst.xml";
 			} else {
 				$catalog_file=$base_path."/external_services/catalog.xml";
-				$xml=@file_get_contents($catalog_file);
-				if (!$xml) {
-					$this->set_error(ES_CATALOG_CANNOT_READ_CATALOG_FILE,"Fichier catalog introuvable");
-					return;
-				}
-				static::$_parsed_catalog = _parser_text_no_function_($xml,"CATALOG");
 			}
+			$xml=@file_get_contents($catalog_file);
+			if (!$xml) {
+				$this->set_error(ES_CATALOG_CANNOT_READ_CATALOG_FILE,"Fichier catalog introuvable");
+				return;
+			}
+			static::$_parsed_catalog = _parser_text_no_function_($xml,"CATALOG");
 		}
 		
 		//Dépouillement du résultat
@@ -526,10 +529,28 @@ class external_services_api_class {
 	public $error=false;		//Y-a-t-il eu une erreur
 	public $error_message="";	//Message correspondant à l'erreur
 	
+	/**
+	 * 
+	 * @param external_services $external_services
+	 * @param string $group_name
+	 * @param es_proxy $proxy_parent
+	 */
 	public function __construct($external_services, $group_name, &$proxy_parent) {
 		$this->proxy_parent = &$proxy_parent;
 		$this->es=$external_services;
 		$this->msg=$this->es->msg($group_name);
+		$this->merge_msg();		
+	}
+	
+	// Permet de surcharger les messages avec ceux du web services, utile pour bibloto par exeemple
+	public function merge_msg() {	    
+	   /*
+	    global $msg;
+	    
+	    foreach ($this->msg as $key => $val) {
+	        $msg[$key] = $val;
+	    }
+	    */	    
 	}
 	
 	//Filtrage du tableau des Id de notices pour la visibilité des notices
@@ -789,14 +810,18 @@ class es_proxy extends es_base {
 					
 					//Construction des paramètres de la méthode
 					$params=array();
+					$params_call = array();
 					for ($i=0; $i<count($es_method->inputs); $i++) {
-						$params[].="\$".$es_method->inputs[$i]->name;
+					    $optional = (!empty($es_method->inputs[$i]->optional) && $es_method->inputs[$i]->optional === "yes");
+					    if (empty($es_method->inputs[$i]->default_value)) $es_method->inputs[$i]->default_value = "''";
+					    $params_call[].="\$".$es_method->inputs[$i]->name;					    
+					    $params[] = "\$".$es_method->inputs[$i]->name.($optional === true ? "=" . $es_method->inputs[$i]->default_value : "");
 					}
 					$group_has_method=true;
 					$proxy_func.="
 	function ".$group_name."_".$method_name."(".implode(",",$params).") {
 		try {
-		\$result =  \$this->".$group_name."->".$method_name."(".implode(",",$params).");
+		\$result =  \$this->".$group_name."->".$method_name."(".implode(",",$params_call).");
 		} catch(Exception \$e) {
 			if (\$this->error_callback_function)
 				call_user_func(\$this->error_callback_function, \$e);
@@ -849,7 +874,7 @@ class es_proxy extends es_base {
 	}
 ";
 		$proxy_end="
-	function es_proxy(\$external_services) {
+	public function __construct(\$external_services) {
 		\$this->es=\$external_services;
 		\$this->init();
 	}

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.14 2017-11-21 12:01:00 dgoron Exp $
+// $Id: search.class.php,v 1.18 2019-07-16 09:43:09 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -51,7 +51,7 @@ class combine_search {
 	    	else	$get_input_box_id++;
 	    	   	
 	    	//$r="&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td colspan='3'>";
-	    	$r .="<script type='text/javascript' src='./javascript/tablist.js'></script>
+	    	$r = "<script type='text/javascript' src='./javascript/tablist.js'></script>
 	    	<div id='$get_input_box_id' class='notice-parent'>	    	
 			<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='$get_input_box_id"."Img' title='".addslashes($msg['plus_detail'])."' style='border:0px; margin:3px 3px' onClick=\"expandBase('$get_input_box_id', true); return false;\">
 			<span class='notice-heada'>		
@@ -60,7 +60,7 @@ class combine_search {
 			</span>
 			
 			</div>
-			<div id='$get_input_box_id"."Child' class='notice-child' style='margin-bottom:6px;display:none;width:94%' $max>
+			<div id='$get_input_box_id"."Child' class='notice-child' style='margin-bottom:6px;display:none;width:94%'>
 				<table class='table-no-border'>
 				!!contenu!!
 				</table>
@@ -85,13 +85,17 @@ class combine_search {
     		/*echo "<pre>";
     		print_r($_SESSION["session_history"]);
     		echo "</pre>";*/
+    		$pair = 1;
     	    for ($i=count($_SESSION["session_history"])-1; $i>=0; $i--) {
-    			if ($_SESSION["session_history"][$i]["NOTI"] || $_SESSION["session_history"][$i]["EXPL"]) {
+    	        if ((!empty($_SESSION["session_history"][$i]["NOTI"]) && $_SESSION["session_history"][$i]["NOTI"]) || (!empty($_SESSION["session_history"][$i]["EXPL"]) && $_SESSION["session_history"][$i]["EXPL"])) {
     				$temp=html_entity_decode(strip_tags(($i+1).") ".$_SESSION["session_history"][$i]["QUERY"]["HUMAN_QUERY"]),ENT_QUOTES,$charset);
     				$onclick="onClick=\"document.getElementById('".$get_input_box_id."_label').innerHTML=this.innerHTML;document.getElementById('".$get_input_box_id."_value').value='$i';expandBase('$get_input_box_id', true); return false;\"";
-    				
-    				if(($pair=1-$pair)) $style=$style_odd;
-    				else $style=$style_even;
+    				$pair = 1 - $pair;
+    				if ($pair) {
+    				    $style = $style_odd;
+    				} else {
+    				    $style = $style_even;
+    				}
     				$liste.="<tr $style><td $onclick >$temp</td></tr>";
 
     				if ($valeur) {
@@ -174,6 +178,9 @@ class combine_search {
     			} else {
     				$op_="EQ";
     				$valeur_champ=$_SESSION["session_history"][$valeur[0]]["NOTI"]["GET"]["idcaddie"];
+    				if(empty($search)) {
+    					$search=array();
+    				}
     				$search[0]="f_11";
 					//opérateur
     				$op="op_0_".$search[0];
@@ -181,11 +188,11 @@ class combine_search {
     				${$op}=$op_;
     		    			
     				//contenu de la recherche
-    				$field="field_0_".$search[0];
-    				$field_=array();
-    				$field_[0]=$valeur_champ;
+    				$field = "field_0_".$search[0];
+    				$field_array_ = array();
+    				$field_array_[0] = $valeur_champ;
     				global ${$field};
-    				${$field}=$field_;
+    				${$field} = $field_array_;
     	    	
     				//opérateur inter-champ
     				$inter="inter_0_".$search[0];
@@ -274,6 +281,9 @@ class combine_search {
     			} else {
     				$op_="EQ";
     				$valeur_champ=$_SESSION["session_history"][$valeur[0]]["NOTI"]["GET"]["idcaddie"];
+    				if(empty($search)) {
+    					$search=array();
+    				}
     				$search[0]="f_11";
 					//opérateur
     				$op="op_0_".$search[0];
@@ -281,11 +291,11 @@ class combine_search {
     				${$op}=$op_;
     		    			
     				//contenu de la recherche
-    				$field="field_0_".$search[0];
-    				$field_=array();
-    				$field_[0]=$valeur_champ;
+    				$field = "field_0_".$search[0];
+    				$field_array_ = array();
+    				$field_array_[0] = $valeur_champ;
     				global ${$field};
-    				${$field}=$field_;
+    				${$field} = $field_array_;
     	    	
     				//opérateur inter-champ
     				$inter="inter_0_".$search[0];

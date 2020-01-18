@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: amende.class.php,v 1.25 2017-08-09 07:44:07 jpermanne Exp $
+// $Id: amende.class.php,v 1.26 2019-01-23 13:42:06 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/calendar.class.php");
 require_once($class_path."/quotas.class.php");
+require_once($class_path."/expl.class.php");
 
 class amende {
 
@@ -67,6 +68,8 @@ class amende {
     		//Gestion des quotas
  			$struct["READER"]=$this->id_empr;
 			$struct["EXPL"]=$id_expl;
+			$struct["NOTI"] = exemplaire::get_expl_notice_from_id($id_expl);
+			$struct["BULL"] = exemplaire::get_expl_bulletin_from_id($id_expl);
 			
 			$qt_delai_avant_amende=new quota("AMENDE_DELAI","$include_path/quotas/own/$lang/finances.xml");
 			$param["delai_avant_amende"]=$qt_delai_avant_amende->get_quota_value($struct);

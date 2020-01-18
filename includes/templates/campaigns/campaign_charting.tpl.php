@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: campaign_charting.tpl.php,v 1.4 2018-03-08 17:29:26 dgoron Exp $
+// $Id: campaign_charting.tpl.php,v 1.5 2019-05-27 10:48:09 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $campaign_charting_commons, $campaign_charting_axis;
 
 $campaign_charting_commons = "
 <div id='!!nodeId!!'></div>

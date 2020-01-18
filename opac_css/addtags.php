@@ -4,7 +4,7 @@
 // © 2006 mental works / www.mental-works.com contact@mental-works.com
 // 	complètement repris et corrigé par PMB Services 
 // +-------------------------------------------------+
-// $Id: addtags.php,v 1.30 2018-04-19 15:21:03 tsamson Exp $
+// $Id: addtags.php,v 1.32 2019-02-20 15:20:24 dgoron Exp $
 
 $base_path=".";
 require_once($base_path."/includes/init.inc.php");
@@ -51,6 +51,9 @@ require_once($base_path."/includes/empr.inc.php");
 require_once($base_path.'/includes/empr_func.inc.php');
 
 if ($opac_allow_add_tag==0) die("");
+
+$ChpTag = strip_tags($ChpTag);
+
 // par défaut, on suppose que le droit donné par le statut est Ok
 $allow_avis = 1 ;
 $allow_tag = 1 ;
@@ -68,6 +71,19 @@ if ($opac_allow_add_tag==1) {
 }
 
 print $popup_header;
+print "
+	<script type='text/javascript'>
+		// Fonction a utilisier pour l'encodage des URLs en javascript
+		function encode_URL(data){
+			var docCharSet = document.characterSet ? document.characterSet : document.charset;
+			if(docCharSet == \"UTF-8\"){
+				return encodeURIComponent(data);
+			}else{
+				return escape(data);
+			}
+		}
+	</script>
+	<div id='att' style='z-Index:1000'></div>";
 if ($opac_allow_add_tag==2 && !$allow_tag) die($popup_footer);
 
 print "<div id='titre-popup'>".$msg['notice_title_tag']."</div>";
@@ -84,43 +100,30 @@ if (($ChpTag) && ($log_ok)) {
 	} else {
 		$sql="insert into tags (libelle, num_notice,user_code,dateajout) values ('$ChpTag',$noticeid,'". $_SESSION["user_code"] ."',CURRENT_TIMESTAMP())";
 		if (pmb_mysql_query($sql, $dbh)) {
-		echo "<div align='center'><br /><br />".$msg['addtag_enregistre']."<br /><br /><a href='#' onclick='window.close()'>".$msg['addtag_fermer']."</a></div>";
-			} else {
-		echo "<div align='center'><br /><br />".$msg['addtag_pb_enr']."<br /><br /><a href='#' onclick='window.close()'>".$msg['addtag_fermer']."</a></div>";
-				}
+			echo "<div align='center'><br /><br />".$msg['addtag_enregistre']."<br /><br /><a href='#' onclick='window.close()'>".$msg['addtag_fermer']."</a></div>";
+		} else {
+			echo "<div align='center'><br /><br />".$msg['addtag_pb_enr']."<br /><br /><a href='#' onclick='window.close()'>".$msg['addtag_fermer']."</a></div>";
+		}
 	}
 } else {
-	$requete = "select index_l from notices where index_l is not null and index_l!=''";
-
-	$r = pmb_mysql_query($requete, $dbh);
-	if (pmb_mysql_num_rows($r)){
-		while ($loc = pmb_mysql_fetch_object($r)) {
-			$liste = explode($pmb_keyword_sep,$loc->index_l);
-			for ($i=0;$i<count($liste);$i++){
-				$index=trim($liste[$i]);
-				if ($index) $arrTag[strtolower($index)]++;
-				}
-			}
-		}
-	ksort($arrTag);
-	$lettre="";
-	foreach ($arrTag as $key => $value) {
-		if ($key{0}!=$lettre){
-			$lettre=$key{0};
-			$select.="<optgroup  class='erreur' label='$lettre'>";
-			}
-		$select.="<option style='color:#000000' value='$key'>".$key ."</option>";
-		}
-	echo "<form id='f' name='f' method='post' action='".$opac_url_base."addtags.php'>
+	echo "
+		<form id='f' name='f' method='post' action='".$opac_url_base."addtags.php'>
 			<input type='hidden' name='noticeid' value='$noticeid' />
 			$msg[addtag_choisissez]<br />
-			<select name='select' style='width:200px' onchange='document.f.ChpTag.value=this.value;'>
-			$select
-			</select><br /><br />
+			<input type='text' id='select' name='select' class='saisie-20emr' completion='keywords' autfield='ChpTag' value='' autocomplete='off' />
+			<input class='bouton' value='...' id='select_selection_selector' title='".htmlentities($msg['parcourir'],ENT_QUOTES,$charset)."' onclick=\"openPopUp('".$base_path."/select.php?what=keyword&caller=f&p1=select&p2=ChpTag&deb_rech=', 'selector')\" type='button' />
+			<input type='button' class='bouton' value='X' onclick=\"document.getElementById('select').value=''; document.getElementById('ChpTag').value='';\">
+			<br /><br />
 			$msg[addtag_nouveau]<br />
-			<input type='text' name='ChpTag' style='width:200px'/>
+			<input type='text' id='ChpTag' name='ChpTag' style='width:200px'/>
 		    <input type='submit' class='bouton' name='submit' value='".$msg['addtag_bt_ajouter']."' />
-			</form>";
+		</form>
+		<script type='text/javascript' src='".$base_path."/includes/javascript/popup.js'></script>
+		<script type='text/javascript' src='".$base_path."/includes/javascript/ajax.js'></script>
+		<script type='text/javascript'>
+			ajax_parse_dom();
+		</script>
+			";
 }
 
 if (!$log_ok && $opac_allow_add_tag==2) {

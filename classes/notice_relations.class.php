@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_relations.class.php,v 1.22 2018-11-20 15:41:00 arenou Exp $
+// $Id: notice_relations.class.php,v 1.25.6.1 2019-10-11 14:19:13 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -147,16 +147,22 @@ class notice_relations {
 		$string_relations = '';
 		$n_rel=0;
 		foreach($notice_links as $direction=>$relations){
+			$last_rel = count($relations) - 1;
 			foreach($relations as $relation){
 				if(!((is_object($relation)) && ($relation->get_serial_id() == $relation->get_linked_notice()) && ($relation->get_relation_type() == 'b'))) {
-					$string_relations .= $relation->get_form($n_rel, $niveau_biblio, $from_duplicate_form);
+					$button_add_field = "";
+					if ($n_rel === $last_rel) {
+						$button_add_field = "<input id='add_field_linked_record' type='button' class='bouton' value='+' onClick=\"add_rel();\"/>";
+					}
+					$string_relations .= str_replace('!!button_add_field!!', $button_add_field, $relation->get_form($n_rel, $niveau_biblio, $from_duplicate_form));
 					$n_rel++;
 				}
 			}
 		}
 		if(!$n_rel) {
+			$button_add_field = "<input id='add_field_linked_record' type='button' class='bouton' value='+' onClick=\"add_rel();\"/>";
 			$this->links[0] = new notice_relation();
-			$string_relations .= $this->links[0]->get_form($n_rel, $niveau_biblio, $from_duplicate_form);
+			$string_relations .= str_replace('!!button_add_field!!', $button_add_field, $this->links[0]->get_form($n_rel, $niveau_biblio, $from_duplicate_form));
 			$n_rel++;
 		}
 		
@@ -179,7 +185,7 @@ class notice_relations {
 		foreach(static::$liste_type_relation[$direction]->table as $key=>$val){
 			$reverse_code = static::$liste_type_relation[$direction]->attributes[$key]['REVERSE_CODE'];
 			$reverse_direction = static::$liste_type_relation[$direction]->attributes[$key]['REVERSE_DIRECTION'];
-			if($key.'-'.$direction == $selected) {
+			if((is_array($selected) && in_array($key.'-'.$direction, $selected)) || ($key.'-'.$direction == $selected)) {
 				$options .='<option  style="color:#000000" value="'.$key.'-'.$direction.'" selected="selected" data-reverse-code="'.$reverse_code.'-'.$reverse_direction.'">'.$val.'</option>';
 			}else{
 				$options .='<option  style="color:#000000" value="'.$key.'-'.$direction.'" data-reverse-code="'.$reverse_code.'-'.$reverse_direction.'">'.$val.'</option>';
@@ -188,7 +194,7 @@ class notice_relations {
 		return $options;
 	}
 	
-	public static function get_selector($name='', $selected='', $on_change='') {
+	public static function get_selector($name='', $selected='', $on_change='', $multiple = false) {
 		global $msg;
 	
 		static::parse();
@@ -197,7 +203,7 @@ class notice_relations {
 		
 		
 		$select = "
-			<select onchange='".$on_change."' id='".$name."' name='".$name."' size='1' data-form-name='".implode('_',$tmp)."_'>
+			<select onchange='".$on_change."' id='".$name."' name='".$name."' data-form-name='".implode('_',$tmp)."_' ".($multiple ? "multiple='multiple'" : "").">
 				<optgroup class='erreur' label='".$msg['notice_lien_montant']."'>";
 		$select .= static::get_selector_options('up', $selected);
 		$select .= "
@@ -528,6 +534,10 @@ class notice_relations {
 			}
 		}
 		return $nb_pairs;
+	}
+	
+	public function get_links() {
+	    return $this->links;
 	}
 	
 	public function get_nb_links() {

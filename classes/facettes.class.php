@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facettes.class.php,v 1.13 2018-12-11 09:41:42 dgoron Exp $
+// $Id: facettes.class.php,v 1.15 2019-05-16 12:54:10 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -77,6 +77,9 @@ class facettes extends facettes_root {
 		global $field_0_s_1;
 		
 		//historique des recherches
+		if(empty($search)) {
+			$search = array();
+		}
 		$search[] = "s_1";
 		$op_0_s_1 = "EQ";
 		$field_0_s_1[] = $_SESSION['last_query']+0; 
@@ -116,6 +119,11 @@ class facettes extends facettes_root {
 	protected static function get_link_not_clicked($name, $label, $code_champ, $code_ss_champ, $id, $nb_result) {
 // 		$link =  "document.location=\"".static::format_url("lvl=more_results&mode=extended&facette_test=1");
 // 		$link .= "&name=".rawurlencode($name)."&value=".rawurlencode($label)."&champ=".$code_champ."&ss_champ=".$code_ss_champ."\";";
+		return $link;
+	}
+	
+	protected static function get_link_reinit_facettes() {
+// 		$link =  "document.location=\"".static::format_url("lvl=more_results&get_last_query=1&reinit_facette=1")."\";";
 		return $link;
 	}
 	

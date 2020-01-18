@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_lecteurs_groupes.inc.php,v 1.16 2018-11-22 15:34:57 dgoron Exp $
+// $Id: import_lecteurs_groupes.inc.php,v 1.18 2019-07-12 10:25:27 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -46,7 +46,7 @@ print "
     <div class='row'>";
     
 // Si les lecteurs sont localisés, affiche le sélecteur de localisation, sinon valeur par défaut de l'utilisateur
-print import_empr::get_locations_selector('localisations');
+print import_empr::get_locations_selector('localisation');
 print "<br />";
     
 // Sélecteur de categ lecteur
@@ -93,6 +93,8 @@ function import($separateur, $dbh, $type_import){
     $fichier = @fopen( "./temp/".basename($_FILES['import_lec']['tmp_name']), "r" );
        
     if ($fichier) {
+    	$cpt_maj = 0;
+    	$j = 0;
         while (!feof($fichier)) {
 			//initialise la variable tableau, au cas où on ait pas toutes les colonnes dans le fichier csv
 			$buffer = fgets($fichier, 4096);
@@ -192,7 +194,7 @@ function import($separateur, $dbh, $type_import){
 							}
 							$tab[12]="";
                     	}
-                    	if ($tab[13]!="") { 
+                    	if (isset($tab[13]) && $tab[13]!="") { 
 	                    	$req_update_prof = "UPDATE empr SET empr_prof='$tab[13]' WHERE empr_cb = '$tab[0]'";
 	                    	$update_prof = pmb_mysql_query($req_update_prof, $dbh);
 	                    	if (!$update_prof) { 
@@ -202,7 +204,7 @@ function import($separateur, $dbh, $type_import){
 							}
 							$tab[13]="";
                     	}
-                    	if ($tab[14]!="") {
+                    	if (isset($tab[14]) && $tab[14]!="") {
 	                    	$req_update_msg = "UPDATE empr SET empr_msg='$tab[14]' WHERE empr_cb = '$tab[0]'";
 	                    	$update_msg = pmb_mysql_query($req_update_msg, $dbh);
 	                    	if (!$update_msg) {                     		
@@ -270,8 +272,4 @@ switch($action) {
         show_import_choix_fichier($dbh);
         break;
 }
-
 ?>
-
-
-

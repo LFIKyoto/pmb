@@ -2,9 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rss_flux.class.php,v 1.15 2017-02-01 15:19:02 dgoron Exp $
+// $Id: rss_flux.class.php,v 1.17.2.3 2019-11-15 09:49:53 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+global $class_path;
+require_once($class_path.'/sort.class.php');
+require_once($class_path.'/interface/interface_select.class.php');
 
 // definition de la classe de gestion des 'flux RSS'
 class rss_flux {
@@ -16,6 +20,7 @@ class rss_flux {
 	public $nom_rss_flux = ""; 
 	public $link_rss_flux = "" ;
 	public $descr_rss_flux = "" ;
+	public $metadata_rss_flux = 1;
 	public $lang_rss_flux = "" ;
 	public $copy_rss_flux = "" ;
 	public $editor_rss_flux = "" ;
@@ -27,7 +32,9 @@ class rss_flux {
 
 	public $format_flux = "";
 	public $export_court_flux = 0;
-	public $tpl_rss_flux = 0;
+	public $tpl_title_rss_flux = "0";
+	public $tpl_rss_flux = "0";
+	public $id_tri_rss_flux = 0;
 	
 	public $nb_paniers = 0;
 	public $nb_bannettes = 0;
@@ -47,14 +54,13 @@ class rss_flux {
 	//		getData() : recuperation infos
 	// ---------------------------------------------------------------
 	public function getData() {
-		global $dbh;
-		
 		if (!$this->id_rss_flux) {
 			// pas d'identifiant. on retourne un tableau vide
 		 	$this->id_rss_flux=0;
 		 	$this->nom_rss_flux = "" ;
 			$this->link_rss_flux = "" ;
 			$this->descr_rss_flux = "" ;
+			$this->metadata_rss_flux = 1 ;
 			$this->lang_rss_flux = "" ;
 			$this->copy_rss_flux = "" ;
 			$this->editor_rss_flux = "" ;
@@ -65,18 +71,21 @@ class rss_flux {
 			$this->img_link_rss_flux = "" ;
 			$this->format_flux = "";
 			$this->export_court_flux = 0;
-			$this->tpl_rss_flux = 0;
+			$this->tpl_title_rss_flux = "0";
+			$this->tpl_rss_flux = "0";
+			$this->id_tri_rss_flux = 0;
 			$this->compte_elements();
 		} else {
-			$requete = "SELECT id_rss_flux, nom_rss_flux, link_rss_flux, descr_rss_flux, lang_rss_flux, copy_rss_flux, editor_rss_flux, webmaster_rss_flux, ttl_rss_flux, img_url_rss_flux, img_title_rss_flux, img_link_rss_flux, format_flux, export_court_flux,tpl_rss_flux ";
+			$requete = "SELECT id_rss_flux, nom_rss_flux, link_rss_flux, descr_rss_flux, metadata_rss_flux, lang_rss_flux, copy_rss_flux, editor_rss_flux, webmaster_rss_flux, ttl_rss_flux, img_url_rss_flux, img_title_rss_flux, img_link_rss_flux, format_flux, export_court_flux, tpl_title_rss_flux, tpl_rss_flux, id_tri_rss_flux ";
 			$requete .= "FROM rss_flux WHERE id_rss_flux='".$this->id_rss_flux."' " ;
-			$result = pmb_mysql_query($requete, $dbh) or die ($requete."<br /> in rss_flux.class.php : ".pmb_mysql_error());
+			$result = pmb_mysql_query($requete);
 			if(pmb_mysql_num_rows($result)) {
 				$temp = pmb_mysql_fetch_object($result);
 			 	$this->id_rss_flux			= $temp->id_rss_flux ;
 				$this->nom_rss_flux			= $temp->nom_rss_flux ;
 				$this->link_rss_flux 		= $temp->link_rss_flux ;     
-				$this->descr_rss_flux 		= $temp->descr_rss_flux ;    
+				$this->descr_rss_flux 		= $temp->descr_rss_flux ;
+				$this->metadata_rss_flux 	= $temp->metadata_rss_flux ;
 				$this->lang_rss_flux 		= $temp->lang_rss_flux ;     
 				$this->copy_rss_flux 		= $temp->copy_rss_flux ;     
 				$this->editor_rss_flux 		= $temp->editor_rss_flux ;   
@@ -87,7 +96,9 @@ class rss_flux {
 				$this->img_link_rss_flux 	= $temp->img_link_rss_flux ; 
 				$this->format_flux			= $temp->format_flux ;
 				$this->export_court_flux	= $temp->export_court_flux;
+				$this->tpl_title_rss_flux	        = $temp->tpl_title_rss_flux;
 				$this->tpl_rss_flux	        = $temp->tpl_rss_flux;
+				$this->id_tri_rss_flux      = $temp->id_tri_rss_flux;
 				$this->compte_elements();
 			} else {
 				// pas de flux avec cette cle
@@ -95,6 +106,7 @@ class rss_flux {
 			 	$this->nom_rss_flux = "" ;
 				$this->link_rss_flux = "" ;
 				$this->descr_rss_flux = "" ;
+				$this->metadata_rss_flux = 1 ;
 				$this->lang_rss_flux = "" ;
 				$this->copy_rss_flux = "" ;
 				$this->editor_rss_flux = "" ;
@@ -105,7 +117,9 @@ class rss_flux {
 				$this->img_link_rss_flux = "" ;
 				$this->format_flux="";
 				$this->export_court_flux = 0;
-				$this->tpl_rss_flux = 0;
+				$this->tpl_title_rss_flux = "0";
+				$this->tpl_rss_flux = "0";
+				$this->id_tri_rss_flux = 0;
 				$this->compte_elements();
 			}
 		}
@@ -118,7 +132,7 @@ class rss_flux {
 	
 		global $msg, $charset;
 		global $dsi_flux_form;
-		global $dbh, $PMBuserid;
+		global $PMBuserid;
 	
 		if($this->id_rss_flux) {
 			$action = "./dsi.php?categ=fluxrss&sub=&id_rss_flux=$this->id_rss_flux&suite=update";
@@ -130,8 +144,24 @@ class rss_flux {
 			$button_delete ='';
 		}
 		
-		$sel_notice_tpl=notice_tpl_gen::gen_tpl_select("notice_tpl",$this->tpl_rss_flux);
-	
+		$options = notice_tpl::get_list();
+		$directories = record_display::get_directories();
+		foreach ($directories as $value => $label) {
+		    $options[$value] = $label;
+		}
+		//Header de la notice
+		$interface_select = new interface_select('notice_title_tpl');
+		$interface_select->set_options($options)
+		->set_selected($this->tpl_title_rss_flux);
+		$sel_notice_title_tpl=$interface_select->get_display(0, $msg["notice_tpl_list_default"], 0, $msg["notice_tpl_list_default"]);
+		
+		//Description de la notice
+		$interface_select = new interface_select('notice_tpl');
+		$interface_select->set_options($options)
+		  ->set_selected($this->tpl_rss_flux)
+		  ->set_onchange('changeTemplateChoice();');
+		$sel_notice_tpl=$interface_select->get_display(0, $msg["notice_tpl_list_default"], 0, $msg["notice_tpl_list_default"]);
+		
 		$sel_default_format="<select name='format_flux'>";
 		if(!$this->format_flux){
 			$sel_default_format.="<option selected value='0'>$msg[dsi_flux_form_format_flux_default_empty]</option>";
@@ -161,6 +191,7 @@ class rss_flux {
 		$dsi_flux_form = str_replace('!!nom_rss_flux!!'			, htmlentities($this->nom_rss_flux			,ENT_QUOTES, $charset), $dsi_flux_form);
 		$dsi_flux_form = str_replace('!!link_rss_flux!!'		, htmlentities($this->link_rss_flux     	,ENT_QUOTES, $charset), $dsi_flux_form);
 		$dsi_flux_form = str_replace('!!descr_rss_flux!!'		, htmlentities($this->descr_rss_flux    	,ENT_QUOTES, $charset), $dsi_flux_form);
+		$dsi_flux_form = str_replace('!!metadata_rss_flux!!'	, ($this->metadata_rss_flux ? "checked='checked'" : ""), $dsi_flux_form);
 		$dsi_flux_form = str_replace('!!lang_rss_flux!!'		, htmlentities($this->lang_rss_flux     	,ENT_QUOTES, $charset), $dsi_flux_form);
 		$dsi_flux_form = str_replace('!!copy_rss_flux!!'		, htmlentities($this->copy_rss_flux     	,ENT_QUOTES, $charset), $dsi_flux_form);
 		$dsi_flux_form = str_replace('!!editor_rss_flux!!'		, htmlentities($this->editor_rss_flux   	,ENT_QUOTES, $charset), $dsi_flux_form);
@@ -169,9 +200,9 @@ class rss_flux {
 		$dsi_flux_form = str_replace('!!img_url_rss_flux!!'		, htmlentities($this->img_url_rss_flux  	,ENT_QUOTES, $charset), $dsi_flux_form);
 		$dsi_flux_form = str_replace('!!img_title_rss_flux!!'	, htmlentities($this->img_title_rss_flux	,ENT_QUOTES, $charset), $dsi_flux_form);
 		$dsi_flux_form = str_replace('!!img_link_rss_flux!!'	, htmlentities($this->img_link_rss_flux 	,ENT_QUOTES, $charset), $dsi_flux_form);
+		$dsi_flux_form = str_replace('!!sel_notice_title_tpl!!', $sel_notice_title_tpl, $dsi_flux_form);
 		$dsi_flux_form = str_replace('!!format_flux_default!!'	, $sel_default_format, $dsi_flux_form);
 		$dsi_flux_form = str_replace('!!sel_notice_tpl!!'		, $sel_notice_tpl, $dsi_flux_form);
-		
 
 		
 		if($this->export_court_flux){
@@ -186,7 +217,7 @@ class rss_flux {
 		if ($PMBuserid!=1) $rqt.=" and (autorisations='$PMBuserid' or autorisations like '$PMBuserid %' or autorisations like '% $PMBuserid %' or autorisations like '% $PMBuserid') ";
 		$rqt.=" order by name ";
 		
-		$result = pmb_mysql_query($rqt, $dbh) or die ($rqt."<br /> in rss_flux.class.php : ".pmb_mysql_error());
+		$result = pmb_mysql_query($rqt);
 		$paniers = "";
 		while (($contenant = pmb_mysql_fetch_object($result))) {
 			if (array_search($contenant->id_obj,$this->num_paniers)!==false) $checked="checked" ; 
@@ -199,17 +230,26 @@ class rss_flux {
 		$dsi_flux_form = str_replace('!!paniers!!', $paniers,  $dsi_flux_form);
 		
 		$rqt="select id_bannette as id_obj, nom_bannette as name_obj from bannettes where proprio_bannette=0 order by nom_bannette ";
-		$result = pmb_mysql_query($rqt, $dbh) or die ($rqt."<br /> in rss_flux.class.php : ".pmb_mysql_error());
+		$result = pmb_mysql_query($rqt);
 		$bannettes = "";
 		while (($contenant = pmb_mysql_fetch_object($result))) {
 			if (array_search($contenant->id_obj,$this->num_bannettes)!==false) $checked="checked" ; 
-				else $checked="" ;
+			else $checked="" ;
 			$bannettes .= "<div class='usercheckbox'>
 							<input  type='checkbox' id='bannettes[".$contenant->id_obj."]' name='bannettes[]' ".$checked." value='".$contenant->id_obj."' />
 							<label for='bannettes[".$contenant->id_obj."]' >".htmlentities($contenant->name_obj,ENT_QUOTES, $charset)."</label>
 							</div>";	
 		}
 		$dsi_flux_form = str_replace('!!bannettes!!', $bannettes,  $dsi_flux_form);
+		
+		if($this->id_tri_rss_flux>0){
+		    $sort = new sort("notices","base");
+		    $dsi_flux_form = str_replace('!!tri!!', $this->id_tri_rss_flux, $dsi_flux_form);
+		    $dsi_flux_form = str_replace('!!tri_name!!', $sort->descriptionTriParId($this->id_tri_rss_flux), $dsi_flux_form);
+		}else{
+		    $dsi_flux_form = str_replace('!!tri!!', "", $dsi_flux_form);
+		    $dsi_flux_form = str_replace('!!tri_name!!', $msg['dsi_flux_form_no_active_tri'], $dsi_flux_form);
+		}
 		
 		$dsi_flux_form = str_replace('!!delete!!', $button_delete,  $dsi_flux_form);
 	
@@ -223,26 +263,69 @@ class rss_flux {
 	//		delete() : suppression 
 	// ---------------------------------------------------------------
 	public function delete() {
-		global $dbh;
 		global $msg;
 		
-		if (!$this->id_rss_flux) return $msg[dsi_flux_no_access]; // impossible d'acceder 
+		if (!$this->id_rss_flux) return $msg['dsi_flux_no_access']; // impossible d'acceder 
 	
 		$requete = "delete from rss_flux_content WHERE num_rss_flux='$this->id_rss_flux'";
-		pmb_mysql_query($requete, $dbh);
+		pmb_mysql_query($requete);
 	
 		$requete = "delete from rss_flux WHERE id_rss_flux='$this->id_rss_flux'";
-		pmb_mysql_query($requete, $dbh);
+		pmb_mysql_query($requete);
 	}
 	
+	
+	public function set_properties_from_form() {
+	    global $nom_rss_flux, $link_rss_flux, $descr_rss_flux, $metadata_rss_flux;
+		global $lang_rss_flux, $copy_rss_flux, $editor_rss_flux, $webmaster_rss_flux, $ttl_rss_flux;
+		global $img_url_rss_flux, $img_title_rss_flux, $img_link_rss_flux;
+		global $notice_title_tpl, $type_export, $notice_tpl, $format_flux;
+		global $paniers, $bannettes;
+		global $id_tri_rss_flux;
+		
+		$this->nom_rss_flux = stripslashes($nom_rss_flux);
+		$this->link_rss_flux = stripslashes($link_rss_flux);
+		$this->descr_rss_flux = stripslashes($descr_rss_flux);
+		$this->metadata_rss_flux = intval($metadata_rss_flux);
+		$this->lang_rss_flux = stripslashes($lang_rss_flux);
+		$this->copy_rss_flux = stripslashes($copy_rss_flux);
+		$this->editor_rss_flux = stripslashes($editor_rss_flux);
+		$this->webmaster_rss_flux = stripslashes($webmaster_rss_flux);
+		$this->ttl_rss_flux = stripslashes($ttl_rss_flux);
+		$this->img_url_rss_flux = stripslashes($img_url_rss_flux);
+		$this->img_title_rss_flux = stripslashes($img_title_rss_flux);
+		$this->img_link_rss_flux = stripslashes($img_link_rss_flux);
+		$this->tpl_title_rss_flux	= stripslashes($notice_title_tpl);
+		switch ($type_export){
+			case 'tpl':
+				$this->export_court_flux="0";
+				$this->tpl_rss_flux	= $notice_tpl;
+				if($notice_tpl==0){
+					$this->format_flux=$format_flux;
+				}else{
+					$this->format_flux="";
+				}
+				break;
+			case 'export_court':
+				$this->export_court_flux="1";
+				$this->tpl_rss_flux	="0";
+				$this->format_flux="";
+				break;
+			default:
+				$this->format_flux=$format_flux ;
+				break;
+		}
+		if (empty($paniers)) $paniers = array();
+		if (empty($bannettes)) $bannettes = array();
+		$this->num_paniers = $paniers;
+		$this->num_bannettes = $bannettes;
+		$this->id_tri_rss_flux = intval($id_tri_rss_flux);
+	}
 	
 	// ---------------------------------------------------------------
 	//		update 
 	// ---------------------------------------------------------------
-	public function update($temp) {
-	
-		global $dbh;
-		
+	public function update() {
 		if ($this->id_rss_flux) {
 			// update
 			$req = "UPDATE rss_flux set ";
@@ -251,34 +334,37 @@ class rss_flux {
 			$req = "insert into rss_flux set ";
 			$clause = "";
 		}
-		$req .= "id_rss_flux       ='".$temp->id_rss_flux        ."', " ;
-		$req .= "nom_rss_flux      ='".$temp->nom_rss_flux       ."', " ;
-		$req .= "link_rss_flux     ='".$temp->link_rss_flux      ."', " ;
-		$req .= "descr_rss_flux    ='".$temp->descr_rss_flux     ."', " ;
-		$req .= "lang_rss_flux     ='".$temp->lang_rss_flux      ."', " ;
-		$req .= "copy_rss_flux     ='".$temp->copy_rss_flux      ."', " ;
-		$req .= "editor_rss_flux   ='".$temp->editor_rss_flux    ."', " ;
-		$req .= "webmaster_rss_flux='".$temp->webmaster_rss_flux ."', " ;
-		$req .= "ttl_rss_flux      ='".$temp->ttl_rss_flux       ."', " ;
-		$req .= "img_url_rss_flux  ='".$temp->img_url_rss_flux   ."', " ;
-		$req .= "img_title_rss_flux='".$temp->img_title_rss_flux ."', " ;
-		$req .= "img_link_rss_flux ='".$temp->img_link_rss_flux  ."', " ;
-		$req .= "export_court_flux ='".$temp->export_court_flux  ."', " ;
-		$req .= "tpl_rss_flux      ='".$temp->tpl_rss_flux       ."', " ;
-		$req .= "format_flux       ='".$temp->format_flux        ."' " ;
+		$req .= "id_rss_flux       ='".$this->id_rss_flux        ."', " ;
+		$req .= "nom_rss_flux      ='".addslashes($this->nom_rss_flux)       ."', " ;
+		$req .= "link_rss_flux     ='".addslashes($this->link_rss_flux)      ."', " ;
+		$req .= "descr_rss_flux    ='".addslashes($this->descr_rss_flux)     ."', " ;
+		$req .= "metadata_rss_flux ='".addslashes($this->metadata_rss_flux)  ."', " ;
+		$req .= "lang_rss_flux     ='".addslashes($this->lang_rss_flux)      ."', " ;
+		$req .= "copy_rss_flux     ='".addslashes($this->copy_rss_flux)      ."', " ;
+		$req .= "editor_rss_flux   ='".addslashes($this->editor_rss_flux)    ."', " ;
+		$req .= "webmaster_rss_flux='".addslashes($this->webmaster_rss_flux) ."', " ;
+		$req .= "ttl_rss_flux      ='".addslashes($this->ttl_rss_flux)       ."', " ;
+		$req .= "img_url_rss_flux  ='".addslashes($this->img_url_rss_flux)   ."', " ;
+		$req .= "img_title_rss_flux='".addslashes($this->img_title_rss_flux) ."', " ;
+		$req .= "img_link_rss_flux ='".addslashes($this->img_link_rss_flux)  ."', " ;
+		$req .= "export_court_flux ='".addslashes($this->export_court_flux)  ."', " ;
+		$req .= "tpl_title_rss_flux='".addslashes($this->tpl_title_rss_flux)       ."', " ;
+		$req .= "tpl_rss_flux      ='".addslashes($this->tpl_rss_flux)       ."', " ;
+		$req .= "id_tri_rss_flux   ='".addslashes($this->id_tri_rss_flux)    ."', " ;
+		$req .= "format_flux       ='".addslashes($this->format_flux)        ."' " ;
 	
 		$req.=$clause ;
-		$res = pmb_mysql_query($req, $dbh) or die ($req) ;
+		$res = pmb_mysql_query($req);
 		if (!$this->id_rss_flux) $this->id_rss_flux = pmb_mysql_insert_id() ;
-		if (!$this->id_rss_flux) die ("Pb grave pendant l'enregistrement du flux");
+		if (!$this->id_rss_flux);
 		
 		pmb_mysql_query("delete from rss_flux_content where num_rss_flux='$this->id_rss_flux' " ) ;
-		for ($i=0;$i<count($temp->num_paniers);$i++) {
-			pmb_mysql_query("insert into rss_flux_content set num_rss_flux='$this->id_rss_flux', type_contenant='CAD', num_contenant='".$temp->num_paniers[$i]."' " ) ;
+		for ($i=0;$i<count($this->num_paniers);$i++) {
+			pmb_mysql_query("insert into rss_flux_content set num_rss_flux='$this->id_rss_flux', type_contenant='CAD', num_contenant='".$this->num_paniers[$i]."' " ) ;
 		}
 	
-		for ($i=0;$i<count($temp->num_bannettes);$i++) {
-			pmb_mysql_query("insert into rss_flux_content set num_rss_flux='$this->id_rss_flux', type_contenant='BAN', num_contenant='".$temp->num_bannettes[$i]."' " ) ;
+		for ($i=0;$i<count($this->num_bannettes);$i++) {
+			pmb_mysql_query("insert into rss_flux_content set num_rss_flux='$this->id_rss_flux', type_contenant='BAN', num_contenant='".$this->num_bannettes[$i]."' " ) ;
 		}
 	}
 	
@@ -286,23 +372,21 @@ class rss_flux {
 	//		compte_elements() : methode pour pouvoir recompter en dehors !
 	// ---------------------------------------------------------------
 	public function compte_elements() {
-		global $dbh ;
-		
 		$this->nb_paniers=0;
 		$this->nb_bannettes=0;
 		$this->num_paniers=array();
 		$this->num_bannettes=array();
 	
 		$req_nb = "SELECT num_contenant from rss_flux_content WHERE num_rss_flux='".$this->id_rss_flux."' and type_contenant='CAD' " ;
-		$res_nb = pmb_mysql_query($req_nb, $dbh) or die ($req_nb."<br /> in rss_flux.class.php : ".pmb_mysql_error());
+		$res_nb = pmb_mysql_query($req_nb);
 		while (($res = pmb_mysql_fetch_object($res_nb))) {
 			$this->num_paniers[]=$res->num_contenant ;
 			$this->nb_paniers++ ;
 		}
 		
 		$req_nb = "SELECT num_contenant from rss_flux_content WHERE num_rss_flux='".$this->id_rss_flux."' and type_contenant='BAN' " ;
-		$res_nb = pmb_mysql_query($req_nb, $dbh) or die ($req_nb."<br /> in rss_flux.class.php : ".pmb_mysql_error());
-		while (($res = pmb_mysql_fetch_object($res_nb))) {
+		$res_nb = pmb_mysql_query($req_nb);
+		while ($res = pmb_mysql_fetch_object($res_nb)) {
 			$this->num_bannettes[]=$res->num_contenant ;
 			$this->nb_bannettes++ ;
 		}

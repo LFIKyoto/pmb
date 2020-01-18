@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_tagcloud_view_tagcloud.class.php,v 1.4 2016-09-20 10:25:42 apetithomme Exp $
+// $Id: cms_module_tagcloud_view_tagcloud.class.php,v 1.5 2019-06-05 13:13:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -74,7 +74,7 @@ class cms_module_tagcloud_view_tagcloud extends cms_module_common_view{
 			}
 		}
 		for($i=0 ; $i<count($datas) ; $i++){
-			$datas[$i]['weight'] = round((($datas[$i]['weight']-$min)/($max-min))*$this->parameters['nb_weight']);
+			$datas[$i]['weight'] = round((($datas[$i]['weight']-$min)/($max-$min))*$this->parameters['nb_weight']);
 		}
 		
 		$html_to_display = "

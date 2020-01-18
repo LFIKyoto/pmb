@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_accounting_commandes_ui.class.php,v 1.3 2018-05-26 06:51:25 dgoron Exp $
+// $Id: list_accounting_commandes_ui.class.php,v 1.6.2.2 2019-12-04 08:20:26 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,10 +10,6 @@ require_once($class_path."/list/accounting/list_accounting_ui.class.php");
 
 class list_accounting_commandes_ui extends list_accounting_ui {
 		
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
-	
 	protected function get_button_add() {
 		global $msg;
 	
@@ -28,17 +24,20 @@ class list_accounting_commandes_ui extends list_accounting_ui {
 		array('main_fields' =>
 				array(
 						'numero' => '38',
+				        'nom_acte' => 'acquisition_cde_nom',
 						'num_fournisseur' => 'acquisition_ach_fou2',
 						'date_acte' => 'acquisition_cde_date_cde',
 						'date_echeance' => 'acquisition_cde_date_ech',
 						'statut' => 'acquisition_statut',
-						'print_mail' => ''
+				        'commentaires' => 'acquisition_commentaires',
+				        'commentaires_i' => 'acquisition_commentaires_i',
+						'print_mail' => 'print_mail'
 				)
 		);
 	}
 	
 	protected function init_default_columns() {
-		if ($this->filters['status'] != STA_ACT_ALL && $this->filters['status'] != STA_ACT_ARC) {
+		if ($this->filters['status'] && $this->filters['status'] != STA_ACT_ALL && $this->filters['status'] != STA_ACT_ARC) {
 			$this->add_column_selection();
 		}
 		$this->add_column('numero');

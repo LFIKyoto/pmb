@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: searcher_sphinx_records.class.php,v 1.10 2018-12-07 11:02:39 arenou Exp $
+// $Id: searcher_sphinx_records.class.php,v 1.11.6.1 2019-09-20 09:42:04 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -126,7 +126,7 @@ class searcher_sphinx_records extends searcher_sphinx {
 		$this->fields_restrict = array();
 		$this->fields_ignore = array();	
 		$this->mode = $mode;
-		$datatypes = $this->sphinx_base->getDatatypes();
+		$datatypes = $this->sphinx_base->get_datatypes();
 		if(isset($datatypes[$mode])){
 		    $this->fields_restrict = $datatypes[$mode];
 		    if($mode == "title" && $mutli_crit_indexation_oeuvre_title){
@@ -385,6 +385,8 @@ class searcher_sphinx_records extends searcher_sphinx {
 	}
 	
 	protected function _get_objects_ids() {
+	    global $sphinx_indexes_prefix;
+
 		if (isset($this->objects_ids)) {
 			return $this->objects_ids;
 		}
@@ -416,7 +418,7 @@ class searcher_sphinx_records extends searcher_sphinx {
 		$matches = array();
 		do {
 			$this->sc->SetLimits($nb, $this->bypass);
-			$result = $this->sc->Query($this->sphinx_query, "records_explnums");
+			$result = $this->sc->Query($this->sphinx_query, $sphinx_indexes_prefix.'records_explnums');
 			for($i = 0 ; $i<count($result['matches']) ; $i++){
 				if (in_array($result['matches'][$i]['attrs']['num_record'], $already_found)) {
 					continue;

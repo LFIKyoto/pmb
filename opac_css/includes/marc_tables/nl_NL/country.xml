@@ -2,7 +2,7 @@
 <!DOCTYPE XMLlist SYSTEM "../../XMLlist.dtd">
 
 <!-- liste des codes pays en UNIMARC (français)
-$Id: country.xml,v 1.1 2005-06-15 17:24:00 touraine37 Exp $ -->
+$Id: country.xml,v 1.4 2019-03-29 10:23:27 dgoron Exp $ -->
 
 <XMLlist>
 	<entry code="AF">Afghanistan</entry>
@@ -22,7 +22,7 @@ $Id: country.xml,v 1.1 2005-06-15 17:24:00 touraine37 Exp $ -->
 	<entry code="AR">Argentine</entry>
 	<entry code="AM">Arménie</entry>
 	<entry code="AW">Aruba</entry>
-	<entry code="AU">Autralie</entry>
+	<entry code="AU">Australie</entry>
 	<entry code="AT">Autriche</entry>
 	<entry code="AZ">Azrbaïdjan</entry>
 	<entry code="BS">Bahamas</entry>
@@ -100,7 +100,7 @@ $Id: country.xml,v 1.1 2005-06-15 17:24:00 touraine37 Exp $ -->
 	<entry code="GW">Guinée-Bissau</entry>
 	<entry code="GQ">Guinée-équatoriale</entry>
 	<entry code="GY">Guyana</entry>
-	<entry code="GF">Guyanne française</entry>
+	<entry code="GF">Guyane française</entry>
 	<entry code="GE">Géorgie</entry>
 	<entry code="GS">Géorgie du Sud</entry>
 	<entry code="HT">Haïti</entry>
@@ -203,6 +203,7 @@ $Id: country.xml,v 1.1 2005-06-15 17:24:00 touraine37 Exp $ -->
 	<entry code="WS">Samoa</entry>
 	<entry code="AS">Samoa orientales</entry>
 	<entry code="ST">Sao Tome et Principe</entry>
+	<entry code="RS">Serbie</entry>
 	<entry code="SC">Seychelles</entry>
 	<entry code="SL">Sierra Leone</entry>
 	<entry code="SG">Singapour</entry>

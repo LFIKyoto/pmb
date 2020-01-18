@@ -2,9 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sip2_functions.inc.php,v 1.25 2018-12-12 09:08:19 mbertin Exp $
+// $Id: sip2_functions.inc.php,v 1.29.2.1 2019-09-23 14:57:42 mbertin Exp $
 
 require_once($class_path."/emprunteur.class.php");
+require_once($class_path."/expl.class.php");
 require_once("$class_path/mono_display.class.php");
 require_once("$class_path/ajax_pret.class.php");
 require_once("$class_path/ajax_retour_class.php");
@@ -59,6 +60,8 @@ function _patron_information_response_($values) {
 	global $id,$lang,$opac_resa,$msg,$pmb_gestion_devise;
 	global $see_all_pret; 
 	global $selfservice_pret_carte_invalide_msg;
+	
+	$ret = array();
 	$see_all_pret=1; 
 		
 	(string)$rep_lang=(string)$values["LANGUAGE"];
@@ -148,7 +151,16 @@ function _patron_information_response_($values) {
 					//Ouvrages en prêt
 					$n=0;
 					if ($values["START_ITEM"][0]) $start=$values["START_ITEM"][0]-1; else $start=0;
-					if ($values["END_ITEM"][0]) $end=$values["END_ITEM"][0]; else $end=count($empr->prets);
+					//Modification à la demande de Nedap pour le passage à l'UHF
+					if ($values["END_ITEM"][0]){
+						if($values["END_ITEM"][0] > count($empr->prets)){
+							$end=count($empr->prets);
+						}else{
+							$end=$values["END_ITEM"][0];
+						}
+					}else{
+						$end=count($empr->prets);
+					}
 					for ($i=$start; $i<$end; $i++) {
 						//$ret["CHARGED_ITEMS"][$n]="retour le : ".$empr->prets[$i]["date_retour"].": ".$empr->prets[$i]["libelle"];
 						$ret["CHARGED_ITEMS"][$n]=$empr->prets[$i]["cb"];
@@ -251,6 +263,8 @@ function _patron_status_response_($values) {
 	global $id,$lang,$opac_resa,$msg,$pmb_gestion_devise;
 	global $see_all_pret; 	
 	global $selfservice_pret_carte_invalide_msg;
+	
+	$ret = array();
 	$see_all_pret=1; 
 	
 	(string)$rep_lang=(string)$values["LANGUAGE"];
@@ -312,7 +326,8 @@ function _patron_status_response_($values) {
 
 function _end_session_response_($values) {
 	global $id,$lang,$opac_resa;
-
+	
+	$ret = array();
 	$localisation=$values["INSTITUTION_ID"][0];
 	$empr_cb=$values["PATRON_IDENTIFIER"][0];
 
@@ -343,6 +358,7 @@ function _item_information_response_($values) {
 	global $selfservice_pret_non_pretable_msg;
 	global $selfservice_pret_expl_inconnu_msg;
 	
+	$ret = array();
 	$requete = "SELECT exemplaires.*, pret.*, docs_location.*, docs_section.*, docs_statut.*, tdoc_libelle, ";
 	$requete .= " date_format(pret_date, '".$msg["format_date"]."') as aff_pret_date, ";
 	$requete .= " date_format(pret_retour, '".$msg["format_date"]."') as aff_pret_retour, ";
@@ -419,7 +435,8 @@ function _checkout_response_($values) {
 	global $selfservice_pret_quota_bloc_msg;
 	global $selfservice_pret_non_pretable_msg;
 	global $selfservice_pret_expl_inconnu_msg;
-		
+	
+	$ret = array();
 	$see_all_pret=1; 
 	//Transaction obligatoire car déjà effectuée !
 	//$force_checkout=($values["NO_BLOCK"]=="Y"?true:false);
@@ -466,7 +483,11 @@ function _checkout_response_($values) {
 				$ok=0;
 				$error=true;
 				$error_message=$selfservice_pret_pret_interdit_msg;
-			} else {
+			}/* elseif ($empr->empr_msg){ //#74002 non pertiant
+			    $ok=0;
+			    $error=true;
+			    $error_message=$empr->empr_msg;
+			}*/ else {
 				if ($expl->pret_flag) {
 					if ($expl->expl_bulletin) {
 						$isbd = new bulletinage_display($expl->expl_bulletin);
@@ -494,7 +515,7 @@ function _checkout_response_($values) {
 							if (!$pret->status) {
 								$ok=1;
 								$desensitize="Y";//Pour demander de désactiver l'antivole
-								$pret->confirm_pret($id_empr, $expl->expl_id);
+								$pret->confirm_pret($id_empr, $expl->expl_id, 0, 'borne_rfid');
 								//Recherche de la date de retour
 								$requete="select date_format(pret_retour, '".$msg["format_date"]."') as retour from pret where pret_idexpl=".$expl->expl_id;
 								$resultat=pmb_mysql_query($requete);
@@ -548,6 +569,7 @@ function _checkin_response_($values) {
 	global $pmb_antivol,$protocol_prolonge;
 	global $selfservice_pret_expl_inconnu_msg;
 	
+	$ret = array();
 	$localisation=$values["INSTITUTION_ID"][0];
 	$expl_cb=$values["ITEM_IDENTIFIER"][0];
 	$cancel=($values["CANCEL"][0]=="Y"?true:false);
@@ -580,7 +602,7 @@ function _checkin_response_($values) {
 		
 		$retour = new expl_to_do($expl_cb);
  		// Fonction qu effectue le retour d'un document
- 		$retour->do_retour_selfservice();
+		$retour->do_retour_selfservice('borne_rfid');
 
  		if ($retour->status==-1) {
  			//Problème
@@ -596,8 +618,8 @@ function _checkin_response_($values) {
 		$ret["SCREEN_MESSAGE"][2]=$retour->message_retard;
 		$ret["SCREEN_MESSAGE"][3]=$retour->message_amende;
 		*/		
- 		if($retour->message_loc || $retour->message_resa || $retour->message_retard || $retour->message_amende || $retour->message_blocage){
-			$ret["SCREEN_MESSAGE"][0]=trim($retour->message_loc." ".$retour->message_resa." ".$retour->message_retard." ".$retour->message_amende." ".$retour->message_blocage);
+ 		if($retour->message_loc || $retour->message_resa || $retour->message_retard || $retour->message_amende || $retour->message_blocage || $retour->expl->expl_note){
+			$ret["SCREEN_MESSAGE"][0]=trim($retour->message_loc." ".$retour->message_resa." ".$retour->message_retard." ".$retour->message_amende." ".$retour->message_blocage." ".$retour->expl->expl_note);
  			//$ok=0;
 			//Attention, pour les deux lignes suivantes, cela dépend d'un paramètre NEDAP ou IDENT
 			if($protocol_prolonge == "3M" || $protocol_prolonge == "Ident"){
@@ -644,6 +666,8 @@ function _renew_response_($values) {
 	global $selfservice_pret_prolonge_non_msg;
 	global $protocol_prolonge;
 	
+	$ret = array();
+	$struct = array();
 	$empr_cb=$values["PATRON_IDENTIFIER"][0];
 	$expl_cb=$values["ITEM_IDENTIFIER"][0];
 
@@ -701,7 +725,9 @@ function _renew_response_($values) {
 					$qt = new quota("PROLONG_NMBR_QUOTA");
 					//Tableau de passage des paramètres
 					$struct["READER"] = $id_empr;
-					$struct["EXPL"] = $expl_id;						
+					$struct["EXPL"] = $expl_id;
+					$struct["NOTI"] = exemplaire::get_expl_notice_from_id($expl_id);
+					$struct["BULL"] = exemplaire::get_expl_bulletin_from_id($expl_id);
 					$pret_nombre_prolongation=$qt -> get_quota_value($struct);		
 
 					if($cpt_prolongation>$pret_nombre_prolongation){
@@ -711,7 +737,9 @@ function _renew_response_($values) {
 					//Initialisation des quotas la durée de prolongations
 					$qt = new quota("PROLONG_TIME_QUOTA");
 					$struct["READER"] = $id_empr;
-					$struct["EXPL"] = $expl_id;	
+					$struct["EXPL"] = $expl_id;
+					$struct["NOTI"] = exemplaire::get_expl_notice_from_id($expl_id);
+					$struct["BULL"] = exemplaire::get_expl_bulletin_from_id($expl_id);
 					$duree_prolongation=$qt -> get_quota_value($struct);	
 				} // fin if gestion par quotas
 			} 

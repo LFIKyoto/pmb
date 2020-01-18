@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_editorial_parametres_perso.class.php,v 1.43 2018-08-08 09:49:44 plmrozowski Exp $
+// $Id: cms_editorial_parametres_perso.class.php,v 1.46.4.1 2019-10-30 14:23:22 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -32,7 +32,7 @@ class cms_editorial_parametres_perso extends parametres_perso {
 		$this->base_url=$base_url;
 		$_custom_prefixe_="cms_editorial";
 
-		$this->num_type = $type*1;
+		$this->num_type = intval($type);
 
 		$this->fetch_data_cache();
 	}	
@@ -342,7 +342,7 @@ class cms_editorial_parametres_perso extends parametres_perso {
 			$this->get_values($id);
 			$check_scripts="";
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				if(!isset($this->values[$key])) $this->values[$key] = array();
 				$t=array();
 				$t["ID"]=$key;
@@ -350,7 +350,7 @@ class cms_editorial_parametres_perso extends parametres_perso {
 				$t["TITRE"]=$val["TITRE"];
 				$t["COMMENT"]=$val["COMMENT"];
 				if($t["COMMENT"]){
-					$t["COMMENT_DISPLAY"]="&nbsp;<span class='pperso_comment' title='".htmlentities($t["COMMENT"],ENT_QUOTES, $charset)."' >".htmlentities($t["COMMENT"],ENT_QUOTES, $charset)."</span>";
+					$t["COMMENT_DISPLAY"]="&nbsp;<span class='pperso_comment' title='".htmlentities($t["COMMENT"],ENT_QUOTES, $charset)."' ><br>".nl2br(htmlentities($t["COMMENT"],ENT_QUOTES, $charset))."</span>";
 				} else {
 					$t["COMMENT_DISPLAY"]="";
 				}
@@ -409,7 +409,7 @@ class cms_editorial_parametres_perso extends parametres_perso {
 			}
 		}
 		reset($this->t_fields);
-		while (list($key,$val)=each($this->t_fields)) {
+		foreach ($this->t_fields as $key => $val) {
 			$name=$val["NAME"];
 			global ${$name};
 			$value=${$name};
@@ -482,20 +482,18 @@ class cms_editorial_parametres_perso extends parametres_perso {
     			static::$fields[$this->prefix.'_'.$this->num_type][$field_id]["PREFIX"]=$this->prefix;
 		      }
 		}
-		if(!empty($this->t_fields[$field_id])){
-    		$aff=$val_list_empr[$this->t_fields[$field_id]["TYPE"]](static::$fields[$this->prefix.'_'.$this->num_type][$field_id],$values);
-		}else{
-		    $aff='';
+		if (!empty($this->t_fields[$field_id])) {
+    		$aff = $val_list_empr[$this->t_fields[$field_id]["TYPE"]](static::$fields[$this->prefix.'_'.$this->num_type][$field_id],$values);	
+    		if (is_array($aff)) {
+    			if ($keep_html) {
+    				return $aff['value'];
+    			} else {
+    				return $aff['withoutHTML'];
+    			}
+    		} 
+    		return $aff;    		
 		}
-		if(is_array($aff)){
-			if($keep_html){
-				return $aff['value'];
-			} else {
-				return $aff['withoutHTML'];
-			}
-		} else {
-			return $aff;
-		}
+		return '';
 	}
 	
 	public function get_num_type(){

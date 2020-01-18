@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: indexation_stack.class.php,v 1.6 2018-10-10 08:06:39 vtouchard Exp $
+// $Id: indexation_stack.class.php,v 1.9 2019-03-06 09:31:15 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,6 +13,7 @@ require_once($class_path.'/skos/skos_onto.class.php');
 require_once($class_path.'/skos/skos_datastore.class.php');
 require_once($class_path.'/curl.class.php');
 require_once($class_path.'/onto/skos/onto_skos_index.class.php');
+require_once($class_path.'/onto/skos/onto_skos_autoposting.class.php');
 
 class indexation_stack {
 	
@@ -79,6 +80,9 @@ class indexation_stack {
 		$query = "select indexation_stack_entity_id, indexation_stack_entity_type, indexation_stack_datatype from indexation_stack order by indexation_stack_timestamp limit ".$limit;
 		$result = pmb_mysql_query($query);
 		$nb_results = pmb_mysql_num_rows($result);
+		if ($nb_results < $limit) {
+			self::indexation_needed(0);
+		}
 		
 		if($nb_results){
 			while($row = pmb_mysql_fetch_assoc($result)){
@@ -86,7 +90,6 @@ class indexation_stack {
 			}
 		}
 		if ($nb_results < $limit) {
-		    self::indexation_needed(0);
 		    self::indexation_in_progress(0);
 		    return;
 		}
@@ -182,7 +185,7 @@ class indexation_stack {
 		global $pmb_indexation_in_progress;
 		self::init_indexation();
 		if (!$pmb_indexation_in_progress) {
-			return false;
+			return array();
 		}
 		$query = 'SELECT count(indexation_stack_entity_id) as nb_entity, indexation_stack_entity_type as entity_type, indexation_stack_parent_id as parent_id, indexation_stack_parent_type as parent_type from indexation_stack group by indexation_stack_parent_type, indexation_stack_parent_id, indexation_stack_entity_type order by indexation_stack_timestamp';
 		$result = pmb_mysql_query($query);

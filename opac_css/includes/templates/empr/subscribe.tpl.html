@@ -1,0 +1,89 @@
+{% extends 'profil.tpl.html' %}
+<!-- $Id: subscribe.tpl.html,v 1.1.6.4 2019-11-25 11:10:09 btafforeau Exp $ -->
+
+{% block profil_form %}
+	<form name='subs_form' method='post' action='./subscribe.php?subsact=inscrire'>
+{% endblock %}
+
+{% block empr_nom %}
+	<tr {% if empr.renewal_form_fields.empr_nom.explanation %} title="{{ empr.renewal_form_fields.empr_nom.explanation }}"{% endif %} >
+		<td>{{msg.profil_empr_nom}} <sup>*</sup> :</td>
+		<td>
+			<input id="empr_nom" name="{{ prefix_name }}nom{{ suffix_name }}" type="text" value="{{ empr.empr_nom }}" required/>
+		</td>
+	</tr>
+{% endblock %}
+
+{% block empr_prenom %}
+	<tr {% if empr.renewal_form_fields.empr_prenom.explanation %} title="{{ empr.renewal_form_fields.empr_prenom.explanation }}"{% endif %} >
+		<td>{{ msg.profil_empr_prenom}} <sup>*</sup> :</td>
+		<td>
+			<input id="empr_prenom" name="{{ prefix_name }}prenom{{ suffix_name }}" type="text" value="{{ empr.empr_prenom }}" required/>
+		</td>
+	</tr>
+{% endblock %}
+
+{% block empr_mail %}
+	<tr {% if empr.renewal_form_fields.empr_mail.explanation %} title="{{ empr.renewal_form_fields.empr_mail.explanation }}"{% endif %} >
+		<td>{{ msg.profil_empr_mail}} <sup>*</sup> :</td>
+		<td>
+			<input id="empr_mail" name="{{ prefix_name }}mail{{ suffix_name }}" type="email" value="{{ empr.empr_mail }}" required />
+		</td>
+	</tr>
+{% endblock %}
+
+{% block empr_login %}
+	<tr {% if empr.renewal_form_fields.empr_login.explanation %} title="{{ empr.renewal_form_fields.empr_login.explanation }}"{% endif %} >
+		<td>{{ msg.profil_empr_login}} <sup>*</sup> :</td>
+		<td>
+			<input id="empr_login" name="{{ prefix_name }}login{{ suffix_name }}" type="text" value="{{ empr.empr_login }}"  required />
+		</td>
+	</tr>
+	<tr>
+		<td>{{ msg.subs_f_password}} <sup>*</sup> :</td>
+		<td>
+			<input id="empr_password" name="{{ prefix_name }}password{{ suffix_name }}" type="password" value=""  required />
+		</td>
+	</tr>
+	<tr>
+		<td>{{ msg.subs_f_passwordv}} <sup>*</sup> :</td>
+		<td>
+			<input id="empr_passwordv" name="{{ prefix_name }}passwordv{{ suffix_name }}" type="password" value=""  required />
+		</td>
+	</tr>
+{% endblock %}
+
+{% block profil_buttons %}
+	<div align='center'>
+		<input type='checkbox' id='empr_consent_message' name='{{ prefix_name }}consent_message{{ suffix_name }}' value='1'/> 
+		<span class='websubscribe_consent_message'><label for='empr_consent_message'>{{ msg.subs_f_consent_message}}</label></span>
+		<br/>
+		<input type='submit' class='bouton' value="{{ msg.subs_bouton_form}}" onClick="if (test_inscription(this.form)) this.form.submit();" />
+	</div>	
+{% endblock %}
+
+{% block profil_script %}
+	<script type='text/javascript'>
+		function test_inscription(form) {
+			var regexp_password = new RegExp("{{ global.opac_websubscribe_password_regexp }}");
+
+			if (!form.empr_consent_message.checked) {
+				alert(reverse_html_entities("{{ msg.subs_form_consent_message_mandatory}}"));
+				return false;
+			}
+			
+			if (!regexp_password.test(form.empr_password.value)) {
+				alert(reverse_html_entities("{{ msg.empr_password_bad_security }}"));
+				return false;
+			}
+			
+			if ((form.empr_nom.value.length==0) || (form.empr_prenom.value.length==0) || (form.empr_mail.value.length==0) || (form.empr_login.value.length==0) || (form.empr_password.value.length==0) || (form.empr_passwordv.value.length==0) || (form.empr_verifcode.value.length<5)) {
+				alert(reverse_html_entities("{{ msg.subs_form_obligatoire}}"));
+				return false;
+			} else if (form.empr_password.value!=form.empr_passwordv.value) {
+				alert(reverse_html_entities("{{ msg.subs_form_bad_passwords}}"));
+				return false;
+			} else return true;
+   		}
+</script>
+{% endblock %}

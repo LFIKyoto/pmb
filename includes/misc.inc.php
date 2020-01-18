@@ -2,16 +2,23 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: misc.inc.php,v 1.189 2018-12-20 11:00:19 mbertin Exp $
+// $Id: misc.inc.php,v 1.212.2.2 2019-11-20 08:33:39 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-require_once($include_path."/apache_functions.inc.php");
+require_once "$include_path/apache_functions.inc.php";
+require_once "$class_path/curl.class.php";
+
+if (!function_exists('is_countable')) {
+	function is_countable($var) {
+		return (is_array($var) || $var instanceof Countable);
+	}
+}
 
 //Fonction pour gérer les images demandés par PMB
 function getimage_cache($notice_id=0, $etagere_id=0, $authority_id=0, $vigurl=0, $noticecode=0, $url_image=0, $empr_pic=0, $cached_in_opac = 0){
 	global $pmb_notice_img_folder_id, $pmb_authority_img_folder_id, $opac_url_base,$empr_pics_max_size, $dbh;
-	
+
 	global $pmb_img_cache_folder, $opac_img_cache_folder;
 
 	if(!$cached_in_opac){
@@ -19,10 +26,10 @@ function getimage_cache($notice_id=0, $etagere_id=0, $authority_id=0, $vigurl=0,
 	}else{
 		$img_cache_folder = $opac_img_cache_folder;
 	}
-	
+
 	$stop = false;
 	$hash = $location = $hash_location = $hash_location_empty = "";
-	
+
 	$imgpmb_name=$imgpmb_test="";
 	if($notice_id){
 		$imgpmb_name="img_".$notice_id;
@@ -34,7 +41,7 @@ function getimage_cache($notice_id=0, $etagere_id=0, $authority_id=0, $vigurl=0,
 		$imgpmb_name="img_authority_".$authority_id;
 		$imgpmb_test=$pmb_authority_img_folder_id;
 	}
-	
+
 	if(!$stop && $imgpmb_name && $imgpmb_test){
 		$req = "select repertoire_path from upload_repertoire where repertoire_id ='".$imgpmb_test."'";
 		$res = pmb_mysql_query($req,$dbh);
@@ -54,7 +61,7 @@ function getimage_cache($notice_id=0, $etagere_id=0, $authority_id=0, $vigurl=0,
 			$stop = true;
 		}
 	}
-	
+
 	if(!$stop && $img_cache_folder){
 		$hash_image="";
 		if($vigurl){
@@ -88,24 +95,25 @@ function getimage_cache($notice_id=0, $etagere_id=0, $authority_id=0, $vigurl=0,
 			}
 		}
 	}
-	
+
 	$tmp = array("hash" => $hash, "location" => $location, "hash_location" => $hash_location, "hash_location_empty" => $hash_location_empty);
 	return $tmp;
 }
 
-function getimage_url($code = "", $vigurl = "", $empr_pic = 0) {
+function getimage_url($code = "", $vigurl = "", $empr_pic = 0, $no_cache=false) {
 	global $opac_url_base, $opac_book_pics_url, $pmb_book_pics_url, $pmb_opac_url, $pmb_url_base, $prefix_url_image;
 	global $pmb_img_cache_folder, $pmb_img_cache_url, $opac_img_cache_folder, $opac_img_cache_url;
+	global $use_opac_url_base;
 	
 	$url_return = $notice_id = $etagere_id = $authority_id = $noticecode = $url_image = "" ;
-	
+
 	if($empr_pic){
 		$code = pmb_preg_replace('/ /', '', $code);
 		$vigurl = str_replace("!!num_carte!!", $code, $vigurl) ;
 		$url_image = "";
 		$code = "";
 	}
-	
+
 	if(isset($prefix_url_image) && $prefix_url_image && ($prefix_url_image != $pmb_opac_url) && ($prefix_url_image != $opac_url_base)){
 		$url_image = $pmb_book_pics_url;
 		$prefix = $prefix_url_image;
@@ -119,13 +127,13 @@ function getimage_url($code = "", $vigurl = "", $empr_pic = 0) {
 		$img_cache_url = $opac_img_cache_url;
 		$cached_in_opac = 1;
 	}
-	
+
 	if($code){
 		$noticecode = pmb_preg_replace('/-|\.| /', '', $code);
 	}else{
 		$noticecode = "";
 	}
-	
+
 	$for_cut="";
 	$out = array();
 	if (($vigurl) && (preg_match('#^(.+)?getimage\.php(.+)?$#',$vigurl,$out))) {
@@ -145,7 +153,7 @@ function getimage_url($code = "", $vigurl = "", $empr_pic = 0) {
 				$for_cut = trim($out[2]);
 			}
 		}
-		
+
 		if($for_cut){
 			$out2=array();
 			if(preg_match("#(notice_id|etagere_id|authority_id)=([0-9]+)#",$for_cut,$out2)){
@@ -166,17 +174,17 @@ function getimage_url($code = "", $vigurl = "", $empr_pic = 0) {
 			}
 		}
 	}
-	
+
 	if((strpos($vigurl,'data:image',0) === 0) || (strpos($vigurl,"vig_num.php") !== FALSE ) || (strpos($vigurl,"vign_middle.php") !== FALSE )){
 		$url_return = $vigurl;
-	}elseif($img_cache_url && $img_cache_folder){
+	}elseif(!$no_cache && $img_cache_url && $img_cache_folder && empty($use_opac_url_base)){
 		$manag_cache=getimage_cache($notice_id, $etagere_id, $authority_id, $vigurl, $noticecode, $url_image, $empr_pic, $cached_in_opac);
 		$out=array();
 		if($manag_cache["location"] && preg_match("#^".$img_cache_folder."(.+)$#",$manag_cache["location"],$out)){
 			$url_return = $img_cache_url.$out[1];
 		}
 	}
-	
+
 	if(!$url_return){
 		$url_return = $prefix."getimage.php?url_image=".urlencode($url_image)."&amp;noticecode=!!noticecode!!&amp;vigurl=".urlencode($vigurl) ;
 		if(isset($empr_pic) && $empr_pic){
@@ -188,20 +196,20 @@ function getimage_url($code = "", $vigurl = "", $empr_pic = 0) {
 }
 
 //Fonction de récupération d'une URL vignette
-function get_vignette($notice_id) {
+function get_vignette($notice_id, $no_cache=false) {
 	global $opac_book_pics_url, $opac_show_book_pics;
 	global $opac_url_base;
-	
+
 	$requete="select code,thumbnail_url from notices where notice_id=$notice_id";
 	$res=pmb_mysql_query($requete);
-	
+
 	$url_image_ok=$opac_url_base."images/vide.png";
-	
+
 	if ($res) {
 		$notice=pmb_mysql_fetch_object($res);
 		if ($notice->code || $notice->thumbnail_url) {
 			if ($opac_show_book_pics && ($opac_book_pics_url || $notice->thumbnail_url)) {
-				$url_image_ok = getimage_url($notice->code, $notice->thumbnail_url);
+				$url_image_ok = getimage_url($notice->code, $notice->thumbnail_url, 0, $no_cache);
 			}
 		}
 	}
@@ -223,11 +231,14 @@ function reg_diacrit($chaine) {
 	$tab = pmb_split('/\s/', $chaine);
 	// mise en forme de la chaine pour les alternatives
 	// on fonctionne avec OU (pour l'instant)
-	if(sizeof($tab) > 1) {
-		foreach($tab as $dummykey=>$word) {
-			if($word) $this->mots[] = "($word)";
+	if (count($tab) > 1) {
+		$mots = array();
+		foreach ($tab as $word) {
+		    if (!empty($word)) {
+		        $mots[] = "($word)";
+		    }
 		}
-		return join('|', $this->mots);
+		return implode('|', $mots);
 	} else {
 		return $chaine;
 	}
@@ -237,9 +248,9 @@ function convert_diacrit($string) {
 	global $tdiac;
 	global $charset;
 	global $include_path;
-	global $tdiac_diacritique, $tdiac_replace; 
+	global $tdiac_diacritique, $tdiac_replace;
 	if(!$string) return;
-	if (!$tdiac) { 
+	if (!$tdiac) {
 		$tdiac = new XMLlist($include_path."/messages/diacritique".$charset.".xml");
 		$tdiac->analyser();
 		$tdiac_diacritique = array();
@@ -265,15 +276,15 @@ function strip_empty_chars($string) {
 	// Mis en commentaire : qu'en est-il des caracteres non latins ???
 	// SUPPRIME DU COMMENTAIRE : ER : 12/05/2004 : ça fait tout merder...
 	// RECH_14 : Attention : ici suppression des eventuels "
-	//          les " ne sont plus supprimes 
+	//          les " ne sont plus supprimes
 	$string = stripslashes($string) ;
 	$string = pmb_alphabetic('^a-z0-9\s', ' ',pmb_strtolower($string));
-	
+
 	// remplacement espace  insécable 0xA0:	&nbsp;  	Non-breaking space
 	$string = clean_nbsp($string);
-	
+
 	$string = pmb_preg_replace_spaces($string);
-	
+
 	return $string;
 }
 
@@ -282,15 +293,16 @@ function get_empty_words($lg = 0) {
 	global $pmb_indexation_lang;
 	//	global $lang;
 	global $include_path;
-	
+
 	if(!isset($got_empty_word[$lg]) || !$got_empty_word[$lg]) {
 		$got_empty_word[$lg] = array();
 		if (!$lg || $lg == $pmb_indexation_lang) {
 			global $empty_word;
-			$got_empty_word[$lg] = $empty_word;
 		} else {
 			include($include_path."/marc_tables/".$lg."/empty_words");
-			$got_empty_word[$lg] = $empty_word;
+		}
+		if(is_array($empty_word)) {
+		    $got_empty_word[$lg] = $empty_word;
 		}
 		$mots = array();
 		$query = "select mot from mots join linked_mots on mots.id_mot = linked_mots.num_mot where type_lien = 4";
@@ -309,11 +321,11 @@ function get_empty_words($lg = 0) {
 function strip_empty_words($string, $lg = 0) {
 
 	// on inclut le tableau des mots-vides pour la langue par defaut si elle n'est pas precisee
-	// c'est normalement la langue de catalogage...	
+	// c'est normalement la langue de catalogage...
 	// sinon on inclut le tableau des mots vides pour la langue precisee
 	// si apres nettoyage des mots vide la chaine est vide alors on garde la chaine telle quelle (sans les accents)
 	$empty_word = get_empty_words($lg);
-	
+
 	// nettoyage de l'entree
 
 	// traitement des diacritiques
@@ -322,16 +334,16 @@ function strip_empty_words($string, $lg = 0) {
 	// Mis en commentaire : qu'en est-il des caracteres non latins ???
 	// SUPPRIME DU COMMENTAIRE : ER : 12/05/2004 : ça fait tout merder...
 	// RECH_14 : Attention : ici suppression des eventuels "
-	//          les " ne sont plus supprimes 
+	//          les " ne sont plus supprimes
 	$string = stripslashes($string) ;
 	$string = pmb_alphabetic('^a-z0-9\s', ' ',pmb_strtolower($string));
-	
+
 	// remplacement espace  insécable 0xA0:	&nbsp;  	Non-breaking space
 	$string = clean_nbsp($string);
-		
+
     //$string = pmb_preg_replace_spaces($string);
 
-	$string_avant_mots_vides = $string ; 
+	$string_avant_mots_vides = $string ;
 	// suppression des mots vides
 	if(is_array($empty_word)) {
 		global $empty_word_converted;
@@ -349,7 +361,7 @@ function strip_empty_words($string, $lg = 0) {
 
 	// re nettoyage des espaces generes
 	$string = pmb_preg_replace_spaces($string);
-	
+
 	if (!$string) {
 		$string = $string_avant_mots_vides ;
 		// re nettoyage des espaces generes
@@ -376,30 +388,30 @@ function clean_string($string) {
 		// supression du point et des espaces de fin
 		$clean_string_matches[] = '/\s+\.$|\s+$/';
 		$clean_string_replaces[] = '';
-	
+
 		// nettoyage des espaces autour des parenthËses
 		$clean_string_matches[] = '/\(\s+/';
 		$clean_string_replaces[] = '(';
 		$clean_string_matches[] = '/\s+\)/';
 		$clean_string_replaces[] = ')';
-	
+
 		// idem pour les crochets
 		$clean_string_matches[] = '/\[\s+/';
 		$clean_string_replaces[] = '[';
 		$clean_string_matches[] = '/\s+\]/';
 		$clean_string_replaces[] = ']';
-	
+
 		// petit point de detail sur les apostrophes
-		//$string = pmb_preg_replace('/\'\s+/', "'", $string); 
-	
+		//$string = pmb_preg_replace('/\'\s+/', "'", $string);
+
 		// 'trim' par regex
 		$clean_string_matches[] = '/^\s+|\s+$/';
 		$clean_string_replaces[] = '';
-	
+
 		// suppression des espaces doubles
 		$clean_string_matches[] = '/\s+/';
 		$clean_string_replaces[] = ' ';
-		
+
 		if($charset == 'utf-8') {
 			foreach ($clean_string_matches as $key=>$matches) {
 				$clean_string_matches[$key] = $matches.'u';
@@ -459,7 +471,7 @@ function today() {
 function formatdate($date_a_convertir, $with_hour=0) {
 	global $msg;
 	global $dbh;
-
+	pmb_load_messages();
 	if ($with_hour) $resultatdate=pmb_mysql_query("select date_format('".$date_a_convertir."', '".$msg["format_date_heure"]."') as date_conv ");
 		else $resultatdate=pmb_mysql_query("select date_format('".$date_a_convertir."', '".$msg["format_date"]."') as date_conv ");
 	$date_conv=pmb_mysql_result($resultatdate,0,0);
@@ -480,7 +492,12 @@ function formatdate_input($date_a_convertir, $with_hour=0) {
 // extraitdate() : retourne une date formatee comme il faut
 function extraitdate($date_a_convertir) {
 	global $msg;
- 	$format_local = str_replace ("%","",$msg["format_date_input_model"]);
+
+	$date_a_convertir = str_replace ("-","/",$date_a_convertir);
+	$date_a_convertir = str_replace (".","/",$date_a_convertir);
+	$date_a_convertir = str_replace ("\\","/",$date_a_convertir);
+
+	$format_local = str_replace ("%","",$msg["format_date_input_model"]);
 	$format_local = str_replace ("-","",$format_local);
 	$format_local = str_replace ("/","",$format_local);
 	$format_local = str_replace ("\\","",$format_local);
@@ -499,28 +516,37 @@ function extraitdate($date_a_convertir) {
 
 function detectFormatDate($date_a_convertir,$compl="01"){
 	global $msg;
-	
+
 	if(preg_match("#\d{4}-\d{2}-\d{2}#",$date_a_convertir)){
 		$date = $date_a_convertir;
+	}else if(preg_match("#\d{4}.\d{2}.\d{2}#",$date_a_convertir)){
+		$date = str_replace('.', '-', $date_a_convertir);
 	}else if(preg_match(getDatePattern(),$date_a_convertir)){
 		$date = extraitdate($date_a_convertir);
-	}elseif(preg_match(getDatePattern("short"),$date_a_convertir)){
-		$format = str_replace ("%","",$msg["format_date_short"]);
-		$format = str_replace ("-","",$format);
-		$format = str_replace ("/","",$format);
-		$format = str_replace ("\\","",$format);
-		$format = str_replace (".","",$format);
-		$format = str_replace (" ","",$format);
-		$format = str_replace ($msg["format_date_input_separator"],"",$format);
-		list($date[substr($format,0,1)],$date[substr($format,1,1)],$date[substr($format,2,1)]) = sscanf($date_a_convertir,$msg["format_date_short_input"]);
-		if ($date['Y'] && $date['m']){
+	} elseif (preg_match(getDatePattern("short"),$date_a_convertir)) {
+	    $dateArray = array();
+		$format = str_replace("%","",$msg["format_date_short"]);
+		$format = str_replace("-","",$format);
+		$format = str_replace("/","",$format);
+		$format = str_replace("\\","",$format);
+		$format = str_replace(".","",$format);
+		$format = str_replace(" ","",$format);
+		$format = str_replace($msg["format_date_input_separator"],"",$format);
+		if (!empty(substr($format,0,1)) && !empty(substr($format,1,1)) && !empty(substr($format,2,1))) {		    
+		    list($dateArray[substr($format,0,1)],$dateArray[substr($format,1,1)],$dateArray[substr($format,2,1)]) = sscanf($date_a_convertir,$msg["format_date_short_input"]);
+		} elseif (!empty(substr($format,0,1)) && !empty(substr($format,1,1))) {		 
+		    list($dateArray[substr($format,0,1)],$dateArray[substr($format,1,1)]) = sscanf($date_a_convertir,$msg["format_date_short_input"]);
+		} elseif (!empty(substr($format,0,1)) && !empty(substr($format,1,1))) {
+		    list($dateArray[substr($format,0,1)]) = sscanf($date_a_convertir,$msg["format_date_short_input"]);
+		}
+		if ($dateArray['Y'] && $dateArray['m']){
 			if ($compl == "min") {
-				$date = sprintf("%04d-%02d-%02s",$date['Y'],$date['m'],"01");
+			    $date = sprintf("%04d-%02d-%02s",$dateArray['Y'],$dateArray['m'],"01");
 			} elseif ($compl == "max") {
-				$date = sprintf("%04d-%02d-%02s",$date['Y'],$date['m'],date("t",mktime( 0, 0, 0, $date['m'], 1, $date['Y'] )));
+			    $date = sprintf("%04d-%02d-%02s",$dateArray['Y'],$dateArray['m'],date("t",mktime( 0, 0, 0, $dateArray['m'], 1, $dateArray['Y'] )));
 			} else{
-				 $date = sprintf("%04d-%02d-%02s",$date['Y'],$date['m'],$compl);
-			}		
+			    $date = sprintf("%04d-%02d-%02s",$dateArray['Y'],$dateArray['m'],$compl);
+			}
 		}else{
 			$date = "0000-00-00";
 		}
@@ -568,27 +594,28 @@ function detectFormatDate($date_a_convertir,$compl="01"){
 	return $date;
 }
 
-function getDatePattern($format="long"){
+function getDatePattern($format = "long") {
 	global $msg;
-	switch($format){
-		case "long" :
-			$format_date = str_replace ("%","",$msg["format_date"]);
-			break;
+	switch ($format) {
+	    case "long" :
+	    default:
+	        $format_date = str_replace("%", "", $msg["format_date"]);
+	        break;
 		case "short" :
-			$format_date = str_replace ("%","",$msg["format_date_short"]);
+			$format_date = str_replace("%", "", $msg["format_date_short"]);
 			break;
 		case "year":
-			$format_date = "Y"; 
+			$format_date = "Y";
 			break;
 	}
-	$format_date = str_replace ("-"," ",$format_date);
-	$format_date = str_replace ("/"," ",$format_date);
-	$format_date = str_replace ("\\"," ",$format_date);
-	$format_date = str_replace ("."," ",$format_date);	
-	$format_date=explode(" ",$format_date);
+	$format_date = str_replace("-"," ",$format_date);
+	$format_date = str_replace("/"," ",$format_date);
+	$format_date = str_replace("\\"," ",$format_date);
+	$format_date = str_replace("."," ",$format_date);
+	$format_date_array = explode(" ",$format_date);
 	$pattern = array();
-	for($i=0;$i<count($format_date);$i++){
-		switch($format_date[$i]){
+	for ($i = 0; $i < count($format_date_array); $i++){
+	    switch ($format_date_array[$i]) {
 			case "m" :
 			case "d" :
 				$pattern[$i] =  '\d{1,2}';
@@ -597,12 +624,12 @@ function getDatePattern($format="long"){
 				$pattern[$i] =  '\d{4}';
 			break;
 		}
-	}	
+	}
 	return "#".implode($pattern,".")."#";
 }
 
 function getDojoPattern($date) {
-	$formatted_date = str_replace (array("%d", "%M", "%Y"),array("dd","MMMM","yyyy"),$date);
+	$formatted_date = str_replace (array("%d", "%m", "%y", "%D", "%M", "%Y"),array("dd","MM","yy","DD","MMMM","yyyy"),$date);
 	if(strpos($formatted_date, '%') !== false) {
 		return '';
 	} else {
@@ -654,7 +681,7 @@ function current_page() {
 // ----------------------------------------------------------------------------
 /*
  $requete :					requete sql pour generer la liste (retourne $champ_code, $champ_info)
- $champ_code :				valeur		
+ $champ_code :				valeur
  $champ_info :				libelle
  $nom :						id et name
  $on_change :				fonction a appeler sur changement
@@ -667,9 +694,9 @@ function current_page() {
  $attr						attributs de la liste
 */
 function gen_liste ($requete, $champ_code, $champ_info, $nom, $on_change, $selected, $liste_vide_code, $liste_vide_info,$option_premier_code,$option_premier_info,$multiple=0,$attr='') {
-	
+
 	global $dbh, $charset ;
-	
+
 	$resultat_liste=pmb_mysql_query($requete, $dbh) or die ($requete);
 	$renvoi="<select name=\"$nom\" id=\"$nom\" onChange=\"$on_change\" ";
 	if ($multiple) $renvoi.="multiple ";
@@ -679,7 +706,7 @@ function gen_liste ($requete, $champ_code, $champ_info, $nom, $on_change, $selec
 	if ($nb_liste==0) {
 		$renvoi.="<option value=\"$liste_vide_code\">".htmlentities($liste_vide_info, ENT_QUOTES, $charset)."</option>\n";
 	} else {
-		if ($option_premier_info!="") {	
+		if ($option_premier_info!="") {
 			$renvoi.="<option value=\"$option_premier_code\" ";
 			if ($selected==$option_premier_code) $renvoi.="selected=\"selected\"";
 			$renvoi.=">".htmlentities($option_premier_info, ENT_QUOTES, $charset)."</option>\n";
@@ -705,7 +732,7 @@ function gen_liste_multiple ($requete, $champ_code, $champ_info, $champ_selected
 	$nb_liste=pmb_mysql_num_rows($resultat_liste);
 	if ($multiple && $nb_liste) {
 		if ($nb_liste < $multiple) $size = $nb_liste+1;
-			else $size = $multiple; 
+			else $size = $multiple;
 		} else $size = 1 ;
 	$renvoi="<select size='$size' name='$nom' data-form-name='$nom' id='$nom' onChange=\"$on_change\"";
 	if ($multiple) $renvoi.=" multiple";
@@ -713,7 +740,7 @@ function gen_liste_multiple ($requete, $champ_code, $champ_info, $champ_selected
 	if ($nb_liste==0) {
 		$renvoi.="<option value=\"$liste_vide_code\">$liste_vide_info</option>\n";
 	} else {
-		if ($option_premier_info!="") {	
+		if ($option_premier_info!="") {
 			$renvoi.="<option value=\"$option_premier_code\" ";
 			if ($selected==$option_premier_code) $renvoi.="selected=\"selected\"";
 			$renvoi.=">$option_premier_info</option>\n";
@@ -737,11 +764,11 @@ function do_selector($table, $name='mySelector', $value=0) {
 
 	global $dbh;
  	global $charset;
-	
+
 	$defltvar="deflt_".$table;
-	
+
 	global ${$defltvar};
-	
+
 	if ($value==0) $value= ${$defltvar} ;
 
 	if(!$table)
@@ -753,19 +780,19 @@ function do_selector($table, $name='mySelector', $value=0) {
 	$nbr_lignes = pmb_mysql_num_rows($result);
 
 	if(!$nbr_lignes)
-		return '';			
+		return '';
 
 	$selector = "<select name='$name' id='$name'>";
 	while($line = pmb_mysql_fetch_row($result)) {
 		$selector .= "<option value='${line[0]}'";
 		$line[0] == $value ? $selector .= ' selected=\'selected\'>' : $selector .= '>';
  		$selector .= htmlentities($line[1],ENT_QUOTES, $charset).'</option>';
-	}                                         
-	$selector .= '</select>';                 
-                                                  
-	return $selector;                         
-}                                                 
- 
+	}
+	$selector .= '</select>';
+
+	return $selector;
+}
+
 
 
 //------like print_r but more readable--for debugging purposes
@@ -797,7 +824,7 @@ function printr($arr,$filter="",$name="") {
 // ----------------------------------------------------------------------------
 
 function aff_pagination ($url_base="", $nbr_lignes=0, $nb_per_page=0, $page=0, $etendue=10, $aff_nb_per_page=false, $aff_extr=false ) {
-	
+
 	global $msg,$charset;
 	global $pmb_items_pagination_custom;
 	if(!$nb_per_page) $nb_per_page=1;
@@ -807,19 +834,19 @@ function aff_pagination ($url_base="", $nbr_lignes=0, $nb_per_page=0, $page=0, $
 	$deb = $page - $etendue ;
 	if ($deb<1) $deb=1;
 	$fin = $page + $etendue ;
-	if($fin>$nbepages)$fin=$nbepages; 
-		
+	if($fin>$nbepages)$fin=$nbepages;
+
 	$nav_bar = "";
-	
+
 	if ($aff_nb_per_page) {
 		$nav_bar = "<div class='left' ><input type='text' name='nb_per_page' id='nb_per_page' class='saisie-2em' value='".$nb_per_page."' />&nbsp;".htmlentities($msg['1905'], ENT_QUOTES, $charset)."&nbsp;";
 		$nav_bar.= "<input type='button' class='bouton' value='".$msg['actualiser']."' ";
-		$nav_bar.="onclick=\"try{ 
+		$nav_bar.="onclick=\"try{
 			var page=".$page.";
 			var old_nb_per_page=".$nb_per_page.";
 			var nbr_lignes=".$nbr_lignes.";
 			var new_nb_per_page=document.getElementById('nb_per_page').value;
-			var new_nbepages=Math.ceil(nbr_lignes/new_nb_per_page); 
+			var new_nbepages=Math.ceil(nbr_lignes/new_nb_per_page);
 			if(page>new_nbepages) page=new_nbepages;
 			document.location='".$url_base."&page='+page+'&nbr_lignes=".$nbr_lignes."&nb_per_page='+new_nb_per_page;
 		}catch(e){}; \" /></div>";
@@ -828,7 +855,7 @@ function aff_pagination ($url_base="", $nbr_lignes=0, $nb_per_page=0, $page=0, $
 	if($aff_extr && (($page-$etendue)>1) ) {
 		$nav_bar .= "<a class='pagination_first' data-type-link='pagination' id='premiere' href='".$url_base."&page=1&nbr_lignes=".$nbr_lignes."&nb_per_page=".$nb_per_page."' ><img src='".get_url_icon('first.gif')."' border='0' alt='".$msg['first_page']."' hspace='6' class='align_middle' title='".$msg['first_page']."' /></a>";
 	}
-		
+
 	// affichage du lien precedent si necessaire
 	if($precedente > 0) {
 		$nav_bar .= "<a class='pagination_left' data-type-link='pagination' id='precedente' href='".$url_base."&page=".$precedente."&nbr_lignes=".$nbr_lignes."&nb_per_page=".$nb_per_page."' ><img src='".get_url_icon('left.gif')."' border='0' alt='".$msg[48]."' hspace='6' class='align_middle' title='".$msg[48]."' /></a>";
@@ -840,10 +867,10 @@ function aff_pagination ($url_base="", $nbr_lignes=0, $nb_per_page=0, $page=0, $
 		} else {
 			$nav_bar .= "<a class='pagination_page' data-type-link='pagination' href='".$url_base."&page=".$i."&nbr_lignes=".$nbr_lignes."&nb_per_page=".$nb_per_page."' >".$i."</a>";
 		}
-		if($i<$nbepages) $nav_bar .= " "; 
+		if($i<$nbepages) $nav_bar .= " ";
 	}
 
-       	
+
 	if ($suivante<=$nbepages) {
 		$nav_bar .= "<a class='pagination_right' data-type-link='pagination' id='suivante' href='".$url_base."&page=".$suivante."&nbr_lignes=".$nbr_lignes."&nb_per_page=".$nb_per_page."' ><img src='".get_url_icon('right.gif')."' border='0' alt='".$msg[49]."' hspace='6' class='align_middle' title='".$msg[49]."' /></a>";
 	}
@@ -851,7 +878,7 @@ function aff_pagination ($url_base="", $nbr_lignes=0, $nb_per_page=0, $page=0, $
 	if($aff_extr && (($page+$etendue)<$nbepages) ) {
 		$nav_bar .= "<a class='pagination_last' data-type-link='pagination' id='derniere' href='".$url_base."&page=".$nbepages."&nbr_lignes=".$nbr_lignes."&nb_per_page=".$nb_per_page."' ><img src='".get_url_icon('last.gif')."' border='0' alt='".$msg['last_page']."' hspace='6' class='align_middle' title='".$msg['last_page']."' /></a>";
 	}
-	
+
 	$start_in_page = ((($page-1)*$nb_per_page)+1);
 	if(($start_in_page + $nb_per_page) > $nbr_lignes) {
 		$end_in_page = $nbr_lignes;
@@ -859,7 +886,7 @@ function aff_pagination ($url_base="", $nbr_lignes=0, $nb_per_page=0, $page=0, $
 		$end_in_page = ((($page-1)*$nb_per_page)+$nb_per_page);
 	}
 	$nav_bar .= " (".$start_in_page." - ".$end_in_page." / ".$nbr_lignes.")";
-	
+
 	$pagination_nav_bar = "";
 	if($pmb_items_pagination_custom) {
 		$pagination_custom = explode(',', $pmb_items_pagination_custom);
@@ -867,14 +894,14 @@ function aff_pagination ($url_base="", $nbr_lignes=0, $nb_per_page=0, $page=0, $
 			$max_nb_elements = 0;
 			$nb_first_custom_element = $pagination_custom[0];
 			foreach ($pagination_custom as $nb_elements) {
-				$nb_elements = trim($nb_elements)+0;
+			    $nb_elements = (int) trim($nb_elements);
 				if($nb_first_custom_element <= $nbr_lignes) {
 					if($nb_elements == $nb_per_page) $pagination_nav_bar .= "<b>";
 					$pagination_nav_bar .= " <a class='pagination_custom' data-type-link='pagination' href='".$url_base."&page=1&nbr_lignes=".$nbr_lignes."&nb_per_page_custom=".$nb_elements."' >".$nb_elements."</a> ";
 					if($nb_elements == $nb_per_page) $pagination_nav_bar .= "</b>";
 				}
 				if($nb_elements > $max_nb_elements) {
-					$max_nb_elements = $nb_elements; 
+					$max_nb_elements = $nb_elements;
 				}
 			}
 			if(($max_nb_elements > $nbr_lignes) && ($nb_per_page < $nbr_lignes)) {
@@ -904,7 +931,7 @@ function ongletSelect($urlPart){
 			$returnSelection=" class=\"selected\"";
 		} else {
 			$returnSelection="";
-			break;	
+			break;
 		}
 	}
 	return $returnSelection;
@@ -1019,19 +1046,19 @@ function pmb_split($separateur,$chaine) {
 	}
 }
 
-/* 
+/*
  * ------------------------------------------------------------------
  * pmb_alphabetic($regex,$replace,$string) : enleve les caracteres non alphabetique. Equivalent de [a-z0-9]
- * 
+ *
  * Pour les caracteres latins;
  * Pour l'instant pour les caracteres non latins:
  * Armenien :
  * \x{0531}-\x{0587}\x{fb13}-\x{fb17}
  * Arabe :
  * \x{0621}-\x{0669}\x{066E}-\x{06D3}\x{06D5}-\x{06FF}\x{FB50}-\x{FDFF}\x{FE70}-\x{FEFF}
- * Cyrillique :	
+ * Cyrillique :
  * \x{0400}-\x{0486}\x{0488}-\x{0513}
- * Chinois : 
+ * Chinois :
  * \x{4E00}-\x{9BFF}
  * Japonais (Hiragana - Katakana - Suppl. phonetique katakana - Katakana demi-chasse) :
  * \x{3040}-\x{309F}\x{30A0}-\x{30FF}\x{31F0}-\x{31FF}\x{FF00}-\x{FFEF}
@@ -1046,9 +1073,9 @@ function pmb_split($separateur,$chaine) {
 
 function pmb_alphabetic($regex,$replace,$string) {
 	global $charset;
-	
+
 	if ($charset != 'utf-8') {
-		return preg_replace('/['.$regex.']/', $replace, $string);	
+		return preg_replace('/['.$regex.']/', $replace, $string);
 	} else {
 		/*return preg_replace('/['.$regex
 				.'\x{0531}-\x{0587}\x{fb13}-\x{fb17}'
@@ -1068,12 +1095,12 @@ function pmb_alphabetic($regex,$replace,$string) {
 // ------------------------------------------------------------------
 function pmb_strlen($string) {
 	global $charset;
-	
-	if ($charset != 'utf-8') 
+
+	if ($charset != 'utf-8')
 		return strlen($string);
 	else {
 		return mb_strlen($string,$charset);
-	}		
+	}
 }
 
 // ------------------------------------------------------------------
@@ -1081,22 +1108,22 @@ function pmb_strlen($string) {
 // ------------------------------------------------------------------
 function pmb_getcar($currentcar,$string) {
 	global $charset;
-	
-	if (!isset($string[$currentcar])) return '';	
-	if ($charset != 'utf-8') 
+
+	if (!isset($string[$currentcar])) return '';
+	if ($charset != 'utf-8')
 		return $string[$currentcar];
 	else {
 		return mb_substr($string,$currentcar, 1,$charset);
-	}		
+	}
 }
 
 // ------------------------------------------------------------------
-//  pmb_substr($chaine,$depart,$longueur) : recupere n caracteres 
+//  pmb_substr($chaine,$depart,$longueur) : recupere n caracteres
 // ------------------------------------------------------------------
 function pmb_substr($chaine,$depart,$longueur=0) {
 	global $charset;
-	
-	if ($charset != 'utf-8') { 
+
+	if ($charset != 'utf-8') {
 		if ($longueur == 0)
 			return substr($chaine,$depart);
 		else
@@ -1107,7 +1134,7 @@ function pmb_substr($chaine,$depart,$longueur=0) {
 			return mb_substr($chaine,$depart,mb_strlen($chaine),$charset);
 		}else
 			return mb_substr($chaine,$depart,$longueur,$charset);
-	}		
+	}
 }
 
 // ------------------------------------------------------------------
@@ -1171,7 +1198,7 @@ function pmb_escape() {
 }
 
 // ------------------------------------------------------------------
-//  pmb_bidi($string) : renvoi la chaine de caractere en gerant les problemes 
+//  pmb_bidi($string) : renvoi la chaine de caractere en gerant les problemes
 //  d'affichage droite gauche des parentheses
 // ------------------------------------------------------------------
 function pmb_bidi($string) {
@@ -1205,12 +1232,12 @@ function pmb_bidi($string) {
 		else {
 			return $string;
 		}
-		
+
 	}
 }
 
 // ------------------------------------------------------------------
-//  pmb_sql_value($string) : renvoie la valeur de l'unique colonne (ou uniquement de la premiere) de la requete $rqt 
+//  pmb_sql_value($string) : renvoie la valeur de l'unique colonne (ou uniquement de la premiere) de la requete $rqt
 // ------------------------------------------------------------------
 function pmb_sql_value($rqt) {
 	if($result=pmb_mysql_query($rqt))
@@ -1219,16 +1246,16 @@ function pmb_sql_value($rqt) {
 }
 
 // ------------------------------------------------------------------
-//  mail_bloc_adresse() : renvoie un code HTML contenant le bloc d'adresse à mettre en bas 
-//  des mails envoyes par PMB (resa, prets) 
+//  mail_bloc_adresse() : renvoie un code HTML contenant le bloc d'adresse à mettre en bas
+//  des mails envoyes par PMB (resa, prets)
 // ------------------------------------------------------------------
 function mail_bloc_adresse() {
 	global $msg ;
 	global $biblio_name, $biblio_email,$biblio_website ;
-	global $biblio_adr1, $biblio_adr2, $biblio_cp, $biblio_town, $biblio_phone ; 
+	global $biblio_adr1, $biblio_adr2, $biblio_cp, $biblio_town, $biblio_phone ;
 	$ret = $biblio_name ;
-	if ($biblio_adr1) $ret .= "<br />".$biblio_adr1 ;  
-	if ($biblio_adr2) $ret .= "<br />".$biblio_adr2 ;  
+	if ($biblio_adr1) $ret .= "<br />".$biblio_adr1 ;
+	if ($biblio_adr2) $ret .= "<br />".$biblio_adr2 ;
 	if ($biblio_cp && $biblio_town) $ret .= "<br />".$biblio_cp." ".$biblio_town ;
 	elseif ($biblio_town) $ret .= "<br />".$biblio_cp." ".$biblio_town ;
 	if ($biblio_phone) $ret .= "<br />".$msg['location_details_phone']." ".$biblio_phone ;
@@ -1244,7 +1271,7 @@ function mail_bloc_adresse() {
 function gen_plus($id, $titre, $contenu, $maximise=0, $script_before='', $script_after='', $class_parent='notice-parent', $class_child='notice-child') {
 	global $msg;
 	if($maximise) $max=" startOpen=\"Yes\""; else $max='';
-	return "	
+	return "
 	<div class='row'></div>
 	<div id='$id' class='".$class_parent."'>
 		<img src='".get_url_icon('plus.gif')."' class='img_plus' name='imEx' id='$id"."Img' title='".$msg['plus_detail']."' border='0' onClick=\" $script_before expandBase('$id', true); $script_after return false;\" hspace='3'>
@@ -1265,7 +1292,7 @@ function gen_plus($id, $titre, $contenu, $maximise=0, $script_before='', $script
 function gen_plus_titre($id,$titre,$contenu,$maximise=0,$script_before='', $script_after='') {
 	global $msg;
 	if($maximise) $max=" startOpen=\"Yes\""; else $max='';
-	return "	
+	return "
 	<div class='row'></div>
 	<div id='$id'  style='cursor: pointer;'  class='notice-parent' onClick=\" $script_before expandBase('$id', true); $script_after return false;\" >
 		<span class='notice-heada'>
@@ -1290,7 +1317,7 @@ if (strtolower(substr(trim($requete),0,6))!='select') return true;
 	if(!$result) return false;
 	$nbr_lignes = pmb_mysql_num_rows($result);
 
-	if (!$nbr_lignes) return false;			
+	if (!$nbr_lignes) return false;
 	/*
 	echo "<table><tr>";
 	echo "<td>id           </td>";
@@ -1331,7 +1358,7 @@ if (strtolower(substr(trim($requete),0,6))!='select') return true;
 			}
 		}
 		$table_davant=$ligne->table;
-	}                                         
+	}
 	// echo "</table>";
 	return true;
 }
@@ -1349,7 +1376,7 @@ function clean_tags($tags) {
 	}
 	if (count($clean_liste)) {
 		return implode($pmb_keyword_sep,$clean_liste);
-	} 
+	}
 	return '';
 }
 
@@ -1359,35 +1386,35 @@ function clean_tags($tags) {
 
 function configurer_proxy_curl(&$curl,$url_asked=''){
 	global $pmb_curl_proxy,$curl_addon_array_options,$curl_addon_array_exclude_proxy;
-	
+
 	/*
 	 * petit hack pour définir des options supplémentaires à curl
 	 * les deux tableaux suivants peuvent être définis dans un fichier pmb/includes/config_local.inc.php (attention, à reporter en opac 'opac_config_local.inc.php')
-	 * 
+	 *
 	 * Exemple $curl_addon_array_options
-	 * 
+	 *
 	 * $curl_addon_array_options = array(
 	 * 		CURLOPT_POST => 1,
 	 * 		CURLOPT_HEADER => false,
 	 * 		CURLOPT_POSTFIELDS => $data,
 	 *      CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4 // Pour forcer la résolution en IPV4
 	 * );
-	 * 
+	 *
 	 * Exemple $curl_addon_array_exclude_proxy
-	 * 
+	 *
 	 * $curl_addon_array_exclude_proxy = array(
 	 * 		"domain1.com",
 	 * 		"domain2.com"
 	 * );
-	 * 
+	 *
 	 */
-	
-	if(count($curl_addon_array_options)){
+
+	if(is_array($curl_addon_array_options) && count($curl_addon_array_options)){
 		curl_setopt_array($curl, $curl_addon_array_options);
 	}
-	
+
 	$use_proxy = true;
-	if(trim($url_asked) && count($curl_addon_array_exclude_proxy)){
+	if(trim($url_asked) && is_array($curl_addon_array_exclude_proxy) && count($curl_addon_array_exclude_proxy)){
 		foreach($curl_addon_array_exclude_proxy as $domain){
 			$domain = str_replace('.','\.',$domain);
 			$domain = str_replace('/','\/',$domain);
@@ -1397,7 +1424,7 @@ function configurer_proxy_curl(&$curl,$url_asked=''){
 			}
 		}
 	}
-	
+
 	if($use_proxy){
 		if($pmb_curl_proxy!=''){
 			$param_proxy = explode(',',$pmb_curl_proxy);
@@ -1405,7 +1432,7 @@ function configurer_proxy_curl(&$curl,$url_asked=''){
 			$port_proxy = $param_proxy[1];
 			$user_proxy = $param_proxy[2];
 			$pwd_proxy = $param_proxy[3];
-			
+
 			curl_setopt($curl, CURLOPT_PROXY, $adresse_proxy);
 			curl_setopt($curl, CURLOPT_PROXYPORT, $port_proxy);
 			curl_setopt($curl, CURLOPT_PROXYUSERPWD, "$user_proxy:$pwd_proxy");
@@ -1415,7 +1442,7 @@ function configurer_proxy_curl(&$curl,$url_asked=''){
 }
 
 //remplacement espace insécable 0xA0: &nbsp; Non-breaking space => problème lié à certaine version de navigateur
-function clean_nbsp($input) {	
+function clean_nbsp($input) {
 	global $charset;
 	//if($charset=="iso-8859-1")$input = str_replace(chr(0xa0), ' ', $input);
 	$input = html_entity_decode(str_replace('&nbsp;',' ',htmlentities($input,ENT_QUOTES,$charset)),ENT_QUOTES,$charset);
@@ -1425,7 +1452,7 @@ function clean_nbsp($input) {
 // permet d'éviter une déconnection mysql
 function mysql_set_wait_timeout($val_second=120) {
 	$sql = "set wait_timeout = $val_second";
-	pmb_mysql_query($sql);	
+	pmb_mysql_query($sql);
 }
 
 
@@ -1436,7 +1463,7 @@ function addslashes_array($input_arr){
             $tmp[$key1] = addslashes_array($val);
         }
         return $tmp;
-    } 
+    }
     else {
     	if (is_string($input_arr))
         	return addslashes($input_arr);
@@ -1452,7 +1479,7 @@ function stripslashes_array($input_arr){
             $tmp[$key1] = stripslashes_array($val);
         }
         return $tmp;
-    } 
+    }
     else {
     	if (is_string($input_arr))
         	return stripslashes($input_arr);
@@ -1465,23 +1492,23 @@ function alert_sound_script(){
 	global $param_sounds, $alert_sound_list;
 	if (!$param_sounds) return;
 	if (!count($alert_sound_list)) return;
-	
+
 	// Parfois ceci bloque le focus sur Firefox 3.5. pb de temps réel dans la gestion des evenements.
 	//$script="<embed src='!!sound_file!!' height='0' width='0' autostart='true' loop='false' BORDER='0'>";
- 
-/*	
+
+/*
 $script=
   "<embed src='!!sound_file!!' autostart='true' height=0/>
    <script type='text/javascript'>
    var obj='';
    if(document.getElementById('form_cb_expl')){
    	obj='form_cb_expl';
-   }    
+   }
    if(document.getElementById('cb_doc')){
    	obj='cb_doc';
-   }  
+   }
    	if(obj){
-		setTimeout(\"document.getElementById('\"+obj+\"').blur(); document.getElementById('\"+obj+\"').focus(); \",1200);		
+		setTimeout(\"document.getElementById('\"+obj+\"').blur(); document.getElementById('\"+obj+\"').focus(); \",1200);
 	}
    </script>
    ";
@@ -1491,10 +1518,10 @@ $script="
 	<audio id='sound_to_play'  >
 		<source src='!!sound_file!!' type='audio/ogg'>
 	</audio>
-	  
+
 	<script type='text/javascript'>
    		myAudio=document.getElementById('sound_to_play');
-   		myAudio.play(); 
+   		myAudio.play();
    </script>
 ";
 	if(in_array("critique",$alert_sound_list))	$sound="sounds/boing.ogg";
@@ -1534,37 +1561,37 @@ function go_first_tab(){
 				print "<SCRIPT>document.location='catalog.php';</SCRIPT>";
 				exit;
 			}
-			break;	
+			break;
 		case "autor" :
 			if(SESSrights & AUTORITES_AUTH){
 				print "<SCRIPT>document.location='autorites.php';</SCRIPT>";
 				exit;
 			}
-			break;	
+			break;
 		case "edit" :
 			if(SESSrights & EDIT_AUTH){
 				print "<SCRIPT>document.location='edit.php';</SCRIPT>";
 				exit;
 			}
-			break;	
+			break;
 		case "dsi" :
 			if(SESSrights & DSI_AUTH){
 				print "<SCRIPT>document.location='dsi.php';</SCRIPT>";
 				exit;
 			}
-			break;	
+			break;
 		case "acquis" :
 			if(SESSrights & ACQUISITION_AUTH){
 				print "<SCRIPT>document.location='acquisition.php';</SCRIPT>";
 				exit;
 			}
-			break;	
+			break;
 		case "admin" :
 			if(SESSrights & ADMINISTRATION_AUTH){
 				print "<SCRIPT>document.location='admin.php';</SCRIPT>";
 				exit;
 			}
-			break;	
+			break;
 		case "exten" :
 			if(SESSrights & EXTENSION_AUTH){
 				print "<SCRIPT>document.location='exten.php';</SCRIPT>";
@@ -1573,7 +1600,7 @@ function go_first_tab(){
 			break;
 		case "cms" :
 			if(SESSrights & CMS_AUTH){
-				print "<SCRIPT>document.location='cms.php';</SCRIPT>";
+				print "<SCRIPT>document.location='cms.php?categ=editorial&sub=list';</SCRIPT>";
 				exit;
 			}
 			break;
@@ -1603,7 +1630,7 @@ function get_msg_to_display($message) {
 
 	if (substr($message, 0, 4) == "msg:") {
 		if(isset($msg[substr($message, 4)])){
-			return $msg[substr($message, 4)]; 
+			return $msg[substr($message, 4)];
 		}
 	}
 	return $message;
@@ -1617,6 +1644,8 @@ function pmb_utf8_decode($elem){
 	}else if(is_object($elem)){
 		$elem = pmb_obj2array($elem);
 		$elem = pmb_utf8_decode($elem);
+	}elseif(function_exists("mb_convert_encoding")){
+		$elem = mb_convert_encoding($elem,"Windows-1252","UTF-8");
 	}else{
 		$elem = utf8_decode($elem);
 	}
@@ -1631,6 +1660,8 @@ function pmb_utf8_encode($elem){
 	}else if(is_object($elem)){
 		$elem = pmb_obj2array($elem);
 		$elem = pmb_utf8_encode($elem);
+	}elseif(function_exists("mb_convert_encoding")){
+		$elem = mb_convert_encoding($elem,"UTF-8","Windows-1252");
 	}else{
 		$elem = utf8_encode($elem);
 	}
@@ -1696,7 +1727,7 @@ function get_upload_max_filesize(){
 		$last = strtolower($upload_max_filesize[strlen($upload_max_filesize)-1]);
 		$upload_max_filesize = rtrim($upload_max_filesize,"GMKgmk");
 		switch($last) {
-			
+
 			// Le modifieur 'G' est disponible depuis PHP 5.1.0
 			case 'g':
 				$upload_max_filesize *= 1024;
@@ -1704,7 +1735,7 @@ function get_upload_max_filesize(){
 				$upload_max_filesize *= 1024;
 			case 'k':
 				$upload_max_filesize *= 1024;
-		}	
+		}
 	}
 	//On retourne le résultat en kbytes
 	return $upload_max_filesize;
@@ -1714,7 +1745,7 @@ function get_url_icon($icon, $use_opac_url_base=0) {
 	global $base_path;
 	global $opac_url_base;
 	global $stylesheet;
-	
+
 	if($use_opac_url_base) $url_base = $opac_url_base;
 	else $url_base = $base_path."/";
 
@@ -1729,12 +1760,15 @@ function get_url_icon($icon, $use_opac_url_base=0) {
 	if($url = search_url_icon_type("images/".$icon_name)){
 		return $url_base.$url;
 	}
-	return $url_base."images/".$icon;
+	if($url = "$url_base/images/$icon") {
+		if (file_exists($url)) return $url;
+		return '';
+	}
 }
 
 function search_url_icon_type($icon) {
 	global $base_path;
-	
+
 	if(file_exists($base_path.'/'.$icon.'.svg')) {
 		return $icon.'.svg';
 	}
@@ -1753,9 +1787,9 @@ function search_url_icon_type($icon) {
 function gen_where_in($field, $elts, &$table_tempo_name=''){
 	global $dbh;
 	global $memo_tempo_table_to_rebuild;
-	
+
 	if(!isset($memo_tempo_table_to_rebuild)) $memo_tempo_table_to_rebuild = array();
-	
+
 	if(!is_array($elts)) {
 		$elts = str_replace("'", '', $elts);
 		$elts = str_replace('"', '', $elts);
@@ -1768,7 +1802,7 @@ function gen_where_in($field, $elts, &$table_tempo_name=''){
 	$rqt = 'create temporary table IF NOT EXISTS '.$table_tempo_name.' ('.$field_id.' int, index using btree('.$field_id.')) engine=memory ';
 	pmb_mysql_query($rqt,$dbh);
 	$memo_tempo_table_to_rebuild[] = $rqt;
-	if(count($elts)) { 
+	if(count($elts)) {
 		$rqt = 'INSERT INTO '.$table_tempo_name.' ('.$field_id.') VALUES ('.implode('),(',$elts).')';
 		$memo_tempo_table_to_rebuild[] = $rqt;
 		pmb_mysql_query($rqt,$dbh);
@@ -1786,9 +1820,9 @@ function gen_where_in_string($field, $elts){
 		$elts = explode(',', $elts);
 		if(!count($elts)) return '';
 	}
-	
+
 	$prefix = str_replace('.', '', $field);
-	
+
 	$query = " inner join (select '".$elts[0]."' as ".$prefix."x_";
 
 	for($i=1; $i<count($elts); $i++) {
@@ -1808,7 +1842,7 @@ function pmb_base64_encode($elem){
 	}else{
 		$elem = base64_encode($elem);
 	}
-	
+
 	return $elem;
 }
 
@@ -1826,8 +1860,191 @@ function pmb_base64_decode($elem){
 	return $elem;
 }
 
+function curl_load_opac_file($url, $filename) {
+
+    global $pmb_curl_available, $base_path, $pmb_opac_url ;
+	//Calcul des URLs subst
+	$url_subst=str_replace(".xml","_subst.xml",$url);
+	$filename_subst=str_replace(".xml","_subst.xml",$filename);
+
+	$file_copied =false;
+	$subst_file_copied = false;
+
+	//Si CURL est disponible en gestion
+	if($pmb_curl_available) {
+		$curl = new Curl();
+
+		// A revoir, devrait etre integre a la fonction "configurer_proxy_curl"
+		$curl->set_option('CURLOPT_SSL_VERIFYPEER',  false);
+
+		$curl->set_option('CURLOPT_TIMEOUT',  5);
+
+		$resp = $curl->get($url);
+		if( !$curl->error() && $resp->headers['Status-Code'] !== '400' && $resp->headers['Status-Code'] !== '401' && (stripos($resp->headers['Status'], '401 Unauthorized')=== false)  ) {
+			$file_copied = file_put_contents($filename, $resp);
+		}
+
+		$resp = $curl->get($url_subst);
+		if($resp->headers['Status-Code'] == '404' || (stripos($resp->headers['Status'], '404 not found')!==false) ) {
+			$subst_file_copied = true;
+		} else if(!$curl->error() && $resp->headers['Status-Code'] !== '400' && $resp->headers['Status-Code'] !== '401' && (stripos($resp->headers['Status'], '401 Unauthorized')=== false)) {
+			$subst_file_copied = file_put_contents($filename_subst, $resp);
+		}
+	}
+
+	//Copie directe si CURL echoue
+	if(!$file_copied) {
+	    $file_path = "$base_path/opac_css/".str_replace($pmb_opac_url, '', $url);
+		if(file_exists($file_path)) {
+			$file_copied = copy($file_path, $filename);
+		}
+	}
+
+	if(!$file_copied) {
+		return false;
+	}
+
+	if(!$subst_file_copied) {
+	    $subst_file_path = "$base_path/opac_css/".str_replace($pmb_opac_url, '', $url_subst);
+		if(file_exists($subst_file_path)) {
+			$subst_file_copied = copy($subst_file_path, $filename_subst);
+		}
+	}
+
+	return true;
+
+}
+
 function get_iso_lang_code($l='') {
 	global $lang;
 	if(!$l) $l = $lang;
-	return substr($l, 0, 2);	
+	return substr($l, 0, 2);
+}
+
+function get_input_date_time_inter($name, $id = '', $date_begin = '', $time_begin = '', $date_end = '', $time_end = '', $required = false, $onchange='') {
+    global $msg;
+
+    if (strpos($_SERVER['HTTP_USER_AGENT'], 'Firefox')) {
+        $version = get_browser_version($_SERVER['HTTP_USER_AGENT']);
+        if (!$version || ((int) $version < 57)) {
+            if ($required) {
+                $required = 'true';
+            } else {
+                $required = 'false';
+            }
+            $fields_date = "
+					<label>".$msg['resa_planning_date_debut']."</label>
+					<input type='text' id='" . $id . "_date_begin' name='" . $name . "[date_begin]' value='" . $date_begin . "' data-dojo-type='dijit/form/DateTextBox'/>
+					<input type='text' id='" . $id . "_time_begin' name='" . $name . "[time_begin]' value='" . $time_begin . "' data-dojo-type='dijit/form/TimeTextBox' data-dojo-props=\"constraints:{timePattern:'HH:mm',clickableIncrement:'T00:15:00', visibleIncrement: 'T01:00:00',visibleRange: 'T01:00:00'}\"/>
+					<label>" . $msg['resa_planning_date_fin'] . "</label>
+					<input type='text' id='" . $id . "_date_end' name='" . $name . "[date_end]' value='" . $date_end . "' data-dojo-type='dijit/form/DateTextBox'/>
+					<input type='text' id='" . $id . "_time_end' name='" . $name . "[time_end]' value='" . $time_end . "' data-dojo-type='dijit/form/TimeTextBox' data-dojo-props=\"constraints:{timePattern:'HH:mm',clickableIncrement:'T00:15:00', visibleIncrement: 'T01:00:00',visibleRange: 'T01:00:00'}\"/>
+					<input class='bouton' type='button' value='X' onClick='empty_dojo_calendar_by_id(\"" . $id . "_date_begin\"); empty_dojo_calendar_by_id(\"" . $id . "_time_begin\"); empty_dojo_calendar_by_id(\"" . $id . "_date_end\"); empty_dojo_calendar_by_id(\"" . $id . "_time_end\");'/>
+    		        <script>use_dojo_calendar = 1</script>
+            ";
+            return $fields_date;
+        }
+    }
+    if ($required) {
+        $required = 'required';
+    } else {
+        $required = '';
+    }
+    $time_begin = str_replace('T', '', $time_begin);
+    $time_end = str_replace('T', '', $time_end);
+    $fields_date = "
+		<label>".$msg['resa_planning_date_debut']."</label>
+        <input type='date' id='" . $id . "_date_begin' name='" . $name . "[date_begin]' value='" . $date_begin . "' onchange='" . $onchange . "' " . $required . " />
+		<input type='time' id='" . $id . "_time_begin' name='" . $name . "[time_begin]' value='" . $time_begin . "' onchange='" . $onchange . "' " . $required . " />
+		<label>" . $msg['resa_planning_date_fin'] . "</label>
+		<input type='date' id='" . $id . "_date_end' name='" . $name . "[date_end]' value='" . $date_end . "' onchange='" . $onchange . "' " . $required . " />
+		<input type='time' id='" . $id . "_time_end' name='" . $name . "[time_end]' value='" . $time_end . "' onchange='" . $onchange . "' " . $required . " />
+		<input class='bouton' type='button' value='X' onClick='document.getElementById(\"" . $id . "_date_begin\").value=\"\";document.getElementById(\"" . $id . "_time_begin\").value=\"\"; document.getElementById(\"" . $id . "_date_end\").value=\"\";document.getElementById(\"" . $id . "_time_end\").value=\"\";'/>
+	   <script>use_dojo_calendar = 0</script>";
+    return $fields_date;
+}
+
+function get_input_date($name, $id = '', $value='', $required = false, $onchange='') {
+    global $msg;
+
+    if (strpos($_SERVER['HTTP_USER_AGENT'], 'Firefox')) {
+        $version = get_browser_version($_SERVER['HTTP_USER_AGENT']);
+        if (!$version || ((int) $version < 57)) {
+            if ($required) {
+                $required = 'true';
+            } else {
+                $required = 'false';
+            }
+            $input_date = "
+                    <input type='text'
+                    name='" . $name . "'
+                    id='" . $id . "'
+                    value='" . $value . "'
+                    onchange='" . $onchange . "'
+                    data-form-name='" . $name . "'
+                    data-dojo-type='dijit/form/DateTextBox'
+                    required='" . $required . "'
+                    constraints=\"{datePattern:'" . getDojoPattern($msg['format_date']) . "'}\" />
+                    <input class='bouton' type='button' value='X' onClick='empty_dojo_calendar_by_id(\"".$id."\"); '/>
+    		        <script>use_dojo_calendar = 1</script>
+            ";
+            return $input_date;
+        }
+    }
+    if ($required) {
+        $required = 'required';
+    } else {
+        $required = '';
+    }
+    $input_date = "
+        <input type='date'
+        name='" . $name . "'
+        id='" . $id . "'
+        value='" . $value . "'
+        onchange='" . $onchange . "'
+        " . $required . " />
+		<input class='bouton' type='button' value='X' onClick='document.getElementById(\"".$id."\").value=\"\";'/>
+	   <script>use_dojo_calendar = 0</script>";
+    return $input_date;
+}
+
+function get_browser_version($u_agent, $ub = "Firefox") {
+
+    $matches = array();
+    $known = array('Version', $ub, 'other');
+    $pattern = '#(?<browser>' . implode('|', $known) . ')[/ ]+(?<version>[0-9.|a-zA-Z.]*)#';
+    if (!preg_match_all($pattern, $u_agent, $matches)) {
+        return '';
+    }
+    // see how many we have
+    $i = count($matches['browser']);
+    if ($i != 1) {
+        //we will have two since we are not using 'other' argument yet
+        //see if version is before or after the name
+        if (strripos($u_agent, "Version") < strripos($u_agent, $ub)) {
+            $version = $matches['version'][0];
+        } else {
+            $version = $matches['version'][1];
+        }
+    } else {
+        $version = $matches['version'][0];
+    }
+    // check if we have a number
+    if ($version == null || $version == "") {
+        $version = "?";
+    }
+    return $version;
+}
+
+// PB de chargement de messages dans certains appel du WS
+// Stratégie de contournement en attendant mieux !
+function pmb_load_messages(){
+    global $msg;
+    global $include_path;
+    global $lang;
+    if(empty($msg) && file_exists("$include_path/messages/$lang.xml")){
+        $messages = new XMLlist("$include_path/messages/$lang.xml", 0);
+        $messages->analyser();
+        $msg = $messages->table;
+    }
 }

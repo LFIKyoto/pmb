@@ -3,7 +3,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facettes_external_search_compare.class.php,v 1.6 2018-08-10 10:43:01 dgoron Exp $
+// $Id: facettes_external_search_compare.class.php,v 1.7 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -55,7 +55,7 @@ class facettes_external_search_compare extends facette_search_compare {
 	public function compare_from_objects($objects_ids){
 		self::session_facette_compare($this);
 	
-		if(sizeof($this->facette_compare)){
+		if (!empty($this->facette_compare)) {
 			//on insert les notices externes de la recherche en table memoire
 			self::gen_temporary_table_name();
 			$query = "CREATE TEMPORARY TABLE ".static::$temporary_table_name." engine=memory SELECT rid FROM external_count WHERE rid IN (".$objects_ids.")";
@@ -67,7 +67,7 @@ class facettes_external_search_compare extends facette_search_compare {
 			$this->build_result();
 	
 			//Si trop de résultat, la génération du tableau html sera trop longue = on coupe.
-			if(sizeof($this->result)*sizeof($this->facette_compare) > $this->max_display){
+			if ((count($this->result) * count($this->facette_compare)) > $this->max_display) {
 				return 'facette_compare_too_more_result';
 			}
 			return true;
@@ -131,8 +131,8 @@ class facettes_external_search_compare extends facette_search_compare {
 			}
 		}
 		
-		if(sizeof($notices_ids)){
-			$notices_ids=implode(',', $notices_ids);
+		if (!empty($notices_ids)) {
+			$notices_ids = implode(',', $notices_ids);
 		}
 		return $notices;
 	}

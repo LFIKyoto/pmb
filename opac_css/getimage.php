@@ -2,7 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: getimage.php,v 1.35 2018-08-27 14:45:29 ngantier Exp $
+// $Id: getimage.php,v 1.35.6.2 2019-10-02 08:47:54 btafforeau Exp $
+
+global $opac_opac_view_activate, $current_opac_view, $opac_view, $pmb_opac_view_class, $opac_view_filter_class, $opac_default_style;
+global $css, $class_path, $notice_id, $etagere_id, $authority_id, $opac_curl_available, $pmb_notice_img_pics_max_size;
 
 require_once("./includes/apache_functions.inc.php");
 
@@ -51,6 +54,33 @@ require_once($base_path."/includes/misc.inc.php");
 require_once($base_path."/includes/session.inc.php");
 require_once($base_path.'/includes/start.inc.php');
 
+//si les vues sont activées (à laisser après le calcul des mots vides)
+// Il n'est pas possible de chagner de vue à ce niveau
+if($opac_opac_view_activate){
+    $current_opac_view=(isset($_SESSION["opac_view"]) ? $_SESSION["opac_view"] : '');
+    if($opac_view==-1){
+        $_SESSION["opac_view"]="default_opac";
+    }else if($opac_view)	{
+        $_SESSION["opac_view"]=$opac_view*1;
+    }
+    $_SESSION['opac_view_query']=0;
+    if(!$pmb_opac_view_class) $pmb_opac_view_class= "opac_view";
+    require_once($base_path."/classes/".$pmb_opac_view_class.".class.php");
+    
+    $opac_view_class= new $pmb_opac_view_class((isset($_SESSION["opac_view"]) ? $_SESSION["opac_view"] : ''),$_SESSION["id_empr_session"]);
+    if($opac_view_class->id){
+        $opac_view_class->set_parameters();
+        $opac_view_filter_class=$opac_view_class->opac_filters;
+        $_SESSION["opac_view"]=$opac_view_class->id;
+        if(!$opac_view_class->opac_view_wo_query) {
+            $_SESSION['opac_view_query']=1;
+        }
+    } else {
+        $_SESSION["opac_view"]=0;
+    }
+    $css=$_SESSION["css"]=$opac_default_style;
+}
+
 require_once("$class_path/curl.class.php");
 require_once($base_path."/includes/isbn.inc.php");
 require_once($base_path."/admin/connecteurs/in/amazon/amazon.class.php");
@@ -74,7 +104,7 @@ if(!isset($authority_id)){
 $img_disk="";
 
 $manag_cache=getimage_cache($notice_id, $etagere_id, $authority_id, $vigurl, $noticecode, $url_image);
-if($manag_cache["location"]){
+if (!empty($manag_cache['location']) && !empty($manag_cache['hash'])) {
     $img_disk=$manag_cache["location"];
     if($manag_cache["hash_location"]){
         copy($img_disk,$manag_cache["hash_location"]);
@@ -141,13 +171,13 @@ if ($opac_curl_available) {
 			break;
 		}
 	}
-	if ($image == '' || file_get_contents($base_path.'/images/white_pixel.jpg') == $image) {	    
+	if ($image == '' || file_get_contents($base_path.'/images/white_pixel.gif') == $image) {
 	    $amazon = new amazon();
 	    $data = $amazon->get_images_by_code($noticecode);
-	    if(isset($data['MediumImage'])) {	        
+	    if (isset($data['MediumImage'])) {
 	        $content = $aCurl->get($data['MediumImage']);
 	        $image = $content->body;
-	    }	    
+	    }
 	}
 } else {
 	// priorité à vigurl si fournie
@@ -234,21 +264,30 @@ if ($image && ($img=imagecreatefromstring($image))) {
 	}
 }else{
 	$img_disk = get_url_icon('no_image.png');
+	if (!empty($notice_id)) {
+		$query = "SELECT niveau_biblio, typdoc FROM notices WHERE notice_id='$notice_id'";
+		$res = pmb_mysql_query($query);
+		if (pmb_mysql_num_rows($res)) {
+			$row = pmb_mysql_fetch_assoc($res);
+			$img_disk = notice::get_picture_url_no_image($row['niveau_biblio'], $row['typdoc']);
+		}
+	}
+	$type = get_content_type($img_disk);
 	if($manag_cache["hash_location_empty"]){
 		copy($img_disk,$manag_cache["hash_location_empty"]);
 	}elseif($manag_cache["hash_location"]){
 		copy($img_disk,$manag_cache["hash_location"]);
 	}
-	send_img_disk($img_disk);
+	send_img_disk($img_disk, $type);
 }
 
-function send_img_disk($img_disk){
-	if($img_disk){
-		header('Content-Type: image/png');
-		$fp=@fopen($img_disk, "rb");
-		if($fp){
+function send_img_disk($img_disk, $content_type = 'Content-Type: image/png') {
+	if ($img_disk) {
+		header($content_type);
+		$fp = @fopen($img_disk, "rb");
+		if ($fp) {
 			fpassthru($fp);
-			fclose($fp) ;
+			fclose($fp);
 		}
 	}
 	die();

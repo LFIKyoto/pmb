@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authority_import.class.php,v 1.9 2017-12-22 13:31:51 apetithomme Exp $
+// $Id: authority_import.class.php,v 1.10 2019-06-03 07:04:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
+
+global $class_path, $include_path;
 
 require_once($class_path."/notice_authority.class.php");
 require_once($class_path."/notice_authority_serie.class.php");

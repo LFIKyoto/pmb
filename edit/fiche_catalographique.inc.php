@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: fiche_catalographique.inc.php,v 1.15 2018-09-05 10:03:35 dgoron Exp $
+// $Id: fiche_catalographique.inc.php,v 1.16 2019-06-06 13:42:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $exemplaire, $expl_cb, $expl_id, $notice, $index, $length, $width, $height, $header;
 
 // PDF de fiche catalographique
 /* reçoit : un cb ou id d'exemplaire */

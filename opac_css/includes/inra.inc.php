@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: inra.inc.php,v 1.4 2017-07-03 15:26:19 jpermanne Exp $
+// $Id: inra.inc.php,v 1.4.8.1 2019-10-15 09:59:04 btafforeau Exp $
 
 function get_field_dateparution() {
 	global $field_dateparution;
@@ -51,7 +51,9 @@ function search_other_function_human_query($n) {
 }
 
 function search_other_function_post_values() {
-	$retour ="<input type=\"hidden\" name=\"chg_opac_view\" value=\"".$_SESSION['opac_view']."\">\n";
+    global $charset;
+    
+    $retour = "<input type=\"hidden\" name=\"chg_opac_view\" value=\"".htmlentities($_SESSION['opac_view'], ENT_QUOTES, $charset)."\">\n";
 	
 	return $retour;
 }

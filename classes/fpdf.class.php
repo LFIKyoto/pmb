@@ -8,7 +8,7 @@
 *                                                                              *
 * Vous pouvez utiliser et modifier ce logiciel comme vous le souhaitez.        *
 *******************************************************************************/
-// $Id: fpdf.class.php,v 1.16 2017-02-28 12:28:34 dgoron Exp $
+// $Id: fpdf.class.php,v 1.24 2019-07-31 12:55:51 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -73,6 +73,7 @@ public $creator;            //creator
 public $AliasNbPages;       //alias for total number of pages
 public $PDFVersion;         //PDF version number
 public $htmlentitiesdecode; //table htmlentities pour decoder avant 
+public $angle;
 
 /*******************************************************************************
 *                                                                              *
@@ -104,6 +105,7 @@ public function __construct($orientation='P',$unit='mm',$format='A4')
 	$this->FontStyle='';
 	$this->FontSizePt=12;
 	$this->underline=false;
+	$this->CurrentFont=array();
 	$this->DrawColor='0 G';
 	$this->FillColor='0 g';
 	$this->TextColor='0 g';
@@ -130,24 +132,24 @@ public function __construct($orientation='P',$unit='mm',$format='A4')
 	{
 		$format=strtolower($format);
 		if($format=='a3')
-			$format=array(841.89,1190.55);
+			$format_array = array(841.89,1190.55);
 		elseif($format=='a4')
-			$format=array(595.28,841.89);
+		    $format_array = array(595.28,841.89);
 		elseif($format=='a5')
-			$format=array(420.94,595.28);
+		    $format_array = array(420.94,595.28);
 		elseif($format=='letter')
-			$format=array(612,792);
+		    $format_array = array(612,792);
 		elseif($format=='legal')
-			$format=array(612,1008);
+		    $format_array = array(612,1008);
 		else
 			$this->Error('Unknown page format: '.$format);
-		$this->fwPt=$format[0];
-		$this->fhPt=$format[1];
+		$this->fwPt=$format_array[0];
+		$this->fhPt=$format_array[1];
 	}
 	else
 	{
-		$this->fwPt=$format[0]*$this->k;
-		$this->fhPt=$format[1]*$this->k;
+	    $this->fwPt=$format[0]*$this->k;
+	    $this->fhPt=$format[1]*$this->k;
 	}
 	$this->fw=$this->fwPt/$this->k;
 	$this->fh=$this->fhPt/$this->k;
@@ -204,7 +206,7 @@ public function gethtmlentitiesdecode() {
 	global $charset;
 	
 	$trans=get_html_translation_table(HTML_ENTITIES,ENT_COMPAT | ENT_HTML401,$charset);
-  	$this->htmlentitiesdecode = "";
+  	$this->htmlentitiesdecode = array();
 	foreach($trans as $k => $v)
 	{
           $this->htmlentitiesdecode[$v] = ($k);
@@ -1220,13 +1222,13 @@ public function _putfonts()
 		$compressed=(substr($file,-2)=='.z');
 		if(!$compressed && isset($info['length2']))
 		{
-			$header=(ord($font{0})==128);
+			$header = (ord(substr($font, 0, 1)) == 128);
 			if($header)
 			{
 				//Strip first binary header
 				$font=substr($font,6);
 			}
-			if($header && ord($font{$info['length1']})==128)
+			if($header && ord(substr($font, $info['length1'], 1)) == 128)
 			{
 				//Strip second binary header
 				$font=substr($font,0,$info['length1']).substr($font,$info['length1']+6);
@@ -1245,12 +1247,12 @@ public function _putfonts()
 	if($mqr){
 		ini_set('magic_quotes_runtime', 1);
 	}
-	foreach($this->fonts as $k=>$font)
+	foreach($this->fonts as $k=>$f)
 	{
 		//Font objects
 		$this->fonts[$k]['n']=$this->n+1;
-		$type=$font['type'];
-		$name=$font['name'];
+		$type=$f['type'];
+		$name=$f['name'];
 		if($type=='core')
 		{
 			//Standard font
@@ -1273,10 +1275,10 @@ public function _putfonts()
 			$this->_out('/FirstChar 32 /LastChar 255');
 			$this->_out('/Widths '.($this->n+1).' 0 R');
 			$this->_out('/FontDescriptor '.($this->n+2).' 0 R');
-			if($font['enc'])
+			if(isset($f['enc']))
 			{
-				if(isset($font['diff']))
-					$this->_out('/Encoding '.($nf+$font['diff']).' 0 R');
+			    if(isset($f['diff']))
+			        $this->_out('/Encoding '.($nf+$f['diff']).' 0 R');
 				else
 					$this->_out('/Encoding /WinAnsiEncoding');
 			}
@@ -1284,7 +1286,7 @@ public function _putfonts()
 			$this->_out('endobj');
 			//Widths
 			$this->_newobj();
-			$cw=&$font['cw'];
+			$cw=&$f['cw'];
 			$s='[';
 			for($i=32;$i<=255;$i++)
 				$s.=$cw[chr($i)].' ';
@@ -1293,9 +1295,9 @@ public function _putfonts()
 			//Descriptor
 			$this->_newobj();
 			$s='<</Type /FontDescriptor /FontName /'.$name;
-			foreach($font['desc'] as $k=>$v)
+			foreach($f['desc'] as $k=>$v)
 				$s.=' /'.$k.' '.$v;
-			$file=$font['file'];
+				$file=$f['file'];
 			if($file)
 				$s.=' /FontFile'.($type=='Type1' ? '' : '2').' '.$this->FontFiles[$file]['n'].' 0 R';
 			$this->_out($s.'>>');
@@ -1307,7 +1309,7 @@ public function _putfonts()
 			$mtd='_put'.strtolower($type);
 			if(!method_exists($this,$mtd))
 				$this->Error('Unsupported font type: '.$type);
-			$this->$mtd($font);
+			$this->$mtd($f);
 		}
 	}
 }
@@ -1316,8 +1318,7 @@ public function _putimages()
 {
 	$filter=($this->compress) ? '/Filter /FlateDecode ' : '';
 	reset($this->images);
-	while(list($file,$info)=each($this->images))
-	{
+	foreach ($this->images as $file => $info) {
 		$this->_newobj();
 		$this->images[$file]['n']=$this->n;
 		$this->_out('<</Type /XObject');

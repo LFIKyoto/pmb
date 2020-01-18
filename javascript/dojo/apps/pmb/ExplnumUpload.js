@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ExplnumUpload.js,v 1.5 2018-11-13 14:14:13 vtouchard Exp $
+// $Id: ExplnumUpload.js,v 1.5.6.1 2019-10-30 10:27:53 dgoron Exp $
 
 define([
         "dojo/_base/declare",
@@ -28,6 +28,7 @@ define([
 		entityId: null,
 		entityType: null,
 		bulId: null,
+		upl:null,
 		constructor: function(entityId, entityType, bulId) {
 			this.entityId = entityId;
 			this.entityType = entityType;
@@ -39,7 +40,7 @@ define([
 			 * TODO: switch sur l'url selon le type d'entité
 			 */
 			
-			var upl = new Uploader({
+			this.upl = new Uploader({
 				
 				url: './ajax.php?module=catalog&categ=explnum&quoifaire=upload_docnum&record_id='+this.entityId+(this.bulId ? '&bul_id='+this.bulId : ''),
 				dropTarget: 'dropTarget_'+this.entityId,
@@ -94,6 +95,9 @@ define([
                     domConstruct.place(data.title, explnumContainer, 'last');
                     domConstruct.place(data.response, explnumContainer, 'last');	
                     topic.publish('ExplnumUpload', 'docnumUploaded');
+                }
+                if(dijit.byId(this.upl.idDropTarget+'snetUploader')) {
+                	dijit.byId(this.upl.idDropTarget+'snetUploader').hide();
                 }
             }
 		},

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: dashboard_module.class.php,v 1.20 2018-07-27 09:32:18 dgoron Exp $
+// $Id: dashboard_module.class.php,v 1.21 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -520,7 +520,7 @@ class dashboard_module {
 						$combo = "<select name='form_".$field."' id='form_".$field."' class='saisie-20em' >";
 						if(!${$field}) $combo .= "<option value='' selected>--</option>";
 						else $combo .= "<option value='' >--</option>";
-						while(list($cle, $value) = each($clang)) {
+						foreach ($clang as $cle => $value) {
 							// arabe seulement si on est en utf-8
 							if (($charset != 'utf-8' and $user_lang != 'ar') or ($charset == 'utf-8')) {
 								if(strcmp($cle, ${$field}) != 0) $combo .= "<option value='$cle'>$value ($cle)</option>";

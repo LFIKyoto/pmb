@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tables.inc.php,v 1.14 2017-12-28 16:55:03 apetithomme Exp $
+// $Id: tables.inc.php,v 1.15 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -57,7 +57,7 @@ while($i < pmb_mysql_num_rows($result)) {
 	var content = new Array();
 <?php
 
-while(list($cle,$valeur)=each($desc)) {
+foreach ($desc as $cle => $valeur) {
 	print "content[".$cle."] = \"".$valeur."\";\n";
 }
 
@@ -73,7 +73,7 @@ while(list($cle,$valeur)=each($desc)) {
 <?php
 print "<div class='div-contenu'><div class='row tableListe'>";
 // affichage du résultat
-while(list($cle,$valeur)=each($table)) {
+foreach ($table as $cle => $valeur) {
 	print "<div class='row'><a href=\"javascript:show_table('sql_tables_".$valeur."',".$cle.")\">".$valeur."</a><div id='sql_tables_".$valeur."'></div>\n</div>";
 }
 print "</div></div>";

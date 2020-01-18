@@ -2,14 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: wikipedia.class.php,v 1.15 2017-11-30 10:00:36 dgoron Exp $
+// $Id: wikipedia.class.php,v 1.18 2019-08-07 13:17:22 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
-global $class_path,$base_path, $include_path;
+global $class_path;
 require_once($class_path."/connecteurs.class.php");
 require_once($class_path."/curl.class.php");
-require_once($class_path."/nusoap/nusoap.php");
 
 class wikipedia extends connector {
 	
@@ -41,7 +40,6 @@ class wikipedia extends connector {
 	}
 	
 	public function getEnrichmentHeader($source_id){
-		global $lang;
 		$header= array();
 		$header[]= "<!-- Script d'enrichissement pour wikipedia-->";
 		$header[]= "<script type='text/javascript'>
@@ -61,6 +59,7 @@ class wikipedia extends connector {
 	}
 	
 	public function getTypeOfEnrichment($notice_id,$source_id){
+	    $type = array();
 		$type['type'] = array(
 			array( 
 				'code' => "wiki",
@@ -92,7 +91,7 @@ class wikipedia extends connector {
 		global $lang;
 		global $charset;
 		
-		if($enrich_params['label']!=""){
+		if(isset($enrich_params['label']) && $enrich_params['label']!=""){
 			$author = $enrich_params['label'];
 		}else{
 			//on va chercher l'auteur principal...
@@ -109,9 +108,12 @@ class wikipedia extends connector {
 		$url = "http://".substr($lang,0,2).".wikipedia.org/w/api.php?format=json&action=opensearch&search=".rawurlencode($author)."&limit=20";
 		$json = $curl->get($url);
 		$search = json_decode($json);
-		if(count($search[1])==1 || $enrich_params['label']!=""){
-			if($enrich_params['label']) $title = $enrich_params['label'];
-			else $title=$search[1][0];
+		if (count($search[1])==1 || !empty($enrich_params['label'])) {
+		    if (!empty($enrich_params['label'])) {
+		        $title = $enrich_params['label'];
+		    } else {
+		        $title = $search[1][0];
+		    }
 			$url = "http://".substr($lang,0,2).".wikipedia.org/w/api.php?format=json&action=query&titles=".rawurlencode($title)."&prop=revisions&rvprop=content&rvparse=1";
 			$json = $curl->get($url);
 			$response = json_decode($json);
@@ -126,7 +128,7 @@ class wikipedia extends connector {
 			$html_to_return = str_replace("href=\"/","target='_blank' href=\"http://".substr($lang,0,2).".wikipedia.org/",$html_to_return);		
 			@ini_set("zend.ze1_compatibility_mode", "0");
 			$dom = new domDocument();
-			$dom->loadHTML($html_to_return);
+			@$dom->loadHTML($html_to_return);
 			$spans = $dom->getElementsByTagName("span");
 			for($i=0; $i<$spans->length ; $i++){
 				for($j=0 ; $j<$spans->item($i)->attributes->length ; $j++){
@@ -174,8 +176,7 @@ class wikipedia extends connector {
 	
 	public function noticeInfos($notice_id,$enrich_params){
 		global $lang,$charset;
-		
-		if($enrich_params['label']!=""){
+		if(isset($enrich_params['label']) && $enrich_params['label'] != ""){
 			$titre = $enrich_params['label'];
 		}else{
 			$rqt = "select tit1 from notices where notice_id='$notice_id'";
@@ -190,9 +191,12 @@ class wikipedia extends connector {
 		$json = $curl->get($url);
 		$search = json_decode($json);
 				
-		if(count($search[1])==1 || $enrich_params['label']!=""){
-			if($enrich_params['label']) $title = $enrich_params['label'];
-			else $title=$search[1][0];
+		if(count($search[1])==1 || !empty($enrich_params['label'])) {
+		    if (!empty($enrich_params['label'])) {
+		        $title = $enrich_params['label'];
+		    } else {
+		        $title=$search[1][0];
+		    }
 			$url = "http://".substr($lang,0,2).".wikipedia.org/w/api.php?format=json&action=query&titles=".rawurlencode($title)."&prop=revisions&rvprop=content&rvparse=1";
 			$json = $curl->get($url);
 			$response = json_decode($json);
@@ -207,7 +211,7 @@ class wikipedia extends connector {
 			$html_to_return = str_replace("href=\"/","target='_blank' href=\"http://".substr($lang,0,2).".wikipedia.org/",$html_to_return);		
 			@ini_set("zend.ze1_compatibility_mode", "0");
 			$dom = new domDocument();
-			$dom->loadHTML($html_to_return);
+			@$dom->loadHTML($html_to_return);
 			$spans = $dom->getElementsByTagName("span");
 			for($i=0; $i<$spans->length ; $i++){
 				for($j=0 ; $j<$spans->item($i)->attributes->length ; $j++){

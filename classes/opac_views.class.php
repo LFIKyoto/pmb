@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: opac_views.class.php,v 1.4 2017-03-30 13:57:48 dgoron Exp $
+// $Id: opac_views.class.php,v 1.5 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -73,7 +73,7 @@ class opac_views  extends quota {
 		return $form;
 	}
 	
-	function get_storable_value($value){
+	public function get_storable_value($value){
 		return addslashes(serialize($value));
 	}
 	

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl_info.inc.php,v 1.64 2018-07-04 09:50:33 dgoron Exp $
+// $Id: expl_info.inc.php,v 1.66 2019-07-10 07:00:37 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -198,10 +198,10 @@ function print_info ($expl, $mode_affichage = 0, $affichage_emprunteurs = 1, $af
 		// zone du message exemplaire
 		$__note = "<hr /><div class='row'>";
 		$__note.= "<b>${msg[377]}</b><br />";
-		if ($expl->expl_note) $__note.= "<div class='message_important'>".$expl->expl_note."</div>";
+		if ($expl->expl_note) $__note.= "<div class='message_important'>".nl2br($expl->expl_note)."</div>";
 		if ($expl->expl_comment) {
 			$__note.= "<b>".$msg['expl_zone_comment']."</b><br />";
-			$__note.= "<div class='expl_comment'>".$expl->expl_comment."</div>";
+			$__note.= "<div class='expl_comment'>".nl2br($expl->expl_comment)."</div>";
 		}
 		$__note.= "<br /><input type='button' class='bouton' value='$msg[378]' onclick=\"document.location='./circ.php?categ=note_ex&cb=".rawurlencode($expl->expl_cb)."&id=".$expl->expl_id."'\" />";
 		$__note.= "</div><hr />";
@@ -511,6 +511,7 @@ function check_pret($expl) {
 	$expl->type_abt = '';
 	$expl->empr_msg = '';
 	$expl->groupes = '';
+	$expl->pnb_flag = '';
 	// récupération des infos du prêt
 	$query = "select *, date_format(pret_date, '".$msg["format_date"]."') as aff_pret_date, date_format(pret_retour, '".$msg["format_date"]."') as aff_pret_retour, IF(pret_retour>sysdate(),0,1) as retard from pret where pret_idexpl=".$expl->expl_id." limit 1";
 	$result = pmb_mysql_query($query, $dbh);

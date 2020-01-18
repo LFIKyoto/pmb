@@ -2,7 +2,7 @@
  // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: options_marclist.php,v 1.7 2018-07-17 09:59:14 dgoron Exp $
+// $Id: options_marclist.php,v 1.8 2019-03-25 13:22:58 dgoron Exp $
 
 //Gestion des options de type text
 $base_path = "../..";
@@ -157,10 +157,6 @@ if ($first == 1) {
 		<tr>
 			<td>".$msg['procs_options_choix_vide']."</td>
 			<td>".$msg['procs_options_value']." : <input type='text' size='5' name='UNSELECT_ITEM_VALUE' value='".htmlentities($UNSELECT_ITEM_VALUE,ENT_QUOTES,$charset)."'>&nbsp;".$msg['procs_options_label']." : <input type='text' name='UNSELECT_ITEM_LIB' value='".htmlentities($UNSELECT_ITEM_LIB,ENT_QUOTES,$charset)."'></td>
-		</tr>
-		<tr>
-			<td>".$msg['proc_options_default_value']."</td>
-			<td>!!selector_default_value!!</td>
 		</tr>
 	</table>
 	

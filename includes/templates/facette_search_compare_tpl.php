@@ -6,6 +6,8 @@
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
+global $tpl_form_compare, $current_module, $charset, $msg, $tpl_display_compare, $facette_search_compare_wrapper, $base_path, $facette_search_compare_header, $facette_search_compare_line, $facette_search_compare_element, $facette_search_compare_hidden_line, $facette_search_compare_hidden_element;
+
 $tpl_form_compare="
 	<form class='form-$current_module' name='form_compare' method='post' action='./admin.php?categ=opac&sub=facettes_comparateur&action=save'>
 		<div class='row'>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: record_log.class.php,v 1.20 2017-06-22 08:37:17 mbertin Exp $
+// $Id: record_log.class.php,v 1.21 2019-01-15 14:14:59 mbertin Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -19,7 +19,7 @@ class record_log{
 	public $doc = array();
 	public $expl = array();
 	public $nb_results = array();
-	public $generique= "";
+	public $generique= array();
 	
 	
 	public function __construct(){
@@ -54,6 +54,9 @@ class record_log{
 				if($value) $this->nb_results = $value;
 				break;
 			default:
+				if(!isset($this->generique) || !is_array($this->generique)){
+					$this->generique=array();
+				}
 				if($value) $this->generique[$nom]=$value;
 				break;
 							

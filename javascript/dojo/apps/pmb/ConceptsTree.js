@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ConceptsTree.js,v 1.2 2018-11-22 10:59:04 arenou Exp $
+// $Id: ConceptsTree.js,v 1.3 2019-01-14 15:34:20 arenou Exp $
 
 
 define([
@@ -109,7 +109,20 @@ define([
     	   		// Root : c'est le traitement dans gotDatas, on l'a déjà
     	   		case 'root' :
     	   			if(this.parameters.conceptSchemes){
-    	   				return this.store.query({parent: object.id, id:this.parameters.conceptSchemes});
+//    	   				return this.store.query({parent: object.id, id:this.parameters.conceptSchemes});
+    	   				var conceptSchemes = this.parameters.conceptSchemes;
+    	   				return this.store.query(function(item){
+    	   					var flag = true;
+    	   					flag = item.parent == object.id;
+    	   					if(!flag) return false;
+    	   					for(var i=0 ; i<conceptSchemes.length ; i++){
+    	   						 flag = item.id == conceptSchemes[i];
+    	   						 if(flag){
+    	   							 return true;
+    	   						 }
+    	   					}
+    	   					return flag;
+    	   				});
     	   			}else{
     	   				return this.store.query({parent: object.id});
     	   			}

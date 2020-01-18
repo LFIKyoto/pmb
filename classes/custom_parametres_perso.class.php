@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: custom_parametres_perso.class.php,v 1.32 2018-08-08 09:49:44 plmrozowski Exp $
+// $Id: custom_parametres_perso.class.php,v 1.37 2019-07-05 13:25:14 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -76,7 +76,7 @@ class custom_parametres_perso extends parametres_perso {
 		$this->option_navigation =$option_navigation;
 	}
 	public function set_option_visibilite($option_visibilite){
-		if(!count($option_visibilite))
+		if(empty($option_visibilite))
 			$this->option_visibilite = array(
 					'multiple' => "none",
 					'opac_sort' => "none",
@@ -323,7 +323,7 @@ class custom_parametres_perso extends parametres_perso {
 			$this->get_values($id);
 			$check_scripts="";
 			reset($this->t_fields);
-			while (list($key,$val)=each($this->t_fields)) {
+			foreach ($this->t_fields as $key => $val) {
 				if(!isset($this->values[$key])) $this->values[$key] = array();
 				$t=array();
 				$t["ID"]=$key;
@@ -365,13 +365,13 @@ class custom_parametres_perso extends parametres_perso {
 	}
 	
 	//Enregistrement des champs perso soumis lors de la saisie d'une fichie emprunteur ou autre...
-	function rec_fields_perso($id,$type="") {
+	public function rec_fields_perso($id,$type="") {
 		
 		$requete="delete ".$this->prefix."_custom_values from ".$this->prefix."_custom_values where ".$this->prefix."_custom_origine=$id";
 		pmb_mysql_query($requete);	
 
 		reset($this->t_fields);
-		while (list($key,$val)=each($this->t_fields)) {
+		foreach ($this->t_fields as $key => $val) {
 			$name=$val["NAME"];
 			global ${$name};
 			$value=${$name};
@@ -401,10 +401,10 @@ class custom_parametres_perso extends parametres_perso {
 		}
 	}
 	
-	function check_mandatory_fields_value() {
+	public function check_mandatory_fields_value() {
 		$error_list = array();
 		reset($this->t_fields);
-		while (list($key,$val)=each($this->t_fields)) {
+		foreach ($this->t_fields as $key => $val) {
 			$name=$val["NAME"];
 			global ${$name};
 			$value=${$name};
@@ -453,14 +453,16 @@ class custom_parametres_perso extends parametres_perso {
     		$field["VALUES"]=$values;
     		$field["PREFIX"]=$this->prefix;
     		$aff=$val_list_empr[$this->t_fields[$field_id]["TYPE"]]($field,$values);
-		}else {
-		    $aff='';
 		}
-		if(is_array($aff)){
-			if($keep_html){
-				return $aff['value'];
-			}else return $aff['withoutHTML'];
+		if (isset($aff)) {
+		    if (is_array($aff)) {		
+    		    if ($keep_html) {
+    		        return $aff['value'];
+    		    } else {
+    		        return $aff['withoutHTML'];
+    		    }
+            } else return $aff;
 		}
-		else return $aff;
+		return '';
 	}
 }

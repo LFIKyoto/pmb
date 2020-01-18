@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_django.class.php,v 1.32 2018-10-31 17:46:06 dgoron Exp $
+// $Id: cms_module_common_view_django.class.php,v 1.35.6.5 2019-10-23 13:32:54 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 require_once($base_path."/cms/modules/common/includes/pmb_h2o.inc.php");
@@ -89,22 +89,44 @@ class cms_module_common_view_django extends cms_module_common_view{
 	
 	public function render($datas){
 	    global $base_path;
-		if(!isset($datas['id']) || !$datas['id']){
-			$datas['id'] = $this->get_module_dom_id();
-		}
-		if(!isset($datas['get_vars']) || !$datas['get_vars']){
-			$datas['get_vars'] = $_GET;
-		}
-		if(!isset($datas['post_vars']) || !$datas['post_vars']){
-			$datas['post_vars'] = $_POST;
-		}
+	    
+	    if(!isset($datas) || (!is_array($datas) && !is_object($datas))){
+	    	$datas=array();
+	    }
+	    if(is_object($datas)) {
+	        if(empty($datas->get_id())){
+	            $datas->id = $this->get_module_dom_id();
+	        }
+	        if(!isset($datas->get_vars) || !$datas->get_vars){
+	            $datas->get_vars = $_GET;
+	        }
+	        if(!isset($datas->post_vars) || !$datas->post_vars){
+	            $datas->post_vars = $_POST;
+	        }
+	        $datas = [$datas];
+	    } else {
+			if(!isset($datas['id']) || !$datas['id']){
+				$datas['id'] = $this->get_module_dom_id();
+			}
+			if(!isset($datas['get_vars']) || !$datas['get_vars']){
+				$datas['get_vars'] = $_GET;
+			}
+			if(!isset($datas['post_vars']) || !$datas['post_vars']){
+				$datas['post_vars'] = $_POST;
+			}
+	    }
 		try{
 		    $template_path = $base_path.'/temp/'.LOCATION.'_cms__view_django_'.$this->id;
-		    if(!file_exists($template_path) || (md5($this->parameters['active_template']) != md5_file($template_path))){
+		    if(!file_exists($template_path) || (isset($this->parameters['active_template']) && md5($this->parameters['active_template']) != md5_file($template_path))){
 		        file_put_contents($template_path, $this->parameters['active_template']);
 		    }
 		    $H2o = H2o_collection::get_instance($template_path);
 		    $html = $H2o->render($datas);
+		    if(is_object($datas)) {
+		        if (!empty($datas->css)) $html.= '<style>'.$datas->css.'</style>';
+		    } else {
+		    	if (!empty($datas['css'])) $html.= '<style>'.$datas['css'].'</style>';
+		    }
 		}catch(Exception $e){
 			$html = $this->msg["cms_module_common_view_error_template"];
 		}
@@ -352,7 +374,11 @@ class cms_module_common_view_django extends cms_module_common_view{
 				array(
 						'var' => "env_vars.browser",
 						'desc' => $this->msg['cms_module_common_view_django_session_vars_browser_desc'],
-				)
+				),
+			    array(
+			        'var' => "env_vars.server_addr",
+			        'desc' => $this->msg['cms_module_common_view_django_session_vars_server_addr_desc'],
+			    )
 			)
 		);
 		return $format_datas;

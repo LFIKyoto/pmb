@@ -2,17 +2,13 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_accounting_livraisons_ui.class.php,v 1.1 2018-04-09 11:30:44 dgoron Exp $
+// $Id: list_accounting_livraisons_ui.class.php,v 1.1.6.1 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/list/accounting/list_accounting_ui.class.php");
 
 class list_accounting_livraisons_ui extends list_accounting_ui {
-		
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
 	
 	/**
 	 * Initialisation des colonnes disponibles

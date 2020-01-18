@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: mysql_backup.class.php,v 1.10 2017-06-30 14:08:17 dgoron Exp $
+// $Id: mysql_backup.class.php,v 1.13 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -51,24 +51,24 @@ class mysql_backup {
 //------------------------------------------
 
 	public function restore($src) {
-		global $dbh;
-		$SQL='';
-		if($src) {
-			$this->filename=$src;
-			if($this->open_restore_stream() && $this->buffer) {
-
+		$SQL = array();
+		if (!empty($src)) {
+			$this->filename = $src;
+			if ($this->open_restore_stream() && !empty($this->buffer)) {
 				// open source file
 				$SQL = preg_split('/;\s*\n|;\n/m', bzdecompress($this->buffer));
-				for($i=0; $i < sizeof($SQL); $i++) {
-					if($SQL[$i])
-						$result = pmb_mysql_query($SQL[$i], $dbh);
+				$nb_queries = count($SQL);
+				for ($i = 0; $i < $nb_queries; $i++) {
+				    if (!empty($SQL[$i])) {
+						$result = pmb_mysql_query($SQL[$i]);
+				    }
 				}
 			} else {
 				die("can't open file to restore");
-				return FALSE;
+				return false;
 			}
 		}
-		return TRUE;
+		return true;
 	}
 
 
@@ -76,13 +76,12 @@ class mysql_backup {
 //------------------------------------------
 
 	public function fetch_data() {
-
-		global $dbh;
-
 		//enumerate tables
 
-		$res=pmb_mysql_list_tables(DATA_BASE);
+		$res = pmb_mysql_list_tables(DATA_BASE);
 		$i = 0;
+		$ina = array();
+		$fna = array();
 
 		while($i < pmb_mysql_num_rows($res)) {
 			$update_a_faire=0; /* permet de gérer les id auto_increment qui auraient pour valeur 0 */
@@ -90,7 +89,7 @@ class mysql_backup {
 			bzwrite ($this->fptr, "delete from $table_name;\n");
 			$this->dump.="delete from $table_name;\n";
 			//parse the field info first
-			$res2=pmb_mysql_query("select * from ${table_name} order by 1 ",$dbh);
+			$res2=pmb_mysql_query("select * from ${table_name} order by 1 ");
 			$nf=pmb_mysql_num_fields($res2);
 			$nr=pmb_mysql_num_rows($res2);
 
@@ -163,32 +162,46 @@ class mysql_backup {
 						// this is where this support will breakdown
 						break;
 					}
-
-				$fields ? $fields .= ', '.$fn : $fields .= $fn;
-
+				if ($fields) {
+				    $fields .= ', '.$fn;
+				} else {
+				    $fields .= $fn;
+				}
 				$fna[$b] = $fn;
 				$ina[$b] = $is_numeric;
 			}
 
 			//parse out the table's data and generate the SQL INSERT statements in order to replicate the data itself...
 
-			for ($c=0;$c<$nr;$c++) {
-				$row=pmb_mysql_fetch_row($res2);
+			for ($c = 0; $c < $nr; $c++) {
+				$row = pmb_mysql_fetch_row($res2);
 				$values = '';
-				for ($d=0;$d<$nf;$d++) {
-					$data=strval($row[$d]);
-					if (($d==0) && (strval($row[$d])==0)) {
+				for ($d = 0; $d < $nf; $d++) {
+					$data = strval($row[$d]);
+					if (($d == 0) && (strval($row[$d]) == 0)) {
 						/* traiter ici l'insertion avec valeur 1 pour id autoincrement et update à suivre */
-						$values ? $values.= ', '.'1' : $values.= '1';
-						$cle_update=pmb_mysql_field_name($res2, 0);
-						$update_a_faire=1;
-						} else {
-							if ($ina[$d]==true)
-								$values ? $values.= ', '.intval($data) : $values.= intval($data);
-								else
-									$values ? $values.=", \"".pmb_mysql_escape_string($data)."\"" : $values.="\"".pmb_mysql_escape_string($data)."\"";
-							}
-
+					    if ($values) {
+					        $values .= ', '.'1';
+					    } else {
+					        $values.= '1';
+					    }
+						$cle_update = pmb_mysql_field_name($res2, 0);
+						$update_a_faire = 1;
+					} else {
+					    if ($ina[$d] == true) {
+					        if ($values) {
+					            $values .= ', '.intval($data);
+					        } else {
+					            $values .= intval($data);
+					        }
+					    } else {
+					        if ($values) {
+					            $values .= ", \"".pmb_mysql_escape_string($data)."\"";
+					        } else {
+					            $values .= "\"".pmb_mysql_escape_string($data)."\"";
+					        }
+					    }
+					}
 				}
 				bzwrite ($this->fptr, "insert into $table_name ($fields) values ($values);\n");
 				$this->dump.="insert into $table_name ($fields) values ($values);\n";

@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: avis.class.php,v 1.26 2018-08-20 09:22:48 plmrozowski Exp $
+// $Id: avis.class.php,v 1.28 2019-06-04 13:45:25 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($include_path."/templates/avis.tpl.php");
+require_once($class_path."/liste_lecture.class.php");
 
 define('AVIS_RECORDS',1);
 define('AVIS_ARTICLES',2);
@@ -141,6 +142,8 @@ class avis {
 				$result = pmb_mysql_query($query);
 				if ($result && pmb_mysql_num_rows($result)) {
 					$notes_sum = 0;
+					$this->avis['public'] = array();
+					$this->avis['private'] = array();
 					while ($avis = pmb_mysql_fetch_object($result)) {
 						if($avis->avis_private) {
 							$this->avis['private'][$avis->avis_num_liste_lecture][] = $avis;
@@ -168,29 +171,30 @@ class avis {
 		global $msg;
 	
 		$display = '';
-		$query = "select id_liste, nom_liste, notices_associees	from opac_liste_lecture
+		$query = "select id_liste from opac_liste_lecture
 				join empr on empr.id_empr = opac_liste_lecture.num_empr
 				where opac_liste_lecture.num_empr = '".$_SESSION['id_empr_session']."'
 				or id_liste in (select num_liste from abo_liste_lecture where num_empr = '".$_SESSION['id_empr_session']."' and etat=2)
 				";
-		$listes=array();
+		$listes = array();
 		$result = pmb_mysql_query($query);
 		if ($result && pmb_mysql_num_rows($result)) {
-			while($row = pmb_mysql_fetch_object($result)){				
-				$notices = explode(",",$row->notices_associees);
+			while ($row = pmb_mysql_fetch_object($result)) {				    
+			    $liste = new liste_lecture($row->id_liste);
+			    $notices = $liste->notices;				   
 				// Pour ne sélectionner que les listes de lecture qui intégrent cette notice
-				if(in_array($this->object_id,$notices)){
-					$listes[]=$row->id_liste;
+				if (in_array($this->object_id, $notices)) {
+					$listes[] = $row->id_liste;
 				}
 			}
 		}
-		if(count($listes)){
-			$filter=implode(',',$listes);
-		}else{
-			$filter=0;
+		if (count($listes)) {
+			$filter = implode(',', $listes);
+		} else {
+			$filter = 0;
 		}
 		$query = "select id_liste, nom_liste from opac_liste_lecture where id_liste in ( ".$filter." ) order by nom_liste ";	
-		$display=gen_liste($query,'id_liste','nom_liste', 'avis_'.$id_avis.'_listes_lecture_notice_'.$this->object_id, '', $selected, 0, $msg['avis_liste_lecture_default_value'], 0, $msg['avis_liste_lecture_default_value']);
+		$display = gen_liste($query,'id_liste','nom_liste', 'avis_'.$id_avis.'_listes_lecture_notice_'.$this->object_id, '', $selected, 0, $msg['avis_liste_lecture_default_value'], 0, $msg['avis_liste_lecture_default_value']);
 			
 		return $display;
 	}

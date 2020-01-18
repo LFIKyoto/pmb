@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pret.class.php,v 1.23 2018-11-14 13:54:46 ngantier Exp $
+// $Id: pret.class.php,v 1.23.6.1 2019-10-25 14:32:48 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -52,6 +52,7 @@ class pret {
 	public $etat;
 	public $display;
 	protected $exemplaire;
+	protected $emprunteur;
 
 	public function __construct( $id_empr, $id_expl, $cb_expl='', $pret_date='', $pret_retour='') {
 		$this->id_empr=$id_empr+0;
@@ -239,6 +240,13 @@ class pret {
 			$this->exemplaire = new exemplaire($this->cb_expl, $this->id_expl);
 		}
 		return $this->exemplaire;
+	}
+	
+	public function get_emprunteur() {
+	    if(!isset($this->emprunteur)) {
+	        $this->emprunteur = new emprunteur($this->id_empr);
+	    }
+	    return $this->emprunteur;
 	}
 	
 	public static function get_display_info($title='', $content) {

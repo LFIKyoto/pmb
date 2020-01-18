@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: remote_procedure_client.class.php,v 1.7 2018-08-28 09:13:02 dbellamy Exp $
+// $Id: remote_procedure_client.class.php,v 1.8 2019-03-25 15:26:00 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -100,39 +100,7 @@ class remote_procedure_client {
 					}
 				}
 			}
-		}
-		//Sinon, utilisons le client nusoap
-		else {
-			$adresse_proxy = false;
-			$port_proxy = false;
-			$user_proxy = false;
-			$pwd_proxy = false;
-			if($pmb_curl_proxy!=''){
-				$param_proxy = explode(',',$pmb_curl_proxy);
-				$adresse_proxy = $param_proxy[0];
-				$port_proxy = $param_proxy[1];
-				$user_proxy = $param_proxy[2];
-				$pwd_proxy = $param_proxy[3];
-			}
-			
-			require_once($class_path."/nusoap/nusoap.php");
-			$client = new nusoapclient($this->server_adress, true, $adresse_proxy, $port_proxy, $user_proxy, $pwd_proxy);
-			$client->decode_utf8 = ($charset != 'utf-8');
-			if ($err=$client->getError()) {
-				return (object)array("error_information" => ((object)array("error_code" => 1 ,"error_string" => $err)));
-			}
-			$result = $client->call("get_procs", array("parameters" => $params), "http://www.sigb.net/pmb/");
-			//Si une seule procédure est renvoyée, soap ne renvoi pas un tableau, et alors elements contient directement une procedure
-			//Mais nous voulons un tableau, donc nous devons traiter le cas
-			if (isset($result["elements"]["id"]))
-				$result["elements"] = array($result["elements"]);
-
-			$result = $this->array_to_object($result);
-			if (isset($result->elements))
-				foreach ($result->elements as $index => $value)
-					$result->elements[$index] = $this->array_to_object($result->elements[$index], true);
-		}
-		
+		}		
 		return $result;
 	}
 	

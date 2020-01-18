@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lists_controller.class.php,v 1.8 2018-11-14 08:52:56 dgoron Exp $
+// $Id: lists_controller.class.php,v 1.9.6.1 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -123,6 +123,62 @@ class lists_controller {
 			$instance_class_name = new $class_name($filters, $pager, array('by' => $sort_by, 'asc_desc' => (!empty($sort_asc_desc) ? $sort_asc_desc : '')));
 			print encoding_normalize::utf8_normalize($instance_class_name->get_display_header_list());
 			print encoding_normalize::utf8_normalize($instance_class_name->get_display_content_list());
+		}
+	}
+	
+	public static function proceed_manage_ajax($id=0, $objects_type, $directory='') {
+		global $sub, $action;
+		global $class_path;
+		global $filters, $pager, $sort_by, $sort_asc_desc;
+	
+		$id = intval($id);
+		if(isset($objects_type) && $objects_type) {
+			switch($sub) {
+				case 'options':
+					switch ($action) {
+						case 'get_applied_group_selector':
+							$class_name = 'list_'.$objects_type;
+							if($directory) {
+								static::load_class('/list/'.$directory.'/'.$class_name.'.class.php');
+							} else {
+								static::load_class('/list/'.$class_name.'.class.php');
+							}
+							$filters = (!empty($filters) ? encoding_normalize::json_decode(stripslashes($filters), true) : array());
+							$pager = (!empty($pager) ? encoding_normalize::json_decode(stripslashes($pager), true) : array());
+							$instance_class_name = new $class_name($filters, $pager, array('by' => $sort_by, 'asc_desc' => (!empty($sort_asc_desc) ? $sort_asc_desc : '')));
+							print encoding_normalize::utf8_normalize($instance_class_name->get_display_add_applied_group($id));
+							break;
+						case 'get_search_order_selector':
+						    $class_name = 'list_'.$objects_type;
+						    if($directory) {
+						        static::load_class('/list/'.$directory.'/'.$class_name.'.class.php');
+						    } else {
+						        static::load_class('/list/'.$class_name.'.class.php');
+						    }
+						    $filters = (!empty($filters) ? encoding_normalize::json_decode(stripslashes($filters), true) : array());
+						    $pager = (!empty($pager) ? encoding_normalize::json_decode(stripslashes($pager), true) : array());
+						    $instance_class_name = new $class_name($filters, $pager, array('by' => $sort_by, 'asc_desc' => (!empty($sort_asc_desc) ? $sort_asc_desc : '')));
+						    print encoding_normalize::utf8_normalize($instance_class_name->get_search_order_add_applied_sort($id));
+						    break;
+					}
+					break;
+				default:
+					switch($action) {
+						case 'save':
+							$list_model = new list_model($id);
+							$list_model->set_objects_type($objects_type);
+							$list_model->set_properties_from_form();
+							$list_model->save();
+							break;
+						case 'edit':
+								
+							break;
+						case 'delete':
+							list_model::delete($id);
+							break;
+					}
+					break;
+			}
 		}
 	}
 	

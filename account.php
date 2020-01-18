@@ -2,7 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: account.php,v 1.74 2018-09-26 07:21:34 dgoron Exp $
+// $Id: account.php,v 1.77.2.1 2019-10-21 12:41:03 dgoron Exp $
+
+global $base_path, $base_auth, $base_title, $base_use_dojo, $include_path, $class_path, $menu_bar, $extra2, $account_layout, $use_shortcuts;
+global $modified, $user_params, $PMBuserid, $param_default, $account_form, $stylesheet, $names, $values, $user_lang, $form_pwd, $pmb_url_base;
+global $form_nb_per_page_search, $form_nb_per_page_select, $form_nb_per_page_gestion, $form_style, $form_user_email, $form_deflt_thesaurus, $field_values, $dummy;
+global $form_deflt_docs_location, $cle, $valeur, $n_values, $loc, $msg, $extra, $extra_info, $footer;
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
@@ -38,6 +43,7 @@ if(empty($modified)) {
 	
 	$account_form = str_replace('!!combo_user_style!!', make_user_style_combo($stylesheet), $account_form);
 	$account_form = str_replace('!!combo_user_lang!!', make_user_lang_combo($user_params->user_lang), $account_form);
+	$account_form = str_replace('!!user_email!!', $user_params->user_email, $account_form);
 	$account_form = str_replace('!!nb_per_page_search!!', $user_params->nb_per_page_search, $account_form);
 	$account_form = str_replace('!!nb_per_page_select!!', $user_params->nb_per_page_select, $account_form);
 	$account_form = str_replace('!!nb_per_page_gestion!!', $user_params->nb_per_page_gestion, $account_form);
@@ -82,6 +88,8 @@ if(empty($modified)) {
 		$values[] .= "'$form_style'";
 	}
 	
+	$names[] = 'user_email';
+	$values[] = "'$form_user_email'";
 			
 	/* insérer ici la maj des param et deflt */
 	
@@ -89,8 +97,8 @@ if(empty($modified)) {
 	if ($form_deflt_thesaurus) thesaurus::setSessionThesaurusId($form_deflt_thesaurus);
 			
 	$requete_param = "SELECT * FROM users WHERE userid='$PMBuserid' LIMIT 1 ";
-	$res_param = pmb_mysql_query($requete_param, $dbh);
-	$field_values = pmb_mysql_fetch_row( $res_param );
+	$res_param = pmb_mysql_query($requete_param);
+	$field_values = pmb_mysql_fetch_row($res_param);
 	$i = 0;
 	while ($i < pmb_mysql_num_fields($res_param)) {
 		$field = pmb_mysql_field_name($res_param, $i) ;
@@ -104,27 +112,33 @@ if(empty($modified)) {
 					$dummy[$i+8]=$field."='".${$formlocid}."'";
 				} else {
 					$var_form = "form_".$field;
+					global ${$var_form};
 					$dummy[$i+8]=$field."='".${$var_form}."'";
 				}
 				break;
 			case "deflt2" :
 				$var_form = "form_".$field;
+				global ${$var_form};
 				$dummy[$i+8]=$field."='".${$var_form}."'";
 				break ;
 			case "param_" :
 				$var_form = "form_".$field;
+				global ${$var_form};
 				$dummy[$i+8]=$field."='".${$var_form}."'";
 				break ;
 			case "value_" :
 				$var_form = "form_".$field;
+				global ${$var_form};
 				$dummy[$i+8]=$field."='".${$var_form}."'";
 				break ;
 			case "xmlta_" :
 				$var_form = "form_".$field;
+				global ${$var_form};
 				$dummy[$i+8]=$field."='".${$var_form}."'";
 				break ;
 			case "deflt3" :
 				$var_form = "form_".$field;
+				global ${$var_form};
 				$dummy[$i+8]=$field."='".${$var_form}."'";
 				break ;
 			case "speci_" :
@@ -141,13 +155,18 @@ if(empty($modified)) {
 		$set = join($dummy, ", ");
 		$set = " , ".$set ;
 	} else $set = "" ;
-		
 	if(sizeof($names) == sizeof($values)) {
-		while(list($cle, $valeur) = each($names)) {
-			$n_values ? $n_values .= ", $valeur=${values[$cle]}" : $n_values = "$valeur=${values[$cle]}";
+	    $test = 0;
+	    foreach($names as $cle => $valeur) {
+	        if ($n_values) {
+	            $n_values .= ", $valeur=${values[$cle]}";
+	        } else {
+	            $n_values = "$valeur=${values[$cle]}";
+	        }
+			$test++;
 	    }
 		$requete = "UPDATE users SET $n_values $set , last_updated_dt=curdate() WHERE username='".SESSlogin."' ";
-		$result = @pmb_mysql_query($requete, $dbh);
+		$result = @pmb_mysql_query($requete);
 		if($result) {
 			$loc = "index.php" ;
 			if (SESSrights & ADMINISTRATION_AUTH) 
@@ -169,9 +188,8 @@ if(empty($modified)) {
 }
 	
 print "</div></div>";
-print $account_layout_end;
 print $extra;
 print $extra_info;
 print $footer;
 
-pmb_mysql_close($dbh);
+pmb_mysql_close();

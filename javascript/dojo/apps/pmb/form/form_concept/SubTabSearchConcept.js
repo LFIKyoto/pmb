@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: SubTabSearchConcept.js,v 1.7 2018-11-07 15:34:55 arenou Exp $
+// $Id: SubTabSearchConcept.js,v 1.8 2019-04-19 09:40:05 ccraig Exp $
 
 
 define([
@@ -101,6 +101,7 @@ define([
 				  	currentQuery.mode = tabQuery.mode;
 				  	var entityType = domAttr.get(tab.parentNode, 'data-pmb-object-type');
 				  	var newHref = this.get('href').split('?')[0] + '?' + ioQuery.objectToQuery(currentQuery)+'&entity_type='+entityType;
+				  	if (entityType == 'authperso') newHref += "&authperso_id=" + currentQuery.mode.slice(3);
 				  	this.currentMode = currentQuery.mode;
 				  	var widgets = registry.findWidgets(this.containerNode);
 				  	widgets.forEach(function(widget){

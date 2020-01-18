@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_grammars.tpl.php,v 1.1 2018-11-27 16:26:45 apetithomme Exp $
+// $Id: vedette_grammars.tpl.php,v 1.2 2019-05-27 09:14:28 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $msg, $base_path;
+global $msg, $base_path, $vedette_grammars_by_entity_form, $vedette_grammars_by_entity_row, $vedette_grammars_by_entity_selector, $vedette_grammars_by_entity_selector_option;
 
 $vedette_grammars_by_entity_form = '
 	<h1>'.$msg['composed_vedettes_grammars_by_entity'].'</h1>

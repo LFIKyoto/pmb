@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_handler.class.php,v 1.59 2018-11-22 13:33:52 apetithomme Exp $
+// $Id: onto_handler.class.php,v 1.65 2019-06-04 14:58:14 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -181,7 +181,7 @@ class onto_handler {
 			return true;
 		}elseif ($errs = $this->data_store->get_errors()) {
 			print "<br>Erreurs: <br>";
-			print "<pre>";print_r($errs);print "</pre><br>";
+			print "<pre>";print_r($query);print "<br/>";print_r($errs);print "</pre><br>";
 		}
 		return false;
 	}
@@ -246,7 +246,7 @@ class onto_handler {
 	
 	public function get_nb_elements($class_uri,$more=""){
 		
-		if(!isset($this->nb_elements[$class_uri.$more]) || !$this->nb_elements[$class_uri.$more]){
+		if(!isset($this->nb_elements[$class_uri.$more])){
 			$query="";
 			$query.="select count(?elem) as ?nb_elem where {
 				?elem rdf:type <".$class_uri.">";
@@ -260,8 +260,13 @@ class onto_handler {
 			}
 			$query.="}";
 			$this->data_store->query($query);
-			$results = $this->data_store->get_result();
-			$this->nb_elements[$class_uri.$more] = $results[0]->nb_elem;
+			$this->nb_elements[$class_uri.$more] = 0;
+			if($this->data_store->num_rows()){
+    			$results = $this->data_store->get_result();
+    			if($results){
+                    $this->nb_elements[$class_uri.$more] = $results[0]->nb_elem;
+    			}
+			}
 		}
 		return $this->nb_elements[$class_uri.$more];
 	}
@@ -289,26 +294,54 @@ class onto_handler {
 			$query = "delete {
 				<".$item->get_uri()."> ?prop ?obj .";
 			if (count($kept_properties)) {
-			    $filter = "";
-			    foreach ($kept_properties as $kept_property) {
-			        if ($filter) {
-			            $filter .= " && ";
-			        }
-			        $filter .= " ?prop != ".$kept_property." ";
-			    }
-			    $query .= "} WHERE {
-			        <".$item->get_uri()."> ?prop ?obj .
-			        FILTER( ".$filter." )";
+    			$filter = "";
+    		    foreach ($kept_properties as $kept_property) {
+    		        if ($filter) {
+    		            $filter .= " && ";
+    		        }
+    		        $filter .= " ?prop != ".$kept_property." ";
+    		    }
+    		    
+    		    $query .= "} WHERE {
+    		        <".$item->get_uri()."> ?prop ?obj .
+    		        FILTER( ".$filter." )";
 			}
-			$query .= "}";
 			
+			$query .= "}";			
 			$this->data_store->query($query);
 			
 			if ($errs = $this->data_store->get_errors()) {
 				print "<br>Erreurs: <br>";
 				print "<pre>";print_r($errs);print "</pre><br>";
 			}
-				
+						
+			$query = "delete {
+				?suj ?prop <".$item->get_uri()."> .";
+			
+			$inverse_properties = $this->get_inverse_of_properties($item);
+		    $filter = "";		    
+		    foreach ($inverse_properties as $property => $inverse_property) {
+		        if (!in_array($property, $kept_properties)) {
+    		        if ($filter) {
+    		            $filter .= " || ";
+    		        }
+    		        $filter .= " ?prop = <".$inverse_property."> ";
+		        }
+		    }
+		    if ($filter) {
+    		    $query .= "} WHERE {
+    		         ?suj ?prop <".$item->get_uri()."> .
+    		        FILTER( ".$filter." )";
+    		    
+    		    $query .= "}";
+    		    $this->data_store->query($query);
+    		    
+    		    if ($errs = $this->data_store->get_errors()) {
+    		        print "<br>Erreurs: <br>";
+    		        print "<pre>";print_r($errs);print "</pre><br>";
+    		    }
+		    }
+		    
 			// On peut y aller
 			$query = "insert into <pmb> {
 				";
@@ -322,8 +355,8 @@ class onto_handler {
 				} else {
 					$object = $assertion->get_object();
 					// On traite le cas où on récupère l'id
-					if ($object*1) {
-						$object = $object*1;
+					if (is_numeric($object)) {
+						$object = intval($object);
 						$object = onto_common_uri::get_uri($object);
 					}
 					$object = "<".addslashes($object).">";
@@ -337,7 +370,7 @@ class onto_handler {
 			$this->data_store->query($query);
 			if ($errs = $this->data_store->get_errors()) {
 				print "<br>Erreurs: <br>";
-				print "<pre>";print_r($errs);print "</pre><br>";
+				print "<pre>";print_r($query);print "<br/>";print_r($errs);print "</pre><br>";
 			}else{
 				indexation_stack::push($item->get_id(), TYPE_CONCEPT);
 			}
@@ -408,7 +441,7 @@ class onto_handler {
 					
 					if (count($is_object_of)) {
 						foreach ($is_object_of as $object) {
-							$onto_index->maj(0,$assertion->subject);
+						    $onto_index->maj(0,$object->get_subject());
 						}
 					}
 					
@@ -454,8 +487,14 @@ class onto_handler {
 				if(count($property->default_value)){
 					global ${$property->default_value['value']};
 					if(isset(${$property->default_value['value']})){
-						$assertions[] = new onto_assertion($item->get_uri(),$uri_property,onto_common_uri::get_uri(${$property->default_value['value']}),$property->range[0], array('type' => "uri",'display_label' => $this->get_data_label(onto_common_uri::get_uri(${$property->default_value['value']}))));
-					}
+					    if(is_array(${$property->default_value['value']})){
+					        for($i=0 ; $i<count(${$property->default_value['value']}) ; $i++){
+					           $assertions[] = new onto_assertion($item->get_uri(),$uri_property,onto_common_uri::get_uri(${$property->default_value['value']}[$i]),$property->range[0], array('type' => "uri",'display_label' => $this->get_data_label(onto_common_uri::get_uri(${$property->default_value['value']}[$i]))));
+					        }
+					    }else{
+                            $assertions[] = new onto_assertion($item->get_uri(),$uri_property,onto_common_uri::get_uri(${$property->default_value['value']}),$property->range[0], array('type' => "uri",'display_label' => $this->get_data_label(onto_common_uri::get_uri(${$property->default_value['value']}))));
+					    }
+                    }
 				}
 			}
 			if(count($assertions)){
@@ -799,6 +838,45 @@ class onto_handler {
 		}else{
 			return 'onto_index';
 		}
-	}	
+	}
+	
+	/**
+	 * 
+	 * @param onto_common_item $item
+	 */
+	protected function get_inverse_of_properties($item) {
+	    $inverse_of_properties = [];
+	    if (!empty($item)) {
+	        $inverse_of = $this->ontology->get_inverse_of_properties();
+            $onto_class = $item->get_onto_class();
+            foreach($onto_class->get_properties() as $property) {
+                if (isset($inverse_of[$property])) {
+                    $inverse_of_properties[$property] = $inverse_of[$property];
+                }
+            }
+	    }
+	    return $inverse_of_properties;
+	}
+	
+	/**
+	 * recupere les uri des proprietes qui composent le display_label
+	 * @param uri $class_uri
+	 * @return NULL[]
+	 */
+	public function get_display_labels($class_uri){
+	    $query = "select ?displayLabel where {
+			<".$class_uri."> pmb:displayLabel ?displayLabel
+		}";
+	    $this->onto_store->query($query);
+	    $displayLabels = [$this->default_display_label];
+	    if($this->onto_store->num_rows()){
+	        $displayLabels = [];
+	        $results = $this->onto_store->get_result();
+	        foreach ($results as $result) {
+	            $displayLabels[] = $result->displayLabel;
+	        }
+	    }
+	    return $displayLabels;
+	}
 	
 } // end of onto_handler

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_segment.class.php,v 1.11 2018-09-21 11:33:09 tsamson Exp $
+// $Id: search_segment.class.php,v 1.12.2.1 2019-11-08 11:07:11 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -88,8 +88,8 @@ class search_segment {
 				$this->logo = $row["search_segment_logo"];
 				$this->set = new search_segment_set($this->id);
 				$this->search_perso = new search_segment_search_perso($this->id);
-				//search_segment_facets::set_num_segment($this->id);
-				$this->facets = new search_segment_facets(); 
+// 				search_segment_facets::set_num_segment($this->id);
+				$this->facets = new search_segment_facets('', $this->id); 
 			}
 		}
 	}
@@ -369,7 +369,7 @@ class search_segment {
 		
 		search_segment_search_view::set_object_id($this->id);
 		search_segment_search_view::set_search_type($search_type);
-		search_segment_search_view::set_user_query(stripslashes($user_query));
+		search_segment_search_view::set_user_query($user_query);
 		search_segment_search_view::set_url_base($base_path.'/index.php?lvl=search_segment&id='.$this->id.'&');
 		$display .= search_segment_search_view::get_display_search();
 		return $display;

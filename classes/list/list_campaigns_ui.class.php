@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_campaigns_ui.class.php,v 1.15 2018-11-13 09:32:58 dgoron Exp $
+// $Id: list_campaigns_ui.class.php,v 1.17.6.1 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -14,10 +14,6 @@ require_once($include_path.'/templates/list/list_campaigns_ui.tpl.php');
 
 class list_campaigns_ui extends list_ui {
 	
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
-	
 	protected function _get_query_base() {
 		$query = 'select id_campaign from campaigns';
 		return $query;
@@ -25,6 +21,25 @@ class list_campaigns_ui extends list_ui {
 	
 	protected function add_object($row) {
 		$this->objects[] = new campaign($row->id_campaign);
+	}
+	
+	/**
+	 * Initialisation des filtres disponibles
+	 */
+	protected function init_available_filters() {
+		global $pmb_lecteurs_localises;
+	
+		$this->available_filters =
+		array('main_fields' =>
+				array(
+						'types' => 'campaigns_types',
+						'labels' => 'campaigns_labels',
+						'descriptors' => 'campaigns_descriptors',
+						'tags' => 'campaigns_tags',
+						'date' => 'campaigns_dates'
+				)
+		);
+		$this->available_filters['custom_fields'] = array();
 	}
 	
 	/**
@@ -44,6 +59,16 @@ class list_campaigns_ui extends list_ui {
 				'ids' => ''
 		);
 		parent::init_filters($filters);
+	}
+	
+	protected function init_default_selected_filters() {
+		$this->add_selected_filter('types');
+		$this->add_selected_filter('labels');
+		$this->add_empty_selected_filter();
+		$this->add_selected_filter('descriptors');
+		$this->add_selected_filter('tags');
+		$this->add_empty_selected_filter();
+		$this->add_selected_filter('date');
 	}
 	
 	/**
@@ -66,10 +91,7 @@ class list_campaigns_ui extends list_ui {
 	 * Initialisation du tri par défaut appliqué
 	 */
 	protected function init_default_applied_sort() {
-		$this->applied_sort = array(
-				'by' => 'date',
-				'asc_desc' => 'desc'
-		);
+	    $this->add_applied_sort('date', 'desc');
 	}
 	
 	/**
@@ -77,9 +99,9 @@ class list_campaigns_ui extends list_ui {
 	 */
 	protected function _get_query_order() {
 		
-		if($this->applied_sort['by']) {
+	    if($this->applied_sort[0]['by']) {
 			$order = '';
-			$sort_by = $this->applied_sort['by'];
+			$sort_by = $this->applied_sort[0]['by'];
 			switch($sort_by) {
 				case 'id':
 					$order .= 'id_campaign';
@@ -95,28 +117,11 @@ class list_campaigns_ui extends list_ui {
 			}
 			if($order) {
 				$this->applied_sort_type = 'SQL';
-				return " order by ".$order." ".$this->applied_sort['asc_desc']; 
+				return " order by ".$order." ".$this->applied_sort[0]['asc_desc']; 
 			} else {
 				return "";
 			}
 		}	
-	}
-	
-	/**
-	 * Affichage des filtres du formulaire de recherche
-	 */
-	public function get_search_filters_form() {
-		global $list_campaigns_ui_search_filters_form_tpl;
-		
-		$search_filters_form = $list_campaigns_ui_search_filters_form_tpl;
-		$search_filters_form = str_replace('!!types_selector!!', $this->get_types_selector(), $search_filters_form);
-		$search_filters_form = str_replace('!!labels_selector!!', $this->get_labels_selector(), $search_filters_form);
-		$search_filters_form = str_replace('!!descriptors_selector!!', $this->get_descriptors_selector(), $search_filters_form);
-		$search_filters_form = str_replace('!!tags_selector!!', $this->get_tags_selector(), $search_filters_form);
-		$search_filters_form = str_replace('!!date_start!!', $this->filters['date_start'], $search_filters_form);
-		$search_filters_form = str_replace('!!date_end!!', $this->filters['date_end'], $search_filters_form);
-		$search_filters_form = str_replace('!!objects_type!!', $this->objects_type, $search_filters_form);
-		return $search_filters_form;
 	}
 	
 	/**
@@ -209,7 +214,7 @@ class list_campaigns_ui extends list_ui {
 		$this->add_column('view_clicks_rate');
 	}
 	
-	protected function get_types_selector() {
+	protected function get_search_filter_types() {
 		global $msg, $charset;
 	
 		$selector = "<select name='".$this->objects_type."_types[]' multiple='3'>";
@@ -221,7 +226,7 @@ class list_campaigns_ui extends list_ui {
 		return $selector;
 	}
 	
-	protected function get_labels_selector() {
+	protected function get_search_filter_labels() {
 		global $msg, $charset;
 	
 		$selector = "<select name='".$this->objects_type."_labels[]' multiple='3'>";
@@ -236,7 +241,7 @@ class list_campaigns_ui extends list_ui {
 		return $selector;
 	}
 	
-	protected function get_descriptors_selector() {
+	protected function get_search_filter_descriptors() {
 		global $msg, $charset;
 	
 		$selector = '';
@@ -256,7 +261,7 @@ class list_campaigns_ui extends list_ui {
 		return $selector;
 	}
 	
-	protected function get_tags_selector() {
+	protected function get_search_filter_tags() {
 		global $msg, $charset;
 	
 		$selector = '';
@@ -274,6 +279,10 @@ class list_campaigns_ui extends list_ui {
 			$selector .= templates::get_input_hidden('max_tags', 1);
 		}
 		return $selector;
+	}
+	
+	protected function get_search_filter_date() {
+		return $this->get_search_filter_interval_date('date');
 	}
 	
 	/**
@@ -390,29 +399,27 @@ class list_campaigns_ui extends list_ui {
 		return $display;
 	}
 	
-	protected function get_grouped_objects() {
-		$grouped_objects = array();
-		foreach ($this->objects as $object) {
-			switch($this->applied_group[0]) {
-				case 'date':
-					$grouped_objects[substr($object->get_formatted_date(),0,10)][] = $object;
-					break;
-				case 'view_opening_rate':
-					$grouped_objects[$object->get_campaign_view()->get_campaign_stats()->get_opening_rate(true)][] = $object;
-					break;
-				case 'view_clicks_rate':
-					$grouped_objects[$object->get_campaign_view()->get_campaign_stats()->get_clicks_rate(true)][] = $object;
-					break;
-				case 'descriptors':
-					break;
-				case 'tags':
-					break;
-			}
+	protected function get_grouped_label($object, $property) {
+		$grouped_label = '';
+		switch($property) {
+			case 'date':
+				$grouped_label = substr($object->get_formatted_date(),0,10);
+				break;
+			case 'view_opening_rate':
+				$grouped_label = $object->get_campaign_view()->get_campaign_stats()->get_opening_rate(true);
+				break;
+			case 'view_clicks_rate':
+				$grouped_label = $object->get_campaign_view()->get_campaign_stats()->get_clicks_rate(true);
+				break;
+			case 'descriptors':
+				break;
+			case 'tags':
+				break;
+			default:
+				$grouped_label = parent::get_grouped_label($object, $property);
+				break;
 		}
-		if(!count($grouped_objects)) {
-			$grouped_objects = parent::get_grouped_objects();
-		}
-		return $grouped_objects;
+		return $grouped_label;
 	}
 	
 	public static function view_sort($selected_objects) {

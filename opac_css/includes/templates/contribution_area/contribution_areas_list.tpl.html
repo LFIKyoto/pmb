@@ -1,4 +1,4 @@
-<!-- $Id: contribution_areas_list.tpl.html,v 1.9 2017-09-06 15:33:47 tsamson Exp $ -->
+<!-- $Id: contribution_areas_list.tpl.html,v 1.10 2019-06-06 07:16:49 btafforeau Exp $ -->
 
 <style type="text/css">
 	.contribution_form_table {
@@ -92,6 +92,9 @@
 									</a>
 								{% endif %}
 								{% if form.can_edit %}
+									<a href='./index.php?lvl=contribution_area&sub={{ form.sub }}&area_id={{ form.area.id }}&form_id={{ form.form_id }}&form_uri={{ form.form_uri }}&id={{ form.uri_id }}&scenario={{ form.parent_scenario_uri }}{% if form.contributor %}&contributor={{ form.contributor.id }}{% endif %}'>
+										<input type="button" value="{{ msg.empr_modify }}" class="bouton"/>
+									</a>
 									<a href='./index.php?lvl=contribution_area&sub={{ form.sub }}&id={{ form.uri_id }}&action=delete' onclick='if(!confirm("{{ msg.onto_contribution_delete_confirm }}")){return false;}'>
 										<input type="button" value="{{ msg.onto_contribution_delete_button }}" class="bouton"/>
 									</a>

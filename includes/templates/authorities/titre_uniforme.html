@@ -1,6 +1,6 @@
 {% extends 'gabarit.html' %}
 
-<!-- $Id: titre_uniforme.html,v 1.21 2017-09-28 09:23:37 dgoron Exp $ -->
+<!-- $Id: titre_uniforme.html,v 1.22 2019-02-15 08:30:30 ngantier Exp $ -->
 
 {% block header %}
 	<h1><span>{{ msg.titre_uniforme_see_title }}</span></h1>
@@ -22,8 +22,7 @@
 				</div>
 				<div class="aut_display_cell">
 		{% else %}/{% endif %}	
-		<a href='autorites.php?categ=see&sub=author&id={{author.id}}'>{{ author.objet.display }}</a>{% for attribute in author.attributes %}{% if attribute.fonction_label %}, {{ attribute.fonction_label }}{% endif %}{% endfor %}
-		{% if author.qualif_label %}({{ author.qualif_label }}){% endif %}
+		<a href='autorites.php?categ=see&sub=author&id={{author.id}}'>{{ author.objet.display }}</a>{% for attribute in author.attributes %}{% if attribute.fonction_label %}, {{ attribute.fonction_label }}{% endif %}{% if attribute.qualif_label %} ({{ attribute.qualif_label }}){% endif %}{% endfor %}
 		{% if loop.last %}
 				</div>
 			</div>
@@ -37,8 +36,7 @@
 				</div>
 				<div class="aut_display_cell">
 		{% else %}/{% endif %}
-		<a href='autorites.php?categ=see&sub=author&id={{performer.id}}'>{{ performer.objet.display }}</a>{% for attribute in performer.attributes %}{% if attribute.fonction_label %}, {{ attribute.fonction_label }}{% endif %}{% endfor %}
-		{% if performer.qualif_label %}({{ performer.qualif_label }}){% endif %}
+		<a href='autorites.php?categ=see&sub=author&id={{performer.id}}'>{{ performer.objet.display }}</a>{% for attribute in performer.attributes %}{% if attribute.fonction_label %}, {{ attribute.fonction_label }}{% endif %}{% if attribute.qualif_label %} ({{ attribute.qualif_label }}){% endif %}{% endfor %}
 		{% if loop.last %}
 				</div>
 			</div>

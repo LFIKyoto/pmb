@@ -2,14 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: more_results.tpl.php,v 1.5 2018-04-23 10:23:32 dgoron Exp $
+// $Id: more_results.tpl.php,v 1.6 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
 global $search_result_affiliate_lvl2_head;
 global $search_result_extended_affiliate_lvl2_head;
 global $search_result_affiliate_lvl2_footer;
-global $tab;
+global $tab, $msg;
 
 $search_result_affiliate_lvl2_head = "
 <div id=\"resultatrech\"><h3>".$msg['resultat_recherche']."</h3>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: groupexpl.class.php,v 1.6 2017-02-01 09:22:10 dgoron Exp $
+// $Id: groupexpl.class.php,v 1.7 2019-06-18 12:57:15 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -427,7 +427,7 @@ class groupexpls {
 	public function fetch_data() {
 		global $dbh;
 		global $f_loc,$montrerquoi;
-		$f_loc+=0;
+		$f_loc = intval($f_loc);
 		$this->info=array();
 		$this->error_message="";	
 		$this->info_message="";	

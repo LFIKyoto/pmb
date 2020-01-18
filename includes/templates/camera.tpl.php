@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: camera.tpl.php,v 1.3 2018-12-05 07:58:30 dgoron Exp $
+// $Id: camera.tpl.php,v 1.4 2019-05-27 12:49:13 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $camera_tpl, $msg, $photo_tpl;
 
 $camera_tpl='
 	<div class="camera">

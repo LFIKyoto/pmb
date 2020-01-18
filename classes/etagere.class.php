@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: etagere.class.php,v 1.30 2018-06-14 10:19:16 dgoron Exp $
+// $Id: etagere.class.php,v 1.32.2.1 2019-10-23 12:30:58 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -94,10 +94,13 @@ class etagere {
 			$form = str_replace('!!formulaire_titre!!', $msg['etagere_edit_etagere'], $form);
 			$form = str_replace('!!formulaire_action!!', $base_path."/catalog.php?categ=etagere&sub=gestion&action=save_etagere&idetagere=".$this->idetagere, $form);
 			$form = str_replace('!!autorisations_users!!', users::get_form_autorisations($this->autorisations,0), $form);
+			$button_duplicate = "<input type='button' class='bouton' value='".htmlentities($msg['duplicate'], ENT_QUOTES, $charset)."' onClick=\"document.location='".$base_path."/catalog.php?categ=etagere&sub=gestion&action=duplicate_etagere&idetagere=".$this->idetagere."'\" />";
+			$form = str_replace('!!button_duplicate!!', $button_duplicate, $form);
 		} else {
 			$form = str_replace('!!formulaire_titre!!', $msg['etagere_new_etagere'], $form);
 			$form = str_replace('!!formulaire_action!!', $base_path."/catalog.php?categ=etagere&sub=gestion&action=valid_new_etagere", $form);
 			$form = str_replace('!!autorisations_users!!', users::get_form_autorisations($this->autorisations,1), $form);
+			$form = str_replace('!!button_duplicate!!', "", $form);
 		}
 		$form = str_replace('!!formulaire_annuler!!', $base_path."/catalog.php?categ=etagere&sub=gestion&action=", $form);
 		$form = str_replace('!!idetagere!!', $this->idetagere, $form);
@@ -285,10 +288,10 @@ class etagere {
 		global $msg ;
 		
 		$liste = caddie::get_cart_list('NOTI');
-		if(sizeof($liste)) {
+		if (!empty($liste)) {
 			$ret = pmb_bidi("<div class='row'><a href='javascript:expandAll()'><img src='".get_url_icon('expand_all.gif')."' id='expandall' style='border:0px'></a>
 				<a href='javascript:collapseAll()'><img src='".get_url_icon('collapse_all.gif')."' id='collapseall' style='border:0px'></a></div>");
-			while(list($cle, $valeur) = each($liste)) {
+			foreach ($liste as $cle => $valeur) {
 				$rqt_autorisation=explode(" ",$valeur['autorisations']);
 				if (array_search ($PMBuserid, $rqt_autorisation)!==FALSE || $PMBuserid==1) {
 					if(!isset($myCart))$myCart = new caddie(0);

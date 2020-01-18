@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bookreaderEPUB.class.php,v 1.13 2018-02-26 17:01:59 apetithomme Exp $
+// $Id: bookreaderEPUB.class.php,v 1.14 2019-06-21 14:09:28 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -311,7 +311,7 @@ class bookreaderEPUB {
 				if(is_array($items)) {
 					foreach ($items as $file) {
 						if ($file["media-type"] == "text/css") {
-							$file_path = $this->doc->driver->get_cached_filename($this->doc->id)."_unzip/".$opfdir.$file["href"];
+							$file_path = $this->doc->driver->get_cached_url_filename($this->doc->id)."_unzip/".$opfdir.$file["href"];
 							file_put_contents($file_path, preg_replace($search, $replace, file_get_contents($file_path)));
 						}
 					}
@@ -320,7 +320,7 @@ class bookreaderEPUB {
 				//- On espace les % pour les styles d'image
 				//- On antislashe les espace dans les noms de fichiers pour compatibilité en ligne de commande
 				foreach ($this->getHtmlOrdered() as $file) {
-					$file_path = $this->doc->driver->get_cached_filename($this->doc->id)."_unzip/".$file;
+					$file_path = $this->doc->driver->get_cached_url_filename($this->doc->id)."_unzip/".$file;
 					file_put_contents($file_path, str_replace("%", " %", file_get_contents($file_path)));
 					$tab_html_docs[] = str_replace(" ", "\ ", $file_path);
 				}
@@ -331,8 +331,7 @@ class bookreaderEPUB {
 				} else {
 					$titre = $this->doc->id;
 				}
-				exec("wkhtmltopdf --title ".str_replace(" ", "\ ", $titre)." --output-format pdf --encoding windows-1250 --dump-outline ".$this->doc->driver->get_cached_filename($this->doc->id)."_toc.xml --footer-center [page] cover ".$list_html_docs." ".$this->doc->driver->get_cached_filename($this->doc->id).".pdf");
-				
+				exec("wkhtmltopdf --title ".str_replace(" ", "\ ", $titre)." --encoding windows-1250 --dump-outline ".$this->doc->driver->get_cached_filename($this->doc->id)."_toc.xml --footer-center [page] cover ".$list_html_docs." ".$this->doc->driver->get_cached_filename($this->doc->id).".pdf");
 				$this->rrmdir($this->doc->driver->get_cached_filename($this->doc->id)."_unzip");
 			} else {
 				print "Erreur à l'ouverture de l'ebook!";

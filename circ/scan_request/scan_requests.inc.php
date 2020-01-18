@@ -2,16 +2,16 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_requests.inc.php,v 1.1 2016-01-15 15:37:39 ngantier Exp $
+// $Id: scan_requests.inc.php,v 1.2 2019-06-20 10:12:38 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-require_once($class_path.'/scan_request/scan_requests.class.php');
+require_once($class_path.'/list/scan_requests/list_scan_requests_ui.class.php');
 
 switch($action) {
 
 	default:
-		$scan_requests = new scan_requests();
-		print $scan_requests->get_display_list();
+		$list_scan_requests_ui = new list_scan_requests_ui();
+		print $list_scan_requests_ui->get_display_list();
 		break;
 }

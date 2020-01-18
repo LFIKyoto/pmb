@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_datatype.class.php,v 1.21 2018-09-11 11:33:09 tsamson Exp $
+// $Id: onto_common_datatype.class.php,v 1.23 2019-06-11 08:53:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -153,7 +153,7 @@ abstract class onto_common_datatype {
 			
 			foreach (${$var_name} as $order => $data) {
 				$data=stripslashes_array($data);
-				if (!empty($data["value"])) {
+				if (($data["value"] !== null) && ($data["value"] !== '')) {
 					$data_properties = array();
 					if (!empty($data["lang"])) {
 						$data_properties["lang"] = $data["lang"];
@@ -166,7 +166,7 @@ abstract class onto_common_datatype {
 					if (!empty($data["display_label"])) {
 						$data_properties["display_label"] = $data["display_label"];
 					}
-					$class_name = get_called_class();
+					$class_name = static::class;
 					$datatypes[$property->uri][] = new $class_name($data["value"], $data["type"], $data_properties);
 				}
 			}

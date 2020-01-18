@@ -47,11 +47,11 @@ function search_other_function_clause(&$clause) {
 	global $typ_notice;
 	
 	reset($typ_notice);
-	$t_n=array();
-	while (list($key,$val)=each($typ_notice)) {
-		$t_n[]=$key;
+	$t_n_tab = array();
+	foreach ($typ_notice as $key => $val) {
+	    $t_n_tab[]=$key;
 	}
-	$t_n=implode("','",$t_n);
+	$t_n=implode("','",$t_n_tab);
 	
 	if ($section_public || $t_n) {
 		if ($section_public) {
@@ -131,7 +131,7 @@ function search_other_function_human_query($n) {
 		$r.="pour les types de notices ";
 		reset($typ_notice);
 		$t_l=array();
-		while (list($key,$val)=each($typ_notice)) {
+		foreach ($typ_notice as $key => $val) {
 			$t_l[]=$notices_t[$key];
 		}
 		$r.=implode(", ",$t_l);
@@ -141,8 +141,8 @@ function search_other_function_human_query($n) {
 }
 
 function search_other_function_post_values() {
-	global $section_public;
-	return "<input type=\"hidden\" name=\"section_public\" value=\"$section_public\">\n";
+	global $section_public, $charset;
+	return "<input type=\"hidden\" name=\"section_public\" value=\"".htmlentities($section_public, ENT_QUOTES, $charset)."\">\n";
 }
 
 ?>

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: nomenclature_voice.class.php,v 1.2 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: nomenclature_voice.class.php,v 1.3 2019-07-03 15:35:47 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -108,5 +108,16 @@ class nomenclature_voice{
 		return $this->id;
 	}
 
+	public static function get_voice_name_from_id($id) {
+	    $voice_name = '';
+	    $id = intval($id);
+	    $query = "select voice_name from nomenclature_voices where id_voice=".$id;
+	    $result = pmb_mysql_query($query);
+	    if (pmb_mysql_num_rows($result)) {
+	        $row = pmb_mysql_fetch_object($result);
+	        $voice_name = $row->voice_name;
+	    }
+	    return $voice_name;
+	}
 	
 } // end of nomenclature_voice

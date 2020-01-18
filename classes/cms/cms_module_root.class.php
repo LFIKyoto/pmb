@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_root.class.php,v 1.57 2018-02-08 16:32:06 dgoron Exp $
+// $Id: cms_module_root.class.php,v 1.58.4.2 2019-11-25 11:30:26 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -347,7 +347,7 @@ class cms_module_root {
 		return array();	
 	}
 
-	public function get_ajax_link($args){
+	public function get_ajax_link($args = array()){
 		global $base_path;
 		$request = "";
 		foreach($args as $key => $val){
@@ -614,7 +614,7 @@ class cms_module_root {
 		global ${$page};
 		global ${$var};
 		$this->parameters['links'][$type] = array(
-			'page' => ${$page}+0,
+		    'page' => (int) ${$page},
 			'var'  => ${$var}
 		);
 	}
@@ -860,5 +860,11 @@ class cms_module_root {
 	
 	public function get_id(){
 		return $this->id;
+	}
+	
+	public function clean_duplication(){
+	    $this->id=0;
+	    $this->hash = '';
+	    $this->get_hash();
 	}
 }

@@ -2,11 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: procs.inc.php,v 1.62 2018-12-20 11:00:19 mbertin Exp $
+// $Id: procs.inc.php,v 1.64 2019-06-05 06:41:19 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
-if(!isset($sort)) $sort = '';
+if(!isset($sort)) $sort = 0;
 if(!isset($force_exec)) $force_exec = '';
 if(!isset($form_type)) $form_type = '';
 
@@ -15,7 +15,7 @@ require_once("$class_path/notice_tpl_gen.class.php");
 
 switch($dest) {
 	case "TABLEAU":
-		$worksheet = new spreadsheet();
+	    $worksheet = new spreadsheetPMB();
 		break;
 	case "TABLEAUHTML":
 		echo "<h1>".$msg[1130]."&nbsp;:&nbsp;".$msg[1131]."</h1>";  
@@ -111,7 +111,7 @@ if (!$id_proc) {
 			default:
 				echo "<h1>".htmlentities($row[1], ENT_QUOTES, $charset)."</h1><h2>".htmlentities($row[3], ENT_QUOTES, $charset)."</h2>";
 				//tri défini ?
-				if($sort!=""){
+				if($sort>0){
 // 					preg_match('`^(.+)( order by .+)$`i',$sql,$arraySql);
 					preg_match("/(.+)(order by.+)$/isU", $sql,$arraySql);
 					if(count($arraySql)) {
@@ -232,7 +232,9 @@ if (!$id_proc) {
 					}
 					</script>";
 					echo "<table>";
-					if($sort == "") $sort=300;//Pour ne pas avoir de colonne marquée comme triée
+					ini_set("display_errors",1);
+					error_reporting(E_ALL);
+					//
 					for($i=0; $i < $nbr_champs; $i++) {
 						$fieldname = pmb_mysql_field_name($res, $i);
 						print "<th class='align_left' onMouseOver ='survol(this);' onClick='sort_by_col(".($sort==($i+1)?(-($i+1)):($i+1)).");'>".$fieldname;

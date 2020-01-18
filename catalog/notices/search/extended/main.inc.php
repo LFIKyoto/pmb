@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.18 2017-07-12 10:25:38 ngantier Exp $
+// $Id: main.inc.php,v 1.19 2019-06-07 08:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $sub, $page, $msg, $pmb_map_activate, $pmb_extended_search_dnd_interface;
 
 require_once($class_path."/search.class.php");
 require_once($class_path."/search_perso.class.php");

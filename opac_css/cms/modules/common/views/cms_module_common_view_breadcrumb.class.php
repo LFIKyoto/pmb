@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_view_breadcrumb.class.php,v 1.7 2017-07-20 12:58:49 ngantier Exp $
+// $Id: cms_module_common_view_breadcrumb.class.php,v 1.7.8.1 2019-09-17 09:59:20 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -55,7 +55,7 @@ class cms_module_common_view_breadcrumb extends cms_module_common_view_django{
 			foreach($datas['sections'] as $section){
 				$cms_section = cms_provider::get_instance("section",$section);
 				$infos= $cms_section->format_datas(false,false);
-				$infos['link'] = $this->get_constructed_link("section",$section);
+				$infos->link = $this->get_constructed_link("section",$section);
 				$render_datas['sections'][]=$infos;
 			}
 		}

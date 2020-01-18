@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: categories.inc.php,v 1.36 2017-01-31 15:41:41 dgoron Exp $
+// $Id: categories.inc.php,v 1.37 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -157,13 +157,13 @@ $toprint = $tpl_div_categories;
 $toprint_rootcategories = "";
 $to_jump=0;
 
-while(list($cle, $valeur) = each($categ_array)) {
+foreach ($categ_array as $cle => $valeur) {
 	if ($to_jump==0) $toprint_rootcategories .="<div class='row_categ'>";
 	$toprint_rootcategories .= $tpl_div_category;
 	$toprint_rootcategories = str_replace("!!category_name!!", $valeur['categ'], $toprint_rootcategories);
 	$toprint_subcategories = "";
 	$cpt=0;
-	while(list($key, $sub) = each($valeur['child'])) {
+	foreach ($valeur['child'] as $key => $sub) {
 		$toprint_subcategories .= $tpl_subcategory;
 		$toprint_subcategories = str_replace("!!sub_category!!", $sub, $toprint_subcategories);
 		$cpt++;

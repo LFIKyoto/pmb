@@ -1,9 +1,15 @@
 // +-------------------------------------------------+
-// © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: track_clicks.js,v 1.4 2015-11-24 14:03:26 arenou Exp $
+// $Id: track_clicks.js,v 1.5 2019-02-21 13:27:30 dgoron Exp $
 
 function _trackClick(event){
+	//event.button == 0 => clic gauche
+	//event.button == 1 => clic molette
+	//event.button == 2 => clic droite
+	if(event.button == 2) { //Impossible de savoir si l'action suivante est : Ouvrir dans un nouvel onglet
+		return;
+	}
 	var el = event.srcElement || event.target;
 	while (el && (typeof el.tagName == 'undefined' || el.tagName.toLowerCase() != 'a' || !el.href)) {
 		el = el.parentNode;
@@ -19,7 +25,7 @@ function _trackClick(event){
 			log_click(el.getAttribute('href'),type);
 			open_link = true;
 		}
-		//L'appel est synchrone et le comportement doit rester à l'identique
+		//L'appel est synchrone et le comportement doit rester ï¿½ l'identique
 //		if (open_link) {
 //			setTimeout(function() {
 //				window.open(el.href, '_blank');
@@ -40,11 +46,11 @@ function log_click(url,type){
 
 if (window.addEventListener) {
 	window.addEventListener('load', function() {
-		document.body.addEventListener('click', _trackClick, false);
+		document.body.addEventListener('mousedown', _trackClick, false);
 	}, false);
 }
 else {
 	window.attachEvent && window.attachEvent('onload', function() {
-		document.body.attachEvent('onclick', _trackClick);
+		document.body.attachEvent('onmousedown', _trackClick);
 	});
 }

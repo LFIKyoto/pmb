@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions_multi.inc.php,v 1.3 2017-04-19 12:37:02 dgoron Exp $
+// $Id: suggestions_multi.inc.php,v 1.4 2019-05-28 15:00:01 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $act, $class_path, $base_path, $acquisition_sugg_display;
 
 if(!isset($act)) $act = '';
 

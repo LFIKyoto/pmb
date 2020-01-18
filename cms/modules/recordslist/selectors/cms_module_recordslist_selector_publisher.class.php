@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_recordslist_selector_publisher.class.php,v 1.2 2016-09-20 10:25:41 apetithomme Exp $
+// $Id: cms_module_recordslist_selector_publisher.class.php,v 1.3 2019-01-04 14:32:13 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -24,18 +24,20 @@ class cms_module_recordslist_selector_publisher extends cms_module_common_select
 	public function get_value(){
 		//le sous-sélecteur va nous donner la notice...
 		if(!$this->value){
-			$sub_selector= new $this->parameters['sub_selector']($this->get_sub_selector_id($this->parameters['sub_selector']));
 			$this->value= array(
-				'record' => 0,
-				'publisher' => 0
+					'record' => 0,
+					'publisher' => 0
 			);
-			if($sub_selector->get_value()*1){
-				$this->value['record'] = $sub_selector->get_value()*1;
-				$query = "select ed1_id from notices where notice_id = '".($sub_selector->get_value()*1)."'";
-				$result = pmb_mysql_query($query);
-				if(pmb_mysql_num_rows($result)){
-					$row = pmb_mysql_fetch_object($result);
-					$this->value['publisher'] = $row->ed1_id;
+			if($this->parameters['sub_selector']) {
+				$sub_selector= new $this->parameters['sub_selector']($this->get_sub_selector_id($this->parameters['sub_selector']));
+				if($sub_selector->get_value()*1){
+					$this->value['record'] = $sub_selector->get_value()*1;
+					$query = "select ed1_id from notices where notice_id = '".($sub_selector->get_value()*1)."'";
+					$result = pmb_mysql_query($query);
+					if(pmb_mysql_num_rows($result)){
+						$row = pmb_mysql_fetch_object($result);
+						$this->value['publisher'] = $row->ed1_id;
+					}
 				}
 			}
 		}

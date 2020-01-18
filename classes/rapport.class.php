@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rapport.class.php,v 1.14 2017-11-22 11:07:34 dgoron Exp $
+// $Id: rapport.class.php,v 1.15 2019-08-26 15:09:21 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -44,8 +44,8 @@ class rapport {
 			
 		}
 		
+		$liste_rap = "";
 		if($this->rapport_elements){
-			$liste_rap = "";
 			for($i=0;$i<count($this->rapport_elements);$i++){			
 				$id=$this->rapport_elements[$i]['id_item'];
 				$style="";

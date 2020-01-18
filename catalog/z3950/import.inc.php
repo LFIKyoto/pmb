@@ -4,7 +4,7 @@
 // | creator : Eric ROBERT                                                    |
 // | modified : ...                                                           |
 // +-------------------------------------------------+
-// $Id: import.inc.php,v 1.43 2018-09-25 07:45:41 vtouchard Exp $
+// $Id: import.inc.php,v 1.44 2019-05-31 13:12:38 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -56,7 +56,7 @@ while (($ligne=pmb_mysql_fetch_array($resultat))) {
 	print pmb_bidi(zshow_isbd($resultat_isbd, $lien));
 
 	if ($action != "integrerexpl") { 
-		if ($source == 'form') {
+	    if (!empty($source) && $source == 'form') {
 			$notice = new z3950_notice ('form');
 		} else {
 			// avant affichage du formulaire : détecter si notice déjà présente pour proposer MAJ

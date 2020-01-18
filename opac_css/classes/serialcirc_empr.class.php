@@ -2,12 +2,13 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serialcirc_empr.class.php,v 1.24 2018-11-20 12:36:40 dgoron Exp $
+// $Id: serialcirc_empr.class.php,v 1.28.2.2 2019-11-27 15:28:08 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 require_once($class_path."/serialcirc_diff.class.php");
 require_once($class_path."/serialcirc.class.php");
+require_once($class_path.'/translation.class.php');
 require_once($include_path."/templates/serialcirc.tpl.php");
 require_once($include_path."/mail.inc.php");
 require_once($include_path."/serialcirc.inc.php");
@@ -15,7 +16,7 @@ require_once($include_path."/serialcirc.inc.php");
 class serialcirc_empr{
 	public $empr_id;	// identifiant de l'emprunteur
 	public $circ_list;	// tableau d'instance de serialcirc_empr_circ
-
+	
 	public function __construct(){
 		$this->empr_id = $_SESSION['id_empr_session']*1;
 		$this->get_my_circ_list();
@@ -32,7 +33,7 @@ class serialcirc_empr{
 	//renvoi un tableau avec les ids des circulation de l'emprunteur
 	public static function get_all_serialcirc($empr_id){
 		$serialcirc_list = array();
-		$empr_id+=0;
+		$empr_id = intval($empr_id);
 		$alone = "select distinct id_serialcirc from serialcirc_diff join serialcirc on num_serialcirc_diff_serialcirc = id_serialcirc where num_serialcirc_diff_empr = ".$empr_id;
 		$group = "select distinct id_serialcirc from serialcirc_diff join serialcirc on num_serialcirc_diff_serialcirc = id_serialcirc join serialcirc_group on num_serialcirc_group_diff = id_serialcirc_diff where num_serialcirc_group_empr = ".$empr_id;
 		$already_start = "select distinct num_serialcirc_circ_serialcirc as id_serialcirc from serialcirc_circ where num_serialcirc_circ_empr = ".$empr_id;
@@ -48,7 +49,7 @@ class serialcirc_empr{
 
 	//renvoi un tableau avec les ids des circulation de l'emprunteur et les expl qui vont avec
 	public static function get_serialcirc_list($empr_id){
-		$empr_id+=0;
+	    $empr_id = intval($empr_id);
 		$query = "select id_serialcirc, if(serialcirc_virtual = 0 or datediff(now(),date_add(serialcirc_expl_start_date, interval serialcirc_duration_before_send day)),num_serialcirc_expl_id,0) as num_serialcirc_expl_id from serialcirc left join serialcirc_expl on id_serialcirc=num_serialcirc_expl_serialcirc where id_serialcirc in (".implode(",",serialcirc_empr::get_all_serialcirc($empr_id)).") group by id_serialcirc,if(serialcirc_virtual = 0 or datediff(now(),date_add(serialcirc_expl_start_date, interval serialcirc_duration_before_send day)),num_serialcirc_expl_id,0) order by serialcirc_expl_start_date desc, serialcirc_expl_bulletine_date desc";
 		$expl_list = array();
 		$result = pmb_mysql_query($query);
@@ -228,8 +229,8 @@ class serialcirc_empr{
 	public function process_actions($id_serialcirc,$expl_id,$subscription=0,$ask_transmission=0,$report_late=0,$trans_accepted=0,$trans_doc_accepted=0,$ret_accepted=0){
 		global $charset,$msg;
 
-		$id_serialcirc+=0;
-		$expl_id+=0;
+		$id_serialcirc = intval($id_serialcirc);
+		$expl_id = intval($expl_id);
 
 		$empr_circ = new serialcirc_empr_circ($this->empr_id,$id_serialcirc,$expl_id);
 		if($subscription==1){
@@ -265,7 +266,7 @@ class serialcirc_empr{
 	public function ask_copy($bulletin_id,$analysis_ids,$comment){
 		global $charset,$msg;
 
-		$bulletin_id+=0;
+		$bulletin_id = intval($bulletin_id);
 		$query = "insert into serialcirc_copy set 
 			num_serialcirc_copy_empr = ".$this->empr_id.",
 			num_serialcirc_copy_bulletin = ".$bulletin_id.",
@@ -358,7 +359,7 @@ class serialcirc_empr{
 		if(is_array($ids)){
 			$ok_insert = true;
 			for($i=0 ; $i<count($ids) ; $i++){
-				$ids[$i]+=0;
+			    $ids[$i] = intval($ids[$i]);
 				$query = "insert into serialcirc_ask set 
 					num_serialcirc_ask_perio = 0,
 					num_serialcirc_ask_serialcirc=".$ids[$i].",
@@ -381,7 +382,7 @@ class serialcirc_empr{
 	}
 
 	public function ask_subscription($serial_id){
-		$serial_id+=0;
+	    $serial_id = intval($serial_id);
 		//TODO jeter les ids pourris....
 		$query = "insert into serialcirc_ask set 
 			num_serialcirc_ask_perio = ".$serial_id.",
@@ -526,8 +527,10 @@ class serialcirc_empr_circ{
 	public $unsubscribe;			// demande de désinscription
 	public $serial_id;
 	public $serial_title;
-	public $issue_title = "";
-
+	public $issue_title = "";	
+	public $issue_id;
+	public $num_serialcirc;
+	
 	public function __construct($empr_id,$id_serialcirc,$num_expl){
 		$this->empr_id = $empr_id*1;
 		$this->id_serialcirc = $id_serialcirc*1;
@@ -652,10 +655,15 @@ class serialcirc_empr_circ{
 	
 	public function get_serial_title(){
 		if(!$this->serial_title){
-			$query="select tit1 from notices join abts_abts on num_notice = notice_id where abt_id = ".$this->serialcirc['num_abt'];
+			$query="select tit1, abt_name_opac from notices join abts_abts on num_notice = notice_id where abt_id = ".$this->serialcirc['num_abt'];
 			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)){
 				$this->serial_title = pmb_mysql_result($result,0,0);
+				$abt_name_opac = pmb_mysql_result($result,0,1);
+				$abt_name_opac = translation::get_text($this->serialcirc['num_abt'], 'abts_abts', 'abt_name_opac', $abt_name_opac);
+				if($abt_name_opac) {
+				    $this->serial_title .= " : ".$abt_name_opac;
+				}
 			}
 		}
 		return $this->serial_title;
@@ -676,6 +684,8 @@ class serialcirc_empr_circ{
 		global $charset,$msg;
 		global $opac_url_base;
 		$this->get_rank();
+		$current_empr = array();
+		$current_empr['expected_date'] = '';
 		$this->check_unsubscribe();
 		for($i=0 ; $i<count($this->serialcirc_circ) ; $i++){
 			if($this->serialcirc_circ[$i]['num_empr'] == $this->empr_id){
@@ -707,7 +717,9 @@ class serialcirc_empr_circ{
 	}
 
 	public function get_transmission_date(){
-		$found=false;
+	    $found=false;
+	    
+	    $current = 0;
 		for($i=0 ; $i<count($this->serialcirc_circ) ; $i++){
 			if($found && $this->serialcirc_circ[$i]['subscription'] == 1){
 				return $this->serialcirc_circ[$i]['expected_date'];

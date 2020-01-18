@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_module_common_selector_record_cp_val.class.php,v 1.2 2015-04-03 11:16:22 jpermanne Exp $
+// $Id: cms_module_common_selector_record_cp_val.class.php,v 1.3 2019-06-18 12:43:51 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 //require_once($base_path."/cms/modules/common/selectors/cms_module_selector.class.php");
@@ -74,7 +74,7 @@ class cms_module_common_selector_record_cp_val extends cms_module_common_selecto
 	
 	public function execute_ajax(){
 		global $id_cp;
-		$id_cp+=0;
+		$id_cp = intval($id_cp);
 		if($id_cp){
 			$response['content'].="
 			<div class='colonne3'>

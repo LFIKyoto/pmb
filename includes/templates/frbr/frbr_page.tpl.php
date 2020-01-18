@@ -1,4 +1,12 @@
 <?php
+// +-------------------------------------------------+
+// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// +-------------------------------------------------+
+// $Id: frbr_page.tpl.php,v 1.9 2019-05-27 09:21:02 ngantier Exp $
+
+if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $frbr_page_form_tpl, $pmb_opac_view_activate, $frbr_page_tree_tpl, $frbr_page_place_tpl, $msg, $charset, $current_module;
 
 $frbr_page_form_tpl="
 <script type='text/javascript'>
@@ -84,7 +92,7 @@ $frbr_page_form_tpl .= "<div class='row'>
 ";
 
 $frbr_page_tree_tpl = "
-	<div data-dojo-type='apps/frbr/TreeContainer' data-dojo-props='splitter:true, data:!!parameters!!' style='height: 800px;' title='".$msg['frbr_page_data']."'>
+	<div data-dojo-type='apps/frbr/TreeContainer' data-dojo-props='splitter:true, data:!!parameters!!' style='height: 700px;' title='".$msg['frbr_page_data']."'>
 	</div>		
 ";
 

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.18 2017-07-28 14:00:16 ngantier Exp $
+// $Id: main.inc.php,v 1.19 2019-07-05 12:06:47 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -56,7 +56,11 @@ if (!$id_empr) {
 		} else {
 			$empr = pmb_mysql_fetch_object($result);
 			$name = $empr->empr_prenom;
-			$name ? $name .= ' '.$empr->empr_nom : $name = $empr->empr_nom;
+			if ($name) {
+			    $name .= ' '.$empr->empr_nom;
+			} else {
+			    $name = $empr->empr_nom;
+			}
 			echo window_title($database_window_title.$name.$msg[1003].$msg[352]);
 			$layout_begin = preg_replace('/!!nom_lecteur!!/m', $name, $layout_begin);
 			$layout_begin = preg_replace('/!!cb_lecteur!!/m', $empr->empr_cb, $layout_begin);

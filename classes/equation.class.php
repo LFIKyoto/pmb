@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: equation.class.php,v 1.23 2018-06-20 10:30:22 dgoron Exp $
+// $Id: equation.class.php,v 1.24 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -206,7 +206,7 @@ class equation {
 	    		$r.="<input type='hidden' name='".$field_."[]' value='".htmlentities($field[$j],ENT_QUOTES,$charset)."'/>";
 	    	}
 	    	reset($fieldvar);
-	    	while (list($var_name,$var_value)=each($fieldvar)) {
+	    	foreach ($fieldvar as $var_name => $var_value) {
 	    		for ($j=0; $j<count($var_value); $j++) {
 	    			$r.="<input type='hidden' name='".$fieldvar_."[".$var_name."][]' value='".htmlentities($var_value[$j],ENT_QUOTES,$charset)."'/>";
 	    		}

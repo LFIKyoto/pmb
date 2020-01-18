@@ -2,7 +2,7 @@
 // +-------------------------------------------------
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: term_search.php,v 1.20 2018-02-08 15:18:05 dgoron Exp $
+// $Id: term_search.php,v 1.21 2019-05-09 10:35:37 ngantier Exp $
 //
 // Recherche des termes correspondants à la saisie
 
@@ -34,6 +34,8 @@ echo $short_header;
 //Récupération des paramètres du formulaire appellant
 $base_query = "";
 
+$page+= 0;
+$id_thes+= 0;
 //Page en cours d'affichage
 $n_per_page=$opac_term_search_n_per_page;
 
@@ -41,7 +43,6 @@ $ts=new term_search("user_input","f_user_input",$n_per_page,$base_query,"term_sh
 echo "<table style='width:80%'><tr><td>";
 echo $ts->show_list_of_terms();
 echo "</td></tr></table>";
-
 echo "<script>
 parent.parent.document.term_search_form.page_search.value='".$page."';
 </script>

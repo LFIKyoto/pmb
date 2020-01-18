@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: serial_affichage_unimarc.class.php,v 1.3 2017-03-21 11:32:17 dgoron Exp $
+// $Id: serial_affichage_unimarc.class.php,v 1.5 2019-05-29 12:28:05 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -37,7 +37,11 @@ class serial_affichage_unimarc extends notice_affichage_unimarc {
 		$doc_nums = array();
 		$cpt_notice_pperso=0;
 		$notice->notice_pperso= array();
-		
+		$notice->tit1 = '';
+		$notice->tit2 = '';
+		$notice->tit3 = '';
+		$notice->tit4 = '';
+		$notice->index_l = '';
 		if(pmb_mysql_num_rows($myQuery)) {
 			$is_article = false;
 			while ($l=pmb_mysql_fetch_object($myQuery)) {
@@ -47,7 +51,7 @@ class serial_affichage_unimarc extends notice_affichage_unimarc {
 					$rsname=pmb_mysql_query($requete);
 					if (pmb_mysql_num_rows($rsname)) $this->source_name=pmb_mysql_result($rsname,0,0);
 				}
-				$this->unimarc[$l->ufield][$l->field_order][$l->usubfield][$l->subfield_order];
+				//$this->unimarc[$l->ufield][$l->field_order][$l->usubfield][$l->subfield_order];
 				switch ($l->ufield) {
 					//dt
 					case "dt":
@@ -86,6 +90,7 @@ class serial_affichage_unimarc extends notice_affichage_unimarc {
 						break;
 					//Editeur
 					case "210":
+					case "219":
 						if($l->field_order!=$lpfo) {
 							$lpfo=$l->field_order;
 							$n_ed++;
@@ -199,7 +204,7 @@ class serial_affichage_unimarc extends notice_affichage_unimarc {
 					case "900":
 						switch ($l->usubfield) {
 							case "a":
-								if($notice->notice_pperso[$cpt_notice_pperso]['value']){
+								if(!empty($notice->notice_pperso[$cpt_notice_pperso]['value'])){
 									$cpt_notice_pperso++;
 								}
 								$notice->notice_pperso[$cpt_notice_pperso]['value']=$l->value;

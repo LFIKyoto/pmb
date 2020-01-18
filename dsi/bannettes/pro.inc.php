@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: pro.inc.php,v 1.63 2018-12-28 09:16:20 dgoron Exp $
+// $Id: pro.inc.php,v 1.64 2019-08-22 09:44:33 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -115,7 +115,7 @@ switch($suite) {
     		if ($id_classement==0) $equ = "select id_equation from equations where proprio_equation=0 ";
     		if ($id_classement==-1) $equ = "select id_equation from equations, bannette_equation where proprio_equation=0 and num_bannette='$id_bannette' and num_equation=id_equation";
     		$res = pmb_mysql_query($equ, $dbh) or die (pmb_mysql_error()." $equ ") ;
-    		if (!$bannette_equation) $bannette_equation = array();
+    		if (empty($bannette_equation)) $bannette_equation = array();
 			while ($equa=pmb_mysql_fetch_object($res)) {
 				pmb_mysql_query("delete from bannette_equation where num_equation='$equa->id_equation' and num_bannette='$id_bannette' ", $dbh) ; 
 				$as = array_search($equa->id_equation,$bannette_equation) ;

@@ -32,7 +32,7 @@ class lastfmApiTasteometer extends lastfmApi {
 	 * @param array $fullAuth A boolean value stating if the user has full authentication or not
 	 * @param array $config An array of config variables related to caching and other features
 	 */
-	function __construct($auth, $fullAuth, $config) {
+	public function __construct($auth, $fullAuth, $config) {
 		$this->auth = $auth;
 		$this->fullAuth = $fullAuth;
 		$this->config = $config;
@@ -78,7 +78,6 @@ class lastfmApiTasteometer extends lastfmApi {
 			);
 			
 			if ( $call = $this->apiGetCall($vars) ) {
-				$result = '';
 				
 				$result['score'] = (string) $call->comparison->result->score;
 				$result['matches'] = (string) $call->comparison->result->artists['matches'];

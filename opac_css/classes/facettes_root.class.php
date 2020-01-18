@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facettes_root.class.php,v 1.38 2018-10-26 09:12:39 dgoron Exp $
+// $Id: facettes_root.class.php,v 1.43 2019-06-11 08:53:57 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -226,7 +226,7 @@ abstract class facettes_root {
 							var response = JSON.parse(data);
 							document.getElementById('facette_wrapper').innerHTML=response.display;
 						    require(['dojo/query', 'dojo/dom-construct'], function(query, domConstruct){
-    						    query('script').forEach(function(node) {
+    						    query('#facette_wrapper script').forEach(function(node) {
                 					domConstruct.create('script', {
                 						innerHTML: node.innerHTML,
                 						type: 'text/javascript'
@@ -265,7 +265,7 @@ abstract class facettes_root {
 		global $opac_facettes_ajax, $opac_map_activate;
 		
 		$return = "";
-		$class_name = get_called_class();
+		$class_name = static::class;
 		$facettes = new $class_name($objects_ids);
 
 		if (!$opac_facettes_ajax && ($opac_map_activate == 1 || $opac_map_activate == 3)) {
@@ -353,6 +353,7 @@ abstract class facettes_root {
 						$tab_surlocations[$row->surloc_num]['param'] = '&check_facette[]=["' . $tab_surlocations[$row->surloc_num]['name'] . '","' . $tab_surlocations[$row->surloc_num]['libelle'] . '",90,9,"",0]';
 					}
 					if($row->surloc_num && $opac_sur_location_activate) {
+					    if (!isset($tab_surlocations[$row->surloc_num]['notices_number'])) $tab_surlocations[$row->surloc_num]['notices_number'] = 0;
 						$tab_surlocations[$row->surloc_num]['notices_number'] += $expls_location['notices_number'][$row->idlocation];
 					}
 				}
@@ -377,7 +378,7 @@ abstract class facettes_root {
 	
 
 	public static function make_ajax_facette($objects_ids){
-		$class_name = get_called_class();
+	    $class_name = static::class;
 		$facettes = new $class_name($objects_ids);
 		
 		$facettes_exists_with_or_without_results = false;
@@ -632,7 +633,7 @@ abstract class facettes_root {
 	}
 	
 	protected function get_display_clicked() {
-		global $msg, $opac_url_base;
+	    global $msg, $charset;
 		
 		$display_clicked = "<table id='active_facette'>";
 		$n = 0;
@@ -648,7 +649,7 @@ abstract class facettes_root {
 					if($tmp){
 						$display_clicked .= "<br>";
 					}
-					$display_clicked .= $vDetail[0]." : ".static::get_formatted_value($vDetail[2], $vDetail[3], $vDetailLib);
+					$display_clicked .= htmlentities($vDetail[0]." : ".static::get_formatted_value($vDetail[2], $vDetail[3], $vDetailLib),ENT_QUOTES,$charset);
 					$tmp++;
 				}
 			}
@@ -664,7 +665,7 @@ abstract class facettes_root {
 		$display_clicked .= "
 					</table>
 					<div class='reinitialize-facettes'>
-						<a href='".$opac_url_base."index.php?lvl=more_results&get_last_query=1&reinit_facette=1' title='".$msg['facette_reset_all']."' class='reinitialize-facettes-link right'>".$msg['reset']." <i alt=\"\" class='fa fa-undo' aria-hidden='true'></i></a>
+						<a onclick='".static::get_link_reinit_facettes()."' style='cursor:pointer' title='".$msg['facette_reset_all']."' class='reinitialize-facettes-link right'>".$msg['reset']." <i alt=\"\" class='fa fa-undo' aria-hidden='true'></i></a>
 					</div>";
 		return $display_clicked;
 	}

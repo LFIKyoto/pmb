@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: openurl.class.php,v 1.10 2017-07-12 15:15:02 tsamson Exp $
+// $Id: openurl.class.php,v 1.11 2019-07-23 09:30:38 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -651,7 +651,7 @@ class openurl extends connector {
 			$param = $export_param->get_parametres($export_param->context);
 			//petit nettoyage pour un bon fonctionnement...
 			foreach($param as $key => $value){
-				$param["exp_".$key] = $param[$key];
+			    $param["exp_".$key] = $value;
 			}
 			//maintenant que c'est en ordre, on peut y aller!
 			$export = new export(array($notice_id),array(),array());

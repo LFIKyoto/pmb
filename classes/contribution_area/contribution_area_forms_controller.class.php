@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution_area_forms_controller.class.php,v 1.12 2018-12-28 16:27:30 tsamson Exp $
+// $Id: contribution_area_forms_controller.class.php,v 1.14.6.1 2019-11-22 09:00:10 tsamson Exp $
 if (stristr($_SERVER ['REQUEST_URI'], ".class.php"))
 	die("no access");
 
@@ -121,7 +121,7 @@ class contribution_area_forms_controller {
 	}
 	
 	public static function get_entity_forms(&$forms_array, $entity){
-		$query = 'select id_form, form_title, form_parameters from contribution_area_forms where form_type = "'.$entity->pmb_name.'"';
+		$query = 'select id_form, form_title, form_comment, form_parameters from contribution_area_forms where form_type = "'.$entity->pmb_name.'"';
 		$result = pmb_mysql_query($query);
 		if(pmb_mysql_num_rows($result)){
 			while($row = pmb_mysql_fetch_object($result)){
@@ -131,6 +131,7 @@ class contribution_area_forms_controller {
 						'id' => self::get_identifier(),
 						'parent_type' => $entity->pmb_name,
 						'name' => $row->form_title,
+				        'comment' => $row->form_comment,
 						'parent' => $entity->id,
 						'pmb_name' => $entity->pmb_name,
 				);
@@ -146,7 +147,7 @@ class contribution_area_forms_controller {
 	 						'id' => self::get_identifier(),
 	 						'parent_type' => $entity->pmb_name,
 	 						'name' => $pValues['label'],
-	 						'flag' => (!empty(self::$classes_properties[$entity->pmb_name][$prop]->flags) ? self::$classes_properties[$entity->pmb_name][$prop]->flags[0] : ""),
+	 						'flag' => (!empty(self::$classes_properties[$entity->pmb_name][$prop]->flags) ? self::$classes_properties[$entity->pmb_name][$prop]->flags : ""),
 	 					    'pmb_name' => (!empty(self::$classes_properties[$entity->pmb_name][$prop]->pmb_name) ? self::$classes_properties[$entity->pmb_name][$prop]->pmb_name : "")
 	 					);
 	 					
@@ -250,14 +251,18 @@ class contribution_area_forms_controller {
 		if (self::get_datastore()->query($query)) {
 			$rows = self::get_datastore()->get_result();
 			foreach ($rows as $row) {
-				if (empty($row->identifier)) {
+			    if (empty($row->identifier)) {
 					if (!isset($results[$row->s])) {
 						$results[$row->s] = array ();
 					}
 					$results[$row->s][explode('#', $row->p)[1]] = htmlentities($row->o,ENT_QUOTES,$charset);
-						
-					if (!isset($results[$row->s]["uri_id"])) {
-						$results[$row->s]["uri_id"] = onto_common_uri::get_id($row->s);
+					
+					if (empty($results[$row->s]["uri_id"])) {
+					    $uri_id = onto_common_uri::get_id($row->s);
+					    if (empty($uri_id)) {
+					        $uri_id = onto_common_uri::set_new_uri($row->s);
+					    }
+					    $results[$row->s]["uri_id"] = $uri_id;
 					}
 											
 					if (!isset($results[$row->s]["contributor"])) {
@@ -304,9 +309,13 @@ class contribution_area_forms_controller {
 					$results [$row->s] = array ();
 				}
 				$results [$row->s] [explode('#', $row->p)[1]] = htmlentities($row->o,ENT_QUOTES,$charset);
-	
-				if (!isset($results [$row->s]["uri_id"])) {
-					$results [$row->s]["uri_id"] = onto_common_uri::get_id($row->s);
+				
+				if (empty($results[$row->s]["uri_id"])) {
+				    $uri_id = onto_common_uri::get_id($row->s);
+				    if (empty($uri_id)) {
+				        $uri_id = onto_common_uri::set_new_uri($row->s);
+				    }
+				    $results[$row->s]["uri_id"] = $uri_id;
 				}
 			}
 		}

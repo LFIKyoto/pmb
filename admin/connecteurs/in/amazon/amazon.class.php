@@ -2,13 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: amazon.class.php,v 1.35 2018-07-16 08:57:11 ngantier Exp $
+// $Id: amazon.class.php,v 1.40 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
 require_once($class_path."/connecteurs.class.php");
-require_once($class_path."/nusoap/nusoap.php");
 
 class amazon extends connector {
 	//Variables internes pour la progression de la récupération des notices
@@ -40,7 +39,7 @@ class amazon extends connector {
 	}
     
     public function source_get_property_form($source_id) {
-    	global $charset;
+        global $charset, $url, $max_return, $review_height, $review_width, $search_index;
     	
     	$params=$this->get_source_params($source_id);
 		if ($params["PARAMETERS"]) {
@@ -106,7 +105,7 @@ class amazon extends connector {
 					<select name='search_index[$country][]' id='search_index_$country' style='".((($url==$country)||(($url=="")&&($country==$sites[0]["COUNTRY"])))?"display:block":"display:none")."'>
 						";
 			for ($j=0; $j<count($searchindexes); $j++) {
-				if ($search_index[$country]=="") $search_index[$country]=array();
+				if (empty($search_index[$country])) $search_index[$country]=array();
 				$form.="<option value='".htmlentities($searchindexes[$j]["TYPE"],ENT_QUOTES,$charset)."' ".(array_search($searchindexes[$j]["TYPE"],$search_index[$country])!==false?"selected":"").">".htmlentities($this->get_libelle($searchindexes[$j]["COMMENT"]),ENT_QUOTES,$charset)."</option>\n";
 			}
 			$form.="
@@ -378,7 +377,7 @@ class amazon extends connector {
 				$req="";
 				for ($j=0; $j<count($query[$i]["FIELDS"]); $j++) {
 					for ($k=0; $k<count($query[$i]["VALUE"]); $k++) {
-						$param="";
+						$param=[];
 						$param[$query[$i]["FIELDS"][$j]]=$query[$i]["VALUE"][$k];
 						$expr[]=$param;
 					}
@@ -704,29 +703,26 @@ class amazon extends connector {
 			foreach ($item["ImageSets"] as $ImageSet) {
 				if (is_array($ImageSet)) {
 					foreach ($ImageSet as $aitem) {
-						if (isset($aitem["!Category"]) && $aitem["!Category"] == 'primary' && $image_count)
+					    if (isset($aitem["!Category"]) && $aitem["!Category"] == 'primary' && $image_count) {
 							continue;
-						if (isset($aitem["LargeImage"]) && isset($aitem["LargeImage"]["URL"])) {
+					    }
+						if (isset($aitem["LargeImage"]["URL"])) {
 							$unimarc["897"][$image_count]["a"][0] = $aitem["LargeImage"]["URL"];
 							$unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - LargeImage";
 							$image_count++;
-						}
-						else if (isset($aitem["MediumImage"]) && isset($aitem["MediumImage"]["URL"])) {
+						} elseif (isset($aitem["MediumImage"]["URL"])) {
 							$unimarc["897"][$image_count]["a"][0] = $aitem["MediumImage"]["URL"];
 							$unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - MediumImage";
 							$image_count++;
-						}
-						else if (isset($aitem["ThumbnailImage"]) && isset($aitem["ThumbnailImage"]["URL"])) {
+						} elseif (isset($aitem["ThumbnailImage"]["URL"])) {
 							$unimarc["897"][$image_count]["a"][0] = $aitem["ThumbnailImage"]["URL"];
 							$unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - ThumbnailImage";
 							$image_count++;
-						}
-						else if (isset($aitem["SmallImage"]) && isset($aitem["SmallImage"]["URL"])) {
+						} elseif (isset($aitem["SmallImage"]["URL"])) {
 							$unimarc["897"][$image_count]["a"][0] = $aitem["SmallImage"]["URL"];
 							$unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - SmallImage";
 							$image_count++;
-						}
-						else if (isset($aitem["TinyImage"]) && isset($aitem["TinyImage"]["URL"])) {
+						} elseif (isset($aitem["TinyImage"]["URL"])) {
 							$unimarc["897"][$image_count]["a"][0] = $aitem["TinyImage"]["URL"];
 							$unimarc["897"][$image_count]["b"][0] = $aitem["!Category"]." - TinyImage";
 							$image_count++;
@@ -950,7 +946,7 @@ class amazon extends connector {
 						$result=amazon::objectToArrayAndCharset($result);
 					}
 					$items=$this->soap2array($result["Items"],"Item");
-					$asin = $items[0][ASIN];
+					$asin = $items[0]['ASIN'];
 					if($asin){
 						$client->__setSoapHeaders(NULL);
 						$client->__setSoapHeaders($this->make_soap_headers('ItemLookup'));
@@ -1015,9 +1011,9 @@ class amazon extends connector {
 							}
 							
 							//pour les similarités
-							foreach($items[0][SimilarProducts][SimilarProduct] as $similar){
-								if(isISBN($similar[ASIN])){
-									$rqt= "select notice_id from notices where code = '".formatISBN($similar[ASIN],10)."' or code = '".formatISBN($similar[ASIN],13)."' limit 1";
+							foreach($items[0]['SimilarProducts']['SimilarProduct'] as $similar){
+								if(isISBN($similar['ASIN'])){
+									$rqt= "select notice_id from notices where code = '".formatISBN($similar['ASIN'],10)."' or code = '".formatISBN($similar['ASIN'],13)."' limit 1";
 									$res = pmb_mysql_query($rqt);
 									if(pmb_mysql_num_rows($res)){
 										$notice = pmb_mysql_result($res,0,0);
@@ -1028,7 +1024,7 @@ class amazon extends connector {
 									$paws["Request"]=array(
 										"ResponseGroup"=>"ItemAttributes",
 										"IdType" => "ASIN",
-										"ItemId" => $similar[ASIN]
+										"ItemId" => $similar['ASIN']
 									);
 									try{
 										$result=$client->ItemLookup($paws);
@@ -1040,7 +1036,7 @@ class amazon extends connector {
 									}
 									if(!$error){
 										$items=$this->soap2array($result["Items"],"Item");
-										$code = $items[0][ItemAttributes][UPC];
+										$code = $items[0]['ItemAttributes']['UPC'];
 										if($code){
 											$rqt= "select notice_id from notices where code = '".$code."' or code = '".$code."' limit 1";
 											$res = pmb_mysql_query($rqt);

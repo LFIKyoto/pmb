@@ -1,8 +1,8 @@
 <?php
 // +-------------------------------------------------+
-// © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
+// ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: facettes_controller.class.php,v 1.8 2018-09-25 14:45:12 vtouchard Exp $
+// $Id: facettes_controller.class.php,v 1.9.2.2 2019-11-05 14:08:25 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -20,7 +20,7 @@ class facettes_controller {
 	
 	
 	public function __construct($id=0, $type='notices', $is_external=false){
-		$this->id = $id*1;
+		$this->id = intval($id);
 		$this->type = $type;
 		$this->is_external = $is_external;
 	}
@@ -32,23 +32,23 @@ class facettes_controller {
 		if($sub == 'facettes_authorities') {
 			print $this->get_authorities_tabs();
 		}
-		$facette_search = new facette_search_opac($this->type, $this->is_external);
+		$facette_search = self::get_facette_search_opac_instance($this->type, $this->is_external);
 		
 		switch($action) {
 			case "edit":
-				$facette = new facette($this->id, $this->is_external);
+				$facette = $this->get_facette_instance();
 				$facette->set_type($this->type);
 				print $facette->get_form();
 				break;
 			case "save":
-				$facette = new facette($this->id, $this->is_external);
+			    $facette = $this->get_facette_instance();
 				$facette->set_type($this->type);
 				$facette->set_properties_from_form();
 				$facette->save();
 				print $facette_search->get_display_list();
 				break;
 			case "delete":
-				$facette = new facette($this->id, $this->is_external);
+			    $facette = $this->get_facette_instance();
 				$facette->delete();
 				print $facette_search->get_display_list();
 				break;
@@ -92,6 +92,7 @@ class facettes_controller {
 		$authorities_tabs .= $this->get_authority_tab('series');
 		$authorities_tabs .= $this->get_authority_tab('titres_uniformes');
 		$authorities_tabs .= $this->get_authority_tab('indexint');
+		$authorities_tabs .= $this->get_authority_tab('authperso');
 		$authorities_tabs .= "</div>";
 		return $authorities_tabs;
 	}
@@ -102,27 +103,36 @@ class facettes_controller {
 		global $type;
 		global $list_crit,$sub_field;
 		global $suffixe_id, $no_label;
+		global $authperso_id, $field;
 		
 		switch($sub){
+		    case "lst_fields_facet":
+		    case "lst_fields_facettes_authorities":
+		    case "lst_fields_facettes":
+			    if( strpos($type, "authperso") !== false && !empty($authperso_id)) {
+			        $type = "authperso_".$authperso_id;
+			    }
+			    $facettes = self::get_facette_search_opac_instance($type);
+			    print $facettes->create_list_fields($field);
+			    break;
 			case "lst_facet":
 			case "lst_facettes_authorities":
 		    case "lst_facettes":
-				$facettes = new facette_search_opac($type);
+				$facettes = self::get_facette_search_opac_instance($type);
 				print $facettes->create_list_subfields($list_crit,$sub_field,$suffixe_id,$no_label);
 				break;
 			case "lst_facettes_external":
-				$facettes_external = new facette_search_opac('notices_externes',1);
+			    $facettes_external = self::get_facette_search_opac_instance('notices_externes',1);
 				print $facettes_external->create_list_subfields($list_crit,$sub_field,$suffixe_id,$no_label);
 				break;
 			default:
+			    $facette = $this->get_facette_instance();
 				switch($action) {
 					case "edit":
-						$facette = new facette($this->id, $this->is_external);
 						$facette->set_type($this->type);
 						print $facette->get_form();
 						break;
 					case "save":
-						$facette = new facette($this->id, $this->is_external);
 						$facette->set_type($this->type);
 						$facette->set_properties_from_form();
 						$facette->save();
@@ -131,6 +141,20 @@ class facettes_controller {
 				}
 				break;
 		}
+	}
+	
+	private function get_facette_instance() {
+	    if (strpos($this->type, "authperso") !== false) {
+	        return new facette_authperso($this->id, $this->is_external);
+	    }
+	    return new facette($this->id, $this->is_external);
+	}
+	
+	public static function get_facette_search_opac_instance($type='notices', $is_external=false) {
+	    if (strpos($type, "authperso") !== false) {
+	        return new facette_authperso_search_opac($type, $is_external);
+	    }
+	    return new facette_search_opac($type, $is_external);
 	}
 }
 

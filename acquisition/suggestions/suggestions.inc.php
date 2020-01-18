@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: suggestions.inc.php,v 1.38 2018-06-06 09:22:22 apetithomme Exp $
+// $Id: suggestions.inc.php,v 1.41 2019-07-24 13:00:12 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $transition, $catnoti, $id_sug, $base_path, $class_path, $acquisition_sugg_display, $chk, $action, $to_categ, $msg, $charset, $id_bibli, $catal_type, $id_pj, $z3950_import_modele;
 
 if(!isset($transition)) $transition = '';
 if(!isset($catnoti)) $catnoti = '';
@@ -42,7 +44,15 @@ if ($acquisition_sugg_categ== '1' && $action == 'to_categ') {
 
 
 //Traitement des actions
-print "<h1>".htmlentities($msg['acquisition_sug_ges'],ENT_QUOTES, $charset)."</h1>";
+switch($dest) {
+    case "TABLEAU":
+        break;
+    case "TABLEAUHTML":
+        break;
+    default:
+        print "<h1>".htmlentities($msg['acquisition_sug_ges'],ENT_QUOTES, $charset)."</h1>";
+        break;
+}
 
 switch($action) {
 
@@ -105,7 +115,7 @@ switch($action) {
 		 $explnum_doc = new explnum_doc($id_pj);
 		 $explnum_doc->delete();
 		 $req="delete from explnum_doc_sugg where num_explnum_doc='".$id_pj."'";
-		 pmb_mysql_query($req,$dbh);		 
+		 pmb_mysql_query($req);		 
 		 $del_url = "./acquisition.php?categ=sug&action=update&id_bibli=".$id_bibli."&id_sug=".$id_sug;
 		 show_form_sug($del_url);
 	 break;
@@ -132,6 +142,4 @@ switch($action) {
 		break;
 		
 }
-
 ?>
-

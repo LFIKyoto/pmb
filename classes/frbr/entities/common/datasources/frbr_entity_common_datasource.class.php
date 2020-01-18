@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_entity_common_datasource.class.php,v 1.21 2018-08-22 16:23:31 tsamson Exp $
+// $Id: frbr_entity_common_datasource.class.php,v 1.25.2.2 2019-10-21 13:46:39 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -15,9 +15,10 @@ class frbr_entity_common_datasource extends frbr_entity_root {
 	protected $used_external_sort=false;
 	protected $external_sort;
 	protected $limitable=true;
+	protected $parent_type = "";
 	
 	public function __construct($id=0){
-		$this->id = $id+0;
+	    $this->id = (int) $id;
 		parent::__construct();
 	}
 	
@@ -32,8 +33,8 @@ class frbr_entity_common_datasource extends frbr_entity_root {
 			$result = pmb_mysql_query($query);
 			if(pmb_mysql_num_rows($result)){
 				$row = pmb_mysql_fetch_object($result);
-				$this->id = $row->id_datanode_content+0;
-				$this->num_datanode = $row->datanode_content_num_datanode+0;
+				$this->id = (int) $row->id_datanode_content;
+				$this->num_datanode = (int) $row->datanode_content_num_datanode;
 				$this->json_decode($row->datanode_content_data);
 			}
 		}
@@ -49,31 +50,8 @@ class frbr_entity_common_datasource extends frbr_entity_root {
 	 */
 	public function get_form(){
 		$form = "<div class='row'>";
-		$sub_datasources = $this->get_sub_datasources();
-		if(count($sub_datasources)) {
-			if(count($sub_datasources)>1) {
-				$form .= "
-					<div class='colonne3'>
-						<label for='datanode_sub_datasource_choice'>".$this->format_text($this->msg['frbr_entity_common_datasource_sub_datasource_choice'])."</label>
-					</div>
-					<div class='colonne-suite'>
-						<select name='datanode_sub_datasource_choice' data-pmb-evt='{\"class\":\"EntityForm\", \"type\":\"change\", \"method\":\"frbrEntityLoadElemForm\", \"parameters\":{\"id\":\"0\", \"domId\":\"sub_datasource_form\",\"filterRefresh\":\"1\",\"sortRefresh\":\"1\"}}'>
-							<option value='".$this->get_sub_datasource_default_value()."'>".$this->format_text($this->msg['frbr_entity_common_datasource_sub_datasource_choice'])."</option>";
-				foreach($sub_datasources as $sub_datasource){
-					$form.= "
-							<option value='".$sub_datasource."'".(isset($this->parameters->sub_datasource_choice) && $sub_datasource == $this->parameters->sub_datasource_choice ? " selected='selected'" : "").">".$this->format_text($this->msg[$sub_datasource])."</option>";
-				}
-				$form.="
-						</select>
-					</div>";
-			} else if (count($sub_datasources) == 1) {
-				$form.="<input type='hidden' name='datanode_sub_datasource_choice' id='datanode_sub_datasource_choice' value='".$sub_datasources[0]."' />";
-			}
-		}
-		$form.="	<div id='sub_datasource_form'>
-						<input type='hidden' name='datanode_entity_type' id='datanode_entity_type' value='".$this->get_entity_type()."' />
-					</div>";
-		if ($this->limitable && isset($this->entity_type) && $this->entity_type && (count($sub_datasources)<=1)) {
+		$form.= $this->get_sub_datasources_form();
+		if (!empty($this->limitable) && !empty($this->entity_type) && (count($this->get_sub_datasources()) <=1)) {
 			$form.= "
 				<div class='row'>
 					<div class='colonne3'>
@@ -84,7 +62,7 @@ class frbr_entity_common_datasource extends frbr_entity_root {
 					</div>
 				</div>";
 		}
-		if (isset($this->parameters->sub_datasource_choice) && $this->parameters->sub_datasource_choice) {
+		if (!empty($this->parameters->sub_datasource_choice)) {
 			$form.="<script type='text/javascript'>
 						require(['dojo/topic'],					
 						function(topic){
@@ -95,7 +73,49 @@ class frbr_entity_common_datasource extends frbr_entity_root {
 		$form.="</div>";
 		
 		return $form;
-	}	
+	}
+	
+    /**
+    * formulaire de la sous datasource
+    * @return string
+    */
+	protected function get_sub_datasources_form() {
+	    $form = "";
+	    $sub_datasources = $this->get_sub_datasources();
+	    if (!empty($sub_datasources) && is_array($sub_datasources)) {
+	        if (count($sub_datasources) > 1) {
+	            $form .= "
+					<div class='colonne3'>
+						<label for='datanode_sub_datasource_choice'>".$this->format_text($this->msg['frbr_entity_common_datasource_sub_datasource_choice'])."</label>
+					</div>
+					<div class='colonne-suite'>
+						<select name='datanode_sub_datasource_choice' data-pmb-evt='{\"class\":\"EntityForm\", \"type\":\"change\", \"method\":\"frbrEntityLoadElemForm\", \"parameters\":{\"id\":\"0\", \"domId\":\"sub_datasource_form\",\"filterRefresh\":\"1\",\"sortRefresh\":\"1\"}}'>
+							<option value='".$this->get_sub_datasource_default_value()."'>".$this->format_text($this->msg['frbr_entity_common_datasource_sub_datasource_choice'])."</option>";
+	            foreach ($sub_datasources as $sub_datasource) {
+	                $form.= "
+							<option value='".$this->get_sub_datasource_value($sub_datasource)."'".(isset($this->parameters->sub_datasource_choice) && $this->get_sub_datasource_value($sub_datasource) == $this->parameters->sub_datasource_choice ? " selected='selected'" : "").">".$this->format_text($this->msg[$sub_datasource])."</option>";
+	            }
+	            $form.="
+						</select>
+					</div>";
+	        } else if (count($sub_datasources) == 1) {
+	            $form.="<input type='hidden' name='datanode_sub_datasource_choice' id='datanode_sub_datasource_choice' value='".$this->get_sub_datasource_value($sub_datasources[0])."' />";
+	        }
+	    }
+	    $form.="	<div id='sub_datasource_form'>
+						<input type='hidden' name='datanode_entity_type' id='datanode_entity_type' value='".$this->get_entity_type()."' />
+					</div>";
+	    return $form;
+	}
+	
+	/**
+	 * pour formater si besoin la valeur de la sous datasource, dans authperso par exemple
+	 * @param string $sub_datasource
+	 * @return string
+	 */
+	protected function get_sub_datasource_value($sub_datasource) {
+	    return $sub_datasource;
+	}
 	
 	/*
 	 * Sauvegarde des infos depuis un formulaire...
@@ -105,7 +125,9 @@ class frbr_entity_common_datasource extends frbr_entity_root {
 		global $datanode_datasource_nb_max_elements;
 		
 		$this->parameters->sub_datasource_choice = $datanode_sub_datasource_choice;
-		$this->parameters->nb_max_elements = $datanode_datasource_nb_max_elements+0;
+		$this->parameters->nb_max_elements = (int) $datanode_datasource_nb_max_elements;
+		
+		$this->save_custom_field_parameters();
 		
 		if($this->id){
 			$query = "update frbr_datanodes_content set";
@@ -210,7 +232,7 @@ class frbr_entity_common_datasource extends frbr_entity_root {
 	}
 	
 	public function set_num_datanode($id){
-		$this->num_datanode = $id+0;
+	    $this->num_datanode = (int) $id;
 	}
 	
 	public function get_entity_type() {
@@ -243,5 +265,111 @@ class frbr_entity_common_datasource extends frbr_entity_root {
 	
 	protected function get_sub_datasource_default_value(){
 		return '';
+	}
+	
+	protected function filter_data_with_access_rights($data) {
+	    return $data;
+	}
+	
+	public function set_parent_type($parent_type){
+	    $this->parent_type = $parent_type;
+	    return $this;
+	}
+	protected function get_parent_type(){
+	    return $this->parent_type;
+	}
+    /**
+     * pour les champs perso
+     * @param string $type
+     * @return number
+     */
+    protected function get_aut_type_from_entity_type($type) {
+        global $authperso_num;
+	    switch ($type) {
+	        case 'authors':
+	            return 1;
+	        case 'categories':
+	            return 2;
+	        case 'publishers':
+	            return 3;
+	        case 'collections':
+	            return 4;
+	        case 'subcollections':
+	            return 5;
+	        case 'series':
+	            return 6;
+	        case 'indexint':
+	            return 7;
+	        case 'works':
+	            return 8;
+	        case 'concepts':
+	            return 9;
+	        case 'authperso':
+	            if (!empty($this->parameters->authperso_id)) {
+	                return 1000 + intval($this->parameters->authperso_id);
+	            }
+	            if (!empty($authperso_num)) {
+	                return 1000 + intval($authperso_num);
+	            }	            
+	            return 1000;
+	        default:
+	            return 0;
+	    }
+	}
+	
+	/**
+	 * methode a deriver au besoin pour les formulaires de sous datasources
+	 * @return string
+	 */
+	public function get_sub_form() {
+	    return $this->get_form();
+	}
+	
+	/**
+	 * enregistrement du parametrage du champ perso quand il est poste
+	 */
+	protected function save_custom_field_parameters() {
+	    global $datanode_datasource_custom_field;
+	    if (!empty($datanode_datasource_custom_field)) {
+	        $custom_field = explode('|||', $datanode_datasource_custom_field);
+	        $this->parameters->prefix = $custom_field[0];
+	        $this->parameters->id = $custom_field[1];
+	        $this->parameters->datatype = $custom_field[2];
+	    }
+	    
+	    global $datanode_datasource_used_in_custom_field;
+	    if (!empty($datanode_datasource_used_in_custom_field)) {
+	        $custom_field = explode('|||', $datanode_datasource_used_in_custom_field);
+	        $this->parameters->prefix = $custom_field[0];
+	        $this->parameters->id = $custom_field[1];
+	        $this->parameters->datatype = $custom_field[2];
+	    }
+	}
+	
+	/*
+	 * Récupération des données de la source...
+	 */
+	public function get_sub_datasource_datas($datas=array()){
+	    if(!empty($this->get_parameters()->sub_datasource_choice)) {
+	        if (strpos($this->get_parameters()->sub_datasource_choice, "authperso")) {
+	            $authperso =  preg_split("#_([\d]+)#", $this->get_parameters()->sub_datasource_choice, 0 ,PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+	            $sub_datasource = new $authperso[0]();
+	            if (!empty($authperso[1])) {
+	                $sub_datasource->set_authperso_id($authperso[1]);
+	            }
+	        } else {
+	            $class_name = $this->get_parameters()->sub_datasource_choice;
+	            $sub_datasource = new $class_name();
+	        }
+	        $sub_datasource->set_parameters($this->parameters);
+	        if(isset($this->external_filter) && $this->external_filter) {
+	            $sub_datasource->set_filter($this->external_filter);
+	        }
+	        if(isset($this->external_sort) && $this->external_sort) {
+	            $sub_datasource->set_sort($this->external_sort);
+	        }
+	        return $sub_datasource->get_datas($datas);
+	    }
+	    return $datas;
 	}
 }

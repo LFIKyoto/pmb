@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr.inc.php,v 1.35 2018-10-19 15:06:56 dgoron Exp $
+// $Id: empr.inc.php,v 1.35.6.1 2019-11-07 15:27:01 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -133,6 +133,28 @@ if ($date_fin_blocage != "0000-00-00"){
 		$blocage=str_replace("!!date_fin_blocage!!","<strong>".$aff_date_fin_blocage."</strong>",$msg["empr_tpl_blocage_pret"]);
 		$tab_empr_info[$i++]["val"]=$blocage;
 	}
+}
+
+//Message(s) de groupe(s)
+$query = "SELECT distinct id_groupe, libelle_groupe, comment_opac 
+    FROM groupe 
+    JOIN empr_groupe ON empr_groupe.groupe_id = groupe.id_groupe
+    JOIN empr ON empr.id_empr = empr_groupe.empr_id
+    WHERE empr_login='".addslashes($login)."' AND groupe.comment_opac <> '' 
+    ORDER BY libelle_groupe";
+$result = pmb_mysql_query($query);
+if (pmb_mysql_num_rows($result)) {
+    $comments = array();
+    while ($row = pmb_mysql_fetch_object($result)) {
+        if($row->comment_opac) {
+            $comments[] = $row->libelle_groupe." : ".$row->comment_opac;
+        }
+    }
+    if(count($comments)) {
+    	$tab_empr_info[$i]["titre"]=$msg["empr_groups_comments"];
+    	$tab_empr_info[$i]["class"]="tab_empr_groups_comments";
+    	$tab_empr_info[$i++]["val"]=implode('<br />', $comments);
+    }
 }
 
 foreach ($tab_empr_info as $ligne){

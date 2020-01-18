@@ -2,10 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: finance.tpl.php,v 1.10 2007-03-14 16:51:33 gueluneau Exp $
+// $Id: finance.tpl.php,v 1.12 2019-05-27 16:04:40 btafforeau Exp $
 // Formulaires gestion financière
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $finance_abts_form, $finance_amende_form, $finance_amende_relance_form, $finance_blocage_form, $current_module, $msg;
 
 //Abonnements
 $finance_abts_form="

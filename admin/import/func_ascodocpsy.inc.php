@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_ascodocpsy.inc.php,v 1.23 2018-07-17 12:09:49 dgoron Exp $
+// $Id: func_ascodocpsy.inc.php,v 1.25 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -756,7 +756,7 @@ function do_thesaurus_ascodocpsy($id_thesaurus, $nom_categ, $branch_values=array
 					}else{
 						$categ_to_index = $categ_id;
 					}
-				}elseif($nom_categ == 'NOMP'){
+				}elseif($nom_categ != 'THEME'){
 					//le terme est à créer
 					$n = new noeuds();
 					$n->num_thesaurus = $id_thesaurus;
@@ -899,8 +899,9 @@ function traite_exemplaires () {
 	// lu en 010$d de la notice
 	$price = $prix[0];
 
+	$nb_infos_995 = count($info_995);
 	// la zone 995 est répétable
-	for ($nb_expl = 0; $nb_expl < sizeof ($info_995); $nb_expl++) {
+	for ($nb_expl = 0; $nb_expl < $nb_infos_995; $nb_expl++) {
 		/* RAZ expl */
 		$expl = array();
 

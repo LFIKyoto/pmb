@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution_area_form.class.php,v 1.23 2018-10-12 15:12:42 apetithomme Exp $
+// $Id: contribution_area_form.class.php,v 1.27 2019-08-20 15:11:35 ccraig Exp $
 if (stristr($_SERVER ['REQUEST_URI'], ".class.php"))
 	die("no access");
 
@@ -27,10 +27,11 @@ class contribution_area_form {
 	protected $uri = "" ;
 	protected $availableProperties = array();
 	protected $name="";
+	protected $comment="";
 	protected $parameters;
 	protected $unserialized_parameters = array();
 	protected $classname = "";
-	protected $active_properties;	
+	protected $active_properties;
 	protected static $contribution_area_form = array();
 	protected $onto_class;
 	protected $area_id;
@@ -63,6 +64,7 @@ class contribution_area_form {
 				$this->parameters = $params->form_parameters;
 				$this->unserialized_parameters = json_decode($this->parameters);
 				$this->name = $params->form_title;
+				$this->comment = $params->form_comment;
 				$this->type = $params->form_type;
 			}
 		}
@@ -112,22 +114,32 @@ class contribution_area_form {
 		 */
 		$html = '
 		<form class="form-'.$current_module.'" name="contribution_area_form" method="post" id="contribution_area_form" action="./modelling.php?module=modelling&categ=contribution_area&sub=form&action=save&type='.$type.'&form_id='.$this->id.'">
-		<h3>'.$msg["admin_contribution_area_form_type"].' : '.$this->classname.'</h3>
-		<div class="form-contenu">
-		<input type="hidden" name="area" value="'.($area*1).'"/>
-		<div class="row">
-			<div class="colonne3">
-				<label>'.$msg['admin_contribution_area_form_name'].'</label>
-				<input type="text" name="form_name" value="'. htmlentities(($this->name ? $this->name : ''), ENT_QUOTES, $charset).'"/>
-			</div>';
 		
+		<div class="row">
+		   <div class="left">
+                <h3>'.$msg["admin_contribution_area_form_type"].' : '.$this->classname.'</h3>
+           </div>';		
 		if($this->id){
 			$html.='
-				<div class="colonne3">
+				<div class="right">
 					<input type="button" class="bouton" name="grid_button" id="grid_button" value="'.htmlentities($msg['pricing_system_edit_grid'], ENT_QUOTES, $charset).'" onclick="window.location.href=\'./modelling.php?categ=contribution_area&sub=form&action=grid&form_id='.$this->id.'\'"/>
 				</div>';
 		}	
 		$html.='
+        </div>
+		<div class="form-contenu">
+		<input type="hidden" name="area" value="'.($area*1).'"/>
+		<div class="row">
+			<label>'.$msg['admin_contribution_area_form_name'].'</label>
+        </div>
+		<div class="row">
+			<input type="text" name="form_name" value="'. htmlentities(($this->name ? $this->name : ''), ENT_QUOTES, $charset).'"/>
+		</div>
+		<div class="row">
+			<label>'.$msg['admin_contribution_area_form_comment'].'</label>
+		</div>
+		<div class="row">
+			<textarea cols="80" rows="2" name="form_comment" id="form_comment" wrap="virtual">' . ($this->comment ? $this->comment : '') . '</textarea>
 		</div>
 		<div class="row">&nbsp;</div>
 		<table class="modern">
@@ -172,8 +184,8 @@ class contribution_area_form {
 					$td_mandatory ='<input onclick="return false" type="checkbox" name="'.$property->pmb_name.'[mandatory]" checked="checked" value="1">';
 				}else{
 					$html.='<td style="width:20px;">';
-					$html.= '<input type="checkbox" '.($this->get_saved_property($property->pmb_name) ? 'checked="checked"' : '').' id="switch_'.$property->pmb_name.'" name="'.$property->pmb_name.'[switch]" class="switch"  onclick="checkSwitcher(this)"/>';
-					$td_mandatory ='<input type="checkbox" onclick="checkSwitcher(this)" id="'.$property->pmb_name.'_mandatory" name="'.$property->pmb_name.'[mandatory]" '.($this->get_saved_property($property->pmb_name,'mandatory') || $min>0 ? 'checked="checked"' : '').' value="1">';
+					$html.= '<input type="checkbox" '.($this->get_saved_property($property->pmb_name) ? 'checked="checked"' : '').' id="switch_'.$property->pmb_name.'" name="'.$property->pmb_name.'[switch]" class="switch" />';
+					$td_mandatory ='<input type="checkbox" id="'.$property->pmb_name.'_mandatory" name="'.$property->pmb_name.'[mandatory]" '.($this->get_saved_property($property->pmb_name,'mandatory') || $min>0 ? 'checked="checked"' : '').' value="1">';
 				}
 				
 				$html.='<input type="hidden" name="inputs_name[]" value="'.$property->pmb_name.'"/>';
@@ -412,6 +424,7 @@ class contribution_area_form {
 		global $inputs_name;
 		global $charset;
 		global $form_name;
+		global $form_comment;
 		
 		$properties_list = array();
 		for($i = 0 ; $i < count($inputs_name); $i++){
@@ -427,9 +440,15 @@ class contribution_area_form {
 					$var_name = $property['default_value'];
 					global ${$var_name};
 					$default_value = stripslashes_array(${$var_name});
+
 					if (!isset($default_value[0])) {
 						// Ce n'est pas un tableau numériques, on ne sait pas quoi en faire...
 						$default_value = array(array('value' => ''));
+					}
+					
+					if (!isset($default_value[0]['type'])) {
+					    // Ce n'est pas un tableau numériques, on ne sait pas quoi en faire...
+					    $default_value[0]['type'] = 'http://www.w3.org/2000/01/rdf-schema#Literal';
 					}
 					for($j = 0; $j < count($default_value); $j++) {
 						if ($default_value[$j]['type'] == "merge_properties") {
@@ -451,6 +470,7 @@ class contribution_area_form {
 		$this->parameters = encoding_normalize::json_encode($properties_list);
 			
 		$this->name = stripslashes($form_name);
+		$this->comment = stripslashes($form_comment);
 	}
 	
 	public function save($ajax_mode=false) {
@@ -464,6 +484,7 @@ class contribution_area_form {
 		}
 		$query.='contribution_area_forms set ';
 		$query.='form_title="'.addslashes($this->name).'",';
+		$query.='form_comment="'.addslashes($this->comment).'",';
 		$query.='form_parameters="'.addslashes($this->parameters).'",';
 		$query.='form_type="'.addslashes($this->type).'"';
 		
@@ -487,7 +508,8 @@ class contribution_area_form {
 				'type' => "form",
 				'form_id' => $this->id,
 				'parent_type' => $this->type,
-				'name' => $this->name
+		        'name' => $this->name,
+		        'comment' => $this->comment,
 		);
 		return $form;
 	}
@@ -539,8 +561,6 @@ class contribution_area_form {
 	 */
 	protected function recompose_data($property_name, $property_uri, $datatype_class_name){
 		$values = array();	
-
-		
 		if(isset($this->unserialized_parameters->$property_name)) {
 			foreach($this->unserialized_parameters->$property_name as $key => $value){
 				if($key == "default_value" && is_array($value)){
@@ -551,6 +571,9 @@ class contribution_area_form {
 						}
 						if (!empty($val->display_label)) {
 							$value_properties["display_label"] = stripslashes(encoding_normalize::utf8_decode($val->display_label)); 							
+						}
+						if (empty($val->type)) {
+						    $val->type = "http://www.w3.org/2000/01/rdf-schema#Literal";
 						}
 						
 						if ($datatype_class_name == 'onto_contribution_datatype_merge_properties') {
@@ -571,7 +594,7 @@ class contribution_area_form {
 								}
 							}
 						}						
-						$values[] = new $datatype_class_name($val->value, $val->type, $value_properties,'');
+						$values[] = new $datatype_class_name((isset($val->value) ? $val->value : null), $val->type, $value_properties,'');
 					}
 				}
 			}
@@ -721,6 +744,10 @@ class contribution_area_form {
 		return $this->name;
 	}
 	
+	public function get_comment() {
+	    return $this->comment;
+	}
+	
 	/**
 	 * Retourne le script de redirection post sauvegarde ou suppression
 	 * @param number $area Identifiant de l'espace vers lequel faire une redirection
@@ -823,6 +850,7 @@ class contribution_area_form {
 		// On vide l'id, le nom et on affiche le formulaire.
 		$this->id = 0;
 		$this->name = '';
+		$this->comment = '';
 		return $this->get_form($area);
 	}
 	

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: tu_notice.class.php,v 1.45 2018-12-21 14:56:25 ngantier Exp $
+// $Id: tu_notice.class.php,v 1.46 2019-03-28 21:47:25 ccraig Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -391,6 +391,7 @@ class tu_notice {
 	        if('$what_sel')".$item.".appendChild(sel_f_".$item.");
 	        ".$item.".appendChild(space.cloneNode(false));
 	        ".$item.".appendChild(del_f_".$item.");	        
+	        ".$item.".appendChild(document.getElementById('button_add_".$item."'));	        
 	        template.appendChild(".$item.");
 	        
 	        child_".$item."= document.createElement('div');
@@ -454,13 +455,17 @@ class tu_notice {
 		$aff= str_replace('!!bouton_parcourir!!', $bouton_parcourir, $aff);	
 
 		$template=$script_js."<div id='add".$item."' class='row'>";
-		$template.="<div class='row'><label for='f_".$item."' class='etiquette'>".$label."</label></div>";
+		$template.="<div class='row'>
+						<label for='f_".$item."' class='etiquette'>".$label."</label>
+						<input class='bouton' value='+' onclick='add_$item();' type='button'>
+					</div>";
 		$num=0;
 		if(!isset($values[0]) || !$values[0]) {
 			$values[0]["label"] = "";
 			$values[0]["id"]= 0;
 			$values[0]["objets"] = array();
 		}
+		$last_id = end($values)['id'];
 		foreach($values as $value) {
 			$label_element=$value["label"];
 			$id_element=$value["id"];
@@ -468,9 +473,8 @@ class tu_notice {
 			$temp= str_replace('!!label_element!!', htmlentities($label_element,ENT_QUOTES,$charset), $temp);	
 			$temp= str_replace('!!num!!', $num, $temp);	
 			
-			
-			if(!$num){
-			    $temp= str_replace('!!bouton_ajouter!!', " <input class='bouton' value='".$msg["req_bt_add_line"]."' onclick='add_".$item."();' type='button'>", $temp);	
+			if($id_element == $last_id){
+			    $temp= str_replace('!!bouton_ajouter!!', "<input id='button_add_".$item."' class='bouton' value='".$msg["req_bt_add_line"]."' onclick='add_".$item."();' type='button'>", $temp);	
 			    $temp= str_replace('!!tu_callback!!', 'callback="tu_add_callback"', $temp);
 			}else{ 
 			    $temp= str_replace('!!bouton_ajouter!!', "", $temp);

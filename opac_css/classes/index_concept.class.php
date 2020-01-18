@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index_concept.class.php,v 1.3 2017-02-28 11:43:27 dgoron Exp $
+// $Id: index_concept.class.php,v 1.4 2019-06-18 12:51:35 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -342,7 +342,7 @@ class index_concept {
 	
 	public static function update_linked_elements($num_concept){
 		global $dbh;
-		$num_concept+=0;
+		$num_concept = intval($num_concept);
 		$query = "select num_object,type_object from index_concept where num_concept = ".$num_concept;
 		$result = pmb_mysql_query($query, $dbh);
 		if ($result && pmb_mysql_num_rows($result)) {

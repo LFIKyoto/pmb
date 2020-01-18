@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_account.class.php,v 1.38 2017-11-21 12:01:00 dgoron Exp $
+// $Id: rent_account.class.php,v 1.39 2019-07-05 13:25:15 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -1092,7 +1092,7 @@ class rent_account {
 		$this->num_invoice = $num_invoice;
 	}
 		
-	static function get_uniform_title_fields($uniform_title_id) {
+	public static function get_uniform_title_fields($uniform_title_id) {
 		$tu= new titre_uniforme($uniform_title_id);
 		return $tu;
 	}

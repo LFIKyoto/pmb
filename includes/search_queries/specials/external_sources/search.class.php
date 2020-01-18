@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search.class.php,v 1.26 2018-05-23 08:38:27 ngantier Exp $
+// $Id: search.class.php,v 1.27 2019-03-12 13:01:58 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -84,6 +84,9 @@ class external_sources {
     	$valeur_="field_".$this->n_ligne."_s_".$this->id;
     	global ${$valeur_};
     	$valeur=${$valeur_};
+    	if(is_array($valeur)) {
+    		$_SESSION["checked_sources"] = $valeur;
+    	}
     	global $charset, $class_path,$include_path,$base_path;
     	
     	//Override le timeout du serveur mysql, pour être sûr que le socket dure assez longtemps pour aller jusqu'aux ajouts des résultats dans la base. 
@@ -172,7 +175,7 @@ class external_sources {
 		return $t_table; 
     }
     
-    //fonction de traduction litterale de la requete effectuee (renvoie un tableau des termes saisis)
+    //fonction de traduction littérale de la requête effectuée (renvoie un tableau des termes saisis)
     public function make_human_query() {
     	global $msg;
     	global $include_path;

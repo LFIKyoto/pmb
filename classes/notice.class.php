@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 //  2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice.class.php,v 1.306 2018-12-04 10:26:44 apetithomme Exp $
+// $Id: notice.class.php,v 1.317.2.1 2019-10-30 08:15:48 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -423,6 +423,12 @@ require_once($class_path.'/event/events/event_record.class.php');
 			return detectFormatDate($annee);
 		}
 		
+		public static function get_niveau_biblio($notice_id) {
+		    $query = "SELECT niveau_biblio FROM notices WHERE notice_id = ".$notice_id;
+		    $result = pmb_mysql_query($query);
+		    return pmb_mysql_result($result, 0, 'niveau_biblio');
+		}
+		
 		protected function get_tab_responsabilities_form() {
 			global $charset;
 			global $value_deflt_fonction;
@@ -432,112 +438,141 @@ require_once($class_path.'/event/events/event_record.class.php');
 			global $notice_responsabilities_secondary_form_tpl;
 				
 			$tab_responsabilities_form = $notice_tab_responsabilities_form_tpl;
-
 			$fonction = new marc_list('function');
 				
-			$as = array_search ("0", $this->responsabilites["responsabilites"]) ;
-			if ($as!== FALSE && $as!== NULL) {
-				$auteur_0 = $this->responsabilites["auteurs"][$as] ;
+			$as = array_search ("0", $this->responsabilites["responsabilites"]);
+			if ($as !== false && $as !== null) {
+				$auteur_0 = $this->responsabilites["auteurs"][$as];
 			} else {
 				$auteur_0 = array(
 						'id' => 0,
-						'fonction' => ($value_deflt_fonction ? $value_deflt_fonction : ''),
+						'fonction' => (!empty($value_deflt_fonction) ? $value_deflt_fonction : ''),
 						'responsability' => '',
 						'id_responsability' => 0
 				);
 			}
-			$auteur = new auteur($auteur_0["id"]);
+			$authority_isbd = "";
+			if ($auteur_0["id"] != 0) {
+    			$authority_instance = authorities_collection::get_authority(AUT_TABLE_AUTHORITY, 0, [ 'num_object' => $auteur_0["id"], 'type_object' => AUT_TABLE_AUTHORS]);
+    			$authority_isbd = $authority_instance->get_isbd();
+			}
 			
-			if($pmb_authors_qualification){
-				$vedette_ui = new vedette_ui(new vedette_composee(vedette_composee::get_vedette_id_from_object($auteur_0["id_responsability"],TYPE_NOTICE_RESPONSABILITY_PRINCIPAL), static::$vedette_composee_config_filename));
+			if (!empty($pmb_authors_qualification)) {
+				$vedette_ui = new vedette_ui(new vedette_composee(vedette_composee::get_vedette_id_from_object($auteur_0["id_responsability"], TYPE_NOTICE_RESPONSABILITY_PRINCIPAL), static::$vedette_composee_config_filename));
 				$tab_responsabilities_form = str_replace('!!vedette_author!!', $vedette_ui->get_form('role', 0, 'notice'), $tab_responsabilities_form);
-			}else{
+			} else {
 				$tab_responsabilities_form = str_replace('!!vedette_author!!', "", $tab_responsabilities_form);
 			}
 			
 			$tab_responsabilities_form = str_replace('!!iaut!!', 0, $tab_responsabilities_form);	
-				
-			$tab_responsabilities_form = str_replace('!!aut0_id!!',			$auteur_0["id"], $tab_responsabilities_form);
-			$tab_responsabilities_form = str_replace('!!aut0!!',				htmlentities($auteur->get_isbd(),ENT_QUOTES, $charset), $tab_responsabilities_form);
-			$tab_responsabilities_form = str_replace('!!f0_code!!',			$auteur_0["fonction"], $tab_responsabilities_form);
-			$tab_responsabilities_form = str_replace('!!f0!!',				($auteur_0["fonction"] ? $fonction->table[$auteur_0["fonction"]] : ''), $tab_responsabilities_form);
+			$tab_responsabilities_form = str_replace('!!aut0_id!!',	$auteur_0["id"], $tab_responsabilities_form);
+			$tab_responsabilities_form = str_replace('!!aut0!!', htmlentities($authority_isbd, ENT_QUOTES, $charset), $tab_responsabilities_form);
+			$tab_responsabilities_form = str_replace('!!f0_code!!', $auteur_0["fonction"], $tab_responsabilities_form);
+			$tab_responsabilities_form = str_replace('!!f0!!', ($auteur_0["fonction"] ? $fonction->table[$auteur_0["fonction"]] : ''), $tab_responsabilities_form);
 							
 			$autres_auteurs = '';
-			$as = array_keys ($this->responsabilites["responsabilites"], "1" ) ;
-			$max_aut1 = (count($as)) ;
-			if ($max_aut1==0) $max_aut1=1;
-			for ($i = 0 ; $i < $max_aut1 ; $i++) {
-				if (isset($as[$i]) && $as[$i]!== FALSE && $as[$i]!== NULL) {
-					$indice = $as[$i] ;
-					$auteur_1 = $this->responsabilites["auteurs"][$indice] ;
+			$as = array_keys($this->responsabilites["responsabilites"], "1");
+			$max_aut1 = count($as);
+			if (empty($max_aut1)) {
+			    $max_aut1 = 1;
+			}
+			for ($i = 0; $i < $max_aut1; $i++) {
+				if (isset($as[$i]) && $as[$i]!== false && $as[$i]!== null) {
+					$indice = $as[$i];
+					$auteur_1 = $this->responsabilites["auteurs"][$indice];
 				} else {
 					$auteur_1 = array(
 							'id' => 0,
-							'fonction' => ($value_deflt_fonction ? $value_deflt_fonction : ''),
+							'fonction' => (!empty($value_deflt_fonction) ? $value_deflt_fonction : ''),
 							'responsability' => '',
 							'id_responsability' => 0
 					);
 				}
-				$auteur = new auteur($auteur_1["id"]);
-				$ptab_aut_autres = $notice_responsabilities_others_form_tpl;
-				if($i){
-					$ptab_aut_autres = str_replace('!!bouton_add_display!!', 'display:none', $ptab_aut_autres);
-				}else{
-					$ptab_aut_autres = str_replace('!!bouton_add_display!!', '', $ptab_aut_autres);
+				$authority_isbd = "";
+				if ($auteur_1["id"] != 0) {
+    				$authority_instance = authorities_collection::get_authority(AUT_TABLE_AUTHORITY, 0, [ 'num_object' => $auteur_1["id"], 'type_object' => AUT_TABLE_AUTHORS]);
+    				$authority_isbd = trim($authority_instance->get_isbd());
 				}
-				if($pmb_authors_qualification){
-					$vedette_ui = new vedette_ui(new vedette_composee(vedette_composee::get_vedette_id_from_object($auteur_1["id_responsability"],TYPE_NOTICE_RESPONSABILITY_AUTRE), static::$vedette_composee_config_filename));				
-					$ptab_aut_autres = str_replace('!!vedette_author!!', $vedette_ui->get_form('role_autre', $i, 'notice','',0), $ptab_aut_autres);
-				}else{
+				
+				$ptab_aut_autres = $notice_responsabilities_others_form_tpl;
+				if ($i == 0) {
+					$ptab_aut_autres = str_replace('!!bouton_add_display!!', '', $ptab_aut_autres);
+				} else {
+					$ptab_aut_autres = str_replace('!!bouton_add_display!!', 'display:none', $ptab_aut_autres);
+				}
+				$button_add = '';
+
+				if ($i == ($max_aut1 -1)) {
+					$button_add = "<input type='button' id='button_add_f_aut1' class='bouton' value='+' onClick=\"add_aut(1);\"/>";
+				}
+				
+				$ptab_aut_autres = str_replace('!!button_add_aut1!!', $button_add, $ptab_aut_autres);
+
+				if (!empty($pmb_authors_qualification)) {
+					$vedette_ui = new vedette_ui(new vedette_composee(vedette_composee::get_vedette_id_from_object($auteur_1["id_responsability"], TYPE_NOTICE_RESPONSABILITY_AUTRE), static::$vedette_composee_config_filename));				
+					$ptab_aut_autres = str_replace('!!vedette_author!!', $vedette_ui->get_form('role_autre', $i, 'notice', '', 0), $ptab_aut_autres);
+				} else {
 					$ptab_aut_autres = str_replace('!!vedette_author!!', "", $ptab_aut_autres);
 				}
-				$ptab_aut_autres = str_replace('!!iaut!!', $i, $ptab_aut_autres) ;
-				$ptab_aut_autres = str_replace('!!aut1_id!!',			$auteur_1["id"], $ptab_aut_autres);
-				$ptab_aut_autres = str_replace('!!aut1!!',				htmlentities($auteur->get_isbd(),ENT_QUOTES, $charset), $ptab_aut_autres);
-				$ptab_aut_autres = str_replace('!!f1_code!!',			$auteur_1["fonction"], $ptab_aut_autres);
-				$ptab_aut_autres = str_replace('!!f1!!',				($auteur_1["fonction"] ? $fonction->table[$auteur_1["fonction"]] : ''), $ptab_aut_autres);
-				$autres_auteurs .= $ptab_aut_autres ;
+				$ptab_aut_autres = str_replace('!!iaut!!', $i, $ptab_aut_autres);
+				$ptab_aut_autres = str_replace('!!aut1_id!!', $auteur_1["id"], $ptab_aut_autres);
+				$ptab_aut_autres = str_replace('!!aut1!!', htmlentities($authority_isbd, ENT_QUOTES, $charset), $ptab_aut_autres);
+				$ptab_aut_autres = str_replace('!!f1_code!!', $auteur_1["fonction"], $ptab_aut_autres);
+				$ptab_aut_autres = str_replace('!!f1!!', ($auteur_1["fonction"] ? $fonction->table[$auteur_1["fonction"]] : ''), $ptab_aut_autres);
+				$autres_auteurs .= $ptab_aut_autres;
 			}
 			$tab_responsabilities_form = str_replace('!!max_aut1!!', $max_aut1, $tab_responsabilities_form);
 			
 			$auteurs_secondaires = '';
-			$as = array_keys ($this->responsabilites["responsabilites"], "2" ) ;
-			$max_aut2 = (count($as)) ;
-			if ($max_aut2==0) $max_aut2=1;
-			for ($i = 0 ; $i < $max_aut2 ; $i++) {
-				if (isset($as[$i]) && $as[$i]!== FALSE && $as[$i]!== NULL) {
-					$indice = $as[$i] ;
-					$auteur_2 = $this->responsabilites["auteurs"][$indice] ;
+			$as = array_keys($this->responsabilites["responsabilites"], "2");
+			$max_aut2 = count($as);
+			if (empty($max_aut2)) {
+			    $max_aut2 = 1;
+			}
+			for ($i = 0; $i < $max_aut2; $i++) {
+				if (isset($as[$i]) && $as[$i] !== false && $as[$i] !== null) {
+					$indice = $as[$i];
+					$auteur_2 = $this->responsabilites["auteurs"][$indice];
 				} else {
 					$auteur_2 = array(
 							'id' => 0,
-							'fonction' => ($value_deflt_fonction ? $value_deflt_fonction : ''),
+							'fonction' => (!empty($value_deflt_fonction) ? $value_deflt_fonction : ''),
 							'responsability' => '',
 							'id_responsability' => 0
 					);
 				}
-				$auteur = new auteur($auteur_2["id"]);
-				$ptab_aut_autres = $notice_responsabilities_secondary_form_tpl;
-				if($i){
-					$ptab_aut_autres = str_replace('!!bouton_add_display!!', 'display:none', $ptab_aut_autres);
-				}else{
-					$ptab_aut_autres = str_replace('!!bouton_add_display!!', '', $ptab_aut_autres);
+				$authority_isbd = "";
+				if ($auteur_2["id"] != 0) {
+    				$authority_instance = authorities_collection::get_authority(AUT_TABLE_AUTHORITY, 0, [ 'num_object' => $auteur_2["id"], 'type_object' => AUT_TABLE_AUTHORS]);
+    				$authority_isbd = $authority_instance->get_isbd();
 				}
-				if($pmb_authors_qualification){
-					$vedette_ui = new vedette_ui(new vedette_composee(vedette_composee::get_vedette_id_from_object($auteur_2["id_responsability"],TYPE_NOTICE_RESPONSABILITY_SECONDAIRE), static::$vedette_composee_config_filename));
-					$ptab_aut_autres = str_replace('!!vedette_author!!', $vedette_ui->get_form('role_secondaire', $i, 'notice','',0), $ptab_aut_autres);
-				}else{
+				
+				$ptab_aut_autres = $notice_responsabilities_secondary_form_tpl;
+ 				if ($i == 0) {
+ 					$ptab_aut_autres = str_replace('!!bouton_add_display!!', '', $ptab_aut_autres);
+ 				} else {
+ 					$ptab_aut_autres = str_replace('!!bouton_add_display!!', 'display:none', $ptab_aut_autres);
+ 				}
+ 				$button_add = '';
+				if ($i == ($max_aut2 - 1)) {
+					$button_add = "<input type='button' id='button_add_f_aut2' style='!!bouton_add_display!!' class='bouton' value='+' onClick=\"add_aut(2);\"/>";
+				}
+				$ptab_aut_autres = str_replace('!!button_add_aut2!!', $button_add, $ptab_aut_autres);
+
+				if (!empty($pmb_authors_qualification)) {
+					$vedette_ui = new vedette_ui(new vedette_composee(vedette_composee::get_vedette_id_from_object($auteur_2["id_responsability"], TYPE_NOTICE_RESPONSABILITY_SECONDAIRE), static::$vedette_composee_config_filename));
+					$ptab_aut_autres = str_replace('!!vedette_author!!', $vedette_ui->get_form('role_secondaire', $i, 'notice', '', 0), $ptab_aut_autres);
+				} else {
 					$ptab_aut_autres = str_replace('!!vedette_author!!', "", $ptab_aut_autres);
 				}	
 				$ptab_aut_autres = str_replace('!!iaut!!', $i, $ptab_aut_autres);					
-				$ptab_aut_autres = str_replace('!!aut2_id!!',			$auteur_2["id"], $ptab_aut_autres);
-				$ptab_aut_autres = str_replace('!!aut2!!',				htmlentities($auteur->get_isbd(),ENT_QUOTES, $charset), $ptab_aut_autres);
-				$ptab_aut_autres = str_replace('!!f2_code!!',			$auteur_2["fonction"], $ptab_aut_autres);
-				$ptab_aut_autres = str_replace('!!f2!!',				($auteur_2["fonction"] ? $fonction->table[$auteur_2["fonction"]] : ''), $ptab_aut_autres);
-				$auteurs_secondaires .= $ptab_aut_autres ;
+				$ptab_aut_autres = str_replace('!!aut2_id!!', $auteur_2["id"], $ptab_aut_autres);
+				$ptab_aut_autres = str_replace('!!aut2!!', htmlentities($authority_isbd, ENT_QUOTES, $charset), $ptab_aut_autres);
+				$ptab_aut_autres = str_replace('!!f2_code!!', $auteur_2["fonction"], $ptab_aut_autres);
+				$ptab_aut_autres = str_replace('!!f2!!', ($auteur_2["fonction"] ? $fonction->table[$auteur_2["fonction"]] : ''), $ptab_aut_autres);
+				$auteurs_secondaires .= $ptab_aut_autres;
 			}
 			$tab_responsabilities_form = str_replace('!!max_aut2!!', $max_aut2, $tab_responsabilities_form);
-			
 			$tab_responsabilities_form = str_replace('!!autres_auteurs!!', $autres_auteurs, $tab_responsabilities_form);
 			$tab_responsabilities_form = str_replace('!!auteurs_secondaires!!', $auteurs_secondaires, $tab_responsabilities_form);
 			return $tab_responsabilities_form;
@@ -584,36 +619,53 @@ require_once($class_path.'/event/events/event_record.class.php');
 			$tab_lang_form = $notice_tab_lang_form_tpl;
 			// langues repetables
 			$lang_repetables = '';
-			if (sizeof($this->langues)==0) $max_lang = 1 ;
-			else $max_lang = sizeof($this->langues) ;
-			for ($i = 0 ; $i < $max_lang ; $i++) {
-				if ($i) $ptab_lang = str_replace('!!ilang!!', $i, $notice_lang_next_form_tpl) ;
-				else $ptab_lang = str_replace('!!ilang!!', $i, $notice_lang_first_form_tpl) ;
-				if ( sizeof($this->langues)==0 ) {
+			if (empty($this->langues)) {
+			    $max_lang = 1;
+			} else {
+			    $max_lang = count($this->langues);
+			}
+			for ($i = 0; $i < $max_lang; $i++) {
+			    if ($i == 0) {
+			        $ptab_lang = str_replace('!!ilang!!', $i, $notice_lang_first_form_tpl);
+			    } else {
+			        $ptab_lang = str_replace('!!ilang!!', $i, $notice_lang_next_form_tpl);
+			    }
+			    if ($i == $max_lang - 1) {
+			        $ptab_lang = str_replace('!!button_add_lang!!', "<input id='button_add_f_lang_code' type='button' class='bouton' value='+' onClick=\"add_lang();\"/>", $ptab_lang);
+			    } else {
+			        $ptab_lang = str_replace('!!button_add_lang!!', '', $ptab_lang);
+			    }
+				if (empty($this->langues)) {
 					$ptab_lang = str_replace('!!lang_code!!', '', $ptab_lang);
 					$ptab_lang = str_replace('!!lang!!', '', $ptab_lang);
 				} else {
 					$ptab_lang = str_replace('!!lang_code!!', $this->langues[$i]["lang_code"], $ptab_lang);
-					$ptab_lang = str_replace('!!lang!!',htmlentities($this->langues[$i]["langue"],ENT_QUOTES, $charset), $ptab_lang);
+					$ptab_lang = str_replace('!!lang!!', htmlentities($this->langues[$i]["langue"], ENT_QUOTES, $charset), $ptab_lang);
 				}
-				$lang_repetables .= $ptab_lang ;
+				$lang_repetables .= $ptab_lang;
 			}
 			$tab_lang_form = str_replace('!!max_lang!!', $max_lang, $tab_lang_form);
 			$tab_lang_form = str_replace('!!langues_repetables!!', $lang_repetables, $tab_lang_form);
 			
 			// langues originales repetables
 			$langorg_repetables = '';
-			if (sizeof($this->languesorg)==0) $max_langorg = 1 ;
-			else $max_langorg = sizeof($this->languesorg) ;
-			for ($i = 0 ; $i < $max_langorg ; $i++) {
-				if ($i) $ptab_lang = str_replace('!!ilangorg!!', $i, $notice_langorg_next_form_tpl) ;
-				else $ptab_lang = str_replace('!!ilangorg!!', $i, $notice_langorg_first_form_tpl) ;
-				if ( sizeof($this->languesorg)==0 ) {
+			if (empty($this->languesorg)) {
+			    $max_langorg = 1;
+			} else {
+			    $max_langorg = count($this->languesorg);
+			}
+			for ($i = 0; $i < $max_langorg; $i++) {
+			    if ($i == 0) {
+			        $ptab_lang = str_replace('!!ilangorg!!', $i, $notice_langorg_first_form_tpl);
+			    } else {
+			        $ptab_lang = str_replace('!!ilangorg!!', $i, $notice_langorg_next_form_tpl);
+			    }
+				if (empty($this->languesorg)) {
 					$ptab_lang = str_replace('!!langorg_code!!', '', $ptab_lang);
 					$ptab_lang = str_replace('!!langorg!!', '', $ptab_lang);
 				} else {
 					$ptab_lang = str_replace('!!langorg_code!!', $this->languesorg[$i]["lang_code"], $ptab_lang);
-					$ptab_lang = str_replace('!!langorg!!',htmlentities($this->languesorg[$i]["langue"],ENT_QUOTES, $charset), $ptab_lang);
+					$ptab_lang = str_replace('!!langorg!!', htmlentities($this->languesorg[$i]["langue"], ENT_QUOTES, $charset), $ptab_lang);
 				}
 				$langorg_repetables .= $ptab_lang ;
 			}
@@ -623,54 +675,68 @@ require_once($class_path.'/event/events/event_record.class.php');
 		}
 		
 		protected function get_tab_indexation_form() {
-			global $charset;
+		    global $charset, $msg;
 			global $notice_tab_indexation_form_tpl, $notice_indexation_first_form_tpl, $notice_indexation_next_form_tpl;
 			global $thesaurus_concepts_active;
 			global $thesaurus_categories_affichage_ordre;
-			global $thesaurus_mode_pmb, $thesaurus_classement_mode_pmb;
+			global $thesaurus_mode_pmb, $thesaurus_classement_mode_pmb, $pmb_keyword_sep;
 			
 			$tab_indexation_form = $notice_tab_indexation_form_tpl;
 			
 			// categories
 			$categ_repetables = '';
 			//tri ?
-			if(($thesaurus_categories_affichage_ordre==0) && count($this->categories)){
-				$tmp=array();
-				foreach ( $this->categories as $key=>$value ) {
-					$tmp[$key]=strip_tags($value['categ_libelle']);
+			if ($thesaurus_categories_affichage_ordre == 0 && !empty($this->categories)) {
+				$tmp = array();
+				foreach ($this->categories as $key => $value) {
+					$tmp[$key] = strip_tags($value['categ_libelle']);
 				}
-				$tmp=array_map("convert_diacrit",$tmp);//On enlève les accents
-				$tmp=array_map("strtoupper",$tmp);//On met en majuscule
+				$tmp = array_map("convert_diacrit", $tmp);//On enlève les accents
+				$tmp = array_map("strtoupper", $tmp);//On met en majuscule
 				asort($tmp);//Tri sur les valeurs en majuscule sans accent
-				foreach ( $tmp as $key => $value ) {
-					$tmp[$key]=$this->categories[$key];//On reprend les bons couples
+				foreach ($tmp as $key => $value) {
+					$tmp[$key] = $this->categories[$key];//On reprend les bons couples
 				}
-				$this->categories=array_values($tmp);
+				$this->categories = array_values($tmp);
 			}
-			if (sizeof($this->categories)==0) $max_categ = 1 ;
-			else $max_categ = sizeof($this->categories) ;
-			$tab_categ_order="";
-			for ($i = 0 ; $i < $max_categ ; $i++) {
-				if(isset($this->categories[$i]["categ_id"]) && $this->categories[$i]["categ_id"]) {
-					$categ_id = $this->categories[$i]["categ_id"] ;
+			if (empty($this->categories)) {
+			    $max_categ = 1;
+			} else {
+			    $max_categ = count($this->categories);
+			}
+			$tab_categ_order = "";
+			for ($i = 0; $i < $max_categ; $i++) {
+				if (!empty($this->categories[$i]["categ_id"])) {
+					$categ_id = $this->categories[$i]["categ_id"];
 				} else {
 					$categ_id = 0;
 				}
 				$categ = new category($categ_id);
 			
-				if ($i==0) $ptab_categ = str_replace('!!icateg!!', $i, $notice_indexation_first_form_tpl) ;
-				else $ptab_categ = str_replace('!!icateg!!', $i, $notice_indexation_next_form_tpl) ;
-					
-				$ptab_categ = str_replace('!!categ_id!!',			$categ_id, $ptab_categ);
-				if ( sizeof($this->categories)==0 ) {
+				if ($i == 0) {
+				    $ptab_categ = str_replace('!!icateg!!', $i, $notice_indexation_first_form_tpl);
+				} else {
+				    $ptab_categ = str_replace('!!icateg!!', $i, $notice_indexation_next_form_tpl);
+				}
+				if ($i == $max_categ - 1) {
+				    $ptab_categ = str_replace("!!add_categ_btn!!", "<input id='add_categ_btn' type='button' class='bouton' value='+' onClick=\"add_categ();\"/>", $ptab_categ);
+				} else {
+				    $ptab_categ = str_replace('!!add_categ_btn!!', '', $ptab_categ);
+				}
+				$ptab_categ = str_replace('!!categ_id!!', $categ_id, $ptab_categ);
+				
+				if (empty($this->categories)) {
 					$ptab_categ = str_replace('!!categ_libelle!!', '', $ptab_categ);
 				} else {
-					if ($thesaurus_mode_pmb) $nom_thesaurus='['.$categ->thes->getLibelle().'] ' ;
-					else $nom_thesaurus='' ;
-					$ptab_categ = str_replace('!!categ_libelle!!',	htmlentities($nom_thesaurus.$categ->catalog_form,ENT_QUOTES, $charset), $ptab_categ);
-						
-					if($tab_categ_order!="")$tab_categ_order.=",";
-					$tab_categ_order.=$i;
+				    $nom_thesaurus = '';
+				    if (!empty($thesaurus_mode_pmb)) {
+				        $nom_thesaurus = '['.$categ->thes->getLibelle().'] ';
+				    }
+			        $ptab_categ = str_replace('!!categ_libelle!!',	htmlentities($nom_thesaurus.$categ->catalog_form, ENT_QUOTES, $charset), $ptab_categ);
+			        if ($tab_categ_order != "") {
+			            $tab_categ_order .= ",";
+			        }
+					$tab_categ_order .= $i;
 				}
 				$categ_repetables .= $ptab_categ ;
 			}
@@ -680,9 +746,9 @@ require_once($class_path.'/event/events/event_record.class.php');
 			
 			// indexation interne
 			$tab_indexation_form = str_replace('!!indexint_id!!', $this->indexint, $tab_indexation_form);
-			if ($this->indexint){
+			if (!empty($this->indexint)) {
 				$indexint = new indexint($this->indexint);
-				$tab_indexation_form = str_replace('!!indexint!!', htmlentities($indexint->get_isbd(),ENT_QUOTES, $charset), $tab_indexation_form);
+				$tab_indexation_form = str_replace('!!indexint!!', htmlentities($indexint->get_isbd(), ENT_QUOTES, $charset), $tab_indexation_form);
 				$tab_indexation_form = str_replace('!!num_pclass!!', $indexint->id_pclass, $tab_indexation_form);
 			} else {
 				$tab_indexation_form = str_replace('!!indexint!!', '', $tab_indexation_form);
@@ -690,22 +756,25 @@ require_once($class_path.'/event/events/event_record.class.php');
 			}
 			
 			// indexation libre
-			$tab_indexation_form = str_replace('!!f_indexation!!', htmlentities($this->index_l,ENT_QUOTES, $charset), $tab_indexation_form);
-			global $pmb_keyword_sep ;
-			$sep="'$pmb_keyword_sep'";
-			if (!$pmb_keyword_sep) $sep="' '";
-			if(ord($pmb_keyword_sep)==0xa || ord($pmb_keyword_sep)==0xd) $sep=$msg['catalogue_saut_de_ligne'];
-			$tab_indexation_form = str_replace("!!sep!!",htmlentities($sep,ENT_QUOTES, $charset),$tab_indexation_form);
+			$tab_indexation_form = str_replace('!!f_indexation!!', htmlentities($this->index_l, ENT_QUOTES, $charset), $tab_indexation_form);
+			$sep = "'$pmb_keyword_sep'";
+			if (empty($pmb_keyword_sep)) {
+			    $sep = "' '";
+			}
+			if (ord($pmb_keyword_sep) == 0xa || ord($pmb_keyword_sep) == 0xd) {
+			    $sep = $msg['catalogue_saut_de_ligne'];
+			}
+			$tab_indexation_form = str_replace("!!sep!!",htmlentities($sep, ENT_QUOTES, $charset), $tab_indexation_form);
 				
 			// Indexation concept
-			if($thesaurus_concepts_active == 1){
-				if($this->duplicate_from_id) {
+			if ($thesaurus_concepts_active == 1) {
+				if (!empty($this->duplicate_from_id)) {
 					$index_concept = new index_concept($this->duplicate_from_id, TYPE_NOTICE);
 				} else {
 					$index_concept = new index_concept($this->id, TYPE_NOTICE);
 				}
 				$tab_indexation_form = str_replace('!!index_concept_form!!', $index_concept->get_form("notice"), $tab_indexation_form);
-			}else{
+			} else {
 				$tab_indexation_form = str_replace('!!index_concept_form!!', "", $tab_indexation_form);
 			}
 			return $tab_indexation_form;
@@ -784,7 +853,7 @@ require_once($class_path.'/event/events/event_record.class.php');
 			$combo = "<select name='indexation_lang' id='indexation_lang' class='saisie-20em' >";
 			if(!$this->indexation_lang) $combo .= "<option value='' selected>--</option>";
 			else $combo .= "<option value='' >--</option>";
-			while(list($cle, $value) = each($clang)) {
+			foreach ($clang as $cle => $value) {
 				// arabe seulement si on est en utf-8
 				if (($charset != 'utf-8' and $this->indexation_lang != 'ar') or ($charset == 'utf-8')) {
 					if(strcmp($cle, $this->indexation_lang) != 0) $combo .= "<option value='$cle'>$value ($cle)</option>";
@@ -1318,10 +1387,11 @@ require_once($class_path.'/event/events/event_record.class.php');
 		
 			$notice_replace=str_replace('!!old_notice_libelle!!', $this->tit1." - ".$this->code, $notice_replace);
 			$notice_replace=str_replace('!!id!!', $this->id, $notice_replace);
-			if ($deflt_notice_replace_keep_categories && sizeof($this->categories)) {
+			if (!empty($deflt_notice_replace_keep_categories) && !empty($this->categories)) {
 				// categories
 				$categories_to_replace = "";
-				for ($i = 0 ; $i < sizeof($this->categories) ; $i++) {
+				$nb_categories = count($this->categories);
+				for ($i = 0; $i < $nb_categories; $i++) {
 					$categ_id = $this->categories[$i]["categ_id"] ;
 					$categ = new category($categ_id);
 					$ptab_categ = str_replace('!!icateg!!', $i, $notice_replace_category) ;
@@ -1332,7 +1402,7 @@ require_once($class_path.'/event/events/event_record.class.php');
 					$categories_to_replace .= $ptab_categ ;
 				}
 				$notice_replace_categories=str_replace('!!notice_replace_category!!', $categories_to_replace, $notice_replace_categories);
-				$notice_replace_categories=str_replace('!!nb_categ!!', sizeof($this->categories), $notice_replace_categories);
+				$notice_replace_categories=str_replace('!!nb_categ!!', count($this->categories), $notice_replace_categories);
 				
 				$notice_replace=str_replace('!!notice_replace_categories!!', $notice_replace_categories, $notice_replace);
 			} else {
@@ -1834,7 +1904,7 @@ require_once($class_path.'/event/events/event_record.class.php');
 			// langues originales
 			$rqt_ins = "insert into notices_langues (num_notice, type_langue, code_langue, ordre_langue) VALUES ";
 			foreach ($this->languesorg as $order=>$langue) {
-				$rqt = $rqt_ins . " ('".$this->id."',0, '".$langue['lang_code']."',$order) " ;
+				$rqt = $rqt_ins . " ('".$this->id."',1, '".$langue['lang_code']."',$order) " ;
 				$res_ins = pmb_mysql_query($rqt);
 			}
 			
@@ -1962,7 +2032,7 @@ require_once($class_path.'/event/events/event_record.class.php');
 		
 			$by_notice= new notice($by);
 			if ($this->biblio_level != $by_notice->biblio_level || $this->hierar_level != $by_notice->hierar_level) {
-				return $msg[catal_rep_not_err1];
+				return $msg['catal_rep_not_err1'];
 			}
 			
 			// traitement des catégories (si conservation cochée)
@@ -2118,22 +2188,15 @@ require_once($class_path.'/event/events/event_record.class.php');
 			@pmb_mysql_query($requete);	
 			
 			//Suppression dans les listes de lecture partagées
-			$requete = "SELECT id_liste, notices_associees from opac_liste_lecture" ;			
-			$res=pmb_mysql_query($requete);
-			$id_tab=array();
-			while(($notices=pmb_mysql_fetch_object($res))){
-				$id_tab = explode(',',$notices->notices_associees);
-				for($i=0;$i<sizeof($id_tab);$i++){
-					if($id_tab[$i] == $id){
-						unset($id_tab[$i]);
-					}
-				}
-				$requete = "UPDATE opac_liste_lecture set notices_associees='".addslashes(implode(',',$id_tab))."' where id_liste='".$notices->id_liste."'";
-				pmb_mysql_query($requete);
-			}
+			$query = "delete from opac_liste_lecture_notices where opac_liste_lecture_notice_num=" . $id;
+			pmb_mysql_query($query);
 			
 			// Suppression des résas 
 			$requete = "DELETE FROM resa WHERE resa_idnotice=".$id;
+			pmb_mysql_query($requete);
+			
+			// Suppression des résas planifiées
+			$requete = "DELETE FROM resa_planning WHERE resa_idnotice=".$id;
 			pmb_mysql_query($requete);
 			
 			// Suppression des transferts_demande			
@@ -2264,7 +2327,33 @@ require_once($class_path.'/event/events/event_record.class.php');
 			}	
 			$tab[]=$notice_id;
 			return	$tab;
-		}	
+		}
+		
+		// Donne les id des notices de bulletins associées à la notice de pério
+		public static function get_list_bulletin_notice($notice_id){
+		    $tab=array();
+		    $query = "SELECT num_notice FROM bulletins WHERE bulletin_notice = ".$notice_id;
+		    $result = pmb_mysql_query($query);
+		    if($result && pmb_mysql_num_rows($result)) {
+		        while ($row = pmb_mysql_fetch_object($result)) {
+		            $tab[]=$row->num_notice;
+		        }
+		    }
+		    return	$tab;
+		}
+		
+		// Donne les id des notices d'articles associées à la notice de pério
+		public static function get_list_analysis($notice_id){
+		    $tab=array();
+		    $query = "SELECT analysis_notice FROM analysis JOIN bulletins ON bulletins.bulletin_id = analysis.analysis_bulletin WHERE bulletin_notice = ".$notice_id;
+		    $result = pmb_mysql_query($query);
+		    if($result && pmb_mysql_num_rows($result)) {
+		        while ($row = pmb_mysql_fetch_object($result)) {
+		            $tab[]=$row->analysis_notice;
+		        }
+		    }
+		    return	$tab;
+		}
 		
 		public static function majNotices_clean_tags($notice=0,$with_reindex=true) {
 			$requete = "select index_l ,notice_id from notices where index_l is not null and index_l!='' ";
@@ -2275,7 +2364,7 @@ require_once($class_path.'/event/events/event_record.class.php');
 			if($res && pmb_mysql_num_rows($res)){
 				while (($r = pmb_mysql_fetch_object($res))) {
 					$val=clean_tags($r->index_l);
-					$requete = "update notices set index_l='".addslashes($val)."' where notice_id=".$r->notice_id;
+					$requete = "update notices set index_l='".addslashes($val)."', update_date=update_date where notice_id=".$r->notice_id;
 					pmb_mysql_query($requete);
 					if($with_reindex && ($val != $r->index_l)){//On réindexe la notice si le nettoyage à réalisé des changements
 						static::majNoticesTotal($r->notice_id);
@@ -2579,6 +2668,7 @@ require_once($class_path.'/event/events/event_record.class.php');
 					$req_update .= ", index_n_contenu='".addslashes($ind_n_contenu)."'";
 					$req_update .= ", index_n_resume='".addslashes($ind_n_resume)."'";
 					$req_update .= ", index_matieres='".addslashes($ind_matieres)."'";
+					$req_update .= ", update_date=update_date";
 					$req_update .= " WHERE notice_id=$row->notice_id ";
 					$update = pmb_mysql_query($req_update);
 
@@ -2927,7 +3017,7 @@ require_once($class_path.'/event/events/event_record.class.php');
 		
 		/**
 		 * magic getter
-		 * @param unknown $name
+		 * @param string $name
 		 */
 		public function __get($name) {
 			$return = $this->look_for_attribute_in_class($this, $name);

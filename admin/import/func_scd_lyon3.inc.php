@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_scd_lyon3.inc.php,v 1.14 2018-01-09 08:54:31 jpermanne Exp $
+// $Id: func_scd_lyon3.inc.php,v 1.16 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -82,8 +82,8 @@ function import_new_notice_suite() {
 
 	//		Créer si besoin et récupérer l'id $categid_parent
 	//
-	for ($a=0; $a<sizeof($info_606_a); $a++) {
-		for ($j=0; $j<sizeof($info_606_j[$a]); $j++) {
+	for ($a=0; $a<count($info_606_a); $a++) {
+		for ($j=0; $j<count($info_606_j[$a]); $j++) {
 			if (!$libelle_j) $libelle_j .= $info_606_j[$a][$j] ;
 				else $libelle_j .= " ** ".$info_606_j[$a][$j] ;
 		}
@@ -98,7 +98,7 @@ function import_new_notice_suite() {
 		}
 		// récup des sous-categ en cascade sous $a
 		$categ_parent =  $categid_a ;
-		for ($x=0 ; $x < sizeof($info_606_x[$a]) ; $x++) {
+		for ($x=0 ; $x < count($info_606_x[$a]) ; $x++) {
 			$res_x = categories::searchLibelle(addslashes($info_606_x[$a][$x]), $thesaurus_defaut, 'fr_FR', $categ_parent);
 			if ($res_x) {
 				$categ_parent = $res_x;
@@ -116,7 +116,7 @@ function import_new_notice_suite() {
 				
 		// récup des categ géo à loger sous la categ géo principale
 		$categ_parent =  $id_rech_geo ;
-		for ($y=0 ; $y < sizeof($info_606_y[$a]) ; $y++) {
+		for ($y=0 ; $y < count($info_606_y[$a]) ; $y++) {
 			$res_y = categories::searchLibelle(addslashes($info_606_y[$a][$y]), $thesaurus_defaut, 'fr_FR', $categ_parent);
 			if($res_y) {
 				$categ_parent = $res_y;
@@ -133,7 +133,7 @@ function import_new_notice_suite() {
 		
 		// récup des categ chrono à loger sous la categ chrono principale
 		$categ_parent =  $id_rech_chrono ;
-		for ($z=0 ; $z < sizeof($info_606_z[$a]) ; $z++) {
+		for ($z=0 ; $z < count($info_606_z[$a]) ; $z++) {
 			$res_z = categories::searchLibelle(addslashes($info_606_z[$a][$z]), $thesaurus_defaut, 'fr_FR', $categ_parent);
 			if ($res_z) {
 				$categ_parent = $res_z;
@@ -188,7 +188,7 @@ function traite_exemplaires () {
 	// lu en 010$d de la notice
 	$price = $prix[0];
 	// la zone 852 est répétable
-	for ($nb_expl = 0; $nb_expl < sizeof ($info_852); $nb_expl++) {
+	for ($nb_expl = 0; $nb_expl < count($info_852); $nb_expl++) {
 		if ($info_852[$nb_expl]['b']=="IDC") {
 			/* préparation du tableau à passer à la méthode */
 			/* RAZ expl */
@@ -250,47 +250,5 @@ function traite_exemplaires () {
 
 // fonction spécifique d'export de la zone 995
 function export_traite_exemplaires ($ex=array()) {
-	global $msg, $dbh ;
-	
-	$subfields["a"] = $ex -> lender_libelle;
-	$subfields["c"] = $ex -> lender_libelle;
-	$subfields["f"] = $ex -> expl_cb;
-	$subfields["k"] = $ex -> expl_cote;
-	$subfields["u"] = $ex -> expl_note;
-
-	if ($ex->statusdoc_codage_import) $subfields["o"] = $ex -> statusdoc_codage_import;
-	if ($ex -> tdoc_codage_import) $subfields["r"] = $ex -> tdoc_codage_import;
-		else $subfields["r"] = "uu";
-	if ($ex -> sdoc_codage_import) $subfields["q"] = $ex -> sdoc_codage_import;
-		else $subfields["q"] = "u";
-	
-	global $export996 ;
-	$export996['f'] = $ex -> expl_cb ;
-	$export996['k'] = $ex -> expl_cote ;
-	$export996['u'] = $ex -> expl_note ;
-
-	$export996['m'] = substr($ex -> expl_date_depot, 0, 4).substr($ex -> expl_date_depot, 5, 2).substr($ex -> expl_date_depot, 8, 2) ;
-	$export996['n'] = substr($ex -> expl_date_retour, 0, 4).substr($ex -> expl_date_retour, 5, 2).substr($ex -> expl_date_retour, 8, 2) ;
-
-	$export996['a'] = $ex -> lender_libelle;
-	$export996['b'] = $ex -> expl_owner;
-
-	$export996['v'] = $ex -> location_libelle;
-	$export996['w'] = $ex -> ldoc_codage_import;
-
-	$export996['x'] = $ex -> section_libelle;
-	$export996['y'] = $ex -> sdoc_codage_import;
-
-	$export996['e'] = $ex -> tdoc_libelle;
-	$export996['r'] = $ex -> tdoc_codage_import;
-
-	$export996['1'] = $ex -> statut_libelle;
-	$export996['2'] = $ex -> statusdoc_codage_import;
-	$export996['3'] = $ex -> pret_flag;
-	
-	global $export_traitement_exemplaires ;
-	$export996['0'] = $export_traitement_exemplaires ;
-	
-	return 	$subfields ;
-
-	}	
+	return import_expl::export_traite_exemplaires($ex);
+}

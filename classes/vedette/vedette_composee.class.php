@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: vedette_composee.class.php,v 1.39 2018-12-06 10:53:36 apetithomme Exp $
+// $Id: vedette_composee.class.php,v 1.42.2.2 2019-11-27 13:36:40 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -46,7 +46,7 @@ class vedette_composee {
 	 * Singleton des configs lues pour ne pas reparser à chaque fois les XML
 	 * @var array ($config_filename => array('available_fields', 'subdivisions', 'separator'))
 	 */
-	static private $configs = array();
+	private static $configs = array();
 	
 	public function __construct($id = 0, $config_filename = "rameau"){
 		$this->id=$id+0;
@@ -200,7 +200,7 @@ class vedette_composee {
 	 * @access public
 	 */
 	public function get_nb_elements_subdivision($subdivision){
-		return sizeof($this->vedette_elements[$subdivision]);
+		return count($this->vedette_elements[$subdivision]);
 	}
 	
 	/**
@@ -233,16 +233,19 @@ class vedette_composee {
 		$query='select object_type, object_id, subdivision, position, num_available_field from vedette_object where num_vedette = '.$this->id.' order by position';
 		$result=pmb_mysql_query($query);
 		if(!pmb_mysql_error() && pmb_mysql_num_rows($result)){
-			while($element_from_database=pmb_mysql_fetch_object($result)){
-				$field=$this->get_at_available_field_num($element_from_database->num_available_field);
-				
-				$vedette_element_class_name=$field['class_name'];
-				require_once($class_path."/vedette/".$vedette_element_class_name.".class.php");
-				if (empty($field['params'])) {
-					$field['params'] = array();
-				}
-				$element = new $vedette_element_class_name($field["num"], $element_from_database->object_id, '', $field['params']);
-				$this->add_element($element, $element_from_database->subdivision, $element_from_database->position);
+		    while($element_from_database=pmb_mysql_fetch_object($result)){
+		        if ($element_from_database->object_id) {
+					$field=$this->get_at_available_field_num($element_from_database->num_available_field);
+					
+					$vedette_element_class_name=$field['class_name'];
+					if(!$vedette_element_class_name || !file_exists($class_path."/vedette/".$vedette_element_class_name.".class.php")) continue;
+					require_once($class_path."/vedette/".$vedette_element_class_name.".class.php");
+					if (empty($field['params'])) {
+						$field['params'] = array();
+					}
+					$element = new $vedette_element_class_name($field["num"], $element_from_database->object_id, '', $field['params']);
+					$this->add_element($element, $element_from_database->subdivision, $element_from_database->position);
+		        }
 			}
 		}
 	}
@@ -277,7 +280,7 @@ class vedette_composee {
 		return 0;
 	}
 	
-	static function replace($object_type, $id, $by){
+	public static function replace($object_type, $id, $by){
 		$responsabilities = array();
 		$query = 'select distinct link.num_object as reponsability_num, type_object as reponsability_type from vedette_object as obj, vedette_link as link WHERE obj.num_vedette=link.num_vedette and obj.object_type="'.$object_type.'" and obj.object_id='.$id;
 		$result = pmb_mysql_query($query);		
@@ -513,7 +516,7 @@ class vedette_composee {
 		foreach ($vedettes_id as $vedette_id) {
 			$vedette = new vedette_composee($vedette_id);
 			if ($vedette->update_label()) {
-				$query = "update vedette set label = '".$vedette->get_label()."' where id_vedette = ".$vedette->get_id();
+				$query = "update vedette set label = '".addslashes($vedette->get_label())."' where id_vedette = ".$vedette->get_id();
 				pmb_mysql_query($query);
 				
 				vedette_link::update_objects_linked_with_vedette($vedette);
@@ -575,6 +578,32 @@ class vedette_composee {
 			}
 		}
 		return $diplay;
+	}
+	
+	/**
+	 * Supprime un élement dans les vedettes et met à jour le label des vedettes concernées
+	 * @param int $element_id Identifiant en base de l'élément
+	 * @param int $element_type Type de l'élément
+	 */
+	public static function delete_element_and_update_vedettes_built_with_element($element_id, $element_type) {
+        $element_id = intval($element_id);
+        $element_type = intval($element_type);
+        
+        $query = "SELECT num_vedette FROM vedette_object WHERE object_type = $element_type and object_id = $element_id";
+        $result = pmb_mysql_query($query);
+        if (pmb_mysql_num_rows($result)) {
+            $query = "DELETE FROM vedette_object WHERE object_type = $element_type and object_id = $element_id";
+            pmb_mysql_query($query);
+            while ($row = pmb_mysql_fetch_assoc($result)) {
+                $vedette = new vedette_composee($row["num_vedette"]);
+                $vedette->update_label();
+                
+                $query = "update vedette set label = '".$vedette->get_label()."' where id_vedette = ".$vedette->get_id();
+                pmb_mysql_query($query);
+                
+                vedette_link::update_objects_linked_with_vedette($vedette);
+            }            
+        }
 	}
 
 	public static function get_element_type_num_from_type_str($vedette,$element_type) {

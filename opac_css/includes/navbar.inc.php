@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: navbar.inc.php,v 1.25 2018-12-28 14:56:48 dgoron Exp $
+// $Id: navbar.inc.php,v 1.26 2019-04-17 08:31:52 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -14,6 +14,7 @@ function printnavbar($page, $nbr_lignes, $nb_per_page, $url, $nb_per_page_custom
 	global $opac_items_pagination_custom;
 	global $cms_active;
 	
+	$page+= 0;
 	$nbrpages = ceil($nbr_lignes/$nb_per_page);
 	$precedente = $page-1;
 	$suivante = $page+1;
@@ -151,7 +152,8 @@ function printnavbar($page, $nbr_lignes, $nb_per_page, $url, $nb_per_page_custom
 function printnavbar_onclick($page, $nbrpages, $url,$action='') {
 	global $script_test_form;
 	global $msg;
-
+	
+	$page+= 0;
 	$precedente = $page-1;
 	$suivante = $page+1;
 

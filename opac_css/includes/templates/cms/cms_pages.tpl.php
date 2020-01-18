@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms_pages.tpl.php,v 1.1 2012-03-19 15:02:15 arenou Exp $
+// $Id: cms_pages.tpl.php,v 1.2 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
+
+global $cms_pages_list_tpl, $msg, $cms_pages_list_item_tpl, $cms_page_form_var_tpl_0, $cms_page_form_var_tpl, $cms_page_form_tpl, $base_path, $cms_page_form_del_button_tpl, $cms_page_form_ajax_tpl;
 
 $cms_pages_list_tpl="
 	<h3>".$msg["cms_menu_page_list"]."</h3>

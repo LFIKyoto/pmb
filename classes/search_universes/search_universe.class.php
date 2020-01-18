@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_universe.class.php,v 1.13 2018-07-26 09:45:31 tsamson Exp $
+// $Id: search_universe.class.php,v 1.13.6.2 2019-11-08 15:18:08 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -82,6 +82,7 @@ class search_universe {
 		global $base_path;
 		global $charset;
 		global $search_universe_content_form;
+		global $pmb_opac_url;
 		
 		$content_form = $search_universe_content_form;
 		$content_form = str_replace('!!universe_label!!', htmlentities($this->label, ENT_QUOTES, $charset), $content_form);
@@ -92,12 +93,15 @@ class search_universe {
 		if($this->id){
 			$interface_form->set_label($msg['search_universe_edit']);
 			$content_form = str_replace('!!universe_segments_form!!', $this->get_segments_form(), $content_form);
+			$content_form = str_replace('!!universe_id_field!!', $interface_form->get_display_field_text($msg['search_universe_id'], $this->id), $content_form);
+			$content_form = str_replace('!!universe_permalink_field!!', $interface_form->get_display_field_url($msg['search_universe_url'], $pmb_opac_url."index.php?lvl=search_universe&id=".$this->id), $content_form);
 		} else {
 			$interface_form->set_label($msg['search_universe_create']);
 			$content_form = str_replace('!!universe_segments_form!!', '', $content_form);
+    		$content_form = str_replace('!!universe_id_field!!','', $content_form);
+    		$content_form = str_replace('!!universe_permalink_field!!','', $content_form);
 		}
 		$content_form = str_replace('!!universe_id!!', $this->id, $content_form);
-		
 		$interface_form->set_object_id($this->id);
 		$interface_form->set_url_base($base_path."/admin.php?categ=search_universes&sub=universe");
 		$interface_form->set_content_form($content_form);
@@ -184,7 +188,6 @@ class search_universe {
 	public function get_opac_views_form() {
 		global $opac_opac_view_activate;
 		global $search_universe_opac_views;
-		
 		$form = '';
 		if($opac_opac_view_activate) {
 			$form = $search_universe_opac_views;

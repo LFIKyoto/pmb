@@ -3,7 +3,7 @@
 ****************************************************************************************
 © 2002-2017 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: pnb.xml,v 1.1 2018-06-06 09:25:44 ngantier Exp $ -->
+$Id: pnb.xml,v 1.1.6.1 2019-12-03 08:59:55 ngantier Exp $ -->
 <pmbquotas table="quotas_pnb">
 	<elements>
 	  	<element name="READER_CATEG" id="1" comment="Catégories de lecteurs">
@@ -47,25 +47,28 @@ $Id: pnb.xml,v 1.1 2018-06-06 09:25:44 ngantier Exp $ -->
 			<tablelinked>empr</tablelinked>
 			<linkedfield>id_empr</linkedfield>
 			<linkedid>id_empr</linkedid>
-			<table>empr_categ</table>
-			<field>id_categ_empr</field>
-			<label>libelle</label>
+			<table>empr</table>
+			<field>id_empr</field>
+			<label>concat(empr_nom,' ',empr_prenom)</label>
 		</element>
 	</elements>
 	
 	<types>
-		<type name="PNB_LOANS" elements_label="affectations" id="1" max="no" min="no" forcelend="no" conflit_min="no" conflit_max="no" comment="" short_comment="" filter_id="">
+		<type name="PNB_LOANS" id="1" max="no" min="no" forcelend="no" commentForcelend="du prêt" comment="Quotas de nombre de prêts" short_comment="nombre de documents">
+			<entity name="READER_CATEG" maxquota="yes">
+				<counttable>pret</counttable>
+				<countfield>pret_idempr</countfield>
+				<countfilter>pret_pnb_flag=1</countfilter>
+				<max_error_message>Le nombre total de prêts %s est atteint (%s)</max_error_message>
+				<partial_error_message>Le nombre de prêts par %s est atteint (%s)</partial_error_message>
+				<default_error_message>Le nombre de prêts par défaut est atteint (%s)</default_error_message>
+			</entity>
 			<quotas>
-				<on>READER_CATEG</on>
-				<on>READER_LOCATION</on>
-				<on>READER_STATUT</on>
-				<on>READER_CODESTAT</on>
-				<on>READER_LOCATION,READER_CATEG</on>
-				<on>READER_LOCATION,READER_STATUT</on>
-				<on>READER_LOCATION,READER_CODESTAT</on>
-				<on>READER_ALONE</on>
+				<on countfields="pret_idempr">READER_CATEG</on>
+				<on countfields="pret_idempr">READER_ALONE</on>
 			</quotas>
 		</type>
+	
 		<type name="PNB_PROLONGATION" elements_label="affectations" id="2" max="no" min="no" forcelend="no" conflit_min="no" conflit_max="no" comment="" short_comment="" filter_id="">
 			<quotas>
 				<on>READER_CATEG</on>

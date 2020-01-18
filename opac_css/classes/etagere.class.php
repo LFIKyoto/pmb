@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: etagere.class.php,v 1.1 2018-06-14 10:19:16 dgoron Exp $
+// $Id: etagere.class.php,v 1.2 2019-06-10 08:57:12 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -286,7 +286,7 @@ class etagere {
 		if(sizeof($liste)) {
 			$ret = pmb_bidi("<div class='row'><a href='javascript:expandAll()'><img src='".get_url_icon('expand_all.gif')."' id='expandall' style='border:0px'></a>
 				<a href='javascript:collapseAll()'><img src='".get_url_icon('collapse_all.gif')."' id='collapseall' style='border:0px'></a></div>");
-			while(list($cle, $valeur) = each($liste)) {
+			foreach ($liste as $cle => $valeur) {
 				$rqt_autorisation=explode(" ",$valeur['autorisations']);
 				if (array_search ($PMBuserid, $rqt_autorisation)!==FALSE || $PMBuserid==1) {
 					if(!isset($myCart))$myCart = new caddie(0);

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: harvest_profil_import.class.php,v 1.4 2017-07-12 15:14:59 tsamson Exp $
+// $Id: harvest_profil_import.class.php,v 1.6 2019-07-11 10:24:50 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -69,7 +69,7 @@ class harvest_profil_import {
 		}
 	}
 	   
-	public function get_notice($id,$notice_uni="") {
+	public function get_notice($id, $notice_uni = array()) {
 		$memo=array();
 		
 		$req="select * from notices where notice_id=".$id." ";
@@ -82,7 +82,7 @@ class harvest_profil_import {
 					if($this->info['fields'][$contens['xml_id']]['flagtodo']==1){
 						// on remplace les champs par les nouvelles valeurs
 						$memo[]=$contens;
-						foreach($notice_uni[f] as $index=>$uni_field){		
+						foreach($notice_uni['f'] as $index=>$uni_field){		
 							if($contens['ufield'] && $contens['usubfield']){	
 								// si champ et sous champ, on delete les anciens champs/sous-champ
 								
@@ -99,8 +99,8 @@ class harvest_profil_import {
 					}	
 				}	
 			}
-			printr($memo)	;				
-			printr($notice_uni[f])	;
+			printr($memo);				
+			printr($notice_uni['f']);
 		}
 	}
        

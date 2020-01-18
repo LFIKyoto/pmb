@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: odilotk.class.php,v 1.4 2017-11-30 15:23:04 apetithomme Exp $
+// $Id: odilotk.class.php,v 1.5 2019-06-13 15:26:51 btafforeau Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))
 	die("no access");
 
@@ -396,7 +396,7 @@ class odilotk extends connector {
 		global $form_from;
 		global $form_radio;
 		
-		$source_id = $source_id + 0;
+		$source_id = (int) $source_id;
 		
 		$sql = " SELECT MAX(UNIX_TIMESTAMP(date_import)) FROM entrepot_source_" . $source_id;
 		$res = pmb_mysql_result(pmb_mysql_query($sql), 0, 0);

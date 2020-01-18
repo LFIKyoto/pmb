@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: codepostal.inc.php,v 1.11 2017-11-21 14:23:55 dgoron Exp $
+// $Id: codepostal.inc.php,v 1.12 2019-06-06 15:04:28 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -17,7 +17,7 @@ $selector_codepostal->proceed();
 
 // function d'affichage
 function show_results($user_input, $nbr_lignes=0, $page=0, $id = 0) {
-	global $nb_per_page;
+    global $nb_per_page, $rech_regexp;
 	global $base_url;
 	global $caller;
 	global $class_path;

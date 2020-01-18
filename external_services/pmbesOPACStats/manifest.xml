@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.1 2011-07-29 12:32:15 dgoron Exp $ -->
+$Id: manifest.xml,v 1.2 2019-08-28 06:48:51 ngantier Exp $ -->
 <manifest>
 	<name>pmbesOPACStats</name>
 	<description>msg:OPACStats_functions_description</description>
@@ -18,7 +18,7 @@ $Id: manifest.xml,v 1.1 2011-07-29 12:32:15 dgoron Exp $ -->
 		<method name="listView" rights="" version="1.0" comment="msg:listView_description" language_independant="true">
 			<inputs>
 				<description>msg:listView_input_description</description>
-				<param name="OPACUserId" type="scalar" dataType="integer" description="msg:listView_OPACUserId"/>
+				<param name="OPACUserId" type="scalar" dataType="integer" description="msg:listView_OPACUserId" optional="yes" default_value="-1"/>
 			</inputs>
 			<outputs>
 				<description>msg:listView_output_description</description>

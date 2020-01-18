@@ -2,13 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: entrez.class.php,v 1.14 2017-07-12 15:15:03 tsamson Exp $
+// $Id: entrez.class.php,v 1.16 2019-07-18 12:47:54 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
 if (version_compare(PHP_VERSION,'5','>=') && extension_loaded('xsl')) {
-	if (substr(phpversion(), 0, 1) == "5") @ini_set("zend.ze1_compatibility_mode", "0");
+    if (PHP_MAJOR_VERSION == "5") @ini_set("zend.ze1_compatibility_mode", "0");
 	require_once($include_path.'/xslt-php4-to-php5.inc.php');
 }
 
@@ -153,8 +153,8 @@ class entrez extends connector {
 			$this->error = 1;
 			return;
 		}
-		$entrez_operator = $entrez_operator+0;
-		$entrez_maxresults= $entrez_maxresults+0;
+		$entrez_operator = (int) $entrez_operator;
+		$entrez_maxresults = (int) $entrez_maxresults;
 		
 		$unimarc_pubmed_mapping = array (
 			'XXX' => '',
@@ -200,7 +200,7 @@ class entrez extends connector {
 			$a=new pubmed_analyse_query($aquery->values[0],0,0,1,0,$field,$pubmed_stopword);
 			$sub_search_query =$a->show_analyse();
 			if($entrez_operator != 2) $pmb_default_operator=$operator;
-			if ($search_query) $search_query = $search_query . " " . strtoupper($aquery->inter) . " " . $sub_search_query;
+			if ($search_query) $search_query .= " " . strtoupper($aquery->inter) . " " . $sub_search_query;
 			else $search_query = $sub_search_query;
 		}
 

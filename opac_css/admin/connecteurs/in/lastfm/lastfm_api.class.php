@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lastfm_api.class.php,v 1.2 2012-02-14 10:30:23 arenou Exp $
+// $Id: lastfm_api.class.php,v 1.3 2019-07-10 06:44:08 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -10,9 +10,9 @@ require_once("lastfmapi/lastfmapi.php");
 
 //classe facilitant les appel depuis le connecteurs...
 class lastfm_api{
-	var $auth;			// objet gérant l'authentification
-	var $api_class;		// objet gérant les appels
-	var $notice_infos;	// tableau regroupant les infos utiles d'une notice
+	public $auth;			// objet gérant l'authentification
+	public $api_class;		// objet gérant les appels
+	public $notice_infos;	// tableau regroupant les infos utiles d'une notice
 	
 	/*
 	 * Constructeur

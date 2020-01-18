@@ -2,14 +2,13 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: google_book.class.php,v 1.13 2017-07-12 15:15:01 tsamson Exp $
+// $Id: google_book.class.php,v 1.14 2019-03-25 15:26:00 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
 global $class_path,$base_path, $include_path;
 require_once($class_path."/connecteurs.class.php");
 require_once($class_path."/curl.class.php");
-require_once($class_path."/nusoap/nusoap.php");
 require_once($include_path."/notice_affichage.inc.php");
 
 class google_book extends connector {

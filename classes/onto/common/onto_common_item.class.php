@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: onto_common_item.class.php,v 1.71 2018-10-12 14:16:04 tsamson Exp $
+// $Id: onto_common_item.class.php,v 1.75 2019-08-01 13:16:35 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -86,7 +86,7 @@ class onto_common_item {
 	protected function order_datatypes(){
 		//on ordonne les datatypes
 		$temp_datatype_tab=array();
-		if(sizeof($this->datatypes)){
+		if (!empty($this->datatypes)) {
 			foreach($this->datatypes as $key=>$datatypes){
 				foreach($datatypes as $datatype){
 					$temp_datatype_tab[$key][$datatype->get_datatype_ui_class_name()][]=$datatype;
@@ -128,7 +128,7 @@ class onto_common_item {
 		
 		$content='';
 		$valid_js = "";
-		if(sizeof($this->onto_class->get_properties())){
+		if (!empty($this->onto_class->get_properties())) {
 			$index = 0;
 			foreach($this->onto_class->get_properties() as $uri_property){
 				$property=$this->onto_class->get_property($uri_property);
@@ -155,7 +155,7 @@ class onto_common_item {
 		}
 		if (substr_count(onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name), "conceptscheme")) {
 			$form = str_replace("!!onto_form_save_and_create_concept!!", 
-					'<input type="button" class="bouton" id="btsubmit" onclick=" submit_onto_form(true);" 
+					'<input type="button" class="bouton" id="btsubmit_create_concept" onclick=" submit_onto_form(true);" 
 					value="'.htmlentities($msg['save_and_continue_concept'],ENT_QUOTES,$charset).'"/>', $form);
 		} else {
 			$form = str_replace("!!onto_form_save_and_create_concept!!", '', $form);
@@ -163,7 +163,7 @@ class onto_common_item {
 		$form=str_replace("!!onto_form_content!!",$content , $form);
 		
 		$form=str_replace("!!onto_form_submit!!",'<input type="button" class="bouton" id="btsubmit" onclick="submit_onto_form();" value="'.htmlentities($msg['77'],ENT_QUOTES,$charset).'"/>' , $form);
-		$form=str_replace("!!onto_form_submit_continue!!",'<input type="button" class="bouton" id="btsubmit" onclick="submit_onto_form(true);" value="'.htmlentities($msg['save_and_continue'],ENT_QUOTES,$charset).'"/>' , $form);
+		$form=str_replace("!!onto_form_submit_continue!!",'<input type="button" class="bouton" id="btsubmit_continue" onclick="submit_onto_form(true);" value="'.htmlentities($msg['save_and_continue'],ENT_QUOTES,$charset).'"/>' , $form);
 		$form=str_replace("!!onto_form_history!!",'<input type="button" class="bouton" id="btcancel" onclick="history.go(-1);" value="'.htmlentities($msg['76'],ENT_QUOTES,$charset).'"/>' , $form);
 		
 		if(!onto_common_uri::is_temp_uri($this->uri)){
@@ -198,7 +198,7 @@ class onto_common_item {
 	public function get_display() {
 		$display='<div id="'.$this->uri.'">';
 		$display.='<h1>'.$this->onto_class->label.'</h1>';
-		if(sizeof($this->datatypes)){
+		if (!empty($this->datatypes)) {
 			foreach($this->datatypes as $key=>$datatypes){
 				
 				$temp_datatype_tab=array();
@@ -226,7 +226,7 @@ class onto_common_item {
 		$this->datatypes = array();
 		$prefix = onto_common_uri::get_name_from_uri($this->uri, $this->onto_class->pmb_name);
 		
-		if(sizeof($this->onto_class->get_properties())){
+		if (!empty($this->onto_class->get_properties())) {
 			foreach($this->onto_class->get_properties() as $uri_property){
 				$property=$this->onto_class->get_property($uri_property);
 				$property->set_framework_params($this->framework_params);
@@ -527,7 +527,7 @@ class onto_common_item {
 		global $lang;
 		$values = $this->datatypes[$uri_property];
 		$label = "";
-		$defaul_label = "";
+		$default_label = "";
 	 	if(count($values) == 1){
 			$label = $values[0]->get_value();	 		
 	 	}else if(count($values) > 1){

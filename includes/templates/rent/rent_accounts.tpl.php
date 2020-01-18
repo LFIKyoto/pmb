@@ -2,13 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_accounts.tpl.php,v 1.15 2017-09-28 09:23:37 dgoron Exp $
+// $Id: rent_accounts.tpl.php,v 1.16 2019-05-27 10:14:55 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 //	------------------------------------------------------------------------------
 //	$rent_accounts_search_form_tpl : template de recherche pour les décomptes
 //	------------------------------------------------------------------------------
+
+global $base_path, $charset, $current_module, $msg, $rent_accounts_search_form_tpl;
 
 $rent_accounts_search_form_tpl = "
 <script src='javascript/pricing_systems.js'></script>

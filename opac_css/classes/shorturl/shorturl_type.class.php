@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2014 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: shorturl_type.class.php,v 1.9 2017-11-21 13:38:21 dgoron Exp $
+// $Id: shorturl_type.class.php,v 1.9.6.1 2019-10-25 09:53:32 dbellamy Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -52,7 +52,7 @@ class shorturl_type {
 		return $this->hash;
 	}
 	
-	public function get_last_acess() {
+	public function get_last_access() {
 		return $this->last_access;
 	}
 	
@@ -157,4 +157,20 @@ class shorturl_type {
 		}
 		return $hash;
 	}
+	
+	public static function get_by_hash($hash) 
+	{
+	    $query = "select id_shorturl,shorturl_type from shorturls where shorturl_hash = '".addslashes($hash)."'";
+	    $result=pmb_mysql_query($query);
+	    if (pmb_mysql_num_rows($result)) {
+	        $row = pmb_mysql_fetch_object($result);
+	        $id = $row->id_shorturl;
+	        $classname = get_called_class();
+	        $obj = new $classname($id);
+	        return $obj;
+	    }
+	    return false;
+	}
+	
 }
+

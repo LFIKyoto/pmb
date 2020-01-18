@@ -2,9 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index.tpl.php,v 1.34 2017-10-19 15:03:23 ngantier Exp $
+// $Id: index.tpl.php,v 1.36 2019-05-27 16:26:52 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $ret_url, $nav_bar, $login_form, $msg, $current_module, $_tableau_databases, $_libelle_databases, $login_form_demo, $login_form_error, $index_layout, $index_footer, $pmb_version;
+global $homepage, $pmb_bdd_version, $pmb_login_message, $index_header, $extra_version, $login_menu;
 
 if(!isset($ret_url)) $ret_url = '';
 if(!isset($nav_bar)) $nav_bar = '';

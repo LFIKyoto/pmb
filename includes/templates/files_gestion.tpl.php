@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: files_gestion.tpl.php,v 1.5 2018-10-03 10:47:17 dgoron Exp $
+// $Id: files_gestion.tpl.php,v 1.6 2019-05-27 16:19:33 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $files_gestion_list_tpl, $msg, $charset, $current_module, $files_gestion_list_line_tpl, $files_gestion_list_add_file;
 
 $files_gestion_list_tpl="
 <script>

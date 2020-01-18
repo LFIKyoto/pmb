@@ -159,10 +159,10 @@ function show_import($dbh, $buffer,$from_ldap) {
 				print "<td class='nobrd'>$row[0]</td>";
 				print "<td class='nobrd'><input name='".$row[0]."' value='".$ordre[$k]."' type='text' size='1'>";
 				$k++;
-				if (empty($_POST[plus1]))
+				if (empty($_POST['plus1']))
 					$ordre[$k] = $OrdreImportEmpr[$row[0]];
 				else
-					$ordre[$k] = $_POST[plus1];
+					$ordre[$k] = $_POST['plus1'];
 					
 //					print "&nbsp;&nbsp;&nbsp;&nbsp;";
 //					print "<input name='plus1' value='".$ordre[$k]."' type='text' size='1'></td>";
@@ -368,7 +368,7 @@ function save_fields_association() {
 	global $dbh ;
 	$i=1;
 	reset($_POST);
-	while (list($kk,$vv)=each($_POST)) {
+	foreach ($_POST as $kk => $vv) {
 		if (!preg_match("/$kk/i","import_lec Sep_Champs selectGroupe Actualiser")) {
 				$OrdreImportEmpr[$kk]=$vv;
 		}
@@ -536,9 +536,9 @@ switch($action) {
 						// update pour inserer la date de creation , modif, date_adhesion...
 						$query2 = 'update empr set empr_modif  = "'.aujourdhui(1).'" where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
-						$query2 = 'update empr set empr_categ = '.$_POST[selectGroupe].' where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
+						$query2 = 'update empr set empr_categ = '.$_POST['selectGroupe'].' where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
-						$query2 = 'update empr set empr_codestat =  '.$_POST[selectStat].' where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
+						$query2 = 'update empr set empr_codestat =  '.$_POST['selectStat'].' where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
 						$query2 = 'update empr set empr_date_expiration = "'.aujourdhui($dur).'" where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query."<hr />";
@@ -582,9 +582,9 @@ switch($action) {
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
 						$query2 = 'update empr set empr_date_expiration = "'.aujourdhui($dur).'" where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
-						$query2 = 'update empr set empr_categ = '.$_POST[selectGroupe].' where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
+						$query2 = 'update empr set empr_categ = '.$_POST["selectGroupe"].' where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
-						$query2 = 'update empr set empr_codestat = '.$_POST[selectStat].' where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
+						$query2 = 'update empr set empr_codestat = '.$_POST["selectStat"].' where empr_cb = "'.$bufferChamp[${$desc_empr[1][0]}].'";';
 						$res = pmb_mysql_query($query2, $dbh) or print $msg["upd_echoue"]."<p>".$query2."<hr />";
 						if ($from_ldap){
 							$query2 = "update empr set empr_ldap = '1' where empr_cb = '".$bufferChamp[${$desc_empr[1][0]}]."';";

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2005 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: acces.class.php,v 1.22 2018-07-27 08:54:55 dgoron Exp $
+// $Id: acces.class.php,v 1.24 2019-06-20 11:43:42 ngantier Exp $
 
 
 if (stristr ($_SERVER['REQUEST_URI'], ".class.php"))
@@ -44,7 +44,8 @@ class acces {
 			if (${$activation_param} =='1') {
 				static::$t_cat[$v['id']]['id']=$v['id'];
 				static::$t_cat[$v['id']]['path']=$v['path'];
-				static::$t_cat[$v['id']]['comment']=$msg[$mt['comment']];
+				static::$t_cat[$v['id']]['comment'] = '';
+				if(!empty($msg[$mt['comment']])) static::$t_cat[$v['id']]['comment']=$msg[$mt['comment']];
 			}
 		}
 		unset ($t_cat);
@@ -1168,8 +1169,8 @@ class domain {
 				$prev_p_id=0;
 				foreach($v_rule['search'] as $k_s=>$v_s) {
 					$p_id = substr($v_s,2);
-	
-					$var_value=$t_var[$p_id];
+					$var_value = 0;
+					if(isset($t_var[$p_id])) $var_value=$t_var[$p_id];
 					$t_values=$t_rules[$k_rule]['field_'.$prev_p_id.'_f_'.$p_id];
 					
 					if (!in_array($var_value, $t_values)) {
@@ -1467,7 +1468,7 @@ class accesParser {
 		$subst_file=str_replace ('.xml', '_subst.xml', $file);
 		if (file_exists ($subst_file))
 			$file=$subst_file;
-		$xml=file_get_contents ($file, "r") or die ("Can't find XML file $file");
+		$xml=file_get_contents ($file, "r") or die (htmlentities("Can't find XML file $file", ENT_QUOTES, $charset));
 		
 		unset ($this->t);
 		
@@ -1597,6 +1598,7 @@ class accesParser {
 		global $msg;
 		
 		if (substr ($code, 0, 4) =='msg:') {
+		    if (empty($msg[substr ($code, 4)])) return '';
 			return $msg[substr ($code, 4)];
 		}
 		return $this->t_dom[$code];

@@ -2,12 +2,11 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: notice_relations.tpl.php,v 1.10 2018-02-09 16:03:50 dgoron Exp $
+// $Id: notice_relations.tpl.php,v 1.12 2019-05-27 12:35:59 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $notice_relations_link_tpl;
-global $notice_relations_links_tpl;
+global $notice_relations_link_tpl, $notice_relations_links_tpl, $msg, $charset;
 
 $notice_relations_link_tpl="
 		<div class='row'>
@@ -37,6 +36,7 @@ $notice_relations_link_tpl="
 				<div id='el11Child_0f' class='row'>
 					<input type='checkbox' id='f_rel_add_reverse_link_!!n_rel!!' name='f_rel_add_reverse_link_!!n_rel!!' data-form-name='f_rel_add_reverse_link_' !!add_reverse_link!! value='1' !!f_rel_add_reverse_link_action!! />
 		   		    !!relations_reverse_links_selector!!
+					!!button_add_field!!	  	
 				</div>
 			</div>
 		   	<input type='hidden' id='f_rel_id_notices_relations_!!n_rel!!' name='f_rel_id_notices_relations_!!n_rel!!' value='!!id_notices_relations!!'/>
@@ -258,7 +258,9 @@ $notice_relations_links_tpl = "
 		relnoticediv.appendChild(f_rel0_id_notices_relations);
 		relnoticediv.appendChild(f_rel0_num_reverse_link);
 		relnoticediv.appendChild(f_rel0_delete_link);
-						
+		var addButton = document.getElementById('add_field_linked_record')
+		relnoticedivreverselinkselector.appendChild(addButton);
+		
         document.notice.max_rel.value=(suffixe*1)+(1*1);
         ajax_pack_element(f_rel0);
         

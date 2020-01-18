@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: avis_ajax.inc.php,v 1.15 2017-11-23 13:52:08 ngantier Exp $
+// $Id: avis_ajax.inc.php,v 1.16 2019-06-07 08:05:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $quoifaire, $id;
 
 require_once ($class_path."/avis_records.class.php");
 

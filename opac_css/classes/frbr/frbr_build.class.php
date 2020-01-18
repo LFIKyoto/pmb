@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: frbr_build.class.php,v 1.15 2018-09-19 08:18:05 tsamson Exp $
+// $Id: frbr_build.class.php,v 1.17.6.2 2019-11-15 08:12:39 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -20,6 +20,8 @@ class frbr_build {
 	
 	protected $object_type;
 	
+	protected $authperso_type;
+	
 	protected $page;
 	
 	protected $cadres;
@@ -36,17 +38,23 @@ class frbr_build {
 	 */
 	protected $datanodes;
 	
-	public function __construct($object_id=0, $object_type='') {
+	public function __construct($object_id=0, $object_type='', $authperso_type = 0) {
 		$this->object_id = $object_id+0;
 		$this->object_type = $object_type;
+		$this->authperso_type = $authperso_type;
 		$this->fetch_data();
 	}
 	
 	protected function fetch_data() {
 		$this->cadres = array();
 		if($this->object_id && $this->object_type) {
+		    //on donne les infos aux datasources
+		    frbr_entity_common_datasource::set_main_entity($this->object_id, $this->object_type);
 			$num_page = 0;
 			$frbr_pages = new frbr_pages($this->object_type);
+			if ($this->authperso_type) {
+			    $frbr_pages->filter_pages_by_authperso_type($this->authperso_type);
+			}
 			foreach ($frbr_pages->get_pages() as $page) {
 				$frbr_entity_class_name = 'frbr_entity_'.$page->get_entity().'_page';
 				$frbr_entity_instance = new $frbr_entity_class_name($page->get_id());
@@ -101,7 +109,7 @@ class frbr_build {
 	}
 	
 	public function has_page() {
-		if($this->page->get_id()) {
+		if(isset($this->page) && $this->page->get_id()) {
 			return true;
 		} else {
 			return false;
@@ -296,7 +304,6 @@ class frbr_build {
 	}
 	
 	protected function get_type_from_class_name($class_name) {
-		$node_type = '';
 		if ($class_name) {
 			$node_type = explode('_', $class_name);
 			if (is_array($node_type) && isset($node_type[2]) && $node_type[2]) {
@@ -306,12 +313,12 @@ class frbr_build {
 		return '';
 	}
 	
-	public static function get_instance($object_id=0, $object_type='') {
+	public static function get_instance($object_id=0, $object_type='', $authperso_type = 0) {
 	    if (!isset(static::$instances[$object_type])) {
 	        static::$instances[$object_type] = array();
 	    }
 	    if (!isset(static::$instances[$object_type][$object_id])) {
-	        static::$instances[$object_type][$object_id] = new frbr_build($object_id, $object_type);
+	        static::$instances[$object_type][$object_id] = new frbr_build($object_id, $object_type, $authperso_type);
 	    }
 	    return static::$instances[$object_type][$object_id];
 	}

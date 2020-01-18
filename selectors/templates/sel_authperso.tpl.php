@@ -3,7 +3,7 @@
 
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sel_authperso.tpl.php,v 1.13 2018-09-28 09:19:14 arenou Exp $
+// $Id: sel_authperso.tpl.php,v 1.15 2019-05-11 08:05:25 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
@@ -23,6 +23,7 @@ global $dyn;
 global $jscript;
 global $jscript_common_selector_simple;
 global $authperso_form_all;
+global $infield;
 
 
 if($dyn == 1){
@@ -145,12 +146,12 @@ function set_parent(f_caller, id_value, libelle_value,callback){
 		if(callback)
 			window.parent[callback](p1bis.replace('_id','')+'_'+i_aut);
 	}else{
-		window.parent.document.forms[f_caller].elements['$p1'].value = id_value;
-		window.parent.document.forms[f_caller].elements['$p2'].value = reverse_html_entities(libelle_value);".
-		($p3 ? "window.parent.document.forms[f_caller].elements['$p3'].value = '0';" : "").
-		($p4 ? "window.parent.document.forms[f_caller].elements['$p4'].value = '';" : "").
-		($p5 ? "window.parent.document.forms[f_caller].elements['$p5'].value = '0';" : "").
-		($p6 ? "window.parent.document.forms[f_caller].elements['$p6'].value = '';" : "")."
+		set_parent_value(f_caller, '$p1', id_value);
+		set_parent_value(f_caller, '$p2', reverse_html_entities(libelle_value));
+		set_parent_value(f_caller, '$p3', '0');
+		set_parent_value(f_caller, '$p4', '');
+		set_parent_value(f_caller, '$p5', '0');
+		set_parent_value(f_caller, '$p6', '');
 		if(callback)
 			window.parent[callback]('$infield');
 		closeCurrentEnv();

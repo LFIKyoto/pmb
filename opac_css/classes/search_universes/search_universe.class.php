@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_universe.class.php,v 1.14 2018-09-21 11:33:09 tsamson Exp $
+// $Id: search_universe.class.php,v 1.14.6.2 2019-11-05 08:10:35 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -108,7 +108,12 @@ class search_universe {
 		global $msg;
 		global $universe_query;
 		
-		$segment_list = "<h4 class='new_search_segment_title'><span class='fa fa-search'></span> ". $msg["search_segment_new_search"] ." \"". $this->get_universe_query()."\"</h4>";
+		$this->get_segments();		
+		if (count($this->segments) <= 1) {
+		    return "";
+		}
+		
+		$segment_list = "<h4 class='new_search_segment_title'><span class='fa fa-search'></span> ". $msg["search_segment_new_search"] ." \"". stripslashes($this->get_universe_query())."\"</h4>";
 		$segment_list .= $search_universe_segment_list;
 		$segment_list = str_replace('!!universe_segments_form!!', $this->get_segments_form($segment_id), $segment_list);
 		$segment_list = str_replace('!!universe_query!!', ($universe_query ? $universe_query : ''), $segment_list);
@@ -263,11 +268,11 @@ class search_universe {
 	    if (!empty($universe_history)) {
 	        $n = $universe_history;
 	        if (!empty($_SESSION["search_universes".$n]["universe_query"])) {
-	            return $_SESSION["search_universes".$n]["universe_query"];
+	           return stripslashes($_SESSION["search_universes".$n]["universe_query"]);
 	        }
 	    }
 	    if (!empty($user_query)) {
-	        return $user_query;
+	        return stripslashes($user_query);
 	    }
 	    return '';
 	}
@@ -305,7 +310,7 @@ class search_universe {
 	    if (!empty($search_index)) {
 	        $n = $search_index;
 	        if (!empty($_SESSION["search_universes".$n]["universe_query"])) {
-	            return $_SESSION["search_universes".$n]["universe_query"];
+	            return stripslashes($_SESSION["search_universes".$n]["universe_query"]);
 	        }
 	    }
 	    return '*';

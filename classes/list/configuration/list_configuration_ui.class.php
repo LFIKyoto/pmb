@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: list_configuration_ui.class.php,v 1.1 2018-10-12 11:59:35 dgoron Exp $
+// $Id: list_configuration_ui.class.php,v 1.1.6.2 2019-11-22 14:44:09 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -16,10 +16,6 @@ class list_configuration_ui extends list_ui {
 	
 	protected static $sub;
 	
-	public function __construct($filters=array(), $pager=array(), $applied_sort=array()) {
-		parent::__construct($filters, $pager, $applied_sort);
-	}
-	
 	protected function add_object($row) {
 		$this->objects[] = $row;
 	}
@@ -28,14 +24,8 @@ class list_configuration_ui extends list_ui {
 	 * Initialisation de la pagination par défaut
 	 */
 	protected function init_default_pager() {
-		global $nb_per_page_a_search;
-		
-		$this->pager = array(
-				'page' => 1,
-				'nb_per_page' => 100,
-				'nb_results' => 0,
-				'nb_page' => 1
-		);
+	    parent::init_default_pager();
+	    $this->pager['nb_per_page'] = 100;
 	}
 	
 	/**

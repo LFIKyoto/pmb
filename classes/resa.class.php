@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: resa.class.php,v 1.42 2018-12-20 11:00:19 mbertin Exp $
+// $Id: resa.class.php,v 1.44.4.1 2019-10-31 14:41:32 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -38,6 +38,7 @@ if (!defined('RESA_CLASS')) {
 		public $force 			= 0; 		// Forcage de la notice en cas de dépassement de quota de réservation
 		public $expl_cb		= ''; 
 		public $expl_id		= 0;
+		public $resa_pnb_flag = 0;
 		protected $exemplaire;
 		protected $on_empr_fiche = false;
 		/* note les statuts possibles :
@@ -91,6 +92,7 @@ if (!defined('RESA_CLASS')) {
 					$this->formatted_date_fin = format_date($this->date_fin);
 					$this->confirmee = $row->resa_confirmee;
 					$this->loc_retrait = $row->resa_loc_retrait;
+					$this->resa_pnb_flag = $row->resa_pnb_flag;
 				}
 			}
 		}
@@ -317,7 +319,7 @@ if (!defined('RESA_CLASS')) {
 			// tout est OK, écriture de la réservation en table
 			// On récupère d'abord la durée
 			$t=get_time($this->id_empr,$this->id_notice,$this->id_bulletin);
-			$query = "INSERT INTO resa (id_resa, resa_idempr, resa_idnotice, resa_idbulletin, resa_date, resa_loc_retrait) ";
+			$query = "INSERT INTO resa (id_resa, resa_idempr, resa_idnotice, resa_idbulletin, resa_date, resa_loc_retrait, resa_pnb_flag) ";
 			$query .= "VALUES ('', '".$this->id_empr."', ";
 			if($this->id_notice) $query .= "'".$this->id_notice."',0 ,";
 				elseif ($this->id_bulletin)
@@ -328,7 +330,7 @@ if (!defined('RESA_CLASS')) {
 				$rqt = "SELECT empr_location FROM empr WHERE id_empr=".$this->id_empr;
 				$idloc_retrait = pmb_mysql_result(pmb_mysql_query($rqt),0);				
 			} 
-			$query .= "'$idloc_retrait' )";			
+			$query .= "'$idloc_retrait', '" . $this->resa_pnb_flag . "' )";			
 			$result = pmb_mysql_query($query);
 			if(!$result) {
 				$this->message = "$query -> $msg[resa_no_create]";
@@ -367,7 +369,8 @@ if (!defined('RESA_CLASS')) {
 					resarc_empr_codestat = '".$empr->empr_codestat ."',
 					resarc_empr_sexe = '".$empr->empr_sexe."',
 					resarc_empr_location = '".$empr->empr_location."',
-					resarc_expl_nb = '$nb_expl'		
+					resarc_expl_nb = '$nb_expl',		
+					resarc_pnb_flag = '" . $this->resa_pnb_flag . "'
 				 ";
 				pmb_mysql_query($query);
 				$stat_id = pmb_mysql_insert_id();
@@ -413,7 +416,7 @@ if (!defined('RESA_CLASS')) {
 					// d'autres réservataires existent
 					$next_empr = pmb_mysql_fetch_object($result);
 		
-					$this->message = $msg[resa_supprimee];
+					$this->message = $msg['resa_supprimee'];
 		
 					// on regarde la disponibilité du document
 					// on compte le nombre total d'exemplaires pour la notice
@@ -901,13 +904,24 @@ if (!defined('RESA_CLASS')) {
 		}
 		
 		/**
+		 * On compte le nombre d'exemplaires en circulation
+		 */
+		public function get_number_expl_in_circ() {
+			$query = "SELECT count(1) FROM exemplaires, serialcirc_expl WHERE num_serialcirc_expl_id=expl_id ".$this->get_restrict_expl_location_query();
+			$query .= " AND ".$this->get_restrict_expl_notice_query();
+			$tresult = pmb_mysql_query($query);
+			return pmb_mysql_result($tresult, 0, 0);
+		}
+		
+		/**
 		 * On compte le nombre d'exemplaires disponibles
 		 */
 		public function get_number_expl_available() {
 			// on compte le nombre total d'exemplaires prêtables pour la notice
 			// on compte le nombre d'exemplaires sortis
+			// on compte le nombre d'exemplaires en circulation
 			// on en déduit le nombre d'exemplaires disponibles
-			$number = $this->get_number_expl_lendable() - $this->get_number_expl_out();
+			$number = $this->get_number_expl_lendable() - $this->get_number_expl_out() - $this->get_number_expl_in_circ();
 			return $number;
 		}
 		

@@ -2,7 +2,10 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: edit.php,v 1.22 2018-11-09 11:32:14 dgoron Exp $
+// $Id: edit.php,v 1.23 2019-06-05 09:04:41 btafforeau Exp $
+
+global $class_path, $base_auth, $base_title, $base_noheader, $use_opac_url_base, $opac_url_base, $prefix_url_image, $no_aff_doc_num_image;
+global $fichier_temp_nom, $idcaddie, $mode, $dest;
 
 // définition du minimum nécessaire 
 $base_path="../../..";                            
@@ -39,4 +42,4 @@ switch($dest) {
 		caddie_controller::proceed_edition_html($idcaddie, $mode);
 		break;
 }
-pmb_mysql_close($dbh);
+pmb_mysql_close();

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: translation.class.php,v 1.9 2018-10-26 12:54:17 dgoron Exp $
+// $Id: translation.class.php,v 1.10 2019-01-24 16:46:40 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php"))	die("no access");
 
@@ -242,6 +242,28 @@ class translation {
 	public static function get_user_lang() {
 		global $lang;
 		return $lang;
+	}
+	
+	/**
+	 * Retourne la traduction d'un champ dans la langue voulue, ou le libellé par défaut
+	 * @param int $id Identifiant de l'entité
+	 * @param string $trans_table Table de référence
+	 * @param string $trans_field Champ de référence
+	 * @param string $text Libellé par défaut
+	 * @param string $mylang Langue voulue
+	 * @return string
+	 */
+	public static function get_translated_text($id, $trans_table, $trans_field, $text="", $mylang="") {
+		global $lang, $dbh;
+	
+		if(!$mylang) {
+			$mylang = $lang;
+		}
+		self::get_text_fields($trans_table, $mylang, $id);
+		if (!isset(self::$text_fields[$trans_table][$id][$mylang][$trans_field])) {
+			self::$text_fields[$trans_table][$id][$mylang][$trans_field] = $text;
+		}
+		return self::$text_fields[$trans_table][$id][$mylang][$trans_field];
 	}
 	
 	public static function get_text_fields($table, $lang, $num){

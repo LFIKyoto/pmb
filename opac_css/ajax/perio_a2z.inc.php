@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: perio_a2z.inc.php,v 1.9 2016-06-29 14:50:22 dgoron Exp $
+// $Id: perio_a2z.inc.php,v 1.10 2019-05-29 12:53:20 ngantier Exp $
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
                     
 require_once($base_path."/classes/perio_a2z.class.php");
@@ -36,10 +36,12 @@ switch($sub){
 				left join pclassement pc on i.num_pclass=pc.id_pclass
 				where notice_id='".$id."'";
 			$res_noti = pmb_mysql_query($rqt);
-			while(($noti=pmb_mysql_fetch_array($res_noti))){
-				$infos_notice=$noti;
+			if(($noti=pmb_mysql_fetch_array($res_noti))){
+			    $log->add_log('docs',$noti);
+			} else {
+			    // n'existe pas, ou notice externe
+			    $log->add_log('docs',$id);
 			}
-			$log->add_log('docs',$infos_notice);
 		
 			//Enregistrement vue
 			if($opac_opac_view_activate){

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: scan_request.inc.php,v 1.3 2016-11-15 13:35:23 dgoron Exp $
+// $Id: scan_request.inc.php,v 1.4 2019-06-05 09:04:41 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $idcaddie, $action, $msg;
 
 require_once("./classes/notice_tpl_gen.class.php");
 require_once("./classes/progress_bar.class.php");

@@ -1,7 +1,7 @@
 // +-------------------------------------------------+
 // � 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: EntitiesGraph.js,v 1.7 2018-03-28 09:06:42 tsamson Exp $
+// $Id: EntitiesGraph.js,v 1.7.6.2 2019-09-20 08:50:13 tsamson Exp $
 
 
 define(["dojo/_base/declare",
@@ -79,11 +79,14 @@ define(["dojo/_base/declare",
                 		return  "stroke: rgb("+d.color+")";	
                 	}
                 	return  "stroke: #999";
-                });
+                })
+	        	.attr("marker-end", "url(#arrow)");
 
             
             this.initNodes();
-
+            // On initialise les markers
+		    this.setDefs();
+		    
             this.simulation
                 .nodes(this.nodes)
                 .on("tick", lang.hitch(this, this.ticked));
@@ -131,12 +134,27 @@ define(["dojo/_base/declare",
                 .attr("y1", function (d) {
                 	return d.source.y;
                 })
-                .attr("x2", function (d) {
-                	return d.target.x;
-                })
-                .attr("y2", function (d) {
-                	return d.target.y;
-                });
+                .attr("x2", function(d) {
+		        	  var sx = d.source.x;
+		        	  var sy = d.source.y;
+		        	  var tx = d.target.x;
+		        	  var ty = d.target.y;
+		        	  
+		        	  // Notre ami Thal�s nous permet de raccourcir les liens pour y faire apparaitre des fl�ches
+		        	  var h = (d.target.radius*Math.abs(tx-sx))/Math.sqrt((tx-sx)*(tx-sx)+(ty-sy)*(ty-sy));
+		        	  
+		        	  return ((tx > sx) ? (tx - h) : (tx + h));
+		          })
+		          .attr("y2", function(d) {
+		        	  var sx = d.source.x;
+		        	  var sy = d.source.y;
+		        	  var tx = d.target.x;
+		        	  var ty = d.target.y;
+		        	  
+		        	  var h = (d.target.radius*Math.abs(ty-sy))/Math.sqrt((tx-sx)*(tx-sx)+(ty-sy)*(ty-sy));
+		        	  
+		        	  return ((ty > sy) ? (ty - h) : (ty + h));
+		          });
 
             this.nodeSvg.attr("transform", function (d) {
                 return "translate(" + d.x + ", " + d.y + ")";
@@ -283,7 +301,8 @@ define(["dojo/_base/declare",
 	        			return  "stroke: rgb("+d.color+")";	
 	        		}
 	        		return  "stroke: #999";
-	        	});
+	        	})
+	        	.attr("marker-end", "url(#arrow)");
     		this.linkSvg = linkEnter.merge(this.linkSvg);
     		this.linkSvg.exit().remove();
     		
@@ -391,5 +410,21 @@ define(["dojo/_base/declare",
 	            })
 	            .on("click", lang.hitch(this, this.nodeClicked));
         },
+	    
+	    setDefs: function() {
+		    this.svg.append("defs")
+		    	.append('marker')
+			    	.attr("id", "arrow")
+			    	.attr("viewBox", "0 0 10 10")
+			    	.attr("refX", "10")
+			    	.attr("refY", "5")
+			    	.attr("markerUnits", "strokeWidth")
+			    	.attr("markerWidth", "5")
+			    	.attr("markerHeight", "5")
+			    	.attr("orient", "auto")
+			    	.append("path")
+			    	.attr("d", "M 0 0 L 10 5 L 0 10 z")
+		    	;
+	    },
     });
 });

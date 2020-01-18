@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: editions_state_view_tcd.class.php,v 1.4 2017-02-22 11:11:39 jpermanne Exp $
+// $Id: editions_state_view_tcd.class.php,v 1.5 2019-06-05 06:41:21 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -129,7 +129,7 @@ class editions_state_view_tcd extends editions_state_view {
 	}
 	
 	public function render_xls_file($name="state"){
-		$worksheet = new spreadsheet();
+	    $worksheet = new spreadsheetPMB();
 		foreach($this->datas_tcd['cols'] as $key => $label){
 			$worksheet->write(0,$key+1,$label);
 		}

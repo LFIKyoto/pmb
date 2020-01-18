@@ -2,34 +2,34 @@
 // +-------------------------------------------------+
 // © 2002-2012 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: File.php,v 1.6 2015-04-03 11:16:24 jpermanne Exp $
+// $Id: File.php,v 1.7 2019-07-05 13:25:14 btafforeau Exp $
 namespace Sabre\PMB;
 
 use Sabre\DAV;
 
 class File extends DAV\File {
 	
-	function get_code_from_name($name){
+	public function get_code_from_name($name){
 		return substr($name,strrpos($name,"(")+1,(strrpos($name,")")-strrpos($name,"("))-1);
 	}
 	
-	function set_parent($parent){
+	public function set_parent($parent){
 		$this->parentNode = $parent;
 	}
 
-	function getName() {
+	public function getName() {
 		return "";
 	}
 
-	function get() {
+	public function get() {
 		return "";
 	}
 
-	function getSize() {
+	public function getSize() {
 		return 0;
 	}
 
-	function getETag() {
+	public function getETag() {
 		if(file_exists(time())){
 			return '"' . md5_file(time()) . '"';
 		}else{
@@ -38,7 +38,7 @@ class File extends DAV\File {
 		
 	}
 	
-    function check_write_permission(){
+    public function check_write_permission(){
     	global $webdav_current_user_id;
     	if($this->config['write_permission']){
     		$tab = array();

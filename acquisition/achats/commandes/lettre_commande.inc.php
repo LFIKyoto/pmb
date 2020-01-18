@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: lettre_commande.inc.php,v 1.1 2011-08-16 12:17:30 dbellamy Exp $
+// $Id: lettre_commande.inc.php,v 1.2 2019-05-28 15:12:23 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $class_path, $base_path, $id_cde, $id_bibli;
 
 // popup d'impression PDF pour liste des relances de receptions
 // reçoit : id_bibli, id_cde

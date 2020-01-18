@@ -2,11 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: index_concept_form.tpl.php,v 1.12 2018-11-28 14:01:35 dgoron Exp $
+// $Id: index_concept_form.tpl.php,v 1.15 2019-05-27 12:26:22 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $base_path, $msg;
+global $base_path, $msg, $charset;
+global $select_concept_prop, $index_concept_form, $index_concept_add_button_form, $index_concept_text_form, $index_concept_script, $index_concept_isbd_display_concept_link;
 
 $select_concept_prop = "scrollbars=yes, toolbar=no, dependent=yes, resizable=yes";
 
@@ -36,9 +37,10 @@ $index_concept_text_form = "
             </span>
 			<input type='text' class='saisie-80emr' id='concept_!!iconcept!!_display_label' name='concept[!!iconcept!!][display_label]' data-form-name='concept_label' value=\"!!concept_display_label!!\" completion='onto' att_id_filter='http://www.w3.org/2004/02/skos/core#Concept' autfield=\"concept_!!iconcept!!_value\" autocomplete='off'/>
 			<input type='button' class='bouton' id='concept_!!iconcept!!_del' value='".$msg['raz']."' onclick=\"onto_remove_selector_value('concept', !!iconcept!!)\" />
+			!!button_add_field!!
 			<input type='hidden' name='concept[!!iconcept!!][value]' data-form-name='concept_value' id='concept_!!iconcept!!_value' value='!!concept_uri!!' />
 			<input type='hidden' name='concept[!!iconcept!!][type]' data-form-name='concept_type' id='concept_!!iconcept!!_type' value='!!concept_type!!' />
-            <div id='concept_!!iconcept!!_options_Child' class='child' style='display : none;'>
+            <div id='concept_!!iconcept!!_options_Child' style='display : none;'>
                 <div class='row'>
                     <label class='etiquette'>".$msg[707]."</label>
                     <input type='checkbox' id='concept_!!iconcept!!_comment_visible_opac' name='concept[!!iconcept!!][comment_visible_opac]' !!concept_comment_visible_opac!! />
@@ -67,11 +69,13 @@ $index_concept_script = "
 		
 		var parent = document.getElementById('el6Child_3');
 		var new_child='';
-		
+		var buttonAdd = null;
 		//on trouve le noeud visé, et on le clone
 		for(var i in parent.childNodes){
 			if(parent.childNodes[i].nodeType == Node.ELEMENT_NODE){
 				if(parent.childNodes[i].getAttribute('id')==element_name+'_'+element_order){
+					buttonAdd = document.getElementById('add_field_index_concept');
+					buttonAdd = buttonAdd.parentNode.removeChild(buttonAdd);
 					new_child = parent.childNodes[i].cloneNode(true);
 				}
 			}
@@ -81,9 +85,7 @@ $index_concept_script = "
 			new_child.setAttribute('id',element_name+'_'+new_order);
 			new_child.setAttribute('order',new_order);
 			new_child.setAttribute('handler',element_name+'_'+new_order+'_handle');
-			parent.appendChild(new_child);
-		
-					
+			parent.appendChild(new_child);					
 		
 			var handle = new_child.querySelector('#'+element_name+'_'+element_order+'_handle');
 			if(handle){
@@ -154,9 +156,8 @@ $index_concept_script = "
 			new_child_del.setAttribute('onclick','onto_remove_selector_value(\"'+element_name+'\",'+new_order+')');
 			new_child_del.value='X';
 			new_child.appendChild(new_child_del);
-				
-			
-			
+			if (buttonAdd) new_child.appendChild(buttonAdd);
+
 			var tab_concept_order = document.getElementById('tab_concept_order');
 			tab_concept_order.value = tab_concept_order.value + ',' + new_order;
 	 		init_drag();

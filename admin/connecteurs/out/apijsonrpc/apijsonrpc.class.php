@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: apijsonrpc.class.php,v 1.11 2017-07-18 13:47:42 dgoron Exp $
+// $Id: apijsonrpc.class.php,v 1.15 2019-08-01 13:52:00 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -13,10 +13,10 @@ require_once($class_path."/external_services_esusers.class.php");
 require_once ("$base_path/admin/connecteurs/out/apijsonrpc/apijsonrpc_jsonrpcserver.class.php");
 
 class apijsonrpc extends connecteur_out {
-	public $json_input = '';
+	public $json_input = array();
 	
-	function get_config_form() {
-		$result = $this->msg["no_configuration_required"];
+	public function get_config_form() {
+	    $result = $this->msg["no_configuration_required"];
 		return $result;
 	}
 	
@@ -58,10 +58,20 @@ class apijsonrpc extends connecteur_out {
 	}
 	
 	public function get_running_pmb_userid($source_id) {
+	    global $auth_user;
+	    global $auth_pw;
+	    
 		$user_id = 1;
 		$this->json_input = json_decode(file_get_contents('php://input'),true);
 		if (!$this->json_input)
 			return 1;
+				
+		$sc = $this->instantiate_source_class($source_id);		
+		// Ajout pour Bibloto
+		if (!empty($auth_user) && !empty($auth_pw)) {
+		    $this->json_input["auth_user"] = $auth_user;
+		    $this->json_input["auth_pw"] = md5($auth_user . $auth_pw . $sc->config['auth_connexion_phrase'] . $this->json_input["id"] . $this->json_input["method"]);
+		}
 		
 		$credentials_user = '';
 		$credentials_password = '';
@@ -74,8 +84,8 @@ class apijsonrpc extends connecteur_out {
 				$resultat=pmb_mysql_query($requete);
 				if ($resultat) {
 					$pwd=pmb_mysql_result($resultat,0,0);
-					$sc=$this->instantiate_source_class($source_id);
-					$salt=md5($credentials_user.md5($pwd).$sc->comment.$this->json_input["id"].$this->json_input["method"]);
+					
+					$salt=md5($credentials_user.md5($pwd).$sc->config['auth_connexion_phrase'].$this->json_input["id"].$this->json_input["method"]);
 					if ($salt==$this->json_input["auth_pw"]) $credentials_password=$pwd;
 				}
 			} 
@@ -108,7 +118,19 @@ class apijsonrpc_source extends connecteur_out_source {
 
 	public function get_config_form() {
 		global $charset;
+		
+		if(!isset($this->config['auth_connexion_phrase'])){
+		    $this->config['auth_connexion_phrase'] = "";
+		}
+		
 		$result = parent::get_config_form();
+		$result .= "
+            <div class='row'>
+                <label for='auth_connexion_phrase'>".htmlentities($this->msg['apijsonrpc_auth_connexion_phrase'],ENT_QUOTES,$charset)."</label>
+            </div>
+            <div class='row'>
+                <input type='text' name='auth_connexion_phrase' class='saisie-80em' value='".htmlentities($this->config['auth_connexion_phrase'],ENT_QUOTES,$charset)."'/>
+            </div>";
 		
 		$api_catalog = es_catalog::get_instance();
 		$api_functions = array();
@@ -156,7 +178,10 @@ class apijsonrpc_source extends connecteur_out_source {
 
 	public function update_config_from_form() {
 		parent::update_config_from_form();
+		global $auth_connexion_phrase;
 		global $api_exported_functions, $authentication_type, $authorized_groups;
+		
+		$this->config['auth_connexion_phrase']= stripslashes($auth_connexion_phrase);
 		
 		if (!$api_exported_functions)
 			$api_exported_functions = array();

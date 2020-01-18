@@ -2,11 +2,15 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cms.tpl.php,v 1.10 2017-03-30 13:57:49 dgoron Exp $
+// $Id: cms.tpl.php,v 1.11 2019-05-27 09:46:09 arenou Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], "tpl.php")) die("no access");
 
-require("cms/cms.tpl.php");
+global $include_path,$msg,$charset;
+global $cms_active,$cms_layout,$current_module,$cms_layout_end;
+
+
+require_once "$include_path/templates/cms/cms.tpl.php";
 
 $cms_menu = "
 	<div id='menu'>";

@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: contribution_area.inc.php,v 1.11 2018-12-28 16:31:40 tsamson Exp $
+// $Id: contribution_area.inc.php,v 1.12 2019-05-23 12:31:03 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -40,7 +40,7 @@ switch ($lvl) {
 	case 'contribution_area_done' :
 		if ($id_empr) {
 			$h2o = H2o_collection::get_instance($include_path .'/templates/contribution_area/contribution_areas_list.tpl.html');
-			print $h2o->render(array('forms' => contribution_area_forms_controller::get_empr_forms($id_empr, true, $last_id)));
+			print $h2o->render(array('forms' => contribution_area_forms_controller::get_empr_forms($id_empr, true, (!empty($last_id) ? $last_id : 0))));
 		}
 		break;
 	case 'contribution_area_moderation' :

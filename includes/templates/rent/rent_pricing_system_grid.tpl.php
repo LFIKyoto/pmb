@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: rent_pricing_system_grid.tpl.php,v 1.1 2016-02-16 15:23:38 dgoron Exp $
+// $Id: rent_pricing_system_grid.tpl.php,v 1.2 2019-05-27 10:03:01 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $rent_pricing_system_grid_form_tpl, $msg, $current_module, $charset, $rent_pricing_system_grid_form_interval_tpl, $rent_pricing_system_grid_form_percent_tpl;
 
 $rent_pricing_system_grid_form_tpl = "
 <script src='javascript/pricing_systems.js'></script>

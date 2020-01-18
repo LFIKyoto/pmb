@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: sticks_sheet.class.php,v 1.6 2018-08-10 10:36:39 dgoron Exp $
+// $Id: sticks_sheet.class.php,v 1.7.2.1 2019-11-06 08:12:34 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -163,7 +163,9 @@ class sticks_sheet {
 				'font_style' => 'B',
 				'font_color' => '000000',
 				'align' => 'C',
-				'rotation' => '0'
+				'rotation' => '0',
+		        'border_size' => '0',
+                'character_line_break' => ''
 		);
 	}
 	
@@ -339,6 +341,14 @@ class sticks_sheet {
 			<div class='colonne25'>".htmlentities($msg['rotation'], ENT_QUOTES, $charset)."</div>
 			<div class='colonne_suite'>
 				<input type='text' id='sticks_sheet_cote_coords_rotation' name='sticks_sheet_cote_coords[rotation]' class='saisie-5em' style='text-align:right;' value='".$this->cote_coords['rotation']."' />
+			</div>
+		</div>";
+		$display .= $this->get_display_line_unit_parameter('border_size', 'cote_coords');
+		$display.= "
+		<div class='row'>
+			<div class='colonne25'>".htmlentities($msg['cote_character_line_break'], ENT_QUOTES, $charset)."</div>
+			<div class='colonne_suite'>
+				<input type='text' id='sticks_sheet_cote_coords_character_line_break' name='sticks_sheet_cote_coords[character_line_break]' class='saisie-5em' style='text-align:right;' value='".$this->cote_coords['character_line_break']."' />
 			</div>
 		</div>";
 	

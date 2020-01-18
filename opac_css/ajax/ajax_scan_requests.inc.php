@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: ajax_scan_requests.inc.php,v 1.4 2017-04-11 09:13:55 ngantier Exp $
+// $Id: ajax_scan_requests.inc.php,v 1.5 2019-07-02 13:16:22 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -28,6 +28,11 @@ switch($sub){
 				break;
 			case 'edit':
 				$scan_request=new scan_request();
+				if($record_type == 'notices') {
+				    $scan_request->set_title(strip_tags(aff_notice($record_id, 0, 1, 0, AFF_ETA_NOTICES_REDUIT, '', 1, 0)));
+				} elseif($record_type == 'bulletins') {
+				    $scan_request->set_title(strip_tags(bulletin_header($record_id)));
+				}
 				$scan_request->add_linked_records(array($record_type => array($record_id)));
 				print $scan_request->get_form_in_record($record_id, $record_type);
 				break;

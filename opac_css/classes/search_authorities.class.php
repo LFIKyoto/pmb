@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_authorities.class.php,v 1.6 2018-10-08 13:59:39 vtouchard Exp $
+// $Id: search_authorities.class.php,v 1.7 2019-03-25 11:45:46 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -175,12 +175,12 @@ class search_authorities extends search {
 	        $bool=false;
 	        if ($s[0]=="f") {
 	            $champ=$this->fixedfields[$s[1]]["TITLE"];
-	            if ((string)$field[0]=="" && (string)$field1[0]=="") {
+	            if ($this->is_empty($field, "field_".$i."_".$search[$i]) && $this->is_empty($field1, "field_".$i."_".$search[$i]."_1")) {
 	                $bool=true;
 	            }
 	        } elseif(array_key_exists($s[0],$this->pp)) {
 	            $champ=$this->pp[$s[0]]->t_fields[$s[1]]["TITRE"];
-	            if ((string)$field[0]=="" && (string)$field1[0]=="") {
+	            if ($this->is_empty($field, "field_".$i."_".$search[$i]) && $this->is_empty($field1, "field_".$i."_".$search[$i]."_1")) {
 	                $bool=true;
 	            }
 	        } elseif($s[0]=="s") {

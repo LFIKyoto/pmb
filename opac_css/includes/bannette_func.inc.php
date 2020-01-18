@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: bannette_func.inc.php,v 1.57 2018-01-26 15:19:03 dgoron Exp $
+// $Id: bannette_func.inc.php,v 1.62.4.1 2019-10-15 06:35:50 jlaurent Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -76,43 +76,92 @@ $affiche_bannette_tpl="
 //	$aff_notices_nb : nombres de notices affichées : toutes = 0 
 //	$link_to_bannette : lien pour afficher le contenu de la bannette
 //	$htmldiv_id="etagere-container", $htmldiv_class="etagere-container", $htmldiv_zindex="" : les id, class et zindex du <DIV > englobant le résultat de la fonction
-function affiche_bannette($bannettes="", $aff_notices_nb=0, $link_to_bannette="", $htmldiv_id="bannette-container", $htmldiv_class="bannette-container",$home=false ) {
+function affiche_bannette($bannettes_ids="", $aff_notices_nb=0, $link_to_bannette="", $htmldiv_id="bannette-container", $htmldiv_class="bannette-container",$home=false ) {
 	global $msg,$charset;
 	global $id_empr;
 	
-	// récupération des bannettes
-	$tableau_bannettes = tableau_bannette($bannettes, $home, 'PRIV') ;
-	
-	if (!sizeof($tableau_bannettes))		
-		return "" ;
-	
-	// préparation du div comme il faut
-	$retour_aff = "<div id='$htmldiv_id' class='$htmldiv_class' >";
-	for ($i=0; $i<sizeof($tableau_bannettes); $i++ ) {
-		$bannette = new bannette($tableau_bannettes[$i]['id_bannette']);
-		$retour_aff.= $bannette->get_display($aff_notices_nb, $link_to_bannette, $home);
+	$retour_aff = "";
+	// bannettes publiques
+	$bannettes = tableau_bannette($bannettes_ids, $home, 'PRIV');
+	if(count($bannettes)) {
+		$retour_aff .= "<div id='".$htmldiv_id."-pub' class='$htmldiv_class' >";
+		foreach ($bannettes as $bannette_info) {
+			$bannette = new bannette($bannette_info['id_bannette']);
+			$retour_aff.= $bannette->get_display($aff_notices_nb, $link_to_bannette, $home);
+		}
+		$retour_aff .= "</div>";
 	}
-	// fermeture du DIV
+	
+	// bannettes privées
+	$bannettes = tableau_bannette($bannettes_ids, $home, 'PRIV', $_SESSION['id_empr_session']);
+	if(count($bannettes)) {
+		$retour_aff .= "<div id='".$htmldiv_id."-priv' class='$htmldiv_class' >";
+		foreach ($bannettes as $bannette_info) {
+			$bannette = new bannette($bannette_info['id_bannette']);
+			$retour_aff.= $bannette->get_display($aff_notices_nb, $link_to_bannette, $home);
+		}
+		$retour_aff .= "</div>";
+	}
+	return $retour_aff;	
+}
+
+// function affiche_bannettes : affiche les bannettes et leur contenu pour l'abonné
+// paramètres :
+//	$aff_notices_nb : nombres de notices affichées : toutes = 0
+//	$link_to_bannette : lien pour afficher le contenu de la bannette
+//	$htmldiv_id="etagere-container", $htmldiv_class="etagere-container", $htmldiv_zindex="" : les id, class et zindex du <DIV > englobant le résultat de la fonction
+function affiche_bannettes($aff_notices_nb=0, $link_to_bannette="", $htmldiv_id="bannette-container", $htmldiv_class="bannette-container",$home=false ) {
+	global $msg,$charset;
+	global $id_empr;
+
+	$retour_aff = "";
+	// bannettes publiques
+	$bannettes = tableau_bannette(0, $home, 'PRIV');
+	$retour_aff .="<h3 id='title_bannette_pub'><span>".$msg['dsi_bannette_pub']."</span></h3>";
+	$retour_aff .= "<div id='".$htmldiv_id."-pub' class='$htmldiv_class' >";
+	if(count($bannettes)) {
+		foreach ($bannettes as $bannette_info) {
+			$bannette = new bannette($bannette_info['id_bannette']);
+			$retour_aff.= $bannette->get_display($aff_notices_nb, $link_to_bannette, $home);
+		}
+	} else {
+		$retour_aff.= $msg['dsi_bannette_no_newrecord'];
+	}
 	$retour_aff .= "</div>";
-	return $retour_aff ;	
+
+	// bannettes privées
+	$bannettes = tableau_bannette(0, $home, 'PRIV', $_SESSION['id_empr_session']);
+	$retour_aff .="<h3 id='title_bannette_priv'><span>".$msg['dsi_bannette_priv']."</span></h3>";
+	$retour_aff .= "<div id='".$htmldiv_id."-priv' class='$htmldiv_class' >";
+	if(count($bannettes)) {
+		foreach ($bannettes as $bannette_info) {
+			$bannette = new bannette($bannette_info['id_bannette']);
+			$retour_aff.= $bannette->get_display($aff_notices_nb, $link_to_bannette, $home);
+		}
+	} else {
+		$retour_aff.= $msg['dsi_bannette_no_newrecord'];
+	}
+	$retour_aff .= "</div>";
+	return $retour_aff;
 }
 
 // retourne un tableau des bannettes de l'abonné	
-function tableau_bannette($id_bannette, $home=false, $priv_pub="PUB") {
+function tableau_bannette($id_bannette, $home=false, $priv_pub="PUB", $proprio_bannette=0) {
 	global $msg ;
 	global $id_empr ;
 	global $opac_show_subscribed_bannettes;
 	
 	$tableau_bannette = array();
-	if ($id_bannette) $clause = " and num_bannette in ('$id_bannette') ";
+	if ($id_bannette) $clause = " and id_bannette in ('$id_bannette') ";
 	else $clause = "";
 	//Récupération des infos des bannettes
-	$query = "select distinct id_bannette,comment_public, date_format(date_last_envoi, '".$msg['format_date']."') as aff_date_last_envoi from bannettes "; 
+	$query = "select distinct id_bannette,comment_public, date_format(date_last_envoi, '".$msg['format_date']."') as aff_date_last_envoi, proprio_bannette from bannettes "; 
 	if($home) {
 		$query .= " where bannette_opac_accueil=1 ";
 	} else {
 		if($priv_pub == "PRIV") {
-			$query .= " join bannette_abon on num_bannette=id_bannette where num_empr='$id_empr' ";
+			$query .= " join bannette_abon on num_bannette=id_bannette where num_empr='".$id_empr."' ";
+			$query .= " and proprio_bannette='".$proprio_bannette."' ";
 		} else {
 			$query .= " where proprio_bannette = 0 ";
 		}

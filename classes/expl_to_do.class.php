@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl_to_do.class.php,v 1.91 2018-11-21 11:45:04 dgoron Exp $
+// $Id: expl_to_do.class.php,v 1.95.2.2 2019-11-12 14:42:09 arenou Exp $
 
 if (stristr ( $_SERVER ['REQUEST_URI'], ".class.php" ))
 	die ( "no access" );
@@ -162,7 +162,7 @@ class expl_to_do {
 	public function do_form_retour($action_piege=0,$piege_resa=0,$confirmed=1){
 		global $msg,$dbh,$form_retour_tpl,$pmb_antivol,$deflt_docs_location,$pmb_transferts_actif;
 		global $transferts_retour_origine,$transferts_retour_origine_force;
-		global $script_antivol_rfid,$pmb_rfid_activate,$pmb_rfid_serveur_url,$transferts_retour_action_defaut;
+		global $script_antivol_rfid,$pmb_rfid_activate, $param_rfid_activate, $pmb_rfid_serveur_url,$transferts_retour_action_defaut;
 		global $expl_section,$retour_ok_tpl,$retour_intouvable_tpl,$categ;
 		global $pmb_resa_retour_action_defaut,$pmb_hide_retdoc_loc_error;
 		global $alert_sound_list,$pmb_play_pret_sound,$pmb_lecteurs_localises;
@@ -171,9 +171,14 @@ class expl_to_do {
 		global $pmb_expl_show_lastempr;
 		global $transferts_retour_action_autorise_autre;
 		global $transferts_validation_actif;
+		global $transferts_resa_etat_transfert;
 		global $transferts_retour_etat_transfert;
 		global $charset;
 		
+		$source_device = 'gestion_standard';
+		if ($pmb_rfid_activate && $param_rfid_activate && $pmb_rfid_serveur_url) {
+		    $source_device = 'gestion_rfid';
+		}		
 		$form_retour_tpl_temp=$form_retour_tpl;
 		if(!$this->expl_id) {
 			// l'exemplaire est inconnu
@@ -325,7 +330,7 @@ class expl_to_do {
     			$this->expl->expl_location_origine=$trans->location_origine;
     			switch($action_piege) {
     				case '1'://issu d'une autre localisation: accepter le retour
-    					if($this->expl->pret_idempr) $message_del_pret=$this->del_pret();
+    					if($this->expl->pret_idempr) $message_del_pret=$this->del_pret($source_device);
     					$this->calcul_resa();
     					if ($this->flag_resa_is_affecte){
     						$message_resa="<div class='erreur'>".$msg["circ_retour_ranger_resa"]."</div>";
@@ -359,12 +364,12 @@ class expl_to_do {
     					pmb_mysql_query( $rqt );	
     				break;
     				case '3':// A traiter plus tard				
-    					if($this->expl->pret_idempr) $message_del_pret=$this->del_pret();
+    				    if($this->expl->pret_idempr) $message_del_pret=$this->del_pret($source_device);
     					$this->piege=1;	
     				break;			
     				case '4':// retour sur le site d'origne, il faut nettoyer
     					$param = $trans->retour_exemplaire_loc_origine($this->expl_id);
-    					if($this->expl->pret_idempr) $message_del_pret=$this->del_pret();
+    					if($this->expl->pret_idempr) $message_del_pret=$this->del_pret($source_device);
     					$this->calcul_resa();
     				break;
     				case '2'://issu d'une autre localisation: changer la loc, effacer les transfert				
@@ -385,7 +390,7 @@ class expl_to_do {
     					pmb_mysql_query( $rqt );			
     				// pas de break; on fait le reste du traitement par défaut
     				default:										
-    					if($this->expl->pret_idempr) $message_del_pret=$this->del_pret();
+    				    if($this->expl->pret_idempr) $message_del_pret=$this->del_pret($source_device);
     					
     					$resa_id=$this->calcul_resa();
     					if ($this->flag_resa_is_affecte){
@@ -433,7 +438,12 @@ class expl_to_do {
     							$result = pmb_mysql_query($query, $dbh);
     							$info_loc=pmb_mysql_fetch_object($result);					
     							if ($transferts_validation_actif) {
-    								$message_transfert= "<div class='erreur'><br />" . str_replace("!!site_dest!!",$info_loc->location_libelle,$msg["transferts_circ_transfert_pour_resa"]) . "<br /><br /></div>";
+    							    $message_to_display = str_replace("!!site_dest!!",$info_loc->location_libelle,$msg["transferts_circ_transfert_pour_resa"]);
+    							    if ($transferts_resa_etat_transfert == "1") {
+    							        //Modification du lien vers les envois
+    							        $message_to_display = str_replace("&sub=valid","&sub=envoi" ,$message_to_display);
+    							    }
+    							    $message_transfert= "<div class='erreur'><br />" . $message_to_display . "<br /><br /></div>";
     							} else {
     								$message_transfert= "<div class='erreur'><br />" . str_replace("!!source_location!!",$info_loc->location_libelle,$msg["transferts_circ_retour_lbl_transfert"]) . "<br /><br /></div>";
     							}
@@ -480,7 +490,7 @@ class expl_to_do {
     												
     							//Affichage des réservations prévisionnelles sur le document courant
     							$q = "SELECT id_resa, resa_idnotice, resa_date, resa_date_debut, resa_date_fin, resa_validee, IF(resa_date_fin>=sysdate() or resa_date_fin='0000-00-00',0,1) as perimee, date_format(resa_date_fin, '".$msg["format_date_sql"]."') as aff_date_fin, ";
-    							$q.= "resa_idempr, concat(lower(empr_prenom), ' ',upper(empr_nom)) as resa_nom, if(resa_idempr!='".$this->expl->pret_idempr."', 0, 1) as resa_same ";
+    							$q.= "resa_idempr, concat(empr_prenom, ' ',empr_nom) as resa_nom, if(resa_idempr!='".$this->expl->pret_idempr."', 0, 1) as resa_same ";
     							$q.= "FROM resa_planning left join empr on resa_idempr=id_empr ";
     							$q.= "where resa_idnotice in (select expl_notice from exemplaires where expl_cb = '".$this->expl_cb."') ";
     							if ($pmb_location_resa_planning) $q.= "and empr_location in (select expl_location from exemplaires where expl_cb = '".$this->expl_cb."') ";
@@ -520,7 +530,7 @@ class expl_to_do {
     		}		
     		
     		if(!$expl_no_checkout && !$pmb_transferts_actif){
-    			if($this->expl->pret_idempr) $message_del_pret=$this->del_pret();
+    		    if($this->expl->pret_idempr) $message_del_pret=$this->del_pret($source_device);
     			$this->calcul_resa();		
     			if ($this->flag_resa_is_affecte){
     				$message_resa="<div class='erreur'>".$msg["circ_retour_ranger_resa"]."</div>";
@@ -554,7 +564,7 @@ class expl_to_do {
     												
     					//Affichage des réservations prévisionnelles sur le document courant
     					$q = "SELECT id_resa, resa_idnotice, resa_date, resa_date_debut, resa_date_fin, resa_validee, IF(resa_date_fin>=sysdate() or resa_date_fin='0000-00-00',0,1) as perimee, date_format(resa_date_fin, '".$msg["format_date_sql"]."') as aff_date_fin, ";
-    					$q.= "resa_idempr, concat(lower(empr_prenom), ' ',upper(empr_nom)) as resa_nom, if(resa_idempr!='".$this->expl->pret_idempr."', 0, 1) as resa_same ";
+    					$q.= "resa_idempr, concat(empr_prenom, ' ',empr_nom) as resa_nom, if(resa_idempr!='".$this->expl->pret_idempr."', 0, 1) as resa_same ";
     					$q.= "FROM resa_planning left join empr on resa_idempr=id_empr ";
     					$q.= "where resa_idnotice in (select expl_notice from exemplaires where expl_cb = '".$this->expl_cb."') ";
     					if ($pmb_location_resa_planning) $q.= "and empr_location in (select expl_location from exemplaires where expl_cb = '".$this->expl_cb."') ";
@@ -705,14 +715,14 @@ class expl_to_do {
 		$expl_note = '';
 		if ($this->expl->expl_note) {
 			$alert_sound_list[]="critique";
-			$expl_note.=pmb_bidi("<hr /><div class='erreur'>${msg[377]} :</div><div class='message_important'>".$this->expl->expl_note."</div>");
+			$expl_note.=pmb_bidi("<hr /><div class='erreur'>${msg[377]} :</div><div class='message_important'>".nl2br($this->expl->expl_note)."</div>");
 		}
 		$form_retour_tpl_temp=str_replace('!!expl_note!!',$expl_note, $form_retour_tpl_temp);
 		
 		$expl_comment = '';
 		if ($this->expl->expl_comment) {
 			if (!$this->expl->expl_note) $expl_comment.=pmb_bidi("<hr />");
-			$expl_comment.=pmb_bidi("<div class='erreur'>".$msg['expl_zone_comment']." :</div><div class='expl_comment'>".$this->expl->expl_comment."</div>");
+			$expl_comment.=pmb_bidi("<div class='erreur'>".$msg['expl_zone_comment']." :</div><div class='expl_comment'>".nl2br($this->expl->expl_comment)."</div>");
 		}
 		$form_retour_tpl_temp=str_replace('!!expl_comment!!',$expl_comment, $form_retour_tpl_temp);
 		
@@ -915,12 +925,13 @@ class expl_to_do {
 		return $ids_resa_planning;
 	}
 	
-	public function del_pret() {
+	public function del_pret($source_device = '', &$info_retour = array()) {
 		global $dbh; 
 		global $msg,$pmb_blocage_retard,$pmb_blocage_delai,$pmb_blocage_coef,$pmb_blocage_max,$pmb_gestion_financiere,$pmb_gestion_amende;
 		global $selfservice_retour_retard_msg, $selfservice_retour_blocage_msg, $selfservice_retour_amende_msg;
 		global $alertsound_list;
 		
+		$info_retour['nb_jours_retard'] = 0;
 		if(!$this->expl->pret_idempr) return '';
 		$message = '';
 		//choix du mode de calcul
@@ -944,6 +955,7 @@ class expl_to_do {
 				$message.= "<br /><div class='erreur'>".$msg[369]."&nbsp;: ".$retard." ".$msg[370]."</div>";
 				$alertsound_list[]="critique";
 				$this->message_retard=$selfservice_retour_retard_msg." ".$msg[369]." : ".$retard." ".$msg[370];
+				$info_retour['nb_jours_retard'] = $ndays;
 			}
 		}
 		
@@ -1013,7 +1025,7 @@ class expl_to_do {
 		$query = "update exemplaires set expl_lastempr='".$this->expl->pret_idempr."', last_loan_date=sysdate() where expl_id='".$this->expl->expl_id."' ";
 		if (!pmb_mysql_query($query, $dbh)) return '' ;
 		
-		$this->maj_stat_pret ();
+		$this->maj_stat_pret($source_device);
 	
 		$this->empr = new emprunteur($this->expl->pret_idempr, '', FALSE, 2);
 		$this->expl->pret_idempr=0;
@@ -1021,7 +1033,7 @@ class expl_to_do {
 		return $message;
 	}
 	
-	public function maj_stat_pret () {
+	public function maj_stat_pret ($source_device = 'gestion_standard') {
 		global $dbh, $empr_archivage_prets, $empr_archivage_prets_purge; 
 		global $deflt_docs_location;
 		
@@ -1054,7 +1066,8 @@ class expl_to_do {
 		$query .= "arc_niveau_relance='".	$this->expl->niveau_relance  			."', ";
 		$query .= "arc_date_relance='".		$this->expl->date_relance    			."', ";
 		$query .= "arc_printed='".			$this->expl->printed    				."', ";
-		$query .= "arc_cpt_prolongation='".	$this->expl->cpt_prolongation 		."' ";	
+		$query .= "arc_cpt_prolongation='".	$this->expl->cpt_prolongation 		."', ";
+		$query .= "arc_retour_source_device='".	    addslashes($source_device) 	           	."' ";
 		$query .= " where arc_id='".$this->expl->pret_arc_id."' ";
 		$res = pmb_mysql_query($query, $dbh);
 	
@@ -1122,7 +1135,7 @@ class expl_to_do {
 		
 	}
 
-	public function do_retour_selfservice(){
+	public function do_retour_selfservice($source_device = '', &$info = array()){
 		global $deflt_docs_location,$pmb_transferts_actif, $pmb_lecteurs_localises;
 		global $transferts_retour_origine,$transferts_retour_origine_force;	
 		global $selfservice_loc_autre_todo,$selfservice_resa_ici_todo,$selfservice_resa_loc_todo;
@@ -1170,7 +1183,7 @@ class expl_to_do {
 				}	
 				$this->message_loc= $selfservice_loc_autre_todo_msg;
 				if(!$non_retournable) {
-					if($this->expl->pret_idempr) $this->message_del_pret=$this->del_pret();
+				    if($this->expl->pret_idempr) $this->message_del_pret=$this->del_pret($source_device, $info);
 					if(!$non_reservable) {
 						$resa_id=$this->calcul_resa();
 						if ($this->flag_resa_is_affecte) {
@@ -1205,7 +1218,7 @@ class expl_to_do {
 				}
 			}else {
 				// c'est la bonne localisation ( et transfert actif)			
-				if($this->expl->pret_idempr) $this->message_del_pret=$this->del_pret();			
+			    if($this->expl->pret_idempr) $this->message_del_pret=$this->del_pret($source_device, $info);			
 				$this->calcul_resa();
 				if ($this->flag_resa_is_affecte) {
 					// Déjà affecté: il aurai du ne pas etre en prêt
@@ -1276,7 +1289,7 @@ class expl_to_do {
 							return false;
 						}					
 						
-						if($this->expl->pret_idempr) $this->message_del_pret=$this->del_pret();
+						if($this->expl->pret_idempr) $this->message_del_pret=$this->del_pret($source_device, $info);
 						
 						if ($this->flag_resa_is_affecte){
 							$this->message_resa= $selfservice_resa_ici_todo_msg;
@@ -1304,7 +1317,7 @@ class expl_to_do {
 							$this->message_resa=$selfservice_resa_loc_todo_msg;
 						}
 					}else{					
-						if($this->expl->pret_idempr) $this->message_del_pret=$this->del_pret();
+					    if($this->expl->pret_idempr) $this->message_del_pret=$this->del_pret($source_device, $info);
 					}	
 				}
 			}else {
@@ -1327,7 +1340,7 @@ class expl_to_do {
 					return false;		
 				}	
 				
-				if($this->expl->pret_idempr) $this->message_del_pret=$this->del_pret();				
+				if($this->expl->pret_idempr) $this->message_del_pret=$this->del_pret($source_device, $info);				
 	//			$this->calcul_resa();
 				if ($this->flag_resa_is_affecte){
 					$this->message_resa= $selfservice_resa_ici_todo_msg;
@@ -1374,6 +1387,12 @@ class expl_to_do {
 			
 		return true;
 		
+	}
+	
+	public function do_pnb_retour(){
+	    $infos = [];
+	    $message = $this->del_pret('pnb',$infos);
+	    return ['message'=> $message, 'infos'=> $infos];
 	}
 //class end
 }		

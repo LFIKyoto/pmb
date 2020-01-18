@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: statut.class.php,v 1.4 2017-06-30 14:08:17 dgoron Exp $
+// $Id: statut.class.php,v 1.5 2019-08-27 10:15:58 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -22,7 +22,9 @@ class statut{
 		$this->id_element = $id_elt;
 		$format_affichage = explode('/',$fieldElt);
 		$this->champ_entree = $format_affichage[0];
-		if($format_affichage[1]) $this->champ_sortie = $format_affichage[1];		
+		if (!empty($format_affichage[1])) {
+		    $this->champ_sortie = $format_affichage[1];
+		}
 		$ids = explode("_",$id_elt);
 		$this->idobjet = $ids[1];
 		

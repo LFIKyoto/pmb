@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: main.inc.php,v 1.3 2017-01-31 15:41:41 dgoron Exp $
+// $Id: main.inc.php,v 1.4 2019-04-11 08:03:30 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -36,9 +36,8 @@ switch($action){
 		}
 		print faq_questions::get_list();
 		break;
-	case "delete" : 
-		$question = new faq_question($id);
-		$result = $question->delete();
+	case "delete" :
+		$result = faq_question::delete($id);
 		if(!$result){
 			error_message("", $msg['faq_question_delete_error']);
 			print "<div class='row'>&nbsp;</div>";

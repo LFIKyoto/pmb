@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: electre.class.php,v 1.7 2018-05-14 08:52:29 arenou Exp $
+// $Id: electre.class.php,v 1.9 2019-08-22 09:44:56 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -30,7 +30,7 @@ class electre extends connector {
 	}
     
     public function source_get_property_form($source_id) {
-    	global $charset;
+        global $charset, $electre_maxresults;
     	$params=$this->get_source_params($source_id);
     	if ($params["PARAMETERS"]) {
     	    //Affichage du formulaire avec $params["PARAMETERS"]
@@ -40,7 +40,7 @@ class electre extends connector {
     	        ${$key}=$val;
     	    }
     	}
-    	if(!$electre_maxresults){
+    	if(empty($electre_maxresults)){
     	    $electre_maxresults = 250;
     	}
     	
@@ -94,8 +94,8 @@ class electre extends connector {
 
 	public function make_serialized_source_properties($source_id) {
 	    global $electre_maxresults;
-	    $t["electre_maxresults"]=$electre_maxresults+0;
-	    $this->sources[$source_id]["PARAMETERS"]=serialize($t);
+	    $t["electre_maxresults"] = (int) $electre_maxresults;
+	    $this->sources[$source_id]["PARAMETERS"] = serialize($t);
 	}
 	
 	public function rec_record($record,$source_id,$search_id) {

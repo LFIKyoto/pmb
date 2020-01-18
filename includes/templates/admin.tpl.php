@@ -2,27 +2,35 @@
 // +-------------------------------------------------+
 // ï¿½ 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: admin.tpl.php,v 1.272 2018-12-19 14:49:38 dgoron Exp $
+// $Id: admin.tpl.php,v 1.281.2.1 2019-11-08 10:55:39 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $pmb_logs_activate, $pmb_opac_view_activate, $pmb_nomenclature_activate, $pmb_quotas_avances, $pmb_utiliser_calendrier, $pmb_gestion_financiere, $pmb_planificateur_allow;
+global $pmb_mails_waiting, $pmb_sur_location_activate, $pmb_selfservice_allow, $pmb_transferts_actif, $pmb_javascript_office_editor, $opac_visionneuse_allow;
+global $opac_search_universes_activate, $opac_websubscribe_show, $opac_serialcirc_active, $ldap_accessible, $faq_active, $acquisition_gestion_tva, $acquisition_sugg_categ;
+global $file_in, $suffix, $mimetype, $output, $admin_menu_new, $msg, $pmb_gestion_abonnement, $pmb_gestion_tarif_prets, $pmb_gestion_amende, $pmb_allow_external_search;
+global $acquisition_active, $gestion_acces_active, $demandes_active, $pmb_scan_request_activate, $plugins, $sur_location_menu, $admin_menu_docs, $pmb_map_activate, $admin_menu_noti_onglet;
+global $admin_menu_notices, $admin_menu_collstate, $admin_menu_search_persopac, $admin_menu_opac, $admin_menu_opac_view, $admin_menu_abonnements, $admin_menu_empr, $admin_menu_users;
+global $admin_menu_import, $admin_menu_convert, $charset, $admin_menu_harvest, $admin_menu_mailtpl, $admin_menu_misc, $PMBuserid, $admin_menu_z3950, $admin_menu_sauvegarde;
+global $admin_menu_calendrier, $admin_menu_finance, $pmb_gestion_financiere_caisses, $admin_menu_acquisition, $admin_menu_external_services, $admin_menu_connecteurs, $admin_menu_selfservice;
+global $admin_menu_visionneuse, $admin_menu_act, $admin_menu_transferts, $admin_menu_upload_docnum, $admin_menu_demandes, $admin_menu_faq, $admin_menu_nomenclature, $admin_menu_formation;
+global $admin_menu_voice, $admin_menu_instrument, $admin_menu_material, $admin_menu_scan_request, $admin_layout, $current_module, $admin_layout_end, $admin_user_javascript;
+global $admin_npass_form, $admin_user_form, $fiches_active, $thesaurus_concepts_active, $dsi_active, $semantic_active, $pmb_extension_tab, $frbr_active, $modelling_active;
+global $user_acquisition_adr_form, $admin_param_form, $password_field, $admin_user_list, $cms_active, $admin_user_alert_row, $admin_user_link1, $admin_codstat_form, $location_map_tpl;
+global $admin_location_form_sur_loc_part, $admin_location_form, $admin_section_form, $admin_statut_form, $admin_orinot_form, $admin_onglet_form, $admin_notice_usage_form;
+global $admin_map_echelle_form, $admin_map_projection_form, $admin_map_ref_form, $admin_typdoc_form, $admin_lender_form, $admin_support_form, $admin_emplacement_form, $admin_categlec_form;
+global $admin_statlec_form, $admin_empr_statut_form, $admin_proc_form, $admin_proc_view_remote, $admin_zbib_form, $admin_zattr_form, $admin_convert_end, $noimport, $n_errors, $errors_msg;
+global $admin_calendrier_form, $admin_calendrier_form_mois_start, $admin_calendrier_form_mois_commentaire, $admin_calendrier_form_mois_end, $admin_notice_statut_form;
+global $admin_collstate_statut_form, $admin_abonnements_periodicite_form, $admin_procs_clas_form, $admin_menu_infopages, $admin_infopages_form, $admin_group_form, $admin_menu_planificateur;
+global $admin_menu_authorities, $admin_menu_opac_views, $admin_menu_cms_editorial, $admin_liste_jscript, $admin_docnum_statut_form, $admin_menu_loans, $admin_authorities_statut_form;
+global $admin_menu_contact_form, $admin_menu_search_universes, $admin_menu_pnb, $admin_vignette_menu, $admin_composed_vedettes_menu;
+global $acquisition_rent_requests_activate;
 
 if(!isset($file_in)) $file_in = '';
 if(!isset($suffix)) $suffix = '';
 if(!isset($mimetype)) $mimetype = '';
 if(!isset($output)) $output = '';
-
-global $pmb_logs_activate, $pmb_opac_view_activate, $pmb_nomenclature_activate, $pmb_quotas_avances, $pmb_utiliser_calendrier;
-global $pmb_gestion_financiere, $pmb_planificateur_allow, $pmb_mails_waiting, $pmb_sur_location_activate;
-global $pmb_selfservice_allow, $pmb_transferts_actif, $pmb_javascript_office_editor;
-global $opac_visionneuse_allow;
-
-global $opac_search_universes_activate, $opac_websubscribe_show, $opac_serialcirc_active;
-
-global $ldap_accessible;
-
-global $faq_active;
-
-global $acquisition_gestion_tva, $acquisition_sugg_categ;
 
 // ---------------------------------------------------------------------------
 //	$admin_menu_new : Menu vertical de l'administration
@@ -43,7 +51,7 @@ $admin_menu_new = "
 	<li><a href='./admin.php?categ=cms_editorial'>".$msg['editorial_content']."</a></li>
 	<li><a href='./admin.php?categ=loans'>".$msg['admin_menu_loans']."</a></li>
 	<li><a href='./admin.php?categ=pnb'>".$msg['admin_menu_pnb']."</a></li>
-	<li><a href='./admin.php?categ=composed_vedettes'>".$msg['admin_menu_composed_vedettes']."</a></li>
+	<li><a href='./admin.php?categ=composed_vedettes&sub=grammars'>".$msg['admin_menu_composed_vedettes']."</a></li>
 </ul>
 <h3 onclick='menuHide(this,event)'>".$msg['opac_admin_menu']."</h3>
 <ul>
@@ -356,6 +364,11 @@ $admin_menu_empr .= "
 	<span".ongletSelect("categ=empr&sub=parperso").">
 		<a title='$msg[parametres_perso_lec_alt]' href='./admin.php?categ=empr&sub=parperso&action='>
 			$msg[parametres_perso_lec_lien]
+		</a>
+	</span>
+	<span".ongletSelect("categ=empr&sub=empr_account").">
+		<a title='".$msg['empr_account']."' href='./admin.php?categ=empr&sub=empr_account&action='>
+			".$msg['empr_account']."
 		</a>
 	</span>
 </div>";
@@ -1268,7 +1281,7 @@ $admin_user_form .= "
 if ($dsi_active) $admin_user_form .= "<input type='checkbox' class='checkbox' !!dsi_flg!! value='1' id='form_dsi' name='form_dsi' /><label for='form_dsi'>".$msg["dsi_droit"]."</label><br />\n";
 	else $admin_user_form .= "<br />\n";
 $admin_user_form .= "<input type='checkbox' class='checkbox' !!pref_flg!! value='1' id='form_pref' name='form_pref' /><label for='form_pref'>$msg[933]</label><br />\n";
-if ($acquisition_active) $admin_user_form .= "<input type='checkbox' class='checkbox' !!acquisition_account_invoice_flg!! value='1' id='form_acquisition_account_invoice_flg' name='form_acquisition_account_invoice_flg' /><label for='form_acquisition_account_invoice_flg'>".$msg['acquisition_account_invoice_flg']."</label><br>\n";
+if ($acquisition_active && $acquisition_rent_requests_activate) $admin_user_form .= "<input type='checkbox' class='checkbox' !!acquisition_account_invoice_flg!! value='1' id='form_acquisition_account_invoice_flg' name='form_acquisition_account_invoice_flg' /><label for='form_acquisition_account_invoice_flg'>".$msg['acquisition_account_invoice_flg']."</label><br>\n";
 	else $admin_user_form .= "<br />\n";
 if ($semantic_active)  $admin_user_form .= "<input type='checkbox' class='checkbox' !!semantic_flg!! value='1' id='form_semantic' name='form_semantic' /><label for='form_semantic'>".$msg['semantic_flg']."</label>\n";
 	else $admin_user_form .= "<br />\n";
@@ -1300,6 +1313,7 @@ $admin_user_form .= "
 	<div class='left'>
 		<input class='bouton' type='button' value=' $msg[76] ' onClick=\"document.location='./admin.php?categ=users&sub=users'\" />&nbsp;
 		<input class='bouton' type='submit' value=' $msg[77] ' onClick=\"return test_form_create(this.form, !!form_type!!)\" />
+		!!button_duplicate!!
 		<input type='hidden' name='form_actif' value='1'>
 		</div>
 	<div class='right'>
@@ -1495,7 +1509,7 @@ $admin_user_list .= "<td class='brd'>";
 				$admin_user_list .= "!!nuserfiches!!$msg[onglet_fichier]</td>";
 			else $admin_user_list .= "&nbsp;</td>";
 			$admin_user_list .= "<td class='brd'>";
-			if ($acquisition_active)
+			if ($acquisition_active && $acquisition_rent_requests_activate)
 				$admin_user_list .= "!!nuseracquisition_account_invoice!!".$msg['acquisition_account_invoice_flg']."</td>";
 			else $admin_user_list .= "&nbsp;</td>";
 			$admin_user_list .= "
@@ -1514,7 +1528,11 @@ if($thesaurus_concepts_active){
 	$admin_user_list .= "!!nuserconcepts!!<i>".$msg["ontology_skos_menu"]."</i>";
 }
 $admin_user_list .= "</td>
-			<td class='brd'></td>
+			<td class='brd'>";
+if($modelling_active){
+	$admin_user_list .= "!!nusermodelling!!".$msg["modelling"];
+}
+$admin_user_list .= "</td>
 			<td class='brd'></td>
 		</tr>";
 // Septième ligne
@@ -1921,7 +1939,7 @@ $admin_onglet_form = "
 
 // $admin_notice_usage_form : template form droit d'usage notice
 $admin_notice_usage_form = "
-<form class='form-$current_module' name=notice_usageform method='post' action=\"./admin.php?categ=notices&sub=notice_usage&action=update&id_usage=!!id_usage!!\">
+<form class='form-$current_module' id='notice_usageform' name='notice_usageform' method='post' action=\"./admin.php?categ=notices&sub=notice_usage&action=update&id_usage=!!id_usage!!\">
 <h3><span onclick='menuHide(this,event)'>!!form_title!!</span></h3>
 <!--    Contenu du form    -->
 <div class='form-contenu'>
@@ -1929,7 +1947,7 @@ $admin_notice_usage_form = "
 		<label class='etiquette' >".$msg['notice_usage_libelle']."</label>
 	</div>
 	<div class='row'>
-		<input type=text name='usage_libelle' value='!!usage_libelle!!' class='saisie-50em' />
+		<input type=text id='usage_libelle' name='usage_libelle' value='!!usage_libelle!!' class='saisie-50em' data-translation-fieldname='usage_libelle' />
 	</div>
 </div>
 <!-- Boutons -->
@@ -2376,31 +2394,35 @@ $admin_proc_form = "
 	</div>
 	<div class='row'>
 		<label class='etiquette' for='form_code'>$msg[706]</label>
-		</div>
+	</div>
 	<div class='row'>
 		<textarea cols='80' rows='8' name='f_proc_code'>!!code!!</textarea>
-		</div>
+	</div>
 	<div class='row'>
 		<label class='etiquette' for='form_comment'>$msg[707]</label>
-		</div>
+	</div>
 	<div class='row'>
 		<input type='text' name='f_proc_comment' value='!!comment!!' maxlength='255' class='saisie-50em' />
-		</div>
+	</div>
 	<div class='row'>
 		<label class='etiquette' for='form_notice_tpl'>".$msg['notice_tpl_notice_id']."</label>
-		</div>
+	</div>
 	<div class='row'>
 		!!notice_tpl!!
-		</div>
+	</div>
+	<div class='row'>
+		<label class='etiquette' for='autorisations_all'>".$msg["procs_autorisations_all"]."</label>
+		<input type='checkbox' id='autorisations_all' name='autorisations_all' value='1' !!autorisations_all!! />
+	</div>
 	<div class='row'>
 		<label class='etiquette' for='form_comment'>$msg[procs_autorisations]</label>
 		<input type='button' class='bouton_small align_middle' value='".$msg['tout_cocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,1);'>
 		<input type='button' class='bouton_small align_middle' value='".$msg['tout_decocher_checkbox']."' onclick='check_checkbox(document.getElementById(\"auto_id_list\").value,0);'>
-		</div>
+	</div>
 	<div class='row'>
 		!!autorisations_users!!
-		</div>
 	</div>
+</div>
 <!-- Boutons -->
 <div class='row'>
 	<div class='left'>
@@ -2680,6 +2702,7 @@ $admin_calendrier_form .= "</span></h3>
 	<input type='hidden' name='loc' value='!!book_location_id!!'  />
 	<input class='bouton' type='submit' value=' $msg[calendrier_ouvrir] ' onClick=\"this.form.faire.value='ouvrir'\" />&nbsp;
 	<input class='bouton' type='submit' value=' $msg[calendrier_fermer] ' onClick=\"this.form.faire.value='fermer'\" />&nbsp;
+	<input class='bouton' type='submit' value=' $msg[calendrier_initialization] ' onClick=\"this.form.faire.value='initialization'\" />&nbsp;
 	<input type='hidden' name='faire' value='' />
 	</div>
 </form>
@@ -3479,4 +3502,16 @@ $admin_vignette_menu ="
 	</div>
 </div>";
 
-
+$admin_composed_vedettes_menu = "
+<h1>".$msg["admin_menu_composed_vedettes"]."</h1>
+<div class='hmenu'>
+	<span".ongletSelect("categ=composed_vedettes&sub=grammars").">
+		<a title='".$msg["composed_vedettes_grammars"]."' href='./admin.php?categ=composed_vedettes&sub=grammars'>
+			".$msg["composed_vedettes_grammars"]."
+		</a>
+	</span>
+	<span".ongletSelect("categ=composed_vedettes&sub=schemes").">
+		<a title='".$msg["ontology_skos_conceptscheme"]."' href='./admin.php?categ=composed_vedettes&sub=schemes'>
+			".$msg["ontology_skos_conceptscheme"]."
+		</a>
+	</span>";

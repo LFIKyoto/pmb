@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: form.inc.php,v 1.41 2017-06-07 12:27:03 dgoron Exp $
+// $Id: form.inc.php,v 1.42 2019-04-29 11:04:20 dgoron Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -41,6 +41,9 @@ function check_clean_form(form) {
 	}
 	if(form.clean_cache_amende) {
 		if(form.clean_cache_amende.checked) flag += 262144;
+	}
+	if(form.clean_cache_temporary_files) {
+		if(form.clean_cache_temporary_files.checked) flag += 8589934592;
 	}
 	if(form.clean_titres_uniformes.checked) flag += 524288;
 	if(flag == 0) {

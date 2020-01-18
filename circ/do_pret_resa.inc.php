@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: do_pret_resa.inc.php,v 1.1 2018-01-29 14:48:56 ngantier Exp $
+// $Id: do_pret_resa.inc.php,v 1.2 2019-02-20 12:45:53 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -34,7 +34,7 @@ function do_pret_resa($id_resa, $force_pret=0) {
 		$return_val = $pret->mode1_check_pieges('', $id_empr, $expl_cb, $expl_id, $force_pret);
 		if(!$return_val['status']) {
 			// pas de piège, le prêt est effectué
-			$pret->confirm_pret($id_empr, $expl_id);
+			$pret->confirm_pret($id_empr, $expl_id, 0, 'gestion_standard');
 		} else {
 			// supression du pret temporaire, si créé
 			$pret->del_pret($expl_id);

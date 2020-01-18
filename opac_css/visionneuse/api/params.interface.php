@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2010 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: params.interface.php,v 1.11 2017-06-30 14:55:37 dgoron Exp $
+// $Id: params.interface.php,v 1.13 2019-07-11 13:01:58 btafforeau Exp $
  
  //on défini les méthodes à implémenter pour une classe de paramétrage...
 
@@ -21,7 +21,7 @@ class base_params implements params {
 	public $listeDocs = array();		//tableau de documents
 	public $listeMimetypes = array();	//tableau listant les différents mimetypes des documents
 	public $current = 0;				//position courante dans le tableau
-	public $currentDoc = "";			//Document courant
+	public $currentDoc = array();			//Document courant
 	public $currentMimetype = "";		//mimetype courant
 	public $params;					//tableau de paramètres utiles pour la recontructions des requetes...et même voir plus
 	public $position = 0;				//
@@ -71,6 +71,10 @@ class base_params implements params {
  	public function get_cached_filename($id){
  		global $visionneuse_path;
  		return realpath($visionneuse_path)."/temp/".$this->driver_name."_".$id;
+ 	}
+ 	
+ 	public function get_cached_url_filename($id){
+ 	    return $this->getUrlBase()."visionneuse/temp/".$this->driver_name."_".$id;
  	}
  	
  	public function cleanCache(){

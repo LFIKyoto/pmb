@@ -2,16 +2,17 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: expl_todo.inc.php,v 1.3 2015-04-03 11:16:25 jpermanne Exp $
+// $Id: expl_todo.inc.php,v 1.4 2019-05-29 12:12:29 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $aff_alerte, $msg;
 
 $temp_aff = expl_retour_todo();
 
 if ($temp_aff) $aff_alerte .= "<ul>".$msg["alert_circ_retour"].$temp_aff."</ul>";
   
 function expl_retour_todo () {
-	global $dbh ;
 	global $msg;
 	global $deflt_docs_location;
 	

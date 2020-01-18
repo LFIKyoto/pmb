@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_form.tpl.php,v 1.11 2018-11-22 15:34:57 dgoron Exp $
+// $Id: import_form.tpl.php,v 1.12 2019-05-27 10:24:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $class_path, $encodage_fic_source, $form, $current_module, $msg, $charset;
 
 require_once($class_path."/import/import_entities.class.php");
 

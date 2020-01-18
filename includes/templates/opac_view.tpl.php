@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // Â© 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: opac_view.tpl.php,v 1.6 2014-02-11 13:02:59 dbellamy Exp $
+// $Id: opac_view.tpl.php,v 1.7 2019-05-27 12:19:16 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $tpl_opac_view_list_tableau, $msg, $tpl_opac_view_list_tableau_ligne, $pmb_opac_url, $tpl_opac_view_form, $current_module, $charset, $tpl_opac_view_create_form, $tpl_opac_view_list_sel_tableau, $tpl_opac_view_list_sel_tableau_ligne;
 
 //*******************************************************************
 // Définition des templates pour les listes en edition

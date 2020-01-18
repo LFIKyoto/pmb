@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: empr.inc.php,v 1.16 2015-04-03 11:16:26 jpermanne Exp $
+// $Id: empr.inc.php,v 1.17 2019-05-29 12:12:29 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
+
+global $aff_alerte, $msg;
 
 $temp_aff = empr_proche_expiration() . empr_expiration() ;
 
@@ -15,7 +17,6 @@ $temp_aff = empr_categ_change () ;
 if ($temp_aff) $aff_alerte .= "<ul>".$msg["empr_categ_alert"].$temp_aff."</ul>";
 
 function empr_proche_expiration () {
-	global $dbh ;
 	global $msg;
 	global $pmb_relance_adhesion, $deflt2docs_location,$pmb_lecteurs_localises;
 	
@@ -34,7 +35,6 @@ function empr_proche_expiration () {
 }
 
 function empr_expiration () {
-	global $dbh ;
 	global $msg; 
 	global $empr_statut_adhes_depassee,$deflt2docs_location,$pmb_lecteurs_localises;
 
@@ -54,7 +54,6 @@ function empr_expiration () {
 }
 
 function empr_categ_change () {
-	global $dbh ;
 	global $msg; 
 	global $pmb_lecteurs_localises,$deflt2docs_location;
 	

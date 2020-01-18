@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: func_27S.inc.php,v 1.8 2015-04-03 11:16:23 jpermanne Exp $
+// $Id: func_27S.inc.php,v 1.10 2019-08-01 13:16:34 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".inc.php")) die("no access");
 
@@ -68,11 +68,7 @@ function import_new_notice_suite() {
 	// TRAITEMENT :
 	//	Rechercher si l'enregistrement existe déjà dans notices_custom_values = SELECT 1 FROM notices_custom_values WHERE notices_custom_champ=$id949_a AND notices_custom_origine=$notice_id
 	//	Créer si besoin
-	$rqt = "SELECT count(1) FROM notices_custom_values WHERE notices_custom_champ='".$id949_a."' AND notices_custom_origine='".$notice_id."' " ;
-	if (!pmb_mysql_result(pmb_mysql_query($rqt, $dbh),0,0)) {
-		$rqt_ajout = "INSERT INTO notices_custom_values (notices_custom_champ, notices_custom_origine, notices_custom_small_text) VALUES ('".$id949_a."', '".$notice_id."', '".$info_949[0]['a']."')" ;
-		$res_ajout = pmb_mysql_query($rqt_ajout, $dbh) ;
-		}
+	import_records::insert_value_custom_field($id949_a, $notice_id, $info_949[0]['a']);
 
 	// 949$c est stocké dans un champ personnalisé texte
 	// ce champ personnalisé a l'id $id949_c
@@ -90,11 +86,7 @@ function import_new_notice_suite() {
 	// TRAITEMENT :
 	//	Rechercher si l'enregistrement existe déjà dans notices_custom_values = SELECT 1 FROM notices_custom_values WHERE notices_custom_champ=$id949_d AND notices_custom_origine=$notice_id
 	//	Créer si besoin
-	$rqt = "SELECT count(1) FROM notices_custom_values WHERE notices_custom_champ='".$id949_d."' AND notices_custom_origine='".$notice_id."' " ;
-	if (!pmb_mysql_result(pmb_mysql_query($rqt, $dbh),0,0)) {
-		$rqt_ajout = "INSERT INTO notices_custom_values (notices_custom_champ, notices_custom_origine, notices_custom_small_text) VALUES ('".$id949_d."', '".$notice_id."', '".$info_949[0]['d']."')" ;
-		$res_ajout = pmb_mysql_query($rqt_ajout, $dbh) ;
-		}
+	import_records::insert_value_custom_field($id949_d, $notice_id, $info_949[0]['d']);
 
 	// les champs $606 sont stockés dans les catégories
 	//	$a >> en sous catégories de $id_rech_theme
@@ -114,46 +106,58 @@ function import_new_notice_suite() {
 	//			SELECT categ_id FROM categories WHERE categ_parent='".$categ_parent."' AND categ_libelle='".addslashes($info_606_x[$a][$x])."' "
 	//		Créer si besoin et récupérer l'id $categid_parent
 	//
-	for ($a=0; $a<sizeof($info_606_a); $a++) {
-		for ($j=0; $j<sizeof($info_606_j[$a]); $j++) {
-			if (!$libelle_j) $libelle_j .= $info_606_j[$a][$j] ;
-				else $libelle_j .= " ** ".$info_606_j[$a][$j] ;
-			}
-		if (!$libelle_j) $libelle_final = $info_606_a[$a][0] ;
-			else $libelle_final = $info_606_a[$a][0]." ** ".$libelle_j ;
-		if (!$libelle_final) break ; 
-		$rqt_a = "SELECT categ_id FROM categories WHERE categ_parent='".$id_rech_theme."' AND categ_libelle='".addslashes($libelle_final)."' " ;
-		$res_a = pmb_mysql_query($rqt_a,$dbh) ;
+	$nb_infos_606_a = count($info_606_a);
+	for ($a = 0; $a < $nb_infos_606_a; $a++) {
+	    $nb_infos_606_j = count($info_606_j[$a]);
+	    for ($j = 0; $j < $nb_infos_606_j; $j++) {
+	        if (empty($libelle_j)) {
+	            $libelle_j .= $info_606_j[$a][$j];
+	        } else {
+	            $libelle_j .= " ** ".$info_606_j[$a][$j];
+	        }
+		}
+		
+		if (empty($libelle_j)) {
+		    $libelle_final = $info_606_a[$a][0];
+		} else {
+		    $libelle_final = $info_606_a[$a][0]." ** $libelle_j";
+		}
+		if (empty($libelle_final)) {
+		    break; 
+		}
+		
+		$rqt_a = "SELECT categ_id FROM categories WHERE categ_parent='$id_rech_theme' AND categ_libelle='".addslashes($libelle_final)."' ";
+		$res_a = pmb_mysql_query($rqt_a);
 		if (pmb_mysql_num_rows($res_a)) {
-			$categid_a = pmb_mysql_result($res_a, 0, 0) ;
-			} else {
-				$rqt_ajout = "insert into categories set categ_parent='".$id_rech_theme."', categ_libelle='".addslashes($libelle_final)."', index_categorie=' ".strip_empty_words($libelle_final)." ' " ;
-				$res_ajout = pmb_mysql_query($rqt_ajout, $dbh);
-				$categid_a = pmb_mysql_insert_id($dbh) ;
-				}
+			$categid_a = pmb_mysql_result($res_a, 0, 0);
+		} else {
+			$rqt_ajout = "insert into categories set categ_parent='$id_rech_theme', categ_libelle='".addslashes($libelle_final)."', index_categorie=' ".strip_empty_words($libelle_final)." ' ";
+			$res_ajout = pmb_mysql_query($rqt_ajout);
+			$categid_a = pmb_mysql_insert_id() ;
+		}
+		
 		// récup des sous-categ en cascade sous $a
-		$categ_parent =  $categid_a ;
-		for ($x=0 ; $x < sizeof($info_606_x[$a]) ; $x++) {
-			$rqt_x = "SELECT categ_id FROM categories WHERE categ_parent='".$categ_parent."' AND categ_libelle='".addslashes($info_606_x[$a][$x])."' " ;
-			$res_x = pmb_mysql_query($rqt_x,$dbh) ;
+		$categ_parent = $categid_a;
+		$nb_infos_606_x = count($info_606_x[$a]);
+		for ($x = 0; $x < $nb_infos_606_x; $x++) {
+			$rqt_x = "SELECT categ_id FROM categories WHERE categ_parent='$categ_parent' AND categ_libelle='".addslashes($info_606_x[$a][$x])."' ";
+			$res_x = pmb_mysql_query($rqt_x);
 			if (pmb_mysql_num_rows($res_x)) {
-				$categ_parent = pmb_mysql_result($res_x, 0, 0) ;
-				} else {
-					$rqt_ajout = "insert into categories set categ_parent='".$categ_parent."', categ_libelle='".addslashes($info_606_x[$a][$x])."', index_categorie=' ".strip_empty_words($info_606_x[$a][$x])." ' " ;
-					$res_ajout = pmb_mysql_query($rqt_ajout, $dbh);
-					$categ_parent = pmb_mysql_insert_id($dbh) ;
-					}
-			} // fin récup des $x en cascade sous l'id de la catégorie 606$a
+				$categ_parent = pmb_mysql_result($res_x, 0, 0);
+			} else {
+				$rqt_ajout = "insert into categories set categ_parent='$categ_parent', categ_libelle='".addslashes($info_606_x[$a][$x])."', index_categorie=' ".strip_empty_words($info_606_x[$a][$x])." ' ";
+				$res_ajout = pmb_mysql_query($rqt_ajout);
+				$categ_parent = pmb_mysql_insert_id();
+			}
+		} // fin récup des $x en cascade sous l'id de la catégorie 606$a
 
 		if ($categ_parent != $id_rech_theme) {
 			// insertion dans la table notices_categories
-			$rqt_ajout = "insert into notices_categories set notcateg_notice='".$notice_id."', notcateg_categorie='".$categ_parent."' " ;
-			$res_ajout = @pmb_mysql_query($rqt_ajout, $dbh);
-			}
+			$rqt_ajout = "insert into notices_categories set notcateg_notice='$notice_id', notcateg_categorie='$categ_parent' ";
+			$res_ajout = @pmb_mysql_query($rqt_ajout);
 		}
-				
-	
-	} // fin import_new_notice_suite
+	}
+} // fin import_new_notice_suite
 			
 // TRAITEMENT DES EXEMPLAIRES ICI
 function traite_exemplaires () {
@@ -166,8 +170,9 @@ function traite_exemplaires () {
 	// lu en 010$d de la notice
 	$price = $prix[0];
 	
+	$nb_infos_995 = count($info_995);
 	// la zone 995 est répétable
-	for ($nb_expl = 0; $nb_expl < sizeof ($info_995); $nb_expl++) {
+	for ($nb_expl = 0; $nb_expl < $nb_infos_995; $nb_expl++) {
 		/* RAZ expl */
 		$expl = array();
 		

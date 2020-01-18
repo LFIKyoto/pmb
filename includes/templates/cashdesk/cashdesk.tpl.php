@@ -2,14 +2,14 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cashdesk.tpl.php,v 1.11 2018-03-08 11:07:59 plmrozowski Exp $
+// $Id: cashdesk.tpl.php,v 1.13 2019-06-07 12:07:30 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
 global $cashdesk_form;
 global $cashdesk_list_form;
 global $cashdesk_list_form_summarize_table;
-global $cashdesk_list_form_summarize;
+global $cashdesk_list_form_summarize, $msg, $current_module;
 
 $cashdesk_form="
 
@@ -116,11 +116,9 @@ $cashdesk_list_form_summarize="
 		".$msg["cashdesk_edition_filter"]."!!cashdesk_filter!!&nbsp;
 		".$msg["cashdesk_edition_transaction_filter"]."!!transaction_filter!!
 		".$msg["cashdesk_edition_start_date"]."
-		<input type='text' style='width: 10em;' name='start_date' id='start_date' value='!!start_date!!' placeholder='".$msg['format_date_input_placeholder']."' data-dojo-type='dijit/form/DateTextBox' required='false' />
-
+        !!start_date!!
 		".$msg["cashdesk_edition_stop_date"]."
-		<input type='text' style='width: 10em;' name='stop_date' id='stop_date' value='!!stop_date!!' placeholder='".$msg['format_date_input_placeholder']."' data-dojo-type='dijit/form/DateTextBox' required='false' />
-		
+		!!stop_date!!
 		<input type='submit' class='bouton' value='".$msg["actualiser"]."' onclick=\"document.forms['form-$current_module-list'].dest.value ='';\"/>
 	</div>
 	<div class='right'>

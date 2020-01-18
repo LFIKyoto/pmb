@@ -4,7 +4,7 @@
 ****************************************************************************************
 © 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 ****************************************************************************************
-$Id: manifest.xml,v 1.2 2018-02-20 10:10:49 dbellamy Exp $ -->
+$Id: manifest.xml,v 1.4 2019-08-27 13:34:04 jlaurent Exp $ -->
 <manifest>
 	<name>pmbesDSI</name>
 	<description>msg:DSI_functions_description</description>
@@ -18,8 +18,8 @@ $Id: manifest.xml,v 1.2 2018-02-20 10:10:49 dbellamy Exp $ -->
 		<method name="listBannettesAuto" rights="" version="1.0" comment="msg:listBannettesAuto_description" language_independant="true">
 			<inputs>
 				<description>msg:listBannettesAuto_input_description</description>
-				<param name="filtre_search" type="scalar" dataType="string" description="msg:listBannettesAuto_filtre_search"/>
-				<param name="id_classement" type="scalar" dataType="integer" description="msg:listBannettesAuto_id_classement"/>
+				<param name="filtre_search" type="scalar" dataType="string" description="msg:listBannettesAuto_filtre_search" optional = "yes"/>
+				<param name="id_classement" type="scalar" dataType="integer" description="msg:listBannettesAuto_id_classement" optional = "yes" default_value = "0"/>
 			</inputs>
 			<outputs>
 				<description>msg:listBannettesAuto_output_description</description>

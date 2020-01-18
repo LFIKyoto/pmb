@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: edit.php,v 1.76 2018-08-07 12:07:04 dgoron Exp $
+// $Id: edit.php,v 1.78 2019-06-05 06:41:21 btafforeau Exp $
 
 // définition du minimum nécéssaire 
 $base_path=".";                            
@@ -40,7 +40,7 @@ require_once("$include_path/resa_planning_func.inc.php");
 require_once("$include_path/explnum.inc.php");
 require_once($class_path."/serialcirc_diff.class.php");
 require_once($class_path."/serialcirc_print_fields.class.php");
-require_once ($class_path."/spreadsheet.class.php");
+require_once ($class_path."/spreadsheetPMB.class.php");
 // modules propres à edit.php ou à ses sous-modules
 require("$include_path/templates/edit.tpl.php");
 require_once ($class_path."/campaigns/campaigns_controller.class.php");
@@ -98,7 +98,7 @@ switch($categ) {
 			default :
 				$serialcirc_diff = new serialcirc_diff($id_serialcirc,$num_abt);
 				$gen_tpl = new serialcirc_print_fields($serialcirc_diff->id);
-				$worksheet = new spreadsheet();
+				$worksheet = new spreadsheetPMB();
 				$worksheet->write(0,0,$serialcirc_diff->serial_info['serial_name']);
 				$worksheet->write(0,1,$serialcirc_diff->serial_info['abt_name']);
 
@@ -167,16 +167,18 @@ switch($categ) {
 			case "categ_change" :
 				$titre_page = $msg["1120"].": ".$msg["edit_titre_empr_categ_change"];
 				if (isset($categ_action) && $categ_action=="change_categ_empr") {
-					for ($i=0; $i<count($empr); $i++) {
-						$id_empr=$empr[$i];
-						$action="empr_chang_categ_edit_".$id_empr;
-						global ${$action};
-						$act=${$action};
-						if ($act!=0) {
-							// on modifie la catégorie du lecteur si demandé
-							if($id_empr){
-								$requete="update empr set empr_categ=$act where id_empr=$id_empr";
-								pmb_mysql_query($requete);
+					if(isset($readers_edition_ui_selected_objects)) {
+						for ($i=0; $i<count($readers_edition_ui_selected_objects); $i++) {
+							$id_empr=$readers_edition_ui_selected_objects[$i];
+							if(!empty($readers_edition_ui_categ_change[$id_empr])) {
+								$act = $readers_edition_ui_categ_change[$id_empr];
+								if ($act!=0) {
+									// on modifie la catégorie du lecteur si demandé
+									if($id_empr){
+										$requete="update empr set empr_categ=$act where id_empr=$id_empr";
+										pmb_mysql_query($requete);
+									}
+								}
 							}
 						}
 					}

@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // Â© 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: search_perso.tpl.php,v 1.1 2018-10-08 13:59:40 vtouchard Exp $
+// $Id: search_perso.tpl.php,v 1.2 2019-05-29 11:23:32 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $tpl_search_perso_liste_tableau, $base_path, $msg, $current_module, $tpl_search_perso_liste_tableau_ligne, $tpl_search_perso_form;
 
 //*******************************************************************
 // Définition des templates pour les listes en edition

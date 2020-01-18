@@ -2,9 +2,11 @@
 // +-------------------------------------------------+
 // © 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: import_authorities.tpl.php,v 1.12 2018-11-22 15:34:57 dgoron Exp $
+// $Id: import_authorities.tpl.php,v 1.13 2019-05-27 13:34:30 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
+
+global $encodage_fic_source, $authorites_import_form, $base_path, $authorites_import_form_content, $charset, $msg, $thesaurus_concepts_active, $authorities_import_preload_form, $current_module, $authorities_import_afterupload_form;
 
 //Gestion de l'encodage du fichier d'import
 if(isset($encodage_fic_source)){

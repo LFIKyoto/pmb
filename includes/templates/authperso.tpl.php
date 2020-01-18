@@ -2,18 +2,12 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authperso.tpl.php,v 1.26 2018-12-21 14:56:25 ngantier Exp $
+// $Id: authperso.tpl.php,v 1.31 2019-05-27 15:09:40 btafforeau Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".tpl.php")) die("no access");
 
-global $authperso_list_tpl;
-global $authperso_list_line_tpl;
-global $authperso_form_tpl;
-global $authperso_form;
-global $authperso_form_select;
-global $authperso_replace;
-global $msg;
-global $pmb_autorites_verif_js, $pmb_form_authorities_editables, $PMBuserid;
+global $authperso_list_tpl, $authperso_list_line_tpl, $authperso_form_tpl, $authperso_form, $authperso_form_select, $authperso_replace, $msg, $pmb_autorites_verif_js;
+global $pmb_form_authorities_editables, $PMBuserid, $charset, $current_module, $base_path;
 
 $authperso_list_tpl="	
 <h1>".htmlentities($msg["admin_authperso"], ENT_QUOTES, $charset)."</h1>			
@@ -62,7 +56,7 @@ $authperso_form_tpl="
 			<label class='etiquette' for='name'>".$msg['admin_authperso_form_name']."</label>
 		</div>
 		<div class='row'>
-			<input type='text' class='saisie-50em' name='name' id='name' value='!!name!!' />
+			<input type='text' class='saisie-50em' name='name' id='name' value='!!name!!' data-pmb-deb-rech='1'/>
 		</div>				
 		<div class='row'>
 			<label class='etiquette' for='comment'>".$msg['admin_authperso_form_comment']."</label>
@@ -98,16 +92,16 @@ $authperso_form.= "
 	});
 </script>
 <script type='text/javascript'>
-<!--
 	function test_form(form){
-		if(form.ed_nom.value.length == 0){
-			alert(\"$msg[144]\");
-			return false;
+		if (typeof check_form == 'function') {
+			if (!check_form()) {
+				return false;
+			}
 		}
 		unload_off();
 		return true;
 	}
-function confirm_delete() {
+	function confirm_delete() {
         result = confirm(\"".$msg['confirm_suppr']."\");
         if(result) {
         	unload_off();
@@ -120,7 +114,6 @@ function confirm_delete() {
 		w=window.open(document.getElementById(id).value);
 		w.focus();
 	}
--->
 </script>
 <script type='text/javascript'>
 	document.title='!!document_title!!';
@@ -160,10 +153,13 @@ function confirm_delete() {
 		<!-- tu_link -->
 	</div>
 </div>
+!!check_scripts!!
 <div class='row'>
 	<div class='left'>
 		<input type='button' class='bouton' value='$msg[76]' onClick=\"unload_off();document.location='!!cancel_action!!';\" />
-		<input type='button' value='$msg[77]' class='bouton' id='btsubmit' onClick=\"unload_off(); this.form.submit();\" />
+		<input type='button' value='$msg[77]' class='bouton' id='btsubmit' onClick=\"document.getElementById('save_and_continue').value=0;unload_off(); if (test_form(this.form)) this.form.submit();\" />
+        <input type='hidden' name='save_and_continue' id='save_and_continue' value='' />
+		<input type='button' id='update_continue' class='bouton' value='" . $msg['save_and_continue'] . "' onClick=\"document.getElementById('save_and_continue').value=1;unload_off(); if (test_form(this.form)) this.form.submit();\" />
 		!!remplace!!
 		!!voir_notices!!
 		!!audit_bt!!
@@ -190,11 +186,6 @@ $authperso_form_select = jscript_unload_question()."
 <!--
 	function test_form(form)
 	{
-		if(form.ed_nom.value.length == 0)
-			{
-				alert(\"$msg[144]\");
-				return false;
-			}
 		unload_off();
 		return true;
 	}
@@ -203,9 +194,7 @@ function confirm_delete() {
         if(result) {
         	unload_off();
             document.location='!!delete_action!!';
-		} else{
-            //document.forms['saisie_editeur'].elements['ed_nom'].focus();
-        }
+		}
     }
 	function check_link(id) {
 		w=window.open(document.getElementById(id).value);
@@ -248,7 +237,7 @@ $authperso_replace = "
 		<label class='etiquette' for='par'>$msg[160]</label>
 		</div>
 	<div class='row'>
-		<input type='text' class='saisie-50emr' id='authperso_libelle' name='authperso_libelle' value=\"\" completion=\"authpersos\" autfield=\"by\" autexclude=\"!!id!!\"
+		<input type='text' class='saisie-50emr' id='authperso_libelle' name='authperso_libelle' value=\"\" completion=\"authperso_!!id_authperso!!\" autfield=\"by\" autexclude=\"!!id!!\"
     	onkeypress=\"if (window.event) { e=window.event; } else e=event; if (e.keyCode==9) { openPopUp('./select.php?what=authperso&caller=authperso_replace&param1=by&param2=authperso_libelle&no_display=!!id!!', 'selector'); }\" />
 
 		<input class='bouton' type='button' onclick=\"openPopUp('./select.php?what=authperso&caller=authperso_replace&authperso_id=!!id_authperso!!&p1=by&p2=authperso_libelle&no_display=!!id!!', 'selector')\" title='$msg[157]' value='$msg[parcourir]' />

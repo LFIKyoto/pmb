@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2011 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: cashdesk_list.class.php,v 1.12 2018-12-19 13:59:19 ngantier Exp $
+// $Id: cashdesk_list.class.php,v 1.16 2019-06-07 12:18:05 ngantier Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -56,8 +56,7 @@ class cashdesk_list {
 		
 		if(!count($this->cashdesk_list))return "";
 		if(!$cashdesk_filter)$cashdesk_filter=array();
-		if(!$cashdesk_filter[0])$cashdesk_filter=array();
-		
+		$selected = '';		
 		if(!count($cashdesk_filter) )$selected= " selected=\"selected\" ";
 		$cashdesk_filter_form="<select  name='cashdesk_filter[]' multiple >
 			<option value='' $selected >--</option>\n";
@@ -73,13 +72,14 @@ class cashdesk_list {
 		$tt_realisee=0;
 		$tt_encaissement_no=0;
 		$tt_encaissement=0;
+		$form = '';
+		$parity = 0;
 		foreach ($this->cashdesk_list as $index =>$cashdesk){		
 			if(count($cashdesk_filter) ){
 				if(! in_array($cashdesk['id'], $cashdesk_filter)) continue;					
 			}			
 			$cashdesk_info=new cashdesk($cashdesk['id']);
-			$all_transactions=$cashdesk_info->summarize($start_date, $stop_date, $transactype,$encaissement);
-			
+			$all_transactions=$cashdesk_info->summarize($start_date, $stop_date, 0, 0);			
 			foreach($all_transactions as $transactions){
 				if ($parity++ % 2)	$pair_impair = "even"; else $pair_impair = "odd";
 				$form.= "
@@ -91,7 +91,7 @@ class cashdesk_list {
 					<td>".htmlentities($this->format_price($transactions['realisee_no']),ENT_QUOTES, $charset)."</td>			
 					<td>".htmlentities($this->format_price($transactions['realisee']),ENT_QUOTES, $charset)."</td>			
 					<td>".htmlentities($this->format_price($transactions['encaissement_no']),ENT_QUOTES, $charset)."</td>			
-					<td>".htmlentities($this->format_price($transactions['encaissement']),ENT_QUOTES, $charset)."</td>
+					<td>".htmlentities($this->format_price($transactions['encaissement']),ENT_QUOTES, $charset) . $this->get_display_payment_method($transactions['encaissement_payment_method']) . "</td>
 				</tr>
 				";
 				$tt_realisee_no+=$transactions['realisee_no'];
@@ -104,17 +104,49 @@ class cashdesk_list {
 		}
 		$formall=str_replace('!!cashdesk_list!!', $form, $cashdesk_list_form_summarize);		
 		$formall=str_replace('!!cashdesk_filter!!', $cashdesk_filter_form, $formall);			
-		$formall=str_replace('!!start_date!!', $start_date, $formall);				
-		$formall=str_replace('!!stop_date!!', $stop_date, $formall);	
+		$formall=str_replace('!!start_date!!', get_input_date('start_date', 'start_date', $start_date), $formall);				
+		$formall=str_replace('!!stop_date!!', get_input_date('stop_date', 'stop_date', $stop_date), $formall);	
+		
+		
 			
 		$formall=str_replace('!!realisee_no!!',$this->format_price($tt_realisee_no) , $formall);
 		$formall=str_replace('!!realisee!!',$this->format_price($tt_realisee) , $formall);
 		$formall=str_replace('!!encaissement_no!!',$this->format_price($tt_encaissement_no) , $formall);
 		$formall=str_replace('!!encaissement!!',$this->format_price($tt_encaissement) , $formall);	
 		
-		$formall=str_replace('!!transaction_filter!!', $transaction_filter_form, $formall);		
+		$formall=str_replace('!!transaction_filter!!', '', $formall);		
 		
 		return $formall;
+	}
+	
+	public function get_display_payment_method($encaissement_payment_method, $for_excel=0) {
+	    
+	    $display = '';
+	    $data = array();
+	    foreach ($encaissement_payment_method as $transaction) {
+	        if ($transaction['transaction_payment_method_name'] && $transaction['cash']) {
+	            if(!isset($data[$transaction['transaction_payment_method_name']])) {
+	                $data[$transaction['transaction_payment_method_name']] = 0;
+	            }
+	            $data[$transaction['transaction_payment_method_name']]+= $transaction['cash'];
+	        }	        
+	    }
+	    foreach ($data as $mode => $montant) {
+	        if($for_excel) {
+	            if ($display) {
+	                $display.= '; ';
+	            }
+	            $display.= $mode . ': ' . $this->format_price($montant);
+	        } else {
+	            if (!$display) {
+	                $display.= '<br />';
+	            } else {	                
+	                $display.= '; ';
+	            }
+	            $display.= $mode . ': ' . $this->format_price($montant);
+	        }
+	    }
+	    return $display;
 	}
 	
 	public function get_html_summarize(){
@@ -131,12 +163,13 @@ class cashdesk_list {
 		$tt_realisee=0;
 		$tt_encaissement_no=0;
 		$tt_encaissement=0;
+		$form = '';
 		foreach ($this->cashdesk_list as $index =>$cashdesk){		
 			if(count($cashdesk_filter) ){
 				if(! in_array($cashdesk['id'], $cashdesk_filter)) continue;
 			}
 			$cashdesk_info=new cashdesk($cashdesk['id']);
-			$all_transactions=$cashdesk_info->summarize($start_date, $stop_date, $transactype,$encaissement);
+			$all_transactions=$cashdesk_info->summarize($start_date, $stop_date, 0, 0);
 				
 			foreach($all_transactions as $transactions){
 				$form.= "
@@ -148,7 +181,7 @@ class cashdesk_list {
 					<td>".htmlentities($this->format_price($transactions['realisee_no']),ENT_QUOTES, $charset)."</td>
 					<td>".htmlentities($this->format_price($transactions['realisee']),ENT_QUOTES, $charset)."</td>
 					<td>".htmlentities($this->format_price($transactions['encaissement_no']),ENT_QUOTES, $charset)."</td>
-					<td>".htmlentities($this->format_price($transactions['encaissement']),ENT_QUOTES, $charset)."</td>
+					<td>".htmlentities($this->format_price($transactions['encaissement']),ENT_QUOTES, $charset) . $this->get_display_payment_method($transactions['encaissement_payment_method']) . "</td>
 				</tr>
 				";
 				$tt_realisee_no+=$transactions['realisee_no'];
@@ -176,8 +209,8 @@ class cashdesk_list {
 		if(!$cashdesk_filter)$cashdesk_filter=array();
 		if(!$cashdesk_filter[0])$cashdesk_filter=array();		
 		
-		require_once ($class_path."/spreadsheet.class.php");
-		$worksheet = new spreadsheet();
+		require_once ($class_path."/spreadsheetPMB.class.php");
+		$worksheet = new spreadsheetPMB();
 		$worksheet->write(0,0,$titre_page);		
 		$i=2;
 		$j=2;
@@ -189,13 +222,14 @@ class cashdesk_list {
 		$worksheet->write($i,$j++,$msg["cashdesk_edition_transac_realisee"]);
 		$worksheet->write($i,$j++,$msg["cashdesk_edition_transac_encaissement_no"]);
 		$worksheet->write($i,$j++,$msg["cashdesk_edition_transac_encaissement"]);
+		$worksheet->write($i,$j++,$msg["cashdesk_edition_transac_payment_method"]);
 		$i++;
 		foreach ($this->cashdesk_list as $index =>$cashdesk){		
 			if(count($cashdesk_filter) ){
 				if(! in_array($cashdesk['id'], $cashdesk_filter)) continue;					
 			}			
 			$cashdesk_info=new cashdesk($cashdesk['id']);
-			$all_transactions=$cashdesk_info->summarize($start_date, $stop_date, $transactype,$encaissement);
+			$all_transactions=$cashdesk_info->summarize($start_date, $stop_date, 0, 0);
 						
 			if(!count($all_transactions) ) continue;	
 						
@@ -209,6 +243,7 @@ class cashdesk_list {
 				$worksheet->write($i,$j++,$this->format_price($transactions['realisee']));
 				$worksheet->write($i,$j++,$this->format_price($transactions['encaissement_no']));
 				$worksheet->write($i,$j++,$this->format_price($transactions['encaissement']));
+				$worksheet->write($i,$j++,$this->get_display_payment_method($transactions['encaissement_payment_method'], 1) );
 				$i++;
 			}
 		}	
@@ -219,7 +254,7 @@ class cashdesk_list {
 		global $pmb_fine_precision;
 		
 		if (!$pmb_fine_precision) $pmb_fine_precision=2;
-		return 	number_format($price + 0, $pmb_fine_precision, '.', ' ');
+		return 	number_format(floatval($price), $pmb_fine_precision, '.', ' ');
 	}
 	
 	public function proceed(){

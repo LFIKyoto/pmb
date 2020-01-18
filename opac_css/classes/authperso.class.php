@@ -2,7 +2,7 @@
 // +-------------------------------------------------+
 // | 2002-2007 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: authperso.class.php,v 1.23 2018-08-23 15:09:39 tsamson Exp $
+// $Id: authperso.class.php,v 1.25 2019-02-20 14:03:33 tsamson Exp $
 
 if (stristr($_SERVER['REQUEST_URI'], ".class.php")) die("no access");
 
@@ -186,7 +186,7 @@ class authperso {
 			}else{
 				$view='';
 				foreach ($authperso_fields as $field){					
-					$view.=$field['values'][0]['format_value'].".  ";
+				    $view.= (!empty($field['values'][0]['format_value']) ? $field['values'][0]['format_value'].".  " : "");
 				}
 			}
 		}
@@ -200,7 +200,7 @@ class authperso {
 		$req .= " order by authperso_index_infos_global limit 20";
 		$res = pmb_mysql_query($req);
 		while(($r=pmb_mysql_fetch_object($res))) {
-			$values[$r->id_authperso_authority]=static::get_isbd($r->id_authperso_authority);
+		    $values[$r->id_authperso_authority]=strip_tags(static::get_isbd($r->id_authperso_authority));
 		}
 		return($values);
 	}
@@ -221,7 +221,7 @@ class authperso {
 		}
 	
 		if($id_to_view){
-			$isbd=static::get_isbd($id_to_view);
+		    $isbd=strip_tags(static::get_isbd($id_to_view));
 			$authority = new authority(0, $id_to_view, AUT_TABLE_AUTHPERSO);
 			return "<br />".$authority->get_display_statut_class_html()."<a href='#' onclick=\"set_parent('".$caller."', '".$id_to_view."', '".htmlentities(addslashes(str_replace("\r"," ",str_replace("\n"," ",$isbd))),ENT_QUOTES, $charset)."','".$callback."')\">".
 					htmlentities($isbd,ENT_QUOTES, $charset)."</a><br />";
@@ -258,7 +258,7 @@ class authperso {
 		$res = pmb_mysql_query($req,$dbh);
 		while(($r=pmb_mysql_fetch_object($res))) {
 			$id=$r->id_authperso_authority;
-			$isbd=static::get_isbd($id);
+			$isbd=strip_tags(static::get_isbd($id));
 			$authority = new authority(0, $id, AUT_TABLE_AUTHPERSO);
 			$auth_lines.=$authority->get_display_statut_class_html()."<a href='#' onclick=\"set_parent('".$caller."', '".$id."', '".htmlentities(addslashes(str_replace("\r"," ",str_replace("\n"," ",$isbd))),ENT_QUOTES, $charset)."','".$callback."')\">".
 					htmlentities($isbd,ENT_QUOTES, $charset)."</a><br />";

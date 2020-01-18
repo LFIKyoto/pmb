@@ -2,13 +2,18 @@
 // +-------------------------------------------------+
 // © 2002-2004 PMB Services / www.sigb.net pmb@sigb.net et contributeurs (voir www.sigb.net)
 // +-------------------------------------------------+
-// $Id: iimport_authorities.php,v 1.10 2017-12-14 18:11:21 apetithomme Exp $
+// $Id: iimport_authorities.php,v 1.12 2019-06-07 09:19:49 ngantier Exp $
 
 // définition du minimum necessaire
 $base_path="../..";
 $base_auth = "AUTORITES_AUTH";
 
 $base_title = "";
+
+global $class_path, $include_path, $pmb_import_modele_authorities, $action, $from_file, $msg, $type_link, $authorities_import_preload_form, $form;
+global $create_link, $create_link_spec, $force_update, $authorities_type, $category_or_concept, $id_thesaurus, $scheme_uri, $encodage_fic_source;
+global $pb_fini, $authorities_import_afterupload_form, $nb_notices_import, $total, $pmb_import_limit_record_load, $notobj, $nb_notices, $nb_notices_rejetees;
+global $file_submit, $charset, $id_thes, $authorites_import_form_content, $thesaurus_concepts_active, $lang;
 
 require_once ("$base_path/includes/init.inc.php");
 require_once($class_path."/origin.class.php");
@@ -271,6 +276,8 @@ switch($action){
 				$sel_schemes.= "</select>";
 			}
 		}
+		
+		$form = str_replace("!!import_encoding_selector!!", import_entities::get_encoding_selector(), $form);
 		$form = str_replace("!!schemes!!", $sel_schemes, $form);
 
 		print $form;
@@ -287,20 +294,19 @@ function loadfile_in_base(){
 	if ($noticenumber=="") $noticenumber=0;
 
 	if (!file_exists($file_submit)) {
-		print $file_submit;
-		printf ($msg[506],$from_file); /* The file %s doesn't exist... */
+		printf ($msg[506],$file_submit); /* The file %s doesn't exist... */
 		return;
 	}
 	
 	if (filesize($file_submit)==0) {
-		printf ($msg[507],$from_file); /* The file % is empty, it's going to be deleted */
-		unlink ($to_file);
+	    printf ($msg[507],$file_submit); /* The file % is empty, it's going to be deleted */
+	    unlink ($file_submit);
 		return;
 	}
 	
 	$handle = fopen ($file_submit, "rb");
 	if (!$handle) {
-		printf ($msg[508],$from_file); /* Unable to open the file %s ... */
+	    printf ($msg[508],$file_submit); /* Unable to open the file %s ... */
 		return;
 	}
 	
