@@ -1,2 +1,4 @@
 temp/*
 opac_css/temp/*
+includes/db_param.inc.php
+opac_css/includes/opac_db_param.inc.php
